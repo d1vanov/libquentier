@@ -340,8 +340,8 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
 QFuture<IAuthenticationInfoPtr>
     AuthenticationInfoProvider::authenticateToLinkedNotebook(
         Account account, qevercloud::Guid linkedNotebookGuid, // NOLINT
-        QString sharedNotebookGlobalId, QString noteStoreUrl,
-        Mode mode) // NOLINT
+        QString sharedNotebookGlobalId, QString noteStoreUrl, // NOLINT
+        QString uri, Mode mode) // NOLINT
 {
     if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
@@ -360,7 +360,7 @@ QFuture<IAuthenticationInfoPtr>
         authenticateToLinkedNotebookWithoutCache(
             std::move(account), std::move(linkedNotebookGuid),
             std::move(sharedNotebookGlobalId),
-            std::move(noteStoreUrl), promise);
+            std::move(noteStoreUrl), std::move(uri), promise);
         return future;
     }
 
@@ -385,13 +385,26 @@ QFuture<IAuthenticationInfoPtr>
         }
     }
 
-    // TODO: implement: try to read linked notebook auth token and shard id
-    // from the keychain
+    ApplicationSettings settings{account, gSynchronizationPersistence};
+
+    const QString keyGroup = QString::fromUtf8("Authentication/%1/%2/")
+                                 .arg(m_host, QString::number(account.id()));
+
+    settings.beginGroup(keyGroup);
+    ApplicationSettings::GroupCloser groupCloser{settings};
+
+    static const QString appName = QCoreApplication::applicationName();
+    const QString keyPrefix = QString::fromUtf8("%1_%2_%3").arg(
+        appName, m_host, QString::number(account.id()));
+
+    // TODO: try to fetch expiration timestamp for the auth token of this
+    // linked notebook; if it's about to expire soon, authenticate without
+    // cache; otherwise try to read auth token and shard id from the keychain.
 
     authenticateToLinkedNotebookWithoutCache(
         std::move(account), std::move(linkedNotebookGuid),
         std::move(sharedNotebookGlobalId),
-        std::move(noteStoreUrl), promise);
+        std::move(noteStoreUrl), std::move(uri), promise);
 
     return future;
 }
@@ -446,13 +459,14 @@ void AuthenticationInfoProvider::authenticateAccountWithoutCache(
 
 void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
     Account account, qevercloud::Guid linkedNotebookGuid, // NOLINT
-    QString sharedNotebookGlobalId, QString noteStoreUrl, // NOLINT
+    QString sharedNotebookGlobalId, QString noteStoreUrl, QString uri, // NOLINT
     const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise)
 {
     Q_UNUSED(account)
     Q_UNUSED(linkedNotebookGuid)
     Q_UNUSED(sharedNotebookGlobalId)
     Q_UNUSED(noteStoreUrl)
+    Q_UNUSED(uri)
     Q_UNUSED(promise)
     // TODO: implement
 }

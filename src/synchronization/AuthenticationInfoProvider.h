@@ -66,7 +66,7 @@ public:
         authenticateToLinkedNotebook(
             Account account, qevercloud::Guid linkedNotebookGuid,
             QString sharedNotebookGlobalId, QString noteStoreUrl,
-            Mode mode = Mode::Cache) override;
+            QString uri, Mode mode = Mode::Cache) override;
 
 private:
     void authenticateAccountWithoutCache(
@@ -75,7 +75,7 @@ private:
 
     void authenticateToLinkedNotebookWithoutCache(
         Account account, qevercloud::Guid linkedNotebookGuid,
-        QString sharedNotebookGlobalId, QString noteStoreUrl,
+        QString sharedNotebookGlobalId, QString noteStoreUrl, QString uri,
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     /**

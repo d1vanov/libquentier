@@ -99,6 +99,8 @@ public:
      *                                  corresponding to the linked notebook.
      * @param noteStoreUrl              URL of the note store corresponding
      *                                  to the linked notebook.
+     * @param uri                       URI corresponding to the linked
+     *                                  notebook.
      * @param mode                      Mode determining the source of
      *                                  authentication info.
      * @return                          QFuture with authentication info for the
@@ -109,7 +111,7 @@ public:
         authenticateToLinkedNotebook(
             Account account, qevercloud::Guid linkedNotebookGuid,
             QString sharedNotebookGlobalId, QString noteStoreUrl,
-            Mode mode = Mode::Cache) = 0;
+            QString uri, Mode mode = Mode::Cache) = 0;
 };
 
 } // namespace quentier::synchronization
