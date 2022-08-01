@@ -52,20 +52,20 @@ public:
         IAuthenticatorPtr authenticator, IKeychainServicePtr keychainService,
         IUserInfoProviderPtr userInfoProvider,
         INoteStoreFactoryPtr noteStoreFactory,
-        qevercloud::IRequestContextPtr ctx, QString host);
+        qevercloud::IRequestContextPtr ctx,
+        qevercloud::IRetryPolicyPtr retryPolicy, QString host);
 
 public:
     // IAuthenticationInfoProvider
-    [[nodiscard]] QFuture<IAuthenticationInfoPtr>
-        authenticateNewAccount() override;
+    [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateNewAccount()
+        override;
 
     [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account, Mode mode = Mode::Cache) override;
 
-    [[nodiscard]] QFuture<IAuthenticationInfoPtr>
-        authenticateToLinkedNotebook(
-            Account account, qevercloud::LinkedNotebook linkedNotebook,
-            Mode mode = Mode::Cache) override;
+    [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateToLinkedNotebook(
+        Account account, qevercloud::LinkedNotebook linkedNotebook,
+        Mode mode = Mode::Cache) override;
 
 private:
     void authenticateAccountWithoutCache(
@@ -73,7 +73,7 @@ private:
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     void authenticateToLinkedNotebookWithoutCache(
-        Account account, qevercloud::LinkedNotebook linkedNotebook,
+        const Account & account, qevercloud::LinkedNotebook linkedNotebook,
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     /**
@@ -98,6 +98,7 @@ private:
     const IUserInfoProviderPtr m_userInfoProvider;
     const INoteStoreFactoryPtr m_noteStoreFactory;
     const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::IRetryPolicyPtr m_retryPolicy;
     const QString m_host;
 
     QReadWriteLock m_authenticationInfosRWLock;
