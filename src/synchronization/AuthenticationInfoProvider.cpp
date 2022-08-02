@@ -132,23 +132,6 @@ const QString gLinkedNotebookAuthenticationTimestamp =
             linkedNotebookGuid);
 }
 
-[[nodiscard]] QString linkedNotebookShardIdKeychainServiceName()
-{
-    static const QString appName = QCoreApplication::applicationName();
-    return QString::fromUtf8("%1_linked_notebook_%2")
-        .arg(appName, gShardIdKeychainKeyPart);
-}
-
-[[nodiscard]] QString linkedNotebookShardIdKeychainKeyName(
-    const QString & host, const QString & userId,
-    const qevercloud::Guid & linkedNotebookGuid)
-{
-    static const QString appName = QCoreApplication::applicationName();
-    return QString::fromUtf8("%1_linked_notebook_%2_%3_%4_%5")
-        .arg(
-            appName, gShardIdKeychainKeyPart, host, userId, linkedNotebookGuid);
-}
-
 [[nodiscard]] bool isTimestampAboutToExpire(
     const qevercloud::Timestamp timestamp)
 {
@@ -601,33 +584,21 @@ QFuture<IAuthenticationInfoPtr>
         linkedNotebookAuthTokenKeychainKeyName(
             m_host, userIdStr, *linkedNotebook.guid()));
 
-    // FIXME: probably it's not necessary for a linked notebook to store
-    // its shard id in the keychain as this field is available right in
-    // qevercloud::LinkedNotebook?
-    auto readShardIdFuture = m_keychainService->readPassword(
-        linkedNotebookShardIdKeychainServiceName(),
-        linkedNotebookShardIdKeychainKeyName(
-            m_host, userIdStr, *linkedNotebook.guid()));
-
-    auto readAllFuture = threading::whenAll<QString>(
-        QList<QFuture<QString>>{} << readAuthTokenFuture << readShardIdFuture);
-
     const auto selfWeak = weak_from_this();
 
-    auto readAllThenFuture = threading::then(
-        std::move(readAllFuture),
+    auto readAuthTokenThenFuture = threading::then(
+        std::move(readAuthTokenFuture),
         [promise, selfWeak, userId = account.id(),
          expirationTimestamp = *expirationTimestamp,
          authenticationTimestamp = *authenticationTimestamp,
          linkedNotebookGuid = *linkedNotebook.guid(),
          noteStoreUrl = linkedNotebook.noteStoreUrl(),
-         webApiUrlPrefix = linkedNotebook.webApiUrlPrefix()](
-            QList<QString> tokenAndShardId) mutable {
-            Q_ASSERT(tokenAndShardId.size() == 2);
-
+         webApiUrlPrefix = linkedNotebook.webApiUrlPrefix(),
+         shardId = linkedNotebook.shardId().value_or(QString{})](
+            QString authToken) mutable {
             auto authenticationInfo = std::make_shared<AuthenticationInfo>();
-            authenticationInfo->m_authToken = std::move(tokenAndShardId[0]);
-            authenticationInfo->m_shardId = std::move(tokenAndShardId[1]);
+            authenticationInfo->m_authToken = std::move(authToken);
+            authenticationInfo->m_shardId = std::move(shardId);
             authenticationInfo->m_userId = userId;
 
             authenticationInfo->m_authenticationTime = authenticationTimestamp;
@@ -650,14 +621,14 @@ QFuture<IAuthenticationInfoPtr>
         });
 
     threading::onFailed(
-        std::move(readAllThenFuture),
+        std::move(readAuthTokenThenFuture),
         [promise, selfWeak, linkedNotebook = std::move(linkedNotebook),
          account = std::move(account)](const QException & e) mutable {
             QNINFO(
                 "synchronization::AuthenticationInfoProvider",
-                "Could not read auth token or shard id for linked notebook "
-                    << "with guid " << *linkedNotebook.guid()
-                    << " from the keychain: " << e.what());
+                "Could not read auth token for linked notebook with guid "
+                    << *linkedNotebook.guid() << " from the keychain: "
+                    << e.what());
 
             if (const auto self = selfWeak.lock()) {
                 self->authenticateToLinkedNotebookWithoutCache(
