@@ -35,7 +35,7 @@ public:
         QString noteStoreUrl = {},
         std::optional<qevercloud::Guid> linkedNotebookGuid = {},
         qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {});
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
 };
 
 } // namespace quentier::synchronization
