@@ -1,10 +1,11 @@
+#include <quentier/synchronization/tests/mocks/MockIAuthenticator.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
-#include "MockIAuthenticator.h"
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
 #include "MockILinkedNotebooksProcessor.h"
 #include "MockINotebooksProcessor.h"
 #include "MockINoteFullDataDownloader.h"
+#include "MockINoteStoreFactory.h"
 #include "MockINotesProcessor.h"
 #include "MockISavedSearchesProcessor.h"
 #include "MockITagsProcessor.h"
@@ -15,4 +16,5 @@
 #include "MockISyncChunksDownloader.h"
 #include "MockISyncChunksProvider.h"
 #include "MockISyncChunksStorage.h"
+#include "MockIUserInfoProvider.h"
 #include "qevercloud/services/MockINoteStore.h"

@@ -22,7 +22,7 @@
 
 namespace quentier::utility::tests::mocks {
 
-class MockIKeychainService : public IKeychainService
+class QUENTIER_EXPORT MockIKeychainService : public IKeychainService
 {
 public:
     MOCK_METHOD(

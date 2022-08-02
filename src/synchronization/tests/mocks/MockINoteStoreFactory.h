@@ -18,21 +18,21 @@
 
 #pragma once
 
-#include <quentier/synchronization/IAuthenticator.h>
+#include <synchronization/INoteStoreFactory.h>
 
 #include <gmock/gmock.h>
 
 namespace quentier::synchronization::tests::mocks {
 
-class MockIAuthenticator : public IAuthenticator
+class MockINoteStoreFactory : public INoteStoreFactory
 {
 public:
     MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
-        (override));
-
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateAccount, (Account account),
+        qevercloud::INoteStorePtr, noteStore,
+        (QString noteStoreUrl,
+         std::optional<qevercloud::Guid> linkedNotebookGuid,
+         qevercloud::IRequestContextPtr ctx,
+         qevercloud::IRetryPolicyPtr retryPolicy),
         (override));
 };
 

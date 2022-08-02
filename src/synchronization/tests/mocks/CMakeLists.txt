@@ -9,13 +9,14 @@ endif()
 
 target_sources(${MOCKS_NAME}
   PUBLIC
+    ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockIAuthenticator.h
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncConflictResolver.h
-    MockIAuthenticator.h
     MockIDurableNotesProcessor.h
     MockIDurableResourcesProcessor.h
     MockILinkedNotebooksProcessor.h
     MockINotebooksProcessor.h
     MockINoteFullDataDownloader.h
+    MockINoteStoreFactory.h
     MockINotesProcessor.h
     MockIResourceFullDataDownloader.h
     MockIResourcesProcessor.h
@@ -28,6 +29,7 @@ target_sources(${MOCKS_NAME}
     MockISyncChunksDownloader.h
     MockISyncChunksProvider.h
     MockISyncChunksStorage.h
+    MockIUserInfoProvider.h
     qevercloud/services/MockINoteStore.h
   PRIVATE
     CheckBuild.cpp

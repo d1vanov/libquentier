@@ -16,33 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <quentier/synchronization/ISyncConflictResolver.h>
+#include <synchronization/IUserInfoProvider.h>
 
 #include <gmock/gmock.h>
 
 namespace quentier::synchronization::tests::mocks {
 
-class QUENTIER_EXPORT MockISyncConflictResolver : public ISyncConflictResolver
+class MockIUserInfoProvider : public IUserInfoProvider
 {
 public:
     MOCK_METHOD(
-        QFuture<NotebookConflictResolution>, resolveNotebookConflict,
-        (qevercloud::Notebook theirs, qevercloud::Notebook mine), (override));
-
-    MOCK_METHOD(
-        QFuture<NoteConflictResolution>, resolveNoteConflict,
-        (qevercloud::Note theirs, qevercloud::Note mine), (override));
-
-    MOCK_METHOD(
-        QFuture<SavedSearchConflictResolution>, resolveSavedSearchConflict,
-        (qevercloud::SavedSearch theirs, qevercloud::SavedSearch mine),
+        QFuture<qevercloud::User>, userInfo, (qevercloud::UserID userId),
         (override));
-
-    MOCK_METHOD(
-        QFuture<TagConflictResolution>, resolveTagConflict,
-        (qevercloud::Tag theirs, qevercloud::Tag mine), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

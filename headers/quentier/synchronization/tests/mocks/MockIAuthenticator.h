@@ -18,31 +18,22 @@
 
 #pragma once
 
-#include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/synchronization/IAuthenticator.h>
 
 #include <gmock/gmock.h>
 
 namespace quentier::synchronization::tests::mocks {
 
-class QUENTIER_EXPORT MockISyncConflictResolver : public ISyncConflictResolver
+class QUENTIER_EXPORT MockIAuthenticator : public IAuthenticator
 {
 public:
     MOCK_METHOD(
-        QFuture<NotebookConflictResolution>, resolveNotebookConflict,
-        (qevercloud::Notebook theirs, qevercloud::Notebook mine), (override));
-
-    MOCK_METHOD(
-        QFuture<NoteConflictResolution>, resolveNoteConflict,
-        (qevercloud::Note theirs, qevercloud::Note mine), (override));
-
-    MOCK_METHOD(
-        QFuture<SavedSearchConflictResolution>, resolveSavedSearchConflict,
-        (qevercloud::SavedSearch theirs, qevercloud::SavedSearch mine),
+        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
         (override));
 
     MOCK_METHOD(
-        QFuture<TagConflictResolution>, resolveTagConflict,
-        (qevercloud::Tag theirs, qevercloud::Tag mine), (override));
+        QFuture<IAuthenticationInfoPtr>, authenticateAccount, (Account account),
+        (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks
