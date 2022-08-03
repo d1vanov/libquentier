@@ -1022,6 +1022,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                 const auto userStoreCookies =
                     authenticationInfo->userStoreCookies();
 
+                bool persistentCookieFound = false;
                 for (const auto & cookie: qAsConst(userStoreCookies)) {
                     const QString cookieName = QString::fromUtf8(cookie.name());
                     if (!cookieName.startsWith(QStringLiteral("web")) ||
@@ -1030,14 +1031,21 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                         QNDEBUG(
                             "synchronization::AuthenticationInfoProvider",
                             "Skipping cookie " << cookie.name()
-                                               << " from persistence");
+                            << " from persistence");
                         continue;
                     }
 
+                    persistentCookieFound = true;
                     settings.setValue(gUserStoreCookieKey, cookie.toRawForm());
                     QNDEBUG(
                         "synchronization::AuthenticationInfoProvider",
                         "Persisted cookie " << cookie.name());
+
+                    break;
+                }
+
+                if (!persistentCookieFound) {
+                    settings.remove(gUserStoreCookieKey);
                 }
 
                 QNDEBUG(
