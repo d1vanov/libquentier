@@ -847,6 +847,8 @@ std::shared_ptr<AuthenticationInfo>
 
     auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
+    authenticationInfo->m_userId = account.id();
+
     const QVariant authenticationTimestamp =
         settings.value(gAuthenticationTimestampKey);
     {
@@ -901,11 +903,13 @@ std::shared_ptr<AuthenticationInfo>
         return nullptr;
     }
 
-    const QByteArray userStoreCookies =
-        settings.value(gUserStoreCookieKey).toByteArray();
+    if (settings.contains(gUserStoreCookieKey)) {
+        const QByteArray userStoreCookies =
+            settings.value(gUserStoreCookieKey).toByteArray();
 
-    authenticationInfo->m_userStoreCookies =
-        QNetworkCookie::parseCookies(userStoreCookies);
+        authenticationInfo->m_userStoreCookies =
+            QNetworkCookie::parseCookies(userStoreCookies);
+    }
 
     return authenticationInfo;
 }
