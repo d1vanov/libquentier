@@ -934,20 +934,25 @@ QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
 
             Q_ASSERT(user.id() && *user.id() == userId);
 
-            if (Q_UNLIKELY(!user.username())) {
+            QString name = user.name()
+                ? *user.name()
+                : user.username().value_or(QString{});
+
+            if (Q_UNLIKELY(name.isEmpty())) {
                 QNWARNING(
                     "synchronization::AuthenticationInfoProvider",
-                    "User for id " << userId << " has no username: " << user);
+                    "User for id " << userId << " has no name or username: "
+                    << user);
                 promise->setException(
                     RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
                         "synchronization::AuthenticationInfoProvider",
-                        "Authenticated user has no username")}});
+                        "Authenticated user has no name or username")}});
                 promise->finish();
                 return;
             }
 
             Account account{
-                *user.username(),
+                std::move(name),
                 Account::Type::Evernote,
                 userId,
                 user.serviceLevel()
