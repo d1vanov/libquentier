@@ -85,6 +85,12 @@ private:
     QSharedDataPointer<ErrorStringData> d;
 };
 
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ErrorString & lhs, const ErrorString & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ErrorString & lhs, const ErrorString & rhs) noexcept;
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TYPES_ERROR_STRING_H

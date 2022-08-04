@@ -253,4 +253,15 @@ QTextStream & ErrorString::print(QTextStream & strm) const
     return strm;
 }
 
+bool operator==(const ErrorString & lhs, const ErrorString & rhs) noexcept
+{
+    return lhs.base() == rhs.base() && lhs.details() == rhs.details() &&
+        lhs.additionalBases() == rhs.additionalBases();
+}
+
+bool operator!=(const ErrorString & lhs, const ErrorString & rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
 } // namespace quentier
