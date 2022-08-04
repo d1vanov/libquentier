@@ -73,8 +73,8 @@ using testing::StrictMock;
 }
 
 void checkAuthenticationInfoPartPersistence(
-    const IAuthenticationInfoPtr & authenticationInfo,
-    const Account & account, const QString & host)
+    const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
+    const QString & host)
 {
     ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
@@ -94,8 +94,8 @@ void checkAuthenticationInfoPartPersistence(
         authenticationInfo->authTokenExpirationTime());
 
     EXPECT_EQ(
-        appSettings.value(
-            QStringLiteral("AuthenticationTimestamp")).toLongLong(),
+        appSettings.value(QStringLiteral("AuthenticationTimestamp"))
+            .toLongLong(),
         authenticationInfo->authenticationTime());
 
     EXPECT_EQ(
@@ -110,8 +110,8 @@ void checkAuthenticationInfoPartPersistence(
 }
 
 void setupAuthenticationInfoPartPersistence(
-    const IAuthenticationInfoPtr & authenticationInfo,
-    const Account & account, const QString & host)
+    const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
+    const QString & host)
 {
     ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
@@ -147,7 +147,18 @@ void setupAuthenticationInfoPartPersistence(
 class AuthenticationInfoProviderTest : public testing::Test
 {
 protected:
+    void SetUp() override
+    {
+        clearPersistence();
+    }
+
     void TearDown() override
+    {
+        clearPersistence();
+    };
+
+private:
+    void clearPersistence()
     {
         const Account account{
             QStringLiteral("Full Name"),
@@ -161,7 +172,8 @@ protected:
             account, QStringLiteral("SynchronizationPersistence")};
 
         appSettings.remove(QString::fromUtf8(""));
-    };
+        appSettings.sync();
+    }
 
 protected:
     const std::shared_ptr<mocks::MockIAuthenticator> m_mockAuthenticator =
@@ -245,8 +257,8 @@ TEST_F(AuthenticationInfoProviderTest, CtorNullRequestContext)
         const auto authenticationInfoProvider =
             std::make_shared<AuthenticationInfoProvider>(
                 m_mockAuthenticator, m_mockKeychainService,
-                m_mockUserInfoProvider, m_mockNoteStoreFactory,
-                nullptr, qevercloud::nullRetryPolicy(), m_host),
+                m_mockUserInfoProvider, m_mockNoteStoreFactory, nullptr,
+                qevercloud::nullRetryPolicy(), m_host),
         InvalidArgument);
 }
 
@@ -277,10 +289,9 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
 {
     const auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
-            m_mockAuthenticator, m_mockKeychainService,
-            m_mockUserInfoProvider, m_mockNoteStoreFactory,
-            qevercloud::newRequestContext(), qevercloud::nullRetryPolicy(),
-            m_host);
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
 
     InSequence s;
 
@@ -300,8 +311,8 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
 
     EXPECT_CALL(
         *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
-            .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
-                qevercloud::User{user})));
+        .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
+            qevercloud::User{user})));
 
     static const QString appName = QCoreApplication::applicationName();
 
@@ -344,7 +355,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
 
     const Account account{
-        *user.username(),
+        *user.name(),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -356,14 +367,257 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
 }
 
 TEST_F(
+    AuthenticationInfoProviderTest, PropagateErrorWhenAuthenticatingNewAccount)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    const ErrorString exceptionMessage =
+        ErrorString{QStringLiteral("some error")};
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(
+            Return(threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+                RuntimeError{exceptionMessage})));
+
+    auto future = authenticationInfoProvider->authenticateNewAccount();
+    ASSERT_TRUE(future.isFinished());
+
+    bool caughtException = false;
+    try {
+        future.waitForFinished();
+    }
+    catch (const RuntimeError & e) {
+        caughtException = true;
+        EXPECT_EQ(e.errorMessage(), exceptionMessage);
+    }
+
+    EXPECT_TRUE(caughtException);
+}
+
+TEST_F(
+    AuthenticationInfoProviderTest,
+    TolerateErrorOfFindingUserInfoWhenAuthenticatingNewAccount)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
+
+    EXPECT_CALL(
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        .WillOnce(Return(threading::makeExceptionalFuture<qevercloud::User>(
+            RuntimeError{ErrorString{QStringLiteral("some error")}})));
+
+    auto future = authenticationInfoProvider->authenticateNewAccount();
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
+}
+
+TEST_F(
+    AuthenticationInfoProviderTest,
+    TolerateErrorOfSavingAuthTokenToKeychainWhenAuthenticatingNewAccount)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
+
+    const auto user = qevercloud::UserBuilder{}
+                          .setId(m_authenticationInfo->userId())
+                          .setUsername(QStringLiteral("username"))
+                          .setName(QStringLiteral("Full Name"))
+                          .setPrivilege(qevercloud::PrivilegeLevel::NORMAL)
+                          .setServiceLevel(qevercloud::ServiceLevel::BASIC)
+                          .setActive(true)
+                          .setShardId(m_authenticationInfo->shardId())
+                          .build();
+
+    EXPECT_CALL(
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
+            qevercloud::User{user})));
+
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->authToken());
+
+            return threading::makeExceptionalFuture<void>(
+                RuntimeError{ErrorString{QStringLiteral("some error")}});
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->shardId());
+
+            return threading::makeReadyFuture();
+        });
+
+    auto future = authenticationInfoProvider->authenticateNewAccount();
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
+
+    const Account account{
+        *user.name(),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
+    ApplicationSettings appSettings{
+        account, QStringLiteral("SynchronizationPersistence")};
+
+    appSettings.beginGroup(
+        QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
+        QString::number(m_authenticationInfo->userId()));
+
+    ApplicationSettings::GroupCloser groupCloser{appSettings};
+
+    EXPECT_TRUE(appSettings.allKeys().isEmpty());
+}
+
+TEST_F(
+    AuthenticationInfoProviderTest,
+    TolerateErrorOfSavingShardIdToKeychainWhenAuthenticatingNewAccount)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
+
+    const auto user = qevercloud::UserBuilder{}
+                          .setId(m_authenticationInfo->userId())
+                          .setUsername(QStringLiteral("username"))
+                          .setName(QStringLiteral("Full Name"))
+                          .setPrivilege(qevercloud::PrivilegeLevel::NORMAL)
+                          .setServiceLevel(qevercloud::ServiceLevel::BASIC)
+                          .setActive(true)
+                          .setShardId(m_authenticationInfo->shardId())
+                          .build();
+
+    EXPECT_CALL(
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
+            qevercloud::User{user})));
+
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->authToken());
+
+            return threading::makeReadyFuture();
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->shardId());
+
+            return threading::makeExceptionalFuture<void>(
+                RuntimeError{ErrorString{QStringLiteral("some error")}});
+        });
+
+    auto future = authenticationInfoProvider->authenticateNewAccount();
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
+
+    const Account account{
+        *user.name(),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
+    ApplicationSettings appSettings{
+        account, QStringLiteral("SynchronizationPersistence")};
+
+    appSettings.beginGroup(
+        QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
+        QString::number(m_authenticationInfo->userId()));
+
+    ApplicationSettings::GroupCloser groupCloser{appSettings};
+
+    EXPECT_TRUE(appSettings.allKeys().isEmpty());
+}
+
+TEST_F(
     AuthenticationInfoProviderTest, AuthenticateAccountWithoutCacheExplicitly)
 {
     const auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
-            m_mockAuthenticator, m_mockKeychainService,
-            m_mockUserInfoProvider, m_mockNoteStoreFactory,
-            qevercloud::newRequestContext(), qevercloud::nullRetryPolicy(),
-            m_host);
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
         QStringLiteral("Full Name"),
@@ -430,10 +684,9 @@ TEST_F(
 {
     const auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
-            m_mockAuthenticator, m_mockKeychainService,
-            m_mockUserInfoProvider, m_mockNoteStoreFactory,
-            qevercloud::newRequestContext(), qevercloud::nullRetryPolicy(),
-            m_host);
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
         QStringLiteral("Full Name"),
@@ -499,10 +752,9 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateAccountWithCache)
 {
     const auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
-            m_mockAuthenticator, m_mockKeychainService,
-            m_mockUserInfoProvider, m_mockNoteStoreFactory,
-            qevercloud::newRequestContext(), qevercloud::nullRetryPolicy(),
-            m_host);
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
         QStringLiteral("Full Name"),
