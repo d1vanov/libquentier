@@ -299,7 +299,7 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
 {
     if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
                 "synchronization::AuthenticationInfoProvider",
                 "Detected attempt to authenticate non-Evernote account")}});
     }
@@ -400,7 +400,7 @@ QFuture<IAuthenticationInfoPtr>
 {
     if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
                 "synchronization::AuthenticationInfoProvider",
                 "Detected attempt to authenticate to linked notebook for "
                 "non-Evernote account")}});
@@ -408,7 +408,7 @@ QFuture<IAuthenticationInfoPtr>
 
     if (Q_UNLIKELY(!linkedNotebook.guid())) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
                 "synchronization::AuthenticationInfoProvider",
                 "Detected attempt to authenticate to linked notebook wihout "
                 "guid")}});
