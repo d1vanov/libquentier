@@ -41,6 +41,8 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
@@ -1226,6 +1228,56 @@ TEST_F(
         AuthenticationInfoProvider::Mode::Cache);
     EXPECT_TRUE(future.isFinished());
     EXPECT_THROW(future.waitForFinished(), InvalidArgument);
+}
+
+TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    const Account account{
+        QStringLiteral("Full Name"),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
+    const qevercloud::LinkedNotebook linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}
+            .setGuid(UidGenerator::Generate())
+            .setUsername(QStringLiteral("username"))
+            .setUri(QStringLiteral("uri"))
+            .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
+            .setWebApiUrlPrefix(m_authenticationInfo->webApiUrlPrefix())
+            .setShardId(m_authenticationInfo->shardId())
+            .build();
+
+    auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
+        account, linkedNotebook, AuthenticationInfoProvider::Mode::NoCache);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    const auto authenticationInfo = future.result();
+    EXPECT_EQ(authenticationInfo->userId(), account.id());
+    EXPECT_EQ(
+        authenticationInfo->authTokenExpirationTime(),
+        std::numeric_limits<qint64>::max());
+
+    EXPECT_EQ(authenticationInfo->shardId(), linkedNotebook.shardId().value());
+    EXPECT_EQ(
+        authenticationInfo->noteStoreUrl(),
+        linkedNotebook.noteStoreUrl().value());
+
+    EXPECT_EQ(
+        authenticationInfo->webApiUrlPrefix(),
+        linkedNotebook.webApiUrlPrefix().value());
+
+    EXPECT_TRUE(authenticationInfo->authToken().isEmpty());
 }
 
 TEST_F(
