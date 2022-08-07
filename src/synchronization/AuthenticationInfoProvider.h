@@ -73,7 +73,7 @@ private:
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     void authenticateToLinkedNotebookWithoutCache(
-        const Account & account, qevercloud::LinkedNotebook linkedNotebook,
+        Account account, qevercloud::LinkedNotebook linkedNotebook,
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     /**
@@ -90,7 +90,11 @@ private:
         qevercloud::UserID userId, QString shardId);
 
     [[nodiscard]] QFuture<void> storeAuthenticationInfo(
-        IAuthenticationInfoPtr info, Account account);
+        IAuthenticationInfoPtr authenticationInfo, Account account);
+
+    [[nodiscard]] QFuture<void> storeLinkedNotebookAuthenticationInfo(
+        IAuthenticationInfoPtr authenticationInfo,
+        qevercloud::LinkedNotebook linkedNotebook, Account account);
 
 private:
     const IAuthenticatorPtr m_authenticator;
