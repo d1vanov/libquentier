@@ -19,6 +19,7 @@
 #include <synchronization/AuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <synchronization/tests/mocks/MockIUserInfoProvider.h>
+#include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 #include <synchronization/types/AuthenticationInfo.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -30,8 +31,10 @@
 
 #include <qevercloud/DurableService.h>
 #include <qevercloud/RequestContext.h>
+#include <qevercloud/types/builders/AuthenticationResultBuilder.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/UserBuilder.h>
+#include <qevercloud/types/builders/UserUrlsBuilder.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -109,6 +112,38 @@ void checkAuthenticationInfoPartPersistence(
             appSettings.value(QStringLiteral("UserStoreCookie")).toString(),
             authenticationInfo->userStoreCookies().at(0).toRawForm());
     }
+}
+
+void checkLinkedNotebookAuthenticationInfoPartPersistence(
+    const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
+    const QString & host, const qevercloud::Guid & linkedNotebookGuid)
+{
+    ApplicationSettings appSettings{
+        account, QStringLiteral("SynchronizationPersistence")};
+
+    appSettings.beginGroup(
+        QStringLiteral("Authentication/") + host + QStringLiteral("/") +
+        QString::number(authenticationInfo->userId()));
+
+    ApplicationSettings::GroupCloser groupCloser{appSettings};
+
+    EXPECT_EQ(appSettings.allKeys().size(), 2);
+
+    EXPECT_EQ(
+        appSettings
+            .value(
+                QStringLiteral("LinkedNotebookExpirationTimestamp_") +
+                linkedNotebookGuid)
+            .toLongLong(),
+        authenticationInfo->authTokenExpirationTime());
+
+    EXPECT_EQ(
+        appSettings
+            .value(
+                QStringLiteral("LinkedNotebookAuthenticationTimestamp_") +
+                linkedNotebookGuid)
+            .toLongLong(),
+        authenticationInfo->authenticationTime());
 }
 
 void setupAuthenticationInfoPartPersistence(
@@ -195,6 +230,9 @@ protected:
 
     const std::shared_ptr<AuthenticationInfo> m_authenticationInfo =
         createSampleAuthenticationInfo();
+
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
+        std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 };
 
 TEST_F(AuthenticationInfoProviderTest, Ctor)
@@ -946,7 +984,7 @@ TEST_F(
         });
 
     auto future = authenticationInfoProvider->authenticateAccount(
-        account, AuthenticationInfoProvider::Mode::NoCache);
+        account, AuthenticationInfoProvider::Mode::Cache);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
@@ -994,7 +1032,7 @@ TEST_F(
                     QString::number(m_authenticationInfo->userId()));
 
             return threading::makeReadyFuture<QString>(
-                m_authenticationInfo->shardId());
+                m_authenticationInfo->authToken());
         });
 
     EXPECT_CALL(*m_mockKeychainService, readPassword)
@@ -1050,7 +1088,7 @@ TEST_F(
         });
 
     auto future = authenticationInfoProvider->authenticateAccount(
-        account, AuthenticationInfoProvider::Mode::NoCache);
+        account, AuthenticationInfoProvider::Mode::Cache);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
@@ -1090,6 +1128,8 @@ TEST_F(
 
     m_authenticationInfo->m_authTokenExpirationTime =
         originalAuthTokenExpirationTime;
+
+    InSequence s;
 
     EXPECT_CALL(*m_mockAuthenticator, authenticateAccount(account))
         .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
@@ -1186,6 +1226,118 @@ TEST_F(
         AuthenticationInfoProvider::Mode::Cache);
     EXPECT_TRUE(future.isFinished());
     EXPECT_THROW(future.waitForFinished(), InvalidArgument);
+}
+
+TEST_F(
+    AuthenticationInfoProviderTest,
+    AuthenticateToLinkedNotebookWithoutCacheExplicitly)
+{
+    const auto requestContext = qevercloud::newRequestContext();
+    const auto retryPolicy = qevercloud::nullRetryPolicy();
+
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, requestContext, retryPolicy, m_host);
+
+    const Account account{
+        QStringLiteral("Full Name"),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
+    const qevercloud::LinkedNotebook linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}
+            .setGuid(UidGenerator::Generate())
+            .setUsername(QStringLiteral("username"))
+            .setSharedNotebookGlobalId(UidGenerator::Generate())
+            .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
+            .setShardId(m_authenticationInfo->shardId())
+            .build();
+
+    InSequence s;
+
+    // NOTE: preventing the leak of m_mockNoteStore below and corresponding
+    // warning from gtest
+    EXPECT_CALL(
+        *m_mockNoteStoreFactory,
+        noteStore(
+            linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(),
+            requestContext, retryPolicy))
+        .WillOnce(
+            [noteStoreWeak =
+             std::weak_ptr<mocks::qevercloud::MockINoteStore>{m_mockNoteStore}](
+                const QString & noteStoreUrl,
+                const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+                const qevercloud::IRequestContextPtr & ctx,
+                const qevercloud::IRetryPolicyPtr & retryPolicy)
+            {
+                Q_UNUSED(noteStoreUrl)
+                Q_UNUSED(linkedNotebookGuid)
+                Q_UNUSED(ctx)
+                Q_UNUSED(retryPolicy)
+                return noteStoreWeak.lock();
+            });
+
+    EXPECT_CALL(
+        *m_mockNoteStore,
+        authenticateToSharedNotebookAsync(
+            linkedNotebook.sharedNotebookGlobalId().value(), requestContext))
+        .WillOnce(
+            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+                qevercloud::AuthenticationResultBuilder{}
+                    .setAuthenticationToken(m_authenticationInfo->authToken())
+                    .setExpiration(
+                        m_authenticationInfo->authTokenExpirationTime())
+                    .setCurrentTime(m_authenticationInfo->authenticationTime())
+                    .setUrls(qevercloud::UserUrlsBuilder{}
+                                 .setNoteStoreUrl(
+                                     m_authenticationInfo->noteStoreUrl())
+                                 .setWebApiUrlPrefix(
+                                     m_authenticationInfo->webApiUrlPrefix())
+                                 .build())
+                    .build())));
+
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key, // NOLINT
+                      const QString & password) {
+            EXPECT_EQ(
+                service,
+                appName + QStringLiteral("_linked_notebook_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_linked_notebook_auth_token_") +
+                    m_host + QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()) +
+                    QStringLiteral("_") + linkedNotebook.guid().value());
+
+            EXPECT_EQ(password, m_authenticationInfo->authToken());
+
+            return threading::makeReadyFuture();
+        });
+
+    auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
+        account, linkedNotebook, AuthenticationInfoProvider::Mode::NoCache);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_NE(future.result().get(), m_authenticationInfo.get());
+
+    const auto * authenticationInfo =
+        dynamic_cast<const AuthenticationInfo *>(future.result().get());
+    ASSERT_TRUE(authenticationInfo);
+
+    m_authenticationInfo->m_userStoreCookies.clear();
+    EXPECT_EQ(*authenticationInfo, *m_authenticationInfo);
+
+    checkLinkedNotebookAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
 }
 
 } // namespace quentier::synchronization::tests
