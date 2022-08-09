@@ -16,6 +16,8 @@ target_sources(${LIBRARY_NAME}
   INoteStoreFactory.h
   IReceiver.h
   IUserInfoProvider.h
+  NoteStoreFactory.cpp
+  NoteStoreFactory.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
