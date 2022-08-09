@@ -229,6 +229,7 @@ QFuture<IAuthenticationInfoPtr>
 
                 auto accountFuture = findAccountForUserId(
                     authenticationInfo->userId(),
+                    authenticationInfo->authToken(),
                     authenticationInfo->shardId());
 
                 auto accountThenFuture = threading::then(
@@ -960,14 +961,14 @@ std::shared_ptr<AuthenticationInfo>
 }
 
 QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
-    const qevercloud::UserID userId, QString shardId)
+    const qevercloud::UserID userId, QString authToken, QString shardId) // NOLINT
 {
     auto promise = std::make_shared<QPromise<Account>>();
     auto future = promise->future();
 
     promise->start();
 
-    auto userFuture = m_userInfoProvider->userInfo(userId);
+    auto userFuture = m_userInfoProvider->userInfo(std::move(authToken));
 
     threading::thenOrFailed(
         std::move(userFuture), promise,

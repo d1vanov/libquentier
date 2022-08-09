@@ -376,7 +376,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
                           .build();
 
     EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
         .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
             qevercloud::User{user})));
 
@@ -481,7 +481,7 @@ TEST_F(
             m_authenticationInfo)));
 
     EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
         .WillOnce(Return(threading::makeExceptionalFuture<qevercloud::User>(
             RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
@@ -519,7 +519,7 @@ TEST_F(
                           .build();
 
     EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
         .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
             qevercloud::User{user})));
 
@@ -611,7 +611,7 @@ TEST_F(
                           .build();
 
     EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->userId()))
+        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
         .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
             qevercloud::User{user})));
 

@@ -35,13 +35,13 @@ public:
     virtual ~IUserInfoProvider() = default;
 
     /**
-     * Find full information about Evernote user by user id.
-     * @param userId        Id of the user.
+     * Find full information about Evernote user by authentication token.
+     * @param authToken     Authentication token
      * @return              Future with full user info or exception if no user
      *                      info is found
      */
     [[nodiscard]] virtual QFuture<qevercloud::User> userInfo(
-        qevercloud::UserID userId) = 0;
+        QString authToken) = 0;
 };
 
 } // namespace quentier::synchronization

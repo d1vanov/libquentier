@@ -26,7 +26,7 @@ class MockIUserInfoProvider : public IUserInfoProvider
 {
 public:
     MOCK_METHOD(
-        QFuture<qevercloud::User>, userInfo, (qevercloud::UserID userId),
+        QFuture<qevercloud::User>, userInfo, (QString authToken),
         (override));
 };
 
