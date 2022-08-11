@@ -21,6 +21,8 @@ target_sources(${LIBRARY_NAME}
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
+  UserInfoProvider.cpp
+  UserInfoProvider.h
   conflict_resolvers/Factory.cpp
   conflict_resolvers/Factory.h
   conflict_resolvers/ISimpleNotebookSyncConflictResolver.h
