@@ -18,3 +18,4 @@
 #include "MockISyncChunksStorage.h"
 #include "MockIUserInfoProvider.h"
 #include "qevercloud/services/MockINoteStore.h"
+#include "qevercloud/services/MockIUserStore.h"

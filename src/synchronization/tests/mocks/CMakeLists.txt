@@ -31,6 +31,7 @@ target_sources(${MOCKS_NAME}
     MockISyncChunksStorage.h
     MockIUserInfoProvider.h
     qevercloud/services/MockINoteStore.h
+    qevercloud/services/MockIUserStore.h
   PRIVATE
     CheckBuild.cpp
 )
