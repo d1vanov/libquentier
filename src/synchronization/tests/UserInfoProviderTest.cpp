@@ -20,8 +20,10 @@
 #include <synchronization/tests/mocks/qevercloud/services/MockIUserStore.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/threading/Future.h>
 
 #include <qevercloud/RequestContext.h>
+#include <qevercloud/types/builders/UserBuilder.h>
 
 #include <gtest/gtest.h>
 
@@ -30,6 +32,7 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::Return;
 using testing::StrictMock;
 
 class UserInfoProviderTest : public testing::Test
@@ -63,6 +66,43 @@ TEST_F(UserInfoProviderTest, CtorNullRequestContext)
         const auto userInfoProvider = std::make_shared<UserInfoProvider>(
             m_mockUserStore, nullptr),
         InvalidArgument);
+}
+
+TEST_F(UserInfoProviderTest, GetUser)
+{
+    const auto userInfoProvider = std::make_shared<UserInfoProvider>(
+        m_mockUserStore, m_ctx);
+
+    const auto user = qevercloud::UserBuilder{}
+        .setId(qevercloud::UserID{42})
+        .setUsername(QStringLiteral("username"))
+        .setName(QStringLiteral("Full name"))
+        .build();
+
+    const QString authToken = QStringLiteral("authToken");
+
+    EXPECT_CALL(*m_mockUserStore, getUserAsync).WillOnce(
+        [&](const qevercloud::IRequestContextPtr & ctx)
+        {
+            EXPECT_EQ(ctx->authenticationToken(), authToken);
+            return threading::makeReadyFuture(user);
+        });
+
+    auto future = userInfoProvider->userInfo(authToken);
+    ASSERT_TRUE(future.isFinished());
+
+    ASSERT_EQ(future.resultCount(), 1);
+    auto result = future.result();
+    EXPECT_EQ(result, user);
+
+    // The second call should not trigger the call of IUserStore as the result
+    // of the first call should be cached
+    future = userInfoProvider->userInfo(authToken);
+    ASSERT_TRUE(future.isFinished());
+
+    ASSERT_EQ(future.resultCount(), 1);
+    result = future.result();
+    EXPECT_EQ(result, user);
 }
 
 } // namespace quentier::synchronization::tests
