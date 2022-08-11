@@ -25,7 +25,8 @@ add_executable(${TESTS_NAME}
   SyncChunksDownloaderTest.cpp
   SyncChunksProviderTest.cpp
   SyncChunksStorageTest.cpp
-  TagsProcessorTest.cpp)
+  TagsProcessorTest.cpp
+  UserInfoProviderTest.cpp)
 
 target_link_libraries(${TESTS_NAME}
   PRIVATE
