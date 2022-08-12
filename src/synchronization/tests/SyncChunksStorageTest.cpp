@@ -39,6 +39,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 // clazy:excludeall=returning-void-expression
 
 namespace quentier::synchronization::tests {
@@ -152,6 +154,70 @@ namespace {
 
     result.setChunkHighUSN(lowUsn - 1);
     return result;
+}
+
+void checkSyncChunksPersistenceDirIsEmpty(const QDir & dir)
+{
+    const auto fileEntries = dir.entryInfoList(
+        QDir::Files | QDir::NoDotAndDotDot);
+    EXPECT_TRUE(fileEntries.isEmpty());
+
+    const auto dirEntries = dir.entryInfoList(
+        QDir::Dirs | QDir::NoDotAndDotDot);
+    ASSERT_EQ(dirEntries.size(), 1);
+
+    const auto & frontSubdirInfo = dirEntries[0];
+    ASSERT_EQ(frontSubdirInfo.fileName(), QStringLiteral("user_own"));
+
+    QDir frontSubdir{frontSubdirInfo.absoluteFilePath()};
+    const auto subdirEntries = frontSubdir.entryInfoList(
+        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    EXPECT_TRUE(subdirEntries.isEmpty());
+}
+
+void checkUserOwnSyncChunksPersistenceIsNotEmpty(const QDir & dir)
+{
+    const auto dirEntries = dir.entryInfoList(
+        QDir::Dirs | QDir::NoDotAndDotDot);
+    ASSERT_FALSE(dirEntries.isEmpty());
+
+    const auto it = std::find_if(
+        dirEntries.constBegin(),
+        dirEntries.constEnd(),
+        [](const QFileInfo & fileInfo)
+        {
+            return fileInfo.fileName() == QStringLiteral("user_own");
+        });
+    ASSERT_NE(it, dirEntries.constEnd());
+
+    QDir userOwnSubdir{it->absoluteFilePath()};
+    const auto subdirEntries = userOwnSubdir.entryInfoList(
+        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    EXPECT_FALSE(subdirEntries.isEmpty());
+}
+
+void checkLinkedNotebookSyncChunksPersistenceIsNotEmpty(const QDir & dir)
+{
+    const auto dirEntries = dir.entryInfoList(
+        QDir::Dirs | QDir::NoDotAndDotDot);
+    ASSERT_FALSE(dirEntries.isEmpty());
+
+    bool foundLinkedNotebookDir = false;
+    for (const QFileInfo & entryInfo: qAsConst(dirEntries))
+    {
+        if (entryInfo.fileName() == QStringLiteral("user_own")) {
+            continue;
+        }
+
+        foundLinkedNotebookDir = true;
+
+        QDir linkedNotebookSubdir{entryInfo.absoluteFilePath()};
+        const auto subdirEntries = linkedNotebookSubdir.entryInfoList(
+            QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+        EXPECT_FALSE(subdirEntries.isEmpty());
+    }
+
+    EXPECT_TRUE(foundLinkedNotebookDir);
 }
 
 } // namespace
@@ -355,10 +421,27 @@ TEST_F(SyncChunksStorageTest, PutAndFetchUserOwnSyncChunks)
 
     storage->putUserOwnSyncChunks(syncChunks);
 
-    const auto fetchedSyncChunks = storage->fetchRelevantUserOwnSyncChunks(0);
+    // Should not flush user own sync chunks to the temporary dir immediately
+    checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
+
+    auto fetchedSyncChunks = storage->fetchRelevantUserOwnSyncChunks(0);
     EXPECT_EQ(fetchedSyncChunks, syncChunks);
 
-    const auto fetchedUsnsRange =
+    auto fetchedUsnsRange =
+        storage->fetchUserOwnSyncChunksLowAndHighUsns();
+
+    EXPECT_EQ(fetchedUsnsRange, usnsRange);
+
+    // Now make sure that flush would actually write the sync chunks to dir
+    storage->flush();
+
+    checkUserOwnSyncChunksPersistenceIsNotEmpty(temporaryDir);
+
+    // Also make sure that fetch continues to work after flushing
+    fetchedSyncChunks = storage->fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_EQ(fetchedSyncChunks, syncChunks);
+
+    fetchedUsnsRange =
         storage->fetchUserOwnSyncChunksLowAndHighUsns();
 
     EXPECT_EQ(fetchedUsnsRange, usnsRange);
@@ -406,6 +489,42 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
         usnsRangePerLinkedNotebookGuid[linkedNotebookGuid] = usnsRange;
     }
 
+    checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        {
+            const auto it =
+                syncChunksPerLinkedNotebookGuid.find(linkedNotebookGuid);
+
+            ASSERT_FALSE(it == syncChunksPerLinkedNotebookGuid.end());
+
+            const auto fetchedSyncChunks =
+                storage->fetchRelevantLinkedNotebookSyncChunks(
+                    linkedNotebookGuid, 0);
+
+            EXPECT_EQ(fetchedSyncChunks, it.value());
+        }
+
+        {
+            const auto it =
+                usnsRangePerLinkedNotebookGuid.find(linkedNotebookGuid);
+
+            ASSERT_FALSE(it == usnsRangePerLinkedNotebookGuid.end());
+
+            const auto fetchedUsnsRange =
+                storage->fetchLinkedNotebookSyncChunksLowAndHighUsns(
+                    linkedNotebookGuid);
+
+            EXPECT_EQ(fetchedUsnsRange, it.value());
+        }
+    }
+
+    // Now make sure that flush would actually write the sync chunks to dir
+    storage->flush();
+
+    checkLinkedNotebookSyncChunksPersistenceIsNotEmpty(temporaryDir);
+
+    // Also make sure that fetch continues to work after flushing
     for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
         {
             const auto it =
@@ -465,6 +584,9 @@ TEST_F(
 
     storage->putUserOwnSyncChunks(newPutSyncChunks);
 
+    // Should not flush user own sync chunks to the temporary dir immediately
+    checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
+
     const auto fetchedSyncChunks = storage->fetchRelevantUserOwnSyncChunks(0);
     EXPECT_TRUE(fetchedSyncChunks.isEmpty());
 
@@ -472,6 +594,11 @@ TEST_F(
         storage->fetchUserOwnSyncChunksLowAndHighUsns();
 
     EXPECT_TRUE(fetchedUsnsRange.isEmpty());
+
+    // Now try to flush and ensure that nothing was really flushed to dir
+    storage->flush();
+
+    checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
 }
 
 TEST_F(

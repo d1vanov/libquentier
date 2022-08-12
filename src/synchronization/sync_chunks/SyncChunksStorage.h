@@ -24,6 +24,7 @@
 #include <QFuture>
 #include <QList>
 
+#include <optional>
 #include <utility>
 
 class QThreadPool;
@@ -55,11 +56,11 @@ public:
             qint32 afterUsn) const override;
 
     void putUserOwnSyncChunks(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        QList<qevercloud::SyncChunk> syncChunks) override;
 
     void putLinkedNotebookSyncChunks(
         const qevercloud::Guid & linkedNotebookGuid,
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        QList<qevercloud::SyncChunk> syncChunks) override;
 
     void clearUserOwnSyncChunks() override;
 
@@ -68,10 +69,9 @@ public:
 
     void clearAllSyncChunks() override;
 
-private:
-    QDir m_rootDir;
-    QDir m_userOwnSyncChunksDir;
+    void flush() override;
 
+private:
     class LowAndHighUsnsDataAccessor
     {
     public:
@@ -102,6 +102,33 @@ private:
 
         LowAndHighUsnsData m_lowAndHighUsnsData;
     };
+
+    struct SyncChunkInfo
+    {
+        qevercloud::SyncChunk m_syncChunk;
+        qint32 m_lowUsn = 0;
+        qint32 m_highUsn = 0;
+    };
+
+private:
+    [[nodiscard]] QList<SyncChunkInfo> toSyncChunksInfo(
+        QList<qevercloud::SyncChunk> syncChunks) const;
+
+    [[nodiscard]] QList<std::pair<qint32, qint32>> toUsns(
+        const QList<SyncChunkInfo> & syncChunksInfo) const;
+
+    void appendPendingSyncChunks(
+        const QList<SyncChunkInfo> & syncChunksInfo, qint32 afterUsn,
+        QList<qevercloud::SyncChunk> & result) const;
+
+private:
+    QDir m_rootDir;
+    QDir m_userOwnSyncChunksDir;
+
+    QList<SyncChunkInfo> m_userOwnSyncChunksPendingPersistence;
+
+    QHash<qevercloud::Guid, QList<SyncChunkInfo>>
+        m_linkedNotebookSyncChunksPendingPersistence;
 
     mutable LowAndHighUsnsDataAccessor m_lowAndHighUsnsDataAccessor;
 };

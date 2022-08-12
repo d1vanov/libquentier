@@ -48,11 +48,11 @@ public:
             qint32 afterUsn) const = 0;
 
     virtual void putUserOwnSyncChunks(
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+        QList<qevercloud::SyncChunk> syncChunks) = 0;
 
     virtual void putLinkedNotebookSyncChunks(
         const qevercloud::Guid & linkedNotebookGuid,
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+        QList<qevercloud::SyncChunk> syncChunks) = 0;
 
     virtual void clearUserOwnSyncChunks() = 0;
 
@@ -60,6 +60,8 @@ public:
         const qevercloud::Guid & linkedNotebookGuid) = 0;
 
     virtual void clearAllSyncChunks() = 0;
+
+    virtual void flush() = 0;
 };
 
 } // namespace quentier::synchronization

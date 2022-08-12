@@ -49,12 +49,12 @@ public:
 
     MOCK_METHOD(
         void, putUserOwnSyncChunks,
-        (const QList<qevercloud::SyncChunk> & syncChunks), (override));
+        (QList<qevercloud::SyncChunk> syncChunks), (override));
 
     MOCK_METHOD(
         void, putLinkedNotebookSyncChunks,
         (const qevercloud::Guid & linkedNotebookGuid,
-         const QList<qevercloud::SyncChunk> & syncChunks), (override));
+         QList<qevercloud::SyncChunk> syncChunks), (override));
 
     MOCK_METHOD(void, clearUserOwnSyncChunks, (), (override));
 
@@ -63,6 +63,8 @@ public:
         (const qevercloud::Guid & linkedNotebookGuid), (override));
 
     MOCK_METHOD(void, clearAllSyncChunks, (), (override));
+
+    MOCK_METHOD(void, flush, (), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

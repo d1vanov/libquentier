@@ -26,6 +26,7 @@
 #include <quentier/utility/FileSystem.h>
 
 #include <qevercloud/serialization/json/SyncChunk.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QFile>
 #include <QFileInfo>
@@ -262,53 +263,35 @@ void filterLowUsnsForSyncChunk(
     return result;
 }
 
-// Returns the list with low and high USNs of put sync chunks
-[[nodiscard]] QList<std::pair<qint32, qint32>> putSyncChunks(
-    const QDir & dir, const QList<qevercloud::SyncChunk> & syncChunks)
+void flushSyncChunk(
+    const QDir & dir, const qevercloud::SyncChunk & syncChunk,
+    const qint32 lowUsn, const qint32 highUsn)
 {
-    QList<std::pair<qint32, qint32>> usns;
+    const QString fileName = [&] {
+        QString fileName;
+        QTextStream strm{&fileName};
 
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
-        const auto lowUsn = utils::syncChunkLowUsn(syncChunk);
-        const auto highUsn = syncChunk.chunkHighUSN();
-        if (!lowUsn || !highUsn) {
-            QNWARNING(
-                "synchronization::SyncChunksStorage",
-                "Failed to fetch low and/or high USN for sync chunk: "
-                    << syncChunk);
-            continue;
-        }
+        strm << lowUsn;
+        strm << "_";
+        strm << highUsn;
+        return fileName;
+    }();
 
-        const QString fileName = [&] {
-            QString fileName;
-            QTextStream strm{&fileName};
-
-            strm << *lowUsn;
-            strm << "_";
-            strm << *highUsn;
-            return fileName;
-        }();
-
-        QFile syncChunkFile{dir.absoluteFilePath(fileName)};
-        if (!syncChunkFile.open(QIODevice::WriteOnly)) {
-            QNWARNING(
-                "synchronization::SyncChunksStorage",
-                "Failed to open file to save sync chunk into: "
-                    << dir.absoluteFilePath(fileName));
-            continue;
-        }
-
-        const QJsonObject obj = qevercloud::serializeToJson(syncChunk);
-        QJsonDocument doc;
-        doc.setObject(obj);
-
-        syncChunkFile.write(doc.toJson(QJsonDocument::Indented));
-        syncChunkFile.close();
-
-        usns << std::make_pair(*lowUsn, *highUsn);
+    QFile syncChunkFile{dir.absoluteFilePath(fileName)};
+    if (!syncChunkFile.open(QIODevice::WriteOnly)) {
+        QNWARNING(
+            "synchronization::SyncChunksStorage",
+            "Failed to open file to save sync chunk into: "
+                << dir.absoluteFilePath(fileName));
+        return;
     }
 
-    return usns;
+    const QJsonObject obj = qevercloud::serializeToJson(syncChunk);
+    QJsonDocument doc;
+    doc.setObject(obj);
+
+    syncChunkFile.write(doc.toJson(QJsonDocument::Indented));
+    syncChunkFile.close();
 }
 
 void removeDirWithLog(const QString & dirPath)
@@ -399,7 +382,18 @@ QList<std::pair<qint32, qint32>>
 QList<qevercloud::SyncChunk> SyncChunksStorage::fetchRelevantUserOwnSyncChunks(
     qint32 afterUsn) const
 {
-    return fetchRelevantSyncChunks(m_userOwnSyncChunksDir, afterUsn);
+    auto result = fetchRelevantSyncChunks(m_userOwnSyncChunksDir, afterUsn);
+
+    if (m_userOwnSyncChunksPendingPersistence.isEmpty()) {
+        return result;
+    }
+
+    // It is guaranteed that not yet flushed user own sync chunks would not
+    // interleave in their USN ranges with actually persisted sync chunks.
+    appendPendingSyncChunks(
+        m_userOwnSyncChunksPendingPersistence, afterUsn, result);
+
+    return result;
 }
 
 QList<qevercloud::SyncChunk>
@@ -409,30 +403,42 @@ QList<qevercloud::SyncChunk>
     const QDir linkedNotebookDir{
         m_rootDir.absoluteFilePath(linkedNotebookGuid)};
 
+    QList<qevercloud::SyncChunk> result;
     const QFileInfo linkedNotebookDirInfo{linkedNotebookDir.absolutePath()};
-    if (!linkedNotebookDirInfo.exists()) {
-        return {};
+    if (linkedNotebookDirInfo.exists() && linkedNotebookDirInfo.isDir() &&
+        linkedNotebookDirInfo.isReadable())
+    {
+        result = fetchRelevantSyncChunks(linkedNotebookDir, afterUsn);
     }
 
-    if (!linkedNotebookDirInfo.isDir() || !linkedNotebookDirInfo.isReadable()) {
-        QNWARNING(
-            "synchronization::SyncChunksStorage",
-            "What is supposed to be a dir for linked notebook sync chunks "
-                << "temporary storage is either not a dir or not a readable "
-                << "dir: " << linkedNotebookDirInfo.absolutePath());
-        return {};
+    const auto it = m_linkedNotebookSyncChunksPendingPersistence.find(
+        linkedNotebookGuid);
+    if (it == m_linkedNotebookSyncChunksPendingPersistence.end()) {
+        return result;
     }
 
-    return fetchRelevantSyncChunks(linkedNotebookDir, afterUsn);
+    const auto & linkedNotebookSyncChunksPendingPersistence = it.value();
+    if (linkedNotebookSyncChunksPendingPersistence.isEmpty()) {
+        return result;
+    }
+
+    // It is guaranteed that not yet flushed user own sync chunks would not
+    // interleave in their USN ranges with actually persisted sync chunks.
+    appendPendingSyncChunks(
+        linkedNotebookSyncChunksPendingPersistence, afterUsn, result);
+
+    return result;
 }
 
 void SyncChunksStorage::putUserOwnSyncChunks(
-    const QList<qevercloud::SyncChunk> & syncChunks)
+    QList<qevercloud::SyncChunk> syncChunks)
 {
     auto & userOwnSyncChunkLowAndHighUsns =
         m_lowAndHighUsnsDataAccessor.data().m_userOwnSyncChunkLowAndHighUsns;
 
-    auto usns = putSyncChunks(m_userOwnSyncChunksDir, syncChunks);
+    auto syncChunksInfo = toSyncChunksInfo(std::move(syncChunks));
+    auto usns = toUsns(syncChunksInfo);
+    m_userOwnSyncChunksPendingPersistence << syncChunksInfo;
 
     if (!userOwnSyncChunkLowAndHighUsns.isEmpty()) {
         const auto & lastExistingUsnRange =
@@ -458,34 +464,19 @@ void SyncChunksStorage::putUserOwnSyncChunks(
 
 void SyncChunksStorage::putLinkedNotebookSyncChunks(
     const qevercloud::Guid & linkedNotebookGuid,
-    const QList<qevercloud::SyncChunk> & syncChunks)
+    QList<qevercloud::SyncChunk> syncChunks)
 {
-    const QDir linkedNotebookDir{
-        m_rootDir.absoluteFilePath(linkedNotebookGuid)};
-
-    const QFileInfo linkedNotebookDirInfo{linkedNotebookDir.absolutePath()};
-    if (!linkedNotebookDirInfo.exists()) {
-        if (!m_rootDir.mkpath(linkedNotebookDir.absolutePath())) {
-            QNWARNING(
-                "synchronization::SyncChunksStorage",
-                "Failed to create dir to store linked notebook sync chunks: "
-                    << linkedNotebookDir.absolutePath());
-            return;
-        }
-    }
-    else if (!linkedNotebookDirInfo.isWritable()) {
-        QNWARNING(
-            "synchronization::SyncChunksStorage",
-            "Dir to store linked notebook sync chunks is not writable: "
-                << linkedNotebookDir.absolutePath());
-        return;
-    }
-
     auto & linkedNotebookSyncChunkLowAndHighUsns =
         m_lowAndHighUsnsDataAccessor.data()
             .m_linkedNotebookSyncChunkLowAndHighUsns;
 
-    auto usns = putSyncChunks(linkedNotebookDir, syncChunks);
+    auto syncChunksInfo = toSyncChunksInfo(std::move(syncChunks));
+    auto usns = toUsns(syncChunksInfo);
+
+    auto & syncChunksPendingPersistence =
+        m_linkedNotebookSyncChunksPendingPersistence[linkedNotebookGuid];
+    syncChunksPendingPersistence << syncChunksInfo;
+
     if (Q_UNLIKELY(usns.isEmpty())) {
         return;
     }
@@ -515,7 +506,23 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
 
 void SyncChunksStorage::clearUserOwnSyncChunks()
 {
-    removeDirWithLog(m_userOwnSyncChunksDir.absolutePath());
+    m_userOwnSyncChunksPendingPersistence.clear();
+
+    const auto userOwnSyncChunks = m_userOwnSyncChunksDir.entryInfoList(
+        QDir::Files | QDir::Dirs |QDir::NoDotAndDotDot);
+    for (const auto & userOwnSyncChunk: userOwnSyncChunks)
+    {
+        if (userOwnSyncChunk.isDir()) {
+            removeDirWithLog(userOwnSyncChunk.absoluteFilePath());
+        }
+        else if (!removeFile(userOwnSyncChunk.absoluteFilePath())) {
+            QNWARNING(
+                "synchronization::SyncChunksStorage",
+                "Failed to remove sync chunk file: "
+                    << userOwnSyncChunk.absoluteFilePath());
+        }
+    }
+
     m_lowAndHighUsnsDataAccessor.data()
         .m_userOwnSyncChunkLowAndHighUsns.clear();
 }
@@ -523,6 +530,7 @@ void SyncChunksStorage::clearUserOwnSyncChunks()
 void SyncChunksStorage::clearLinkedNotebookSyncChunks(
     const qevercloud::Guid & linkedNotebookGuid)
 {
+    m_linkedNotebookSyncChunksPendingPersistence.remove(linkedNotebookGuid);
     removeDirWithLog(m_rootDir.absoluteFilePath(linkedNotebookGuid));
 
     auto & linkedNotebookSyncChunkLowAndHighUsns =
@@ -539,6 +547,8 @@ void SyncChunksStorage::clearLinkedNotebookSyncChunks(
 
 void SyncChunksStorage::clearAllSyncChunks()
 {
+    m_userOwnSyncChunksPendingPersistence.clear();
+    m_linkedNotebookSyncChunksPendingPersistence.clear();
     m_lowAndHighUsnsDataAccessor.reset();
 
     const auto entries = m_rootDir.entryInfoList(
@@ -550,6 +560,107 @@ void SyncChunksStorage::clearAllSyncChunks()
         }
         else {
             Q_UNUSED(removeFile(entry.absoluteFilePath()))
+        }
+    }
+}
+
+void SyncChunksStorage::flush()
+{
+    for (const auto & syncChunkInfo: qAsConst(m_userOwnSyncChunksPendingPersistence)) {
+        flushSyncChunk(
+            m_userOwnSyncChunksDir, syncChunkInfo.m_syncChunk,
+            syncChunkInfo.m_lowUsn, syncChunkInfo.m_highUsn);
+    }
+    m_userOwnSyncChunksPendingPersistence.clear();
+
+    for (const auto it: qevercloud::toRange(
+             qAsConst(m_linkedNotebookSyncChunksPendingPersistence)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+
+        const QDir linkedNotebookDir{
+            m_rootDir.absoluteFilePath(linkedNotebookGuid)};
+
+        const QFileInfo linkedNotebookDirInfo{linkedNotebookDir.absolutePath()};
+        if (!linkedNotebookDirInfo.exists()) {
+            if (!m_rootDir.mkpath(linkedNotebookDir.absolutePath())) {
+                QNWARNING(
+                    "synchronization::SyncChunksStorage",
+                    "Failed to create dir to store linked notebook sync chunks: "
+                        << linkedNotebookDir.absolutePath());
+                continue;
+            }
+        }
+        else if (!linkedNotebookDirInfo.isWritable()) {
+            QNWARNING(
+                "synchronization::SyncChunksStorage",
+                "Dir to store linked notebook sync chunks is not writable: "
+                    << linkedNotebookDir.absolutePath());
+            continue;
+        }
+
+        for (const auto & syncChunkInfo: qAsConst(it.value())) {
+            flushSyncChunk(
+                linkedNotebookDir, syncChunkInfo.m_syncChunk,
+                syncChunkInfo.m_lowUsn, syncChunkInfo.m_highUsn);
+        }
+    }
+    m_linkedNotebookSyncChunksPendingPersistence.clear();
+}
+
+QList<SyncChunksStorage::SyncChunkInfo> SyncChunksStorage::toSyncChunksInfo(
+    QList<qevercloud::SyncChunk> syncChunks) const
+{
+    QList<SyncChunkInfo> syncChunksInfo;
+    syncChunksInfo.reserve(syncChunks.size());
+    for (auto & syncChunk: syncChunks) {
+        const auto highUsn = syncChunk.chunkHighUSN();
+        const auto lowUsn =
+            (highUsn ? utils::syncChunkLowUsn(syncChunk) : std::nullopt);
+
+        if (Q_UNLIKELY(!lowUsn || !highUsn)) {
+            QNWARNING(
+                "synchronization::SyncChunksStorage",
+                "Failed to fetch low and/or high USN for sync chunk: "
+                    << syncChunk);
+            continue;
+        }
+
+        syncChunksInfo << SyncChunkInfo{
+            std::move(syncChunk), *lowUsn, *highUsn};
+    }
+
+    return syncChunksInfo;
+}
+
+QList<std::pair<qint32, qint32>> SyncChunksStorage::toUsns(
+    const QList<SyncChunkInfo> & syncChunksInfo) const
+{
+    QList<std::pair<qint32, qint32>> usns;
+    usns.reserve(syncChunksInfo.size());
+    for (const auto & syncChunkInfo: syncChunksInfo) {
+        usns << std::make_pair(syncChunkInfo.m_lowUsn, syncChunkInfo.m_highUsn);
+    }
+    return usns;
+}
+
+void SyncChunksStorage::appendPendingSyncChunks(
+    const QList<SyncChunkInfo> & syncChunksInfo, qint32 afterUsn,
+    QList<qevercloud::SyncChunk> & result) const
+{
+    for (const auto & syncChunkInfo: qAsConst(syncChunksInfo))
+    {
+        if (syncChunkInfo.m_highUsn <= afterUsn) {
+            continue;
+        }
+
+        if (afterUsn != 0 && syncChunkInfo.m_lowUsn <= afterUsn) {
+            qevercloud::SyncChunk copy{syncChunkInfo.m_syncChunk};
+            filterLowUsnsForSyncChunk(afterUsn, copy);
+            result << copy;
+        }
+        else {
+            result << syncChunkInfo.m_syncChunk;
         }
     }
 }
