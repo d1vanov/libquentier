@@ -25,6 +25,8 @@
 namespace quentier::synchronization {
 
 Downloader::Downloader(
+    IAuthenticationInfoProviderPtr authenticationInfoProvider,
+    ISyncStateStoragePtr syncStateStorage,
     ISyncChunksProviderPtr syncChunksProvider,
     ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
     INotebooksProcessorPtr notebooksProcessor,
@@ -34,6 +36,8 @@ Downloader::Downloader(
     ITagsProcessorPtr tagsProcessor,
     utility::cancelers::ICancelerPtr canceler,
     const QDir & syncPersistentStorageDir) :
+    m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
+    m_syncStateStorage{std::move(syncStateStorage)},
     m_syncChunksProvider{std::move(syncChunksProvider)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
@@ -44,6 +48,18 @@ Downloader::Downloader(
     m_canceler{std::move(canceler)},
     m_syncPersistentStorageDir{syncPersistentStorageDir}
 {
+    if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: authentication info provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncStateStorage)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: sync state storage is null")}};
+    }
+
     if (Q_UNLIKELY(!m_syncChunksProvider)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",

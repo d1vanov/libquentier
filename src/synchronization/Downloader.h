@@ -21,6 +21,7 @@
 #include "IDownloader.h"
 #include "Fwd.h"
 
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
 #include <QDir>
@@ -33,6 +34,8 @@ class Downloader final :
 {
 public:
     Downloader(
+        IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
         ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
         INotebooksProcessorPtr notebooksProcessor,
@@ -46,6 +49,8 @@ public:
     [[nodiscard]] QFuture<Result> download() override;
 
 private:
+    const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
+    const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
     const ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
     const INotebooksProcessorPtr m_notebooksProcessor;
