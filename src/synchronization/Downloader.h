@@ -37,6 +37,7 @@ public:
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
+        ISyncChunksStoragePtr syncChunksStorage,
         ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
         INotebooksProcessorPtr notebooksProcessor,
         INotesProcessorPtr notesProcessor,
@@ -52,6 +53,7 @@ private:
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
+    const ISyncChunksStoragePtr m_syncChunksStorage;
     const ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
     const INotebooksProcessorPtr m_notebooksProcessor;
     const INotesProcessorPtr m_notesProcessor;

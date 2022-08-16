@@ -28,6 +28,7 @@ Downloader::Downloader(
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
     ISyncStateStoragePtr syncStateStorage,
     ISyncChunksProviderPtr syncChunksProvider,
+    ISyncChunksStoragePtr syncChunksStorage,
     ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
     INotebooksProcessorPtr notebooksProcessor,
     INotesProcessorPtr notesProcessor,
@@ -39,6 +40,7 @@ Downloader::Downloader(
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_syncStateStorage{std::move(syncStateStorage)},
     m_syncChunksProvider{std::move(syncChunksProvider)},
+    m_syncChunksStorage{std::move(syncChunksStorage)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
     m_notesProcessor{std::move(notesProcessor)},
@@ -64,6 +66,12 @@ Downloader::Downloader(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
             "Downloader ctor: sync chunks provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncChunksStorage)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: sync chunks storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_linkedNotebooksProcessor)) {
