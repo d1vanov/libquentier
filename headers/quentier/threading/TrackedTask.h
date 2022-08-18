@@ -79,17 +79,17 @@ public:
         m_function{std::forward<SomeFunction>(function)}
     {}
 
-	template<typename... Arguments>
-	constexpr void operator()(Arguments &&... arguments)
-	{
-		detail::invoke(
+    template<typename... Arguments>
+    constexpr void operator()(Arguments &&... arguments)
+    {
+        detail::invoke(
             m_lockableObject, m_function,
             std::forward<Arguments>(arguments)...);
-	}
+    }
 
-	template<typename... Arguments>
-	constexpr void operator()(Arguments &&... arguments) const
-	{
+    template<typename... Arguments>
+    constexpr void operator()(Arguments &&... arguments) const
+    {
         detail::invoke(
             m_lockableObject, m_function,
             std::forward<Arguments>(arguments)...);
