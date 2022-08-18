@@ -28,6 +28,14 @@ namespace quentier::synchronization {
  */
 struct SyncState final : public ISyncState
 {
+    SyncState() = default;
+
+    explicit SyncState(
+        qint32 userDataUpdateCount, qevercloud::Timestamp userDataLastSyncTime,
+        QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts,
+        QHash<qevercloud::Guid, qevercloud::Timestamp>
+            linkedNotebookLastSyncTimes);
+
     [[nodiscard]] qint32 userDataUpdateCount() const noexcept override;
 
     [[nodiscard]] qevercloud::Timestamp userDataLastSyncTime()

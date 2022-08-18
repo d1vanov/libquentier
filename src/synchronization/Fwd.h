@@ -34,6 +34,9 @@ using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 class INoteStoreFactory;
 using INoteStoreFactoryPtr = std::shared_ptr<INoteStoreFactory>;
 
+class IProtocolVersionChecker;
+using IProtocolVersionCheckerPtr = std::shared_ptr<IProtocolVersionChecker>;
+
 class IResourceFullDataDownloader;
 using IResourceFullDataDownloaderPtr = std::shared_ptr<IResourceFullDataDownloader>;
 

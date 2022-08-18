@@ -22,9 +22,14 @@
 #include "Fwd.h"
 
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/types/Account.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
+#include <synchronization/types/SyncState.h>
+
 #include <QDir>
+
+#include <optional>
 
 namespace quentier::synchronization {
 
@@ -34,7 +39,9 @@ class Downloader final :
 {
 public:
     Downloader(
+        Account account,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        IProtocolVersionCheckerPtr protocolVersionChecker,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
         ISyncChunksStoragePtr syncChunksStorage,
@@ -50,7 +57,15 @@ public:
     [[nodiscard]] QFuture<Result> download() override;
 
 private:
+    void readLastSyncState();
+
+    [[nodiscard]] QFuture<Result> launchDownload(
+        IAuthenticationInfoPtr authenticationInfo);
+
+private:
+    const Account m_account;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
+    const IProtocolVersionCheckerPtr m_protocolVersionChecker;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
     const ISyncChunksStoragePtr m_syncChunksStorage;
@@ -62,6 +77,8 @@ private:
     const ITagsProcessorPtr m_tagsProcessor;
     const utility::cancelers::ICancelerPtr m_canceler;
     const QDir m_syncPersistentStorageDir;
+
+    std::optional<SyncState> m_lastSyncState;
 };
 
 } // namespace quentier::synchronization

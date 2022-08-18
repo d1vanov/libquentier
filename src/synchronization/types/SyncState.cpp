@@ -26,6 +26,17 @@
 
 namespace quentier::synchronization {
 
+SyncState::SyncState(
+    qint32 userDataUpdateCount, qevercloud::Timestamp userDataLastSyncTime,
+    QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts,
+    QHash<qevercloud::Guid, qevercloud::Timestamp>
+        linkedNotebookLastSyncTimes) :
+    m_userDataUpdateCount{userDataUpdateCount},
+    m_userDataLastSyncTime{userDataLastSyncTime},
+    m_linkedNotebookUpdateCounts{std::move(linkedNotebookUpdateCounts)},
+    m_linkedNotebookLastSyncTimes{std::move(linkedNotebookLastSyncTimes)}
+{}
+
 qint32 SyncState::userDataUpdateCount() const noexcept
 {
     return m_userDataUpdateCount;
