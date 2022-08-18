@@ -9,6 +9,7 @@
 #include "MockINoteFullDataDownloader.h"
 #include "MockINoteStoreFactory.h"
 #include "MockINotesProcessor.h"
+#include "MockIProtocolVersionChecker.h"
 #include "MockISavedSearchesProcessor.h"
 #include "MockITagsProcessor.h"
 #include "MockISimpleNotebookSyncConflictResolver.h"

@@ -14,10 +14,13 @@ target_sources(${LIBRARY_NAME}
   IAuthenticationInfoProvider.h
   IDownloader.h
   INoteStoreFactory.h
+  IProtocolVersionChecker.h
   IReceiver.h
   IUserInfoProvider.h
   NoteStoreFactory.cpp
   NoteStoreFactory.h
+  ProtocolVersionChecker.cpp
+  ProtocolVersionChecker.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
