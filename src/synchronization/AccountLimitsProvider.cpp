@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "UserInfoProvider.h"
+#include "AccountLimitsProvider.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
@@ -35,68 +35,70 @@
 
 namespace quentier::synchronization {
 
-UserInfoProvider::UserInfoProvider(
-    qevercloud::IUserStorePtr userStore, qevercloud::IRequestContextPtr ctx) :
+AccountLimitsProvider::AccountLimitsProvider(
+    qevercloud::IUserStorePtr userStore,
+    qevercloud::IRequestContextPtr ctx) :
     m_userStore{std::move(userStore)},
     m_ctx{std::move(ctx)}
 {
     if (Q_UNLIKELY(!m_userStore)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::UserInfoProvider",
-            "UserInfoProvider ctor: user store is null")}};
+            "synchronization::AccountLimitsProvider",
+            "AccountLimitsProvider ctor: user store is null")}};
     }
 
     if (Q_UNLIKELY(!m_ctx)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::UserInfoProvider",
-            "UserInfoProvider ctor: request context is null")}};
+            "synchronization::AccountLimitsProvider",
+            "AccountLimitsProvider ctor: request context is null")}};
     }
 }
 
-QFuture<qevercloud::User> UserInfoProvider::userInfo(QString authToken)
+QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
+    const qevercloud::ServiceLevel serviceLevel)
 {
     {
-        const QReadLocker locker{&m_userInfoCacheReadWriteLock};
-        const auto it = m_userInfoCache.constFind(authToken);
-        if (it != m_userInfoCache.constEnd()) {
-            return threading::makeReadyFuture(qevercloud::User{it.value()});
+        const QReadLocker locker{&m_accountLimitsCacheReadWriteLock};
+        const auto it = m_accountLimitsCache.constFind(serviceLevel);
+        if (it != m_accountLimitsCache.constEnd()) {
+            return threading::makeReadyFuture(it.value());
         }
     }
+    
+    auto ctx = qevercloud::IRequestContextPtr{m_ctx->clone()};
 
-    auto ctx = qevercloud::newRequestContext(
-        authToken, m_ctx->requestTimeout(),
-        m_ctx->increaseRequestTimeoutExponentially(),
-        m_ctx->maxRequestTimeout(), m_ctx->maxRequestRetryCount(),
-        m_ctx->cookies());
-
-    auto promise = std::make_shared<QPromise<qevercloud::User>>();
+    auto promise = std::make_shared<QPromise<qevercloud::AccountLimits>>();
     auto future = promise->future();
     promise->start();
 
     auto selfWeak = weak_from_this();
 
-    auto userFuture = m_userStore->getUserAsync(std::move(ctx));
+    auto accountLimitsFuture = m_userStore->getAccountLimitsAsync(
+        serviceLevel, std::move(ctx));
+
     threading::thenOrFailed(
-        std::move(userFuture), promise,
-        [promise, selfWeak, authToken = std::move(authToken)](
-            qevercloud::User user)
+        std::move(accountLimitsFuture), promise,
+        [promise, selfWeak, serviceLevel, ctx = std::move(ctx)](
+            qevercloud::AccountLimits accountLimits)
         {
             if (const auto self = selfWeak.lock()) {
-                const QWriteLocker locker{&self->m_userInfoCacheReadWriteLock};
+                const QWriteLocker locker{
+                    &self->m_accountLimitsCacheReadWriteLock};
 
                 // First let's check whether we are too late and another call
-                // managed to bring the user to the local cache faster
-                const auto it = self->m_userInfoCache.find(authToken);
-                if (it != self->m_userInfoCache.end()) {
+                // managed to bring the account limits to the local cache faster
+                const auto it =
+                    self->m_accountLimitsCache.constFind(serviceLevel);
+                if (it != self->m_accountLimitsCache.constEnd()) {
                     promise->addResult(it.value());
                     promise->finish();
                     return;
                 }
 
-                self->m_userInfoCache[authToken] = user;
+                self->m_accountLimitsCache[serviceLevel] = accountLimits;
             }
 
-            promise->addResult(std::move(user));
+            promise->addResult(std::move(accountLimits));
             promise->finish();
         });
 

@@ -6,11 +6,14 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  AccountLimitsProvider.cpp
+  AccountLimitsProvider.h
   AuthenticationInfoProvider.cpp
   AuthenticationInfoProvider.h
   Downloader.cpp
   Downloader.h
   Fwd.h
+  IAccountLimitsProvider.h
   IAuthenticationInfoProvider.h
   IDownloader.h
   INoteStoreFactory.h

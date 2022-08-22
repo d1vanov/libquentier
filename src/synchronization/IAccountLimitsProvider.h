@@ -18,30 +18,29 @@
 
 #pragma once
 
-#include <qevercloud/types/TypeAliases.h>
-#include <qevercloud/types/User.h>
+#include <qevercloud/EDAMErrorCode.h>
+#include <qevercloud/types/AccountLimits.h>
 
 #include <QFuture>
 
 namespace quentier::synchronization {
 
 /**
- * @brief The IUserInfoProvider interface provides information about
- * Evernote users.
+ * @brief The IAccountLimitsProvider provides information about account limits
  */
-class IUserInfoProvider
+class IAccountLimitsProvider
 {
 public:
-    virtual ~IUserInfoProvider() = default;
+    virtual ~IAccountLimitsProvider() = default;
 
     /**
-     * Find full information about Evernote user by authentication token.
-     * @param authToken     Authentication token
-     * @return              Future with full user info or exception if no user
-     *                      info is found
+     * Find account limits for particular Evernote service level
+     * @param serviceLevel  Service level for which account limits are requested
+     * @return              Future with account limits or exception in case of
+     *                      error
      */
-    [[nodiscard]] virtual QFuture<qevercloud::User> userInfo(
-        QString authToken) = 0;
+    [[nodiscard]] virtual QFuture<qevercloud::AccountLimits> accountLimits(
+        qevercloud::ServiceLevel serviceLevel) = 0;
 };
 
 } // namespace quentier::synchronization
