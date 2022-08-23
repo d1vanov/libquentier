@@ -1,6 +1,7 @@
 #include <quentier/synchronization/tests/mocks/MockIAuthenticator.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
+#include "MockIAccountLimitsProvider.h"
 #include "MockIAuthenticationInfoProvider.h"
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
