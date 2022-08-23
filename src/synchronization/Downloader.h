@@ -42,6 +42,8 @@ public:
         Account account,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         IProtocolVersionCheckerPtr protocolVersionChecker,
+        IUserInfoProviderPtr userInfoProvider,
+        IAccountLimitsProviderPtr accountLimitsProvider,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
         ISyncChunksStoragePtr syncChunksStorage,
@@ -66,6 +68,8 @@ private:
     const Account m_account;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const IProtocolVersionCheckerPtr m_protocolVersionChecker;
+    const IUserInfoProviderPtr m_userInfoProvider;
+    const IAccountLimitsProviderPtr m_accountLimitsProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
     const ISyncChunksStoragePtr m_syncChunksStorage;

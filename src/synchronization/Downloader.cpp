@@ -38,6 +38,8 @@ namespace quentier::synchronization {
 Downloader::Downloader(
     Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
     IProtocolVersionCheckerPtr protocolVersionChecker,
+    IUserInfoProviderPtr userInfoProvider,
+    IAccountLimitsProviderPtr accountLimitsProvider,
     ISyncStateStoragePtr syncStateStorage,
     ISyncChunksProviderPtr syncChunksProvider,
     ISyncChunksStoragePtr syncChunksStorage,
@@ -51,13 +53,15 @@ Downloader::Downloader(
     m_account{std::move(account)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_protocolVersionChecker{std::move(protocolVersionChecker)},
+    m_userInfoProvider{std::move(userInfoProvider)},
+    m_accountLimitsProvider{std::move(accountLimitsProvider)},
     m_syncStateStorage{std::move(syncStateStorage)},
     m_syncChunksProvider{std::move(syncChunksProvider)},
     m_syncChunksStorage{std::move(syncChunksStorage)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
-    m_notesProcessor{std::move(notesProcessor)}, m_resourcesProcessor{std::move(
-                                                     resourcesProcessor)},
+    m_notesProcessor{std::move(notesProcessor)},
+    m_resourcesProcessor{std::move(resourcesProcessor)},
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
     m_tagsProcessor{std::move(tagsProcessor)}, m_canceler{std::move(canceler)},
     m_syncPersistentStorageDir{syncPersistentStorageDir}
@@ -78,6 +82,18 @@ Downloader::Downloader(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
             "Downloader ctor: protocol version checker is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_userInfoProvider)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: user info provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_accountLimitsProvider)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: account limits provider is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncStateStorage)) {

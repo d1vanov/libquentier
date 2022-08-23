@@ -24,6 +24,7 @@
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <synchronization/tests/mocks/MockIAccountLimitsProvider.h>
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>
 #include <synchronization/tests/mocks/MockINotebooksProcessor.h>
@@ -34,6 +35,7 @@
 #include <synchronization/tests/mocks/MockISyncChunksProvider.h>
 #include <synchronization/tests/mocks/MockISyncChunksStorage.h>
 #include <synchronization/tests/mocks/MockITagsProcessor.h>
+#include <synchronization/tests/mocks/MockIUserInfoProvider.h>
 
 #include <QTemporaryDir>
 
@@ -82,6 +84,13 @@ protected:
         m_mockProtocolVersionChecker =
             std::make_shared<StrictMock<mocks::MockIProtocolVersionChecker>>();
 
+    const std::shared_ptr<mocks::MockIUserInfoProvider> m_mockUserInfoProvider =
+        std::make_shared<StrictMock<mocks::MockIUserInfoProvider>>();
+
+    const std::shared_ptr<mocks::MockIAccountLimitsProvider>
+        m_mockAccountLimitsProvider =
+            std::make_shared<StrictMock<mocks::MockIAccountLimitsProvider>>();
+
     const std::shared_ptr<mocks::MockISyncStateStorage> m_mockSyncStateStorage =
         std::make_shared<StrictMock<mocks::MockISyncStateStorage>>();
 
@@ -126,7 +135,8 @@ TEST_F(DownloaderTest, Ctor)
     EXPECT_NO_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
@@ -139,7 +149,8 @@ TEST_F(DownloaderTest, CtorEmptyAccount)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             Account{}, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
@@ -153,6 +164,7 @@ TEST_F(DownloaderTest, CtorNullAuthenticationInfoProvider)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, nullptr, m_mockProtocolVersionChecker,
+            m_mockUserInfoProvider, m_mockAccountLimitsProvider,
             m_mockSyncStateStorage, m_mockSyncChunksProvider,
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
@@ -166,6 +178,35 @@ TEST_F(DownloaderTest, CtorNullProtocolVersionChecker)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider, nullptr,
+            m_mockUserInfoProvider, m_mockAccountLimitsProvider,
+            m_mockSyncStateStorage, m_mockSyncChunksProvider,
+            m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
+            m_mockNotebooksProcessor, m_mockNotesProcessor,
+            m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
+            m_mockTagsProcessor, m_manualCanceler, QDir{m_temporaryDir.path()}),
+        InvalidArgument);
+}
+
+TEST_F(DownloaderTest, CtorNullUserInfoProvider)
+{
+    EXPECT_THROW(
+        const auto downloader = std::make_shared<Downloader>(
+            m_account, m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker, nullptr, m_mockAccountLimitsProvider,
+            m_mockSyncStateStorage, m_mockSyncChunksProvider,
+            m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
+            m_mockNotebooksProcessor, m_mockNotesProcessor,
+            m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
+            m_mockTagsProcessor, m_manualCanceler, QDir{m_temporaryDir.path()}),
+        InvalidArgument);
+}
+
+TEST_F(DownloaderTest, CtorNullAccountLimitsProvider)
+{
+    EXPECT_THROW(
+        const auto downloader = std::make_shared<Downloader>(
+            m_account, m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider, nullptr,
             m_mockSyncStateStorage, m_mockSyncChunksProvider,
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
@@ -179,7 +220,8 @@ TEST_F(DownloaderTest, CtorNullSyncStateStorage)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, nullptr, m_mockSyncChunksProvider,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, nullptr, m_mockSyncChunksProvider,
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
@@ -192,7 +234,8 @@ TEST_F(DownloaderTest, CtorNullSyncChunksProvider)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage, nullptr,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage, nullptr,
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
@@ -205,7 +248,8 @@ TEST_F(DownloaderTest, CtorNullSyncChunksStorage)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, nullptr, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
@@ -218,7 +262,8 @@ TEST_F(DownloaderTest, CtorNullLinkedNotebooksProcessor)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage, nullptr,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
@@ -231,7 +276,8 @@ TEST_F(DownloaderTest, CtorNullNotebooksProcessor)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, nullptr, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
@@ -244,7 +290,8 @@ TEST_F(DownloaderTest, CtorNullNotesProcessor)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor, nullptr,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
@@ -257,7 +304,8 @@ TEST_F(DownloaderTest, CtorNullResourcesProcessor)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, nullptr, m_mockSavedSearchesProcessor,
@@ -270,7 +318,8 @@ TEST_F(DownloaderTest, CtorNullSavedSearchesProcessor)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor, nullptr,
@@ -283,7 +332,8 @@ TEST_F(DownloaderTest, CtorNullTagsProcessor)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
@@ -297,7 +347,8 @@ TEST_F(DownloaderTest, CtorNullCanceler)
     EXPECT_THROW(
         const auto downloader = std::make_shared<Downloader>(
             m_account, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker, m_mockSyncStateStorage,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
