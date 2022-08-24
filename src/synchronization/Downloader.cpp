@@ -72,6 +72,12 @@ Downloader::Downloader(
             "Downloader ctor: account is empty")}};
     }
 
+    if (Q_UNLIKELY(m_account.type() != Account::Type::Evernote)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: account is not of Evernote type")}};
+    }
+
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",

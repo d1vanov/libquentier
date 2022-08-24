@@ -159,6 +159,23 @@ TEST_F(DownloaderTest, CtorEmptyAccount)
         InvalidArgument);
 }
 
+TEST_F(DownloaderTest, CtorNonEvernoteAccount)
+{
+    Account account{QStringLiteral("Full Name"), Account::Type::Local};
+
+    EXPECT_THROW(
+        const auto downloader = std::make_shared<Downloader>(
+            std::move(account), m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
+            m_mockSyncChunksProvider, m_mockSyncChunksStorage,
+            m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
+            m_mockNotesProcessor, m_mockResourcesProcessor,
+            m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_manualCanceler,
+            QDir{m_temporaryDir.path()}),
+        InvalidArgument);
+}
+
 TEST_F(DownloaderTest, CtorNullAuthenticationInfoProvider)
 {
     EXPECT_THROW(
