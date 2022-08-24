@@ -21,6 +21,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
+#include <quentier/utility/ApplicationSettings.h>
 
 #include <qevercloud/RequestContext.h>
 #include <qevercloud/types/builders/AccountLimitsBuilder.h>
@@ -39,6 +40,35 @@ using testing::StrictMock;
 class AccountLimitsProviderTest : public testing::Test
 {
 protected:
+    void SetUp() override
+    {
+        clearPersistence();
+    }
+
+    void TearDown() override
+    {
+        clearPersistence();
+    };
+
+private:
+    void clearPersistence()
+    {
+        ApplicationSettings appSettings{
+            m_account, QStringLiteral("SynchronizationPersistence")};
+
+        appSettings.remove(QString::fromUtf8(""));
+        appSettings.sync();
+    }
+
+protected:
+    const Account m_account = Account{
+        QStringLiteral("Full Name"),
+        Account::Type::Evernote,
+        qevercloud::UserID{42},
+        Account::EvernoteAccountType::Free,
+        QStringLiteral("https://www.evernote.com"),
+        QStringLiteral("shard id")};
+
     const std::shared_ptr<mocks::qevercloud::MockIUserStore> m_mockUserStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockIUserStore>>();
 
@@ -50,14 +80,35 @@ TEST_F(AccountLimitsProviderTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(m_mockUserStore, m_ctx));
+            std::make_shared<AccountLimitsProvider>(
+                m_account, m_mockUserStore, m_ctx));
+}
+
+TEST_F(AccountLimitsProviderTest, CtorEmptyAccount)
+{
+    EXPECT_THROW(
+        const auto accountLimitsProvider =
+            std::make_shared<AccountLimitsProvider>(
+                Account{}, m_mockUserStore, m_ctx),
+        InvalidArgument);
+}
+
+TEST_F(AccountLimitsProviderTest, CtorNonEvernoteAccount)
+{
+    Account account{QStringLiteral("Full Name"), Account::Type::Local};
+
+    EXPECT_THROW(
+        const auto accountLimitsProvider =
+            std::make_shared<AccountLimitsProvider>(
+                std::move(account), m_mockUserStore, m_ctx),
+        InvalidArgument);
 }
 
 TEST_F(AccountLimitsProviderTest, CtorNullUserStore)
 {
     EXPECT_THROW(
         const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(nullptr, m_ctx),
+            std::make_shared<AccountLimitsProvider>(m_account, nullptr, m_ctx),
         InvalidArgument);
 }
 
@@ -65,22 +116,23 @@ TEST_F(AccountLimitsProviderTest, CtorNullRequestContext)
 {
     EXPECT_THROW(
         const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(m_mockUserStore, nullptr),
+            std::make_shared<AccountLimitsProvider>(
+                m_account, m_mockUserStore, nullptr),
         InvalidArgument);
 }
 
 TEST_F(AccountLimitsProviderTest, GetAccountLimits)
 {
-    const auto accountLimitsProvider =
-        std::make_shared<AccountLimitsProvider>(m_mockUserStore, m_ctx);
+    const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
+        m_account, m_mockUserStore, m_ctx);
 
     const auto accountLimits = qevercloud::AccountLimitsBuilder{}
-        .setNoteTagCountMax(42)
-        .setUploadLimit(200)
-        .setUserTagCountMax(30)
-        .setNoteSizeMax(2000)
-        .setNoteResourceCountMax(30)
-        .build();
+                                   .setNoteTagCountMax(42)
+                                   .setUploadLimit(200)
+                                   .setUserTagCountMax(30)
+                                   .setNoteSizeMax(2000)
+                                   .setNoteResourceCountMax(30)
+                                   .build();
 
     EXPECT_CALL(
         *m_mockUserStore,

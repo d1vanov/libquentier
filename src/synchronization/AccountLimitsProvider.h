@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/types/Account.h>
+
 #include <synchronization/IAccountLimitsProvider.h>
 
 #include <qevercloud/Fwd.h>
@@ -36,6 +38,7 @@ class AccountLimitsProvider final :
 {
 public:
     explicit AccountLimitsProvider(
+        Account account,
         qevercloud::IUserStorePtr userStore,
         qevercloud::IRequestContextPtr ctx);
 
@@ -43,6 +46,16 @@ public:
         qevercloud::ServiceLevel serviceLevel) override;
 
 private:
+    [[nodiscard]] std::optional<qevercloud::AccountLimits>
+        readPersistentAccountLimits(
+            qevercloud::ServiceLevel serviceLevel) const;
+
+    void writePersistentAccountLimits(
+        qevercloud::ServiceLevel serviceLevel,
+        const qevercloud::AccountLimits & accountLimits);
+
+private:
+    const Account m_account;
     const qevercloud::IUserStorePtr m_userStore;
     const qevercloud::IRequestContextPtr m_ctx;
 
