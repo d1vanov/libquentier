@@ -52,6 +52,8 @@ using testing::InSequence;
 using testing::Return;
 using testing::StrictMock;
 
+namespace {
+
 [[nodiscard]] std::shared_ptr<AuthenticationInfo>
     createSampleAuthenticationInfo()
 {
@@ -90,7 +92,7 @@ void checkAuthenticationInfoPartPersistence(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    const ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_EQ(
         appSettings.value(QStringLiteral("NoteStoreUrl")).toString(),
@@ -206,6 +208,8 @@ void setupLinkedNotebookAuthenticationInfoPartPersistence(
             linkedNotebookGuid,
         authenticationInfo->authenticationTime());
 }
+
+} // namespace
 
 class AuthenticationInfoProviderTest : public testing::Test
 {
