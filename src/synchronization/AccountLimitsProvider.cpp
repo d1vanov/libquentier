@@ -355,6 +355,9 @@ void AccountLimitsProvider::writePersistentAccountLimits(
             if (value) {
                 appSettings.setValue(key, *value);
             }
+            else {
+                appSettings.remove(key);
+            }
         };
 
     writeAccountLimitValue(
