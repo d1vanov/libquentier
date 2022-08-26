@@ -26,6 +26,7 @@
 #include <qevercloud/RequestContext.h>
 #include <qevercloud/types/builders/AccountLimitsBuilder.h>
 
+#include <QDateTime>
 #include <QTextStream>
 
 #include <gtest/gtest.h>
@@ -225,6 +226,117 @@ void checkAccountLimitsPersistence(
     }
 }
 
+void setupAccountLimitsPersistence(
+    const Account & account, const qevercloud::ServiceLevel serviceLevel,
+    const qevercloud::AccountLimits & accountLimits,
+    const qint64 currentTimestamp)
+{
+    ApplicationSettings appSettings{
+        account, QStringLiteral("SynchronizationPersistence")};
+
+    appSettings.beginGroup(appSettingsAccountLimitsGroupName(serviceLevel));
+    const ApplicationSettings::GroupCloser groupCloser{appSettings};
+
+    appSettings.setValue(QStringLiteral("lastSyncTime"), currentTimestamp);
+
+    if (accountLimits.userMailLimitDaily()) {
+        appSettings.setValue(
+            QStringLiteral("userMailLimitDaily"),
+            *accountLimits.userMailLimitDaily());
+    }
+    else {
+        appSettings.remove(QStringLiteral("userMailLimitDaily"));
+    }
+
+    if (accountLimits.noteSizeMax()) {
+        appSettings.setValue(
+            QStringLiteral("noteSizeMax"), *accountLimits.noteSizeMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("noteSizeMax"));
+    }
+
+    if (accountLimits.resourceSizeMax()) {
+        appSettings.setValue(
+            QStringLiteral("resourceSizeMax"),
+            *accountLimits.resourceSizeMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("resourceSizeMax"));
+    }
+
+    if (accountLimits.userLinkedNotebookMax()) {
+        appSettings.setValue(
+            QStringLiteral("userLinkedNotebookMax"),
+            *accountLimits.userLinkedNotebookMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("userLinkedNotebookMax"));
+    }
+
+    if (accountLimits.uploadLimit()) {
+        appSettings.setValue(
+            QStringLiteral("uploadLimit"), *accountLimits.uploadLimit());
+    }
+    else {
+        appSettings.remove(QStringLiteral("uploadLimit"));
+    }
+
+    if (accountLimits.userNoteCountMax()) {
+        appSettings.setValue(
+            QStringLiteral("userNoteCountMax"),
+            *accountLimits.userNoteCountMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("userNoteCountMax"));
+    }
+
+    if (accountLimits.userNotebookCountMax()) {
+        appSettings.setValue(
+            QStringLiteral("userNotebookCountMax"),
+            *accountLimits.userNotebookCountMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("userNotebookCountMax"));
+    }
+
+    if (accountLimits.userTagCountMax()) {
+        appSettings.setValue(
+            QStringLiteral("userTagCountMax"),
+            *accountLimits.userTagCountMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("userTagCountMax"));
+    }
+
+    if (accountLimits.userSavedSearchesMax()) {
+        appSettings.setValue(
+            QStringLiteral("userSavedSearchCountMax"),
+            *accountLimits.userSavedSearchesMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("userSavedSearchCountMax"));
+    }
+
+    if (accountLimits.noteResourceCountMax()) {
+        appSettings.setValue(
+            QStringLiteral("noteResourceCountMax"),
+            *accountLimits.noteResourceCountMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("noteResourceCountMax"));
+    }
+
+    if (accountLimits.noteTagCountMax()) {
+        appSettings.setValue(
+            QStringLiteral("noteTagCountMax"),
+            *accountLimits.noteTagCountMax());
+    }
+    else {
+        appSettings.remove(QStringLiteral("noteTagCountMax"));
+    }
+}
+
 } // namespace
 
 class AccountLimitsProviderTest : public testing::Test
@@ -311,7 +423,7 @@ TEST_F(AccountLimitsProviderTest, CtorNullRequestContext)
         InvalidArgument);
 }
 
-TEST_F(AccountLimitsProviderTest, GetAccountLimits)
+TEST_F(AccountLimitsProviderTest, GetAccountLimitsWithoutPreexistingStorage)
 {
     const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
         m_account, m_mockUserStore, m_ctx);
@@ -373,6 +485,83 @@ TEST_F(AccountLimitsProviderTest, GetAccountLimits)
 
     checkAccountLimitsPersistence(
         m_account, qevercloud::ServiceLevel::PLUS, accountLimits);
+}
+
+TEST_F(
+    AccountLimitsProviderTest, GetAccountLimitsWithRelevantPreexistingStorage)
+{
+    const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
+        m_account, m_mockUserStore, m_ctx);
+
+    const auto accountLimits = qevercloud::AccountLimitsBuilder{}
+                                   .setNoteTagCountMax(42)
+                                   .setUploadLimit(200)
+                                   .setUserTagCountMax(30)
+                                   .setNoteSizeMax(2000)
+                                   .setNoteResourceCountMax(30)
+                                   .build();
+
+    // If persistently stored account limits already exist and are still
+    // relevant, there's no need to call
+    // qevercloud::IUserStore::getAccountLimitsAsync
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    setupAccountLimitsPersistence(
+        m_account, qevercloud::ServiceLevel::PREMIUM, accountLimits, now);
+
+    auto future =
+        accountLimitsProvider->accountLimits(qevercloud::ServiceLevel::PREMIUM);
+
+    ASSERT_TRUE(future.isFinished());
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto result = future.result();
+    EXPECT_EQ(result, accountLimits);
+
+    checkAccountLimitsPersistence(
+        m_account, qevercloud::ServiceLevel::PREMIUM, accountLimits);
+}
+
+TEST_F(
+    AccountLimitsProviderTest, GetAccountLimitsWithIrrelevantPreexistingStorage)
+{
+    const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
+        m_account, m_mockUserStore, m_ctx);
+
+    const auto accountLimits = qevercloud::AccountLimitsBuilder{}
+                                   .setNoteTagCountMax(42)
+                                   .setUploadLimit(200)
+                                   .setUserTagCountMax(30)
+                                   .setNoteSizeMax(2000)
+                                   .setNoteResourceCountMax(30)
+                                   .build();
+
+    // If persistently stored account limits are too old, they should
+    // be requested from Evernote via the call to
+    // qevercloud::IUserStore::getAccountLimitsAsync
+    constexpr qint64 thirty_days_in_msec = 2592000000;
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    const auto oldTimestamp = now - thirty_days_in_msec - 1000000;
+
+    setupAccountLimitsPersistence(
+        m_account, qevercloud::ServiceLevel::BUSINESS, accountLimits,
+        oldTimestamp);
+
+    EXPECT_CALL(
+        *m_mockUserStore,
+        getAccountLimitsAsync(qevercloud::ServiceLevel::BUSINESS, _))
+        .WillOnce(Return(threading::makeReadyFuture(accountLimits)));
+
+    auto future = accountLimitsProvider->accountLimits(
+        qevercloud::ServiceLevel::BUSINESS);
+
+    ASSERT_TRUE(future.isFinished());
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto result = future.result();
+    EXPECT_EQ(result, accountLimits);
+
+    checkAccountLimitsPersistence(
+        m_account, qevercloud::ServiceLevel::BUSINESS, accountLimits);
 }
 
 } // namespace quentier::synchronization::tests
