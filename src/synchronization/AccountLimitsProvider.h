@@ -26,7 +26,7 @@
 #include <qevercloud/services/Fwd.h>
 
 #include <QHash>
-#include <QReadWriteLock>
+#include <QMutex>
 
 #include <memory>
 
@@ -59,7 +59,7 @@ private:
     const qevercloud::IUserStorePtr m_userStore;
     const qevercloud::IRequestContextPtr m_ctx;
 
-    QReadWriteLock m_accountLimitsCacheReadWriteLock;
+    QMutex m_accountLimitsCacheMutex;
     QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>
         m_accountLimitsCache;
 };

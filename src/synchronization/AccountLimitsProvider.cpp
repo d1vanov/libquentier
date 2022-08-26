@@ -28,9 +28,8 @@
 #include <qevercloud/services/IUserStore.h>
 
 #include <QDateTime>
-#include <QReadLocker>
+#include <QMutexLocker>
 #include <QTextStream>
-#include <QWriteLocker>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -131,7 +130,7 @@ QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
     const qevercloud::ServiceLevel serviceLevel)
 {
     {
-        const QReadLocker locker{&m_accountLimitsCacheReadWriteLock};
+        const QMutexLocker locker{&m_accountLimitsCacheMutex};
         const auto it = m_accountLimitsCache.constFind(serviceLevel);
         if (it != m_accountLimitsCache.constEnd()) {
             return threading::makeReadyFuture(it.value());
@@ -140,7 +139,6 @@ QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
         auto accountLimits = readPersistentAccountLimits(serviceLevel);
         if (accountLimits)
         {
-            const QWriteLocker locker{&m_accountLimitsCacheReadWriteLock};
             m_accountLimitsCache[serviceLevel] = *accountLimits;
             return threading::makeReadyFuture(std::move(*accountLimits));
         }
@@ -163,8 +161,8 @@ QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
             qevercloud::AccountLimits accountLimits)
         {
             if (const auto self = selfWeak.lock()) {
-                const QWriteLocker locker{
-                    &self->m_accountLimitsCacheReadWriteLock};
+                const QMutexLocker locker{
+                    &self->m_accountLimitsCacheMutex};
 
                 // First let's check whether we are too late and another call
                 // managed to bring the account limits to the local cache faster
