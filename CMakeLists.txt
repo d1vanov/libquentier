@@ -179,6 +179,7 @@ set(EXCEPTION_HEADERS
     headers/quentier/exception/NoteEditorInitializationException.h
     headers/quentier/exception/NoteEditorPluginInitializationException.h
     headers/quentier/exception/NullPtrException.h
+    headers/quentier/exception/OperationCanceled.h
     headers/quentier/exception/RuntimeError.h)
 
 set(UTILITY_HEADERS
@@ -394,6 +395,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/exception/OperationCanceled.cpp
     src/exception/RuntimeError.cpp
     src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
