@@ -20,6 +20,7 @@
 
 #include <quentier/types/Account.h>
 
+#include <synchronization/Fwd.h>
 #include <synchronization/IAccountLimitsProvider.h>
 
 #include <qevercloud/Fwd.h>
@@ -39,6 +40,7 @@ class AccountLimitsProvider final :
 public:
     explicit AccountLimitsProvider(
         Account account,
+        IAuthenticationInfoProviderPtr authenticationInfoProvider,
         qevercloud::IUserStorePtr userStore,
         qevercloud::IRequestContextPtr ctx);
 
@@ -56,6 +58,7 @@ private:
 
 private:
     const Account m_account;
+    const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const qevercloud::IUserStorePtr m_userStore;
     const qevercloud::IRequestContextPtr m_ctx;
 

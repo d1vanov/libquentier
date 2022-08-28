@@ -20,11 +20,16 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/threading/Future.h>
+#include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/DateTime.h>
 
+#include <synchronization/IAuthenticationInfoProvider.h>
+
 #include <qevercloud/RequestContext.h>
+#include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/IUserStore.h>
 
 #include <QDateTime>
@@ -54,8 +59,7 @@ const QString gAccountLimitsUserMailLimitDaily =
 
 const QString gAccountLimitsNoteSizeMax = QStringLiteral("noteSizeMax");
 
-const QString gAccountLimitsResourceSizeMax =
-    QStringLiteral("resourceSizeMax");
+const QString gAccountLimitsResourceSizeMax = QStringLiteral("resourceSizeMax");
 
 const QString gAccountLimitsUserLinkedNotebookMax =
     QStringLiteral("userLinkedNotebookMax");
@@ -68,8 +72,7 @@ const QString gAccountLimitsUserNoteCountMax =
 const QString gAccountLimitsUserNotebookCountMax =
     QStringLiteral("userNotebookCountMax");
 
-const QString gAccountLimitsUserTagCountMax =
-    QStringLiteral("userTagCountMax");
+const QString gAccountLimitsUserTagCountMax = QStringLiteral("userTagCountMax");
 
 const QString gAccountLimitsUserSavedSearchCountMax =
     QStringLiteral("userSavedSearchCountMax");
@@ -77,8 +80,7 @@ const QString gAccountLimitsUserSavedSearchCountMax =
 const QString gAccountLimitsNoteResourceCountMax =
     QStringLiteral("noteResourceCountMax");
 
-const QString gAccountLimitsNoteTagCountMax =
-    QStringLiteral("noteTagCountMax");
+const QString gAccountLimitsNoteTagCountMax = QStringLiteral("noteTagCountMax");
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -94,12 +96,11 @@ const QString gAccountLimitsNoteTagCountMax =
 } // namespace
 
 AccountLimitsProvider::AccountLimitsProvider(
-    Account account,
-    qevercloud::IUserStorePtr userStore,
-    qevercloud::IRequestContextPtr ctx) :
+    Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
+    qevercloud::IUserStorePtr userStore, qevercloud::IRequestContextPtr ctx) :
     m_account{std::move(account)},
-    m_userStore{std::move(userStore)},
-    m_ctx{std::move(ctx)}
+    m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
+    m_userStore{std::move(userStore)}, m_ctx{std::move(ctx)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -111,6 +112,13 @@ AccountLimitsProvider::AccountLimitsProvider(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::AccountLimitsProvider",
             "AccountLimitsProvider ctor: account is not an Evernote one")}};
+    }
+
+    if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::AccountLimitsProvider",
+            "AccountLimitsProvider ctor: authentication info provider is "
+            "null")}};
     }
 
     if (Q_UNLIKELY(!m_userStore)) {
@@ -137,56 +145,81 @@ QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
         }
 
         auto accountLimits = readPersistentAccountLimits(serviceLevel);
-        if (accountLimits)
-        {
+        if (accountLimits) {
             m_accountLimitsCache[serviceLevel] = *accountLimits;
             return threading::makeReadyFuture(std::move(*accountLimits));
         }
     }
 
-    auto ctx = qevercloud::IRequestContextPtr{m_ctx->clone()};
-
     auto promise = std::make_shared<QPromise<qevercloud::AccountLimits>>();
     auto future = promise->future();
     promise->start();
 
+    auto authenticationInfoFuture =
+        m_authenticationInfoProvider->authenticateAccount(
+            m_account, IAuthenticationInfoProvider::Mode::Cache);
+
     auto selfWeak = weak_from_this();
 
-    auto accountLimitsFuture = m_userStore->getAccountLimitsAsync(
-        serviceLevel, std::move(ctx));
-
     threading::thenOrFailed(
-        std::move(accountLimitsFuture), promise,
-        [promise, selfWeak, serviceLevel, ctx = std::move(ctx)](
-            qevercloud::AccountLimits accountLimits)
-        {
-            if (const auto self = selfWeak.lock()) {
-                const QMutexLocker locker{
-                    &self->m_accountLimitsCacheMutex};
+        std::move(authenticationInfoFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, selfWeak,
+             serviceLevel](const IAuthenticationInfoPtr & authenticationInfo) {
+                Q_ASSERT(authenticationInfo);
 
-                // First let's check whether we are too late and another call
-                // managed to bring the account limits to the local cache faster
-                const auto it =
-                    self->m_accountLimitsCache.constFind(serviceLevel);
-                if (it != self->m_accountLimitsCache.constEnd()) {
-                    promise->addResult(it.value());
-                    promise->finish();
-                    return;
-                }
+                auto ctx =
+                    qevercloud::RequestContextBuilder{}
+                        .setAuthenticationToken(authenticationInfo->authToken())
+                        .setRequestTimeout(m_ctx->requestTimeout())
+                        .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
+                        .setMaxRetryCount(m_ctx->maxRequestRetryCount())
+                        .setIncreaseRequestTimeoutExponentially(
+                            m_ctx->increaseRequestTimeoutExponentially())
+                        .setCookies(m_ctx->cookies())
+                        .build();
 
-                self->m_accountLimitsCache[serviceLevel] = accountLimits;
-                self->writePersistentAccountLimits(serviceLevel, accountLimits);
-            }
+                auto accountLimitsFuture = m_userStore->getAccountLimitsAsync(
+                    serviceLevel, std::move(ctx));
 
-            promise->addResult(std::move(accountLimits));
-            promise->finish();
-        });
+                threading::thenOrFailed(
+                    std::move(accountLimitsFuture), promise,
+                    [promise, selfWeak, serviceLevel, ctx = std::move(ctx)](
+                        qevercloud::AccountLimits accountLimits) {
+                        if (const auto self = selfWeak.lock()) {
+                            const QMutexLocker locker{
+                                &self->m_accountLimitsCacheMutex};
+
+                            // First let's check whether we are too late and
+                            // another call managed to bring the account limits
+                            // to the local cache faster
+                            const auto it =
+                                self->m_accountLimitsCache.constFind(
+                                    serviceLevel);
+                            if (it != self->m_accountLimitsCache.constEnd()) {
+                                promise->addResult(it.value());
+                                promise->finish();
+                                return;
+                            }
+
+                            self->m_accountLimitsCache[serviceLevel] =
+                                accountLimits;
+                            self->writePersistentAccountLimits(
+                                serviceLevel, accountLimits);
+                        }
+
+                        promise->addResult(std::move(accountLimits));
+                        promise->finish();
+                    });
+            }});
 
     return future;
 }
 
-std::optional<qevercloud::AccountLimits> AccountLimitsProvider::readPersistentAccountLimits(
-    qevercloud::ServiceLevel serviceLevel) const
+std::optional<qevercloud::AccountLimits>
+    AccountLimitsProvider::readPersistentAccountLimits(
+        qevercloud::ServiceLevel serviceLevel) const
 {
     ApplicationSettings appSettings{m_account, gSynchronizationPersistence};
 
@@ -276,58 +309,47 @@ std::optional<qevercloud::AccountLimits> AccountLimitsProvider::readPersistentAc
         };
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setUserMailLimitDaily,
+        &QVariant::toInt, &qevercloud::AccountLimits::setUserMailLimitDaily,
         gAccountLimitsUserMailLimitDaily);
 
     readNumericAccountLimitValue(
-        &QVariant::toLongLong,
-        &qevercloud::AccountLimits::setNoteSizeMax,
+        &QVariant::toLongLong, &qevercloud::AccountLimits::setNoteSizeMax,
         gAccountLimitsNoteSizeMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toLongLong,
-        &qevercloud::AccountLimits::setResourceSizeMax,
+        &QVariant::toLongLong, &qevercloud::AccountLimits::setResourceSizeMax,
         gAccountLimitsResourceSizeMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setUserLinkedNotebookMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setUserLinkedNotebookMax,
         gAccountLimitsUserLinkedNotebookMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toLongLong,
-        &qevercloud::AccountLimits::setUploadLimit,
+        &QVariant::toLongLong, &qevercloud::AccountLimits::setUploadLimit,
         gAccountLimitsUploadLimit);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setUserNoteCountMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setUserNoteCountMax,
         gAccountLimitsUserNoteCountMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setUserNotebookCountMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setUserNotebookCountMax,
         gAccountLimitsUserNotebookCountMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setUserTagCountMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setUserTagCountMax,
         gAccountLimitsUserTagCountMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setUserSavedSearchesMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setUserSavedSearchesMax,
         gAccountLimitsUserSavedSearchCountMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setNoteResourceCountMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setNoteResourceCountMax,
         gAccountLimitsNoteResourceCountMax);
 
     readNumericAccountLimitValue(
-        &QVariant::toInt,
-        &qevercloud::AccountLimits::setNoteTagCountMax,
+        &QVariant::toInt, &qevercloud::AccountLimits::setNoteTagCountMax,
         gAccountLimitsNoteTagCountMax);
 
     return accountLimits;
