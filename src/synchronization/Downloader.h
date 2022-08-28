@@ -27,7 +27,18 @@
 
 #include <synchronization/types/SyncState.h>
 
+#include <qevercloud/Fwd.h>
+#include <qevercloud/types/AccountLimits.h>
+#include <qevercloud/types/User.h>
+
 #include <QDir>
+#include <QMutex>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
 
 #include <optional>
 
@@ -53,6 +64,7 @@ public:
         IResourcesProcessorPtr resourcesProcessor,
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
+        qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         const QDir & syncPersistentStorageDir);
 
@@ -63,6 +75,11 @@ private:
 
     [[nodiscard]] QFuture<Result> launchDownload(
         IAuthenticationInfoPtr authenticationInfo);
+
+    [[nodiscard]] QFuture<qevercloud::User> syncUser(
+        IAuthenticationInfoPtr authenticationInfo);
+
+    void cancel(QPromise<Result> & promise);
 
 private:
     const Account m_account;
@@ -79,10 +96,15 @@ private:
     const IResourcesProcessorPtr m_resourcesProcessor;
     const ISavedSearchesProcessorPtr m_savedSearchesProcessor;
     const ITagsProcessorPtr m_tagsProcessor;
+    const qevercloud::IRequestContextPtr m_ctx;
     const utility::cancelers::ICancelerPtr m_canceler;
     const QDir m_syncPersistentStorageDir;
 
+    QMutex m_mutex;
+    std::optional<QFuture<Result>> m_future;
     std::optional<SyncState> m_lastSyncState;
+    std::optional<qevercloud::User> m_user;
+    std::optional<qevercloud::AccountLimits> m_accountLimits;
 };
 
 } // namespace quentier::synchronization
