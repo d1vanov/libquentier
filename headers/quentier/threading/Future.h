@@ -48,7 +48,6 @@ namespace quentier::threading {
  */
 template <class T>
 [[nodiscard]] std::enable_if_t<
-    std::is_fundamental_v<std::decay_t<T>> &&
         std::negation_v<std::is_same<std::decay_t<T>, void>>,
     QFuture<std::decay_t<T>>>
     makeReadyFuture(T t)
@@ -57,24 +56,7 @@ template <class T>
     QFuture<std::decay_t<T>> future = promise.future();
 
     promise.start();
-    promise.addResult(t);
-    promise.finish();
-
-    return future;
-}
-
-template <class T>
-[[nodiscard]] std::enable_if_t<
-    std::negation_v<std::is_fundamental<std::decay_t<T>>> &&
-        std::negation_v<std::is_same<std::decay_t<T>, void>>,
-    QFuture<std::decay_t<T>>>
-    makeReadyFuture(T && t)
-{
-    QPromise<std::decay_t<T>> promise;
-    QFuture<std::decay_t<T>> future = promise.future();
-
-    promise.start();
-    promise.addResult(std::forward<T>(t));
+    promise.addResult(std::move(t));
     promise.finish();
 
     return future;
