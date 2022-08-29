@@ -19,6 +19,7 @@
 #pragma once
 
 #include <qevercloud/EDAMErrorCode.h>
+#include <qevercloud/Fwd.h>
 #include <qevercloud/types/AccountLimits.h>
 
 #include <QFuture>
@@ -36,11 +37,13 @@ public:
     /**
      * Find account limits for particular Evernote service level
      * @param serviceLevel  Service level for which account limits are requested
+     * @param ctx           Request context for fetching of account limits
      * @return              Future with account limits or exception in case of
      *                      error
      */
     [[nodiscard]] virtual QFuture<qevercloud::AccountLimits> accountLimits(
-        qevercloud::ServiceLevel serviceLevel) = 0;
+        qevercloud::ServiceLevel serviceLevel,
+        qevercloud::IRequestContextPtr ctx) = 0;
 };
 
 } // namespace quentier::synchronization

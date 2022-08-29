@@ -17,9 +17,7 @@
  */
 
 #include <synchronization/AccountLimitsProvider.h>
-#include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockIUserStore.h>
-#include <synchronization/types/AuthenticationInfo.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
@@ -373,15 +371,8 @@ protected:
         QStringLiteral("https://www.evernote.com"),
         QStringLiteral("shard id")};
 
-    const std::shared_ptr<mocks::MockIAuthenticationInfoProvider>
-        m_mockAuthenticationInfoProvider = std::make_shared<
-            StrictMock<mocks::MockIAuthenticationInfoProvider>>();
-
     const std::shared_ptr<mocks::qevercloud::MockIUserStore> m_mockUserStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockIUserStore>>();
-
-    const qevercloud::IRequestContextPtr m_ctx =
-        qevercloud::newRequestContext();
 };
 
 TEST_F(AccountLimitsProviderTest, Ctor)
@@ -389,17 +380,14 @@ TEST_F(AccountLimitsProviderTest, Ctor)
     EXPECT_NO_THROW(
         const auto accountLimitsProvider =
             std::make_shared<AccountLimitsProvider>(
-                m_account, m_mockAuthenticationInfoProvider, m_mockUserStore,
-                m_ctx));
+                m_account, m_mockUserStore));
 }
 
 TEST_F(AccountLimitsProviderTest, CtorEmptyAccount)
 {
     EXPECT_THROW(
         const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(
-                Account{}, m_mockAuthenticationInfoProvider, m_mockUserStore,
-                m_ctx),
+            std::make_shared<AccountLimitsProvider>(Account{}, m_mockUserStore),
         InvalidArgument);
 }
 
@@ -410,17 +398,7 @@ TEST_F(AccountLimitsProviderTest, CtorNonEvernoteAccount)
     EXPECT_THROW(
         const auto accountLimitsProvider =
             std::make_shared<AccountLimitsProvider>(
-                std::move(account), m_mockAuthenticationInfoProvider,
-                m_mockUserStore, m_ctx),
-        InvalidArgument);
-}
-
-TEST_F(AccountLimitsProviderTest, CtorNullAuthenticationInfoProvider)
-{
-    EXPECT_THROW(
-        const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(
-                m_account, nullptr, m_mockUserStore, m_ctx),
+                std::move(account), m_mockUserStore),
         InvalidArgument);
 }
 
@@ -428,25 +406,14 @@ TEST_F(AccountLimitsProviderTest, CtorNullUserStore)
 {
     EXPECT_THROW(
         const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(
-                m_account, m_mockAuthenticationInfoProvider, nullptr, m_ctx),
-        InvalidArgument);
-}
-
-TEST_F(AccountLimitsProviderTest, CtorNullRequestContext)
-{
-    EXPECT_THROW(
-        const auto accountLimitsProvider =
-            std::make_shared<AccountLimitsProvider>(
-                m_account, m_mockAuthenticationInfoProvider, m_mockUserStore,
-                nullptr),
+            std::make_shared<AccountLimitsProvider>(m_account, nullptr),
         InvalidArgument);
 }
 
 TEST_F(AccountLimitsProviderTest, GetAccountLimitsWithoutPreexistingStorage)
 {
-    const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
-        m_account, m_mockAuthenticationInfoProvider, m_mockUserStore, m_ctx);
+    const auto accountLimitsProvider =
+        std::make_shared<AccountLimitsProvider>(m_account, m_mockUserStore);
 
     const auto accountLimits = qevercloud::AccountLimitsBuilder{}
                                    .setNoteTagCountMax(42)
@@ -457,32 +424,19 @@ TEST_F(AccountLimitsProviderTest, GetAccountLimitsWithoutPreexistingStorage)
                                    .build();
 
     const QString authToken = QStringLiteral("authToken");
+    auto ctx = qevercloud::newRequestContext(authToken);
 
-    EXPECT_CALL(
-        *m_mockAuthenticationInfoProvider,
-        authenticateAccount(
-            m_account, IAuthenticationInfoProvider::Mode::Cache))
-        .WillRepeatedly(
-            [&](const Account &, const IAuthenticationInfoProvider::Mode) {
-                auto info = std::make_shared<AuthenticationInfo>();
-                info->m_userId = m_account.id();
-                info->m_authToken = authToken;
-                return threading::makeReadyFuture<IAuthenticationInfoPtr>(
-                    std::move(info));
-            });
-
-    EXPECT_CALL(
-        *m_mockUserStore,
-        getAccountLimitsAsync(qevercloud::ServiceLevel::BASIC, _))
-        .WillOnce([&](const qevercloud::ServiceLevel,
+    EXPECT_CALL(*m_mockUserStore, getAccountLimitsAsync)
+        .WillOnce([&](const qevercloud::ServiceLevel serviceLevel,
                       const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(serviceLevel, qevercloud::ServiceLevel::BASIC);
             EXPECT_EQ(ctx->authenticationToken(), authToken);
             return threading::makeReadyFuture<qevercloud::AccountLimits>(
                 accountLimits);
         });
 
-    auto future =
-        accountLimitsProvider->accountLimits(qevercloud::ServiceLevel::BASIC);
+    auto future = accountLimitsProvider->accountLimits(
+        qevercloud::ServiceLevel::BASIC, ctx);
 
     ASSERT_TRUE(future.isFinished());
 
@@ -495,8 +449,8 @@ TEST_F(AccountLimitsProviderTest, GetAccountLimitsWithoutPreexistingStorage)
 
     // The second call with the same argument should not trigger the call of
     // IUserStore as the result of the first call should be cached
-    future =
-        accountLimitsProvider->accountLimits(qevercloud::ServiceLevel::BASIC);
+    future = accountLimitsProvider->accountLimits(
+        qevercloud::ServiceLevel::BASIC, ctx);
 
     ASSERT_TRUE(future.isFinished());
 
@@ -509,18 +463,17 @@ TEST_F(AccountLimitsProviderTest, GetAccountLimitsWithoutPreexistingStorage)
 
     // The call with another argument value should trigger the call of
     // IUSerStore method
-    EXPECT_CALL(
-        *m_mockUserStore,
-        getAccountLimitsAsync(qevercloud::ServiceLevel::PLUS, _))
-        .WillOnce([&](const qevercloud::ServiceLevel,
+    EXPECT_CALL(*m_mockUserStore, getAccountLimitsAsync)
+        .WillOnce([&](const qevercloud::ServiceLevel serviceLevel,
                       const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(serviceLevel, qevercloud::ServiceLevel::PLUS);
             EXPECT_EQ(ctx->authenticationToken(), authToken);
             return threading::makeReadyFuture<qevercloud::AccountLimits>(
                 accountLimits);
         });
 
-    future =
-        accountLimitsProvider->accountLimits(qevercloud::ServiceLevel::PLUS);
+    future = accountLimitsProvider->accountLimits(
+        qevercloud::ServiceLevel::PLUS, ctx);
 
     ASSERT_TRUE(future.isFinished());
 
@@ -535,8 +488,8 @@ TEST_F(AccountLimitsProviderTest, GetAccountLimitsWithoutPreexistingStorage)
 TEST_F(
     AccountLimitsProviderTest, GetAccountLimitsWithRelevantPreexistingStorage)
 {
-    const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
-        m_account, m_mockAuthenticationInfoProvider, m_mockUserStore, m_ctx);
+    const auto accountLimitsProvider =
+        std::make_shared<AccountLimitsProvider>(m_account, m_mockUserStore);
 
     const auto accountLimits = qevercloud::AccountLimitsBuilder{}
                                    .setNoteTagCountMax(42)
@@ -553,8 +506,11 @@ TEST_F(
     setupAccountLimitsPersistence(
         m_account, qevercloud::ServiceLevel::PREMIUM, accountLimits, now);
 
-    auto future =
-        accountLimitsProvider->accountLimits(qevercloud::ServiceLevel::PREMIUM);
+    const QString authToken = QStringLiteral("authToken");
+    auto ctx = qevercloud::newRequestContext(authToken);
+
+    auto future = accountLimitsProvider->accountLimits(
+        qevercloud::ServiceLevel::PREMIUM, ctx);
 
     ASSERT_TRUE(future.isFinished());
 
@@ -569,8 +525,8 @@ TEST_F(
 TEST_F(
     AccountLimitsProviderTest, GetAccountLimitsWithIrrelevantPreexistingStorage)
 {
-    const auto accountLimitsProvider = std::make_shared<AccountLimitsProvider>(
-        m_account, m_mockAuthenticationInfoProvider, m_mockUserStore, m_ctx);
+    const auto accountLimitsProvider =
+        std::make_shared<AccountLimitsProvider>(m_account, m_mockUserStore);
 
     const auto accountLimits = qevercloud::AccountLimitsBuilder{}
                                    .setNoteTagCountMax(42)
@@ -592,32 +548,19 @@ TEST_F(
         oldTimestamp);
 
     const QString authToken = QStringLiteral("authToken");
+    auto ctx = qevercloud::newRequestContext(authToken);
 
-    EXPECT_CALL(
-        *m_mockAuthenticationInfoProvider,
-        authenticateAccount(
-            m_account, IAuthenticationInfoProvider::Mode::Cache))
-        .WillRepeatedly(
-            [&](const Account &, const IAuthenticationInfoProvider::Mode) {
-                auto info = std::make_shared<AuthenticationInfo>();
-                info->m_userId = m_account.id();
-                info->m_authToken = authToken;
-                return threading::makeReadyFuture<IAuthenticationInfoPtr>(
-                    std::move(info));
-            });
-
-    EXPECT_CALL(
-        *m_mockUserStore,
-        getAccountLimitsAsync(qevercloud::ServiceLevel::BUSINESS, _))
-        .WillOnce([&](const qevercloud::ServiceLevel,
+    EXPECT_CALL(*m_mockUserStore, getAccountLimitsAsync)
+        .WillOnce([&](const qevercloud::ServiceLevel serviceLevel,
                       const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(serviceLevel, qevercloud::ServiceLevel::BUSINESS);
             EXPECT_EQ(ctx->authenticationToken(), authToken);
             return threading::makeReadyFuture<qevercloud::AccountLimits>(
                 accountLimits);
         });
 
     auto future = accountLimitsProvider->accountLimits(
-        qevercloud::ServiceLevel::BUSINESS);
+        qevercloud::ServiceLevel::BUSINESS, ctx);
 
     ASSERT_TRUE(future.isFinished());
 

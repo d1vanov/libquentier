@@ -28,7 +28,8 @@ class MockIAccountLimitsProvider : public IAccountLimitsProvider
 {
     MOCK_METHOD(
         QFuture<qevercloud::AccountLimits>, accountLimits,
-        (qevercloud::ServiceLevel serviceLevel), (override));
+        (qevercloud::ServiceLevel serviceLevel,
+         qevercloud::IRequestContextPtr ctx), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

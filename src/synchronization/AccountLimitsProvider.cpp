@@ -20,16 +20,12 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/DateTime.h>
 
-#include <synchronization/IAuthenticationInfoProvider.h>
-
 #include <qevercloud/RequestContext.h>
-#include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/IUserStore.h>
 
 #include <QDateTime>
@@ -96,11 +92,10 @@ const QString gAccountLimitsNoteTagCountMax = QStringLiteral("noteTagCountMax");
 } // namespace
 
 AccountLimitsProvider::AccountLimitsProvider(
-    Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
-    qevercloud::IUserStorePtr userStore, qevercloud::IRequestContextPtr ctx) :
+    Account account,
+    qevercloud::IUserStorePtr userStore) :
     m_account{std::move(account)},
-    m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
-    m_userStore{std::move(userStore)}, m_ctx{std::move(ctx)}
+    m_userStore{std::move(userStore)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -114,28 +109,16 @@ AccountLimitsProvider::AccountLimitsProvider(
             "AccountLimitsProvider ctor: account is not an Evernote one")}};
     }
 
-    if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AccountLimitsProvider",
-            "AccountLimitsProvider ctor: authentication info provider is "
-            "null")}};
-    }
-
     if (Q_UNLIKELY(!m_userStore)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::AccountLimitsProvider",
             "AccountLimitsProvider ctor: user store is null")}};
     }
-
-    if (Q_UNLIKELY(!m_ctx)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AccountLimitsProvider",
-            "AccountLimitsProvider ctor: request context is null")}};
-    }
 }
 
 QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
-    const qevercloud::ServiceLevel serviceLevel)
+    const qevercloud::ServiceLevel serviceLevel,
+    qevercloud::IRequestContextPtr ctx)
 {
     {
         const QMutexLocker locker{&m_accountLimitsCacheMutex};
@@ -155,64 +138,40 @@ QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
     auto future = promise->future();
     promise->start();
 
-    auto authenticationInfoFuture =
-        m_authenticationInfoProvider->authenticateAccount(
-            m_account, IAuthenticationInfoProvider::Mode::Cache);
-
     auto selfWeak = weak_from_this();
 
+    auto accountLimitsFuture = m_userStore->getAccountLimitsAsync(
+        serviceLevel, std::move(ctx));
+
     threading::thenOrFailed(
-        std::move(authenticationInfoFuture), promise,
-        threading::TrackedTask{
-            selfWeak,
-            [this, promise, selfWeak,
-             serviceLevel](const IAuthenticationInfoPtr & authenticationInfo) {
-                Q_ASSERT(authenticationInfo);
+        std::move(accountLimitsFuture), promise,
+        [promise, selfWeak, serviceLevel, ctx = std::move(ctx)](
+            qevercloud::AccountLimits accountLimits) {
+            if (const auto self = selfWeak.lock()) {
+                const QMutexLocker locker{
+                    &self->m_accountLimitsCacheMutex};
 
-                auto ctx =
-                    qevercloud::RequestContextBuilder{}
-                        .setAuthenticationToken(authenticationInfo->authToken())
-                        .setRequestTimeout(m_ctx->requestTimeout())
-                        .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
-                        .setMaxRetryCount(m_ctx->maxRequestRetryCount())
-                        .setIncreaseRequestTimeoutExponentially(
-                            m_ctx->increaseRequestTimeoutExponentially())
-                        .setCookies(m_ctx->cookies())
-                        .build();
+                // First let's check whether we are too late and
+                // another call managed to bring the account limits
+                // to the local cache faster
+                const auto it =
+                    self->m_accountLimitsCache.constFind(
+                        serviceLevel);
+                if (it != self->m_accountLimitsCache.constEnd()) {
+                    promise->addResult(it.value());
+                    promise->finish();
+                    return;
+                }
 
-                auto accountLimitsFuture = m_userStore->getAccountLimitsAsync(
-                    serviceLevel, std::move(ctx));
+                self->m_accountLimitsCache[serviceLevel] =
+                    accountLimits;
+                self->writePersistentAccountLimits(
+                    serviceLevel, accountLimits);
+            }
 
-                threading::thenOrFailed(
-                    std::move(accountLimitsFuture), promise,
-                    [promise, selfWeak, serviceLevel, ctx = std::move(ctx)](
-                        qevercloud::AccountLimits accountLimits) {
-                        if (const auto self = selfWeak.lock()) {
-                            const QMutexLocker locker{
-                                &self->m_accountLimitsCacheMutex};
-
-                            // First let's check whether we are too late and
-                            // another call managed to bring the account limits
-                            // to the local cache faster
-                            const auto it =
-                                self->m_accountLimitsCache.constFind(
-                                    serviceLevel);
-                            if (it != self->m_accountLimitsCache.constEnd()) {
-                                promise->addResult(it.value());
-                                promise->finish();
-                                return;
-                            }
-
-                            self->m_accountLimitsCache[serviceLevel] =
-                                accountLimits;
-                            self->writePersistentAccountLimits(
-                                serviceLevel, accountLimits);
-                        }
-
-                        promise->addResult(std::move(accountLimits));
-                        promise->finish();
-                    });
-            }});
+            promise->addResult(std::move(accountLimits));
+            promise->finish();
+        });
 
     return future;
 }

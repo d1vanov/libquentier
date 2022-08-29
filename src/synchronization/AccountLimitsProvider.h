@@ -39,13 +39,11 @@ class AccountLimitsProvider final :
 {
 public:
     explicit AccountLimitsProvider(
-        Account account,
-        IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        qevercloud::IUserStorePtr userStore,
-        qevercloud::IRequestContextPtr ctx);
+        Account account, qevercloud::IUserStorePtr userStore);
 
     [[nodiscard]] QFuture<qevercloud::AccountLimits> accountLimits(
-        qevercloud::ServiceLevel serviceLevel) override;
+        qevercloud::ServiceLevel serviceLevel,
+        qevercloud::IRequestContextPtr ctx) override;
 
 private:
     [[nodiscard]] std::optional<qevercloud::AccountLimits>
@@ -58,9 +56,7 @@ private:
 
 private:
     const Account m_account;
-    const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const qevercloud::IUserStorePtr m_userStore;
-    const qevercloud::IRequestContextPtr m_ctx;
 
     QMutex m_accountLimitsCacheMutex;
     QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>
