@@ -282,7 +282,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 }
 
 QFuture<qevercloud::User> Downloader::syncUser(
-    IAuthenticationInfoPtr authenticationInfo) // NOLINT
+    qevercloud::IRequestContextPtr ctx) // NOLINT
 {
     {
         const QMutexLocker locker{&m_mutex};
@@ -296,9 +296,7 @@ QFuture<qevercloud::User> Downloader::syncUser(
 
     promise->start();
 
-    auto userFuture =
-        m_userInfoProvider->userInfo(authenticationInfo->authToken());
-
+    auto userFuture = m_userInfoProvider->userInfo(std::move(ctx));
     auto selfWeak = weak_from_this();
 
     threading::thenOrFailed(

@@ -35,16 +35,13 @@ class UserInfoProvider final :
     public std::enable_shared_from_this<UserInfoProvider>
 {
 public:
-    explicit UserInfoProvider(
-        qevercloud::IUserStorePtr userStore,
-        qevercloud::IRequestContextPtr ctx);
+    explicit UserInfoProvider(qevercloud::IUserStorePtr userStore);
 
     [[nodiscard]] QFuture<qevercloud::User> userInfo(
-        QString authToken) override;
+        qevercloud::IRequestContextPtr ctx) override;
 
 private:
     const qevercloud::IUserStorePtr m_userStore;
-    const qevercloud::IRequestContextPtr m_ctx;
 
     QReadWriteLock m_userInfoCacheReadWriteLock;
     QHash<QString, qevercloud::User> m_userInfoCache;

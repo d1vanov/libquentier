@@ -35,26 +35,28 @@
 
 namespace quentier::synchronization {
 
-UserInfoProvider::UserInfoProvider(
-    qevercloud::IUserStorePtr userStore, qevercloud::IRequestContextPtr ctx) :
-    m_userStore{std::move(userStore)},
-    m_ctx{std::move(ctx)}
+UserInfoProvider::UserInfoProvider(qevercloud::IUserStorePtr userStore) :
+    m_userStore{std::move(userStore)}
 {
     if (Q_UNLIKELY(!m_userStore)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::UserInfoProvider",
             "UserInfoProvider ctor: user store is null")}};
     }
-
-    if (Q_UNLIKELY(!m_ctx)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::UserInfoProvider",
-            "UserInfoProvider ctor: request context is null")}};
-    }
 }
 
-QFuture<qevercloud::User> UserInfoProvider::userInfo(QString authToken)
+QFuture<qevercloud::User> UserInfoProvider::userInfo(
+    qevercloud::IRequestContextPtr ctx)
 {
+    if (Q_UNLIKELY(!ctx)) {
+        return threading::makeExceptionalFuture<qevercloud::User>(
+            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+                "synchronization::UserInfoProvider",
+                "Request context is null")}});
+    }
+
+    QString authToken = ctx->authenticationToken();
+
     {
         const QReadLocker locker{&m_userInfoCacheReadWriteLock};
         const auto it = m_userInfoCache.constFind(authToken);
@@ -62,12 +64,6 @@ QFuture<qevercloud::User> UserInfoProvider::userInfo(QString authToken)
             return threading::makeReadyFuture(qevercloud::User{it.value()});
         }
     }
-
-    auto ctx = qevercloud::newRequestContext(
-        authToken, m_ctx->requestTimeout(),
-        m_ctx->increaseRequestTimeoutExponentially(),
-        m_ctx->maxRequestTimeout(), m_ctx->maxRequestRetryCount(),
-        m_ctx->cookies());
 
     auto promise = std::make_shared<QPromise<qevercloud::User>>();
     auto future = promise->future();

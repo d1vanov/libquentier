@@ -34,6 +34,7 @@
 #include <synchronization/types/AuthenticationInfo.h>
 
 #include <qevercloud/RequestContext.h>
+#include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>
 
 #include <QCoreApplication>
@@ -230,7 +231,8 @@ QFuture<IAuthenticationInfoPtr>
                 auto accountFuture = findAccountForUserId(
                     authenticationInfo->userId(),
                     authenticationInfo->authToken(),
-                    authenticationInfo->shardId());
+                    authenticationInfo->shardId(),
+                    authenticationInfo->userStoreCookies());
 
                 auto accountThenFuture = threading::then(
                     std::move(accountFuture),
@@ -961,14 +963,20 @@ std::shared_ptr<AuthenticationInfo>
 }
 
 QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
-    const qevercloud::UserID userId, QString authToken, QString shardId) // NOLINT
+    const qevercloud::UserID userId, QString authToken, QString shardId, // NOLINT
+    QList<QNetworkCookie> cookies) // NOLINT
 {
     auto promise = std::make_shared<QPromise<Account>>();
     auto future = promise->future();
 
     promise->start();
 
-    auto userFuture = m_userInfoProvider->userInfo(std::move(authToken));
+    auto ctx = qevercloud::RequestContextBuilder{}
+                   .setAuthenticationToken(std::move(authToken))
+                   .setCookies(std::move(cookies))
+                   .build();
+
+    auto userFuture = m_userInfoProvider->userInfo(std::move(ctx));
 
     threading::thenOrFailed(
         std::move(userFuture), promise,

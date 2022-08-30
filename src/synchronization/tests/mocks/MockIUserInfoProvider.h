@@ -26,8 +26,8 @@ class MockIUserInfoProvider : public IUserInfoProvider
 {
 public:
     MOCK_METHOD(
-        QFuture<qevercloud::User>, userInfo, (QString authToken),
-        (override));
+        QFuture<qevercloud::User>, userInfo,
+        (qevercloud::IRequestContextPtr ctx), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

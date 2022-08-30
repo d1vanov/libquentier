@@ -379,10 +379,14 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
                           .setShardId(m_authenticationInfo->shardId())
                           .build();
 
-    EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
-        .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
-            qevercloud::User{user})));
+    EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
+        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            EXPECT_EQ(
+                ctx->authenticationToken(), m_authenticationInfo->authToken());
+            EXPECT_EQ(ctx->cookies(), m_authenticationInfo->userStoreCookies());
+            return threading::makeReadyFuture<qevercloud::User>(user);
+        });
 
     static const QString appName = QCoreApplication::applicationName();
 
@@ -436,8 +440,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
         m_authenticationInfo, account, m_host);
 }
 
-TEST_F(
-    AuthenticationInfoProviderTest, PropagateErrorWhenAuthNewAccount)
+TEST_F(AuthenticationInfoProviderTest, PropagateErrorWhenAuthNewAccount)
 {
     const auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
@@ -484,10 +487,15 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
             m_authenticationInfo)));
 
-    EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
-        .WillOnce(Return(threading::makeExceptionalFuture<qevercloud::User>(
-            RuntimeError{ErrorString{QStringLiteral("some error")}})));
+    EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
+        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            EXPECT_EQ(
+                ctx->authenticationToken(), m_authenticationInfo->authToken());
+            EXPECT_EQ(ctx->cookies(), m_authenticationInfo->userStoreCookies());
+            return threading::makeExceptionalFuture<qevercloud::User>(
+                RuntimeError{ErrorString{QStringLiteral("some error")}});
+        });
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
     ASSERT_TRUE(future.isFinished());
@@ -522,10 +530,14 @@ TEST_F(
                           .setShardId(m_authenticationInfo->shardId())
                           .build();
 
-    EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
-        .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
-            qevercloud::User{user})));
+    EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
+        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            EXPECT_EQ(
+                ctx->authenticationToken(), m_authenticationInfo->authToken());
+            EXPECT_EQ(ctx->cookies(), m_authenticationInfo->userStoreCookies());
+            return threading::makeReadyFuture<qevercloud::User>(user);
+        });
 
     static const QString appName = QCoreApplication::applicationName();
 
@@ -614,10 +626,14 @@ TEST_F(
                           .setShardId(m_authenticationInfo->shardId())
                           .build();
 
-    EXPECT_CALL(
-        *m_mockUserInfoProvider, userInfo(m_authenticationInfo->authToken()))
-        .WillOnce(Return(threading::makeReadyFuture<qevercloud::User>(
-            qevercloud::User{user})));
+    EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
+        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            EXPECT_EQ(
+                ctx->authenticationToken(), m_authenticationInfo->authToken());
+            EXPECT_EQ(ctx->cookies(), m_authenticationInfo->userStoreCookies());
+            return threading::makeReadyFuture<qevercloud::User>(user);
+        });
 
     static const QString appName = QCoreApplication::applicationName();
 

@@ -42,36 +42,38 @@ protected:
         std::make_shared<StrictMock<mocks::qevercloud::MockIUserStore>>();
 
     const qevercloud::IRequestContextPtr m_ctx =
-        qevercloud::newRequestContext();
+        qevercloud::newRequestContext(QStringLiteral("authToken"));
 };
 
 TEST_F(UserInfoProviderTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-            m_mockUserStore, m_ctx));
+            m_mockUserStore));
 }
 
 TEST_F(UserInfoProviderTest, CtorNullUserStore)
 {
     EXPECT_THROW(
         const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-            nullptr, m_ctx),
+            nullptr),
         InvalidArgument);
 }
 
-TEST_F(UserInfoProviderTest, CtorNullRequestContext)
+TEST_F(UserInfoProviderTest, GetUserNullRequestContext)
 {
-    EXPECT_THROW(
-        const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-            m_mockUserStore, nullptr),
-        InvalidArgument);
+    const auto userInfoProvider = std::make_shared<UserInfoProvider>(
+        m_mockUserStore);
+
+    auto future = userInfoProvider->userInfo(nullptr);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_THROW(future.waitForFinished(), InvalidArgument);
 }
 
 TEST_F(UserInfoProviderTest, GetUser)
 {
     const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-        m_mockUserStore, m_ctx);
+        m_mockUserStore);
 
     const auto user = qevercloud::UserBuilder{}
         .setId(qevercloud::UserID{42})
@@ -79,16 +81,14 @@ TEST_F(UserInfoProviderTest, GetUser)
         .setName(QStringLiteral("Full name"))
         .build();
 
-    const QString authToken = QStringLiteral("authToken");
-
     EXPECT_CALL(*m_mockUserStore, getUserAsync).WillOnce(
         [&](const qevercloud::IRequestContextPtr & ctx)
         {
-            EXPECT_EQ(ctx->authenticationToken(), authToken);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
             return threading::makeReadyFuture(user);
         });
 
-    auto future = userInfoProvider->userInfo(authToken);
+    auto future = userInfoProvider->userInfo(m_ctx);
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -97,7 +97,7 @@ TEST_F(UserInfoProviderTest, GetUser)
 
     // The second call should not trigger the call of IUserStore as the result
     // of the first call should be cached
-    future = userInfoProvider->userInfo(authToken);
+    future = userInfoProvider->userInfo(m_ctx);
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);

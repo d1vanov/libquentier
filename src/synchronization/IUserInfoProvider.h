@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <qevercloud/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 #include <qevercloud/types/User.h>
 
@@ -35,13 +36,15 @@ public:
     virtual ~IUserInfoProvider() = default;
 
     /**
-     * Find full information about Evernote user by authentication token.
-     * @param authToken     Authentication token
+     * Find full information about current authenticated Evernote user.
+     * @param ctx           Request context with authentication token
+     *                      identifyng the user the information about which
+     *                      is being requested.
      * @return              Future with full user info or exception if no user
      *                      info is found
      */
     [[nodiscard]] virtual QFuture<qevercloud::User> userInfo(
-        QString authToken) = 0;
+        qevercloud::IRequestContextPtr ctx) = 0;
 };
 
 } // namespace quentier::synchronization

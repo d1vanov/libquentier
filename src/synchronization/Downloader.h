@@ -77,7 +77,7 @@ private:
         IAuthenticationInfoPtr authenticationInfo);
 
     [[nodiscard]] QFuture<qevercloud::User> syncUser(
-        IAuthenticationInfoPtr authenticationInfo);
+        qevercloud::IRequestContextPtr ctx);
 
     void cancel(QPromise<Result> & promise);
 

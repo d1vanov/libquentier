@@ -87,7 +87,8 @@ private:
         readAuthenticationInfoPart(const Account & account) const;
 
     [[nodiscard]] QFuture<Account> findAccountForUserId(
-        qevercloud::UserID userId, QString authToken, QString shardId);
+        qevercloud::UserID userId, QString authToken, QString shardId,
+        QList<QNetworkCookie> networkCookies);
 
     [[nodiscard]] QFuture<void> storeAuthenticationInfo(
         IAuthenticationInfoPtr authenticationInfo, Account account);
