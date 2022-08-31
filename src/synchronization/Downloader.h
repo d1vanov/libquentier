@@ -27,7 +27,9 @@
 
 #include <synchronization/types/SyncState.h>
 
+#include <qevercloud/EDAMErrorCode.h>
 #include <qevercloud/Fwd.h>
+#include <qevercloud/services/Fwd.h>
 #include <qevercloud/types/AccountLimits.h>
 #include <qevercloud/types/User.h>
 
@@ -65,6 +67,7 @@ public:
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
         qevercloud::IRequestContextPtr ctx,
+        qevercloud::INoteStorePtr noteStore,
         utility::cancelers::ICancelerPtr canceler,
         const QDir & syncPersistentStorageDir);
 
@@ -77,6 +80,10 @@ private:
         IAuthenticationInfoPtr authenticationInfo);
 
     [[nodiscard]] QFuture<qevercloud::User> syncUser(
+        qevercloud::IRequestContextPtr ctx);
+
+    [[nodiscard]] QFuture<qevercloud::AccountLimits> syncAccountLimits(
+        qevercloud::ServiceLevel serviceLevel,
         qevercloud::IRequestContextPtr ctx);
 
     void cancel(QPromise<Result> & promise);
@@ -97,14 +104,15 @@ private:
     const ISavedSearchesProcessorPtr m_savedSearchesProcessor;
     const ITagsProcessorPtr m_tagsProcessor;
     const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::INoteStorePtr m_noteStore;
     const utility::cancelers::ICancelerPtr m_canceler;
     const QDir m_syncPersistentStorageDir;
 
     QMutex m_mutex;
     std::optional<QFuture<Result>> m_future;
     std::optional<SyncState> m_lastSyncState;
-    std::optional<qevercloud::User> m_user;
-    std::optional<qevercloud::AccountLimits> m_accountLimits;
+    std::optional<QFuture<qevercloud::User>> m_userFuture;
+    std::optional<QFuture<qevercloud::AccountLimits>> m_accountLimitsFuture;
 };
 
 } // namespace quentier::synchronization

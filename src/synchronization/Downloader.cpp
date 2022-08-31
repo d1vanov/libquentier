@@ -26,6 +26,7 @@
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/cancelers/ICanceler.h>
 
+#include <synchronization/IAccountLimitsProvider.h>
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/IUserInfoProvider.h>
@@ -48,6 +49,7 @@ Downloader::Downloader(
     IResourcesProcessorPtr resourcesProcessor,
     ISavedSearchesProcessorPtr savedSearchesProcessor,
     ITagsProcessorPtr tagsProcessor, qevercloud::IRequestContextPtr ctx,
+    qevercloud::INoteStorePtr noteStore,
     utility::cancelers::ICancelerPtr canceler,
     const QDir & syncPersistentStorageDir) :
     m_account{std::move(account)},
@@ -60,12 +62,15 @@ Downloader::Downloader(
     m_syncChunksStorage{std::move(syncChunksStorage)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
-    m_notesProcessor{std::move(notesProcessor)}, m_resourcesProcessor{std::move(
-                                                     resourcesProcessor)},
+    // clang-format does some weird crap here, working around
+    // clang-format off
+    m_notesProcessor{std::move(notesProcessor)},
+    m_resourcesProcessor{std::move(resourcesProcessor)},
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
     m_tagsProcessor{std::move(tagsProcessor)}, m_ctx{std::move(ctx)},
-    m_canceler{std::move(canceler)}, m_syncPersistentStorageDir{
-                                         syncPersistentStorageDir}
+    m_noteStore{std::move(noteStore)}, m_canceler{std::move(canceler)},
+    m_syncPersistentStorageDir{syncPersistentStorageDir}
+// clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -163,6 +168,12 @@ Downloader::Downloader(
             "Downloader ctor: request context is null")}};
     }
 
+    if (Q_UNLIKELY(!m_noteStore)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: note store is null")}};
+    }
+
     if (Q_UNLIKELY(!m_canceler)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
@@ -174,28 +185,28 @@ QFuture<IDownloader::Result> Downloader::download()
 {
     QNDEBUG("synchronization::Downloader", "Downloader::download");
 
-    QMutexLocker locker{&m_mutex};
+    std::shared_ptr<QPromise<Result>> promise;
+    {
+        const QMutexLocker locker{&m_mutex};
+        if (m_future) {
+            QNDEBUG(
+                "synchronization::Downloader",
+                "Download is already in progress");
+            return *m_future;
+        }
 
-    if (m_future) {
+        if (!m_lastSyncState) {
+            readLastSyncState();
+            Q_ASSERT(m_lastSyncState);
+        }
+
         QNDEBUG(
             "synchronization::Downloader",
-            "Download is already in progress");
-        return *m_future;
+            "Last sync state: " << *m_lastSyncState);
+
+        promise = std::make_shared<QPromise<Result>>();
+        m_future = promise->future();
     }
-
-    if (!m_lastSyncState) {
-        readLastSyncState();
-        Q_ASSERT(m_lastSyncState);
-    }
-
-    QNDEBUG(
-        "synchronization::Downloader",
-        "Last sync state: " << *m_lastSyncState);
-
-    auto promise = std::make_shared<QPromise<Result>>();
-    m_future = promise->future();
-
-    locker.unlock();
 
     promise->start();
 
@@ -277,43 +288,107 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 {
     Q_ASSERT(authenticationInfo);
 
-    // TODO: implement
+    const auto ctx =
+        qevercloud::RequestContextBuilder{}
+            .setAuthenticationToken(authenticationInfo->authToken())
+            .setCookies(authenticationInfo->userStoreCookies())
+            .setRequestTimeout(m_ctx->requestTimeout())
+            .setIncreaseRequestTimeoutExponentially(
+                m_ctx->increaseRequestTimeoutExponentially())
+            .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
+            .setMaxRetryCount(m_ctx->maxRequestRetryCount())
+            .build();
+
+    auto userFuture = syncUser(ctx);
+
+    const auto selfWeak = weak_from_this();
+
+    auto accountLimitsFuture = threading::then(
+        std::move(userFuture), [selfWeak, ctx](qevercloud::User && user) {
+            if (const auto self = selfWeak.lock()) {
+                if (self->m_canceler->isCanceled()) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::AccountLimits>(OperationCanceled{});
+                }
+
+                const qevercloud::ServiceLevel serviceLevel = [&] {
+                    auto level = user.serviceLevel();
+                    if (level) {
+                        return *level;
+                    }
+
+                    QNWARNING(
+                        "synchronization::Downloader",
+                        "No service level set for user: " << user);
+                    return qevercloud::ServiceLevel::BASIC;
+                }();
+
+                return self->syncAccountLimits(serviceLevel, ctx);
+            }
+
+            return threading::makeExceptionalFuture<qevercloud::AccountLimits>(
+                OperationCanceled{});
+        });
+
+    // TODO: implement further
+    Q_UNUSED(accountLimitsFuture)
     return threading::makeReadyFuture<IDownloader::Result>({});
 }
 
 QFuture<qevercloud::User> Downloader::syncUser(
-    qevercloud::IRequestContextPtr ctx) // NOLINT
+    qevercloud::IRequestContextPtr ctx)
 {
+    std::shared_ptr<QPromise<qevercloud::User>> promise;
     {
         const QMutexLocker locker{&m_mutex};
-        if (m_user) {
-            return threading::makeReadyFuture(*m_user);
+        if (m_userFuture) {
+            return *m_userFuture;
         }
-    }
 
-    auto promise = std::make_shared<QPromise<qevercloud::User>>();
-    auto future = promise->future();
+        promise = std::make_shared<QPromise<qevercloud::User>>();
+        m_userFuture = promise->future();
+    }
 
     promise->start();
 
     auto userFuture = m_userInfoProvider->userInfo(std::move(ctx));
-    auto selfWeak = weak_from_this();
-
     threading::thenOrFailed(
-        std::move(userFuture), promise,
-        [promise, selfWeak](qevercloud::User user)
-        {
-            if (const auto self = selfWeak.lock())
-            {
-                const QMutexLocker locker{&self->m_mutex};
-                self->m_user = user;
-            }
-
+        std::move(userFuture), promise, [promise](qevercloud::User user) {
             promise->addResult(std::move(user));
             promise->finish();
         });
 
-    return future;
+    return promise->future();
+}
+
+QFuture<qevercloud::AccountLimits> Downloader::syncAccountLimits(
+    const qevercloud::ServiceLevel serviceLevel,
+    qevercloud::IRequestContextPtr ctx)
+{
+    std::shared_ptr<QPromise<qevercloud::AccountLimits>> promise;
+    {
+        const QMutexLocker locker{&m_mutex};
+        if (m_accountLimitsFuture) {
+            return *m_accountLimitsFuture;
+        }
+
+        promise = std::make_shared<QPromise<qevercloud::AccountLimits>>();
+        m_accountLimitsFuture = promise->future();
+    }
+
+    promise->start();
+
+    auto accountLimitsFuture =
+        m_accountLimitsProvider->accountLimits(serviceLevel, std::move(ctx));
+
+    threading::thenOrFailed(
+        std::move(accountLimitsFuture), promise,
+        [promise](qevercloud::AccountLimits accountLimits) {
+            promise->addResult(std::move(accountLimits));
+            promise->finish();
+        });
+
+    return promise->future();
 }
 
 void Downloader::cancel(QPromise<IDownloader::Result> & promise)
@@ -321,8 +396,18 @@ void Downloader::cancel(QPromise<IDownloader::Result> & promise)
     promise.setException(OperationCanceled{});
     promise.finish();
 
-    QMutexLocker locker{&m_mutex};
+    const QMutexLocker locker{&m_mutex};
     m_future.reset();
+
+    if (m_userFuture) {
+        m_userFuture->cancel();
+        m_userFuture.reset();
+    }
+
+    if (m_accountLimitsFuture) {
+        m_accountLimitsFuture->cancel();
+        m_accountLimitsFuture.reset();
+    }
 }
 
 } // namespace quentier::synchronization
