@@ -19,6 +19,7 @@
 #include <synchronization/Downloader.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/utility/FileSystem.h>
@@ -131,6 +132,10 @@ protected:
     const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
+    const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
+        m_mockLocalStorage = std::make_shared<
+            StrictMock<local_storage::tests::mocks::MockILocalStorage>>();
+
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -148,7 +153,8 @@ TEST_F(DownloaderTest, Ctor)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_ctx,
-            m_mockNoteStore, m_manualCanceler, QDir{m_temporaryDir.path()}));
+            m_mockNoteStore, m_mockLocalStorage, m_manualCanceler,
+            QDir{m_temporaryDir.path()}));
 }
 
 TEST_F(DownloaderTest, CtorEmptyAccount)
@@ -162,7 +168,8 @@ TEST_F(DownloaderTest, CtorEmptyAccount)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_ctx,
-            m_mockNoteStore, m_manualCanceler, QDir{m_temporaryDir.path()}),
+            m_mockNoteStore, m_mockLocalStorage, m_manualCanceler,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -179,7 +186,8 @@ TEST_F(DownloaderTest, CtorNonEvernoteAccount)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_ctx,
-            m_mockNoteStore, m_manualCanceler, QDir{m_temporaryDir.path()}),
+            m_mockNoteStore, m_mockLocalStorage, m_manualCanceler,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -193,8 +201,8 @@ TEST_F(DownloaderTest, CtorNullAuthenticationInfoProvider)
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -208,8 +216,8 @@ TEST_F(DownloaderTest, CtorNullProtocolVersionChecker)
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -223,8 +231,8 @@ TEST_F(DownloaderTest, CtorNullUserInfoProvider)
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -238,8 +246,8 @@ TEST_F(DownloaderTest, CtorNullAccountLimitsProvider)
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -253,8 +261,8 @@ TEST_F(DownloaderTest, CtorNullSyncStateStorage)
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -268,8 +276,8 @@ TEST_F(DownloaderTest, CtorNullSyncChunksProvider)
             m_mockSyncChunksStorage, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -283,8 +291,8 @@ TEST_F(DownloaderTest, CtorNullSyncChunksStorage)
             m_mockSyncChunksProvider, nullptr, m_mockLinkedNotebooksProcessor,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -298,8 +306,8 @@ TEST_F(DownloaderTest, CtorNullLinkedNotebooksProcessor)
             m_mockSyncChunksProvider, m_mockSyncChunksStorage, nullptr,
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -313,8 +321,8 @@ TEST_F(DownloaderTest, CtorNullNotebooksProcessor)
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, nullptr, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -328,8 +336,8 @@ TEST_F(DownloaderTest, CtorNullNotesProcessor)
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor, nullptr,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -343,8 +351,8 @@ TEST_F(DownloaderTest, CtorNullResourcesProcessor)
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, nullptr, m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -358,8 +366,8 @@ TEST_F(DownloaderTest, CtorNullSavedSearchesProcessor)
             m_mockSyncChunksProvider, m_mockSyncChunksStorage,
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor, nullptr,
-            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_manualCanceler,
-            QDir{m_temporaryDir.path()}),
+            m_mockTagsProcessor, m_ctx, m_mockNoteStore, m_mockLocalStorage,
+            m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -374,7 +382,7 @@ TEST_F(DownloaderTest, CtorNullTagsProcessor)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, nullptr, m_ctx, m_mockNoteStore,
-            m_manualCanceler, QDir{m_temporaryDir.path()}),
+            m_mockLocalStorage, m_manualCanceler, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -389,7 +397,8 @@ TEST_F(DownloaderTest, CtorNullRequestContext)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, m_mockTagsProcessor, nullptr,
-            m_mockNoteStore, m_manualCanceler, QDir{m_temporaryDir.path()}),
+            m_mockNoteStore, m_mockLocalStorage, m_manualCanceler,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -404,7 +413,23 @@ TEST_F(DownloaderTest, CtorNullNoteStore)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_ctx, nullptr,
-            m_manualCanceler, QDir{m_temporaryDir.path()}),
+            m_mockLocalStorage, m_manualCanceler, QDir{m_temporaryDir.path()}),
+        InvalidArgument);
+}
+
+TEST_F(DownloaderTest, CtorNullLocalStorage)
+{
+    EXPECT_THROW(
+        const auto downloader = std::make_shared<Downloader>(
+            m_account, m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+            m_mockAccountLimitsProvider, m_mockSyncStateStorage,
+            m_mockSyncChunksProvider, m_mockSyncChunksStorage,
+            m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
+            m_mockNotesProcessor, m_mockResourcesProcessor,
+            m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_ctx,
+            m_mockNoteStore, nullptr, m_manualCanceler,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -419,7 +444,8 @@ TEST_F(DownloaderTest, CtorNullCanceler)
             m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
             m_mockNotesProcessor, m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor, m_mockTagsProcessor, m_ctx,
-            m_mockNoteStore, nullptr, QDir{m_temporaryDir.path()}),
+            m_mockNoteStore, m_mockLocalStorage, nullptr,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 

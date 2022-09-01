@@ -20,6 +20,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>
+#include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/threading/Future.h>
@@ -32,6 +33,7 @@
 #include <synchronization/IUserInfoProvider.h>
 
 #include <qevercloud/RequestContextBuilder.h>
+#include <qevercloud/services/INoteStore.h>
 
 namespace quentier::synchronization {
 
@@ -50,6 +52,7 @@ Downloader::Downloader(
     ISavedSearchesProcessorPtr savedSearchesProcessor,
     ITagsProcessorPtr tagsProcessor, qevercloud::IRequestContextPtr ctx,
     qevercloud::INoteStorePtr noteStore,
+    local_storage::ILocalStoragePtr localStorage,
     utility::cancelers::ICancelerPtr canceler,
     const QDir & syncPersistentStorageDir) :
     m_account{std::move(account)},
@@ -68,7 +71,8 @@ Downloader::Downloader(
     m_resourcesProcessor{std::move(resourcesProcessor)},
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
     m_tagsProcessor{std::move(tagsProcessor)}, m_ctx{std::move(ctx)},
-    m_noteStore{std::move(noteStore)}, m_canceler{std::move(canceler)},
+    m_noteStore{std::move(noteStore)}, m_localStorage{std::move(localStorage)},
+    m_canceler{std::move(canceler)},
     m_syncPersistentStorageDir{syncPersistentStorageDir}
 // clang-format on
 {
@@ -172,6 +176,12 @@ Downloader::Downloader(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
             "Downloader ctor: note store is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_localStorage)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_canceler)) {
@@ -288,6 +298,11 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 {
     Q_ASSERT(authenticationInfo);
 
+    auto promise = std::make_shared<QPromise<Result>>();
+    auto future = promise->future();
+
+    promise->start();
+
     const auto ctx =
         qevercloud::RequestContextBuilder{}
             .setAuthenticationToken(authenticationInfo->authToken())
@@ -304,7 +319,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
     const auto selfWeak = weak_from_this();
 
     auto accountLimitsFuture = threading::then(
-        std::move(userFuture), [selfWeak, ctx](qevercloud::User && user) {
+        std::move(userFuture),
+        [selfWeak, ctx = ctx](qevercloud::User && user) mutable {
             if (const auto self = selfWeak.lock()) {
                 if (self->m_canceler->isCanceled()) {
                     return threading::makeExceptionalFuture<
@@ -323,16 +339,86 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                     return qevercloud::ServiceLevel::BASIC;
                 }();
 
-                return self->syncAccountLimits(serviceLevel, ctx);
+                return self->syncAccountLimits(serviceLevel, std::move(ctx));
             }
 
             return threading::makeExceptionalFuture<qevercloud::AccountLimits>(
                 OperationCanceled{});
         });
 
-    // TODO: implement further
-    Q_UNUSED(accountLimitsFuture)
-    return threading::makeReadyFuture<IDownloader::Result>({});
+    auto syncStateFuture = threading::then(
+        std::move(accountLimitsFuture),
+        [selfWeak,
+         ctx = ctx](qevercloud::AccountLimits && accountLimits) mutable {
+            Q_UNUSED(accountLimits)
+            if (const auto self = selfWeak.lock()) {
+                return self->m_noteStore->getSyncStateAsync(std::move(ctx));
+            }
+
+            return threading::makeExceptionalFuture<qevercloud::SyncState>(
+                OperationCanceled{});
+        });
+
+    threading::thenOrFailed(
+        std::move(syncStateFuture), promise,
+        [promise = promise, selfWeak,
+         ctx = ctx](qevercloud::SyncState && syncState) mutable {
+            if (const auto self = selfWeak.lock()) {
+                QNDEBUG(
+                    "synchronization::Downloader",
+                    "Sync state from Evernote: " << syncState);
+
+                Q_ASSERT(self->m_lastSyncState);
+
+                if (syncState.fullSyncBefore() >
+                    self->m_lastSyncState->m_userDataLastSyncTime) {
+                    QNDEBUG(
+                        "synchronization::Downloader",
+                        "Performing full synchronization instead of "
+                        "incremental one");
+
+                    self->launchUserOwnDataDownload(
+                        std::move(promise), std::move(ctx), SyncMode::Full);
+                }
+                else if (
+                    syncState.updateCount() ==
+                    self->m_lastSyncState->m_userDataUpdateCount)
+                {
+                    QNDEBUG(
+                        "synchronization::Downloader",
+                        "Evernote has no updates for user own data");
+
+                    self->launchLinkedNotebooksDataDownload(
+                        std::move(promise), std::move(ctx));
+                }
+
+                return;
+            }
+
+            promise->setException(OperationCanceled{});
+            promise->finish();
+        });
+
+    return future;
+}
+
+void Downloader::launchUserOwnDataDownload(
+    std::shared_ptr<QPromise<Result>> promise,                   // NOLINT
+    qevercloud::IRequestContextPtr ctx, const SyncMode syncMode) // NOLINT
+{
+    // TODO: implement
+    Q_UNUSED(promise)
+    Q_UNUSED(ctx)
+    Q_UNUSED(syncMode)
+}
+
+void Downloader::launchLinkedNotebooksDataDownload(
+    std::shared_ptr<QPromise<Result>> promise, // NOLINT
+    qevercloud::IRequestContextPtr ctx)        // NOLINT
+{
+    // TODO: implement
+    Q_UNUSED(promise)
+    Q_UNUSED(ctx)
 }
 
 QFuture<qevercloud::User> Downloader::syncUser(

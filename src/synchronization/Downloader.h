@@ -21,6 +21,7 @@
 #include "IDownloader.h"
 #include "Fwd.h"
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/cancelers/Fwd.h>
@@ -68,6 +69,7 @@ public:
         ITagsProcessorPtr tagsProcessor,
         qevercloud::IRequestContextPtr ctx,
         qevercloud::INoteStorePtr noteStore,
+        local_storage::ILocalStoragePtr localStorage,
         utility::cancelers::ICancelerPtr canceler,
         const QDir & syncPersistentStorageDir);
 
@@ -78,6 +80,20 @@ private:
 
     [[nodiscard]] QFuture<Result> launchDownload(
         IAuthenticationInfoPtr authenticationInfo);
+
+    enum class SyncMode
+    {
+        Full,
+        Incremental
+    };
+
+    void launchUserOwnDataDownload(
+        std::shared_ptr<QPromise<Result>> promise,
+        qevercloud::IRequestContextPtr ctx, SyncMode syncMode);
+
+    void launchLinkedNotebooksDataDownload(
+        std::shared_ptr<QPromise<Result>> promise,
+        qevercloud::IRequestContextPtr ctx);
 
     [[nodiscard]] QFuture<qevercloud::User> syncUser(
         qevercloud::IRequestContextPtr ctx);
@@ -105,6 +121,7 @@ private:
     const ITagsProcessorPtr m_tagsProcessor;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::INoteStorePtr m_noteStore;
+    const local_storage::ILocalStoragePtr m_localStorage;
     const utility::cancelers::ICancelerPtr m_canceler;
     const QDir m_syncPersistentStorageDir;
 
