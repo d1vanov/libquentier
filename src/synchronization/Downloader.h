@@ -73,13 +73,17 @@ public:
         utility::cancelers::ICancelerPtr canceler,
         const QDir & syncPersistentStorageDir);
 
-    [[nodiscard]] QFuture<Result> download() override;
+    ~Downloader() override;
+
+    [[nodiscard]] QFuture<Result> download(
+        ICallbackWeakPtr callbackWeak) override;
 
 private:
     void readLastSyncState();
 
     [[nodiscard]] QFuture<Result> launchDownload(
-        IAuthenticationInfoPtr authenticationInfo);
+        const IAuthenticationInfo & authenticationInfo,
+        ICallbackWeakPtr callbackWeak);
 
     enum class SyncMode
     {
@@ -89,16 +93,19 @@ private:
 
     void launchUserOwnDataDownload(
         std::shared_ptr<QPromise<Result>> promise,
-        qevercloud::IRequestContextPtr ctx, SyncMode syncMode);
+        qevercloud::IRequestContextPtr ctx,
+        ICallbackWeakPtr callbackWeak,
+        SyncMode syncMode);
 
     void launchLinkedNotebooksDataDownload(
         std::shared_ptr<QPromise<Result>> promise,
+        qevercloud::IRequestContextPtr ctx,
+        ICallbackWeakPtr callbackWeak);
+
+    [[nodiscard]] QFuture<qevercloud::User> fetchUser(
         qevercloud::IRequestContextPtr ctx);
 
-    [[nodiscard]] QFuture<qevercloud::User> syncUser(
-        qevercloud::IRequestContextPtr ctx);
-
-    [[nodiscard]] QFuture<qevercloud::AccountLimits> syncAccountLimits(
+    [[nodiscard]] QFuture<qevercloud::AccountLimits> fetchAccountLimits(
         qevercloud::ServiceLevel serviceLevel,
         qevercloud::IRequestContextPtr ctx);
 
@@ -130,6 +137,9 @@ private:
     std::optional<SyncState> m_lastSyncState;
     std::optional<QFuture<qevercloud::User>> m_userFuture;
     std::optional<QFuture<qevercloud::AccountLimits>> m_accountLimitsFuture;
+
+    SyncChunksDataCountersPtr m_syncChunksDataCounters;
+    SyncChunksDataCountersPtr m_linkedNotebookSyncChunksDataCounters;
 };
 
 } // namespace quentier::synchronization
