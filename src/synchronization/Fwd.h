@@ -31,6 +31,10 @@ class IAuthenticationInfoProvider;
 using IAuthenticationInfoProviderPtr =
     std::shared_ptr<IAuthenticationInfoProvider>;
 
+class IFullSyncStaleDataExpunger;
+using IFullSyncStaleDataExpungerPtr =
+    std::shared_ptr<IFullSyncStaleDataExpunger>;
+
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 

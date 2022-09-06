@@ -13,9 +13,12 @@ target_sources(${LIBRARY_NAME}
   Downloader.cpp
   Downloader.h
   Fwd.h
+  FullSyncStaleDataExpunger.cpp
+  FullSyncStaleDataExpunger.h
   IAccountLimitsProvider.h
   IAuthenticationInfoProvider.h
   IDownloader.h
+  IFullSyncStaleDataExpunger.h
   INoteStoreFactory.h
   IProtocolVersionChecker.h
   IReceiver.h
