@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,8 +39,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QThreadPool>
 
 namespace quentier::local_storage::sql {
@@ -50,45 +50,39 @@ LinkedNotebooksHandler::LinkedNotebooksHandler(
     Notifier * notifier, QThreadPtr writerThread,
     const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool},
-    m_notifier{notifier},
-    m_writerThread{std::move(writerThread)},
-    m_localStorageDir{localStorageDirPath}
+    m_threadPool{threadPool}, m_notifier{notifier},
+    m_writerThread{std::move(writerThread)}, m_localStorageDir{
+                                                 localStorageDirPath}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "LinkedNotebooksHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "LinkedNotebooksHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "LinkedNotebooksHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "LinkedNotebooksHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "LinkedNotebooksHandler ctor: notifier is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "LinkedNotebooksHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "LinkedNotebooksHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "LinkedNotebooksHandler ctor: writer thread is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "LinkedNotebooksHandler ctor: local storage dir is not "
-                "readable")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "LinkedNotebooksHandler ctor: local storage dir is not "
+            "readable")}};
     }
 
     if (Q_UNLIKELY(
@@ -105,11 +99,9 @@ LinkedNotebooksHandler::LinkedNotebooksHandler(
 QFuture<quint32> LinkedNotebooksHandler::linkedNotebookCount() const
 {
     return makeReadTask<quint32>(
-        makeTaskContext(),
-        weak_from_this(),
+        makeTaskContext(), weak_from_this(),
         [](const LinkedNotebooksHandler & handler, QSqlDatabase & database,
-           ErrorString & errorDescription)
-        {
+           ErrorString & errorDescription) {
             return handler.linkedNotebookCountImpl(database, errorDescription);
         });
 }
@@ -118,12 +110,10 @@ QFuture<void> LinkedNotebooksHandler::putLinkedNotebook(
     qevercloud::LinkedNotebook linkedNotebook)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [linkedNotebook = std::move(linkedNotebook)]
-        (LinkedNotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription) mutable
-        {
+        makeTaskContext(), weak_from_this(),
+        [linkedNotebook = std::move(linkedNotebook)](
+            LinkedNotebooksHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) mutable {
             const bool res = utils::putLinkedNotebook(
                 linkedNotebook, database, errorDescription);
 
@@ -140,12 +130,10 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
         qevercloud::Guid guid) const
 {
     return makeReadTask<std::optional<qevercloud::LinkedNotebook>>(
-        makeTaskContext(),
-        weak_from_this(),
-        [guid = std::move(guid)]
-        (const LinkedNotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [guid = std::move(guid)](
+            const LinkedNotebooksHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.findLinkedNotebookByGuid(
                 guid, database, errorDescription);
         });
@@ -155,12 +143,10 @@ QFuture<void> LinkedNotebooksHandler::expungeLinkedNotebookByGuid(
     qevercloud::Guid guid)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [guid = std::move(guid)]
-        (LinkedNotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [guid = std::move(guid)](
+            LinkedNotebooksHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             const bool res = handler.expungeLinkedNotebookByGuidImpl(
                 guid, database, errorDescription);
 
@@ -177,12 +163,10 @@ QFuture<QList<qevercloud::LinkedNotebook>>
         ListLinkedNotebooksOptions options) const
 {
     return makeReadTask<QList<qevercloud::LinkedNotebook>>(
-        makeTaskContext(),
-        weak_from_this(),
-        [options]
-        (const LinkedNotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [options](
+            const LinkedNotebooksHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.listLinkedNotebooksImpl(
                 options, database, errorDescription);
         });
@@ -192,8 +176,8 @@ std::optional<quint32> LinkedNotebooksHandler::linkedNotebookCountImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     QSqlQuery query{database};
-    const bool res = query.exec(
-        QStringLiteral("SELECT COUNT(guid) FROM LinkedNotebooks"));
+    const bool res =
+        query.exec(QStringLiteral("SELECT COUNT(guid) FROM LinkedNotebooks"));
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::LinkedNotebooksHandler",
@@ -212,11 +196,10 @@ std::optional<quint32> LinkedNotebooksHandler::linkedNotebookCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "Cannot count linked notebooks in the local storage database: "
-                "failed to convert linked notebook count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "Cannot count linked notebooks in the local storage database: "
+            "failed to convert linked notebook count to int"));
         QNWARNING("local_storage:sql", errorDescription);
         return std::nullopt;
     }
@@ -242,7 +225,8 @@ std::optional<qevercloud::LinkedNotebook>
         res, query, "local_storage::sql::LinkedNotebooksHandler",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::LinkedNotebooksHandler",
-            "Cannot find linked notebook in the local storage database by guid: "
+            "Cannot find linked notebook in the local storage database by "
+            "guid: "
             "failed to prepare query"),
         std::nullopt);
 
@@ -266,17 +250,15 @@ std::optional<qevercloud::LinkedNotebook>
     ErrorString error;
     if (!utils::fillLinkedNotebookFromSqlRecord(record, linkedNotebook, error))
     {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "Failed to find linked notebook by local id in the local "
-                "storage database"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "Failed to find linked notebook by local id in the local "
+            "storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
         QNWARNING(
-            "local_storage::sql::LinkedNotebooksHandler",
-            errorDescription);
+            "local_storage::sql::LinkedNotebooksHandler", errorDescription);
         return std::nullopt;
     }
 
@@ -333,14 +315,14 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
 
     Transaction transaction{database, Transaction::Type::Exclusive};
 
-    const auto noteLocalIds = listNoteLocalIdsByLinkedNotebookGuid(
-        guid, database, errorDescription);
+    const auto noteLocalIds =
+        listNoteLocalIdsByLinkedNotebookGuid(guid, database, errorDescription);
     if (!errorDescription.isEmpty()) {
         return false;
     }
 
-    static const QString queryString = QStringLiteral(
-        "DELETE FROM LinkedNotebooks WHERE guid = :guid");
+    static const QString queryString =
+        QStringLiteral("DELETE FROM LinkedNotebooks WHERE guid = :guid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -374,7 +356,8 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
 
     for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
         if (!utils::removeResourceDataFilesForNote(
-                m_localStorageDir, noteLocalId, errorDescription)) {
+                m_localStorageDir, noteLocalId, errorDescription))
+        {
             return false;
         }
     }
@@ -384,8 +367,8 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
 
 QList<qevercloud::LinkedNotebook>
     LinkedNotebooksHandler::listLinkedNotebooksImpl(
-        const ListLinkedNotebooksOptions & options,
-        QSqlDatabase & database, ErrorString & errorDescription) const
+        const ListLinkedNotebooksOptions & options, QSqlDatabase & database,
+        ErrorString & errorDescription) const
 {
     return utils::listObjects<
         qevercloud::LinkedNotebook, ILocalStorage::ListLinkedNotebooksOrder>(
@@ -396,15 +379,13 @@ QList<qevercloud::LinkedNotebook>
 TaskContext LinkedNotebooksHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool,
-        m_writerThread,
-        m_connectionPool,
+        m_threadPool, m_writerThread, m_connectionPool,
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "LinkedNotebooksHandler is already destroyed")},
+            "local_storage::sql::LinkedNotebooksHandler",
+            "LinkedNotebooksHandler is already destroyed")},
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::LinkedNotebooksHandler",
-                "Request has been canceled")}};
+            "local_storage::sql::LinkedNotebooksHandler",
+            "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -304,9 +304,7 @@ protected:
         m_notifier->moveToThread(m_writerThread.get());
 
         QObject::connect(
-            m_writerThread.get(),
-            &QThread::finished,
-            m_notifier,
+            m_writerThread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
         m_writerThread->start();
@@ -401,8 +399,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto notebookFuture = notebooksHandler->findNotebookByLocalId(
-        UidGenerator::Generate());
+    auto notebookFuture =
+        notebooksHandler->findNotebookByLocalId(UidGenerator::Generate());
 
     notebookFuture.waitForFinished();
     ASSERT_EQ(notebookFuture.resultCount(), 1);
@@ -415,8 +413,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto notebookFuture = notebooksHandler->findNotebookByGuid(
-        UidGenerator::Generate());
+    auto notebookFuture =
+        notebooksHandler->findNotebookByGuid(UidGenerator::Generate());
 
     notebookFuture.waitForFinished();
     ASSERT_EQ(notebookFuture.resultCount(), 1);
@@ -429,8 +427,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByName)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto notebookFuture = notebooksHandler->findNotebookByName(
-        QStringLiteral("My notebook"));
+    auto notebookFuture =
+        notebooksHandler->findNotebookByName(QStringLiteral("My notebook"));
 
     notebookFuture.waitForFinished();
     ASSERT_EQ(notebookFuture.resultCount(), 1);
@@ -455,8 +453,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByLocalId(
-        UidGenerator::Generate());
+    auto expungeNotebookFuture =
+        notebooksHandler->expungeNotebookByLocalId(UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
 }
@@ -467,8 +465,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByGuid(
-        UidGenerator::Generate());
+    auto expungeNotebookFuture =
+        notebooksHandler->expungeNotebookByGuid(UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
 }
@@ -479,8 +477,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByName)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
-        QStringLiteral("My notebook"));
+    auto expungeNotebookFuture =
+        notebooksHandler->expungeNotebookByName(QStringLiteral("My notebook"));
 
     EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
 }
@@ -491,8 +489,7 @@ TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto listNotebooksOptions =
-        ILocalStorage::ListNotebooksOptions{};
+    auto listNotebooksOptions = ILocalStorage::ListNotebooksOptions{};
 
     listNotebooksOptions.m_affiliation = ILocalStorage::Affiliation::Any;
 
@@ -509,8 +506,8 @@ TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto sharedNotebooksFuture = notebooksHandler->listSharedNotebooks(
-        UidGenerator::Generate());
+    auto sharedNotebooksFuture =
+        notebooksHandler->listSharedNotebooks(UidGenerator::Generate());
 
     sharedNotebooksFuture.waitForFinished();
     EXPECT_TRUE(sharedNotebooksFuture.result().isEmpty());
@@ -527,53 +524,49 @@ const std::array gNotebookTestValues{
         CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook}),
-    createNotebook(
-        CreateNotebookOptions{CreateNotebookOption::WithContact}),
+    createNotebook(CreateNotebookOptions{CreateNotebookOption::WithContact}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRestrictions}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRecipientSettings}),
-    createNotebook(
-        CreateNotebookOptions{CreateNotebookOption::WithPublishing}),
+    createNotebook(CreateNotebookOptions{CreateNotebookOption::WithPublishing}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithLinkedNotebookGuid}),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithSharedNotebooks} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks} |
         CreateNotebookOption::WithBusinessNotebook),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithSharedNotebooks} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks} |
         CreateNotebookOption::WithContact),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithSharedNotebooks} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks} |
         CreateNotebookOption::WithRestrictions),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithSharedNotebooks} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks} |
         CreateNotebookOption::WithRecipientSettings),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithSharedNotebooks} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks} |
         CreateNotebookOption::WithPublishing),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithSharedNotebooks} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks} |
         CreateNotebookOption::WithLinkedNotebookGuid),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithBusinessNotebook} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook} |
         CreateNotebookOption::WithContact |
         CreateNotebookOption::WithRestrictions),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithBusinessNotebook} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook} |
         CreateNotebookOption::WithRestrictions |
         CreateNotebookOption::WithPublishing),
-    createNotebook(CreateNotebookOptions{
-        CreateNotebookOption::WithContact} |
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithContact} |
         CreateNotebookOption::WithRestrictions |
         CreateNotebookOption::WithPublishing |
-        CreateNotebookOption::WithLinkedNotebookGuid)
-};
+        CreateNotebookOption::WithLinkedNotebookGuid)};
 
 INSTANTIATE_TEST_SUITE_P(
     NotebooksHandlerSingleNotebookTestInstance,
-    NotebooksHandlerSingleNotebookTest,
-    testing::ValuesIn(gNotebookTestValues));
+    NotebooksHandlerSingleNotebookTest, testing::ValuesIn(gNotebookTestValues));
 
 TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 {
@@ -584,15 +577,11 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     NotebooksHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notebookPut,
-        &notifierListener,
+        m_notifier, &Notifier::notebookPut, &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notebookExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::notebookExpunged, &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
     const auto notebook = GetParam();
@@ -623,22 +612,22 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     notebookCountFuture.waitForFinished();
     EXPECT_EQ(notebookCountFuture.result(), 1U);
 
-    auto foundByLocalIdNotebookFuture = notebooksHandler->findNotebookByLocalId(
-        notebook.localId());
+    auto foundByLocalIdNotebookFuture =
+        notebooksHandler->findNotebookByLocalId(notebook.localId());
 
     foundByLocalIdNotebookFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByLocalIdNotebookFuture.result(), notebook);
 
-    auto foundByGuidNotebookFuture = notebooksHandler->findNotebookByGuid(
-        notebook.guid().value());
+    auto foundByGuidNotebookFuture =
+        notebooksHandler->findNotebookByGuid(notebook.guid().value());
 
     foundByGuidNotebookFuture.waitForFinished();
     ASSERT_EQ(foundByGuidNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
 
     auto foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
-        notebook.name().value(),  notebook.linkedNotebookGuid());
+        notebook.name().value(), notebook.linkedNotebookGuid());
 
     foundByNameNotebookFuture.waitForFinished();
     ASSERT_EQ(foundByNameNotebookFuture.resultCount(), 1);
@@ -648,8 +637,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     foundDefaultNotebookFuture.waitForFinished();
     EXPECT_EQ(foundDefaultNotebookFuture.result(), notebook);
 
-    auto listNotebooksOptions =
-        ILocalStorage::ListNotebooksOptions{};
+    auto listNotebooksOptions = ILocalStorage::ListNotebooksOptions{};
 
     listNotebooksOptions.m_affiliation = ILocalStorage::Affiliation::Any;
 
@@ -672,28 +660,27 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     EXPECT_EQ(
         notifierListener.expungedNotebookLocalIds()[0], notebook.localId());
 
-    auto checkNotebookDeleted = [&]
-    {
+    auto checkNotebookDeleted = [&] {
         notebookCountFuture = notebooksHandler->notebookCount();
         notebookCountFuture.waitForFinished();
         EXPECT_EQ(notebookCountFuture.result(), 0U);
 
-        foundByLocalIdNotebookFuture = notebooksHandler->findNotebookByLocalId(
-            notebook.localId());
+        foundByLocalIdNotebookFuture =
+            notebooksHandler->findNotebookByLocalId(notebook.localId());
 
         foundByLocalIdNotebookFuture.waitForFinished();
         ASSERT_EQ(foundByLocalIdNotebookFuture.resultCount(), 1);
         EXPECT_FALSE(foundByLocalIdNotebookFuture.result());
 
-        foundByGuidNotebookFuture = notebooksHandler->findNotebookByGuid(
-            notebook.guid().value());
+        foundByGuidNotebookFuture =
+            notebooksHandler->findNotebookByGuid(notebook.guid().value());
 
         foundByGuidNotebookFuture.waitForFinished();
         ASSERT_EQ(foundByGuidNotebookFuture.resultCount(), 1);
         EXPECT_FALSE(foundByGuidNotebookFuture.result());
 
-        foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
-            notebook.name().value());
+        foundByNameNotebookFuture =
+            notebooksHandler->findNotebookByName(notebook.name().value());
 
         foundByNameNotebookFuture.waitForFinished();
         ASSERT_EQ(foundByNameNotebookFuture.resultCount(), 1);
@@ -763,22 +750,20 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
     NotebooksHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notebookPut,
-        &notifierListener,
+        m_notifier, &Notifier::notebookPut, &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notebookExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::notebookExpunged, &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
     QStringList linkedNotebookGuids;
     auto notebooks = gNotebookTestValues;
     int notebookCounter = 2;
     qint64 sharedNotebookIdCounter = 6U;
-    for (auto it = std::next(notebooks.begin()); it != notebooks.end(); ++it) { // NOLINT
+    for (auto it = std::next(notebooks.begin()); // NOLINT
+         it != notebooks.end(); ++it)
+    {
         auto & notebook = *it;
         notebook.setLocalId(UidGenerator::Generate());
         notebook.setGuid(UidGenerator::Generate());
@@ -827,8 +812,8 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 
     QFutureSynchronizer<void> putNotebooksSynchronizer;
     for (auto notebook: notebooks) {
-        auto putNotebookFuture = notebooksHandler->putNotebook(
-            std::move(notebook));
+        auto putNotebookFuture =
+            notebooksHandler->putNotebook(std::move(notebook));
 
         putNotebooksSynchronizer.addFuture(putNotebookFuture);
     }
@@ -907,15 +892,11 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     NotebooksHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notebookPut,
-        &notifierListener,
+        m_notifier, &Notifier::notebookPut, &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notebookExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::notebookExpunged, &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
     auto notebook1 = createNotebook();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -143,19 +143,20 @@ template <class T>
 
 template <class T, class TOrderBy>
 QList<T> listObjects(
-    const ILocalStorage::ListObjectsFilters & filters,
-    quint64 limit, quint64 offset, const TOrderBy & orderBy,
+    const ILocalStorage::ListObjectsFilters & filters, quint64 limit,
+    quint64 offset, const TOrderBy & orderBy,
     const ILocalStorage::OrderDirection & orderDirection,
-    const QString & additionalSqlQueryCondition,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    const QString & additionalSqlQueryCondition, QSqlDatabase & database,
+    ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "Listing " << T::staticMetaObject.className() << " objects: filters = "
-            << filters << ", limit = " << limit << ", offset = " << offset
-            << ", order by " << orderBy <<  ", order direction = "
-            << orderDirection << ", additional SQL query condition = "
-            << additionalSqlQueryCondition);
+        "Listing " << T::staticMetaObject.className()
+                   << " objects: filters = " << filters << ", limit = " << limit
+                   << ", offset = " << offset << ", order by " << orderBy
+                   << ", order direction = " << orderDirection
+                   << ", additional SQL query condition = "
+                   << additionalSqlQueryCondition);
 
     ErrorString flagError;
 
@@ -222,8 +223,10 @@ QList<T> listObjects(
 
     QNDEBUG(
         "local_storage::sql::utils",
-        "Listing " << T::staticMetaObject.className() << " objects with SQL "
-        "query: " << queryString);
+        "Listing " << T::staticMetaObject.className()
+                   << " objects with SQL "
+                      "query: "
+                   << queryString);
 
     QList<T> objects;
 
@@ -256,7 +259,7 @@ QList<T> listObjects(
     QNDEBUG(
         "local_storage::sql::utils",
         "Found " << objects.size() << " " << T::staticMetaObject.className()
-            << " objects");
+                 << " objects");
 
     return objects;
 }

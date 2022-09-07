@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,8 @@
 #include <quentier/local_storage/ILocalStorage.h>
 
 #include <local_storage/sql/ConnectionPool.h>
-#include <local_storage/sql/LocalStorage.h>
 #include <local_storage/sql/LinkedNotebooksHandler.h>
+#include <local_storage/sql/LocalStorage.h>
 #include <local_storage/sql/NotebooksHandler.h>
 #include <local_storage/sql/NotesHandler.h>
 #include <local_storage/sql/Notifier.h>
@@ -28,12 +28,12 @@
 #include <local_storage/sql/SavedSearchesHandler.h>
 #include <local_storage/sql/SynchronizationInfoHandler.h>
 #include <local_storage/sql/TagsHandler.h>
-#include <local_storage/sql/VersionHandler.h>
 #include <local_storage/sql/UsersHandler.h>
+#include <local_storage/sql/VersionHandler.h>
 
 #include <QDebug>
-#include <QTextStream>
 #include <QReadWriteLock>
+#include <QTextStream>
 
 namespace quentier::local_storage {
 
@@ -76,13 +76,11 @@ T & printStartupOptions(T & t, const ILocalStorage::StartupOptions options)
 }
 
 template <class T>
-T & printListObjectsFilter(
-    T & t, const ILocalStorage::ListObjectsFilter filter)
+T & printListObjectsFilter(T & t, const ILocalStorage::ListObjectsFilter filter)
 {
     using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
 
-    switch (filter)
-    {
+    switch (filter) {
     case ListObjectsFilter::Include:
         t << "include";
         break;
@@ -591,9 +589,8 @@ bool compareListOptionsBase(
     const ILocalStorage::ListOptionsBase & lhs,
     const ILocalStorage::ListOptionsBase & rhs) noexcept
 {
-    return lhs.m_filters == rhs.m_filters &&
-        lhs.m_limit == rhs.m_limit && lhs.m_offset == rhs.m_offset &&
-        lhs.m_direction == rhs.m_direction;
+    return lhs.m_filters == rhs.m_filters && lhs.m_limit == rhs.m_limit &&
+        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction;
 }
 
 } // namespace
@@ -626,8 +623,7 @@ QTextStream & operator<<(
     return printListObjectsFilter(strm, filter);
 }
 
-QDebug & operator<<(
-    QDebug & dbg, const ILocalStorage::ListObjectsFilter filter)
+QDebug & operator<<(QDebug & dbg, const ILocalStorage::ListObjectsFilter filter)
 {
     return printListObjectsFilter(dbg, filter);
 }
@@ -999,8 +995,8 @@ ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
     QThreadPool * threadPool)
 {
-    auto localStorageMainFilePath = localStorageDir.absoluteFilePath(
-        QStringLiteral("qn.storage.sqlite"));
+    auto localStorageMainFilePath =
+        localStorageDir.absoluteFilePath(QStringLiteral("qn.storage.sqlite"));
 
     auto connectionPool = std::make_shared<sql::ConnectionPool>(
         QStringLiteral("localhost"), QString{}, QString{},
@@ -1010,8 +1006,7 @@ ILocalStoragePtr createSqliteLocalStorage(
 
     sql::QThreadPtr writerThread;
     {
-        auto deleter = [](QThread * thread)
-        {
+        auto deleter = [](QThread * thread) {
             thread->quit();
             thread->deleteLater();
         };
@@ -1039,22 +1034,21 @@ ILocalStoragePtr createSqliteLocalStorage(
 
     const QString localStorageDirPath = localStorageDir.absolutePath();
 
-    auto linkedNotebooksHandler =
-        std::make_shared<sql::LinkedNotebooksHandler>(
-            connectionPool, threadPool, notifier,
-            writerThread, localStorageDirPath);
+    auto linkedNotebooksHandler = std::make_shared<sql::LinkedNotebooksHandler>(
+        connectionPool, threadPool, notifier, writerThread,
+        localStorageDirPath);
 
     auto notebooksHandler = std::make_shared<sql::NotebooksHandler>(
-        connectionPool, threadPool, notifier,
-        writerThread, localStorageDirPath, resourceDataFilesLock);
+        connectionPool, threadPool, notifier, writerThread, localStorageDirPath,
+        resourceDataFilesLock);
 
     auto notesHandler = std::make_shared<sql::NotesHandler>(
-        connectionPool, threadPool, notifier,
-        writerThread, localStorageDirPath, resourceDataFilesLock);
+        connectionPool, threadPool, notifier, writerThread, localStorageDirPath,
+        resourceDataFilesLock);
 
     auto resourcesHandler = std::make_shared<sql::ResourcesHandler>(
-        connectionPool, threadPool, notifier,
-        writerThread, localStorageDirPath, resourceDataFilesLock);
+        connectionPool, threadPool, notifier, writerThread, localStorageDirPath,
+        resourceDataFilesLock);
 
     auto savedSearchesHandler = std::make_shared<sql::SavedSearchesHandler>(
         connectionPool, threadPool, notifier, writerThread);

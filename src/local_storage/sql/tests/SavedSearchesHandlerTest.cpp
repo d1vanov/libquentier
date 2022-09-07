@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../SavedSearchesHandler.h"
 #include "../ConnectionPool.h"
 #include "../Notifier.h"
+#include "../SavedSearchesHandler.h"
 #include "../TablesInitializer.h"
 
 #include <quentier/exception/IQuentierException.h>
@@ -206,8 +206,8 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto savedSearchFuture = savedSearchesHandler->findSavedSearchByGuid(
-        UidGenerator::Generate());
+    auto savedSearchFuture =
+        savedSearchesHandler->findSavedSearchByGuid(UidGenerator::Generate());
 
     savedSearchFuture.waitForFinished();
     ASSERT_EQ(savedSearchFuture.resultCount(), 1);
@@ -220,8 +220,8 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByName)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto savedSearchFuture = savedSearchesHandler->findSavedSearchByName(
-        QStringLiteral("search1"));
+    auto savedSearchFuture =
+        savedSearchesHandler->findSavedSearchByName(QStringLiteral("search1"));
 
     savedSearchFuture.waitForFinished();
     ASSERT_EQ(savedSearchFuture.resultCount(), 1);
@@ -297,8 +297,7 @@ class SavedSearchesHandlerSingleSavedSearchTest :
 const std::array gSavedSearchTestValues{
     createSavedSearch(),
     createSavedSearch(
-        CreateSavedSearchOptions{CreateSavedSearchOption::WithScope})
-};
+        CreateSavedSearchOptions{CreateSavedSearchOption::WithScope})};
 
 INSTANTIATE_TEST_SUITE_P(
     SavedSearchesHandlerSingleSavedSearchTestInstance,
@@ -314,21 +313,17 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     SavedSearchesHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::savedSearchPut,
-        &notifierListener,
+        m_notifier, &Notifier::savedSearchPut, &notifierListener,
         &SavedSearchesHandlerTestNotifierListener::onSavedSearchPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::savedSearchExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::savedSearchExpunged, &notifierListener,
         &SavedSearchesHandlerTestNotifierListener::onSavedSearchExpunged);
 
     const auto savedSearch = GetParam();
 
-    auto putSavedSearchFuture = savedSearchesHandler->putSavedSearch(
-        savedSearch);
+    auto putSavedSearchFuture =
+        savedSearchesHandler->putSavedSearch(savedSearch);
 
     putSavedSearchFuture.waitForFinished();
 
@@ -367,8 +362,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     const auto listSavedSearchesOptions =
         ILocalStorage::ListSavedSearchesOptions{};
 
-    auto listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
-        listSavedSearchesOptions);
+    auto listSavedSearchesFuture =
+        savedSearchesHandler->listSavedSearches(listSavedSearchesOptions);
 
     listSavedSearchesFuture.waitForFinished();
     auto savedSearches = listSavedSearchesFuture.result();
@@ -388,35 +383,37 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
         notifierListener.expungedSavedSearchLocalIds()[0],
         savedSearch.localId());
 
-    auto checkSavedSearchDeleted = [&]
-    {
+    auto checkSavedSearchDeleted = [&] {
         savedSearchCountFuture = savedSearchesHandler->savedSearchCount();
         savedSearchCountFuture.waitForFinished();
         EXPECT_EQ(savedSearchCountFuture.result(), 0U);
 
         foundSavedSearchByLocalIdFuture =
-            savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
+            savedSearchesHandler->findSavedSearchByLocalId(
+                savedSearch.localId());
 
         foundSavedSearchByLocalIdFuture.waitForFinished();
         ASSERT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 1);
         EXPECT_FALSE(foundSavedSearchByLocalIdFuture.result());
 
         foundSavedSearchByGuidFuture =
-            savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
+            savedSearchesHandler->findSavedSearchByGuid(
+                savedSearch.guid().value());
 
         foundSavedSearchByGuidFuture.waitForFinished();
         ASSERT_EQ(foundSavedSearchByGuidFuture.resultCount(), 1);
         EXPECT_FALSE(foundSavedSearchByGuidFuture.result());
 
         foundSavedSearchByNameFuture =
-            savedSearchesHandler->findSavedSearchByName(savedSearch.name().value());
+            savedSearchesHandler->findSavedSearchByName(
+                savedSearch.name().value());
 
         foundSavedSearchByNameFuture.waitForFinished();
         ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
         EXPECT_FALSE(foundSavedSearchByNameFuture.result());
 
-        listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
-            listSavedSearchesOptions);
+        listSavedSearchesFuture =
+            savedSearchesHandler->listSavedSearches(listSavedSearchesOptions);
 
         listSavedSearchesFuture.waitForFinished();
         EXPECT_TRUE(listSavedSearchesFuture.result().isEmpty());
@@ -456,21 +453,17 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
     SavedSearchesHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::savedSearchPut,
-        &notifierListener,
+        m_notifier, &Notifier::savedSearchPut, &notifierListener,
         &SavedSearchesHandlerTestNotifierListener::onSavedSearchPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::savedSearchExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::savedSearchExpunged, &notifierListener,
         &SavedSearchesHandlerTestNotifierListener::onSavedSearchExpunged);
 
     auto savedSearches = gSavedSearchTestValues;
     int savedSearchCounter = 2;
-    for (auto it = std::next(savedSearches.begin()); it != savedSearches.end(); // NOLINT
-         ++it)
+    for (auto it = std::next(savedSearches.begin()); // NOLINT
+         it != savedSearches.end(); ++it)
     {
         auto & savedSearch = *it;
         savedSearch.setLocalId(UidGenerator::Generate());
@@ -486,8 +479,8 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
 
     QFutureSynchronizer<void> putSavedSearchesSynchronizer;
     for (auto savedSearch: savedSearches) {
-        auto putSavedSearchFuture = savedSearchesHandler->putSavedSearch(
-            std::move(savedSearch));
+        auto putSavedSearchFuture =
+            savedSearchesHandler->putSavedSearch(std::move(savedSearch));
 
         putSavedSearchesSynchronizer.addFuture(putSavedSearchFuture);
     }

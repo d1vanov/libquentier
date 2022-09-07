@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../LinkedNotebooksHandler.h"
 #include "../ConnectionPool.h"
+#include "../LinkedNotebooksHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
 
@@ -62,7 +62,8 @@ public:
     }
 
 public Q_SLOTS:
-    void onLinkedNotebookPut(qevercloud::LinkedNotebook linkedNotebook) // NOLINT
+    void onLinkedNotebookPut(
+        qevercloud::LinkedNotebook linkedNotebook) // NOLINT
     {
         m_putLinkedNotebooks << linkedNotebook;
     }
@@ -122,9 +123,7 @@ protected:
         m_notifier->moveToThread(m_writerThread.get());
 
         QObject::connect(
-            m_writerThread.get(),
-            &QThread::finished,
-            m_notifier,
+            m_writerThread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
         m_writerThread->start();
@@ -197,14 +196,17 @@ TEST_F(LinkedNotebooksHandlerTest, CtorNullWriterThread)
         IQuentierException);
 }
 
-TEST_F(LinkedNotebooksHandlerTest, ShouldHaveZeroLinkedNotebookCountWhenThereAreNoLinkedNotebooks)
+TEST_F(
+    LinkedNotebooksHandlerTest,
+    ShouldHaveZeroLinkedNotebookCountWhenThereAreNoLinkedNotebooks)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread, m_temporaryDir.path());
 
-    auto linkedNotebookCountFuture = linkedNotebooksHandler->linkedNotebookCount();
+    auto linkedNotebookCountFuture =
+        linkedNotebooksHandler->linkedNotebookCount();
     linkedNotebookCountFuture.waitForFinished();
     EXPECT_EQ(linkedNotebookCountFuture.result(), 0U);
 }
@@ -216,28 +218,34 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldNotFindNonexistentLinkedNotebookByGuid)
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread, m_temporaryDir.path());
 
-    auto linkedNotebookFuture = linkedNotebooksHandler->findLinkedNotebookByGuid(
-        UidGenerator::Generate());
+    auto linkedNotebookFuture =
+        linkedNotebooksHandler->findLinkedNotebookByGuid(
+            UidGenerator::Generate());
 
     linkedNotebookFuture.waitForFinished();
     ASSERT_EQ(linkedNotebookFuture.resultCount(), 1);
     EXPECT_FALSE(linkedNotebookFuture.result());
 }
 
-TEST_F(LinkedNotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentLinkedNotebookByGuid)
+TEST_F(
+    LinkedNotebooksHandlerTest,
+    IgnoreAttemptToExpungeNonexistentLinkedNotebookByGuid)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread, m_temporaryDir.path());
 
-    auto expungeLinkedNotebookFuture = linkedNotebooksHandler->expungeLinkedNotebookByGuid(
-        UidGenerator::Generate());
+    auto expungeLinkedNotebookFuture =
+        linkedNotebooksHandler->expungeLinkedNotebookByGuid(
+            UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeLinkedNotebookFuture.waitForFinished());
 }
 
-TEST_F(LinkedNotebooksHandlerTest, ShouldListNoLinkedNotebooksWhenThereAreNoLinkedNotebooks)
+TEST_F(
+    LinkedNotebooksHandlerTest,
+    ShouldListNoLinkedNotebooksWhenThereAreNoLinkedNotebooks)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
@@ -264,15 +272,11 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
     LinkedNotebooksHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::linkedNotebookPut,
-        &notifierListener,
+        m_notifier, &Notifier::linkedNotebookPut, &notifierListener,
         &LinkedNotebooksHandlerTestNotifierListener::onLinkedNotebookPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::linkedNotebookExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::linkedNotebookExpunged, &notifierListener,
         &LinkedNotebooksHandlerTestNotifierListener::onLinkedNotebookExpunged);
 
     const auto linkedNotebook = createLinkedNotebook();
@@ -324,8 +328,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
         notifierListener.expungedLinkedNotebookGuids()[0],
         linkedNotebook.guid().value());
 
-    linkedNotebookCountFuture =
-        linkedNotebooksHandler->linkedNotebookCount();
+    linkedNotebookCountFuture = linkedNotebooksHandler->linkedNotebookCount();
 
     linkedNotebookCountFuture.waitForFinished();
     EXPECT_EQ(linkedNotebookCountFuture.result(), 0U);
@@ -349,15 +352,11 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
     LinkedNotebooksHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::linkedNotebookPut,
-        &notifierListener,
+        m_notifier, &Notifier::linkedNotebookPut, &notifierListener,
         &LinkedNotebooksHandlerTestNotifierListener::onLinkedNotebookPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::linkedNotebookExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::linkedNotebookExpunged, &notifierListener,
         &LinkedNotebooksHandlerTestNotifierListener::onLinkedNotebookExpunged);
 
     const int linkedNotebookCount = 5;
@@ -416,8 +415,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
         notifierListener.expungedLinkedNotebookGuids().size(),
         linkedNotebookCount);
 
-    linkedNotebookCountFuture =
-        linkedNotebooksHandler->linkedNotebookCount();
+    linkedNotebookCountFuture = linkedNotebooksHandler->linkedNotebookCount();
 
     linkedNotebookCountFuture.waitForFinished();
     EXPECT_EQ(linkedNotebookCountFuture.result(), 0U);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -344,8 +344,7 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerNotebookLocalId(
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
-        [notebookLocalId = std::move(notebookLocalId),
-         options, fetchOptions](
+        [notebookLocalId = std::move(notebookLocalId), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -365,8 +364,7 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerTagLocalId(
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
-        [tagLocalId = std::move(tagLocalId), options,
-         fetchOptions](
+        [tagLocalId = std::move(tagLocalId), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -382,14 +380,12 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerTagLocalId(
 QFuture<QList<qevercloud::Note>>
     NotesHandler::listNotesPerNotebookAndTagLocalIds(
         QStringList notebookLocalIds, QStringList tagLocalIds,
-        FetchNoteOptions fetchOptions,
-        ListNotesOptions options) const
+        FetchNoteOptions fetchOptions, ListNotesOptions options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
         [notebookLocalIds = std::move(notebookLocalIds),
-         tagLocalIds = std::move(tagLocalIds), options,
-         fetchOptions](
+         tagLocalIds = std::move(tagLocalIds), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -409,8 +405,7 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesByLocalIds(
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
-        [noteLocalIds = std::move(noteLocalIds), options,
-         fetchOptions](
+        [noteLocalIds = std::move(noteLocalIds), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -451,8 +446,7 @@ QFuture<QStringList> NotesHandler::queryNoteLocalIds(
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             Q_UNUSED(handler)
-            return utils::queryNoteLocalIds(
-                query, database, errorDescription);
+            return utils::queryNoteLocalIds(query, database, errorDescription);
         });
 }
 
@@ -621,9 +615,8 @@ std::optional<quint32> NotesHandler::noteCountPerTagLocalIdImpl(
 }
 
 std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
-    const ListTagsOptions & listTagsOptions,
-    NoteCountOptions options, QSqlDatabase & database,
-    ErrorString & errorDescription) const
+    const ListTagsOptions & listTagsOptions, NoteCountOptions options,
+    QSqlDatabase & database, ErrorString & errorDescription) const
 {
     Transaction transaction{database, Transaction::Type::Selection};
 
@@ -1198,8 +1191,7 @@ bool NotesHandler::fillTagIds(
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotesHandler",
-            "Cannot fill note tag ids"),
+            "local_storage::sql::NotesHandler", "Cannot fill note tag ids"),
         false);
 
     struct TagIdData
@@ -1297,10 +1289,9 @@ bool NotesHandler::fillResources(
     }
 
     ErrorString error;
-    const auto resourceLocalIds = listResourceLocalIdsPerNoteLocalId(
-        note.localId(), database, error);
-    if (resourceLocalIds.isEmpty())
-    {
+    const auto resourceLocalIds =
+        listResourceLocalIdsPerNoteLocalId(note.localId(), database, error);
+    if (resourceLocalIds.isEmpty()) {
         if (error.isEmpty()) {
             return true;
         }
@@ -1318,8 +1309,7 @@ bool NotesHandler::fillResources(
 
     utils::FetchResourceOptions resourceOptions;
     if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData)) {
-        resourceOptions.setFlag(
-            utils::FetchResourceOption::WithBinaryData);
+        resourceOptions.setFlag(utils::FetchResourceOption::WithBinaryData);
     }
 
     if (!note.resources()) {
@@ -1331,13 +1321,13 @@ bool NotesHandler::fillResources(
         error.clear();
         int indexInNote = -1;
         auto resource = utils::findResourceByLocalId(
-            resourceLocalId, resourceOptions, m_localStorageDir,
-            indexInNote, database, error,
+            resourceLocalId, resourceOptions, m_localStorageDir, indexInNote,
+            database, error,
             utils::TransactionOption::DontUseSeparateTransaction);
         if (!resource) {
             errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::NotesHandler",
-                    "failed to find one of note's resources"));
+                "local_storage::sql::NotesHandler",
+                "failed to find one of note's resources"));
             errorDescription = errorPrefix;
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -1403,8 +1393,8 @@ bool NotesHandler::expungeNoteByLocalIdImpl(
         transaction.emplace(database, Transaction::Type::Exclusive);
     }
 
-    static const QString queryString = QStringLiteral(
-        "DELETE FROM Notes WHERE localUid = :localUid");
+    static const QString queryString =
+        QStringLiteral("DELETE FROM Notes WHERE localUid = :localUid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -1468,8 +1458,7 @@ bool NotesHandler::expungeNoteByGuidImpl(
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesImpl(
-    FetchNoteOptions fetchOptions,
-    const ListNotesOptions & options,
+    FetchNoteOptions fetchOptions, const ListNotesOptions & options,
     QSqlDatabase & database, ErrorString & errorDescription,
     const QString & sqlQueryCondition,
     std::optional<Transaction> transaction) const
@@ -1619,7 +1608,7 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
 
     if (!notebookLocalIds.isEmpty() && tagLocalIds.isEmpty()) {
         strm << "localUid IN (SELECT DISTINCT Notes.localUid FROM "
-            << "Notes WHERE Notes.notebookLocalUid IN (";
+             << "Notes WHERE Notes.notebookLocalUid IN (";
 
         for (const auto & notebookLocalId: notebookLocalIds) {
             strm << "'" << utils::sqlEscape(notebookLocalId) << "'";
@@ -1632,7 +1621,7 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
     }
     else if (notebookLocalIds.isEmpty() && !tagLocalIds.isEmpty()) {
         strm << "localUid IN (SELECT DISTINCT NoteTags.localNote FROM "
-            << "NoteTags WHERE NoteTags.localTag IN (";
+             << "NoteTags WHERE NoteTags.localTag IN (";
 
         for (const auto & tagLocalId: tagLocalIds) {
             strm << "'" << utils::sqlEscape(tagLocalId) << "'";
@@ -1645,9 +1634,9 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
     }
     else {
         strm << "localUid IN (SELECT DISTINCT Notes.localUid FROM "
-            << "(Notes LEFT OUTER JOIN NoteTags ON "
-            << "Notes.localUid = NoteTags.localNote) "
-            << "WHERE Notes.notebookLocalUid IN (";
+             << "(Notes LEFT OUTER JOIN NoteTags ON "
+             << "Notes.localUid = NoteTags.localNote) "
+             << "WHERE Notes.notebookLocalUid IN (";
 
         for (const auto & notebookLocalId: notebookLocalIds) {
             strm << "'" << utils::sqlEscape(notebookLocalId) << "'";
@@ -1676,7 +1665,8 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
 QList<qevercloud::Note> NotesHandler::listNotesByLocalIdsImpl(
     const QStringList & noteLocalIds, FetchNoteOptions fetchOptions,
     const ListNotesOptions & options, QSqlDatabase & database,
-    ErrorString & errorDescription, std::optional<Transaction> transaction) const
+    ErrorString & errorDescription,
+    std::optional<Transaction> transaction) const
 {
     QString noteLocalIdsSqlQueryCondition;
     QTextStream strm{&noteLocalIdsSqlQueryCondition};
@@ -1717,15 +1707,12 @@ QList<qevercloud::Note> NotesHandler::queryNotesImpl(
 TaskContext NotesHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool,
-        m_writerThread,
-        m_connectionPool,
+        m_threadPool, m_writerThread, m_connectionPool,
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "NotesHandler is already destroyed")},
+            "local_storage::sql::NotesHandler",
+            "NotesHandler is already destroyed")},
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "Request has been canceled")}};
+            "local_storage::sql::NotesHandler", "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql
