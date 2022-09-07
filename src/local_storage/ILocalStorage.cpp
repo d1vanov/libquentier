@@ -76,40 +76,18 @@ T & printStartupOptions(T & t, const ILocalStorage::StartupOptions options)
 }
 
 template <class T>
-T & printListObjectsOption(T & t, const ILocalStorage::ListObjectsOption option)
+T & printListObjectsFilter(
+    T & t, const ILocalStorage::ListObjectsFilter filter)
 {
-    using ListObjectsOption = ILocalStorage::ListObjectsOption;
+    using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
 
-    switch (option) {
-    case ListObjectsOption::ListAll:
-        t << "List all";
+    switch (filter)
+    {
+    case ListObjectsFilter::Include:
+        t << "include";
         break;
-    case ListObjectsOption::ListDirty:
-        t << "List dirty";
-        break;
-    case ListObjectsOption::ListNonDirty:
-        t << "List non dirty";
-        break;
-    case ListObjectsOption::ListElementsWithoutGuid:
-        t << "List elements without guid";
-        break;
-    case ListObjectsOption::ListElementsWithGuid:
-        t << "List elements with guid";
-        break;
-    case ListObjectsOption::ListLocal:
-        t << "List local";
-        break;
-    case ListObjectsOption::ListNonLocal:
-        t << "List non local";
-        break;
-    case ListObjectsOption::ListFavoritedElements:
-        t << "List favorited elements";
-        break;
-    case ListObjectsOption::ListNonFavoritedElements:
-        t << "List non-favorited elements";
-        break;
-    default:
-        t << "Unknown (" << static_cast<qint64>(option);
+    case ListObjectsFilter::Exclude:
+        t << "exclude";
         break;
     }
 
@@ -117,45 +95,39 @@ T & printListObjectsOption(T & t, const ILocalStorage::ListObjectsOption option)
 }
 
 template <class T>
-T & printListObjectsOptions(
-    T & t, const ILocalStorage::ListObjectsOptions options)
+T & printListObjectsFilters(
+    T & t, const ILocalStorage::ListObjectsFilters & filters)
 {
-    using ListObjectsOption = ILocalStorage::ListObjectsOption;
-
-    if (options & ListObjectsOption::ListAll) {
-        t << "List all; ";
+    t << "Locally modified filter: ";
+    if (filters.m_locallyModifiedFilter) {
+        t << *filters.m_locallyModifiedFilter;
+    }
+    else {
+        t << "<not set>";
     }
 
-    if (options & ListObjectsOption::ListDirty) {
-        t << "List dirty; ";
+    t << ", with guid filter: ";
+    if (filters.m_withGuidFilter) {
+        t << *filters.m_withGuidFilter;
+    }
+    else {
+        t << "<not set>";
     }
 
-    if (options & ListObjectsOption::ListNonDirty) {
-        t << "List non dirty; ";
+    t << ", local only filter: ";
+    if (filters.m_localOnlyFilter) {
+        t << *filters.m_localOnlyFilter;
+    }
+    else {
+        t << "<not set>";
     }
 
-    if (options & ListObjectsOption::ListElementsWithoutGuid) {
-        t << "List elements without guid; ";
+    t << ", locally favorited filter: ";
+    if (filters.m_locallyFavoritedFilter) {
+        t << *filters.m_locallyFavoritedFilter;
     }
-
-    if (options & ListObjectsOption::ListElementsWithGuid) {
-        t << "List elements with guid; ";
-    }
-
-    if (options & ListObjectsOption::ListLocal) {
-        t << "List local; ";
-    }
-
-    if (options & ListObjectsOption::ListNonLocal) {
-        t << "List non local; ";
-    }
-
-    if (options & ListObjectsOption::ListFavoritedElements) {
-        t << "List favorited elements; ";
-    }
-
-    if (options & ListObjectsOption::ListNonFavoritedElements) {
-        t << "List non-favorited elements; ";
+    else {
+        t << "<not set>";
     }
 
     return t;
@@ -242,7 +214,7 @@ T & printListLinkedNotebooksOrder(
 template <class T>
 T & printListOptionsBase(T & t, const ILocalStorage::ListOptionsBase & options)
 {
-    t << "Flags: " << options.m_flags << "; limit = " << options.m_limit
+    t << "Filters: " << options.m_filters << "; limit = " << options.m_limit
       << ", offset = " << options.m_offset
       << ", direction = " << options.m_direction;
     return t;
@@ -619,8 +591,7 @@ bool compareListOptionsBase(
     const ILocalStorage::ListOptionsBase & lhs,
     const ILocalStorage::ListOptionsBase & rhs) noexcept
 {
-    return static_cast<qint64>(lhs.m_flags) ==
-        static_cast<qint64>(rhs.m_flags) &&
+    return lhs.m_filters == rhs.m_filters &&
         lhs.m_limit == rhs.m_limit && lhs.m_offset == rhs.m_offset &&
         lhs.m_direction == rhs.m_direction;
 }
@@ -650,26 +621,27 @@ QDebug & operator<<(QDebug & dbg, const ILocalStorage::StartupOptions options)
 }
 
 QTextStream & operator<<(
-    QTextStream & strm, const ILocalStorage::ListObjectsOption option)
+    QTextStream & strm, const ILocalStorage::ListObjectsFilter filter)
 {
-    return printListObjectsOption(strm, option);
-}
-
-QDebug & operator<<(QDebug & dbg, const ILocalStorage::ListObjectsOption option)
-{
-    return printListObjectsOption(dbg, option);
-}
-
-QTextStream & operator<<(
-    QTextStream & strm, const ILocalStorage::ListObjectsOptions options)
-{
-    return printListObjectsOptions(strm, options);
+    return printListObjectsFilter(strm, filter);
 }
 
 QDebug & operator<<(
-    QDebug & dbg, const ILocalStorage::ListObjectsOptions options)
+    QDebug & dbg, const ILocalStorage::ListObjectsFilter filter)
 {
-    return printListObjectsOptions(dbg, options);
+    return printListObjectsFilter(dbg, filter);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const ILocalStorage::ListObjectsFilters & filters)
+{
+    return printListObjectsFilters(strm, filters);
+}
+
+QDebug & operator<<(
+    QDebug & dbg, const ILocalStorage::ListObjectsFilters & filters)
+{
+    return printListObjectsFilters(dbg, filters);
 }
 
 QTextStream & operator<<(
@@ -902,6 +874,16 @@ QTextStream & operator<<(
 QDebug & operator<<(QDebug & dbg, const ILocalStorage::NoteCountOptions options)
 {
     return printNoteCountOptions(dbg, options);
+}
+
+bool operator==(
+    const ILocalStorage::ListObjectsFilters & lhs,
+    const ILocalStorage::ListObjectsFilters & rhs) noexcept
+{
+    return lhs.m_locallyModifiedFilter == rhs.m_locallyModifiedFilter &&
+        lhs.m_withGuidFilter == rhs.m_withGuidFilter &&
+        lhs.m_localOnlyFilter == rhs.m_localOnlyFilter &&
+        lhs.m_locallyFavoritedFilter == rhs.m_locallyFavoritedFilter;
 }
 
 bool operator==(

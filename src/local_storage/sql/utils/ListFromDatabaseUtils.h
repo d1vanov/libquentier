@@ -86,82 +86,55 @@ template <>
 
 template <class T>
 [[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(
-    const ILocalStorage::ListObjectsOptions & options,
+    const ILocalStorage::ListObjectsFilters & filters,
     ErrorString & errorDescription)
 {
     QString result;
     errorDescription.clear();
 
-    using ListObjectsOption = ILocalStorage::ListObjectsOption;
+    using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
 
-    bool listAll = options.testFlag(ListObjectsOption::ListAll);
-
-    bool listDirty = options.testFlag(ListObjectsOption::ListDirty);
-    bool listNonDirty = options.testFlag(ListObjectsOption::ListNonDirty);
-
-    bool listElementsWithoutGuid =
-        options.testFlag(ListObjectsOption::ListElementsWithoutGuid);
-
-    bool listElementsWithGuid =
-        options.testFlag(ListObjectsOption::ListElementsWithGuid);
-
-    bool listLocal = options.testFlag(ListObjectsOption::ListLocal);
-    bool listNonLocal = options.testFlag(ListObjectsOption::ListNonLocal);
-
-    bool listFavoritedElements =
-        options.testFlag(ListObjectsOption::ListFavoritedElements);
-
-    bool listNonFavoritedElements =
-        options.testFlag(ListObjectsOption::ListNonFavoritedElements);
-
-    if (!listAll && !listDirty && !listNonDirty && !listElementsWithoutGuid &&
-        !listElementsWithGuid && !listLocal && !listNonLocal &&
-        !listFavoritedElements && !listNonFavoritedElements)
-    {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't list objects by filter: detected incorrect filter flag"));
-        errorDescription.details() = QString::number(static_cast<int>(options));
-        return result;
-    }
-
-    if (!(listDirty && listNonDirty)) {
-        if (listDirty) {
+    if (filters.m_locallyModifiedFilter) {
+        switch (*filters.m_locallyModifiedFilter) {
+        case ListObjectsFilter::Include:
             result += QStringLiteral("(isDirty=1) AND ");
-        }
-
-        if (listNonDirty) {
+            break;
+        case ListObjectsFilter::Exclude:
             result += QStringLiteral("(isDirty=0) AND ");
+            break;
         }
     }
 
-    if (!(listElementsWithoutGuid && listElementsWithGuid)) {
-        if (listElementsWithoutGuid) {
+    if (filters.m_withGuidFilter) {
+        switch (*filters.m_withGuidFilter) {
+        case ListObjectsFilter::Include:
             result += QStringLiteral("(guid IS NULL) AND ");
-        }
-
-        if (listElementsWithGuid) {
+            break;
+        case ListObjectsFilter::Exclude:
             result += QStringLiteral("(guid IS NOT NULL) AND ");
+            break;
         }
     }
 
-    if (!(listLocal && listNonLocal)) {
-        if (listLocal) {
+    if (filters.m_localOnlyFilter) {
+        switch (*filters.m_localOnlyFilter) {
+        case ListObjectsFilter::Include:
             result += QStringLiteral("(isLocal=1) AND ");
-        }
-
-        if (listNonLocal) {
+            break;
+        case ListObjectsFilter::Exclude:
             result += QStringLiteral("(isLocal=0) AND ");
+            break;
         }
     }
 
-    if (!(listFavoritedElements && listNonFavoritedElements)) {
-        if (listFavoritedElements) {
+    if (filters.m_locallyFavoritedFilter) {
+        switch (*filters.m_locallyFavoritedFilter) {
+        case ListObjectsFilter::Include:
             result += QStringLiteral("(isFavorited=1) AND ");
-        }
-
-        if (listNonFavoritedElements) {
+            break;
+        case ListObjectsFilter::Exclude:
             result += QStringLiteral("(isFavorited=0) AND ");
+            break;
         }
     }
 
@@ -170,7 +143,7 @@ template <class T>
 
 template <class T, class TOrderBy>
 QList<T> listObjects(
-    const ILocalStorage::ListObjectsOptions & flag,
+    const ILocalStorage::ListObjectsFilters & filters,
     quint64 limit, quint64 offset, const TOrderBy & orderBy,
     const ILocalStorage::OrderDirection & orderDirection,
     const QString & additionalSqlQueryCondition,
@@ -178,8 +151,8 @@ QList<T> listObjects(
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "Listing " << T::staticMetaObject.className() << " objects: flag = "
-            << flag << ", limit = " << limit << ", offset = " << offset
+        "Listing " << T::staticMetaObject.className() << " objects: filters = "
+            << filters << ", limit = " << limit << ", offset = " << offset
             << ", order by " << orderBy <<  ", order direction = "
             << orderDirection << ", additional SQL query condition = "
             << additionalSqlQueryCondition);
@@ -187,7 +160,7 @@ QList<T> listObjects(
     ErrorString flagError;
 
     QString sqlQueryConditions =
-        listObjectsOptionsToSqlQueryConditions<T>(flag, flagError);
+        listObjectsOptionsToSqlQueryConditions<T>(filters, flagError);
 
     if (sqlQueryConditions.isEmpty() && !flagError.isEmpty()) {
         errorDescription = flagError;

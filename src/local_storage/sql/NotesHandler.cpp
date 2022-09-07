@@ -629,7 +629,7 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
 
     const QList<qevercloud::Tag> tags =
         utils::listObjects<qevercloud::Tag, ILocalStorage::ListTagsOrder>(
-            listTagsOptions.m_flags, listTagsOptions.m_limit,
+            listTagsOptions.m_filters, listTagsOptions.m_limit,
             listTagsOptions.m_offset, listTagsOptions.m_order,
             listTagsOptions.m_direction, QString{}, database, errorDescription);
 
@@ -1479,7 +1479,7 @@ QList<qevercloud::Note> NotesHandler::listNotesImpl(
     }
 
     auto notes = utils::listObjects<qevercloud::Note, ListNotesOrder>(
-        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_filters, options.m_limit, options.m_offset, options.m_order,
         options.m_direction, sqlQueryCondition, database, errorDescription);
 
     if (notes.isEmpty()) {
@@ -1709,12 +1709,8 @@ QList<qevercloud::Note> NotesHandler::queryNotesImpl(
         return {};
     }
 
-    ListNotesOptions options;
-    options.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     return listNotesByLocalIdsImpl(
-        noteLocalIds, fetchOptions, options, database,
+        noteLocalIds, fetchOptions, ListNotesOptions{}, database,
         errorDescription, std::move(transaction));
 }
 

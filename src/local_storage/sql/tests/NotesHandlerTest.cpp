@@ -648,13 +648,8 @@ TEST_F(
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
-    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     auto noteCountsFuture = notesHandler->noteCountsPerTags(
-        listTagsOptions,
+        ILocalStorage::ListTagsOptions{},
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
             NoteCountOption::IncludeDeletedNotes);
 
@@ -764,14 +759,9 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
-
-    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     auto notesFuture = notesHandler->listNotes(
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
-        listNotesOptions);
+        ILocalStorage::ListNotesOptions{});
 
     notesFuture.waitForFinished();
     EXPECT_TRUE(notesFuture.result().isEmpty());
@@ -786,15 +776,10 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
-
-    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     auto notesFuture = notesHandler->listNotesPerNotebookLocalId(
         UidGenerator::Generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
-        listNotesOptions);
+        ILocalStorage::ListNotesOptions{});
 
     notesFuture.waitForFinished();
     EXPECT_TRUE(notesFuture.result().isEmpty());
@@ -809,15 +794,10 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
-
-    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     auto notesFuture = notesHandler->listNotesPerTagLocalId(
         UidGenerator::Generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
-        listNotesOptions);
+        ILocalStorage::ListNotesOptions{});
 
     notesFuture.waitForFinished();
     EXPECT_TRUE(notesFuture.result().isEmpty());
@@ -832,16 +812,11 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
-
-    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     auto notesFuture = notesHandler->listNotesPerNotebookAndTagLocalIds(
         QStringList{} << UidGenerator::Generate(),
         QStringList{} << UidGenerator::Generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
-        listNotesOptions);
+        ILocalStorage::ListNotesOptions{});
 
     notesFuture.waitForFinished();
     EXPECT_TRUE(notesFuture.result().isEmpty());
@@ -856,15 +831,10 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
-
-    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     auto notesFuture = notesHandler->listNotesByLocalIds(
         QStringList{} << UidGenerator::Generate() << UidGenerator::Generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
-        listNotesOptions);
+        ILocalStorage::ListNotesOptions{});
 
     notesFuture.waitForFinished();
     EXPECT_TRUE(notesFuture.result().isEmpty());
@@ -1067,10 +1037,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidNoteFuture.result(), note);
 
-    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
-
-    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
+    const auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     auto listNotesFuture =
         notesHandler->listNotes(fetchNoteOptions, listNotesOptions);

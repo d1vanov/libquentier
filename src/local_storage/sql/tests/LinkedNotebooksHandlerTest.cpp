@@ -244,11 +244,8 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldListNoLinkedNotebooksWhenThereAreNoLink
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread, m_temporaryDir.path());
 
-    auto listLinkedNotebooksOptions =
+    const auto listLinkedNotebooksOptions =
         ILocalStorage::ListLinkedNotebooksOptions{};
-
-    listLinkedNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
 
     auto listLinkedNotebooksFuture =
         linkedNotebooksHandler->listLinkedNotebooks(listLinkedNotebooksOptions);
@@ -303,11 +300,8 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
     ASSERT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidLinkedNotebookFuture.result(), linkedNotebook);
 
-    auto listLinkedNotebooksOptions =
+    const auto listLinkedNotebooksOptions =
         ILocalStorage::ListLinkedNotebooksOptions{};
-
-    listLinkedNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
 
     auto listLinkedNotebooksFuture =
         linkedNotebooksHandler->listLinkedNotebooks(listLinkedNotebooksOptions);

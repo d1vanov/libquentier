@@ -697,7 +697,7 @@ QList<qevercloud::Tag> TagsHandler::listTagsImpl(
     }
 
     return utils::listObjects<qevercloud::Tag, ILocalStorage::ListTagsOrder>(
-        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_filters, options.m_limit, options.m_offset, options.m_order,
         options.m_direction, sqlQueryCondition, database, errorDescription);
 }
 
@@ -718,7 +718,7 @@ QList<qevercloud::Tag> TagsHandler::listTagsPerNoteLocalIdImpl(
             .arg(utils::sqlEscape(noteLocalId));
 
     return utils::listObjects<qevercloud::Tag, ILocalStorage::ListTagsOrder>(
-        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_filters, options.m_limit, options.m_offset, options.m_order,
         options.m_direction, noteLocalIdSqlQueryCondition, database,
         errorDescription);
 }

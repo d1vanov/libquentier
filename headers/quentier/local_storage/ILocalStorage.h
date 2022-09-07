@@ -81,31 +81,31 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////
 
-    enum class ListObjectsOption
+    enum class ListObjectsFilter
     {
-        ListAll = 1 << 0,
-        ListDirty = 1 << 1,
-        ListNonDirty = 1 << 2,
-        ListElementsWithoutGuid = 1 << 3,
-        ListElementsWithGuid = 1 << 4,
-        ListLocal = 1 << 5,
-        ListNonLocal = 1 << 6,
-        ListFavoritedElements = 1 << 7,
-        ListNonFavoritedElements = 1 << 8
+        Include,
+        Exclude
     };
-    Q_DECLARE_FLAGS(ListObjectsOptions, ListObjectsOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListObjectsOption option);
+        QTextStream & strm, ListObjectsFilter filter);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListObjectsOption option);
+        QDebug & dbg, ListObjectsFilter filter);
+
+    struct QUENTIER_EXPORT ListObjectsFilters
+    {
+        std::optional<ListObjectsFilter> m_locallyModifiedFilter;
+        std::optional<ListObjectsFilter> m_withGuidFilter;
+        std::optional<ListObjectsFilter> m_localOnlyFilter;
+        std::optional<ListObjectsFilter> m_locallyFavoritedFilter;
+    };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListObjectsOptions options);
+        QTextStream & strm, const ListObjectsFilters & filters);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListObjectsOptions options);
+        QDebug & dbg, const ListObjectsFilters & filters);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -232,7 +232,7 @@ public:
     {
         ListOptionsBase() noexcept {}; // NOLINT
 
-        ListObjectsOptions m_flags = {};
+        ListObjectsFilters m_filters = {};
         quint64 m_limit = 0UL;
         quint64 m_offset = 0UL;
         OrderDirection m_direction = OrderDirection::Ascending;
@@ -665,6 +665,10 @@ public:
      */
     [[nodiscard]] virtual ILocalStorageNotifier * notifier() const = 0;
 };
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListObjectsFilters & lhs,
+    const ILocalStorage::ListObjectsFilters & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
     const ILocalStorage::ListOptionsBase & lhs,

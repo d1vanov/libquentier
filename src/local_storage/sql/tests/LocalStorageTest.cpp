@@ -494,11 +494,7 @@ TEST_F(LocalStorageTest, ForwardListNotebooksToNotebooksHandler)
     const auto notebooks = QList<qevercloud::Notebook>{}
         << qevercloud::Notebook{};
 
-    auto listOptions = ILocalStorage::ListNotebooksOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListNotebooksOptions{};
     EXPECT_CALL(*m_mockNotebooksHandler, listNotebooks(listOptions))
         .WillOnce(Return(threading::makeReadyFuture(notebooks)));
 
@@ -687,10 +683,7 @@ TEST_F(LocalStorageTest, ForwardNoteCountPerTagsToNotesHandler)
             ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
         ILocalStorage::NoteCountOption::IncludeDeletedNotes;
 
-    ILocalStorage::ListTagsOptions listTagsOptions;
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listTagsOptions = ILocalStorage::ListTagsOptions{};
     EXPECT_CALL(
         *m_mockNotesHandler,
         noteCountsPerTags(listTagsOptions, noteCountOptions))
@@ -818,11 +811,7 @@ TEST_F(LocalStorageTest, ForwardListNotesToNotesHandler)
             ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions = ILocalStorage::ListNotesOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListNotesOptions{};
     EXPECT_CALL(*m_mockNotesHandler, listNotes(fetchOptions, listOptions))
         .WillOnce(Return(threading::makeReadyFuture(notes)));
 
@@ -844,11 +833,7 @@ TEST_F(LocalStorageTest, ForwardListNotesPerNotebookLocalIdToNotesHandler)
             ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions = ILocalStorage::ListNotesOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListNotesOptions{};
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesPerNotebookLocalId(notebookLocalId, fetchOptions, listOptions))
@@ -874,11 +859,7 @@ TEST_F(LocalStorageTest, ForwardListNotesPerTagLocalIdToNotesHandler)
             ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions = ILocalStorage::ListNotesOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListNotesOptions{};
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesPerTagLocalId(tagLocalId, fetchOptions, listOptions))
@@ -906,11 +887,7 @@ TEST_F(
             ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions = ILocalStorage::ListNotesOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListNotesOptions{};
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesPerNotebookAndTagLocalIds(
@@ -937,11 +914,7 @@ TEST_F(LocalStorageTest, ForwardListNotesByLocalIdsToNotesHandler)
             ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions = ILocalStorage::ListNotesOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListNotesOptions{};
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesByLocalIds(noteLocalIds, fetchOptions, listOptions))
@@ -1118,11 +1091,7 @@ TEST_F(LocalStorageTest, ForwardListTagsToTagsHandler)
 
     const auto tags = QList<qevercloud::Tag>{} << qevercloud::Tag{};
 
-    auto listOptions = ILocalStorage::ListTagsOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListTagsOptions{};
     EXPECT_CALL(*m_mockTagsHandler, listTags(listOptions))
         .WillOnce(Return(threading::makeReadyFuture(tags)));
 
@@ -1138,13 +1107,8 @@ TEST_F(LocalStorageTest, ForwardListTagsPerNoteLocalIdToNotesHandler)
 
     const auto tags = QList<qevercloud::Tag>{} << qevercloud::Tag{};
 
-    auto listOptions = ILocalStorage::ListTagsOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListTagsOptions{};
     const auto & localId = tags[0].localId();
-
     EXPECT_CALL(
         *m_mockTagsHandler, listTagsPerNoteLocalId(localId, listOptions))
         .WillOnce(Return(threading::makeReadyFuture(tags)));
@@ -1400,11 +1364,7 @@ TEST_F(LocalStorageTest, ForwardListSavedSearchesToSavedSearchesHandler)
     const auto savedSearches = QList<qevercloud::SavedSearch>{}
         << qevercloud::SavedSearch{};
 
-    auto listOptions = ILocalStorage::ListSavedSearchesOptions{};
-
-    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
+    const auto listOptions = ILocalStorage::ListSavedSearchesOptions{};
     EXPECT_CALL(*m_mockSavedSearchesHandler, listSavedSearches(listOptions))
         .WillOnce(Return(threading::makeReadyFuture(savedSearches)));
 

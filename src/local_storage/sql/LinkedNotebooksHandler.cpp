@@ -389,7 +389,7 @@ QList<qevercloud::LinkedNotebook>
 {
     return utils::listObjects<
         qevercloud::LinkedNotebook, ILocalStorage::ListLinkedNotebooksOrder>(
-        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_filters, options.m_limit, options.m_offset, options.m_order,
         options.m_direction, {}, database, errorDescription);
 }
 

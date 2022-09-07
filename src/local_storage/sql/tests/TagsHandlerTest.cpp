@@ -292,10 +292,6 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsWhenThereAreNoTags)
         m_writerThread);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
@@ -311,10 +307,6 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
         m_writerThread);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
@@ -409,10 +401,6 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     EXPECT_EQ(*foundByNameTagFuture.result(), tag);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
@@ -931,10 +919,6 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
     putTagFuture.waitForFinished();
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
@@ -1059,10 +1043,6 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
     putNoteFuture.waitForFinished();
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
@@ -1209,10 +1189,6 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
     putNoteFuture.waitForFinished();
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
-
-    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
-
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 

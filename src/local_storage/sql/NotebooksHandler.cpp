@@ -796,7 +796,7 @@ QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
 
     return utils::listObjects<
         qevercloud::Notebook, ILocalStorage::ListNotebooksOrder>(
-        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_filters, options.m_limit, options.m_offset, options.m_order,
         options.m_direction, linkedNotebookGuidSqlQueryCondition, database,
         errorDescription);
 }

@@ -368,7 +368,7 @@ QList<qevercloud::SavedSearch> SavedSearchesHandler::listSavedSearchesImpl(
 {
     return utils::listObjects<
         qevercloud::SavedSearch, ILocalStorage::ListSavedSearchesOrder>(
-        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_filters, options.m_limit, options.m_offset, options.m_order,
         options.m_direction, QString{}, database, errorDescription);
 }
 

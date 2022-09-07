@@ -251,10 +251,8 @@ TEST_F(
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto listSavedSearchesOptions = ILocalStorage::ListSavedSearchesOptions{};
-
-    listSavedSearchesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
+    const auto listSavedSearchesOptions =
+        ILocalStorage::ListSavedSearchesOptions{};
 
     auto listSavedSearchesFuture =
         savedSearchesHandler->listSavedSearches(listSavedSearchesOptions);
@@ -366,10 +364,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     ASSERT_TRUE(foundSavedSearchByNameFuture.result());
     EXPECT_EQ(foundSavedSearchByNameFuture.result(), savedSearch);
 
-    auto listSavedSearchesOptions = ILocalStorage::ListSavedSearchesOptions{};
-
-    listSavedSearchesOptions.m_flags = ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll};
+    const auto listSavedSearchesOptions =
+        ILocalStorage::ListSavedSearchesOptions{};
 
     auto listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
         listSavedSearchesOptions);
