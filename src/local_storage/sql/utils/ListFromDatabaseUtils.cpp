@@ -30,6 +30,17 @@
 
 namespace quentier::local_storage::sql::utils {
 
+namespace {
+
+[[nodiscard]] QString listGuidsGenericSqlQueryImpl(const QString & table)
+{
+    return QString::fromUtf8("SELECT DISTINCT guid FROM %1").arg(table);
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <>
 QString listObjectsGenericSqlQuery<qevercloud::Notebook>()
 {
@@ -83,6 +94,40 @@ QString listObjectsGenericSqlQuery<qevercloud::Note>()
         "LEFT OUTER JOIN NoteLimits ON "
         "Notes.localUid = NoteLimits.noteLocalUid");
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <>
+QString listGuidsGenericSqlQuery<qevercloud::Notebook>()
+{
+    return listGuidsGenericSqlQueryImpl(QStringLiteral("Notebooks"));
+}
+
+template <>
+QString listGuidsGenericSqlQuery<qevercloud::Note>()
+{
+    return listGuidsGenericSqlQueryImpl(QStringLiteral("Notes"));
+}
+
+template <>
+QString listGuidsGenericSqlQuery<qevercloud::SavedSearch>()
+{
+    return listGuidsGenericSqlQueryImpl(QStringLiteral("SavedSearches"));
+}
+
+template <>
+QString listGuidsGenericSqlQuery<qevercloud::Tag>()
+{
+    return listGuidsGenericSqlQueryImpl(QStringLiteral("Tags"));
+}
+
+template <>
+QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>()
+{
+    return listGuidsGenericSqlQueryImpl(QStringLiteral("LinkedNotebooks"));
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <>
 QString orderByToSqlTableColumn<ILocalStorage::ListNotebooksOrder>(

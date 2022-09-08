@@ -24,6 +24,9 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
+#include <qevercloud/types/TypeAliases.h>
+
+#include <QSet>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -47,6 +50,8 @@ enum class ListNoteResourcesOption
     ListNoteResourcesOption option, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <class T>
 [[nodiscard]] QString listObjectsGenericSqlQuery();
 
@@ -61,6 +66,28 @@ template <>
 
 template <>
 [[nodiscard]] QString listObjectsGenericSqlQuery<qevercloud::LinkedNotebook>();
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+[[nodiscard]] QString listGuidsGenericSqlQuery();
+
+template <>
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Notebook>();
+
+template <>
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Note>();
+
+template <>
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::SavedSearch>();
+
+template <>
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Tag>();
+
+template <>
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>();
+
+////////////////////////////////////////////////////////////////////////////////
 
 template <class TOrderBy>
 [[nodiscard]] QString orderByToSqlTableColumn(const TOrderBy & orderBy);
@@ -84,13 +111,13 @@ template <>
     orderByToSqlTableColumn<ILocalStorage::ListLinkedNotebooksOrder>(
         const ILocalStorage::ListLinkedNotebooksOrder & order);
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <class T>
-[[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(
-    const ILocalStorage::ListObjectsFilters & filters,
-    ErrorString & errorDescription)
+[[nodiscard]] QString listObjectsFiltersToSqlQueryConditions(
+    const ILocalStorage::ListObjectsFilters & filters)
 {
     QString result;
-    errorDescription.clear();
 
     using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
 
@@ -142,7 +169,7 @@ template <class T>
 }
 
 template <class T, class TOrderBy>
-QList<T> listObjects(
+[[nodiscard]] QList<T> listObjects(
     const ILocalStorage::ListObjectsFilters & filters, quint64 limit,
     quint64 offset, const TOrderBy & orderBy,
     const ILocalStorage::OrderDirection & orderDirection,
@@ -158,16 +185,8 @@ QList<T> listObjects(
                    << ", additional SQL query condition = "
                    << additionalSqlQueryCondition);
 
-    ErrorString flagError;
-
     QString sqlQueryConditions =
-        listObjectsOptionsToSqlQueryConditions<T>(filters, flagError);
-
-    if (sqlQueryConditions.isEmpty() && !flagError.isEmpty()) {
-        errorDescription = flagError;
-        QNWARNING("local_storage::sql::utils", flagError);
-        return QList<T>();
-    }
+        listObjectsFiltersToSqlQueryConditions<T>(filters);
 
     QString sumSqlQueryConditions;
     if (!sqlQueryConditions.isEmpty()) {
@@ -230,9 +249,9 @@ QList<T> listObjects(
 
     QList<T> objects;
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
-        "can't list objects from the local storage database by filter"));
+        "can't list objects from the local storage database")};
 
     QSqlQuery query{database};
     if (!query.exec(queryString)) {
@@ -262,6 +281,99 @@ QList<T> listObjects(
                  << " objects");
 
     return objects;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+[[nodiscard]] QString listGuidsFiltersToSqlQueryConditions(
+    const ILocalStorage::ListGuidsFilters & filters,
+    ErrorString & errorDescription)
+{
+    QString result;
+    errorDescription.clear();
+
+    using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
+
+    if (filters.m_locallyModifiedFilter) {
+        switch (*filters.m_locallyModifiedFilter) {
+        case ListObjectsFilter::Include:
+            result += QStringLiteral("(isDirty=1) AND ");
+            break;
+        case ListObjectsFilter::Exclude:
+            result += QStringLiteral("(isDirty=0) AND ");
+            break;
+        }
+    }
+
+    if (filters.m_localOnlyFilter) {
+        switch (*filters.m_localOnlyFilter) {
+        case ListObjectsFilter::Include:
+            result += QStringLiteral("(isLocal=1) AND ");
+            break;
+        case ListObjectsFilter::Exclude:
+            result += QStringLiteral("(isLocal=0) AND ");
+            break;
+        }
+    }
+
+    if (filters.m_locallyFavoritedFilter) {
+        switch (*filters.m_locallyFavoritedFilter) {
+        case ListObjectsFilter::Include:
+            result += QStringLiteral("(isFavorited=1) AND ");
+            break;
+        case ListObjectsFilter::Exclude:
+            result += QStringLiteral("(isFavorited=0) AND ");
+            break;
+        }
+    }
+
+    if (result.endsWith(QStringLiteral(" AND "))) {
+        result.chop(5);
+    }
+
+    return result;
+}
+
+template <class T>
+QSet<qevercloud::Guid> listGuids(
+    const ILocalStorage::ListGuidsFilters & filters, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QString queryString = listGuidsGenericSqlQuery<T>();
+
+    const QString sqlQueryConditions =
+        listGuidsFiltersToSqlQueryConditions<T>(filters);
+    if (!sqlQueryConditions.isEmpty()) {
+        queryString += QStringLiteral(" WHERE (");
+        queryString += sqlQueryConditions;
+        queryString += QStringLiteral(")");
+    }
+
+    QSet<qevercloud::Guid> guids;
+
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "can't list guids from the local storage database")};
+
+    QSqlQuery query{database};
+    if (!query.exec(queryString)) {
+        errorDescription.base() = errorPrefix.base();
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << ", last query = " << query.lastQuery()
+                             << ", last error = " << query.lastError());
+        errorDescription.details() = query.lastError().text();
+        return guids;
+    }
+
+    guids.reserve(std::max(query.size(), 0));
+
+    while (query.next()) {
+        guids.insert(query.value(0).toString());
+    }
+
+    return guids;
 }
 
 } // namespace quentier::local_storage::sql::utils

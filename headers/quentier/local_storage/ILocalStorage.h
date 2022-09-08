@@ -93,6 +93,8 @@ public:
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & dbg, ListObjectsFilter filter);
 
+    ////////////////////////////////////////////////////////////////////////////
+
     struct QUENTIER_EXPORT ListObjectsFilters
     {
         std::optional<ListObjectsFilter> m_locallyModifiedFilter;
@@ -106,6 +108,21 @@ public:
 
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & dbg, const ListObjectsFilters & filters);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    struct QUENTIER_EXPORT ListGuidsFilters
+    {
+        std::optional<ListObjectsFilter> m_locallyModifiedFilter;
+        std::optional<ListObjectsFilter> m_localOnlyFilter;
+        std::optional<ListObjectsFilter> m_locallyFavoritedFilter;
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListGuidsFilters & filters);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListGuidsFilters & filters);
 
     ////////////////////////////////////////////////////////////////////////////
 

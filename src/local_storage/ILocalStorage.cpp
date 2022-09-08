@@ -132,6 +132,37 @@ T & printListObjectsFilters(
 }
 
 template <class T>
+T & printListGuidsFilters(
+    T & t, const ILocalStorage::ListGuidsFilters & filters)
+{
+    t << "Locally modified filter: ";
+    if (filters.m_locallyModifiedFilter) {
+        t << *filters.m_locallyModifiedFilter;
+    }
+    else {
+        t << "<not set>";
+    }
+
+    t << ", local only filter: ";
+    if (filters.m_localOnlyFilter) {
+        t << *filters.m_localOnlyFilter;
+    }
+    else {
+        t << "<not set>";
+    }
+
+    t << ", locally favorited filter: ";
+    if (filters.m_locallyFavoritedFilter) {
+        t << *filters.m_locallyFavoritedFilter;
+    }
+    else {
+        t << "<not set>";
+    }
+
+    return t;
+}
+
+template <class T>
 T & printOrderDirection(
     T & t, const ILocalStorage::OrderDirection orderDirection)
 {
@@ -638,6 +669,18 @@ QDebug & operator<<(
     QDebug & dbg, const ILocalStorage::ListObjectsFilters & filters)
 {
     return printListObjectsFilters(dbg, filters);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const ILocalStorage::ListGuidsFilters & filters)
+{
+    return printListGuidsFilters(strm, filters);
+}
+
+QDebug & operator<<(
+    QDebug & dbg, const ILocalStorage::ListGuidsFilters & filters)
+{
+    return printListGuidsFilters(dbg, filters);
 }
 
 QTextStream & operator<<(
