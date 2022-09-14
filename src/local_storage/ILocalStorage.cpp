@@ -143,14 +143,6 @@ T & printListGuidsFilters(
         t << "<not set>";
     }
 
-    t << ", local only filter: ";
-    if (filters.m_localOnlyFilter) {
-        t << *filters.m_localOnlyFilter;
-    }
-    else {
-        t << "<not set>";
-    }
-
     t << ", locally favorited filter: ";
     if (filters.m_locallyFavoritedFilter) {
         t << *filters.m_locallyFavoritedFilter;

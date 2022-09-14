@@ -114,7 +114,6 @@ public:
     struct QUENTIER_EXPORT ListGuidsFilters
     {
         std::optional<ListObjectsFilter> m_locallyModifiedFilter;
-        std::optional<ListObjectsFilter> m_localOnlyFilter;
         std::optional<ListObjectsFilter> m_locallyFavoritedFilter;
     };
 

@@ -129,6 +129,43 @@ QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+QString listGuidsFiltersToSqlQueryConditions(
+    const ILocalStorage::ListGuidsFilters & filters)
+{
+    QString result;
+    using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
+
+    if (filters.m_locallyModifiedFilter) {
+        switch (*filters.m_locallyModifiedFilter) {
+        case ListObjectsFilter::Include:
+            result += QStringLiteral("(isDirty=1) AND ");
+            break;
+        case ListObjectsFilter::Exclude:
+            result += QStringLiteral("(isDirty=0) AND ");
+            break;
+        }
+    }
+
+    if (filters.m_locallyFavoritedFilter) {
+        switch (*filters.m_locallyFavoritedFilter) {
+        case ListObjectsFilter::Include:
+            result += QStringLiteral("(isFavorited=1) AND ");
+            break;
+        case ListObjectsFilter::Exclude:
+            result += QStringLiteral("(isFavorited=0) AND ");
+            break;
+        }
+    }
+
+    if (result.endsWith(QStringLiteral(" AND "))) {
+        result.chop(5);
+    }
+
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <>
 QString orderByToSqlTableColumn<ILocalStorage::ListNotebooksOrder>(
     const ILocalStorage::ListNotebooksOrder & order)
@@ -306,7 +343,8 @@ QList<qevercloud::SharedNotebook> listSharedNotebooks(
         ErrorString error;
         if (!utils::fillSharedNotebookFromSqlRecord(
                 query.record(), sharedNotebook, indexInNotebook,
-                errorDescription)) {
+                errorDescription))
+        {
             return {};
         }
 
@@ -375,8 +413,7 @@ QList<qevercloud::Resource> listNoteResources(
         int indexInNote = -1;
         ErrorString error;
         if (!fillResourceFromSqlRecord(
-                query.record(), resource, indexInNote, error))
-        {
+                query.record(), resource, indexInNote, error)) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "local_storage::sql::utils",
                 "Can't list resources by note local id"));
@@ -388,11 +425,10 @@ QList<qevercloud::Resource> listNoteResources(
 
         error.clear();
         if (!findResourceAttributesApplicationDataByLocalId(
-                resource, database, error))
-        {
+                resource, database, error)) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
-                    "Can't list resources by note local id"));
+                "local_storage::sql::utils",
+                "Can't list resources by note local id"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();

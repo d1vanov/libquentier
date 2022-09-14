@@ -285,55 +285,8 @@ template <class T, class TOrderBy>
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <class T>
 [[nodiscard]] QString listGuidsFiltersToSqlQueryConditions(
-    const ILocalStorage::ListGuidsFilters & filters,
-    ErrorString & errorDescription)
-{
-    QString result;
-    errorDescription.clear();
-
-    using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
-
-    if (filters.m_locallyModifiedFilter) {
-        switch (*filters.m_locallyModifiedFilter) {
-        case ListObjectsFilter::Include:
-            result += QStringLiteral("(isDirty=1) AND ");
-            break;
-        case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(isDirty=0) AND ");
-            break;
-        }
-    }
-
-    if (filters.m_localOnlyFilter) {
-        switch (*filters.m_localOnlyFilter) {
-        case ListObjectsFilter::Include:
-            result += QStringLiteral("(isLocal=1) AND ");
-            break;
-        case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(isLocal=0) AND ");
-            break;
-        }
-    }
-
-    if (filters.m_locallyFavoritedFilter) {
-        switch (*filters.m_locallyFavoritedFilter) {
-        case ListObjectsFilter::Include:
-            result += QStringLiteral("(isFavorited=1) AND ");
-            break;
-        case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(isFavorited=0) AND ");
-            break;
-        }
-    }
-
-    if (result.endsWith(QStringLiteral(" AND "))) {
-        result.chop(5);
-    }
-
-    return result;
-}
+    const ILocalStorage::ListGuidsFilters & filters);
 
 template <class T>
 QSet<qevercloud::Guid> listGuids(
@@ -343,7 +296,7 @@ QSet<qevercloud::Guid> listGuids(
     QString queryString = listGuidsGenericSqlQuery<T>();
 
     const QString sqlQueryConditions =
-        listGuidsFiltersToSqlQueryConditions<T>(filters);
+        listGuidsFiltersToSqlQueryConditions(filters);
     if (!sqlQueryConditions.isEmpty()) {
         queryString += QStringLiteral(" WHERE (");
         queryString += sqlQueryConditions;
