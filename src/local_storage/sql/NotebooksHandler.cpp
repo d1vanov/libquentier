@@ -236,6 +236,20 @@ QFuture<void> NotebooksHandler::expungeNotebookByName(
         });
 }
 
+QFuture<QSet<qevercloud::Guid>> NotebooksHandler::listNotebookGuids(
+    ListGuidsFilters filters,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+{
+    return makeReadTask<QSet<qevercloud::Guid>>(
+        makeTaskContext(), weak_from_this(),
+        [filters, linkedNotebookGuid = std::move(linkedNotebookGuid)](
+            const NotebooksHandler &, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            return utils::listGuids<qevercloud::Notebook>(
+                filters, linkedNotebookGuid, database, errorDescription);
+        });
+}
+
 QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
     ListNotebooksOptions options) const
 {

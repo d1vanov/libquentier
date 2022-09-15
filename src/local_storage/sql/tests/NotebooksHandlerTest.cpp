@@ -510,7 +510,26 @@ TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
         notebooksHandler->listSharedNotebooks(UidGenerator::Generate());
 
     sharedNotebooksFuture.waitForFinished();
+    ASSERT_EQ(sharedNotebooksFuture.resultCount(), 1);
     EXPECT_TRUE(sharedNotebooksFuture.result().isEmpty());
+}
+
+TEST_F(NotebooksHandlerTest, ShouldListNoNotebookGuidsWhenThereAreNoNotebooks)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto listNotebookGuidsFilters = ILocalStorage::ListGuidsFilters{};
+    listNotebookGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Include;
+
+    auto listNotebookGuidsFuture = notebooksHandler->listNotebookGuids(
+        listNotebookGuidsFilters);
+
+    listNotebookGuidsFuture.waitForFinished();
+    ASSERT_EQ(listNotebookGuidsFuture.resultCount(), 1);
+    EXPECT_TRUE(listNotebookGuidsFuture.result().isEmpty());
 }
 
 class NotebooksHandlerSingleNotebookTest :
@@ -586,6 +605,8 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
     const auto notebook = GetParam();
 
+    // === Put ===
+
     if (notebook.linkedNotebookGuid()) {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -608,9 +629,13 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     EXPECT_EQ(notifierListener.putNotebooks().size(), 1);
     EXPECT_EQ(notifierListener.putNotebooks()[0], notebook);
 
+    // === Count ===
+
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
     EXPECT_EQ(notebookCountFuture.result(), 1U);
+
+    // === Find by local id ===
 
     auto foundByLocalIdNotebookFuture =
         notebooksHandler->findNotebookByLocalId(notebook.localId());
@@ -619,12 +644,16 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     ASSERT_EQ(foundByLocalIdNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByLocalIdNotebookFuture.result(), notebook);
 
+    // === Find by guid ===
+
     auto foundByGuidNotebookFuture =
         notebooksHandler->findNotebookByGuid(notebook.guid().value());
 
     foundByGuidNotebookFuture.waitForFinished();
     ASSERT_EQ(foundByGuidNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
+
+    // === Find by name ===
 
     auto foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
         notebook.name().value(), notebook.linkedNotebookGuid());
@@ -633,9 +662,13 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     ASSERT_EQ(foundByNameNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByNameNotebookFuture.result(), notebook);
 
+    // === Find default ===
+
     auto foundDefaultNotebookFuture = notebooksHandler->findDefaultNotebook();
     foundDefaultNotebookFuture.waitForFinished();
     EXPECT_EQ(foundDefaultNotebookFuture.result(), notebook);
+
+    // === List notebooks ===
 
     auto listNotebooksOptions = ILocalStorage::ListNotebooksOptions{};
 
@@ -645,9 +678,42 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
         notebooksHandler->listNotebooks(listNotebooksOptions);
 
     listNotebooksFuture.waitForFinished();
+    ASSERT_EQ(listNotebooksFuture.resultCount(), 1);
     auto notebooks = listNotebooksFuture.result();
-    EXPECT_EQ(notebooks.size(), 1);
+    ASSERT_EQ(notebooks.size(), 1);
     EXPECT_EQ(notebooks[0], notebook);
+
+    // === List notebook guids
+
+    // == Including locally modified notebooks ==
+    auto listNotebookGuidsFilters = ILocalStorage::ListGuidsFilters{};
+    listNotebookGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Include;
+
+    auto listNotebookGuidsFuture = notebooksHandler->listNotebookGuids(
+        listNotebookGuidsFilters, notebook.linkedNotebookGuid());
+
+    listNotebookGuidsFuture.waitForFinished();
+    ASSERT_EQ(listNotebookGuidsFuture.resultCount(), 1);
+
+    auto notebookGuids = listNotebookGuidsFuture.result();
+    ASSERT_EQ(notebookGuids.size(), 1);
+    EXPECT_EQ(*notebookGuids.constBegin(), notebooks[0].guid().value());
+
+    // == Excluding locally modified notebooks ==
+    listNotebookGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Exclude;
+
+    listNotebookGuidsFuture = notebooksHandler->listNotebookGuids(
+        listNotebookGuidsFilters, notebook.linkedNotebookGuid());
+
+    listNotebookGuidsFuture.waitForFinished();
+    ASSERT_EQ(listNotebookGuidsFuture.resultCount(), 1);
+
+    notebookGuids = listNotebookGuidsFuture.result();
+    EXPECT_TRUE(notebookGuids.isEmpty());
+
+    // === Expunge notebook by local id ===
 
     auto expungeNotebookByLocalIdFuture =
         notebooksHandler->expungeNotebookByLocalId(notebook.localId());
@@ -696,9 +762,20 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
         listNotebooksFuture.waitForFinished();
         EXPECT_TRUE(listNotebooksFuture.result().isEmpty());
+
+        listNotebookGuidsFuture = notebooksHandler->listNotebookGuids(
+            ILocalStorage::ListGuidsFilters{}, notebook.linkedNotebookGuid());
+
+        listNotebookGuidsFuture.waitForFinished();
+        ASSERT_EQ(listNotebookGuidsFuture.resultCount(), 1);
+
+        notebookGuids = listNotebookGuidsFuture.result();
+        EXPECT_TRUE(notebookGuids.isEmpty());
     };
 
     checkNotebookDeleted();
+
+    // === Put notebook ===
 
     putNotebookFuture = notebooksHandler->putNotebook(notebook);
     putNotebookFuture.waitForFinished();
@@ -706,6 +783,8 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.putNotebooks().size(), 2);
     EXPECT_EQ(notifierListener.putNotebooks()[1], notebook);
+
+    // === Expunge notebook by guid ===
 
     auto expungeNotebookByGuidFuture =
         notebooksHandler->expungeNotebookByGuid(notebook.guid().value());
@@ -720,12 +799,16 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
     checkNotebookDeleted();
 
+    // === Put notebook ===
+
     putNotebookFuture = notebooksHandler->putNotebook(notebook);
     putNotebookFuture.waitForFinished();
 
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.putNotebooks().size(), 3);
     EXPECT_EQ(notifierListener.putNotebooks()[2], notebook);
+
+    // === Expunge notebook by name ===
 
     auto expungeNotebookByNameFuture = notebooksHandler->expungeNotebookByName(
         notebook.name().value(), notebook.linkedNotebookGuid());
@@ -785,6 +868,8 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
             notebook.setContact(std::nullopt);
         }
 
+        notebook.setLocallyModified(notebookCounter % 2 != 0);
+
         notebook.setUpdateSequenceNum(notebookCounter);
         ++notebookCounter;
 
@@ -825,6 +910,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
+    ASSERT_EQ(notebookCountFuture.resultCount(), 1);
     EXPECT_EQ(notebookCountFuture.result(), notebooks.size());
 
     for (const auto & notebook: notebooks) {

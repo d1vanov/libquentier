@@ -63,6 +63,12 @@ public:
         (override));
 
     MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listNotebookGuids,
+        (ListGuidsFilters filters,
+         std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (const, override));
+
+    MOCK_METHOD(
         QFuture<QList<qevercloud::Notebook>>, listNotebooks,
         (ListNotebooksOptions options), (const, override));
 

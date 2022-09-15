@@ -24,9 +24,11 @@
 #include <quentier/local_storage/ILocalStorage.h>
 
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 #include <QList>
+#include <QSet>
 
 #include <optional>
 
@@ -51,7 +53,7 @@ public:
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByName(
             QString name,
-            std::optional<QString> linkedNotebookGuid = {}) const = 0;
+            std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findDefaultNotebook() const = 0;
@@ -63,10 +65,16 @@ public:
         qevercloud::Guid guid) = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNotebookByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) = 0;
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) = 0;
 
+    using ListGuidsFilters = ILocalStorage::ListGuidsFilters;
     using ListNotebooksOptions = ILocalStorage::ListNotebooksOptions;
     using ListNotebooksOrder = ILocalStorage::ListNotebooksOrder;
+
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listNotebookGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListNotebooksOptions options) const = 0;

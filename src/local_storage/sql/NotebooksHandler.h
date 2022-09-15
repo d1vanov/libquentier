@@ -70,6 +70,10 @@ public:
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) override;
 
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listNotebookGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const override;
+
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListNotebooksOptions options) const override;
 

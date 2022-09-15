@@ -19,6 +19,7 @@
 #pragma once
 
 #include "FillFromSqlRecordUtils.h"
+#include "SqlUtils.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -30,6 +31,7 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QTextStream>
 
 class QDir;
 
@@ -289,21 +291,47 @@ template <class T, class TOrderBy>
     const ILocalStorage::ListGuidsFilters & filters);
 
 template <class T>
-QSet<qevercloud::Guid> listGuids(
-    const ILocalStorage::ListGuidsFilters & filters, QSqlDatabase & database,
-    ErrorString & errorDescription)
+std::optional<QSet<qevercloud::Guid>> listGuids(
+    const ILocalStorage::ListGuidsFilters & filters,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+    QSqlDatabase & database, ErrorString & errorDescription)
 {
-    QString queryString = listGuidsGenericSqlQuery<T>();
+    const QString queryString = [&] {
+        QString queryString;
+        QTextStream strm{&queryString};
 
-    const QString sqlQueryConditions =
-        listGuidsFiltersToSqlQueryConditions(filters);
-    if (!sqlQueryConditions.isEmpty()) {
-        queryString += QStringLiteral(" WHERE (");
-        queryString += sqlQueryConditions;
-        queryString += QStringLiteral(")");
-    }
+        strm << listGuidsGenericSqlQuery<T>();
 
-    QSet<qevercloud::Guid> guids;
+        const QString sqlQueryConditions =
+            listGuidsFiltersToSqlQueryConditions(filters);
+
+        if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::SavedSearch>)
+        {
+            if (!sqlQueryConditions.isEmpty()) {
+                strm << " WHERE ";
+                strm << sqlQueryConditions;
+            }
+        }
+        else {
+            strm << " WHERE ";
+
+            if (!sqlQueryConditions.isEmpty()) {
+                strm << sqlQueryConditions;
+                strm << " AND ";
+            }
+
+            if (linkedNotebookGuid) {
+                strm << "(linkedNotebookGuid = '";
+                strm << sqlEscape(*linkedNotebookGuid);
+                strm << "')";
+            }
+            else {
+                strm << "(linkedNotebookGuid IS NULL)";
+            }
+        }
+
+        return queryString;
+    }();
 
     const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
@@ -317,9 +345,10 @@ QSet<qevercloud::Guid> listGuids(
             errorDescription << ", last query = " << query.lastQuery()
                              << ", last error = " << query.lastError());
         errorDescription.details() = query.lastError().text();
-        return guids;
+        return std::nullopt;
     }
 
+    QSet<qevercloud::Guid> guids;
     guids.reserve(std::max(query.size(), 0));
 
     while (query.next()) {
