@@ -312,21 +312,27 @@ std::optional<QSet<qevercloud::Guid>> listGuids(
                 strm << sqlQueryConditions;
             }
         }
-        else {
+        else if (!sqlQueryConditions.isEmpty() || linkedNotebookGuid) {
             strm << " WHERE ";
 
             if (!sqlQueryConditions.isEmpty()) {
                 strm << sqlQueryConditions;
-                strm << " AND ";
             }
 
             if (linkedNotebookGuid) {
-                strm << "(linkedNotebookGuid = '";
-                strm << sqlEscape(*linkedNotebookGuid);
-                strm << "')";
-            }
-            else {
-                strm << "(linkedNotebookGuid IS NULL)";
+                if (!sqlQueryConditions.isEmpty()) {
+                    strm << " AND ";
+                }
+
+                strm << "(linkedNotebookGuid ";
+                if (!linkedNotebookGuid->isEmpty()) {
+                    strm << "= '";
+                    strm << sqlEscape(*linkedNotebookGuid);
+                    strm << "')";
+                }
+                else {
+                    strm << "IS NULL)";
+                }
             }
         }
 
@@ -349,8 +355,6 @@ std::optional<QSet<qevercloud::Guid>> listGuids(
     }
 
     QSet<qevercloud::Guid> guids;
-    guids.reserve(std::max(query.size(), 0));
-
     while (query.next()) {
         guids.insert(query.value(0).toString());
     }
