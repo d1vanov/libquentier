@@ -232,6 +232,20 @@ QFuture<QList<qevercloud::Tag>> TagsHandler::listTagsPerNoteLocalId(
         });
 }
 
+QFuture<QSet<qevercloud::Guid>> TagsHandler::listTagGuids(
+    ListGuidsFilters filters,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+{
+    return makeReadTask<QSet<qevercloud::Guid>>(
+        makeTaskContext(), weak_from_this(),
+        [filters, linkedNotebookGuid = std::move(linkedNotebookGuid)](
+            [[maybe_unused]] const TagsHandler & handler,
+            QSqlDatabase & database, ErrorString & errorDescription) {
+            return utils::listGuids<qevercloud::Tag>(
+                filters, linkedNotebookGuid, database, errorDescription);
+        });
+}
+
 std::optional<quint32> TagsHandler::tagCountImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {

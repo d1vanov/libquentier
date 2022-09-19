@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,6 +25,8 @@
 
 #include <qevercloud/types/Tag.h>
 
+#include <QSet>
+
 #include <optional>
 
 namespace quentier::local_storage::sql {
@@ -48,6 +50,7 @@ public:
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const = 0;
 
+    using ListGuidsFilters = ILocalStorage::ListGuidsFilters;
     using ListTagsOptions = ILocalStorage::ListTagsOptions;
     using ListTagsOrder = ILocalStorage::ListTagsOrder;
     using TagNotesRelation = ILocalStorage::TagNotesRelation;
@@ -58,6 +61,10 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>>
         listTagsPerNoteLocalId(
             QString noteLocalId, ListTagsOptions options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listTagGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeTagByLocalId(
         QString tagLocalId) = 0;

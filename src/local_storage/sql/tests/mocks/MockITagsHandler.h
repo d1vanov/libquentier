@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,6 +50,12 @@ public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::Tag>>, listTagsPerNoteLocalId,
         (QString noteLocalId, ListTagsOptions options), (const, override));
+
+    MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listTagGuids,
+        (ListGuidsFilters filters,
+         std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeTagByLocalId, (QString tagLocalId), (override));

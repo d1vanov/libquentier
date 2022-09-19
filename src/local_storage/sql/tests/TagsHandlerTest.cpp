@@ -27,6 +27,9 @@
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/types/builders/NotebookBuilder.h>
+#include <qevercloud/types/builders/TagBuilder.h>
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QFlags>
@@ -315,6 +318,22 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
     EXPECT_TRUE(listTagsFuture.result().isEmpty());
 }
 
+TEST_F(TagsHandlerTest, ShouldListNoTagGuidsWhenThereAreNoTags)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    auto listTagGuidsFilters = ILocalStorage::ListGuidsFilters{};
+    listTagGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Include;
+
+    auto listTagGuidsFuture = tagsHandler->listTagGuids(listTagGuidsFilters);
+    listTagGuidsFuture.waitForFinished();
+    ASSERT_EQ(listTagGuidsFuture.resultCount(), 1);
+    EXPECT_TRUE(listTagGuidsFuture.result().isEmpty());
+}
+
 class TagsHandlerSingleTagTest :
     public TagsHandlerTest,
     public testing::WithParamInterface<qevercloud::Tag>
@@ -346,6 +365,8 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
     const auto tag = GetParam();
 
+    // === Put ===
+
     if (tag.linkedNotebookGuid()) {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -368,9 +389,13 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     EXPECT_EQ(notifierListener.putTags().size(), 1);
     EXPECT_EQ(notifierListener.putTags()[0], tag);
 
+    // === Count ===
+
     auto tagCountFuture = tagsHandler->tagCount();
     tagCountFuture.waitForFinished();
     EXPECT_EQ(tagCountFuture.result(), 1U);
+
+    // === Find by local id ===
 
     auto foundByLocalIdTagFuture = tagsHandler->findTagByLocalId(tag.localId());
     foundByLocalIdTagFuture.waitForFinished();
@@ -378,11 +403,15 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     ASSERT_TRUE(foundByLocalIdTagFuture.result());
     EXPECT_EQ(*foundByLocalIdTagFuture.result(), tag);
 
+    // === Find by guid ===
+
     auto foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
     foundByGuidTagFuture.waitForFinished();
     ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
     ASSERT_TRUE(foundByGuidTagFuture.result());
     EXPECT_EQ(*foundByGuidTagFuture.result(), tag);
+
+    // === Find by name ===
 
     auto foundByNameTagFuture = tagsHandler->findTagByName(
         tag.name().value(), tag.linkedNotebookGuid());
@@ -391,6 +420,8 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
     ASSERT_TRUE(foundByNameTagFuture.result());
     EXPECT_EQ(*foundByNameTagFuture.result(), tag);
+
+    // === List tags ===
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
@@ -402,6 +433,38 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     auto tags = listTagsFuture.result();
     EXPECT_EQ(tags.size(), 1);
     EXPECT_EQ(tags[0], tag);
+
+    // === List tag guids ===
+
+    // == Including locally modified tags ==
+    auto listTagGuidsFilters = ILocalStorage::ListGuidsFilters{};
+    listTagGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Include;
+
+    auto listTagGuidsFuture = tagsHandler->listTagGuids(
+        listTagGuidsFilters, tag.linkedNotebookGuid());
+
+    listTagGuidsFuture.waitForFinished();
+    ASSERT_EQ(listTagGuidsFuture.resultCount(), 1);
+
+    auto tagGuids = listTagGuidsFuture.result();
+    ASSERT_EQ(tagGuids.size(), 1);
+    EXPECT_EQ(*tagGuids.constBegin(), tag.guid().value());
+
+    // == Excluding locally modified tags ==
+    listTagGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Exclude;
+
+    listTagGuidsFuture = tagsHandler->listTagGuids(
+        listTagGuidsFilters, tag.linkedNotebookGuid());
+
+    listTagGuidsFuture.waitForFinished();
+    ASSERT_EQ(listTagGuidsFuture.resultCount(), 1);
+
+    tagGuids = listTagGuidsFuture.result();
+    EXPECT_TRUE(tagGuids.isEmpty());
+
+    // === Expunge tag by local id ===
 
     auto expungeTagByLocalIdFuture =
         tagsHandler->expungeTagByLocalId(tag.localId());
@@ -437,9 +500,20 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
         listTagsFuture = tagsHandler->listTags(listTagsOptions);
         listTagsFuture.waitForFinished();
         EXPECT_TRUE(listTagsFuture.result().isEmpty());
+
+        listTagGuidsFuture = tagsHandler->listTagGuids(
+            ILocalStorage::ListGuidsFilters{}, tag.linkedNotebookGuid());
+
+        listTagGuidsFuture.waitForFinished();
+        ASSERT_EQ(listTagGuidsFuture.resultCount(), 1);
+
+        tagGuids = listTagGuidsFuture.result();
+        EXPECT_TRUE(tagGuids.isEmpty());
     };
 
     checkTagDeleted();
+
+    // === Put tag ===
 
     putTagFuture = tagsHandler->putTag(tag);
     putTagFuture.waitForFinished();
@@ -447,6 +521,8 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.putTags().size(), 2);
     EXPECT_EQ(notifierListener.putTags()[1], tag);
+
+    // === Expunge tag by guid ===
 
     auto expungeTagByGuidFuture =
         tagsHandler->expungeTagByGuid(tag.guid().value());
@@ -459,12 +535,16 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
     checkTagDeleted();
 
+    // === Put tag ===
+
     putTagFuture = tagsHandler->putTag(tag);
     putTagFuture.waitForFinished();
 
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.putTags().size(), 3);
     EXPECT_EQ(notifierListener.putTags()[2], tag);
+
+    // === Expunge tag by name ===
 
     auto expungeTagByNameFuture = tagsHandler->expungeTagByName(
         tag.name().value(), tag.linkedNotebookGuid());
@@ -1221,6 +1301,463 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
 
     tags = listTagsFuture.result();
     EXPECT_TRUE(tags.empty());
+}
+
+Q_GLOBAL_STATIC_WITH_ARGS(
+    qevercloud::Guid, gLinkedNotebookGuid1ForListGuidsTest,
+    (UidGenerator::Generate()));
+
+Q_GLOBAL_STATIC_WITH_ARGS(
+    qevercloud::Guid, gLinkedNotebookGuid2ForListGuidsTest,
+    (UidGenerator::Generate()));
+
+const QList<qevercloud::Tag> gTagsForListGuidsTest =
+    QList<qevercloud::Tag>{}
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 1"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 2"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 3"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 4"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 5"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 6"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 7"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 8"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 9"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 10"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 11"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+           .build()
+    << qevercloud::TagBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Tag 12"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+           .build();
+
+struct ListTagGuidsTestData
+{
+    // Input data
+    ILocalStorage::ListGuidsFilters filters;
+    std::optional<qevercloud::Guid> linkedNotebookGuid;
+    // Expected indexes of notebook guids
+    QSet<int> expectedIndexes;
+};
+
+const QList<ListTagGuidsTestData> gListTagGuidsTestData =
+    QList<ListTagGuidsTestData>{}
+    << ListTagGuidsTestData{
+        {}, // filters
+        std::nullopt, // linked notebook guid
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10
+                    << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 1 << 3 << 5 << 7 << 9 << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 0 << 2 << 4 << 6 << 8 << 10, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 2 << 3 << 6 << 7 << 10 << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 0 << 1 << 4 << 5 << 8 << 9, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 3 << 7 << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 0 << 4 << 8, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 1 << 5 << 9, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        std::nullopt, //linked notebook guid
+        QSet<int>{} << 2 << 6 << 10, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        {}, // filters
+        qevercloud::Guid{}, // linked notebook guid
+        QSet<int>{} << 0 << 1 << 2 << 3, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 1 << 3, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 0 << 2, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 2 << 3, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 0 << 1, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 3, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 0, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 1, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        qevercloud::Guid{}, //linked notebook guid
+        QSet<int>{} << 2, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        {}, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, // linked notebook guid
+        QSet<int>{} << 4 << 5 << 6 << 7, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 5 << 7, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 4 << 6, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 6 << 7, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 4 << 5, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 7, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 4, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 5, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 6, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        {}, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, // linked notebook guid
+        QSet<int>{} << 8 << 9 << 10 << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 9 << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 8 << 10, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 10 << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 8 << 9, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 11, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 8, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 9, // expected indexes
+    }
+    << ListTagGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
+        QSet<int>{} << 10, // expected indexes
+    };
+
+class TagsHandlerListGuidsTest :
+    public TagsHandlerTest,
+    public testing::WithParamInterface<ListTagGuidsTestData>
+{};
+
+INSTANTIATE_TEST_SUITE_P(
+    TagsHandlerListGuidsTestInstance, TagsHandlerListGuidsTest,
+    testing::ValuesIn(gListTagGuidsTestData));
+
+TEST_P(TagsHandlerListGuidsTest, ListTagGuids)
+{
+    // Set up linked notebooks and tags ===
+    qevercloud::LinkedNotebook linkedNotebook1;
+    linkedNotebook1.setGuid(*gLinkedNotebookGuid1ForListGuidsTest);
+    linkedNotebook1.setUsername(QStringLiteral("username1"));
+
+    qevercloud::LinkedNotebook linkedNotebook2;
+    linkedNotebook2.setGuid(*gLinkedNotebookGuid2ForListGuidsTest);
+    linkedNotebook2.setUsername(QStringLiteral("username2"));
+
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    auto putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook2);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    for (const auto & tag: qAsConst(gTagsForListGuidsTest)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    // Test the results of tag guids listing
+    const auto testData = GetParam();
+    auto listTagGuidsFuture = tagsHandler->listTagGuids(
+        testData.filters, testData.linkedNotebookGuid);
+
+    listTagGuidsFuture.waitForFinished();
+    ASSERT_EQ(listTagGuidsFuture.resultCount(), 1);
+
+    const QSet<qevercloud::Guid> expectedGuids = [&] {
+        QSet<qevercloud::Guid> result;
+        result.reserve(testData.expectedIndexes.size());
+        for (const int index: testData.expectedIndexes) {
+            result.insert(gTagsForListGuidsTest[index].guid().value());
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(listTagGuidsFuture.result().size(), expectedGuids.size());
+    EXPECT_EQ(listTagGuidsFuture.result(), expectedGuids);
 }
 
 } // namespace quentier::local_storage::sql::tests
