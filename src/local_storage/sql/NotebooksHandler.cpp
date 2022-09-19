@@ -59,10 +59,12 @@ NotebooksHandler::NotebooksHandler(
     const QString & localStorageDirPath,
     QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool}, m_notifier{notifier}, m_writerThread{std::move(
-                                                        writerThread)},
-    m_localStorageDir{localStorageDirPath}, m_resourceDataFilesLock{std::move(
-                                                resourceDataFilesLock)}
+    m_threadPool{threadPool}, m_notifier{notifier},
+    // clang-format off
+    m_writerThread{std::move(writerThread)},
+    m_localStorageDir{localStorageDirPath},
+    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
+    // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -243,8 +245,8 @@ QFuture<QSet<qevercloud::Guid>> NotebooksHandler::listNotebookGuids(
     return makeReadTask<QSet<qevercloud::Guid>>(
         makeTaskContext(), weak_from_this(),
         [filters, linkedNotebookGuid = std::move(linkedNotebookGuid)](
-            const NotebooksHandler &, QSqlDatabase & database,
-            ErrorString & errorDescription) {
+            [[maybe_unused]] const NotebooksHandler & handler,
+            QSqlDatabase & database, ErrorString & errorDescription) {
             return utils::listGuids<qevercloud::Notebook>(
                 filters, linkedNotebookGuid, database, errorDescription);
         });

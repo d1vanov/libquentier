@@ -688,7 +688,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     ASSERT_EQ(notebooks.size(), 1);
     EXPECT_EQ(notebooks[0], notebook);
 
-    // === List notebook guids
+    // === List notebook guids ===
 
     // == Including locally modified notebooks ==
     auto listNotebookGuidsFilters = ILocalStorage::ListGuidsFilters{};
@@ -703,7 +703,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
     auto notebookGuids = listNotebookGuidsFuture.result();
     ASSERT_EQ(notebookGuids.size(), 1);
-    EXPECT_EQ(*notebookGuids.constBegin(), notebooks[0].guid().value());
+    EXPECT_EQ(*notebookGuids.constBegin(), notebook.guid().value());
 
     // == Excluding locally modified notebooks ==
     listNotebookGuidsFilters.m_locallyModifiedFilter =
@@ -1525,7 +1525,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 1 << 3 << 5 << 7 << 9 << 11, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1533,7 +1533,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 0 << 2 << 4 << 6 << 8 << 10, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1541,7 +1541,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 2 << 3 << 6 << 7 << 10 << 11, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1549,7 +1549,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 0 << 1 << 4 << 5 << 8 << 9, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1557,7 +1557,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 3 << 7 << 11, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1565,7 +1565,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 0 << 4 << 8, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1573,7 +1573,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 1 << 5 << 9, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1581,7 +1581,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        std::nullopt, //linked notebook guid 
+        std::nullopt, //linked notebook guid
         QSet<int>{} << 2 << 6 << 10, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1594,7 +1594,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 1 << 3, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1602,7 +1602,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 0 << 2, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1610,7 +1610,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 2 << 3, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1618,7 +1618,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 0 << 1, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1626,7 +1626,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 3, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1634,7 +1634,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 0, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1642,7 +1642,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 1, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1650,7 +1650,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        qevercloud::Guid{}, //linked notebook guid 
+        qevercloud::Guid{}, //linked notebook guid
         QSet<int>{} << 2, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1663,7 +1663,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 5 << 7, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1671,7 +1671,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 4 << 6, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1679,7 +1679,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 6 << 7, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1687,7 +1687,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 4 << 5, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1695,7 +1695,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 7, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1703,7 +1703,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 4, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1711,7 +1711,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 5, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1719,7 +1719,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid1ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 6, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1732,7 +1732,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 9 << 11, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1740,7 +1740,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             std::nullopt, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 8 << 10, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1748,7 +1748,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 10 << 11, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1756,7 +1756,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             std::nullopt, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 8 << 9, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1764,7 +1764,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 11, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1772,7 +1772,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 8, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1780,7 +1780,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Include, // locally modified
             ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 9, // expected indexes
     }
     << ListNotebookGuidsTestData{
@@ -1788,7 +1788,7 @@ const QList<ListNotebookGuidsTestData> gListNotebookGuidsTestData =
             ILocalStorage::ListObjectsFilter::Exclude, // locally modified
             ILocalStorage::ListObjectsFilter::Include, // locally favorited
         }, // filters
-        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid 
+        *gLinkedNotebookGuid2ForListGuidsTest, //linked notebook guid
         QSet<int>{} << 10, // expected indexes
     };
 
@@ -1836,7 +1836,7 @@ TEST_P(NotebooksHandlerListGuidsTest, ListNotebookGuids)
         putNotebookFuture.waitForFinished();
     }
 
-    // Test the results of notebook guids listing ===
+    // Test the results of notebook guids listing
     const auto testData = GetParam();
     auto listNotebookGuidsFuture = notebooksHandler->listNotebookGuids(
         testData.filters, testData.linkedNotebookGuid);
