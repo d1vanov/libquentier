@@ -1706,7 +1706,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(TagsHandlerListGuidsTest, ListTagGuids)
 {
-    // Set up linked notebooks and tags ===
+    // Set up linked notebooks and tags
     qevercloud::LinkedNotebook linkedNotebook1;
     linkedNotebook1.setGuid(*gLinkedNotebookGuid1ForListGuidsTest);
     linkedNotebook1.setUsername(QStringLiteral("username1"));

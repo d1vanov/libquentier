@@ -1803,7 +1803,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(NotebooksHandlerListGuidsTest, ListNotebookGuids)
 {
-    // Set up linked notebooks and notebooks ===
+    // Set up linked notebooks and notebooks
     qevercloud::LinkedNotebook linkedNotebook1;
     linkedNotebook1.setGuid(*gLinkedNotebookGuid1ForListGuidsTest);
     linkedNotebook1.setUsername(QStringLiteral("username1"));
