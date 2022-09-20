@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,6 +50,9 @@ public:
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
         ListSavedSearchesOptions options = {}) const override;
+
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listSavedSearchGuids(
+        ListGuidsFilters filters) const override;
 
     [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(
         QString localId) override;

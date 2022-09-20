@@ -160,6 +160,19 @@ QFuture<QList<qevercloud::SavedSearch>> SavedSearchesHandler::listSavedSearches(
         });
 }
 
+QFuture<QSet<qevercloud::Guid>> SavedSearchesHandler::listSavedSearchGuids(
+    ListGuidsFilters filters) const
+{
+    return makeReadTask<QSet<qevercloud::Guid>>(
+        makeTaskContext(), weak_from_this(),
+        [filters](
+            [[maybe_unused]] const SavedSearchesHandler & handler,
+            QSqlDatabase & database, ErrorString & errorDescription) {
+            return utils::listGuids<qevercloud::SavedSearch>(
+                filters, std::nullopt, database, errorDescription);
+        });
+}
+
 QFuture<void> SavedSearchesHandler::expungeSavedSearchByLocalId(QString localId)
 {
     return makeWriteTask<void>(

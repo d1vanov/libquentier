@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -51,11 +51,15 @@ public:
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByName(QString name) const = 0;
 
+    using ListGuidsFilters = ILocalStorage::ListGuidsFilters;
     using ListSavedSearchesOptions = ILocalStorage::ListSavedSearchesOptions;
     using ListSavedSearchesOrder = ILocalStorage::ListSavedSearchesOrder;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>
         listSavedSearches(ListSavedSearchesOptions options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listSavedSearchGuids(
+        ListGuidsFilters filters) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeSavedSearchByLocalId(
         QString localId) = 0;

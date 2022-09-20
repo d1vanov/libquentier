@@ -24,6 +24,8 @@
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/types/builders/SavedSearchBuilder.h>
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QFlags>
@@ -261,6 +263,26 @@ TEST_F(
     EXPECT_TRUE(listSavedSearchesFuture.result().isEmpty());
 }
 
+TEST_F(
+    SavedSearchesHandlerTest,
+    ShouldListNoSavedSearchGuidsWhenThereAreNoSavedSearches)
+{
+    const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    auto listSavedSearchGuidsFilters = ILocalStorage::ListGuidsFilters{};
+    listSavedSearchGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Include;
+
+    auto listSavedSearchGuidsFuture =
+        savedSearchesHandler->listSavedSearchGuids(listSavedSearchGuidsFilters);
+
+    listSavedSearchGuidsFuture.waitForFinished();
+    ASSERT_EQ(listSavedSearchGuidsFuture.resultCount(), 1);
+    EXPECT_TRUE(listSavedSearchGuidsFuture.result().isEmpty());
+}
+
 enum class CreateSavedSearchOption
 {
     WithScope = 1 << 0
@@ -272,6 +294,7 @@ Q_DECLARE_FLAGS(CreateSavedSearchOptions, CreateSavedSearchOption);
     const CreateSavedSearchOptions options = {})
 {
     qevercloud::SavedSearch savedSearch;
+    savedSearch.setLocallyModified(true);
     savedSearch.setGuid(UidGenerator::Generate());
     savedSearch.setName(QStringLiteral("Saved search"));
     savedSearch.setQuery(QStringLiteral("Query"));
@@ -322,6 +345,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 
     const auto savedSearch = GetParam();
 
+    // === Put ===
+
     auto putSavedSearchFuture =
         savedSearchesHandler->putSavedSearch(savedSearch);
 
@@ -331,9 +356,13 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     EXPECT_EQ(notifierListener.putSavedSearches().size(), 1);
     EXPECT_EQ(notifierListener.putSavedSearches()[0], savedSearch);
 
+    // === Count ===
+
     auto savedSearchCountFuture = savedSearchesHandler->savedSearchCount();
     savedSearchCountFuture.waitForFinished();
     EXPECT_EQ(savedSearchCountFuture.result(), 1U);
+
+    // === Find by local id ===
 
     auto foundSavedSearchByLocalIdFuture =
         savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
@@ -343,6 +372,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     ASSERT_TRUE(foundSavedSearchByLocalIdFuture.result());
     EXPECT_EQ(foundSavedSearchByLocalIdFuture.result(), savedSearch);
 
+    // === Find by guid ===
+
     auto foundSavedSearchByGuidFuture =
         savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
 
@@ -351,6 +382,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     ASSERT_TRUE(foundSavedSearchByGuidFuture.result());
     EXPECT_EQ(foundSavedSearchByGuidFuture.result(), savedSearch);
 
+    // === Find by name ===
+
     auto foundSavedSearchByNameFuture =
         savedSearchesHandler->findSavedSearchByName(savedSearch.name().value());
 
@@ -358,6 +391,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
     ASSERT_TRUE(foundSavedSearchByNameFuture.result());
     EXPECT_EQ(foundSavedSearchByNameFuture.result(), savedSearch);
+
+    // === List saved searches ===
 
     const auto listSavedSearchesOptions =
         ILocalStorage::ListSavedSearchesOptions{};
@@ -369,6 +404,38 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     auto savedSearches = listSavedSearchesFuture.result();
     EXPECT_EQ(savedSearches.size(), 1);
     EXPECT_EQ(savedSearches[0], savedSearch);
+
+    // === List saved search guids ===
+
+    // == Including locally modified saved searches ==
+    auto listSavedSearchGuidsFilters = ILocalStorage::ListGuidsFilters{};
+    listSavedSearchGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Include;
+
+    auto listSavedSearchGuidsFuture =
+        savedSearchesHandler->listSavedSearchGuids(listSavedSearchGuidsFilters);
+
+    listSavedSearchGuidsFuture.waitForFinished();
+    ASSERT_EQ(listSavedSearchGuidsFuture.resultCount(), 1);
+
+    auto savedSearchGuids = listSavedSearchGuidsFuture.result();
+    ASSERT_EQ(savedSearchGuids.size(), 1);
+    EXPECT_EQ(*savedSearchGuids.constBegin(), savedSearch.guid().value());
+
+    // == Excluding locally modified saved searches ==
+    listSavedSearchGuidsFilters.m_locallyModifiedFilter =
+        ILocalStorage::ListObjectsFilter::Exclude;
+
+    listSavedSearchGuidsFuture =
+        savedSearchesHandler->listSavedSearchGuids(listSavedSearchGuidsFilters);
+
+    listSavedSearchGuidsFuture.waitForFinished();
+    ASSERT_EQ(listSavedSearchGuidsFuture.resultCount(), 1);
+
+    savedSearchGuids = listSavedSearchGuidsFuture.result();
+    EXPECT_TRUE(savedSearchGuids.isEmpty());
+
+    // === Expunge saved search by local id ===
 
     auto expungeSavedSearchByLocalIdFuture =
         savedSearchesHandler->expungeSavedSearchByLocalId(
@@ -417,9 +484,20 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 
         listSavedSearchesFuture.waitForFinished();
         EXPECT_TRUE(listSavedSearchesFuture.result().isEmpty());
+
+        listSavedSearchGuidsFuture = savedSearchesHandler->listSavedSearchGuids(
+            ILocalStorage::ListGuidsFilters{});
+
+        listSavedSearchGuidsFuture.waitForFinished();
+        ASSERT_EQ(listSavedSearchGuidsFuture.resultCount(), 1);
+
+        savedSearchGuids = listSavedSearchGuidsFuture.result();
+        EXPECT_TRUE(savedSearchGuids.isEmpty());
     };
 
     checkSavedSearchDeleted();
+
+    // === Put saved search ===
 
     putSavedSearchFuture = savedSearchesHandler->putSavedSearch(savedSearch);
     putSavedSearchFuture.waitForFinished();
@@ -427,6 +505,8 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.putSavedSearches().size(), 2);
     EXPECT_EQ(notifierListener.putSavedSearches()[1], savedSearch);
+
+    // === Expunge saved search by guid ===
 
     auto expungeSavedSearchByGuidFuture =
         savedSearchesHandler->expungeSavedSearchByGuid(
@@ -601,6 +681,153 @@ TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
     ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
     ASSERT_TRUE(foundSavedSearchByNameFuture.result());
     EXPECT_EQ(foundSavedSearchByNameFuture.result(), search2);
+}
+
+const QList<qevercloud::SavedSearch> gSavedSearchesForListGuidsTest =
+    QList<qevercloud::SavedSearch>{}
+    << qevercloud::SavedSearchBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Saved search 1"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .build()
+    << qevercloud::SavedSearchBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Saved search 2"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .build()
+    << qevercloud::SavedSearchBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Saved search 3"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .build()
+    << qevercloud::SavedSearchBuilder{}
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setName(QStringLiteral("Saved search 4"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .build();
+
+struct ListSavedSearchGuidsTestData
+{
+    // Input data
+    ILocalStorage::ListGuidsFilters filters;
+    // Expected indexes of notebook guids
+    QSet<int> expectedIndexes;
+};
+
+const QList<ListSavedSearchGuidsTestData> gListSavedSearchGuidsTestData =
+    QList<ListSavedSearchGuidsTestData>{}
+    << ListSavedSearchGuidsTestData{
+        {}, // filters
+        QSet<int>{} << 0 << 1 << 2 << 3, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        QSet<int>{} << 1 << 3, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            std::nullopt, // locally favorited
+        }, // filters
+        QSet<int>{} << 0 << 2, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        QSet<int>{} << 2 << 3, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            std::nullopt, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        QSet<int>{} << 0 << 1, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        QSet<int>{} << 3, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        QSet<int>{} << 0, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Include, // locally modified
+            ILocalStorage::ListObjectsFilter::Exclude, // locally favorited
+        }, // filters
+        QSet<int>{} << 1, // expected indexes
+    }
+    << ListSavedSearchGuidsTestData{
+        ILocalStorage::ListGuidsFilters{
+            ILocalStorage::ListObjectsFilter::Exclude, // locally modified
+            ILocalStorage::ListObjectsFilter::Include, // locally favorited
+        }, // filters
+        QSet<int>{} << 2, // expected indexes
+    };
+
+class SavedSearchesHandlerListGuidsTest :
+    public SavedSearchesHandlerTest,
+    public testing::WithParamInterface<ListSavedSearchGuidsTestData>
+{};
+
+INSTANTIATE_TEST_SUITE_P(
+    SavedSearchesHandlerListGuidsTestInstance,
+    SavedSearchesHandlerListGuidsTest,
+    testing::ValuesIn(gListSavedSearchGuidsTestData));
+
+TEST_P(SavedSearchesHandlerListGuidsTest, ListSavedSearchGuids)
+{
+    // Set up saved searches
+    const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    for (const auto & savedSearch: qAsConst(gSavedSearchesForListGuidsTest)) {
+        auto putSavedSearchFuture =
+            savedSearchesHandler->putSavedSearch(savedSearch);
+
+        putSavedSearchFuture.waitForFinished();
+    }
+
+    // Test the results of tag guids listing
+    const auto testData = GetParam();
+    auto listSavedSearchGuidsFuture =
+        savedSearchesHandler->listSavedSearchGuids(testData.filters);
+
+    listSavedSearchGuidsFuture.waitForFinished();
+    ASSERT_EQ(listSavedSearchGuidsFuture.resultCount(), 1);
+
+    const QSet<qevercloud::Guid> expectedGuids = [&] {
+        QSet<qevercloud::Guid> result;
+        result.reserve(testData.expectedIndexes.size());
+        for (const int index: testData.expectedIndexes) {
+            result.insert(gSavedSearchesForListGuidsTest[index].guid().value());
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(listSavedSearchGuidsFuture.result().size(), expectedGuids.size());
+    EXPECT_EQ(listSavedSearchGuidsFuture.result(), expectedGuids);
 }
 
 } // namespace quentier::local_storage::sql::tests

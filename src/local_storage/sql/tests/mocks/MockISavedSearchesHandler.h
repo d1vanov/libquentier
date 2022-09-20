@@ -50,6 +50,10 @@ public:
         (ListSavedSearchesOptions options), (const, override));
 
     MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listSavedSearchGuids,
+        (ListGuidsFilters filters), (const, override));
+
+    MOCK_METHOD(
         QFuture<void>, expungeSavedSearchByLocalId, (QString localId),
         (override));
 
