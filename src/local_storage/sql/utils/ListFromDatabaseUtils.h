@@ -72,22 +72,39 @@ template <>
 ////////////////////////////////////////////////////////////////////////////////
 
 template <class T>
-[[nodiscard]] QString listGuidsGenericSqlQuery();
+[[nodiscard]] QString listGuidsGenericSqlQuery(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 template <>
-[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Notebook>();
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Notebook>(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 template <>
-[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Note>();
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Note>(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 template <>
-[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::SavedSearch>();
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::SavedSearch>(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 template <>
-[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Tag>();
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::Tag>(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 template <>
-[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>();
+[[nodiscard]] QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid);
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+[[nodiscard]] QString linkedNotebookGuidColumn()
+{
+    return QStringLiteral("linkedNotebookGuid");
+}
+
+template <>
+[[nodiscard]] QString linkedNotebookGuidColumn<qevercloud::Note>();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -300,7 +317,7 @@ std::optional<QSet<qevercloud::Guid>> listGuids(
         QString queryString;
         QTextStream strm{&queryString};
 
-        strm << listGuidsGenericSqlQuery<T>();
+        strm << listGuidsGenericSqlQuery<T>(linkedNotebookGuid);
 
         const QString sqlQueryConditions =
             listGuidsFiltersToSqlQueryConditions(filters);
@@ -324,7 +341,9 @@ std::optional<QSet<qevercloud::Guid>> listGuids(
                     strm << " AND ";
                 }
 
-                strm << "(linkedNotebookGuid ";
+                strm << "(";
+                strm << linkedNotebookGuidColumn<T>();
+                strm << " ";
                 if (!linkedNotebookGuid->isEmpty()) {
                     strm << "= '";
                     strm << sqlEscape(*linkedNotebookGuid);

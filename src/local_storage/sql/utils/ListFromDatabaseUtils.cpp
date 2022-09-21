@@ -98,33 +98,52 @@ QString listObjectsGenericSqlQuery<qevercloud::Note>()
 ////////////////////////////////////////////////////////////////////////////////
 
 template <>
-QString listGuidsGenericSqlQuery<qevercloud::Notebook>()
+QString listGuidsGenericSqlQuery<qevercloud::Notebook>(
+    [[maybe_unused]] const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     return listGuidsGenericSqlQueryImpl(QStringLiteral("Notebooks"));
 }
 
 template <>
-QString listGuidsGenericSqlQuery<qevercloud::Note>()
+QString listGuidsGenericSqlQuery<qevercloud::Note>(
+    [[maybe_unused]] const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
-    return listGuidsGenericSqlQueryImpl(QStringLiteral("Notes"));
+    if (linkedNotebookGuid) {
+        return QStringLiteral(
+            "SELECT DISTINCT Notes.guid FROM Notes LEFT OUTER JOIN "
+            "Notebooks ON Notes.notebookGuid = Notebooks.guid");
+    }
+
+    return QStringLiteral("SELECT DISTINCT guid FROM Notes");
 }
 
 template <>
-QString listGuidsGenericSqlQuery<qevercloud::SavedSearch>()
+QString listGuidsGenericSqlQuery<qevercloud::SavedSearch>(
+    [[maybe_unused]] const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     return listGuidsGenericSqlQueryImpl(QStringLiteral("SavedSearches"));
 }
 
 template <>
-QString listGuidsGenericSqlQuery<qevercloud::Tag>()
+QString listGuidsGenericSqlQuery<qevercloud::Tag>(
+    [[maybe_unused]] const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     return listGuidsGenericSqlQueryImpl(QStringLiteral("Tags"));
 }
 
 template <>
-QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>()
+QString listGuidsGenericSqlQuery<qevercloud::LinkedNotebook>(
+    [[maybe_unused]] const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     return listGuidsGenericSqlQueryImpl(QStringLiteral("LinkedNotebooks"));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <>
+[[nodiscard]] QString linkedNotebookGuidColumn<qevercloud::Note>()
+{
+    return QStringLiteral("Notebooks.linkedNotebookGuid");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
