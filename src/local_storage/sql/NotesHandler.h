@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -105,6 +105,10 @@ public:
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesByLocalIds(
         QStringList noteLocalIds, FetchNoteOptions fetchOptions,
         ListNotesOptions options = {}) const override;
+
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listNoteGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const override;

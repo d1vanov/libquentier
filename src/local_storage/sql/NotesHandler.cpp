@@ -419,6 +419,20 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesByLocalIds(
         });
 }
 
+QFuture<QSet<qevercloud::Guid>> NotesHandler::listNoteGuids(
+    ListGuidsFilters filters,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+{
+    return makeReadTask<QSet<qevercloud::Guid>>(
+        makeTaskContext(), weak_from_this(),
+        [filters, linkedNotebookGuid = std::move(linkedNotebookGuid)](
+            [[maybe_unused]] const NotesHandler & handler,
+            QSqlDatabase & database, ErrorString & errorDescription) {
+            return utils::listGuids<qevercloud::Note>(
+                filters, linkedNotebookGuid, database, errorDescription);
+        });
+}
+
 QFuture<QList<qevercloud::Note>> NotesHandler::queryNotes(
     NoteSearchQuery query, FetchNoteOptions fetchOptions) const
 {
