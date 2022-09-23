@@ -137,16 +137,17 @@ template <class T>
     const ILocalStorage::ListObjectsFilters & filters)
 {
     QString result;
+    QTextStream strm{&result};
 
     using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
 
     if (filters.m_locallyModifiedFilter) {
         switch (*filters.m_locallyModifiedFilter) {
         case ListObjectsFilter::Include:
-            result += QStringLiteral("(isDirty=1) AND ");
+            strm << "(isDirty=1) AND ";
             break;
         case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(isDirty=0) AND ");
+            strm << "(isDirty=0) AND ";
             break;
         }
     }
@@ -154,10 +155,10 @@ template <class T>
     if (filters.m_withGuidFilter) {
         switch (*filters.m_withGuidFilter) {
         case ListObjectsFilter::Include:
-            result += QStringLiteral("(guid IS NULL) AND ");
+            strm << "(guid IS NULL) AND ";
             break;
         case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(guid IS NOT NULL) AND ");
+            strm << "(guid IS NOT NULL) AND ";
             break;
         }
     }
@@ -165,10 +166,10 @@ template <class T>
     if (filters.m_localOnlyFilter) {
         switch (*filters.m_localOnlyFilter) {
         case ListObjectsFilter::Include:
-            result += QStringLiteral("(isLocal=1) AND ");
+            strm << "(isLocal=1) AND ";
             break;
         case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(isLocal=0) AND ");
+            strm << "(isLocal=0) AND ";
             break;
         }
     }
@@ -176,10 +177,10 @@ template <class T>
     if (filters.m_locallyFavoritedFilter) {
         switch (*filters.m_locallyFavoritedFilter) {
         case ListObjectsFilter::Include:
-            result += QStringLiteral("(isFavorited=1) AND ");
+            strm << "(isFavorited=1) AND ";
             break;
         case ListObjectsFilter::Exclude:
-            result += QStringLiteral("(isFavorited=0) AND ");
+            strm << "(isFavorited=0) AND ";
             break;
         }
     }
@@ -304,8 +305,48 @@ template <class T, class TOrderBy>
 
 ////////////////////////////////////////////////////////////////////////////////
 
+template <class T>
 [[nodiscard]] QString listGuidsFiltersToSqlQueryConditions(
-    const ILocalStorage::ListGuidsFilters & filters);
+    const ILocalStorage::ListGuidsFilters & filters)
+{
+    QString result;
+    QTextStream strm{&result};
+
+    using ListObjectsFilter = ILocalStorage::ListObjectsFilter;
+
+    QString tableName;
+    if constexpr (std::is_same_v<T, qevercloud::Note>) {
+        tableName = QStringLiteral("Notes.");
+    }
+
+    if (filters.m_locallyModifiedFilter) {
+        switch (*filters.m_locallyModifiedFilter) {
+        case ListObjectsFilter::Include:
+            strm << "(" << tableName << "isDirty=1) AND ";
+            break;
+        case ListObjectsFilter::Exclude:
+            strm << "(" << tableName << "isDirty=0) AND ";
+            break;
+        }
+    }
+
+    if (filters.m_locallyFavoritedFilter) {
+        switch (*filters.m_locallyFavoritedFilter) {
+        case ListObjectsFilter::Include:
+            strm << "(" << tableName << "isFavorited=1) AND ";
+            break;
+        case ListObjectsFilter::Exclude:
+            strm << "(" << tableName << "isFavorited=0) AND ";
+            break;
+        }
+    }
+
+    if (result.endsWith(QStringLiteral(" AND "))) {
+        result.chop(5);
+    }
+
+    return result;
+}
 
 template <class T>
 std::optional<QSet<qevercloud::Guid>> listGuids(
@@ -320,7 +361,7 @@ std::optional<QSet<qevercloud::Guid>> listGuids(
         strm << listGuidsGenericSqlQuery<T>(linkedNotebookGuid);
 
         const QString sqlQueryConditions =
-            listGuidsFiltersToSqlQueryConditions(filters);
+            listGuidsFiltersToSqlQueryConditions<T>(filters);
 
         if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::SavedSearch>)
         {
