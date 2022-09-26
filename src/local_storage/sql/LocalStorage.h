@@ -91,6 +91,10 @@ public:
     [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const override;
 
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listNotebookGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const override;
+
     // Linked notebooks API
     [[nodiscard]] QFuture<quint32> linkedNotebookCount() const override;
 
@@ -165,6 +169,10 @@ public:
         QStringList noteLocalIds, FetchNoteOptions fetchOptions,
         ListNotesOptions listOptions = {}) const override;
 
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listNoteGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const override;
+
     [[nodiscard]] QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const override;
 
@@ -197,6 +205,10 @@ public:
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
         QString noteLocalId, ListTagsOptions options = {}) const override;
+
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listTagGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeTagByLocalId(
         QString tagLocalId) override;
@@ -253,6 +265,9 @@ public:
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
         ListSavedSearchesOptions options = {}) const override;
+
+    [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listSavedSearchGuids(
+        ListGuidsFilters filters) const override;
 
     [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(
         QString savedSearchLocalId) override;

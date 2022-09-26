@@ -489,6 +489,10 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const = 0;
 
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listNotebookGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const = 0;
+
     // Linked notebooks API
     [[nodiscard]] virtual QFuture<quint32> linkedNotebookCount() const = 0;
 
@@ -566,6 +570,10 @@ public:
         QStringList noteLocalIds, FetchNoteOptions fetchOptions,
         ListNotesOptions listOptions = {}) const = 0;
 
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listNoteGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const = 0;
+
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const = 0;
 
@@ -599,6 +607,10 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>>
         listTagsPerNoteLocalId(
             QString noteLocalId, ListTagsOptions options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listTagGuids(
+        ListGuidsFilters filters,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeTagByLocalId(
         QString tagLocalId) = 0;
@@ -654,6 +666,9 @@ public:
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>
         listSavedSearches(ListSavedSearchesOptions options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<QSet<qevercloud::Guid>> listSavedSearchGuids(
+        ListGuidsFilters filters) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeSavedSearchByLocalId(
         QString savedSearchLocalId) = 0;
@@ -728,6 +743,14 @@ public:
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const ILocalStorage::ListTagsOptions & lhs,
     const ILocalStorage::ListTagsOptions & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListGuidsFilters & lhs,
+    const ILocalStorage::ListGuidsFilters & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListGuidsFilters & lhs,
+    const ILocalStorage::ListGuidsFilters & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,

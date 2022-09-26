@@ -92,6 +92,12 @@ public:
         QFuture<QList<qevercloud::SharedNotebook>>, listSharedNotebooks,
         (qevercloud::Guid notebookGuid), (const, override));
 
+    MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listNotebookGuids,
+        (ListGuidsFilters filters,
+         std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (const, override));
+
     MOCK_METHOD(QFuture<quint32>, linkedNotebookCount, (), (const, override));
 
     MOCK_METHOD(
@@ -183,6 +189,12 @@ public:
         (const, override));
 
     MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listNoteGuids,
+        (ListGuidsFilters filters,
+         std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (const, override));
+
+    MOCK_METHOD(
         QFuture<QList<qevercloud::Note>>, queryNotes,
         (NoteSearchQuery query, FetchNoteOptions fetchOptions),
         (const, override));
@@ -214,6 +226,12 @@ public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::Tag>>, listTagsPerNoteLocalId,
         (QString noteLocalId, ListTagsOptions options), (const, override));
+
+    MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listTagGuids,
+        (ListGuidsFilters filters,
+         std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeTagByLocalId, (QString tagLocalId), (override));
@@ -278,6 +296,10 @@ public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::SavedSearch>>, listSavedSearches,
         (ListSavedSearchesOptions options), (const, override));
+
+    MOCK_METHOD(
+        QFuture<QSet<qevercloud::Guid>>, listSavedSearchGuids,
+        (ListGuidsFilters filters), (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeSavedSearchByLocalId, (QString localId),

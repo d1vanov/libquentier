@@ -1026,6 +1026,21 @@ bool operator!=(
     return !(lhs == rhs);
 }
 
+bool operator==(
+    const ILocalStorage::ListGuidsFilters & lhs,
+    const ILocalStorage::ListGuidsFilters & rhs) noexcept
+{
+    return lhs.m_locallyFavoritedFilter == rhs.m_locallyFavoritedFilter &&
+        lhs.m_locallyModifiedFilter == rhs.m_locallyModifiedFilter;
+}
+
+bool operator!=(
+    const ILocalStorage::ListGuidsFilters & lhs,
+    const ILocalStorage::ListGuidsFilters & rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
 ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
     QThreadPool * threadPool)

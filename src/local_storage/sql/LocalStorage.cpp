@@ -223,6 +223,14 @@ QFuture<QList<qevercloud::SharedNotebook>> LocalStorage::listSharedNotebooks(
     return m_notebooksHandler->listSharedNotebooks(std::move(notebookGuid));
 }
 
+QFuture<QSet<qevercloud::Guid>> LocalStorage::listNotebookGuids(
+    ListGuidsFilters filters,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+{
+    return m_notebooksHandler->listNotebookGuids(
+        filters, std::move(linkedNotebookGuid));
+}
+
 QFuture<quint32> LocalStorage::linkedNotebookCount() const
 {
     return m_linkedNotebooksHandler->linkedNotebookCount();
@@ -350,6 +358,14 @@ QFuture<QList<qevercloud::Note>> LocalStorage::listNotesByLocalIds(
         std::move(noteLocalIds), fetchOptions, listOptions);
 }
 
+QFuture<QSet<qevercloud::Guid>> LocalStorage::listNoteGuids(
+    ListGuidsFilters filters,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+{
+    return m_notesHandler->listNoteGuids(
+        filters, std::move(linkedNotebookGuid));
+}
+
 QFuture<QList<qevercloud::Note>> LocalStorage::queryNotes(
     NoteSearchQuery query, FetchNoteOptions fetchOptions) const
 {
@@ -412,6 +428,13 @@ QFuture<QList<qevercloud::Tag>> LocalStorage::listTagsPerNoteLocalId(
 {
     return m_tagsHandler->listTagsPerNoteLocalId(
         std::move(noteLocalId), options);
+}
+
+QFuture<QSet<qevercloud::Guid>> LocalStorage::listTagGuids(
+    ListGuidsFilters filters,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+{
+    return m_tagsHandler->listTagGuids(filters, std::move(linkedNotebookGuid));
 }
 
 QFuture<void> LocalStorage::expungeTagByLocalId(QString tagLocalId)
@@ -508,6 +531,12 @@ QFuture<QList<qevercloud::SavedSearch>> LocalStorage::listSavedSearches(
     ListSavedSearchesOptions options) const
 {
     return m_savedSearchesHandler->listSavedSearches(options);
+}
+
+QFuture<QSet<qevercloud::Guid>> LocalStorage::listSavedSearchGuids(
+    ListGuidsFilters filters) const
+{
+    return m_savedSearchesHandler->listSavedSearchGuids(filters);
 }
 
 QFuture<void> LocalStorage::expungeSavedSearchByLocalId(

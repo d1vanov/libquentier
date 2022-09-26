@@ -521,6 +521,29 @@ TEST_F(LocalStorageTest, ForwardListSharedNotebooksToNotebooksHandler)
     EXPECT_EQ(res.result(), sharedNotebooks);
 }
 
+TEST_F(LocalStorageTest, ForwardListNotebookGuidsToNotebooksHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto linkedNotebookGuid = UidGenerator::Generate();
+    const auto filters = ILocalStorage::ListGuidsFilters{};
+
+    const QSet<qevercloud::Guid> notebookGuids = QSet<qevercloud::Guid>{}
+        << UidGenerator::Generate() << UidGenerator::Generate()
+        << UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockNotebooksHandler,
+        listNotebookGuids(filters, std::make_optional(linkedNotebookGuid)))
+        .WillOnce(Return(threading::makeReadyFuture(notebookGuids)));
+
+    const auto res =
+        localStorage->listNotebookGuids(filters, linkedNotebookGuid);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notebookGuids);
+}
+
 TEST_F(LocalStorageTest, ForwardLinkedNotebookCountToLinkedNotebooksHandler)
 {
     const auto localStorage = createLocalStorage();
@@ -928,6 +951,28 @@ TEST_F(LocalStorageTest, ForwardListNotesByLocalIdsToNotesHandler)
     EXPECT_EQ(res.result(), notes);
 }
 
+TEST_F(LocalStorageTest, ForwardListNoteGuidsToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto linkedNotebookGuid = UidGenerator::Generate();
+    const auto filters = ILocalStorage::ListGuidsFilters{};
+
+    const QSet<qevercloud::Guid> noteGuids = QSet<qevercloud::Guid>{}
+        << UidGenerator::Generate() << UidGenerator::Generate()
+        << UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        listNoteGuids(filters, std::make_optional(linkedNotebookGuid)))
+        .WillOnce(Return(threading::makeReadyFuture(noteGuids)));
+
+    const auto res = localStorage->listNoteGuids(filters, linkedNotebookGuid);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteGuids);
+}
+
 TEST_F(LocalStorageTest, ForwardQueryNotesToNotesHandler)
 {
     const auto localStorage = createLocalStorage();
@@ -1117,6 +1162,28 @@ TEST_F(LocalStorageTest, ForwardListTagsPerNoteLocalIdToNotesHandler)
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), tags);
+}
+
+TEST_F(LocalStorageTest, ForwardListTagGuidsToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto linkedNotebookGuid = UidGenerator::Generate();
+    const auto filters = ILocalStorage::ListGuidsFilters{};
+
+    const QSet<qevercloud::Guid> tagGuids = QSet<qevercloud::Guid>{}
+        << UidGenerator::Generate() << UidGenerator::Generate()
+        << UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockTagsHandler,
+        listTagGuids(filters, std::make_optional(linkedNotebookGuid)))
+        .WillOnce(Return(threading::makeReadyFuture(tagGuids)));
+
+    const auto res = localStorage->listTagGuids(filters, linkedNotebookGuid);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tagGuids);
 }
 
 TEST_F(LocalStorageTest, ForwardExpungeTagByLocalIdToTagsHandler)
@@ -1372,6 +1439,25 @@ TEST_F(LocalStorageTest, ForwardListSavedSearchesToSavedSearchesHandler)
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), savedSearches);
+}
+
+TEST_F(LocalStorageTest, ForwardListSavedSearchGuidsToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto filters = ILocalStorage::ListGuidsFilters{};
+
+    const QSet<qevercloud::Guid> savedSearchGuids = QSet<qevercloud::Guid>{}
+        << UidGenerator::Generate() << UidGenerator::Generate()
+        << UidGenerator::Generate();
+
+    EXPECT_CALL(*m_mockSavedSearchesHandler, listSavedSearchGuids(filters))
+        .WillOnce(Return(threading::makeReadyFuture(savedSearchGuids)));
+
+    const auto res = localStorage->listSavedSearchGuids(filters);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), savedSearchGuids);
 }
 
 TEST_F(
