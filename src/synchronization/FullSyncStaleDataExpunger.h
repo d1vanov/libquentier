@@ -24,9 +24,19 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <memory>
+
 namespace quentier::synchronization {
 
-class FullSyncStaleDataExpunger final : public IFullSyncStaleDataExpunger
+class FullSyncStaleDataExpunger final :
+    public IFullSyncStaleDataExpunger,
+    public std::enable_shared_from_this<FullSyncStaleDataExpunger>
 {
 public:
     explicit FullSyncStaleDataExpunger(
@@ -35,7 +45,28 @@ public:
 
     [[nodiscard]] QFuture<void> expungeStaleData(
         PreservedGuids preservedGuids,
-        qevercloud::Guid linkedNotebookGuid = {}) override;
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) override;
+
+private:
+    struct Guids
+    {
+        QSet<qevercloud::Guid> locallyModifiedNotebookGuids;
+        QSet<qevercloud::Guid> unmodifiedNotebookGuids;
+
+        QSet<qevercloud::Guid> locallyModifiedTagGuids;
+        QSet<qevercloud::Guid> unmodifiedTagGuids;
+
+        QSet<qevercloud::Guid> locallyModifiedNoteGuids;
+        QSet<qevercloud::Guid> unmodifiedNoteGuids;
+
+        QSet<qevercloud::Guid> locallyModifiedSavedSearchGuids;
+        QSet<qevercloud::Guid> unmodifiedSavedSearchGuids;
+    };
+
+    void onGuidsListed(
+        Guids guids, PreservedGuids preservedGuids,
+        std::optional<qevercloud::Guid> linkedNotebookGuid,
+        std::shared_ptr<QPromise<void>> promise);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

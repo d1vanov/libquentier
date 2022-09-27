@@ -23,6 +23,8 @@
 #include <QFuture>
 #include <QSet>
 
+#include <optional>
+
 namespace quentier::synchronization {
 
 /**
@@ -78,17 +80,17 @@ public:
      * Expunge relevant data items not matching the guids meant to be preserved.
      * @param preservedGuids        Guids of data items which should not be
      *                              expunged.
-     * @param linkedNotebookGuid    If not empty, this guid represents the fact
-     *                              that the only stale data which should be
-     *                              expunged is the data belonging to the
-     *                              particular linked notebook corresponding to
-     *                              this guid. Otherwise stale data for user's
-     *                              own account is expunged.
+     * @param linkedNotebookGuid    If not equal to std::nullopt, this guid
+     *                              represents the fact that the only stale data
+     *                              which should be expunged is the data
+     *                              belonging to the particular linked notebook
+     *                              corresponding to this guid. Otherwise stale
+     *                              data for user's own account is expunged.
      * @return Future with no value or with exception in case of error.
      */
     [[nodiscard]] virtual QFuture<void> expungeStaleData(
         PreservedGuids preservedGuids,
-        qevercloud::Guid linkedNotebookGuid = {});
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {});
 };
 
 } // namespace quentier::synchronization
