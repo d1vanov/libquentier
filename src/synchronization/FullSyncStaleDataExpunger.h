@@ -30,6 +30,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <QHash>
+
 #include <memory>
 
 namespace quentier::synchronization {
@@ -68,6 +70,21 @@ private:
         std::optional<qevercloud::Guid> linkedNotebookGuid,
         std::shared_ptr<QPromise<void>> promise);
 
+    using GuidToLocalIdHash = QHash<qevercloud::Guid, QString>;
+
+    // returns a map from notebook guids passed into the method to notebook
+    // local ids corresponding to newly created local notebooks
+    [[nodiscard]] QFuture<GuidToLocalIdHash> processModifiedNotebooks(
+        const QSet<qevercloud::Guid> & notebookGuids);
+
+    // returns a map from tag guids passed into the method to tag local ids
+    // corresponding to newly created local tags
+    [[nodiscard]] QFuture<GuidToLocalIdHash> processModifiedTags(
+        const QSet<qevercloud::Guid> & tagGuids);
+
+    [[nodiscard]] QFuture<void> processModifiedSavedSearches(
+        const QSet<qevercloud::Guid> & savedSearchGuids);
+    
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const utility::cancelers::ICancelerPtr m_canceler;
