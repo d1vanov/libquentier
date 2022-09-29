@@ -258,10 +258,10 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
             threading::then(
                 std::move(notebookFuture),
                 [guid, selfWeak](std::optional<qevercloud::Notebook> notebook) {
-                    if (!notebook) {
+                    if (Q_UNLIKELY(!notebook)) {
                         QNWARNING(
                             "synchronization::FullSyncStaleDataExpunger",
-                            "Could not find a supposedly existing notebook "
+                            "Could not find the supposedly existing notebook "
                                 << "in the local storage by guid: " << guid);
 
                         return threading::makeReadyFuture<
@@ -349,17 +349,161 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
         processNotebookFutures << processNotebookFuture;
     }
 
-    // TODO: implement further
-    return threading::makeReadyFuture<GuidToLocalIdHash>({});
+    auto allNotebooksFuture =
+        threading::whenAll<std::pair<qevercloud::Guid, QString>>(
+            std::move(processNotebookFutures));
+
+    auto promise = std::make_shared<QPromise<GuidToLocalIdHash>>();
+    auto future = promise->future();
+    promise->start();
+
+    threading::thenOrFailed(
+        std::move(allNotebooksFuture), promise,
+        [promise](QList<std::pair<qevercloud::Guid, QString>> pairs)
+        {
+            GuidToLocalIdHash hash;
+            hash.reserve(pairs.size());
+            for (auto & pair: pairs) {
+                hash[pair.first] = std::move(pair.second);
+            }
+
+            promise->addResult(std::move(hash));
+            promise->finish();
+        });
+
+    return future;
 }
 
 QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
     FullSyncStaleDataExpunger::processModifiedTags(
         const QSet<qevercloud::Guid> & tagGuids)
 {
-    // TODO: implement
-    Q_UNUSED(tagGuids)
-    return threading::makeReadyFuture<GuidToLocalIdHash>({});
+    if (tagGuids.isEmpty()) {
+        return threading::makeReadyFuture<GuidToLocalIdHash>({});
+    }
+
+    auto selfWeak = weak_from_this();
+
+    QList<QFuture<std::pair<qevercloud::Guid, QString>>> processTagFutures;
+    processTagFutures.reserve(std::max(0, tagGuids.size()));
+    for (const auto & guid: qAsConst(tagGuids)) {
+        QFuture<std::optional<qevercloud::Tag>> tagFuture =
+            m_localStorage->findTagByGuid(guid);
+
+        QFuture<std::pair<qevercloud::Guid, QString>> processTagFuture =
+            threading::then(
+                std::move(tagFuture),
+                [guid, selfWeak](std::optional<qevercloud::Tag> tag) {
+                    if (Q_UNLIKELY(!tag)) {
+                        QNWARNING(
+                            "synchronization::FullSyncStaleDataExpunger",
+                            "Could not find the supposedly existing tag "
+                                << "in the local storage by guid: " << guid);
+
+                        return threading::makeReadyFuture<
+                            std::pair<qevercloud::Guid, QString>>({});
+                    }
+
+                    const auto self = selfWeak.lock();
+                    if (!self) {
+                        return threading::makeReadyFuture<
+                            std::pair<qevercloud::Guid, QString>>({});
+                    }
+
+                    auto promise = std::make_shared<
+                        QPromise<std::pair<qevercloud::Guid, QString>>>();
+
+                    auto future = promise->future();
+                    promise->start();
+
+                    tag->setGuid(std::nullopt);
+                    tag->setLinkedNotebookGuid(std::nullopt);
+                    tag->setUpdateSequenceNum(std::nullopt);
+                    tag->setParentGuid(std::nullopt);
+                    tag->setParentTagLocalId(QString{});
+
+                    const auto newLocalId = UidGenerator::Generate();
+                    tag->setLocalId(newLocalId);
+
+                    auto expungeTagFuture =
+                        self->m_localStorage->expungeTagByGuid(guid);
+
+                    auto expungeTagThenFuture = threading::then(
+                        std::move(expungeTagFuture),
+                        [promise, guid, newLocalId, selfWeak,
+                         tag = std::move(*tag)]() mutable {
+                            const auto self = selfWeak.lock();
+                            if (!self) {
+                                promise->addResult(
+                                    std::pair<qevercloud::Guid, QString>{});
+                                promise->finish();
+                                return;
+                            }
+
+                            auto putTagFuture =
+                                self->m_localStorage->putTag(std::move(tag));
+
+                            auto putTagThenFuture = threading::then(
+                                std::move(putTagFuture),
+                                [promise, guid, newLocalId] {
+                                    promise->addResult(
+                                        std::pair{guid, newLocalId});
+                                    promise->finish();
+                                });
+
+                            threading::onFailed(
+                                std::move(putTagThenFuture),
+                                [promise](const QException & e) {
+                                    QNWARNING(
+                                        "synchronization::"
+                                        "FullSyncStaleDataExpunger",
+                                        "Failed to put recreated locally "
+                                            << "modified tag to the "
+                                            << "local storage: " << e.what());
+
+                                    promise->addResult(
+                                        std::pair<qevercloud::Guid, QString>{});
+                                    promise->finish();
+                                });
+                        });
+
+                    threading::onFailed(
+                        std::move(expungeTagThenFuture),
+                        [promise](const QException &) {
+                            promise->addResult(
+                                std::pair<qevercloud::Guid, QString>{});
+                            promise->finish();
+                        });
+
+                    return future;
+                });
+
+        processTagFutures << processTagFuture;
+    }
+
+    auto allTagsFuture =
+        threading::whenAll<std::pair<qevercloud::Guid, QString>>(
+            std::move(processTagFutures));
+
+    auto promise = std::make_shared<QPromise<GuidToLocalIdHash>>();
+    auto future = promise->future();
+    promise->start();
+
+    threading::thenOrFailed(
+        std::move(allTagsFuture), promise,
+        [promise](QList<std::pair<qevercloud::Guid, QString>> pairs)
+        {
+            GuidToLocalIdHash hash;
+            hash.reserve(pairs.size());
+            for (auto & pair: pairs) {
+                hash[pair.first] = std::move(pair.second);
+            }
+
+            promise->addResult(std::move(hash));
+            promise->finish();
+        });
+
+    return future;
 }
 
 QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
