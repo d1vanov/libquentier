@@ -75,16 +75,18 @@ private:
     // returns a map from notebook guids passed into the method to notebook
     // local ids corresponding to newly created local notebooks
     [[nodiscard]] QFuture<GuidToLocalIdHash> processModifiedNotebooks(
-        const QSet<qevercloud::Guid> & notebookGuids);
+        const QSet<qevercloud::Guid> & notebookGuids,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
     // returns a map from tag guids passed into the method to tag local ids
     // corresponding to newly created local tags
     [[nodiscard]] QFuture<GuidToLocalIdHash> processModifiedTags(
-        const QSet<qevercloud::Guid> & tagGuids);
+        const QSet<qevercloud::Guid> & tagGuids,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
     [[nodiscard]] QFuture<void> processModifiedSavedSearches(
         const QSet<qevercloud::Guid> & savedSearchGuids);
-    
+
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const utility::cancelers::ICancelerPtr m_canceler;
