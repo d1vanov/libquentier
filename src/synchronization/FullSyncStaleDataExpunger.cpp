@@ -244,8 +244,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
 
         threading::thenOrFailed(
             std::move(newNotebooksMapFuture), p,
-            [p, newNotebooksMap](GuidToLocalIdHash hash)
-            {
+            [p, newNotebooksMap](GuidToLocalIdHash hash) {
                 *newNotebooksMap = std::move(hash);
                 p->finish();
             });
@@ -260,8 +259,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
 
         threading::thenOrFailed(
             std::move(newTagsMapFuture), p,
-            [p, newTagsMap](GuidToLocalIdHash hash)
-            {
+            [p, newTagsMap](GuidToLocalIdHash hash) {
                 *newTagsMap = std::move(hash);
                 p->finish();
             });
@@ -285,12 +283,10 @@ void FullSyncStaleDataExpunger::onGuidsListed(
                 return;
             }
 
-            if (noteGuidsToUpdate.isEmpty()) {
-                promise->finish();
-                return;
-            }
+            auto processNotesFuture = self->processModifiedNotes(
+                noteGuidsToUpdate, newNotebooksMap, newTagsMap);
 
-            // TODO: process note guids to update
+            threading::thenOrFailed(std::move(processNotesFuture), promise);
         });
 }
 
@@ -346,6 +342,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                     notebook->setPublished(std::nullopt);
                     notebook->setPublishing(std::nullopt);
                     notebook->setDefaultNotebook(std::nullopt);
+                    notebook->setLocallyModified(true);
 
                     const auto newLocalId = UidGenerator::Generate();
                     notebook->setLocalId(newLocalId);
@@ -457,6 +454,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                     tag->setUpdateSequenceNum(std::nullopt);
                     tag->setParentGuid(std::nullopt);
                     tag->setParentTagLocalId(QString{});
+                    tag->setLocallyModified(true);
 
                     const auto newLocalId = UidGenerator::Generate();
                     tag->setLocalId(newLocalId);
@@ -551,6 +549,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
     const auto selfWeak = weak_from_this();
 
     QList<QFuture<void>> processSavedSearchFutures;
+    processSavedSearchFutures.reserve(std::max(0, savedSearchGuids.size()));
     for (const auto & guid: qAsConst(savedSearchGuids)) {
         QFuture<std::optional<qevercloud::SavedSearch>> savedSearchFuture =
             m_localStorage->findSavedSearchByGuid(guid);
@@ -580,6 +579,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
                 savedSearch->setGuid(std::nullopt);
                 savedSearch->setUpdateSequenceNum(std::nullopt);
                 savedSearch->setLocalId(UidGenerator::Generate());
+                savedSearch->setLocallyModified(true);
 
                 auto expungeSavedSearchFuture =
                     self->m_localStorage->expungeSavedSearchByGuid(guid);
@@ -609,6 +609,122 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
     }
 
     return threading::whenAll(std::move(processSavedSearchFutures));
+}
+
+QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
+    const QSet<qevercloud::Guid> & noteGuids,
+    const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap, // NOLINT
+    const std::shared_ptr<const GuidToLocalIdHash> & newTagsMap)
+{
+    if (noteGuids.isEmpty()) {
+        return threading::makeReadyFuture();
+    }
+
+    const auto selfWeak = weak_from_this();
+
+    const auto fetchNoteOptions =
+        local_storage::ILocalStorage::FetchNoteOptions{} |
+        local_storage::ILocalStorage::FetchNoteOption::WithResourceMetadata |
+        local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    QList<QFuture<void>> processNoteFutures;
+    processNoteFutures.reserve(std::max(0, noteGuids.size()));
+    for (const auto & guid: qAsConst(noteGuids)) {
+        QFuture<std::optional<qevercloud::Note>> noteFuture =
+            m_localStorage->findNoteByGuid(guid, fetchNoteOptions);
+
+        QFuture<void> processNoteFuture = threading::then(
+            std::move(noteFuture),
+            [guid, selfWeak, newNotebooksMap,
+             newTagsMap](std::optional<qevercloud::Note> note) {
+                if (Q_UNLIKELY(!note)) {
+                    QNWARNING(
+                        "synchronization::FullSyncStaleDataExpunger",
+                        "Could not find the supposedly existing note in the "
+                            << "local storage by guid: " << guid);
+                    return threading::makeReadyFuture();
+                }
+
+                if (Q_UNLIKELY(!note->notebookGuid())) {
+                    QNWARNING(
+                        "synchronization::FullSyncStaleDataExpunger",
+                        "Found note with guid which somehow doesn't have "
+                            << "notebook guid: " << *note);
+                    return threading::makeReadyFuture();
+                }
+
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return threading::makeReadyFuture();
+                }
+
+                auto promise = std::make_shared<QPromise<void>>();
+                auto future = promise->future();
+                promise->start();
+
+                note->setGuid(std::nullopt);
+                note->setUpdateSequenceNum(std::nullopt);
+                note->setLocalId(UidGenerator::Generate());
+
+                if (const auto it =
+                        newNotebooksMap->constFind(*note->notebookGuid());
+                    it != newNotebooksMap->constEnd())
+                {
+                    note->setNotebookLocalId(it.value());
+                }
+
+                note->setNotebookGuid(std::nullopt);
+
+                if (note->resources()) {
+                    for (auto & resource: *note->mutableResources()) {
+                        resource.setNoteLocalId(note->localId());
+                        resource.setNoteGuid(std::nullopt);
+                        resource.setGuid(std::nullopt);
+                        resource.setUpdateSequenceNum(std::nullopt);
+                        resource.setLocallyModified(true);
+                        resource.setLocalId(UidGenerator::Generate());
+                    }
+                }
+
+                if (note->tagGuids()) {
+                    QStringList tagLocalIds;
+                    for (const auto & tagGuid: qAsConst(*note->tagGuids())) {
+                        const auto it = newTagsMap->constFind(tagGuid);
+                        if (it != newTagsMap->constEnd()) {
+                            tagLocalIds << it.value();
+                        }
+                    }
+                    note->setTagLocalIds(std::move(tagLocalIds));
+                    note->setTagGuids(std::nullopt);
+                }
+
+                auto expungeNoteFuture =
+                    self->m_localStorage->expungeNoteByGuid(guid);
+
+                threading::thenOrFailed(
+                    std::move(expungeNoteFuture), promise,
+                    [promise, guid, selfWeak,
+                     note = std::move(*note)]() mutable {
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            promise->finish();
+                            return;
+                        }
+
+                        auto putNoteFuture =
+                            self->m_localStorage->putNote(std::move(note));
+
+                        threading::thenOrFailed(
+                            std::move(putNoteFuture), promise);
+                    });
+
+                return future;
+            });
+
+        processNoteFutures << processNoteFuture;
+    }
+
+    return threading::whenAll(std::move(processNoteFutures));
 }
 
 } // namespace quentier::synchronization

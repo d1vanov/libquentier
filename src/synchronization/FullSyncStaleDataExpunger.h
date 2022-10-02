@@ -87,6 +87,11 @@ private:
     [[nodiscard]] QFuture<void> processModifiedSavedSearches(
         const QSet<qevercloud::Guid> & savedSearchGuids);
 
+    [[nodiscard]] QFuture<void> processModifiedNotes(
+        const QSet<qevercloud::Guid> & noteGuids,
+        const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap,
+        const std::shared_ptr<const GuidToLocalIdHash> & newTagsMap);
+
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const utility::cancelers::ICancelerPtr m_canceler;
