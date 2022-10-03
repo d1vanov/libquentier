@@ -11,6 +11,7 @@ add_executable(${TESTS_NAME}
   DownloaderTest.cpp
   DurableNotesProcessorTest.cpp
   DurableResourcesProcessorTest.cpp
+  FullSyncStaleDataExpungerTest.cpp
   LinkedNotebooksProcessorTest.cpp
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
