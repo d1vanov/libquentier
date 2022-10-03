@@ -90,7 +90,7 @@ public:
      */
     [[nodiscard]] virtual QFuture<void> expungeStaleData(
         PreservedGuids preservedGuids,
-        std::optional<qevercloud::Guid> linkedNotebookGuid = {});
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {}) = 0;
 };
 
 } // namespace quentier::synchronization
