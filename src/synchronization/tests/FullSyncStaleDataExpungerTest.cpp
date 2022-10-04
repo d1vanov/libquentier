@@ -40,6 +40,7 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::AnyNumber;
 using testing::StrictMock;
 
 class FullSyncStaleDataExpungerTest : public testing::Test
@@ -267,6 +268,34 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             });
     }
 
+    QSet<qevercloud::Guid> expungedNotebookGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeNotebookByGuid).WillRepeatedly(
+        [&](const qevercloud::Guid & notebookGuid) {
+            expungedNotebookGuids.insert(notebookGuid);
+            return threading::makeReadyFuture();
+        });
+
+    QSet<qevercloud::Guid> expungedTagGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid).WillRepeatedly(
+        [&](const qevercloud::Guid & tagGuid) {
+            expungedTagGuids.insert(tagGuid);
+            return threading::makeReadyFuture();
+        });
+
+    QSet<qevercloud::Guid> expungedNoteGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid).WillRepeatedly(
+        [&](const qevercloud::Guid & noteGuid) {
+            expungedNoteGuids.insert(noteGuid);
+            return threading::makeReadyFuture();
+        });
+
+    QSet<qevercloud::Guid> expungedSavedSearchGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid).WillRepeatedly(
+        [&](const qevercloud::Guid & savedSearchGuid) {
+            expungedSavedSearchGuids.insert(savedSearchGuid);
+            return threading::makeReadyFuture();
+        });
+
     // TODO: fill in other expectations
 
     auto future = fullSyncStaleDataExpunger->expungeStaleData(
@@ -276,6 +305,104 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             testData.m_preservedSavedSearchGuids});
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
+
+    const QSet<qevercloud::Guid> expectedExpungedNotebookGuids = [&]{
+        QSet<qevercloud::Guid> guids;
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_unmodifiedNotebooks))) {
+            const auto & guid = it.key();
+            if (!testData.m_preservedNotebookGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_modifiedNotebooks))) {
+            const auto & guid = it.key();
+            if (!testData.m_preservedNotebookGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        return guids;
+    }();
+
+    EXPECT_EQ(expungedNotebookGuids, expectedExpungedNotebookGuids);
+
+    const QSet<qevercloud::Guid> expectedExpungedNoteGuids = [&]{
+        QSet<qevercloud::Guid> guids;
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_unmodifiedNotes))) {
+            const auto & guid = it.key();
+            if (!testData.m_preservedNoteGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_modifiedNotes))) {
+            const auto & guid = it.key();
+            if (!testData.m_preservedNoteGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        return guids;
+    }();
+
+    EXPECT_EQ(expungedNoteGuids, expectedExpungedNoteGuids);
+
+    const QSet<qevercloud::Guid> expectedExpungedTagGuids = [&]{
+        QSet<qevercloud::Guid> guids;
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_unmodifiedTags))) {
+            const auto & guid = it.key();
+            if (!testData.m_preservedTagGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_modifiedTags))) {
+            const auto & guid = it.key();
+            if (!testData.m_preservedTagGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        return guids;
+    }();
+
+    EXPECT_EQ(expungedTagGuids, expectedExpungedTagGuids);
+
+    const QSet<qevercloud::Guid> expectedExpungedSavedSearchGuids = [&]{
+        QSet<qevercloud::Guid> guids;
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_unmodifiedSavedSearches)))
+        {
+            const auto & guid = it.key();
+            if (!testData.m_preservedSavedSearchGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(testData.m_modifiedSavedSearches)))
+        {
+            const auto & guid = it.key();
+            if (!testData.m_preservedSavedSearchGuids.contains(guid)) {
+                guids.insert(guid);
+            }
+        }
+
+        return guids;
+    }();
+
+    EXPECT_EQ(expungedSavedSearchGuids, expectedExpungedSavedSearchGuids);
 }
 
 } // namespace quentier::synchronization::tests
