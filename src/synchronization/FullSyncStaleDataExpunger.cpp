@@ -239,7 +239,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
         processModifiedSavedSearches(savedSearchGuidsToUpdate);
 
     auto newNotebooksMap = std::make_shared<GuidToLocalIdHash>();
-    auto newTagsMap = std::make_shared<GuidToLocalIdHash>();
+    auto newTagsMap = std::make_shared<GuidToTagDataHash>();
 
     auto processNotebooksFuture = [&] {
         auto p = std::make_shared<QPromise<void>>();
@@ -263,7 +263,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
 
         threading::thenOrFailed(
             std::move(newTagsMapFuture), p,
-            [p, newTagsMap](GuidToLocalIdHash hash) {
+            [p, newTagsMap](GuidToTagDataHash hash) {
                 *newTagsMap = std::move(hash);
                 p->finish();
             });
@@ -414,24 +414,24 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
     return future;
 }
 
-QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
+QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
     FullSyncStaleDataExpunger::processModifiedTags(
         const QSet<qevercloud::Guid> & tagGuids,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     if (tagGuids.isEmpty()) {
-        return threading::makeReadyFuture<GuidToLocalIdHash>({});
+        return threading::makeReadyFuture<GuidToTagDataHash>({});
     }
 
     auto selfWeak = weak_from_this();
 
-    QList<QFuture<std::pair<qevercloud::Guid, QString>>> processTagFutures;
+    QList<QFuture<std::pair<qevercloud::Guid, TagData>>> processTagFutures;
     processTagFutures.reserve(std::max(0, tagGuids.size()));
     for (const auto & guid: qAsConst(tagGuids)) {
         QFuture<std::optional<qevercloud::Tag>> tagFuture =
             m_localStorage->findTagByGuid(guid);
 
-        QFuture<std::pair<qevercloud::Guid, QString>> processTagFuture =
+        QFuture<std::pair<qevercloud::Guid, TagData>> processTagFuture =
             threading::then(
                 std::move(tagFuture),
                 [guid, linkedNotebookGuid,
@@ -443,17 +443,17 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                                 << "in the local storage by guid: " << guid);
 
                         return threading::makeReadyFuture<
-                            std::pair<qevercloud::Guid, QString>>({});
+                            std::pair<qevercloud::Guid, TagData>>({});
                     }
 
                     const auto self = selfWeak.lock();
                     if (!self || self->m_canceler->isCanceled()) {
                         return threading::makeReadyFuture<
-                            std::pair<qevercloud::Guid, QString>>({});
+                            std::pair<qevercloud::Guid, TagData>>({});
                     }
 
                     auto promise = std::make_shared<
-                        QPromise<std::pair<qevercloud::Guid, QString>>>();
+                        QPromise<std::pair<qevercloud::Guid, TagData>>>();
 
                     auto future = promise->future();
                     promise->start();
@@ -465,7 +465,8 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                     tag->setParentTagLocalId(QString{});
                     tag->setLocallyModified(true);
 
-                    const auto newLocalId = UidGenerator::Generate();
+                    auto oldLocalId = tag->localId();
+                    auto newLocalId = UidGenerator::Generate();
                     tag->setLocalId(newLocalId);
 
                     auto expungeTagFuture =
@@ -473,12 +474,14 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
 
                     auto expungeTagThenFuture = threading::then(
                         std::move(expungeTagFuture),
-                        [promise, guid, newLocalId, selfWeak,
+                        [promise, guid, selfWeak,
+                         oldLocalId = std::move(oldLocalId),
+                         newLocalId = std::move(newLocalId),
                          tag = std::move(*tag)]() mutable {
                             const auto self = selfWeak.lock();
                             if (!self || self->m_canceler->isCanceled()) {
                                 promise->addResult(
-                                    std::pair<qevercloud::Guid, QString>{});
+                                    std::pair<qevercloud::Guid, TagData>{});
                                 promise->finish();
                                 return;
                             }
@@ -488,9 +491,14 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
 
                             auto putTagThenFuture = threading::then(
                                 std::move(putTagFuture),
-                                [promise, guid, newLocalId] {
-                                    promise->addResult(
-                                        std::pair{guid, newLocalId});
+                                [promise, guid,
+                                 oldLocalId = std::move(oldLocalId),
+                                 newLocalId = std::move(newLocalId)]() mutable {
+                                    promise->addResult(std::pair{
+                                        guid,
+                                        TagData{
+                                            std::move(oldLocalId),
+                                            std::move(newLocalId)}});
                                     promise->finish();
                                 });
 
@@ -505,7 +513,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                                             << "local storage: " << e.what());
 
                                     promise->addResult(
-                                        std::pair<qevercloud::Guid, QString>{});
+                                        std::pair<qevercloud::Guid, TagData>{});
                                     promise->finish();
                                 });
                         });
@@ -514,7 +522,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                         std::move(expungeTagThenFuture),
                         [promise]([[maybe_unused]] const QException & e) {
                             promise->addResult(
-                                std::pair<qevercloud::Guid, QString>{});
+                                std::pair<qevercloud::Guid, TagData>{});
                             promise->finish();
                         });
 
@@ -525,22 +533,22 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
     }
 
     auto allTagsFuture =
-        threading::whenAll<std::pair<qevercloud::Guid, QString>>(
+        threading::whenAll<std::pair<qevercloud::Guid, TagData>>(
             std::move(processTagFutures));
 
-    auto promise = std::make_shared<QPromise<GuidToLocalIdHash>>();
+    auto promise = std::make_shared<QPromise<GuidToTagDataHash>>();
     auto future = promise->future();
     promise->start();
 
     threading::thenOrFailed(
         std::move(allTagsFuture), promise,
         [promise, canceler = m_canceler](
-            QList<std::pair<qevercloud::Guid, QString>> pairs) {
+            QList<std::pair<qevercloud::Guid, TagData>> pairs) {
             if (canceler->isCanceled()) {
                 return;
             }
 
-            GuidToLocalIdHash hash;
+            GuidToTagDataHash hash;
             hash.reserve(pairs.size());
             for (auto & pair: pairs) {
                 hash[pair.first] = std::move(pair.second);
@@ -627,8 +635,8 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
 
 QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
     const QSet<qevercloud::Guid> & noteGuids,
-    const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap, // NOLINT
-    const std::shared_ptr<const GuidToLocalIdHash> & newTagsMap)
+    const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap,
+    const std::shared_ptr<const GuidToTagDataHash> & newTagsMap)
 {
     if (noteGuids.isEmpty()) {
         return threading::makeReadyFuture();
@@ -701,11 +709,16 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
                 }
 
                 if (note->tagGuids()) {
-                    QStringList tagLocalIds;
+                    QStringList tagLocalIds = note->tagLocalIds();
                     for (const auto & tagGuid: qAsConst(*note->tagGuids())) {
                         const auto it = newTagsMap->constFind(tagGuid);
                         if (it != newTagsMap->constEnd()) {
-                            tagLocalIds << it.value();
+                            const auto & tagData = it.value();
+                            if (const auto index =
+                                    tagLocalIds.indexOf(tagData.oldLocalId);
+                                index != -1) {
+                                tagLocalIds[index] = tagData.newLocalId;
+                            }
                         }
                     }
                     note->setTagLocalIds(std::move(tagLocalIds));

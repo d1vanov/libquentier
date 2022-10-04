@@ -78,9 +78,17 @@ private:
         const QSet<qevercloud::Guid> & notebookGuids,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
+    struct TagData
+    {
+        QString oldLocalId;
+        QString newLocalId;
+    };
+
+    using GuidToTagDataHash = QHash<qevercloud::Guid, TagData>;
+
     // returns a map from tag guids passed into the method to tag local ids
     // corresponding to newly created local tags
-    [[nodiscard]] QFuture<GuidToLocalIdHash> processModifiedTags(
+    [[nodiscard]] QFuture<GuidToTagDataHash> processModifiedTags(
         const QSet<qevercloud::Guid> & tagGuids,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
@@ -90,7 +98,7 @@ private:
     [[nodiscard]] QFuture<void> processModifiedNotes(
         const QSet<qevercloud::Guid> & noteGuids,
         const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap,
-        const std::shared_ptr<const GuidToLocalIdHash> & newTagsMap);
+        const std::shared_ptr<const GuidToTagDataHash> & newTagsMap);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
