@@ -22,13 +22,19 @@
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
+#include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/types/builders/NoteBuilder.h>
+#include <qevercloud/types/builders/NotebookBuilder.h>
+#include <qevercloud/types/builders/SavedSearchBuilder.h>
+#include <qevercloud/types/builders/TagBuilder.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/SavedSearch.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/utility/ToRange.h>
 
+#include <QFlags>
 #include <QHash>
 
 #include <gtest/gtest.h>
@@ -98,6 +104,124 @@ struct FullSyncStaleDataExpungerTestData
 
     std::optional<qevercloud::Guid> m_linkedNotebookGuid;
 };
+
+enum class FullSyncStaleDataExpungerTestDataOption
+{
+    WithUnmodifiedNotebooks = 1 << 0,
+    WithModifiedNotebooks = 1 << 1,
+    WithUnmodifiedTags = 1 << 2,
+    WithModifiedTags = 1 << 3,
+    WithUnmodifiedNotes = 1 << 4,
+    WithModifiedNotes = 1 << 5,
+    WithUnmodifiedSavedSearches = 1 << 6,
+    WithModifiedSavedSearches = 1 << 7,
+    WithPreservedNotebookGuids = 1 << 8,
+    WithPreservedTagGuids = 1 << 9,
+    WithPreservedNoteGuids = 1 << 10,
+    WithPreservedSavedSearchGuids = 1 << 11,
+    WithLinkedNotebookGuid = 1 << 12
+};
+
+Q_DECLARE_FLAGS(
+    FullSyncStaleDataExpungerTestDataOptions,
+    FullSyncStaleDataExpungerTestDataOption);
+
+[[nodiscard]] FullSyncStaleDataExpungerTestData
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions options)
+{
+    const auto createNotebook =
+        [](const bool modified, const int counter,
+           std::optional<qevercloud::Guid> linkedNotebookGuid) {
+            return qevercloud::NotebookBuilder{}
+                .setGuid(UidGenerator::Generate())
+                .setLocalId(UidGenerator::Generate())
+                .setUpdateSequenceNum(counter)
+                .setName(QString::fromUtf8("Notebook #%1").arg(counter))
+                .setLocallyModified(modified)
+                .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
+                .build();
+        };
+
+    const auto createNote =
+        [](const bool modified, const int counter,
+           qevercloud::Guid notebookGuid, QString notebookLocalId,
+           QList<qevercloud::Guid> tagGuids, QStringList tagLocalIds) {
+            return qevercloud::NoteBuilder{}
+                .setGuid(UidGenerator::Generate())
+                .setLocalId(UidGenerator::Generate())
+                .setUpdateSequenceNum(counter)
+                .setTitle(QString::fromUtf8("Note #%1").arg(counter))
+                .setLocallyModified(modified)
+                .setNotebookGuid(std::move(notebookGuid))
+                .setNotebookLocalId(std::move(notebookLocalId))
+                .setTagGuids(std::move(tagGuids))
+                .setTagLocalIds(std::move(tagLocalIds))
+                .build();
+        };
+
+    const auto createTag = 
+        [](const bool modified, const int counter) {
+            return qevercloud::TagBuilder{}
+                .setGuid(UidGenerator::Generate())
+                .setLocalId(UidGenerator::Generate())
+                .setUpdateSequenceNum(counter)
+                .setName(QString::fromUtf8("Tag #%1").arg(counter))
+                .setLocallyModified(modified)
+                .build();
+        };
+
+    const auto createSavedSearch =
+        [](const bool modified, const int counter) {
+            return qevercloud::SavedSearchBuilder{}
+                .setGuid(UidGenerator::Generate())
+                .setLocalId(UidGenerator::Generate())
+                .setUpdateSequenceNum(counter)
+                .setName(QString::fromUtf8("Saved search #%1").arg(counter))
+                .setLocallyModified(modified)
+                .build();
+        };
+
+    FullSyncStaleDataExpungerTestData result;
+    constexpr int itemCount = 3;
+
+    const std::optional<qevercloud::Guid> linkedNotebookGuid =
+        (options.testFlag(FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid)
+         ? std::make_optional(UidGenerator::Generate())
+         : std::optional<qevercloud::Guid>{});
+
+    int notebookCounter = 1;
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto notebook =
+                createNotebook(false, notebookCounter, linkedNotebookGuid);
+            Q_ASSERT(notebook.guid());
+
+            const auto guid = *notebook.guid();
+            result.m_unmodifiedNotebooks[guid] = std::move(notebook);
+
+            ++notebookCounter;
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto notebook =
+                createNotebook(true, notebookCounter, linkedNotebookGuid);
+            Q_ASSERT(notebook.guid());
+
+            const auto guid = *notebook.guid();
+            result.m_modifiedNotebooks[guid] = std::move(notebook);
+
+            ++notebookCounter;
+        }
+    }
+
+    // TODO: implement further
+    return result;
+}
 
 class FullSyncStaleDataExpungerDataTest :
     public FullSyncStaleDataExpungerTest,
