@@ -137,7 +137,7 @@ Q_DECLARE_FLAGS(
                 .setGuid(UidGenerator::Generate())
                 .setLocalId(UidGenerator::Generate())
                 .setUpdateSequenceNum(counter)
-                .setName(QString::fromUtf8("Notebook #%1").arg(counter))
+                .setName(QString::fromUtf8("Notebook #%1").arg(counter + 1))
                 .setLocallyModified(modified)
                 .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
                 .build();
@@ -151,7 +151,7 @@ Q_DECLARE_FLAGS(
                 .setGuid(UidGenerator::Generate())
                 .setLocalId(UidGenerator::Generate())
                 .setUpdateSequenceNum(counter)
-                .setTitle(QString::fromUtf8("Note #%1").arg(counter))
+                .setTitle(QString::fromUtf8("Note #%1").arg(counter + 1))
                 .setLocallyModified(modified)
                 .setNotebookGuid(std::move(notebookGuid))
                 .setNotebookLocalId(std::move(notebookLocalId))
@@ -161,13 +161,15 @@ Q_DECLARE_FLAGS(
         };
 
     const auto createTag = 
-        [](const bool modified, const int counter) {
+        [](const bool modified, const int counter,
+           std::optional<qevercloud::Guid> linkedNotebookGuid) {
             return qevercloud::TagBuilder{}
                 .setGuid(UidGenerator::Generate())
                 .setLocalId(UidGenerator::Generate())
                 .setUpdateSequenceNum(counter)
-                .setName(QString::fromUtf8("Tag #%1").arg(counter))
+                .setName(QString::fromUtf8("Tag #%1").arg(counter + 1))
                 .setLocallyModified(modified)
+                .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
                 .build();
         };
 
@@ -177,7 +179,7 @@ Q_DECLARE_FLAGS(
                 .setGuid(UidGenerator::Generate())
                 .setLocalId(UidGenerator::Generate())
                 .setUpdateSequenceNum(counter)
-                .setName(QString::fromUtf8("Saved search #%1").arg(counter))
+                .setName(QString::fromUtf8("Saved search #%1").arg(counter + 1))
                 .setLocallyModified(modified)
                 .build();
         };
@@ -190,7 +192,7 @@ Q_DECLARE_FLAGS(
          ? std::make_optional(UidGenerator::Generate())
          : std::optional<qevercloud::Guid>{});
 
-    int notebookCounter = 1;
+    int notebookCounter = 0;
     if (options.testFlag(
             FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks)) {
         for (int i = 0; i < itemCount; ++i) {
@@ -219,7 +221,137 @@ Q_DECLARE_FLAGS(
         }
     }
 
-    // TODO: implement further
+    int tagCounter = 0;
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto tag = createTag(false, tagCounter, linkedNotebookGuid);
+            Q_ASSERT(tag.guid());
+
+            const auto guid = *tag.guid();
+            result.m_unmodifiedTags[guid] = std::move(tag);
+
+            ++tagCounter;
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedTags)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto tag = createTag(true, tagCounter, linkedNotebookGuid);
+            Q_ASSERT(tag.guid());
+
+            const auto guid = *tag.guid();
+            result.m_modifiedTags[guid] = std::move(tag);
+
+            ++tagCounter;
+        }
+    }
+
+    const QList<qevercloud::Notebook> notebooks = [&] {
+        QList<qevercloud::Notebook> notebooks;
+        for (const auto it:
+                qevercloud::toRange(qAsConst(result.m_unmodifiedNotebooks))) {
+            notebooks << it.value();
+        }
+        for (const auto it:
+                qevercloud::toRange(qAsConst(result.m_modifiedNotebooks))) {
+            notebooks << it.value();
+        }
+        return notebooks;
+    }();
+
+    const QList<qevercloud::Tag> tags = [&] {
+        QList<qevercloud::Tag> tags;
+        for (const auto it:
+                qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
+            tags << it.value();
+        }
+        for (const auto it:
+                qevercloud::toRange(qAsConst(result.m_modifiedTags))) {
+            tags << it.value();
+        }
+        return tags;
+    }();
+
+    int noteCounter = 0;
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto note = createNote(
+                false, noteCounter,
+                (notebooks.size() > i ? notebooks[i].guid().value()
+                                      : UidGenerator::Generate()),
+                (notebooks.size() > i ? notebooks[i].localId()
+                                      : UidGenerator::Generate()),
+                QList<qevercloud::Guid>{}
+                    << (tags.size() > i ? tags[i].guid().value()
+                                        : UidGenerator::Generate()),
+                QStringList{}
+                    << (tags.size() > i ? tags[i].localId()
+                                        : UidGenerator::Generate()));
+            Q_ASSERT(note.guid());
+
+            const auto guid = *note.guid();
+            result.m_unmodifiedNotes[guid] = std::move(note);
+
+            ++noteCounter;
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto note = createNote(
+                true, noteCounter,
+                (notebooks.size() > i ? notebooks[i].guid().value()
+                                      : UidGenerator::Generate()),
+                (notebooks.size() > i ? notebooks[i].localId()
+                                      : UidGenerator::Generate()),
+                QList<qevercloud::Guid>{}
+                    << (tags.size() > i ? tags[i].guid().value()
+                                        : UidGenerator::Generate()),
+                QStringList{}
+                    << (tags.size() > i ? tags[i].localId()
+                                        : UidGenerator::Generate()));
+            Q_ASSERT(note.guid());
+
+            const auto guid = *note.guid();
+            result.m_modifiedNotes[guid] = std::move(note);
+
+            ++noteCounter;
+        }
+    }
+
+    int savedSearchCounter = 0;
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::
+                WithUnmodifiedSavedSearches)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto savedSearch = createSavedSearch(false, savedSearchCounter);
+            Q_ASSERT(savedSearch.guid());
+
+            const auto guid = *savedSearch.guid();
+            result.m_unmodifiedSavedSearches[guid] = std::move(savedSearch);
+
+            ++savedSearchCounter;
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::
+                WithModifiedSavedSearches)) {
+        for (int i = 0; i < itemCount; ++i) {
+            auto savedSearch = createSavedSearch(true, savedSearchCounter);
+            Q_ASSERT(savedSearch.guid());
+
+            const auto guid = *savedSearch.guid();
+            result.m_modifiedSavedSearches[guid] = std::move(savedSearch);
+
+            ++savedSearchCounter;
+        }
+    }
+
     return result;
 }
 
