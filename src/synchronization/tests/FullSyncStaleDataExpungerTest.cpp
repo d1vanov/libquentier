@@ -21,19 +21,22 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/threading/Future.h>
-#include <quentier/utility/cancelers/ManualCanceler.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
-#include <qevercloud/types/builders/NoteBuilder.h>
-#include <qevercloud/types/builders/NotebookBuilder.h>
-#include <qevercloud/types/builders/SavedSearchBuilder.h>
-#include <qevercloud/types/builders/TagBuilder.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/SavedSearch.h>
 #include <qevercloud/types/Tag.h>
+#include <qevercloud/types/builders/DataBuilder.h>
+#include <qevercloud/types/builders/NoteBuilder.h>
+#include <qevercloud/types/builders/NotebookBuilder.h>
+#include <qevercloud/types/builders/ResourceBuilder.h>
+#include <qevercloud/types/builders/SavedSearchBuilder.h>
+#include <qevercloud/types/builders/TagBuilder.h>
 #include <qevercloud/utility/ToRange.h>
 
+#include <QCryptographicHash>
 #include <QFlags>
 #include <QHash>
 
@@ -143,24 +146,42 @@ Q_DECLARE_FLAGS(
                 .build();
         };
 
-    const auto createNote =
-        [](const bool modified, const int counter,
-           qevercloud::Guid notebookGuid, QString notebookLocalId,
-           QList<qevercloud::Guid> tagGuids, QStringList tagLocalIds) {
-            return qevercloud::NoteBuilder{}
-                .setGuid(UidGenerator::Generate())
-                .setLocalId(UidGenerator::Generate())
-                .setUpdateSequenceNum(counter)
-                .setTitle(QString::fromUtf8("Note #%1").arg(counter + 1))
-                .setLocallyModified(modified)
-                .setNotebookGuid(std::move(notebookGuid))
-                .setNotebookLocalId(std::move(notebookLocalId))
-                .setTagGuids(std::move(tagGuids))
-                .setTagLocalIds(std::move(tagLocalIds))
-                .build();
-        };
+    const auto createNote = [](const bool modified, const int counter,
+                               qevercloud::Guid notebookGuid,
+                               QString notebookLocalId,
+                               QList<qevercloud::Guid> tagGuids,
+                               QStringList tagLocalIds) {
+        const QByteArray sampleBodyData =
+            QString::fromUtf8("some_data").toUtf8();
+        const qint32 sampleBodyDataSize = sampleBodyData.size();
+        const auto sampleBodyDataHash =
+            QCryptographicHash::hash(sampleBodyData, QCryptographicHash::Md5);
+        return qevercloud::NoteBuilder{}
+            .setGuid(UidGenerator::Generate())
+            .setLocalId(UidGenerator::Generate())
+            .setUpdateSequenceNum(counter)
+            .setTitle(QString::fromUtf8("Note #%1").arg(counter + 1))
+            .setLocallyModified(modified)
+            .setNotebookGuid(std::move(notebookGuid))
+            .setNotebookLocalId(std::move(notebookLocalId))
+            .setTagGuids(std::move(tagGuids))
+            .setTagLocalIds(std::move(tagLocalIds))
+            .setResources(
+                QList<qevercloud::Resource>{}
+                << qevercloud::ResourceBuilder{}
+                       .setGuid(UidGenerator::Generate())
+                       .setLocalId(UidGenerator::Generate())
+                       .setData(qevercloud::DataBuilder{}
+                                    .setBody(sampleBodyData)
+                                    .setSize(sampleBodyDataSize)
+                                    .setBodyHash(sampleBodyDataHash)
+                                    .build())
+                       .setUpdateSequenceNum(counter + 100)
+                       .build())
+            .build();
+    };
 
-    const auto createTag = 
+    const auto createTag =
         [](const bool modified, const int counter,
            std::optional<qevercloud::Guid> linkedNotebookGuid) {
             return qevercloud::TagBuilder{}
@@ -173,28 +194,29 @@ Q_DECLARE_FLAGS(
                 .build();
         };
 
-    const auto createSavedSearch =
-        [](const bool modified, const int counter) {
-            return qevercloud::SavedSearchBuilder{}
-                .setGuid(UidGenerator::Generate())
-                .setLocalId(UidGenerator::Generate())
-                .setUpdateSequenceNum(counter)
-                .setName(QString::fromUtf8("Saved search #%1").arg(counter + 1))
-                .setLocallyModified(modified)
-                .build();
-        };
+    const auto createSavedSearch = [](const bool modified, const int counter) {
+        return qevercloud::SavedSearchBuilder{}
+            .setGuid(UidGenerator::Generate())
+            .setLocalId(UidGenerator::Generate())
+            .setUpdateSequenceNum(counter)
+            .setName(QString::fromUtf8("Saved search #%1").arg(counter + 1))
+            .setLocallyModified(modified)
+            .build();
+    };
 
     FullSyncStaleDataExpungerTestData result;
     constexpr int itemCount = 3;
 
     const std::optional<qevercloud::Guid> linkedNotebookGuid =
-        (options.testFlag(FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid)
-         ? std::make_optional(UidGenerator::Generate())
-         : std::optional<qevercloud::Guid>{});
+        (options.testFlag(
+             FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid)
+             ? std::make_optional(UidGenerator::Generate())
+             : std::optional<qevercloud::Guid>{});
 
     int notebookCounter = 0;
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks)) {
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto notebook =
                 createNotebook(false, notebookCounter, linkedNotebookGuid);
@@ -208,7 +230,8 @@ Q_DECLARE_FLAGS(
     }
 
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks)) {
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto notebook =
                 createNotebook(true, notebookCounter, linkedNotebookGuid);
@@ -223,7 +246,8 @@ Q_DECLARE_FLAGS(
 
     int tagCounter = 0;
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags)) {
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto tag = createTag(false, tagCounter, linkedNotebookGuid);
             Q_ASSERT(tag.guid());
@@ -251,11 +275,11 @@ Q_DECLARE_FLAGS(
     const QList<qevercloud::Notebook> notebooks = [&] {
         QList<qevercloud::Notebook> notebooks;
         for (const auto it:
-                qevercloud::toRange(qAsConst(result.m_unmodifiedNotebooks))) {
+             qevercloud::toRange(qAsConst(result.m_unmodifiedNotebooks))) {
             notebooks << it.value();
         }
         for (const auto it:
-                qevercloud::toRange(qAsConst(result.m_modifiedNotebooks))) {
+             qevercloud::toRange(qAsConst(result.m_modifiedNotebooks))) {
             notebooks << it.value();
         }
         return notebooks;
@@ -264,11 +288,11 @@ Q_DECLARE_FLAGS(
     const QList<qevercloud::Tag> tags = [&] {
         QList<qevercloud::Tag> tags;
         for (const auto it:
-                qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
+             qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
             tags << it.value();
         }
         for (const auto it:
-                qevercloud::toRange(qAsConst(result.m_modifiedTags))) {
+             qevercloud::toRange(qAsConst(result.m_modifiedTags))) {
             tags << it.value();
         }
         return tags;
@@ -276,7 +300,8 @@ Q_DECLARE_FLAGS(
 
     int noteCounter = 0;
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes)) {
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto note = createNote(
                 false, noteCounter,
@@ -300,7 +325,8 @@ Q_DECLARE_FLAGS(
     }
 
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes)) {
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto note = createNote(
                 true, noteCounter,
@@ -324,9 +350,9 @@ Q_DECLARE_FLAGS(
     }
 
     int savedSearchCounter = 0;
-    if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::
-                WithUnmodifiedSavedSearches)) {
+    if (options.testFlag(FullSyncStaleDataExpungerTestDataOption::
+                             WithUnmodifiedSavedSearches))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto savedSearch = createSavedSearch(false, savedSearchCounter);
             Q_ASSERT(savedSearch.guid());
@@ -339,8 +365,8 @@ Q_DECLARE_FLAGS(
     }
 
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::
-                WithModifiedSavedSearches)) {
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches))
+    {
         for (int i = 0; i < itemCount; ++i) {
             auto savedSearch = createSavedSearch(true, savedSearchCounter);
             Q_ASSERT(savedSearch.guid());
@@ -362,6 +388,43 @@ class FullSyncStaleDataExpungerDataTest :
 
 const std::array gFullSyncStaleDataExpungerTestData{
     FullSyncStaleDataExpungerTestData{},
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::
+                WithUnmodifiedSavedSearches}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -376,6 +439,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             m_mockLocalStorage, m_manualCanceler);
 
     const auto & testData = GetParam();
+
+    // === List expectations ===
 
     const local_storage::ILocalStorage::ListGuidsFilters modifiedFilters{
         local_storage::ILocalStorage::ListObjectsFilter::Include, // modified
@@ -524,35 +589,75 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             });
     }
 
+    // === Expunge expectations ===
+
     QSet<qevercloud::Guid> expungedNotebookGuids;
-    EXPECT_CALL(*m_mockLocalStorage, expungeNotebookByGuid).WillRepeatedly(
-        [&](const qevercloud::Guid & notebookGuid) {
+    EXPECT_CALL(*m_mockLocalStorage, expungeNotebookByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & notebookGuid) {
             expungedNotebookGuids.insert(notebookGuid);
             return threading::makeReadyFuture();
         });
 
     QSet<qevercloud::Guid> expungedTagGuids;
-    EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid).WillRepeatedly(
-        [&](const qevercloud::Guid & tagGuid) {
+    EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & tagGuid) {
             expungedTagGuids.insert(tagGuid);
             return threading::makeReadyFuture();
         });
 
     QSet<qevercloud::Guid> expungedNoteGuids;
-    EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid).WillRepeatedly(
-        [&](const qevercloud::Guid & noteGuid) {
+    EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & noteGuid) {
             expungedNoteGuids.insert(noteGuid);
             return threading::makeReadyFuture();
         });
 
     QSet<qevercloud::Guid> expungedSavedSearchGuids;
-    EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid).WillRepeatedly(
-        [&](const qevercloud::Guid & savedSearchGuid) {
+    EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & savedSearchGuid) {
             expungedSavedSearchGuids.insert(savedSearchGuid);
             return threading::makeReadyFuture();
         });
 
-    // TODO: fill in other expectations
+    // === Put expectations ===
+
+    QHash<QString, qevercloud::Notebook> putNotebooksByName;
+    EXPECT_CALL(*m_mockLocalStorage, putNotebook)
+        .WillRepeatedly([&](qevercloud::Notebook notebook) {
+            Q_ASSERT(notebook.name());
+            const auto notebookName = *notebook.name();
+            putNotebooksByName[notebookName] = std::move(notebook);
+            return threading::makeReadyFuture();
+        });
+
+    QHash<QString, qevercloud::Note> putNotesByTitle;
+    EXPECT_CALL(*m_mockLocalStorage, putNote)
+        .WillRepeatedly([&](qevercloud::Note note) {
+            Q_ASSERT(note.title());
+            const auto noteTitle = *note.title();
+            putNotesByTitle[noteTitle] = std::move(note);
+            return threading::makeReadyFuture();
+        });
+
+    QHash<QString, qevercloud::Tag> putTagsByName;
+    EXPECT_CALL(*m_mockLocalStorage, putTag)
+        .WillRepeatedly([&](qevercloud::Tag tag) {
+            Q_ASSERT(tag.name());
+            const auto tagName = *tag.name();
+            putTagsByName[tagName] = std::move(tag);
+            return threading::makeReadyFuture();
+        });
+
+    QHash<QString, qevercloud::SavedSearch> putSavedSearchesByName;
+    EXPECT_CALL(*m_mockLocalStorage, putSavedSearch)
+        .WillRepeatedly([&](qevercloud::SavedSearch savedSearch) {
+            Q_ASSERT(savedSearch.name());
+            const auto savedSearchName = *savedSearch.name();
+            putSavedSearchesByName[savedSearchName] = std::move(savedSearch);
+            return threading::makeReadyFuture();
+        });
+
+    // === Expunge stale data and check results ===
 
     auto future = fullSyncStaleDataExpunger->expungeStaleData(
         IFullSyncStaleDataExpunger::PreservedGuids{
@@ -562,11 +667,14 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
-    const QSet<qevercloud::Guid> expectedExpungedNotebookGuids = [&]{
+    // === Check expunge expectations ===
+
+    const QSet<qevercloud::Guid> expectedExpungedNotebookGuids = [&] {
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_unmodifiedNotebooks))) {
+             qevercloud::toRange(qAsConst(testData.m_unmodifiedNotebooks)))
+        {
             const auto & guid = it.key();
             if (!testData.m_preservedNotebookGuids.contains(guid)) {
                 guids.insert(guid);
@@ -586,7 +694,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
 
     EXPECT_EQ(expungedNotebookGuids, expectedExpungedNotebookGuids);
 
-    const QSet<qevercloud::Guid> expectedExpungedNoteGuids = [&]{
+    const QSet<qevercloud::Guid> expectedExpungedNoteGuids = [&] {
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
@@ -610,7 +718,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
 
     EXPECT_EQ(expungedNoteGuids, expectedExpungedNoteGuids);
 
-    const QSet<qevercloud::Guid> expectedExpungedTagGuids = [&]{
+    const QSet<qevercloud::Guid> expectedExpungedTagGuids = [&] {
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
@@ -634,7 +742,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
 
     EXPECT_EQ(expungedTagGuids, expectedExpungedTagGuids);
 
-    const QSet<qevercloud::Guid> expectedExpungedSavedSearchGuids = [&]{
+    const QSet<qevercloud::Guid> expectedExpungedSavedSearchGuids = [&] {
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
@@ -659,6 +767,167 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
     }();
 
     EXPECT_EQ(expungedSavedSearchGuids, expectedExpungedSavedSearchGuids);
+
+    // === Check put expectations ===
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(testData.m_modifiedNotebooks))) {
+        auto originalNotebook = it.value();
+        ASSERT_TRUE(originalNotebook.name());
+
+        const auto pit = putNotebooksByName.constFind(*originalNotebook.name());
+        if (testData.m_preservedNotebookGuids.contains(
+                originalNotebook.guid().value())) {
+            EXPECT_EQ(pit, putNotebooksByName.constEnd());
+            continue;
+        }
+
+        ASSERT_NE(pit, putNotebooksByName.constEnd());
+
+        const auto & putNotebook = pit.value();
+        EXPECT_NE(putNotebook.localId(), originalNotebook.localId());
+
+        originalNotebook.setLocalId(putNotebook.localId());
+        originalNotebook.setGuid(std::nullopt);
+        originalNotebook.setUpdateSequenceNum(std::nullopt);
+        originalNotebook.setRestrictions(std::nullopt);
+        originalNotebook.setContact(std::nullopt);
+        originalNotebook.setPublished(std::nullopt);
+        originalNotebook.setPublishing(std::nullopt);
+        originalNotebook.setDefaultNotebook(std::nullopt);
+        originalNotebook.setLocallyModified(true);
+
+        EXPECT_EQ(putNotebook, originalNotebook);
+    }
+
+    for (const auto it: qevercloud::toRange(qAsConst(testData.m_modifiedNotes)))
+    {
+        auto originalNote = it.value();
+        ASSERT_TRUE(originalNote.title());
+
+        const auto pit = putNotesByTitle.constFind(*originalNote.title());
+        if (testData.m_preservedNoteGuids.contains(originalNote.guid().value()))
+        {
+            EXPECT_EQ(pit, putNotesByTitle.constEnd());
+            continue;
+        }
+
+        ASSERT_NE(pit, putNotesByTitle.constEnd());
+
+        const auto & putNote = pit.value();
+        EXPECT_NE(putNote.localId(), originalNote.localId());
+
+        const auto originalNotebookGuid = originalNote.notebookGuid().value();
+        const auto originalTagGuids = originalNote.tagGuids().value();
+
+        originalNote.setLocalId(putNote.localId());
+        originalNote.setGuid(std::nullopt);
+        originalNote.setUpdateSequenceNum(std::nullopt);
+        originalNote.setNotebookGuid(std::nullopt);
+        originalNote.setNotebookLocalId(putNote.notebookLocalId());
+        originalNote.setLocallyModified(true);
+
+        if (originalNote.resources()) {
+            ASSERT_TRUE(putNote.resources());
+            ASSERT_EQ(
+                putNote.resources()->size(), originalNote.resources()->size());
+
+            for (int i = 0, size = putNote.resources()->size(); i < size; ++i) {
+                const auto & src = (*putNote.resources())[i];
+                auto & dst = (*originalNote.mutableResources())[i];
+                dst.setLocalId(src.localId());
+                dst.setNoteLocalId(src.noteLocalId());
+                dst.setNoteGuid(std::nullopt);
+                dst.setGuid(std::nullopt);
+                dst.setUpdateSequenceNum(std::nullopt);
+                dst.setLocallyModified(true);
+            }
+        }
+
+        originalNote.setTagGuids(std::nullopt);
+        originalNote.setTagLocalIds(putNote.tagLocalIds());
+
+        EXPECT_EQ(putNote, originalNote);
+
+        if (const auto nit =
+                testData.m_modifiedNotebooks.constFind(originalNotebookGuid);
+            nit != testData.m_modifiedNotebooks.constEnd())
+        {
+            const auto & originalNotebook = nit.value();
+            ASSERT_TRUE(originalNotebook.name());
+            const auto pit =
+                putNotebooksByName.constFind(*originalNotebook.name());
+            ASSERT_NE(pit, putNotebooksByName.constEnd());
+            EXPECT_EQ(putNote.notebookLocalId(), pit.value().localId());
+        }
+
+        for (const auto & tagGuid: qAsConst(originalTagGuids)) {
+            if (const auto nit = testData.m_modifiedTags.constFind(tagGuid);
+                nit != testData.m_modifiedTags.constEnd())
+            {
+                const auto & originalTag = nit.value();
+                ASSERT_TRUE(originalTag.name());
+                const auto pit = putTagsByName.constFind(*originalTag.name());
+                ASSERT_NE(pit, putTagsByName.constEnd());
+                EXPECT_TRUE(
+                    putNote.tagLocalIds().contains(pit.value().localId()));
+            }
+        }
+    }
+
+    for (const auto it: qevercloud::toRange(qAsConst(testData.m_modifiedTags)))
+    {
+        auto originalTag = it.value();
+        ASSERT_TRUE(originalTag.name());
+
+        const auto pit = putTagsByName.constFind(*originalTag.name());
+        if (testData.m_preservedTagGuids.contains(originalTag.guid().value())) {
+            EXPECT_EQ(pit, putTagsByName.constEnd());
+            continue;
+        }
+
+        ASSERT_NE(pit, putTagsByName.constEnd());
+
+        const auto & putTag = pit.value();
+        EXPECT_NE(putTag.localId(), originalTag.localId());
+
+        originalTag.setLocalId(putTag.localId());
+        originalTag.setGuid(std::nullopt);
+        originalTag.setUpdateSequenceNum(std::nullopt);
+        originalTag.setParentGuid(std::nullopt);
+        originalTag.setParentTagLocalId(QString{});
+        originalTag.setLocallyModified(true);
+
+        EXPECT_EQ(putTag, originalTag);
+    }
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(testData.m_modifiedSavedSearches)))
+    {
+        auto originalSavedSearch = it.value();
+        ASSERT_TRUE(originalSavedSearch.name());
+
+        const auto pit =
+            putSavedSearchesByName.constFind(*originalSavedSearch.name());
+        if (testData.m_preservedSavedSearchGuids.contains(
+                originalSavedSearch.guid().value()))
+        {
+            EXPECT_EQ(pit, putSavedSearchesByName.constEnd());
+            continue;
+        }
+
+        ASSERT_NE(pit, putSavedSearchesByName.constEnd());
+
+        const auto & putSavedSearch = pit.value();
+        EXPECT_NE(putSavedSearch.localId(), originalSavedSearch.localId());
+
+        originalSavedSearch.setLocalId(putSavedSearch.localId());
+        originalSavedSearch.setGuid(std::nullopt);
+        originalSavedSearch.setUpdateSequenceNum(std::nullopt);
+        originalSavedSearch.setLocallyModified(true);
+
+        EXPECT_EQ(putSavedSearch, originalSavedSearch);
+    }
 }
 
 } // namespace quentier::synchronization::tests
