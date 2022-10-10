@@ -687,6 +687,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
                 note->setGuid(std::nullopt);
                 note->setUpdateSequenceNum(std::nullopt);
                 note->setLocalId(UidGenerator::Generate());
+                note->setLocallyModified(true);
 
                 if (const auto it =
                         newNotebooksMap->constFind(*note->notebookGuid());
