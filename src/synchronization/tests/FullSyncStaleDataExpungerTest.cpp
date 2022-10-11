@@ -213,6 +213,8 @@ Q_DECLARE_FLAGS(
              ? std::make_optional(UidGenerator::Generate())
              : std::optional<qevercloud::Guid>{});
 
+    result.m_linkedNotebookGuid = linkedNotebookGuid;
+
     int notebookCounter = 0;
     if (options.testFlag(
             FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks))
@@ -425,6 +427,94 @@ const std::array gFullSyncStaleDataExpungerTestData{
         FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
         FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
         FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedTags}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::
+                WithModifiedSavedSearches}),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::
+                WithUnmodifiedSavedSearches} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -619,6 +709,61 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             return threading::makeReadyFuture();
         });
 
+    // === Find expectations ===
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const auto it = testData.m_modifiedNotebooks.constFind(guid);
+            if (it == testData.m_modifiedNotebooks.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Notebook>>(std::nullopt);
+            }
+            return threading::makeReadyFuture<
+                std::optional<qevercloud::Notebook>>(it.value());
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, findTagByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const auto it = testData.m_modifiedTags.constFind(guid);
+            if (it == testData.m_modifiedTags.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Tag>>(std::nullopt);
+            }
+            return threading::makeReadyFuture<std::optional<qevercloud::Tag>>(
+                it.value());
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid,
+                            const local_storage::ILocalStorage::FetchNoteOptions
+                                fetchNoteOptions) {
+            EXPECT_EQ(
+                fetchNoteOptions,
+                local_storage::ILocalStorage::FetchNoteOptions{} |
+                    local_storage::ILocalStorage::FetchNoteOption::
+                        WithResourceMetadata |
+                    local_storage::ILocalStorage::FetchNoteOption::
+                        WithResourceBinaryData);
+            const auto it = testData.m_modifiedNotes.constFind(guid);
+            if (it == testData.m_modifiedNotes.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Note>>(std::nullopt);
+            }
+            return threading::makeReadyFuture<std::optional<qevercloud::Note>>(
+                it.value());
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const auto it = testData.m_modifiedSavedSearches.constFind(guid);
+            if (it == testData.m_modifiedSavedSearches.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::SavedSearch>>(std::nullopt);
+            }
+            return threading::makeReadyFuture<
+                std::optional<qevercloud::SavedSearch>>(it.value());
+        });
+
     // === Put expectations ===
 
     QHash<QString, qevercloud::Notebook> putNotebooksByName;
@@ -663,7 +808,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         IFullSyncStaleDataExpunger::PreservedGuids{
             testData.m_preservedNotebookGuids, testData.m_preservedTagGuids,
             testData.m_preservedNoteGuids,
-            testData.m_preservedSavedSearchGuids});
+            testData.m_preservedSavedSearchGuids},
+        testData.m_linkedNotebookGuid);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
