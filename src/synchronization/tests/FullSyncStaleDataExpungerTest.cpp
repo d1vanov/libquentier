@@ -380,6 +380,140 @@ Q_DECLARE_FLAGS(
         }
     }
 
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids))
+    {
+        int counter = 0;
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_unmodifiedNotebooks))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedNotebookGuids.insert(it.key());
+        }
+
+        counter = 0;
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_modifiedNotebooks))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedNotebookGuids.insert(it.key());
+        }
+
+        if (result.m_preservedNotebookGuids.isEmpty()) {
+            // Just add some random guids then to make sure nothing bad would
+            // happen with them present
+            for (int i = 0; i < itemCount; ++i) {
+                result.m_preservedNotebookGuids.insert(
+                    UidGenerator::Generate());
+            }
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids)) {
+        int counter = 0;
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedTagGuids.insert(it.key());
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_modifiedTags))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedTagGuids.insert(it.key());
+        }
+
+        if (result.m_preservedTagGuids.isEmpty()) {
+            // Just add some random guids then to make sure nothing bad would
+            // happen with them present
+            for (int i = 0; i < itemCount; ++i) {
+                result.m_preservedTagGuids.insert(
+                    UidGenerator::Generate());
+            }
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids)) {
+        int counter = 0;
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_unmodifiedNotes))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedNoteGuids.insert(it.key());
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_modifiedNotes))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedNoteGuids.insert(it.key());
+        }
+
+        if (result.m_preservedNoteGuids.isEmpty()) {
+            // Just add some random guids then to make sure nothing bad would
+            // happen with them present
+            for (int i = 0; i < itemCount; ++i) {
+                result.m_preservedNoteGuids.insert(
+                    UidGenerator::Generate());
+            }
+        }
+    }
+
+    if (options.testFlag(
+            FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids)) {
+        int counter = 0;
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_unmodifiedSavedSearches))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedSavedSearchGuids.insert(it.key());
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.m_modifiedSavedSearches))) {
+            ++counter;
+            if (counter % 2 == 0) {
+                continue;
+            }
+
+            result.m_preservedSavedSearchGuids.insert(it.key());
+        }
+
+        if (result.m_preservedSavedSearchGuids.isEmpty()) {
+            // Just add some random guids then to make sure nothing bad would
+            // happen with them present
+            for (int i = 0; i < itemCount; ++i) {
+                result.m_preservedSavedSearchGuids.insert(
+                    UidGenerator::Generate());
+            }
+        }
+    }
+
     return result;
 }
 
@@ -514,6 +648,102 @@ const std::array gFullSyncStaleDataExpungerTestData{
         FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
         FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
         FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches} |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
+    createFullSyncStaleDataExpungerTestData(
+        FullSyncStaleDataExpungerTestDataOptions{
+            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotebooks} |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotebooks |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedNotes |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids |
+        FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithModifiedTags |
+        FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids |
         FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
 };
 
