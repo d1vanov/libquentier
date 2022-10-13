@@ -29,9 +29,9 @@ namespace quentier::synchronization {
 
 /**
  * @brief The IFullSyncStaleDataExpunger interface is meant to ensure there
- * would be no stale left within the local storage after the full sync if the
- * full sync is being performed for an account which has already performed full
- * sync in the past i.e. which local storage is not empty but filled with
+ * would be no stale data left within the local storage after the full sync if
+ * the full sync is being performed for an account which has already performed
+ * full sync in the past i.e. which local storage is not empty but filled with
  * something.
  *
  * From time to time the Evernote synchronization protocol (EDAM) might require
@@ -44,19 +44,18 @@ namespace quentier::synchronization {
  *
  * When the client performs full sync for the first time, there is no need for
  * the client to expunge anything: it starts with empty local storage and only
- * fills in the data received from the service into it. However, when full sync
- * is done after the local storage has been filled with something, the client
- * needs to understand which data items are now stale within its local storage
- * (i.e. were expunged from the service at some point) and thus need to be
- * expunged from the client's local storage. These are all data items which have
- * guids which were not referenced during the last full sync.
+ * puts the data received from the service into it. However, when full sync
+ * is done after the local storage had already been filled with something, the
+ * client needs to understand which data items are now stale within its local
+ * storage (i.e. were expunged from the service at some point) and thus need to
+ * be expunged from the client's local storage. These are all data items which
+ * have guids which were not referenced during the last full sync.
  *
  * However, for the sake of preserving the modified but not yet synchronized
  * data, the matching data items which are marked as locally modified need not
- * be expunged from the local storage: instead their Evernote specific fields
- * such as guid and update sequence number are cleared out so that they are
- * presented as new data to the service. That happens during sending the local
- * changes to Evernote service.
+ * be expunged from the local storage: instead these items are recreated in the
+ * local storage as local ones which have not yet been synchronized with
+ * Evernote.
  */
 class IFullSyncStaleDataExpunger
 {
