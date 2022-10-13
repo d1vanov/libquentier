@@ -67,6 +67,7 @@ public:
         IResourcesProcessorPtr resourcesProcessor,
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
+        IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
         qevercloud::IRequestContextPtr ctx,
         qevercloud::INoteStorePtr noteStore,
         local_storage::ILocalStoragePtr localStorage,
@@ -126,6 +127,7 @@ private:
     const IResourcesProcessorPtr m_resourcesProcessor;
     const ISavedSearchesProcessorPtr m_savedSearchesProcessor;
     const ITagsProcessorPtr m_tagsProcessor;
+    const IFullSyncStaleDataExpungerPtr m_fullSyncStaleDataExpunger;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::INoteStorePtr m_noteStore;
     const local_storage::ILocalStoragePtr m_localStorage;

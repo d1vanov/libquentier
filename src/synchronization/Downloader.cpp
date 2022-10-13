@@ -29,6 +29,7 @@
 
 #include <synchronization/IAccountLimitsProvider.h>
 #include <synchronization/IAuthenticationInfoProvider.h>
+#include <synchronization/IFullSyncStaleDataExpunger.h>
 #include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/SyncChunksDataCounters.h>
@@ -52,7 +53,9 @@ Downloader::Downloader(
     INotesProcessorPtr notesProcessor,
     IResourcesProcessorPtr resourcesProcessor,
     ISavedSearchesProcessorPtr savedSearchesProcessor,
-    ITagsProcessorPtr tagsProcessor, qevercloud::IRequestContextPtr ctx,
+    ITagsProcessorPtr tagsProcessor,
+    IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
+    qevercloud::IRequestContextPtr ctx,
     qevercloud::INoteStorePtr noteStore,
     local_storage::ILocalStoragePtr localStorage,
     utility::cancelers::ICancelerPtr canceler,
@@ -72,9 +75,10 @@ Downloader::Downloader(
     m_notesProcessor{std::move(notesProcessor)},
     m_resourcesProcessor{std::move(resourcesProcessor)},
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
-    m_tagsProcessor{std::move(tagsProcessor)}, m_ctx{std::move(ctx)},
-    m_noteStore{std::move(noteStore)}, m_localStorage{std::move(localStorage)},
-    m_canceler{std::move(canceler)},
+    m_tagsProcessor{std::move(tagsProcessor)},
+    m_fullSyncStaleDataExpunger{std::move(fullSyncStaleDataExpunger)},
+    m_ctx{std::move(ctx)}, m_noteStore{std::move(noteStore)},
+    m_localStorage{std::move(localStorage)}, m_canceler{std::move(canceler)},
     m_syncPersistentStorageDir{syncPersistentStorageDir}
     // clang-format on
 {
@@ -166,6 +170,12 @@ Downloader::Downloader(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
             "Downloader ctor: tags processor is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_fullSyncStaleDataExpunger)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: full sync stale data expunger is null")}};
     }
 
     if (Q_UNLIKELY(!m_ctx)) {
