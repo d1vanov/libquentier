@@ -16,6 +16,7 @@ target_sources(${MOCKS_NAME}
     MockIAuthenticationInfoProvider.h
     MockIDurableNotesProcessor.h
     MockIDurableResourcesProcessor.h
+    MockIFullSyncStaleDataExpunger.h
     MockILinkedNotebooksProcessor.h
     MockINotebooksProcessor.h
     MockINoteFullDataDownloader.h

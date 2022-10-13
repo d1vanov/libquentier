@@ -5,6 +5,7 @@
 #include "MockIAuthenticationInfoProvider.h"
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
+#include "MockIFullSyncStaleDataExpunger.h"
 #include "MockILinkedNotebooksProcessor.h"
 #include "MockINotebooksProcessor.h"
 #include "MockINoteFullDataDownloader.h"
