@@ -30,13 +30,15 @@ public:
     MOCK_METHOD(
         QFuture<SyncChunksResult>, downloadSyncChunks,
         (qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
-         utility::cancelers::ICancelerPtr canceler), (override));
+         utility::cancelers::ICancelerPtr canceler,
+         ICallbackWeakPtr callbackWeak), (override));
 
     MOCK_METHOD(
         QFuture<SyncChunksResult>, downloadLinkedNotebookSyncChunks,
         (qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
          qevercloud::IRequestContextPtr ctx,
-         utility::cancelers::ICancelerPtr canceler),
+         utility::cancelers::ICancelerPtr canceler,
+         ICallbackWeakPtr callbackWeak),
         (override));
 };
 

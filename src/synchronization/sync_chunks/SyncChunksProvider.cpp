@@ -244,7 +244,7 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler) {
             return m_syncChunksDownloader->downloadSyncChunks(
-                afterUsn, std::move(ctx), std::move(canceler));
+                afterUsn, std::move(ctx), std::move(canceler), {});
         },
         [this](qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantUserOwnSyncChunks(
@@ -282,7 +282,7 @@ QFuture<QList<qevercloud::SyncChunk>>
             utility::cancelers::ICancelerPtr canceler) mutable {
             return m_syncChunksDownloader->downloadLinkedNotebookSyncChunks(
                 std::move(linkedNotebook), afterUsn, std::move(ctx),
-                std::move(canceler));
+                std::move(canceler), {});
         },
         [this, linkedNotebookGuid = *linkedNotebookGuid](qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantLinkedNotebookSyncChunks(

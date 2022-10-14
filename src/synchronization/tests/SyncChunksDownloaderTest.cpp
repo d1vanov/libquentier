@@ -34,6 +34,7 @@
 
 #include <QCoreApplication>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <array>
@@ -148,15 +149,28 @@ const auto sampleIncrementalSyncSyncChunkFilter =
 
 using testing::InSequence;
 using testing::Return;
+using testing::StrictMock;
+
+struct MockICallback : public ISyncChunksDownloader::ICallback
+{
+    MOCK_METHOD(
+        void, onSyncChunksDownloadProgress,
+        (qint32 highestDownloadedUsn, qint32 highestServerUsn,
+         qint32 lastPreviousUsn),
+        (override));
+};
 
 class SyncChunksDownloaderTest : public ::testing::Test
 {
 protected:
     std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
-        std::make_shared<mocks::qevercloud::MockINoteStore>();
+        std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
     utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
+
+    std::shared_ptr<MockICallback> m_mockCallback =
+        std::make_shared<StrictMock<MockICallback>>();
 };
 
 TEST_F(SyncChunksDownloaderTest, Ctor)
@@ -257,10 +271,20 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
-    const auto syncChunksFuture =
-        downloader.downloadSyncChunks(afterUsnInitial, ctx, m_manualCanceler);
+    const auto syncChunksFuture = downloader.downloadSyncChunks(
+        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
@@ -368,10 +392,20 @@ TEST_P(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
@@ -442,10 +476,20 @@ TEST_F(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler);
+        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -516,10 +560,20 @@ TEST_F(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler);
+        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -596,10 +650,20 @@ TEST_F(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler);
+        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_FALSE(syncChunksFuture.isFinished());
 
@@ -676,10 +740,20 @@ TEST_F(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -760,10 +834,20 @@ TEST_F(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -850,10 +934,20 @@ TEST_F(
 
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
+
+        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial](
+                                qint32 highestDownloadedUsn,
+                                qint32 highestServerUsn,
+                                qint32 lastPreviousUsn) {
+                EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
+                EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
+                EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+            });
     }
 
     auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
     ASSERT_FALSE(syncChunksFuture.isFinished());
 

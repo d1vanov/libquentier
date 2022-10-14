@@ -44,15 +44,29 @@ public:
         std::shared_ptr<QException> m_exception;
     };
 
+    class ICallback
+    {
+    public:
+        virtual ~ICallback() = default;
+
+        virtual void onSyncChunksDownloadProgress(
+            qint32 highestDownloadedUsn, qint32 highestServerUsn,
+            qint32 lastPreviousUsn) = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<SyncChunksResult> downloadSyncChunks(
         qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler) = 0;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak) = 0;
 
     [[nodiscard]] virtual QFuture<SyncChunksResult>
         downloadLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
             qevercloud::IRequestContextPtr ctx,
-            utility::cancelers::ICancelerPtr canceler) = 0;
+            utility::cancelers::ICancelerPtr canceler,
+            ICallbackWeakPtr callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization

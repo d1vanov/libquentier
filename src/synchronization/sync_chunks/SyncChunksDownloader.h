@@ -35,12 +35,14 @@ public:
 
     [[nodiscard]] QFuture<SyncChunksResult> downloadSyncChunks(
         qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler) override;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak) override;
 
     [[nodiscard]] QFuture<SyncChunksResult> downloadLinkedNotebookSyncChunks(
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
         qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler) override;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak) override;
 
 private:
     const SynchronizationMode m_synchronizationMode;
