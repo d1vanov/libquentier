@@ -110,6 +110,12 @@ private:
         qevercloud::ServiceLevel serviceLevel,
         qevercloud::IRequestContextPtr ctx);
 
+    void processUserOwnSyncChunks(
+        QList<qevercloud::SyncChunk> syncChunks,
+        std::shared_ptr<QPromise<Result>> promise,
+        qevercloud::IRequestContextPtr ctx, ICallbackWeakPtr callbackWeak,
+        SyncMode syncMode);
+
     void cancel(QPromise<Result> & promise);
 
 private:
