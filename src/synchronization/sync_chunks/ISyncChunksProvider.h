@@ -34,15 +34,39 @@ class ISyncChunksProvider
 public:
     virtual ~ISyncChunksProvider() = default;
 
+    class ICallback
+    {
+    public:
+        virtual ~ICallback() = default;
+
+        virtual void onUserOwnSyncChunksDownloadProgress(
+            qint32 highestDownloadedUsn, qint32 highestServerUsn,
+            qint32 lastPreviousUsn) = 0;
+
+        virtual void onUserOwnSyncChunksDownloaded() = 0;
+
+        virtual void onLinkedNotebookSyncChunksDownloadProgress(
+            qint32 highestDownloadedUsn, qint32 highestServerUsn,
+            qint32 lastPreviousUsn,
+            qevercloud::LinkedNotebook linkedNotebook) = 0;
+
+        virtual void onLinkedNotebookSyncChunksDownloaded(
+            qevercloud::LinkedNotebook linkedNotebook) = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunks(
         qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler) = 0;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak) = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>>
         fetchLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
             qevercloud::IRequestContextPtr ctx,
-            utility::cancelers::ICancelerPtr canceler) = 0;
+            utility::cancelers::ICancelerPtr canceler,
+            ICallbackWeakPtr callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization

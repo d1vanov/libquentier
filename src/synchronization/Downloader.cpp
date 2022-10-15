@@ -439,7 +439,7 @@ void Downloader::launchUserOwnDataDownload(
                                     : m_lastSyncState->m_userDataUpdateCount);
 
     auto syncChunksFuture =
-        m_syncChunksProvider->fetchSyncChunks(afterUsn, ctx, m_canceler);
+        m_syncChunksProvider->fetchSyncChunks(afterUsn, ctx, m_canceler, {});
 
     auto selfWeak = weak_from_this();
 

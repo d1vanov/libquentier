@@ -30,6 +30,7 @@
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -43,6 +44,27 @@ using testing::InSequence;
 using testing::Return;
 using testing::StrictMock;
 
+struct MockICallback : public ISyncChunksProvider::ICallback
+{
+    MOCK_METHOD(
+        void, onUserOwnSyncChunksDownloadProgress,
+        (qint32 highestDownloadedUsn, qint32 highestServerUsn,
+         qint32 lastPreviousUsn),
+        (override));
+
+    MOCK_METHOD(void, onUserOwnSyncChunksDownloaded, (), (override));
+
+    MOCK_METHOD(
+        void, onLinkedNotebookSyncChunksDownloadProgress,
+        (qint32 highestDownloadedUsn, qint32 highestServerUsn,
+         qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook),
+        (override));
+
+    MOCK_METHOD(
+        void, onLinkedNotebookSyncChunksDownloaded,
+        (qevercloud::LinkedNotebook linkedNotebook), (override));
+};
+
 class SyncChunksProviderTest : public testing::Test
 {
 protected:
@@ -55,6 +77,9 @@ protected:
 
     utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
+
+    std::shared_ptr<MockICallback> m_mockCallback =
+        std::make_shared<StrictMock<MockICallback>>();
 };
 
 TEST_F(SyncChunksProviderTest, Ctor)
@@ -149,7 +174,7 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                 {})));
 
     auto future = provider.fetchSyncChunks(
-        0, qevercloud::newRequestContext(), m_manualCanceler);
+        0, qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -227,26 +252,39 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
     fullSyncChunks << downloadedSyncChunks;
 
     EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(54, _, _, _))
-        .WillOnce([downloadedSyncChunks](
-                      qint32 afterUsn,
-                      qevercloud::IRequestContextPtr ctx,        // NOLINT
-                      utility::cancelers::ICancelerPtr canceler, // NOLINT
-                      ISyncChunksDownloader::ICallbackWeakPtr
-                          callbackWeak) mutable // NOLINT
-                  {
-                      Q_UNUSED(afterUsn)
-                      Q_UNUSED(ctx)
-                      Q_UNUSED(canceler)
-                      Q_UNUSED(callbackWeak)
+        .WillOnce(
+            [downloadedSyncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx,        // NOLINT
+                utility::cancelers::ICancelerPtr canceler, // NOLINT
+                ISyncChunksDownloader::ICallbackWeakPtr
+                    callbackWeak) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+                Q_UNUSED(canceler)
 
-                      return threading::makeReadyFuture<
-                          ISyncChunksDownloader::SyncChunksResult>(
-                          ISyncChunksDownloader::SyncChunksResult{
-                              std::move(downloadedSyncChunks), nullptr});
-                  });
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    callback->onUserOwnSyncChunksDownloadProgress(82, 82, 54);
+
+                    callback->onUserOwnSyncChunksDownloaded();
+                }
+
+                return threading::makeReadyFuture<
+                    ISyncChunksDownloader::SyncChunksResult>(
+                    ISyncChunksDownloader::SyncChunksResult{
+                        std::move(downloadedSyncChunks), nullptr});
+            });
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress(82, 82, 0))
+        .Times(1);
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloaded).Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, qevercloud::newRequestContext(), m_manualCanceler);
+        0, qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -313,12 +351,39 @@ TEST_F(
                .build();
 
     EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(0, _, _, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                ISyncChunksDownloader::SyncChunksResult{syncChunks, nullptr})));
+        .WillOnce(
+            [syncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx,        // NOLINT
+                utility::cancelers::ICancelerPtr canceler, // NOLINT
+                ISyncChunksDownloader::ICallbackWeakPtr
+                    callbackWeak) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+                Q_UNUSED(canceler)
+
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    callback->onUserOwnSyncChunksDownloadProgress(82, 82, 0);
+
+                    callback->onUserOwnSyncChunksDownloaded();
+                }
+
+                return threading::makeReadyFuture<
+                    ISyncChunksDownloader::SyncChunksResult>(
+                    ISyncChunksDownloader::SyncChunksResult{
+                        syncChunks, nullptr});
+            });
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress(82, 82, 0))
+        .Times(1);
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloaded).Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, qevercloud::newRequestContext(), m_manualCanceler);
+        0, qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -399,26 +464,39 @@ TEST_F(
     fullSyncChunks << downloadedSyncChunks;
 
     EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(54, _, _, _))
-        .WillOnce([downloadedSyncChunks](
-                      qint32 afterUsn,
-                      qevercloud::IRequestContextPtr ctx,        // NOLINT
-                      utility::cancelers::ICancelerPtr canceler, // NOLINT
-                      ISyncChunksDownloader::ICallbackWeakPtr
-                          callbackWeak) mutable // NOLINT
-                  {
-                      Q_UNUSED(afterUsn)
-                      Q_UNUSED(ctx)
-                      Q_UNUSED(canceler)
-                      Q_UNUSED(callbackWeak)
+        .WillOnce(
+            [downloadedSyncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx,        // NOLINT
+                utility::cancelers::ICancelerPtr canceler, // NOLINT
+                ISyncChunksDownloader::ICallbackWeakPtr
+                    callbackWeak) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+                Q_UNUSED(canceler)
 
-                      return threading::makeReadyFuture<
-                          ISyncChunksDownloader::SyncChunksResult>(
-                          ISyncChunksDownloader::SyncChunksResult{
-                              std::move(downloadedSyncChunks), nullptr});
-                  });
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    callback->onUserOwnSyncChunksDownloadProgress(82, 82, 54);
+
+                    callback->onUserOwnSyncChunksDownloaded();
+                }
+
+                return threading::makeReadyFuture<
+                    ISyncChunksDownloader::SyncChunksResult>(
+                    ISyncChunksDownloader::SyncChunksResult{
+                        std::move(downloadedSyncChunks), nullptr});
+            });
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress(82, 82, 0))
+        .Times(1);
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloaded).Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, qevercloud::newRequestContext(), m_manualCanceler);
+        0, qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -486,18 +564,40 @@ TEST_F(
                .build();
 
     EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(0, _, _, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                ISyncChunksDownloader::SyncChunksResult{
-                    syncChunks,
-                    std::make_shared<qevercloud::EverCloudException>(
-                        QStringLiteral("something"))})));
+        .WillOnce(
+            [syncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx,        // NOLINT
+                utility::cancelers::ICancelerPtr canceler, // NOLINT
+                ISyncChunksDownloader::ICallbackWeakPtr
+                    callbackWeak) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+                Q_UNUSED(canceler)
+
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    callback->onUserOwnSyncChunksDownloadProgress(82, 82, 0);
+                }
+
+                return threading::makeReadyFuture<
+                    ISyncChunksDownloader::SyncChunksResult>(
+                    ISyncChunksDownloader::SyncChunksResult{
+                        syncChunks,
+                        std::make_shared<qevercloud::EverCloudException>(
+                            QStringLiteral("something"))});
+            });
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress(82, 82, 0))
+        .Times(1);
 
     EXPECT_CALL(*m_mockSyncChunksStorage, putUserOwnSyncChunks(syncChunks))
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, qevercloud::newRequestContext(), m_manualCanceler);
+        0, qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
@@ -575,32 +675,41 @@ TEST_F(
     fullSyncChunks << downloadedSyncChunks;
 
     EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(54, _, _, _))
-        .WillOnce([downloadedSyncChunks](
-                      qint32 afterUsn,
-                      qevercloud::IRequestContextPtr ctx,        // NOLINT
-                      utility::cancelers::ICancelerPtr canceler, // NOLINT
-                      ISyncChunksDownloader::ICallbackWeakPtr
-                          callbackWeak) mutable // NOLINT
-                  {
-                      Q_UNUSED(afterUsn)
-                      Q_UNUSED(ctx)
-                      Q_UNUSED(canceler)
-                      Q_UNUSED(callbackWeak)
+        .WillOnce(
+            [downloadedSyncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx,        // NOLINT
+                utility::cancelers::ICancelerPtr canceler, // NOLINT
+                ISyncChunksDownloader::ICallbackWeakPtr
+                    callbackWeak) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+                Q_UNUSED(canceler)
 
-                      return threading::makeReadyFuture<
-                          ISyncChunksDownloader::SyncChunksResult>(
-                          ISyncChunksDownloader::SyncChunksResult{
-                              std::move(downloadedSyncChunks),
-                              std::make_shared<qevercloud::EverCloudException>(
-                                  QStringLiteral("something"))});
-                  });
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    callback->onUserOwnSyncChunksDownloadProgress(82, 82, 54);
+                }
+
+                return threading::makeReadyFuture<
+                    ISyncChunksDownloader::SyncChunksResult>(
+                    ISyncChunksDownloader::SyncChunksResult{
+                        std::move(downloadedSyncChunks),
+                        std::make_shared<qevercloud::EverCloudException>(
+                            QStringLiteral("something"))});
+            });
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress(82, 82, 0))
+        .Times(1);
 
     EXPECT_CALL(
         *m_mockSyncChunksStorage, putUserOwnSyncChunks(downloadedSyncChunks))
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, qevercloud::newRequestContext(), m_manualCanceler);
+        0, qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
@@ -688,7 +797,8 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                 {})));
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler);
+        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -789,7 +899,15 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                       Q_UNUSED(afterUsn)
                       Q_UNUSED(ctx)
                       Q_UNUSED(canceler)
-                      Q_UNUSED(callbackWeak)
+
+                      const auto callback = callbackWeak.lock();
+                      EXPECT_TRUE(callback);
+                      if (callback) {
+                          callback->onLinkedNotebookSyncChunksDownloadProgress(
+                              82, 82, 54, ln);
+
+                          callback->onLinkedNotebookSyncChunksDownloaded(ln);
+                      }
 
                       return threading::makeReadyFuture<
                           ISyncChunksDownloader::SyncChunksResult>(
@@ -797,8 +915,17 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                               std::move(downloadedSyncChunks), nullptr});
                   });
 
+    EXPECT_CALL(
+        *m_mockCallback,
+        onLinkedNotebookSyncChunksDownloadProgress(82, 82, 0, linkedNotebook))
+        .Times(1);
+
+    EXPECT_CALL(
+        *m_mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler);
+        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -875,12 +1002,45 @@ TEST_F(
     EXPECT_CALL(
         *m_mockSyncChunksDownloader,
         downloadLinkedNotebookSyncChunks(linkedNotebook, 0, _, _, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                ISyncChunksDownloader::SyncChunksResult{syncChunks, nullptr})));
+        .WillOnce([syncChunks, &linkedNotebook](
+                      qevercloud::LinkedNotebook ln, // NOLINT
+                      qint32 afterUsn,
+                      qevercloud::IRequestContextPtr ctx,        // NOLINT
+                      utility::cancelers::ICancelerPtr canceler, // NOLINT
+                      ISyncChunksDownloader::ICallbackWeakPtr
+                          callbackWeak) mutable // NOLINT
+                  {
+                      EXPECT_EQ(ln, linkedNotebook);
+                      Q_UNUSED(afterUsn)
+                      Q_UNUSED(ctx)
+                      Q_UNUSED(canceler)
+
+                      const auto callback = callbackWeak.lock();
+                      EXPECT_TRUE(callback);
+                      if (callback) {
+                          callback->onLinkedNotebookSyncChunksDownloadProgress(
+                              82, 82, 0, ln);
+
+                          callback->onLinkedNotebookSyncChunksDownloaded(ln);
+                      }
+
+                      return threading::makeReadyFuture<
+                          ISyncChunksDownloader::SyncChunksResult>(
+                          ISyncChunksDownloader::SyncChunksResult{
+                              syncChunks, nullptr});
+                  });
+
+    EXPECT_CALL(
+        *m_mockCallback,
+        onLinkedNotebookSyncChunksDownloadProgress(82, 82, 0, linkedNotebook))
+        .Times(1);
+
+    EXPECT_CALL(
+        *m_mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler);
+        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -984,7 +1144,15 @@ TEST_F(
                       Q_UNUSED(afterUsn)
                       Q_UNUSED(ctx)
                       Q_UNUSED(canceler)
-                      Q_UNUSED(callbackWeak)
+
+                      const auto callback = callbackWeak.lock();
+                      EXPECT_TRUE(callback);
+                      if (callback) {
+                          callback->onLinkedNotebookSyncChunksDownloadProgress(
+                              82, 82, 54, ln);
+
+                          callback->onLinkedNotebookSyncChunksDownloaded(ln);
+                      }
 
                       return threading::makeReadyFuture<
                           ISyncChunksDownloader::SyncChunksResult>(
@@ -992,8 +1160,17 @@ TEST_F(
                               std::move(downloadedSyncChunks), nullptr});
                   });
 
+    EXPECT_CALL(
+        *m_mockCallback,
+        onLinkedNotebookSyncChunksDownloadProgress(82, 82, 0, linkedNotebook))
+        .Times(1);
+
+    EXPECT_CALL(
+        *m_mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler);
+        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
@@ -1070,12 +1247,38 @@ TEST_F(
     EXPECT_CALL(
         *m_mockSyncChunksDownloader,
         downloadLinkedNotebookSyncChunks(linkedNotebook, 0, _, _, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                ISyncChunksDownloader::SyncChunksResult{
-                    syncChunks,
-                    std::make_shared<qevercloud::EverCloudException>(
-                        QStringLiteral("something"))})));
+        .WillOnce([syncChunks, &linkedNotebook](
+                      qevercloud::LinkedNotebook ln, // NOLINT
+                      qint32 afterUsn,
+                      qevercloud::IRequestContextPtr ctx,        // NOLINT
+                      utility::cancelers::ICancelerPtr canceler, // NOLINT
+                      ISyncChunksDownloader::ICallbackWeakPtr
+                          callbackWeak) mutable // NOLINT
+                  {
+                      EXPECT_EQ(ln, linkedNotebook);
+                      Q_UNUSED(afterUsn)
+                      Q_UNUSED(ctx)
+                      Q_UNUSED(canceler)
+
+                      const auto callback = callbackWeak.lock();
+                      EXPECT_TRUE(callback);
+                      if (callback) {
+                          callback->onLinkedNotebookSyncChunksDownloadProgress(
+                              82, 82, 0, ln);
+                      }
+
+                      return threading::makeReadyFuture<
+                          ISyncChunksDownloader::SyncChunksResult>(
+                          ISyncChunksDownloader::SyncChunksResult{
+                              syncChunks,
+                              std::make_shared<qevercloud::EverCloudException>(
+                                  QStringLiteral("something"))});
+                  });
+
+    EXPECT_CALL(
+        *m_mockCallback,
+        onLinkedNotebookSyncChunksDownloadProgress(82, 82, 0, linkedNotebook))
+        .Times(1);
 
     EXPECT_CALL(
         *m_mockSyncChunksStorage,
@@ -1083,7 +1286,8 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler);
+        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler,
+        m_mockCallback);
 
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
@@ -1184,7 +1388,13 @@ TEST_F(
                       Q_UNUSED(afterUsn)
                       Q_UNUSED(ctx)
                       Q_UNUSED(canceler)
-                      Q_UNUSED(callbackWeak)
+
+                      const auto callback = callbackWeak.lock();
+                      EXPECT_TRUE(callback);
+                      if (callback) {
+                          callback->onLinkedNotebookSyncChunksDownloadProgress(
+                              82, 82, 54, ln);
+                      }
 
                       return threading::makeReadyFuture<
                           ISyncChunksDownloader::SyncChunksResult>(
@@ -1195,12 +1405,18 @@ TEST_F(
                   });
 
     EXPECT_CALL(
+        *m_mockCallback,
+        onLinkedNotebookSyncChunksDownloadProgress(82, 82, 0, linkedNotebook))
+        .Times(1);
+
+    EXPECT_CALL(
         *m_mockSyncChunksStorage,
         putLinkedNotebookSyncChunks(linkedNotebookGuid, downloadedSyncChunks))
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler);
+        linkedNotebook, 0, qevercloud::newRequestContext(), m_manualCanceler,
+        m_mockCallback);
 
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }

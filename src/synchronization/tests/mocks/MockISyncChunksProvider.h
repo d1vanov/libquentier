@@ -30,13 +30,15 @@ public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::SyncChunk>>, fetchSyncChunks,
         (qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
-         utility::cancelers::ICancelerPtr canceler), (override));
+         utility::cancelers::ICancelerPtr canceler,
+         ICallbackWeakPtr callbackWeak), (override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::SyncChunk>>, fetchLinkedNotebookSyncChunks,
         (qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
          qevercloud::IRequestContextPtr ctx,
-         utility::cancelers::ICancelerPtr canceler), (override));
+         utility::cancelers::ICancelerPtr canceler,
+         ICallbackWeakPtr callbackWeak), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks
