@@ -23,8 +23,8 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
-#include <quentier/utility/cancelers/ManualCanceler.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
@@ -154,10 +154,22 @@ using testing::StrictMock;
 struct MockICallback : public ISyncChunksDownloader::ICallback
 {
     MOCK_METHOD(
-        void, onSyncChunksDownloadProgress,
+        void, onUserOwnSyncChunksDownloadProgress,
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
          qint32 lastPreviousUsn),
         (override));
+
+    MOCK_METHOD(void, onUserOwnSyncChunksDownloaded, (), (override));
+
+    MOCK_METHOD(
+        void, onLinkedNotebookSyncChunksDownloadProgress,
+        (qint32 highestDownloadedUsn, qint32 highestServerUsn,
+         qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook),
+        (override));
+
+    MOCK_METHOD(
+        void, onLinkedNotebookSyncChunksDownloaded,
+        (qevercloud::LinkedNotebook linkedNotebook), (override));
 };
 
 class SyncChunksDownloaderTest : public ::testing::Test
@@ -272,7 +284,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+        EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress)
             .WillRepeatedly([&syncChunk, afterUsnInitial](
                                 qint32 highestDownloadedUsn,
                                 qint32 highestServerUsn,
@@ -282,6 +294,8 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
                 EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
             });
     }
+
+    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloaded).Times(1);
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
         afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
@@ -393,16 +407,21 @@ TEST_P(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
-            .WillRepeatedly([&syncChunk, afterUsnInitial](
+        EXPECT_CALL(*m_mockCallback, onLinkedNotebookSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial, &linkedNotebook](
                                 qint32 highestDownloadedUsn,
-                                qint32 highestServerUsn,
-                                qint32 lastPreviousUsn) {
+                                qint32 highestServerUsn, qint32 lastPreviousUsn,
+                                qevercloud::LinkedNotebook ln) { // NOLINT
                 EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
                 EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
                 EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+                EXPECT_EQ(ln, linkedNotebook);
             });
     }
+
+    EXPECT_CALL(
+        *m_mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook))
+        .Times(1);
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
         linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
@@ -477,7 +496,7 @@ TEST_F(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+        EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress)
             .WillRepeatedly([&syncChunk, afterUsnInitial](
                                 qint32 highestDownloadedUsn,
                                 qint32 highestServerUsn,
@@ -561,7 +580,7 @@ TEST_F(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+        EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress)
             .WillRepeatedly([&syncChunk, afterUsnInitial](
                                 qint32 highestDownloadedUsn,
                                 qint32 highestServerUsn,
@@ -621,8 +640,7 @@ TEST_F(
     int i = 0;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
         ++i;
-        if (i == 3)
-        {
+        if (i == 3) {
             break;
         }
 
@@ -651,7 +669,7 @@ TEST_F(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
+        EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloadProgress)
             .WillRepeatedly([&syncChunk, afterUsnInitial](
                                 qint32 highestDownloadedUsn,
                                 qint32 highestServerUsn,
@@ -741,14 +759,15 @@ TEST_F(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
-            .WillRepeatedly([&syncChunk, afterUsnInitial](
+        EXPECT_CALL(*m_mockCallback, onLinkedNotebookSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial, &linkedNotebook](
                                 qint32 highestDownloadedUsn,
-                                qint32 highestServerUsn,
-                                qint32 lastPreviousUsn) {
+                                qint32 highestServerUsn, qint32 lastPreviousUsn,
+                                qevercloud::LinkedNotebook ln) { // NOLINT
                 EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
                 EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
                 EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+                EXPECT_EQ(ln, linkedNotebook);
             });
     }
 
@@ -835,14 +854,15 @@ TEST_F(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
-            .WillRepeatedly([&syncChunk, afterUsnInitial](
+        EXPECT_CALL(*m_mockCallback, onLinkedNotebookSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial, &linkedNotebook](
                                 qint32 highestDownloadedUsn,
-                                qint32 highestServerUsn,
-                                qint32 lastPreviousUsn) {
+                                qint32 highestServerUsn, qint32 lastPreviousUsn,
+                                qevercloud::LinkedNotebook ln) { // NOLINT
                 EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
                 EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
                 EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+                EXPECT_EQ(ln, linkedNotebook);
             });
     }
 
@@ -903,8 +923,7 @@ TEST_F(
     int i = 0;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
         ++i;
-        if (i == 3)
-        {
+        if (i == 3) {
             break;
         }
 
@@ -935,14 +954,15 @@ TEST_F(
         ASSERT_TRUE(syncChunk.chunkHighUSN());
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
 
-        EXPECT_CALL(*m_mockCallback, onSyncChunksDownloadProgress)
-            .WillRepeatedly([&syncChunk, afterUsnInitial](
+        EXPECT_CALL(*m_mockCallback, onLinkedNotebookSyncChunksDownloadProgress)
+            .WillRepeatedly([&syncChunk, afterUsnInitial, &linkedNotebook](
                                 qint32 highestDownloadedUsn,
-                                qint32 highestServerUsn,
-                                qint32 lastPreviousUsn) {
+                                qint32 highestServerUsn, qint32 lastPreviousUsn,
+                                qevercloud::LinkedNotebook ln) { // NOLINT
                 EXPECT_EQ(highestDownloadedUsn, *syncChunk.chunkHighUSN());
                 EXPECT_EQ(highestServerUsn, syncChunk.updateCount());
                 EXPECT_EQ(lastPreviousUsn, afterUsnInitial);
+                EXPECT_EQ(ln, linkedNotebook);
             });
     }
 

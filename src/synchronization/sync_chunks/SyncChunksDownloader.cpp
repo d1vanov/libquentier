@@ -129,17 +129,19 @@ void processSingleDownloadedSyncChunk(
     qevercloud::INoteStorePtr noteStore, qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler,
     ISyncChunksDownloader::ICallbackWeakPtr callbackWeak,
+    std::optional<qevercloud::LinkedNotebook> linkedNotebook,
     SingleSyncChunkDownloader singleSyncChunkDownloader,
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult,
     qevercloud::SyncChunk syncChunk);
 
 void downloadSyncChunksList(
-    const qint32 lastPreviousUsn, const qint32 afterUsn,
+    const qint32 lastPreviousUsn, const qint32 afterUsn, // NOLINT
     const SynchronizationMode synchronizationMode,
     qevercloud::INoteStorePtr noteStore, qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler,
     ISyncChunksDownloader::ICallbackWeakPtr callbackWeak,
+    std::optional<qevercloud::LinkedNotebook> linkedNotebook,
     SingleSyncChunkDownloader singleSyncChunkDownloader,
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult = {})
@@ -166,14 +168,16 @@ void downloadSyncChunksList(
         [synchronizationMode, promise, runningResult, lastPreviousUsn,
          ctx = std::move(ctx), canceler = std::move(canceler),
          callbackWeak = std::move(callbackWeak),
+         linkedNotebook = std::move(linkedNotebook),
          singleSyncChunkDownloader = std::move(singleSyncChunkDownloader),
          noteStore =
              std::move(noteStore)](qevercloud::SyncChunk syncChunk) mutable {
             processSingleDownloadedSyncChunk(
                 lastPreviousUsn, synchronizationMode, std::move(noteStore),
                 std::move(ctx), std::move(canceler), std::move(callbackWeak),
-                std::move(singleSyncChunkDownloader), std::move(promise),
-                std::move(runningResult), std::move(syncChunk));
+                std::move(linkedNotebook), std::move(singleSyncChunkDownloader),
+                std::move(promise), std::move(runningResult),
+                std::move(syncChunk));
         });
 
     threading::onFailed(
@@ -192,6 +196,7 @@ void processSingleDownloadedSyncChunk(
     qevercloud::INoteStorePtr noteStore, qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler,
     ISyncChunksDownloader::ICallbackWeakPtr callbackWeak,
+    std::optional<qevercloud::LinkedNotebook> linkedNotebook,
     SingleSyncChunkDownloader singleSyncChunkDownloader,
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult,
@@ -211,6 +216,16 @@ void processSingleDownloadedSyncChunk(
     runningResult << syncChunk;
 
     if (*syncChunk.chunkHighUSN() >= syncChunk.updateCount()) {
+        if (const auto callback = callbackWeak.lock()) {
+            if (linkedNotebook) {
+                callback->onLinkedNotebookSyncChunksDownloaded(
+                    std::move(*linkedNotebook));
+            }
+            else {
+                callback->onUserOwnSyncChunksDownloaded();
+            }
+        }
+
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult), nullptr});
 
@@ -219,16 +234,24 @@ void processSingleDownloadedSyncChunk(
     }
 
     if (const auto callback = callbackWeak.lock()) {
-        callback->onSyncChunksDownloadProgress(
-            *syncChunk.chunkHighUSN(), syncChunk.updateCount(),
-            lastPreviousUsn);
+        if (linkedNotebook) {
+            callback->onLinkedNotebookSyncChunksDownloadProgress(
+                *syncChunk.chunkHighUSN(), syncChunk.updateCount(),
+                lastPreviousUsn, *linkedNotebook);
+        }
+        else {
+            callback->onUserOwnSyncChunksDownloadProgress(
+                *syncChunk.chunkHighUSN(), syncChunk.updateCount(),
+                lastPreviousUsn);
+        }
     }
 
     downloadSyncChunksList(
         lastPreviousUsn, *syncChunk.chunkHighUSN(), synchronizationMode,
         std::move(noteStore), std::move(ctx), std::move(canceler),
-        std::move(callbackWeak), std::move(singleSyncChunkDownloader),
-        std::move(promise), std::move(runningResult));
+        std::move(callbackWeak), std::move(linkedNotebook),
+        std::move(singleSyncChunkDownloader), std::move(promise),
+        std::move(runningResult));
 }
 
 } // namespace
@@ -260,7 +283,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 
     downloadSyncChunksList(
         afterUsn, afterUsn, m_synchronizationMode, m_noteStore, std::move(ctx),
-        std::move(canceler), std::move(callbackWeak),
+        std::move(canceler), std::move(callbackWeak), std::nullopt,
         [](const qint32 afterUsn, const SynchronizationMode synchronizationMode,
            qevercloud::INoteStore & noteStore,
            qevercloud::IRequestContextPtr ctx) {
@@ -296,8 +319,8 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 
     downloadSyncChunksList(
         afterUsn, afterUsn, m_synchronizationMode, m_noteStore, std::move(ctx),
-        std::move(canceler), std::move(callbackWeak),
-        [linkedNotebook = std::move(linkedNotebook)](
+        std::move(canceler), std::move(callbackWeak), linkedNotebook,
+        [linkedNotebook](
             const qint32 afterUsn,
             const SynchronizationMode synchronizationMode,
             qevercloud::INoteStore & noteStore,
