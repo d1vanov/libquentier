@@ -216,16 +216,6 @@ void processSingleDownloadedSyncChunk(
     runningResult << syncChunk;
 
     if (*syncChunk.chunkHighUSN() >= syncChunk.updateCount()) {
-        if (const auto callback = callbackWeak.lock()) {
-            if (linkedNotebook) {
-                callback->onLinkedNotebookSyncChunksDownloaded(
-                    std::move(*linkedNotebook));
-            }
-            else {
-                callback->onUserOwnSyncChunksDownloaded();
-            }
-        }
-
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult), nullptr});
 

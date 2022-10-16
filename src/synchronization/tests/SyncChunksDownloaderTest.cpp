@@ -159,17 +159,11 @@ struct MockICallback : public ISyncChunksDownloader::ICallback
          qint32 lastPreviousUsn),
         (override));
 
-    MOCK_METHOD(void, onUserOwnSyncChunksDownloaded, (), (override));
-
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloadProgress,
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
          qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook),
         (override));
-
-    MOCK_METHOD(
-        void, onLinkedNotebookSyncChunksDownloaded,
-        (qevercloud::LinkedNotebook linkedNotebook), (override));
 };
 
 class SyncChunksDownloaderTest : public ::testing::Test
@@ -295,8 +289,6 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
             });
     }
 
-    EXPECT_CALL(*m_mockCallback, onUserOwnSyncChunksDownloaded).Times(1);
-
     const auto syncChunksFuture = downloader.downloadSyncChunks(
         afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
 
@@ -418,10 +410,6 @@ TEST_P(
                 EXPECT_EQ(ln, linkedNotebook);
             });
     }
-
-    EXPECT_CALL(
-        *m_mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook))
-        .Times(1);
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
         linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);

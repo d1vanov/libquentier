@@ -53,14 +53,9 @@ public:
             qint32 highestDownloadedUsn, qint32 highestServerUsn,
             qint32 lastPreviousUsn) = 0;
 
-        virtual void onUserOwnSyncChunksDownloaded() = 0;
-
         virtual void onLinkedNotebookSyncChunksDownloadProgress(
             qint32 highestDownloadedUsn, qint32 highestServerUsn,
             qint32 lastPreviousUsn,
-            qevercloud::LinkedNotebook linkedNotebook) = 0;
-
-        virtual void onLinkedNotebookSyncChunksDownloaded(
             qevercloud::LinkedNotebook linkedNotebook) = 0;
     };
 
