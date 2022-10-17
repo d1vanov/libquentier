@@ -40,6 +40,91 @@
 
 namespace quentier::synchronization {
 
+namespace {
+
+class SyncChunksProviderCallback final : public ISyncChunksProvider::ICallback
+{
+public:
+    explicit SyncChunksProviderCallback(
+        IDownloader::ICallbackWeakPtr callbackWeak) :
+        m_callbackWeak{std::move(callbackWeak)}
+    {}
+
+    // ISyncChunksProvider::ICallback
+    void onUserOwnSyncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onSyncChunksDownloadProgress(
+                highestDownloadedUsn, highestServerUsn, lastPreviousUsn);
+        }
+    }
+
+    void onLinkedNotebookSyncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn,
+        qevercloud::LinkedNotebook linkedNotebook) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookSyncChunksDownloadProgress(
+                highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
+                std::move(linkedNotebook));
+        }
+    }
+
+private:
+    const IDownloader::ICallbackWeakPtr m_callbackWeak;
+};
+
+[[nodiscard]] IFullSyncStaleDataExpunger::PreservedGuids collectPreservedGuids(
+    const QList<qevercloud::SyncChunk> & syncChunks)
+{
+    IFullSyncStaleDataExpunger::PreservedGuids preservedGuids;
+
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        const auto & notebooks = syncChunk.notebooks();
+        if (notebooks) {
+            for (const auto & notebook: qAsConst(*notebooks)) {
+                if (notebook.guid()) {
+                    preservedGuids.notebookGuids.insert(*notebook.guid());
+                }
+            }
+        }
+
+        const auto & tags = syncChunk.tags();
+        if (tags) {
+            for (const auto & tag: qAsConst(*tags)) {
+                if (tag.guid()) {
+                    preservedGuids.tagGuids.insert(*tag.guid());
+                }
+            }
+        }
+
+        const auto & notes = syncChunk.notes();
+        if (notes) {
+            for (const auto & note: qAsConst(*notes)) {
+                if (note.guid()) {
+                    preservedGuids.noteGuids.insert(*note.guid());
+                }
+            }
+        }
+
+        const auto & savedSearches = syncChunk.searches();
+        if (savedSearches) {
+            for (const auto & savedSearch: qAsConst(*savedSearches)) {
+                if (savedSearch.guid()) {
+                    preservedGuids.savedSearchGuids.insert(*savedSearch.guid());
+                }
+            }
+        }
+    }
+
+    return preservedGuids;
+}
+
+} // namespace
+
 Downloader::Downloader(
     Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
     IProtocolVersionCheckerPtr protocolVersionChecker,
@@ -438,8 +523,9 @@ void Downloader::launchUserOwnDataDownload(
         (syncMode == SyncMode::Full ? 0
                                     : m_lastSyncState->m_userDataUpdateCount);
 
-    auto syncChunksFuture =
-        m_syncChunksProvider->fetchSyncChunks(afterUsn, ctx, m_canceler, {});
+    auto syncChunksFuture = m_syncChunksProvider->fetchSyncChunks(
+        afterUsn, ctx, m_canceler,
+        std::make_shared<SyncChunksProviderCallback>(callbackWeak));
 
     auto selfWeak = weak_from_this();
 
@@ -453,6 +539,10 @@ void Downloader::launchUserOwnDataDownload(
                 if (m_canceler->isCanceled()) {
                     cancel(*promise);
                     return;
+                }
+
+                if (const auto callback = callbackWeak.lock()) {
+                    callback->onSyncChunksDownloaded();
                 }
 
                 processUserOwnSyncChunks(
@@ -533,8 +623,35 @@ void Downloader::processUserOwnSyncChunks(
     std::shared_ptr<QPromise<Result>> promise, // NOLINT
     qevercloud::IRequestContextPtr ctx, // NOLINT
     ICallbackWeakPtr callbackWeak, // NOLINT
-    SyncMode syncMode)
+    SyncMode syncMode, CheckForFirstSync checkForFirstSync)
 {
+    Q_ASSERT(m_lastSyncState);
+
+    // TODO: check the case of empty sync chunks
+
+    if (checkForFirstSync == CheckForFirstSync::Yes) {
+        const bool isFirstSync = (m_lastSyncState->userDataUpdateCount() == 0);
+        if (isFirstSync && (syncMode == SyncMode::Full)) {
+            auto preservedGuids = collectPreservedGuids(syncChunks);
+            auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
+                std::move(preservedGuids));
+
+            threading::thenOrFailed(
+                std::move(future), promise,
+                threading::TrackedTask{
+                    weak_from_this(),
+                    [this, syncChunks = std::move(syncChunks),
+                     promise = std::move(promise), ctx = std::move(ctx),
+                     callbackWeak = std::move(callbackWeak),
+                     syncMode]() mutable {
+                        processUserOwnSyncChunks(
+                            std::move(syncChunks), std::move(promise),
+                            std::move(ctx), std::move(callbackWeak), syncMode,
+                            CheckForFirstSync::No);
+                    }});
+        }
+    }
+
     // TODO: implement
     Q_UNUSED(syncChunks)
     Q_UNUSED(promise)

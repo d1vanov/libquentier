@@ -60,16 +60,16 @@ public:
             qint32 lastPreviousUsn) = 0;
 
         /**
-        * This method is called when the sync chunks for the stuff from user's
+        * This method is called when the sync chunks for data from user's
         * own account are downloaded during the download synchronization step.
         */
-        virtual void syncChunksDownloaded() = 0;
+        virtual void onSyncChunksDownloaded() = 0;
 
         /**
         * This method is called during user own account's downloaded sync chunks
         * contents processing and denotes the progress on that step.
         */
-        virtual void syncChunksDataProcessingProgress(
+        virtual void onSyncChunksDataProcessingProgress(
             ISyncChunksDataCountersPtr counters) = 0;
 
         /**
@@ -91,22 +91,22 @@ public:
         * @param linkedNotebook            The linked notebook which sync chunks
         *                                  download progress is reported
         */
-        virtual void linkedNotebookSyncChunksDownloadProgress(
+        virtual void onLinkedNotebookSyncChunksDownloadProgress(
             qint32 highestDownloadedUsn, qint32 highestServerUsn,
             qint32 lastPreviousUsn,
             qevercloud::LinkedNotebook linkedNotebook) = 0;
 
         /**
-        * This method is called when the sync chunks for the stuff from linked
+        * This method is called when the sync chunks for data from linked
         * notebooks are downloaded during "remote to local" synchronization step
         */
-        virtual void linkedNotebooksSyncChunksDownloaded() = 0;
+        virtual void onLinkedNotebooksSyncChunksDownloaded() = 0;
 
         /**
         * This method is called during linked notebooks' downloaded sync chunks
         * contents processing and denotes the progress on that step.
         */
-        virtual void linkedNotebookSyncChunksDataProcessingProgress(
+        virtual void onLinkedNotebookSyncChunksDataProcessingProgress(
             ISyncChunksDataCountersPtr counters) = 0;
 
         /**
@@ -118,7 +118,7 @@ public:
         * @param totalNotesToDownload  The total number of notes that need to be
         *                              downloaded
         */
-        virtual void notesDownloadProgress(
+        virtual void onNotesDownloadProgress(
             quint32 notesDownloaded, quint32 totalNotesToDownload) = 0;
 
         /**
@@ -130,7 +130,7 @@ public:
         * @param totalNotesToDownload  The total number of notes that need to be
         *                              downloaded
         */
-        virtual void linkedNotebooksNotesDownloadProgress(
+        virtual void onLinkedNotebooksNotesDownloadProgress(
             quint32 notesDownloaded, quint32 totalNotesToDownload) = 0;
 
         /**
@@ -143,7 +143,7 @@ public:
         * @param totalResourcesToDownload  The total number of resources that
         *                                  need to be downloaded
         */
-        virtual void resourcesDownloadProgress(
+        virtual void onResourcesDownloadProgress(
             quint32 resourcesDownloaded, quint32 totalResourcesToDownload) = 0;
 
         /**
@@ -155,7 +155,7 @@ public:
         * @param totalResourcesToDownload  The total number of resources that
         *                                  need to be downloaded
         */
-        virtual void linkedNotebooksResourcesDownloadProgress(
+        virtual void onLinkedNotebooksResourcesDownloadProgress(
             quint32 resourcesDownloaded, quint32 totalResourcesToDownload) = 0;
     };
 

@@ -110,11 +110,18 @@ private:
         qevercloud::ServiceLevel serviceLevel,
         qevercloud::IRequestContextPtr ctx);
 
+    enum class CheckForFirstSync
+    {
+        Yes,
+        No
+    };
+
     void processUserOwnSyncChunks(
         QList<qevercloud::SyncChunk> syncChunks,
         std::shared_ptr<QPromise<Result>> promise,
         qevercloud::IRequestContextPtr ctx, ICallbackWeakPtr callbackWeak,
-        SyncMode syncMode);
+        SyncMode syncMode,
+        CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
     void cancel(QPromise<Result> & promise);
 
