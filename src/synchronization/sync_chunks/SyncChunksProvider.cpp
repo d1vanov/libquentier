@@ -294,10 +294,20 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) {
-            return m_syncChunksDownloader->downloadSyncChunks(
-                afterUsn, std::move(ctx), std::move(canceler),
-                std::make_shared<SyncChunksDownloaderCallback>(
-                    std::move(callbackWeak), actualAfterUsn));
+            // Artificially prolonging the lifetime of
+            // SyncChunksDownloaderCallback until the result of
+            // m_syncChunksDownloader->downloadSyncChunks is ready
+            auto callback = std::make_shared<SyncChunksDownloaderCallback>(
+                std::move(callbackWeak), actualAfterUsn);
+            auto downloadFuture = m_syncChunksDownloader->downloadSyncChunks(
+                afterUsn, std::move(ctx), std::move(canceler), callback);
+            auto resultFuture = threading::then(
+                std::move(downloadFuture),
+                [callback = std::move(callback)](
+                    ISyncChunksDownloader::SyncChunksResult result) {
+                    return result;
+                });
+            return resultFuture;
         },
         [this](qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantUserOwnSyncChunks(
@@ -336,11 +346,22 @@ QFuture<QList<qevercloud::SyncChunk>>
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) mutable {
-            return m_syncChunksDownloader->downloadLinkedNotebookSyncChunks(
-                std::move(linkedNotebook), afterUsn, std::move(ctx),
-                std::move(canceler),
-                std::make_shared<SyncChunksDownloaderCallback>(
-                    std::move(callbackWeak), actualAfterUsn));
+            // Artificially prolonging the lifetime of
+            // SyncChunksDownloaderCallback until the result of
+            // m_syncChunksDownloader->downloadLinkedNotebookSyncChunks is ready
+            auto callback = std::make_shared<SyncChunksDownloaderCallback>(
+                std::move(callbackWeak), actualAfterUsn);
+            auto downloadFuture =
+                m_syncChunksDownloader->downloadLinkedNotebookSyncChunks(
+                    std::move(linkedNotebook), afterUsn, std::move(ctx),
+                    std::move(canceler), callback);
+            auto resultFuture = threading::then(
+                std::move(downloadFuture),
+                [callback = std::move(callback)](
+                    ISyncChunksDownloader::SyncChunksResult result) {
+                    return result;
+                });
+            return resultFuture;
         },
         [this, linkedNotebookGuid = *linkedNotebookGuid](qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantLinkedNotebookSyncChunks(
