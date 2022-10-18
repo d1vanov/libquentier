@@ -25,6 +25,7 @@
 #include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 #include <QList>
@@ -41,9 +42,37 @@ class IDurableNotesProcessor
 public:
     virtual ~IDurableNotesProcessor() = default;
 
+    struct ICallback
+    {
+        virtual ~ICallback() = default;
+
+        virtual void onProcessedNote(
+            const qevercloud::Guid & noteGuid,
+            qint32 noteUpdateSequenceNum) noexcept = 0;
+
+        virtual void onExpungedNote(
+            const qevercloud::Guid & noteGuid) noexcept = 0;
+
+        virtual void onFailedToExpungeNote(
+            const qevercloud::Guid & noteGuid,
+            const QException & e) noexcept = 0;
+
+        virtual void onNoteFailedToDownload(
+            const qevercloud::Note & note, const QException & e) noexcept = 0;
+
+        virtual void onNoteFailedToProcess(
+            const qevercloud::Note & note, const QException & e) noexcept = 0;
+
+        virtual void onNoteProcessingCancelled(
+            const qevercloud::Note & note) noexcept = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        utility::cancelers::ICancelerPtr canceler) = 0;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 
 } // namespace quentier::synchronization

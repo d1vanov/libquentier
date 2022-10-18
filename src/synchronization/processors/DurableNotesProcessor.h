@@ -19,7 +19,6 @@
 #pragma once
 
 #include "IDurableNotesProcessor.h"
-#include "INotesProcessor.h"
 
 #include <qevercloud/types/Note.h>
 
@@ -37,7 +36,6 @@ namespace quentier::synchronization {
 
 class DurableNotesProcessor final :
     public IDurableNotesProcessor,
-    public INotesProcessor::ICallback,
     public std::enable_shared_from_this<DurableNotesProcessor>
 {
 public:
@@ -48,28 +46,8 @@ public:
     // IDurableNotesProcessor
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        utility::cancelers::ICancelerPtr canceler) override;
-
-private:
-    // INotesProcessor::ICallback
-    void onProcessedNote(
-        const qevercloud::Guid & noteGuid,
-        qint32 noteUpdateSequenceNum) noexcept override;
-
-    void onExpungedNote(const qevercloud::Guid & noteGuid) noexcept override;
-
-    void onFailedToExpungeNote(
-        const qevercloud::Guid & noteGuid,
-        const QException & e) noexcept override;
-
-    void onNoteFailedToDownload(
-        const qevercloud::Note & note, const QException & e) noexcept override;
-
-    void onNoteFailedToProcess(
-        const qevercloud::Note & note, const QException & e) noexcept override;
-
-    void onNoteProcessingCancelled(
-        const qevercloud::Note & note) noexcept override;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
     [[nodiscard]] QList<qevercloud::Note> notesFromPreviousSync() const;
@@ -81,7 +59,8 @@ private:
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Note> previousNotes,
-        QList<qevercloud::Guid> previousExpungedNotes);
+        QList<qevercloud::Guid> previousExpungedNotes,
+        ICallbackWeakPtr callbackWeak);
 
 private:
     const INotesProcessorPtr m_notesProcessor;
