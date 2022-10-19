@@ -34,6 +34,8 @@
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/sync_chunks/ISyncChunksProvider.h>
+#include <synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
 
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>
@@ -41,6 +43,14 @@
 namespace quentier::synchronization {
 
 namespace {
+
+[[nodiscard]] IDownloader::Result createEmptyResult()
+{
+    return IDownloader::Result{
+        std::make_shared<SyncChunksDataCounters>(),
+        std::make_shared<DownloadNotesStatus>(),
+        std::make_shared<DownloadResourcesStatus>()};
+}
 
 class SyncChunksProviderCallback final : public ISyncChunksProvider::ICallback
 {
@@ -619,15 +629,23 @@ QFuture<qevercloud::AccountLimits> Downloader::fetchAccountLimits(
 }
 
 void Downloader::processUserOwnSyncChunks(
-    QList<qevercloud::SyncChunk> syncChunks, // NOLINT
-    std::shared_ptr<QPromise<Result>> promise, // NOLINT
-    qevercloud::IRequestContextPtr ctx, // NOLINT
-    ICallbackWeakPtr callbackWeak, // NOLINT
+    QList<qevercloud::SyncChunk> syncChunks,
+    std::shared_ptr<QPromise<Result>> promise,
+    qevercloud::IRequestContextPtr ctx,
+    ICallbackWeakPtr callbackWeak,
     SyncMode syncMode, CheckForFirstSync checkForFirstSync)
 {
     Q_ASSERT(m_lastSyncState);
 
-    // TODO: check the case of empty sync chunks
+    if (syncChunks.isEmpty()) {
+        QNINFO(
+            "synchronization::Downloader",
+            "No new data found in Evernote for user's own account");
+        launchLinkedNotebooksDataDownload(
+            std::move(promise), std::move(ctx),
+            std::move(callbackWeak));
+        return;
+    }
 
     if (checkForFirstSync == CheckForFirstSync::Yes) {
         const bool isFirstSync = (m_lastSyncState->userDataUpdateCount() == 0);
