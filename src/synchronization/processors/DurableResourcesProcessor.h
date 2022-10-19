@@ -19,7 +19,6 @@
 #pragma once
 
 #include "IDurableResourcesProcessor.h"
-#include "IResourcesProcessor.h"
 
 #include <qevercloud/types/Resource.h>
 
@@ -37,7 +36,6 @@ namespace quentier::synchronization {
 
 class DurableResourcesProcessor final :
     public IDurableResourcesProcessor,
-    public IResourcesProcessor::ICallback,
     public std::enable_shared_from_this<DurableResourcesProcessor>
 {
 public:
@@ -48,24 +46,8 @@ public:
     // IDurableResourcesProcessor
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        utility::cancelers::ICancelerPtr canceler) override;
-
-private:
-    // IResourcesProcessor::ICallback
-    void onProcessedResource(
-        const qevercloud::Guid & resourceGuid,
-        qint32 resourceUpdateSequenceNum) noexcept override;
-
-    void onResourceFailedToDownload(
-        const qevercloud::Resource & resource,
-        const QException & e) noexcept override;
-
-    void onResourceFailedToProcess(
-        const qevercloud::Resource & resource,
-        const QException & e) noexcept override;
-
-    void onResourceProcessingCancelled(
-        const qevercloud::Resource & resource) noexcept override;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
     [[nodiscard]] QList<qevercloud::Resource> resourcesFromPreviousSync() const;
@@ -73,7 +55,8 @@ private:
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
-        QList<qevercloud::Resource> previousResources);
+        QList<qevercloud::Resource> previousResources,
+        ICallbackWeakPtr callbackWeak);
 
 private:
     const IResourcesProcessorPtr m_resourcesProcessor;

@@ -35,6 +35,155 @@
 
 namespace quentier::synchronization {
 
+namespace {
+
+class Callback final : public IResourcesProcessor::ICallback
+{
+public:
+    explicit Callback(
+        IDurableResourcesProcessor::ICallbackWeakPtr callbackWeak,
+        std::weak_ptr<IDurableResourcesProcessor> durableProcessorWeak,
+        const QDir & syncResourcesDir) :
+        m_callbackWeak{std::move(callbackWeak)},
+        m_durableProcessorWeak{std::move(durableProcessorWeak)},
+        m_syncResourcesDir{syncResourcesDir}
+    {}
+
+    // IResourcesProcessor::ICallback
+    void onProcessedResource(
+        const qevercloud::Guid & resourceGuid,
+        qint32 resourceUpdateSequenceNum) noexcept override
+    {
+        const auto durableProcessor = m_durableProcessorWeak.lock();
+        if (!durableProcessor) {
+            return;
+        }
+
+        try {
+            utils::writeProcessedResourceInfo(
+                resourceGuid, resourceUpdateSequenceNum, m_syncResourcesDir);
+        }
+        catch (const std::exception & e) {
+            QNWARNING(
+                "synchronization::DurableResourcesProcessor",
+                "Failed to write processed resource info: "
+                    << e.what() << ", resource guid = " << resourceGuid
+                    << ", resource usn = " << resourceUpdateSequenceNum);
+        }
+        catch (...) {
+            QNWARNING(
+                "synchronization::DurableResourcesProcessor",
+                "Failed to write processed resource info: unknown exception, "
+                    << "resource guid = " << resourceGuid
+                    << ", resource usn = " << resourceUpdateSequenceNum);
+        }
+
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onProcessedResource(
+                resourceGuid, resourceUpdateSequenceNum);
+        }
+    }
+
+    void onResourceFailedToDownload(
+        const qevercloud::Resource & resource,
+        const QException & e) noexcept override
+    {
+        const auto durableProcessor = m_durableProcessorWeak.lock();
+        if (!durableProcessor) {
+            return;
+        }
+
+        try {
+            utils::writeFailedToDownloadResource(resource, m_syncResourcesDir);
+        }
+        catch (const std::exception & e) {
+            QNWARNING(
+                "synchronization::IDurableResourcesProcessor",
+                "Failed to write failed to download resource: "
+                    << e.what() << ", resource: " << resource);
+        }
+        catch (...) {
+            QNWARNING(
+                "synchronization::DurableResourcesProcessor",
+                "Failed to write failed to download resource: unknown "
+                "exception, "
+                    << "resource: " << resource);
+        }
+
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onResourceFailedToDownload(resource, e);
+        }
+    }
+
+    void onResourceFailedToProcess(
+        const qevercloud::Resource & resource,
+        const QException & e) noexcept override
+    {
+        const auto durableProcessor = m_durableProcessorWeak.lock();
+        if (!durableProcessor) {
+            return;
+        }
+
+        try {
+            utils::writeFailedToProcessResource(resource, m_syncResourcesDir);
+        }
+        catch (const std::exception & e) {
+            QNWARNING(
+                "synchronization::IDurableResourcesProcessor",
+                "Failed to write failed to process resource: "
+                    << e.what() << ", resource: " << resource);
+        }
+        catch (...) {
+            QNWARNING(
+                "synchronization::DurableResourcesProcessor",
+                "Failed to write failed to process resource: unknown "
+                "exception, "
+                    << "resource: " << resource);
+        }
+
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onResourceFailedToProcess(resource, e);
+        }
+    }
+
+    void onResourceProcessingCancelled(
+        const qevercloud::Resource & resource) noexcept override
+    {
+        const auto durableProcessor = m_durableProcessorWeak.lock();
+        if (!durableProcessor) {
+            return;
+        }
+
+        try {
+            utils::writeCancelledResource(resource, m_syncResourcesDir);
+        }
+        catch (const std::exception & e) {
+            QNWARNING(
+                "synchronization::DurableResourcesProcessor",
+                "Failed to write cancelled resource: "
+                    << e.what() << ", resource: " << resource);
+        }
+        catch (...) {
+            QNWARNING(
+                "synchronization::DurableResourcesProcessor",
+                "Failed to write cancelled resource: unknown exception, "
+                "resource: "
+                    << resource);
+        }
+
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onResourceProcessingCancelled(resource);
+        }
+    }
+
+private:
+    const IDurableResourcesProcessor::ICallbackWeakPtr m_callbackWeak;
+    const std::weak_ptr<IDurableResourcesProcessor> m_durableProcessorWeak;
+    const QDir m_syncResourcesDir;
+};
+
+} // namespace
+
 DurableResourcesProcessor::DurableResourcesProcessor(
     IResourcesProcessorPtr resourcesProcessor,
     const QDir & syncPersistentStorageDir) :
@@ -55,7 +204,7 @@ DurableResourcesProcessor::DurableResourcesProcessor(
 
 QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks,
-    utility::cancelers::ICancelerPtr canceler)
+    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
     Q_ASSERT(canceler);
 
@@ -72,7 +221,8 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
 
     if (alreadyProcessedResourcesInfo.isEmpty()) {
         return processResourcesImpl(
-            syncChunks, std::move(canceler), std::move(previousResources));
+            syncChunks, std::move(canceler), std::move(previousResources),
+            std::move(callbackWeak));
     }
 
     auto filteredSyncChunks = syncChunks;
@@ -105,95 +255,8 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     }
 
     return processResourcesImpl(
-        filteredSyncChunks, std::move(canceler), std::move(previousResources));
-}
-
-void DurableResourcesProcessor::onProcessedResource(
-    const qevercloud::Guid & resourceGuid,
-    qint32 resourceUpdateSequenceNum) noexcept
-{
-    try {
-        utils::writeProcessedResourceInfo(
-            resourceGuid, resourceUpdateSequenceNum, m_syncResourcesDir);
-    }
-    catch (const std::exception & e) {
-        QNWARNING(
-            "synchronization::DurableResourcesProcessor",
-            "Failed to write processed resource info: "
-                << e.what() << ", resource guid = " << resourceGuid
-                << ", resource usn = " << resourceUpdateSequenceNum);
-    }
-    catch (...) {
-        QNWARNING(
-            "synchronization::DurableResourcesProcessor",
-            "Failed to write processed resource info: unknown exception, "
-                << "resource guid = " << resourceGuid
-                << ", resource usn = " << resourceUpdateSequenceNum);
-    }
-}
-
-void DurableResourcesProcessor::onResourceFailedToDownload(
-    const qevercloud::Resource & resource, const QException & e) noexcept
-{
-    Q_UNUSED(e)
-
-    try {
-        utils::writeFailedToDownloadResource(resource, m_syncResourcesDir);
-    }
-    catch (const std::exception & e) {
-        QNWARNING(
-            "synchronization::IDurableResourcesProcessor",
-            "Failed to write failed to download resource: "
-                << e.what() << ", resource: " << resource);
-    }
-    catch (...) {
-        QNWARNING(
-            "synchronization::DurableResourcesProcessor",
-            "Failed to write failed to download resource: unknown exception, "
-                << "resource: " << resource);
-    }
-}
-
-void DurableResourcesProcessor::onResourceFailedToProcess(
-    const qevercloud::Resource & resource, const QException & e) noexcept
-{
-    Q_UNUSED(e)
-
-    try {
-        utils::writeFailedToProcessResource(resource, m_syncResourcesDir);
-    }
-    catch (const std::exception & e) {
-        QNWARNING(
-            "synchronization::IDurableResourcesProcessor",
-            "Failed to write failed to process resource: "
-                << e.what() << ", resource: " << resource);
-    }
-    catch (...) {
-        QNWARNING(
-            "synchronization::DurableResourcesProcessor",
-            "Failed to write failed to process resource: unknown exception, "
-                << "resource: " << resource);
-    }
-}
-
-void DurableResourcesProcessor::onResourceProcessingCancelled(
-    const qevercloud::Resource & resource) noexcept
-{
-    try {
-        utils::writeCancelledResource(resource, m_syncResourcesDir);
-    }
-    catch (const std::exception & e) {
-        QNWARNING(
-            "synchronization::DurableResourcesProcessor",
-            "Failed to write cancelled resource: " << e.what() << ", resource: "
-                                                   << resource);
-    }
-    catch (...) {
-        QNWARNING(
-            "synchronization::DurableResourcesProcessor",
-            "Failed to write cancelled resource: unknown exception, resource: "
-                << resource);
-    }
+        filteredSyncChunks, std::move(canceler), std::move(previousResources),
+        std::move(callbackWeak));
 }
 
 QList<qevercloud::Resource>
@@ -219,7 +282,8 @@ QFuture<DownloadResourcesStatusPtr>
     DurableResourcesProcessor::processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
-        QList<qevercloud::Resource> previousResources)
+        QList<qevercloud::Resource> previousResources,
+        ICallbackWeakPtr callbackWeak)
 {
     const auto selfWeak = weak_from_this();
 
@@ -228,12 +292,16 @@ QFuture<DownloadResourcesStatusPtr>
     promise->start();
 
     if (previousResources.isEmpty()) {
+        auto callback = std::make_shared<Callback>(
+            std::move(callbackWeak), weak_from_this(), m_syncResourcesDir);
+
         auto processSyncChunksFuture = m_resourcesProcessor->processResources(
-            syncChunks, std::move(canceler), selfWeak);
+            syncChunks, std::move(canceler), callback);
 
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
-            [promise](DownloadResourcesStatusPtr status) {
+            [promise, callback = std::move(callback)](
+                DownloadResourcesStatusPtr status) {
                 promise->addResult(std::move(status));
                 promise->finish();
             });
@@ -246,17 +314,22 @@ QFuture<DownloadResourcesStatusPtr>
                .setResources(std::move(previousResources))
                .build();
 
+    auto callback =
+        std::make_shared<Callback>(callbackWeak, selfWeak, m_syncResourcesDir);
+
     auto resourcesFuture = m_resourcesProcessor->processResources(
-        pseudoSyncChunks, canceler, selfWeak);
+        pseudoSyncChunks, canceler, callback);
 
     threading::thenOrFailed(
         std::move(resourcesFuture), promise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, promise, canceler = std::move(canceler),
-             syncChunks](DownloadResourcesStatusPtr status) mutable {
-                auto processResourcesFuture =
-                    processResourcesImpl(syncChunks, std::move(canceler), {});
+             syncChunks, callbackWeak = std::move(callbackWeak)](
+                DownloadResourcesStatusPtr status) mutable {
+                auto processResourcesFuture = processResourcesImpl(
+                    syncChunks, std::move(canceler), {},
+                    std::move(callbackWeak));
 
                 threading::thenOrFailed(
                     std::move(processResourcesFuture), promise,

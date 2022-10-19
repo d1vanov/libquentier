@@ -25,6 +25,7 @@
 #include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 #include <QList>
@@ -41,9 +42,32 @@ class IDurableResourcesProcessor
 public:
     virtual ~IDurableResourcesProcessor() = default;
 
+    struct ICallback
+    {
+        virtual ~ICallback() = default;
+
+        virtual void onProcessedResource(
+            const qevercloud::Guid & resourceGuid,
+            qint32 resourceUpdateSequenceNum) noexcept = 0;
+
+        virtual void onResourceFailedToDownload(
+            const qevercloud::Resource & resource,
+            const QException & e) noexcept = 0;
+
+        virtual void onResourceFailedToProcess(
+            const qevercloud::Resource & resource,
+            const QException & e) noexcept = 0;
+
+        virtual void onResourceProcessingCancelled(
+            const qevercloud::Resource & resource) noexcept = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        utility::cancelers::ICancelerPtr canceler) = 0;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 
 } // namespace quentier::synchronization

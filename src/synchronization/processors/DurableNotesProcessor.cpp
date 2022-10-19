@@ -370,7 +370,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
 
     if (previousNotes.isEmpty() && previousExpungedNotes.isEmpty()) {
         auto callback = std::make_shared<Callback>(
-            std::move(callbackWeak), weak_from_this(), m_syncNotesDir);
+            std::move(callbackWeak), selfWeak, m_syncNotesDir);
 
         auto processSyncChunksFuture = m_notesProcessor->processNotes(
             syncChunks, std::move(canceler), callback);
@@ -393,7 +393,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                    .build();
 
         auto callback = std::make_shared<Callback>(
-            callbackWeak, weak_from_this(), m_syncNotesDir);
+            callbackWeak, selfWeak, m_syncNotesDir);
 
         auto expungeNotesFuture = m_notesProcessor->processNotes(
             pseudoSyncChunks, canceler, callback);
@@ -438,7 +438,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                    .build();
 
         auto callback = std::make_shared<Callback>(
-            callbackWeak, weak_from_this(), m_syncNotesDir);
+            callbackWeak, selfWeak, m_syncNotesDir);
 
         auto notesFuture = m_notesProcessor->processNotes(
             pseudoSyncChunks, canceler, callback);
@@ -475,7 +475,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     }
 
     auto callback = std::make_shared<Callback>(
-        std::move(callbackWeak), weak_from_this(), m_syncNotesDir);
+        std::move(callbackWeak), selfWeak, m_syncNotesDir);
 
     auto processSyncChunksFuture = m_notesProcessor->processNotes(
         syncChunks, canceler, callback);
