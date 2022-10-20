@@ -27,12 +27,12 @@
 
 #include <synchronization/tests/mocks/MockIAccountLimitsProvider.h>
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
+#include <synchronization/tests/mocks/MockIDurableNotesProcessor.h>
+#include <synchronization/tests/mocks/MockIDurableResourcesProcessor.h>
 #include <synchronization/tests/mocks/MockIFullSyncStaleDataExpunger.h>
 #include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>
 #include <synchronization/tests/mocks/MockINotebooksProcessor.h>
-#include <synchronization/tests/mocks/MockINotesProcessor.h>
 #include <synchronization/tests/mocks/MockIProtocolVersionChecker.h>
-#include <synchronization/tests/mocks/MockIResourcesProcessor.h>
 #include <synchronization/tests/mocks/MockISavedSearchesProcessor.h>
 #include <synchronization/tests/mocks/MockISyncChunksProvider.h>
 #include <synchronization/tests/mocks/MockISyncChunksStorage.h>
@@ -113,12 +113,13 @@ protected:
         m_mockNotebooksProcessor =
             std::make_shared<StrictMock<mocks::MockINotebooksProcessor>>();
 
-    const std::shared_ptr<mocks::MockINotesProcessor> m_mockNotesProcessor =
-        std::make_shared<StrictMock<mocks::MockINotesProcessor>>();
+    const std::shared_ptr<mocks::MockIDurableNotesProcessor>
+        m_mockNotesProcessor =
+            std::make_shared<StrictMock<mocks::MockIDurableNotesProcessor>>();
 
-    const std::shared_ptr<mocks::MockIResourcesProcessor>
-        m_mockResourcesProcessor =
-            std::make_shared<StrictMock<mocks::MockIResourcesProcessor>>();
+    const std::shared_ptr<mocks::MockIDurableResourcesProcessor>
+        m_mockResourcesProcessor = std::make_shared<
+            StrictMock<mocks::MockIDurableResourcesProcessor>>();
 
     const std::shared_ptr<mocks::MockISavedSearchesProcessor>
         m_mockSavedSearchesProcessor =

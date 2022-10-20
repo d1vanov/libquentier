@@ -63,8 +63,8 @@ public:
         ISyncChunksStoragePtr syncChunksStorage,
         ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
         INotebooksProcessorPtr notebooksProcessor,
-        INotesProcessorPtr notesProcessor,
-        IResourcesProcessorPtr resourcesProcessor,
+        IDurableNotesProcessorPtr notesProcessor,
+        IDurableResourcesProcessorPtr resourcesProcessor,
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
         IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
@@ -136,8 +136,8 @@ private:
     const ISyncChunksStoragePtr m_syncChunksStorage;
     const ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
     const INotebooksProcessorPtr m_notebooksProcessor;
-    const INotesProcessorPtr m_notesProcessor;
-    const IResourcesProcessorPtr m_resourcesProcessor;
+    const IDurableNotesProcessorPtr m_notesProcessor;
+    const IDurableResourcesProcessorPtr m_resourcesProcessor;
     const ISavedSearchesProcessorPtr m_savedSearchesProcessor;
     const ITagsProcessorPtr m_tagsProcessor;
     const IFullSyncStaleDataExpungerPtr m_fullSyncStaleDataExpunger;

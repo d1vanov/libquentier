@@ -31,6 +31,13 @@ class IAuthenticationInfoProvider;
 using IAuthenticationInfoProviderPtr =
     std::shared_ptr<IAuthenticationInfoProvider>;
 
+class IDurableNotesProcessor;
+using IDurableNotesProcessorPtr = std::shared_ptr<IDurableNotesProcessor>;
+
+class IDurableResourcesProcessor;
+using IDurableResourcesProcessorPtr =
+    std::shared_ptr<IDurableResourcesProcessor>;
+
 class IFullSyncStaleDataExpunger;
 using IFullSyncStaleDataExpungerPtr =
     std::shared_ptr<IFullSyncStaleDataExpunger>;

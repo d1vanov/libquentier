@@ -33,6 +33,7 @@
 #include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/processors/INotebooksProcessor.h>
 #include <synchronization/sync_chunks/ISyncChunksProvider.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
@@ -145,8 +146,8 @@ Downloader::Downloader(
     ISyncChunksStoragePtr syncChunksStorage,
     ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
     INotebooksProcessorPtr notebooksProcessor,
-    INotesProcessorPtr notesProcessor,
-    IResourcesProcessorPtr resourcesProcessor,
+    IDurableNotesProcessorPtr notesProcessor,
+    IDurableResourcesProcessorPtr resourcesProcessor,
     ISavedSearchesProcessorPtr savedSearchesProcessor,
     ITagsProcessorPtr tagsProcessor,
     IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
@@ -669,6 +670,8 @@ void Downloader::processUserOwnSyncChunks(
                     }});
         }
     }
+
+    
 
     // TODO: implement
     Q_UNUSED(syncChunks)
