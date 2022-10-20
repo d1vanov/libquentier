@@ -33,7 +33,12 @@
 #include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/processors/IDurableNotesProcessor.h>
+#include <synchronization/processors/IDurableResourcesProcessor.h>
+#include <synchronization/processors/ILinkedNotebooksProcessor.h>
 #include <synchronization/processors/INotebooksProcessor.h>
+#include <synchronization/processors/ISavedSearchesProcessor.h>
+#include <synchronization/processors/ITagsProcessor.h>
 #include <synchronization/sync_chunks/ISyncChunksProvider.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
@@ -648,9 +653,11 @@ void Downloader::processUserOwnSyncChunks(
         return;
     }
 
+    const auto selfWeak = weak_from_this();
+
     if (checkForFirstSync == CheckForFirstSync::Yes) {
         const bool isFirstSync = (m_lastSyncState->userDataUpdateCount() == 0);
-        if (isFirstSync && (syncMode == SyncMode::Full)) {
+        if (!isFirstSync && (syncMode == SyncMode::Full)) {
             auto preservedGuids = collectPreservedGuids(syncChunks);
             auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
                 std::move(preservedGuids));
@@ -658,7 +665,7 @@ void Downloader::processUserOwnSyncChunks(
             threading::thenOrFailed(
                 std::move(future), promise,
                 threading::TrackedTask{
-                    weak_from_this(),
+                    selfWeak,
                     [this, syncChunks = std::move(syncChunks),
                      promise = std::move(promise), ctx = std::move(ctx),
                      callbackWeak = std::move(callbackWeak),
@@ -668,10 +675,28 @@ void Downloader::processUserOwnSyncChunks(
                             std::move(ctx), std::move(callbackWeak), syncMode,
                             CheckForFirstSync::No);
                     }});
+            return;
         }
     }
 
-    
+    auto notebooksFuture = m_notebooksProcessor->processNotebooks(syncChunks);
+    auto tagsFuture = m_tagsProcessor->processTags(syncChunks);
+    auto savedSearchesFuture = m_savedSearchesProcessor->processSavedSearches(
+        syncChunks);
+
+    auto allFirstStageFuture = threading::whenAll(
+        QList<QFuture<void>>{}
+            << notebooksFuture << tagsFuture << savedSearchesFuture);
+
+    auto notesFuture = threading::then(
+        std::move(allFirstStageFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this, syncChunks = std::move(syncChunks),
+             promise = std::move(promise), ctx = std::move(ctx),
+             callbackWeak = std::move(callbackWeak), syncMode]() mutable {
+                // TODO: download notes and find a way to propagate the result
+            }});
 
     // TODO: implement
     Q_UNUSED(syncChunks)
