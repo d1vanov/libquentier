@@ -141,7 +141,10 @@ QFuture<void> NotebooksProcessor::processNotebooks(
             std::move(expungeNotebookFuture),
             threading::TrackedTask{
                 selfWeak,
-                [this] { ++m_syncChunksDataCounters->m_expungedNotebooks; }});
+                [this] {
+                    ++m_syncChunksDataCounters->m_expungedNotebooks;
+                    m_syncChunksDataCounters->notifyUpdate();
+                }});
 
         threading::thenOrFailed(
             std::move(thenFuture), std::move(notebookPromise));
@@ -184,6 +187,7 @@ void NotebooksProcessor::tryToFindDuplicateByName(
                     threading::TrackedTask{
                         selfWeak, [this] {
                             ++m_syncChunksDataCounters->m_addedNotebooks;
+                            m_syncChunksDataCounters->notifyUpdate();
                         }});
 
                 threading::thenOrFailed(
@@ -241,6 +245,7 @@ void NotebooksProcessor::onFoundDuplicate(
                     threading::TrackedTask{
                         selfWeak, [this] {
                             ++m_syncChunksDataCounters->m_updatedNotebooks;
+                            m_syncChunksDataCounters->notifyUpdate();
                         }});
 
                 threading::thenOrFailed(std::move(thenFuture), notebookPromise);
@@ -282,6 +287,8 @@ void NotebooksProcessor::onFoundDuplicate(
                                     if (const auto self = selfWeak.lock()) {
                                         ++self->m_syncChunksDataCounters
                                               ->m_addedNotebooks;
+                                        self->m_syncChunksDataCounters
+                                            ->notifyUpdate();
                                     }
 
                                     notebookPromise->finish();

@@ -188,7 +188,10 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
             std::move(expungeSavedSearchFuture),
             threading::TrackedTask{
                 selfWeak,
-                [this] { ++m_syncChunksDataCounters->m_expungedSavedSearches; },
+                [this] {
+                    ++m_syncChunksDataCounters->m_expungedSavedSearches;
+                    m_syncChunksDataCounters->notifyUpdate();
+                },
             });
 
         threading::thenOrFailed(
@@ -234,6 +237,7 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
                     threading::TrackedTask{
                         selfWeak, [this] {
                             ++m_syncChunksDataCounters->m_addedSavedSearches;
+                            m_syncChunksDataCounters->notifyUpdate();
                         }});
 
                 threading::thenOrFailed(
@@ -291,6 +295,7 @@ void SavedSearchesProcessor::onFoundDuplicate(
                             selfWeak, [this] {
                                 ++m_syncChunksDataCounters
                                       ->m_updatedSavedSearches;
+                                m_syncChunksDataCounters->notifyUpdate();
                             }});
 
                     threading::thenOrFailed(
@@ -335,6 +340,8 @@ void SavedSearchesProcessor::onFoundDuplicate(
                                         if (const auto self = selfWeak.lock()) {
                                             ++m_syncChunksDataCounters
                                                   ->m_addedSavedSearches;
+                                            m_syncChunksDataCounters
+                                                ->notifyUpdate();
                                         }
 
                                         savedSearchPromise->finish();

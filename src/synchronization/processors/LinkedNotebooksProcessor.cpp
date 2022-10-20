@@ -113,6 +113,7 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             threading::TrackedTask{
                 selfWeak, [this] {
                     ++m_syncChunksDataCounters->m_updatedLinkedNotebooks;
+                    m_syncChunksDataCounters->notifyUpdate();
                 }});
 
         threading::thenOrFailed(
@@ -132,6 +133,7 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             threading::TrackedTask{
                 selfWeak, [this] {
                     ++m_syncChunksDataCounters->m_expungedLinkedNotebooks;
+                    m_syncChunksDataCounters->notifyUpdate();
                 }});
 
         threading::thenOrFailed(

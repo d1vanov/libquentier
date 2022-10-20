@@ -16,10 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNC_CHUNKS_DATA_COUNTERS_H
-#define LIB_QUENTIER_SYNCHRONIZATION_SYNC_CHUNKS_DATA_COUNTERS_H
+#pragma once
 
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
+
+#include <functional>
 
 namespace quentier {
 
@@ -131,6 +132,15 @@ struct SyncChunksDataCounters final : public ISyncChunksDataCounters
         return m_expungedNotebooks;
     }
 
+    QTextStream & print(QTextStream & strm) const override;
+
+    void notifyUpdate() const
+    {
+        if (m_updateCallback) {
+            m_updateCallback();
+        }
+    }
+
     quint64 m_totalSavedSearches = 0UL;
     quint64 m_totalExpungedSavedSearches = 0UL;
     quint64 m_addedSavedSearches = 0UL;
@@ -155,9 +165,7 @@ struct SyncChunksDataCounters final : public ISyncChunksDataCounters
     quint64 m_updatedNotebooks = 0UL;
     quint64 m_expungedNotebooks = 0UL;
 
-    QTextStream & print(QTextStream & strm) const override;
+    std::function<void()> m_updateCallback;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_SYNC_CHUNKS_DATA_COUNTERS_H

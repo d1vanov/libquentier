@@ -175,7 +175,10 @@ QFuture<void> TagsProcessor::processExpungedTags(
             std::move(expungeTagFuture),
             threading::TrackedTask{
                 selfWeak,
-                [this] { ++m_syncChunksDataCounters->m_expungedTags; }});
+                [this] {
+                    ++m_syncChunksDataCounters->m_expungedTags;
+                    m_syncChunksDataCounters->notifyUpdate();
+                }});
 
         threading::thenOrFailed(std::move(thenFuture), std::move(tagPromise));
     }
@@ -339,7 +342,10 @@ void TagsProcessor::tryToFindDuplicateByName(
                     std::move(putTagFuture),
                     threading::TrackedTask{
                         selfWeak,
-                        [this] { ++m_syncChunksDataCounters->m_addedTags; }});
+                        [this] {
+                            ++m_syncChunksDataCounters->m_addedTags;
+                            m_syncChunksDataCounters->notifyUpdate();
+                        }});
 
                 threading::thenOrFailed(
                     std::move(thenFuture), std::move(tagPromise));
@@ -390,7 +396,10 @@ void TagsProcessor::onFoundDuplicate(
                     std::move(putTagFuture),
                     threading::TrackedTask{
                         selfWeak,
-                        [this] { ++m_syncChunksDataCounters->m_updatedTags; }});
+                        [this] {
+                            ++m_syncChunksDataCounters->m_updatedTags;
+                            m_syncChunksDataCounters->notifyUpdate();
+                        }});
 
                 threading::thenOrFailed(std::move(thenFuture), tagPromise);
 
@@ -428,6 +437,8 @@ void TagsProcessor::onFoundDuplicate(
                                     if (const auto self = selfWeak.lock()) {
                                         ++self->m_syncChunksDataCounters
                                               ->m_addedTags;
+                                        self->m_syncChunksDataCounters
+                                            ->notifyUpdate();
                                     }
 
                                     tagPromise->finish();
