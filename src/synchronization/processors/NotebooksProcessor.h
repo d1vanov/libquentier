@@ -33,7 +33,6 @@
 
 #include <qevercloud/types/TypeAliases.h>
 
-#include <memory>
 #include <optional>
 
 namespace quentier::synchronization {
@@ -45,26 +44,29 @@ class NotebooksProcessor final :
 public:
     explicit NotebooksProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver,
-        SyncChunksDataCountersPtr syncChunksDataCounters);
+        ISyncConflictResolverPtr syncConflictResolver);
 
     [[nodiscard]] QFuture<void> processNotebooks(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeak callbackWeak = {}) override;
 
 private:
+    class NotebookCounters;
+
     void tryToFindDuplicateByName(
         const std::shared_ptr<QPromise<void>> & notebookPromise,
+        const std::shared_ptr<NotebookCounters> & notebookCounters,
         qevercloud::Notebook updatedNotebook);
 
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<void>> & notebookPromise,
+        const std::shared_ptr<NotebookCounters> & notebookCounters,
         qevercloud::Notebook updatedNotebook,
         qevercloud::Notebook localNotebook);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
-    const SyncChunksDataCountersPtr m_syncChunksDataCounters;
 };
 
 } // namespace quentier::synchronization

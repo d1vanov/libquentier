@@ -23,6 +23,8 @@
 #include <QFuture>
 #include <QList>
 
+#include <memory>
+
 namespace quentier::synchronization {
 
 class INotebooksProcessor
@@ -30,8 +32,22 @@ class INotebooksProcessor
 public:
     virtual ~INotebooksProcessor() = default;
 
+    class ICallback
+    {
+    public:
+        virtual ~ICallback() = default;
+
+        virtual void onNotebooksProcessingProgress(
+            qint32 totalNotebooks, qint32 totalNotebooksToExpunge,
+            qint32 addedNotebooks, qint32 updatedNotebooks,
+            qint32 expungedNotebooks) = 0;
+    };
+
+    using ICallbackWeak = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<void> processNotebooks(
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeak callbackWeak = {}) = 0;
 };
 
 } // namespace quentier::synchronization

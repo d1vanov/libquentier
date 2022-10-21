@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/NotebooksProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -31,6 +30,7 @@
 
 #include <QSet>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -43,6 +43,21 @@ namespace quentier::synchronization::tests {
 
 using testing::StrictMock;
 
+namespace {
+
+class MockICallback : public INotebooksProcessor::ICallback
+{
+public:
+    MOCK_METHOD(
+        void, onNotebooksProcessingProgress,
+        (qint32 totalNotebooks, qint32 totalNotebooksToExpunge,
+         qint32 addedNotebooks, qint32 updatedNotebooks,
+         qint32 expungedNotebooks),
+        (override));
+};
+
+} // namespace
+
 class NotebooksProcessorTest : public testing::Test
 {
 protected:
@@ -53,40 +68,28 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
-
-    const SyncChunksDataCountersPtr m_syncChunksDataCounters =
-        std::make_shared<SyncChunksDataCounters>();
 };
 
 TEST_F(NotebooksProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters));
+            m_mockLocalStorage, m_mockSyncConflictResolver));
 }
 
 TEST_F(NotebooksProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            nullptr, m_mockSyncConflictResolver, m_syncChunksDataCounters),
+            nullptr, m_mockSyncConflictResolver),
         InvalidArgument);
 }
 
 TEST_F(NotebooksProcessorTest, CtorNullSyncConflictResolver)
 {
     EXPECT_THROW(
-        const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, nullptr, m_syncChunksDataCounters),
-        InvalidArgument);
-}
-
-TEST_F(NotebooksProcessorTest, CtorNullSyncChunksDataCounters)
-{
-    EXPECT_THROW(
-        const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, nullptr),
+        const auto notebooksProcessor =
+            std::make_shared<NotebooksProcessor>(m_mockLocalStorage, nullptr),
         InvalidArgument);
 }
 
@@ -95,19 +98,16 @@ TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.build();
 
-    const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
-    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver);
+
+    auto future =
+        notebooksProcessor->processNotebooks(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->addedNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->expungedNotebooks(), 0UL);
 }
 
 TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
@@ -218,27 +218,44 @@ TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setNotebooks(notebooks).build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    qint32 totalNotebooks = 0;
+    qint32 totalExpungedNotebooks = 0;
+    qint32 addedNotebooks = 0;
+    qint32 updatedNotebooks = 0;
+    qint32 expungedNotebooks = 0;
+    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+    EXPECT_CALL(*mockCallback, onNotebooksProcessingProgress)
+        .WillRepeatedly([&](qint32 total, qint32 totalExpunged, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalNotebooks == 0 || totalNotebooks == total);
+            totalNotebooks = total;
+
+            EXPECT_TRUE(
+                totalExpungedNotebooks == 0 ||
+                totalExpungedNotebooks == totalExpunged);
+            totalExpungedNotebooks = totalExpunged;
+
+            addedNotebooks = added;
+            updatedNotebooks = updated;
+            expungedNotebooks = expunged;
+        });
+
+    auto future =
+        notebooksProcessor->processNotebooks(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(notebooksPutIntoLocalStorage, notebooks);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalNotebooks(),
-        static_cast<quint64>(notebooks.size()));
+    EXPECT_EQ(totalNotebooks, notebooks.size());
+    EXPECT_EQ(totalExpungedNotebooks, 0);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedNotebooks(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->addedNotebooks(),
-        static_cast<quint64>(notebooks.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->expungedNotebooks(), 0UL);
+    EXPECT_EQ(addedNotebooks, notebooks.size());
+    EXPECT_EQ(updatedNotebooks, 0);
+    EXPECT_EQ(expungedNotebooks, 0);
 }
 
 TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
@@ -253,8 +270,7 @@ TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
                .build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QList<qevercloud::Guid> processedNotebookGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNotebookByGuid)
@@ -263,24 +279,41 @@ TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
             return threading::makeReadyFuture();
         });
 
-    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    qint32 totalNotebooks = 0;
+    qint32 totalExpungedNotebooks = 0;
+    qint32 addedNotebooks = 0;
+    qint32 updatedNotebooks = 0;
+    qint32 expungedNotebooks = 0;
+    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+    EXPECT_CALL(*mockCallback, onNotebooksProcessingProgress)
+        .WillRepeatedly([&](qint32 total, qint32 totalExpunged, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalNotebooks == 0 || totalNotebooks == total);
+            totalNotebooks = total;
+
+            EXPECT_TRUE(
+                totalExpungedNotebooks == 0 ||
+                totalExpungedNotebooks == totalExpunged);
+            totalExpungedNotebooks = totalExpunged;
+
+            addedNotebooks = added;
+            updatedNotebooks = updated;
+            expungedNotebooks = expunged;
+        });
+
+    auto future =
+        notebooksProcessor->processNotebooks(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNotebookGuids, expungedNotebookGuids);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalNotebooks(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalExpungedNotebooks(),
-        static_cast<quint64>(expungedNotebookGuids.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->addedNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->expungedNotebooks(),
-        static_cast<quint64>(expungedNotebookGuids.size()));
+    EXPECT_EQ(totalNotebooks, 0);
+    EXPECT_EQ(totalExpungedNotebooks, expungedNotebookGuids.size());
+    EXPECT_EQ(addedNotebooks, 0);
+    EXPECT_EQ(updatedNotebooks, 0);
+    EXPECT_EQ(expungedNotebooks, expungedNotebookGuids.size());
 }
 
 TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
@@ -323,8 +356,7 @@ TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
                .build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QList<qevercloud::Guid> processedNotebookGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNotebookByGuid)
@@ -333,24 +365,41 @@ TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
             return threading::makeReadyFuture();
         });
 
-    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    qint32 totalNotebooks = 0;
+    qint32 totalExpungedNotebooks = 0;
+    qint32 addedNotebooks = 0;
+    qint32 updatedNotebooks = 0;
+    qint32 expungedNotebooks = 0;
+    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+    EXPECT_CALL(*mockCallback, onNotebooksProcessingProgress)
+        .WillRepeatedly([&](qint32 total, qint32 totalExpunged, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalNotebooks == 0 || totalNotebooks == total);
+            totalNotebooks = total;
+
+            EXPECT_TRUE(
+                totalExpungedNotebooks == 0 ||
+                totalExpungedNotebooks == totalExpunged);
+            totalExpungedNotebooks = totalExpunged;
+
+            addedNotebooks = added;
+            updatedNotebooks = updated;
+            expungedNotebooks = expunged;
+        });
+
+    auto future =
+        notebooksProcessor->processNotebooks(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNotebookGuids, expungedNotebookGuids);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalNotebooks(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalExpungedNotebooks(),
-        static_cast<quint64>(expungedNotebookGuids.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->addedNotebooks(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->expungedNotebooks(),
-        static_cast<quint64>(expungedNotebookGuids.size()));
+    EXPECT_EQ(totalNotebooks, 0);
+    EXPECT_EQ(totalExpungedNotebooks, expungedNotebookGuids.size());
+    EXPECT_EQ(addedNotebooks, 0);
+    EXPECT_EQ(updatedNotebooks, 0);
+    EXPECT_EQ(expungedNotebooks, expungedNotebookGuids.size());
 }
 
 class NotebooksProcessorTestWithConflict :
@@ -535,10 +584,33 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
         << qevercloud::SyncChunkBuilder{}.setNotebooks(notebooks).build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    qint32 totalNotebooks = 0;
+    qint32 totalExpungedNotebooks = 0;
+    qint32 addedNotebooks = 0;
+    qint32 updatedNotebooks = 0;
+    qint32 expungedNotebooks = 0;
+    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+    EXPECT_CALL(*mockCallback, onNotebooksProcessingProgress)
+        .WillRepeatedly([&](qint32 total, qint32 totalExpunged, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalNotebooks == 0 || totalNotebooks == total);
+            totalNotebooks = total;
+
+            EXPECT_TRUE(
+                totalExpungedNotebooks == 0 ||
+                totalExpungedNotebooks == totalExpunged);
+            totalExpungedNotebooks = totalExpunged;
+
+            addedNotebooks = added;
+            updatedNotebooks = updated;
+            expungedNotebooks = expunged;
+        });
+
+    auto future =
+        notebooksProcessor->processNotebooks(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -557,11 +629,8 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
 
     EXPECT_EQ(notebooksPutIntoLocalStorage, notebooks);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalNotebooks(),
-        static_cast<quint64>(originalNotebooksSize));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedNotebooks(), 0UL);
+    EXPECT_EQ(totalNotebooks, originalNotebooksSize);
+    EXPECT_EQ(totalExpungedNotebooks, 0);
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
@@ -571,25 +640,20 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedNotebooks(),
-            static_cast<quint64>(originalNotebooksSize - 1));
+        EXPECT_EQ(addedNotebooks, originalNotebooksSize - 1);
 
         if (std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
         {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
+            EXPECT_EQ(updatedNotebooks, 0);
         }
         else {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 1UL);
+            EXPECT_EQ(updatedNotebooks, 1);
         }
     }
     else {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedNotebooks(),
-            static_cast<quint64>(originalNotebooksSize));
-
-        EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
+        EXPECT_EQ(addedNotebooks, originalNotebooksSize);
+        EXPECT_EQ(updatedNotebooks, 0);
     }
 }
 
@@ -742,10 +806,33 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
         << qevercloud::SyncChunkBuilder{}.setNotebooks(notebooks).build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    qint32 totalNotebooks = 0;
+    qint32 totalExpungedNotebooks = 0;
+    qint32 addedNotebooks = 0;
+    qint32 updatedNotebooks = 0;
+    qint32 expungedNotebooks = 0;
+    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+    EXPECT_CALL(*mockCallback, onNotebooksProcessingProgress)
+        .WillRepeatedly([&](qint32 total, qint32 totalExpunged, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalNotebooks == 0 || totalNotebooks == total);
+            totalNotebooks = total;
+
+            EXPECT_TRUE(
+                totalExpungedNotebooks == 0 ||
+                totalExpungedNotebooks == totalExpunged);
+            totalExpungedNotebooks = totalExpunged;
+
+            addedNotebooks = added;
+            updatedNotebooks = updated;
+            expungedNotebooks = expunged;
+        });
+
+    auto future =
+        notebooksProcessor->processNotebooks(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -764,11 +851,8 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
 
     EXPECT_EQ(notebooksPutIntoLocalStorage, notebooks);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalNotebooks(),
-        static_cast<quint64>(originalNotebooksSize));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedNotebooks(), 0UL);
+    EXPECT_EQ(totalNotebooks, originalNotebooksSize);
+    EXPECT_EQ(totalExpungedNotebooks, 0);
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
@@ -778,25 +862,20 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedNotebooks(),
-            static_cast<quint64>(originalNotebooksSize - 1));
+        EXPECT_EQ(addedNotebooks, originalNotebooksSize - 1);
 
         if (std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
         {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
+            EXPECT_EQ(updatedNotebooks, 0);
         }
         else {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 1UL);
+            EXPECT_EQ(updatedNotebooks, 1);
         }
     }
     else {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedNotebooks(),
-            static_cast<quint64>(originalNotebooksSize));
-
-        EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
+        EXPECT_EQ(addedNotebooks, originalNotebooksSize);
+        EXPECT_EQ(updatedNotebooks, 0);
     }
 }
 

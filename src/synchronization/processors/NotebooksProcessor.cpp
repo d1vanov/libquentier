@@ -35,13 +35,60 @@
 
 namespace quentier::synchronization {
 
+class NotebooksProcessor::NotebookCounters
+{
+public:
+    NotebookCounters(
+        const qint32 totalNotebooks, const qint32 totalNotebooksToExpunge,
+        INotebooksProcessor::ICallbackWeak callbackWeak) :
+        m_totalNotebooks{totalNotebooks},
+        m_totalNotebooksToExpunge{totalNotebooksToExpunge},
+        m_callbackWeak{std::move(callbackWeak)}
+    {}
+
+    void onAddedNotebook()
+    {
+        ++m_addedNotebooks;
+        notifyUpdate();
+    }
+
+    void onUpdatedNotebook()
+    {
+        ++m_updatedNotebooks;
+        notifyUpdate();
+    }
+
+    void onExpungedNotebook()
+    {
+        ++m_expungedNotebooks;
+        notifyUpdate();
+    }
+
+private:
+    void notifyUpdate()
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onNotebooksProcessingProgress(
+                m_totalNotebooks, m_totalNotebooksToExpunge, m_addedNotebooks,
+                m_updatedNotebooks, m_expungedNotebooks);
+        }
+    }
+
+private:
+    const qint32 m_totalNotebooks;
+    const qint32 m_totalNotebooksToExpunge;
+    const INotebooksProcessor::ICallbackWeak m_callbackWeak;
+
+    qint32 m_addedNotebooks{0};
+    qint32 m_updatedNotebooks{0};
+    qint32 m_expungedNotebooks{0};
+};
+
 NotebooksProcessor::NotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver,
-    SyncChunksDataCountersPtr syncChunksDataCounters) :
+    ISyncConflictResolverPtr syncConflictResolver) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)},
-    m_syncChunksDataCounters{std::move(syncChunksDataCounters)}
+    m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -54,16 +101,10 @@ NotebooksProcessor::NotebooksProcessor(
             "synchronization::NotebooksProcessor",
             "NotebooksProcessor ctor: sync conflict resolver is null")}};
     }
-
-    if (Q_UNLIKELY(!m_syncChunksDataCounters)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotebooksProcessor",
-            "NotebooksProcessor ctor: sync chuks data counters is null")}};
-    }
 }
 
 QFuture<void> NotebooksProcessor::processNotebooks(
-    const QList<qevercloud::SyncChunk> & syncChunks)
+    const QList<qevercloud::SyncChunk> & syncChunks, ICallbackWeak callbackWeak)
 {
     QNDEBUG(
         "synchronization::NotebooksProcessor",
@@ -80,12 +121,6 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 
     utils::filterOutExpungedItems(expungedNotebooks, notebooks);
 
-    m_syncChunksDataCounters->m_totalNotebooks =
-        static_cast<quint64>(std::max<int>(notebooks.size(), 0));
-
-    m_syncChunksDataCounters->m_totalExpungedNotebooks =
-        static_cast<quint64>(std::max<int>(expungedNotebooks.size(), 0));
-
     if (notebooks.isEmpty() && expungedNotebooks.isEmpty()) {
         QNDEBUG(
             "synchronization::NotebooksProcessor",
@@ -94,11 +129,16 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         return threading::makeReadyFuture();
     }
 
-    const int totalItemCount = notebooks.size() + expungedNotebooks.size();
+    const qint32 totalNotebooks = notebooks.size();
+    const qint32 totalExpungedNotebooks = expungedNotebooks.size();
+    const qint32 totalItemCount = totalNotebooks + totalExpungedNotebooks;
 
     const auto selfWeak = weak_from_this();
     QList<QFuture<void>> notebookFutures;
     notebookFutures.reserve(totalItemCount);
+
+    auto notebookCounters = std::make_shared<NotebookCounters>(
+        totalNotebooks, totalExpungedNotebooks, std::move(callbackWeak));
 
     for (const auto & notebook: qAsConst(notebooks)) {
         auto notebookPromise = std::make_shared<QPromise<void>>();
@@ -114,18 +154,19 @@ QFuture<void> NotebooksProcessor::processNotebooks(
             std::move(findNotebookByGuidFuture), notebookPromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, updatedNotebook = notebook,
-                 notebookPromise](const std::optional<qevercloud::Notebook> &
-                                      notebook) mutable {
+                [this, updatedNotebook = notebook, notebookPromise,
+                 notebookCounters](const std::optional<qevercloud::Notebook> &
+                                       notebook) mutable {
                     if (notebook) {
                         onFoundDuplicate(
-                            notebookPromise, std::move(updatedNotebook),
-                            *notebook);
+                            notebookPromise, notebookCounters,
+                            std::move(updatedNotebook), *notebook);
                         return;
                     }
 
                     tryToFindDuplicateByName(
-                        notebookPromise, std::move(updatedNotebook));
+                        notebookPromise, notebookCounters,
+                        std::move(updatedNotebook));
                 }});
     }
 
@@ -139,12 +180,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 
         auto thenFuture = threading::then(
             std::move(expungeNotebookFuture),
-            threading::TrackedTask{
-                selfWeak,
-                [this] {
-                    ++m_syncChunksDataCounters->m_expungedNotebooks;
-                    m_syncChunksDataCounters->notifyUpdate();
-                }});
+            [notebookCounters] { notebookCounters->onExpungedNotebook(); });
 
         threading::thenOrFailed(
             std::move(thenFuture), std::move(notebookPromise));
@@ -155,6 +191,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 
 void NotebooksProcessor::tryToFindDuplicateByName(
     const std::shared_ptr<QPromise<void>> & notebookPromise,
+    const std::shared_ptr<NotebookCounters> & notebookCounters,
     qevercloud::Notebook updatedNotebook)
 {
     Q_ASSERT(updatedNotebook.name());
@@ -169,11 +206,12 @@ void NotebooksProcessor::tryToFindDuplicateByName(
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, updatedNotebook = std::move(updatedNotebook),
-             notebookPromise = notebookPromise](
+             notebookPromise = notebookPromise, notebookCounters](
                 const std::optional<qevercloud::Notebook> & notebook) mutable {
                 if (notebook) {
                     onFoundDuplicate(
-                        notebookPromise, std::move(updatedNotebook), *notebook);
+                        notebookPromise, notebookCounters,
+                        std::move(updatedNotebook), *notebook);
                     return;
                 }
 
@@ -183,12 +221,9 @@ void NotebooksProcessor::tryToFindDuplicateByName(
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
                 auto thenFuture = threading::then(
-                    std::move(putNotebookFuture),
-                    threading::TrackedTask{
-                        selfWeak, [this] {
-                            ++m_syncChunksDataCounters->m_addedNotebooks;
-                            m_syncChunksDataCounters->notifyUpdate();
-                        }});
+                    std::move(putNotebookFuture), [notebookCounters] {
+                        notebookCounters->onAddedNotebook();
+                    });
 
                 threading::thenOrFailed(
                     std::move(thenFuture), std::move(notebookPromise));
@@ -197,6 +232,7 @@ void NotebooksProcessor::tryToFindDuplicateByName(
 
 void NotebooksProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<void>> & notebookPromise,
+    const std::shared_ptr<NotebookCounters> & notebookCounters,
     qevercloud::Notebook updatedNotebook, qevercloud::Notebook localNotebook)
 {
     using ConflictResolution = ISyncConflictResolver::ConflictResolution;
@@ -217,7 +253,7 @@ void NotebooksProcessor::onFoundDuplicate(
         [this, selfWeak, notebookPromise,
          updatedNotebook = std::move(updatedNotebook),
          localNotebookLocalId = std::move(localNotebookLocalId),
-         localNotebookLocallyFavorited](
+         localNotebookLocallyFavorited, notebookCounters](
             const NotebookConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
@@ -241,12 +277,9 @@ void NotebooksProcessor::onFoundDuplicate(
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
                 auto thenFuture = threading::then(
-                    std::move(putNotebookFuture),
-                    threading::TrackedTask{
-                        selfWeak, [this] {
-                            ++m_syncChunksDataCounters->m_updatedNotebooks;
-                            m_syncChunksDataCounters->notifyUpdate();
-                        }});
+                    std::move(putNotebookFuture), [notebookCounters] {
+                        notebookCounters->onUpdatedNotebook();
+                    });
 
                 threading::thenOrFailed(std::move(thenFuture), notebookPromise);
 
@@ -274,7 +307,7 @@ void NotebooksProcessor::onFoundDuplicate(
                     std::move(updateLocalNotebookFuture), notebookPromise,
                     threading::TrackedTask{
                         selfWeak,
-                        [this, selfWeak, notebookPromise,
+                        [this, selfWeak, notebookPromise, notebookCounters,
                          updatedNotebook =
                              std::move(updatedNotebook)]() mutable {
                             auto putNotebookFuture =
@@ -283,14 +316,8 @@ void NotebooksProcessor::onFoundDuplicate(
 
                             auto thenFuture = threading::then(
                                 std::move(putNotebookFuture),
-                                [selfWeak, notebookPromise]() mutable {
-                                    if (const auto self = selfWeak.lock()) {
-                                        ++self->m_syncChunksDataCounters
-                                              ->m_addedNotebooks;
-                                        self->m_syncChunksDataCounters
-                                            ->notifyUpdate();
-                                    }
-
+                                [notebookPromise, notebookCounters]() mutable {
+                                    notebookCounters->onAddedNotebook();
                                     notebookPromise->finish();
                                 });
 
