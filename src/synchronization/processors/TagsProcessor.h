@@ -33,7 +33,6 @@
 
 #include <qevercloud/types/TypeAliases.h>
 
-#include <memory>
 #include <optional>
 
 namespace quentier::synchronization {
@@ -45,17 +44,22 @@ class TagsProcessor final :
 public:
     explicit TagsProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver,
-        SyncChunksDataCountersPtr syncChunksDataCounters);
+        ISyncConflictResolverPtr syncConflictResolver);
 
     [[nodiscard]] QFuture<void> processTags(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak) override;
 
 private:
-    [[nodiscard]] QFuture<void> processTagsList(QList<qevercloud::Tag> tags);
+    class TagCounters;
+
+    [[nodiscard]] QFuture<void> processTagsList(
+        QList<qevercloud::Tag> tags,
+        const std::shared_ptr<TagCounters> & tagCounters);
 
     [[nodiscard]] QFuture<void> processExpungedTags(
-        QList<qevercloud::Guid> expungedTags);
+        QList<qevercloud::Guid> expungedTags,
+        const std::shared_ptr<TagCounters> & tagCounters);
 
     enum class CheckParentTag
     {
@@ -64,28 +68,28 @@ private:
     };
 
     [[nodiscard]] QFuture<void> processTag(
-        const QList<qevercloud::Tag> & tags,
-        int tagIndex,
+        const QList<qevercloud::Tag> & tags, int tagIndex,
+        const std::shared_ptr<TagCounters> & tagCounters,
         CheckParentTag checkParentTag = CheckParentTag::Yes);
 
     void processTagsOneByOne(
-        QList<qevercloud::Tag> tags,
-        int tagIndex,
-        QList<std::shared_ptr<QPromise<void>>> tagPromises);
+        QList<qevercloud::Tag> tags, int tagIndex,
+        QList<std::shared_ptr<QPromise<void>>> tagPromises,
+        const std::shared_ptr<TagCounters> & tagCounters);
 
     void tryToFindDuplicateByName(
         const std::shared_ptr<QPromise<void>> & tagPromise,
+        const std::shared_ptr<TagCounters> & tagCounters,
         qevercloud::Tag updatedTag);
 
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<void>> & tagPromise,
-        qevercloud::Tag updatedTag,
-        qevercloud::Tag localTag);
+        const std::shared_ptr<TagCounters> & tagCounters,
+        qevercloud::Tag updatedTag, qevercloud::Tag localTag);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
-    const SyncChunksDataCountersPtr m_syncChunksDataCounters;
 };
 
 } // namespace quentier::synchronization

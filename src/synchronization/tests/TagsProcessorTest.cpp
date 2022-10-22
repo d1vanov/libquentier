@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/TagsProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -32,6 +31,7 @@
 
 #include <QSet>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -45,6 +45,20 @@ namespace quentier::synchronization::tests {
 
 using testing::StrictMock;
 
+namespace {
+
+class MockICallback : public ITagsProcessor::ICallback
+{
+public:
+    MOCK_METHOD(
+        void, onTagsProcessingProgress,
+        (qint32 totalTags, qint32 totalTagsToExpunge, qint32 addedTags,
+         qint32 updatedTags, qint32 expungedTag),
+        (override));
+};
+
+} // namespace
+
 class TagsProcessorTest : public testing::Test
 {
 protected:
@@ -55,40 +69,28 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
-
-    const SyncChunksDataCountersPtr m_syncChunksDataCounters =
-        std::make_shared<SyncChunksDataCounters>();
 };
 
 TEST_F(TagsProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters));
+            m_mockLocalStorage, m_mockSyncConflictResolver));
 }
 
 TEST_F(TagsProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            nullptr, m_mockSyncConflictResolver, m_syncChunksDataCounters),
+            nullptr, m_mockSyncConflictResolver),
         InvalidArgument);
 }
 
 TEST_F(TagsProcessorTest, CtorNullSyncConflictResolver)
 {
     EXPECT_THROW(
-        const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, nullptr, m_syncChunksDataCounters),
-        InvalidArgument);
-}
-
-TEST_F(TagsProcessorTest, CtorNullSyncChunksDataCounters)
-{
-    EXPECT_THROW(
-        const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, nullptr),
+        const auto tagsProcessor =
+            std::make_shared<TagsProcessor>(m_mockLocalStorage, nullptr),
         InvalidArgument);
 }
 
@@ -98,18 +100,13 @@ TEST_F(TagsProcessorTest, ProcessSyncChunksWithoutTagsToProcess)
         << qevercloud::SyncChunkBuilder{}.build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = tagsProcessor->processTags(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    auto future = tagsProcessor->processTags(syncChunks, mockCallback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->addedTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->expungedTags(), 0UL);
 }
 
 TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
@@ -257,10 +254,32 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setTags(tags).build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = tagsProcessor->processTags(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalTags = 0;
+    qint32 totalTagsToExpunge = 0;
+    qint32 addedTags = 0;
+    qint32 updatedTags = 0;
+    qint32 expungedTags = 0;
+    EXPECT_CALL(*mockCallback, onTagsProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlTags, qint32 ttlTagsToExpunge,
+                            qint32 added, qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalTags == 0 || totalTags == ttlTags);
+            totalTags = ttlTags;
+
+            EXPECT_TRUE(
+                totalTagsToExpunge == 0 ||
+                totalTagsToExpunge == ttlTagsToExpunge);
+            totalTagsToExpunge = ttlTagsToExpunge;
+
+            addedTags = added;
+            updatedTags = updated;
+            expungedTags = expunged;
+        });
+
+    auto future = tagsProcessor->processTags(syncChunks, mockCallback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -271,18 +290,11 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
 
     EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalTags(),
-        static_cast<quint64>(tags.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedTags(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->addedTags(),
-        static_cast<quint64>(tags.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->expungedTags(), 0UL);
+    EXPECT_EQ(totalTags, tags.size());
+    EXPECT_EQ(totalTagsToExpunge, 0);
+    EXPECT_EQ(addedTags, tags.size());
+    EXPECT_EQ(updatedTags, 0);
+    EXPECT_EQ(expungedTags, 0);
 }
 
 TEST_F(TagsProcessorTest, ProcessExpungedTags)
@@ -297,8 +309,7 @@ TEST_F(TagsProcessorTest, ProcessExpungedTags)
                .build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QList<qevercloud::Guid> processedTagGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid)
@@ -307,24 +318,40 @@ TEST_F(TagsProcessorTest, ProcessExpungedTags)
             return threading::makeReadyFuture();
         });
 
-    auto future = tagsProcessor->processTags(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalTags = 0;
+    qint32 totalTagsToExpunge = 0;
+    qint32 addedTags = 0;
+    qint32 updatedTags = 0;
+    qint32 expungedTags = 0;
+    EXPECT_CALL(*mockCallback, onTagsProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlTags, qint32 ttlTagsToExpunge,
+                            qint32 added, qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalTags == 0 || totalTags == ttlTags);
+            totalTags = ttlTags;
+
+            EXPECT_TRUE(
+                totalTagsToExpunge == 0 ||
+                totalTagsToExpunge == ttlTagsToExpunge);
+            totalTagsToExpunge = ttlTagsToExpunge;
+
+            addedTags = added;
+            updatedTags = updated;
+            expungedTags = expunged;
+        });
+
+    auto future = tagsProcessor->processTags(syncChunks, mockCallback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedTagGuids, expungedTagGuids);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalTags(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalExpungedTags(),
-        static_cast<quint64>(expungedTagGuids.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->addedTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->expungedTags(),
-        static_cast<quint64>(expungedTagGuids.size()));
+    EXPECT_EQ(totalTags, 0);
+    EXPECT_EQ(totalTagsToExpunge, expungedTagGuids.size());
+    EXPECT_EQ(addedTags, 0);
+    EXPECT_EQ(updatedTags, 0);
+    EXPECT_EQ(expungedTags, expungedTagGuids.size());
 }
 
 TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
@@ -367,8 +394,7 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
                .build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QList<qevercloud::Guid> processedTagGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid)
@@ -377,24 +403,40 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
             return threading::makeReadyFuture();
         });
 
-    auto future = tagsProcessor->processTags(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalTags = 0;
+    qint32 totalTagsToExpunge = 0;
+    qint32 addedTags = 0;
+    qint32 updatedTags = 0;
+    qint32 expungedTags = 0;
+    EXPECT_CALL(*mockCallback, onTagsProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlTags, qint32 ttlTagsToExpunge,
+                            qint32 added, qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalTags == 0 || totalTags == ttlTags);
+            totalTags = ttlTags;
+
+            EXPECT_TRUE(
+                totalTagsToExpunge == 0 ||
+                totalTagsToExpunge == ttlTagsToExpunge);
+            totalTagsToExpunge = ttlTagsToExpunge;
+
+            addedTags = added;
+            updatedTags = updated;
+            expungedTags = expunged;
+        });
+
+    auto future = tagsProcessor->processTags(syncChunks, mockCallback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedTagGuids, expungedTagGuids);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalTags(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalExpungedTags(),
-        static_cast<quint64>(expungedTagGuids.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->addedTags(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->expungedTags(),
-        static_cast<quint64>(expungedTagGuids.size()));
+    EXPECT_EQ(totalTags, 0);
+    EXPECT_EQ(totalTagsToExpunge, expungedTagGuids.size());
+    EXPECT_EQ(addedTags, 0);
+    EXPECT_EQ(updatedTags, 0);
+    EXPECT_EQ(expungedTags, expungedTagGuids.size());
 }
 
 class TagsProcessorTestWithConflict :
@@ -578,10 +620,32 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
         << qevercloud::SyncChunkBuilder{}.setTags(tags).build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = tagsProcessor->processTags(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalTags = 0;
+    qint32 totalTagsToExpunge = 0;
+    qint32 addedTags = 0;
+    qint32 updatedTags = 0;
+    qint32 expungedTags = 0;
+    EXPECT_CALL(*mockCallback, onTagsProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlTags, qint32 ttlTagsToExpunge,
+                            qint32 added, qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalTags == 0 || totalTags == ttlTags);
+            totalTags = ttlTags;
+
+            EXPECT_TRUE(
+                totalTagsToExpunge == 0 ||
+                totalTagsToExpunge == ttlTagsToExpunge);
+            totalTagsToExpunge = ttlTagsToExpunge;
+
+            addedTags = added;
+            updatedTags = updated;
+            expungedTags = expunged;
+        });
+
+    auto future = tagsProcessor->processTags(syncChunks, mockCallback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -605,11 +669,8 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 
     EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalTags(),
-        static_cast<quint64>(originalTagsSize));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedTags(), 0UL);
+    EXPECT_EQ(totalTags, originalTagsSize);
+    EXPECT_EQ(totalTagsToExpunge, 0);
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
@@ -619,25 +680,20 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedTags(),
-            static_cast<quint64>(originalTagsSize - 1));
+        EXPECT_EQ(addedTags, originalTagsSize - 1);
 
         if (std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
         {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
+            EXPECT_EQ(updatedTags, 0);
         }
         else {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 1UL);
+            EXPECT_EQ(updatedTags, 1);
         }
     }
     else {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedTags(),
-            static_cast<quint64>(originalTagsSize));
-
-        EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
+        EXPECT_EQ(addedTags, originalTagsSize);
+        EXPECT_EQ(updatedTags, 0);
     }
 }
 
@@ -790,10 +846,32 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
         << qevercloud::SyncChunkBuilder{}.setTags(tags).build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_syncChunksDataCounters);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = tagsProcessor->processTags(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalTags = 0;
+    qint32 totalTagsToExpunge = 0;
+    qint32 addedTags = 0;
+    qint32 updatedTags = 0;
+    qint32 expungedTags = 0;
+    EXPECT_CALL(*mockCallback, onTagsProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlTags, qint32 ttlTagsToExpunge,
+                            qint32 added, qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(totalTags == 0 || totalTags == ttlTags);
+            totalTags = ttlTags;
+
+            EXPECT_TRUE(
+                totalTagsToExpunge == 0 ||
+                totalTagsToExpunge == ttlTagsToExpunge);
+            totalTagsToExpunge = ttlTagsToExpunge;
+
+            addedTags = added;
+            updatedTags = updated;
+            expungedTags = expunged;
+        });
+
+    auto future = tagsProcessor->processTags(syncChunks, mockCallback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -817,11 +895,8 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
 
     EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalTags(),
-        static_cast<quint64>(originalTagsSize));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedTags(), 0UL);
+    EXPECT_EQ(totalTags, originalTagsSize);
+    EXPECT_EQ(totalTagsToExpunge, 0);
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
@@ -831,25 +906,20 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedTags(),
-            static_cast<quint64>(originalTagsSize - 1));
+        EXPECT_EQ(addedTags, originalTagsSize - 1);
 
         if (std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
         {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
+            EXPECT_EQ(updatedTags, 0);
         }
         else {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 1UL);
+            EXPECT_EQ(updatedTags, 1);
         }
     }
     else {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedTags(),
-            static_cast<quint64>(originalTagsSize));
-
-        EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
+        EXPECT_EQ(addedTags, originalTagsSize);
+        EXPECT_EQ(updatedTags, 0);
     }
 }
 

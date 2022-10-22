@@ -19,7 +19,6 @@
 #include "TagsProcessor.h"
 #include "Utils.h"
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/sync_chunks/Utils.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -37,13 +36,60 @@
 
 namespace quentier::synchronization {
 
+class TagsProcessor::TagCounters
+{
+public:
+    TagCounters(
+        const qint32 totalTags, const qint32 totalTagsToExpunge,
+        ITagsProcessor::ICallbackWeakPtr callbackWeak) :
+        m_totalTags{totalTags},
+        m_totalExpungedTags{totalTagsToExpunge}, m_callbackWeak{
+                                                     std::move(callbackWeak)}
+    {}
+
+    void onAddedTag()
+    {
+        ++m_addedTags;
+        notifyUpdate();
+    }
+
+    void onUpdatedTag()
+    {
+        ++m_updatedTags;
+        notifyUpdate();
+    }
+
+    void onExpungedTag()
+    {
+        ++m_expungedTags;
+        notifyUpdate();
+    }
+
+private:
+    void notifyUpdate()
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onTagsProcessingProgress(
+                m_totalTags, m_totalExpungedTags, m_addedTags, m_updatedTags,
+                m_expungedTags);
+        }
+    }
+
+private:
+    const qint32 m_totalTags;
+    const qint32 m_totalExpungedTags;
+    const ITagsProcessor::ICallbackWeakPtr m_callbackWeak;
+
+    qint32 m_addedTags{0};
+    qint32 m_updatedTags{0};
+    qint32 m_expungedTags{0};
+};
+
 TagsProcessor::TagsProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver,
-    SyncChunksDataCountersPtr syncChunksDataCounters) :
+    ISyncConflictResolverPtr syncConflictResolver) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)},
-    m_syncChunksDataCounters{std::move(syncChunksDataCounters)}
+    m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -56,16 +102,11 @@ TagsProcessor::TagsProcessor(
             "synchronization::TagsProcessor",
             "TagsProcessor ctor: sync conflict resolver is null")}};
     }
-
-    if (Q_UNLIKELY(!m_syncChunksDataCounters)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::TagsProcessor",
-            "TagsProcessor ctor: sync chuks data counters is null")}};
-    }
 }
 
 QFuture<void> TagsProcessor::processTags(
-    const QList<qevercloud::SyncChunk> & syncChunks)
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG("synchronization::TagsProcessor", "TagsProcessor::processTags");
 
@@ -102,12 +143,6 @@ QFuture<void> TagsProcessor::processTags(
         ++it;
     }
 
-    m_syncChunksDataCounters->m_totalTags =
-        static_cast<quint64>(std::max<int>(tags.size(), 0));
-
-    m_syncChunksDataCounters->m_totalExpungedTags =
-        static_cast<quint64>(std::max<int>(expungedTags.size(), 0));
-
     if (tags.isEmpty() && expungedTags.isEmpty()) {
         QNDEBUG(
             "synchronization::TagsProcessor",
@@ -116,15 +151,23 @@ QFuture<void> TagsProcessor::processTags(
         return threading::makeReadyFuture();
     }
 
+    const qint32 totalTags = tags.size();
+    const qint32 totalTagsToExpunge = expungedTags.size();
+
+    const auto tagCounters = std::make_shared<TagCounters>(
+        totalTags, totalTagsToExpunge, std::move(callbackWeak));
+
     QList<QFuture<void>> futures;
     futures.reserve(2);
-    futures << processTagsList(std::move(tags));
-    futures << processExpungedTags(std::move(expungedTags));
+    futures << processTagsList(std::move(tags), tagCounters);
+    futures << processExpungedTags(std::move(expungedTags), tagCounters);
 
     return threading::whenAll(std::move(futures));
 }
 
-QFuture<void> TagsProcessor::processTagsList(QList<qevercloud::Tag> tags)
+QFuture<void> TagsProcessor::processTagsList(
+    QList<qevercloud::Tag> tags,
+    const std::shared_ptr<TagCounters> & tagCounters)
 {
     if (tags.isEmpty()) {
         return threading::makeReadyFuture();
@@ -149,12 +192,15 @@ QFuture<void> TagsProcessor::processTagsList(QList<qevercloud::Tag> tags)
         tagFutures << promise->future();
     }
 
-    processTagsOneByOne(std::move(tags), 0, std::move(tagPromises));
+    processTagsOneByOne(
+        std::move(tags), 0, std::move(tagPromises), tagCounters);
+
     return threading::whenAll(std::move(tagFutures));
 }
 
 QFuture<void> TagsProcessor::processExpungedTags(
-    QList<qevercloud::Guid> expungedTags)
+    QList<qevercloud::Guid> expungedTags,
+    const std::shared_ptr<TagCounters> & tagCounters)
 {
     if (expungedTags.isEmpty()) {
         return threading::makeReadyFuture();
@@ -171,14 +217,10 @@ QFuture<void> TagsProcessor::processExpungedTags(
 
         auto expungeTagFuture = m_localStorage->expungeTagByGuid(guid);
 
-        auto thenFuture = threading::then(
-            std::move(expungeTagFuture),
-            threading::TrackedTask{
-                selfWeak,
-                [this] {
-                    ++m_syncChunksDataCounters->m_expungedTags;
-                    m_syncChunksDataCounters->notifyUpdate();
-                }});
+        auto thenFuture =
+            threading::then(std::move(expungeTagFuture), [tagCounters] {
+                tagCounters->onExpungedTag();
+            });
 
         threading::thenOrFailed(std::move(thenFuture), std::move(tagPromise));
     }
@@ -188,6 +230,7 @@ QFuture<void> TagsProcessor::processExpungedTags(
 
 QFuture<void> TagsProcessor::processTag(
     const QList<qevercloud::Tag> & tags, int tagIndex,
+    const std::shared_ptr<TagCounters> & tagCounters,
     CheckParentTag checkParentTag)
 {
     if (Q_UNLIKELY(tagIndex < 0 || tagIndex >= tags.size())) {
@@ -210,7 +253,8 @@ QFuture<void> TagsProcessor::processTag(
         for (int i = 0; i < tagIndex; ++i) {
             if (tags[i].guid() == tag.parentGuid()) {
                 // Found parent of the currently processed tag
-                return processTag(tags, tagIndex, CheckParentTag::No);
+                return processTag(
+                    tags, tagIndex, tagCounters, CheckParentTag::No);
             }
         }
 
@@ -230,7 +274,7 @@ QFuture<void> TagsProcessor::processTag(
             std::move(findParentTagFuture), promise,
             threading::TrackedTask{
                 selfWeak,
-                [this, promise, tags = tags, tagIndex](
+                [this, promise, tags = tags, tagIndex, tagCounters](
                     const std::optional<qevercloud::Tag> & parentTag) mutable {
                     if (!parentTag) {
                         // Haven't found the parent tag, must clear parent guid
@@ -239,8 +283,8 @@ QFuture<void> TagsProcessor::processTag(
                         tags[tagIndex].setParentTagLocalId(QString{});
                     }
 
-                    auto processTagFuture =
-                        processTag(tags, tagIndex, CheckParentTag::No);
+                    auto processTagFuture = processTag(
+                        tags, tagIndex, tagCounters, CheckParentTag::No);
 
                     threading::thenOrFailed(
                         std::move(processTagFuture), std::move(promise));
@@ -264,14 +308,16 @@ QFuture<void> TagsProcessor::processTag(
         std::move(findTagFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [this, updatedTag = tag,
+            [this, updatedTag = tag, tagCounters,
              promise](const std::optional<qevercloud::Tag> & tag) mutable {
                 if (tag) {
-                    onFoundDuplicate(promise, std::move(updatedTag), *tag);
+                    onFoundDuplicate(
+                        promise, tagCounters, std::move(updatedTag), *tag);
                     return;
                 }
 
-                tryToFindDuplicateByName(promise, std::move(updatedTag));
+                tryToFindDuplicateByName(
+                    promise, tagCounters, std::move(updatedTag));
             }});
 
     return future;
@@ -279,19 +325,22 @@ QFuture<void> TagsProcessor::processTag(
 
 void TagsProcessor::processTagsOneByOne(
     QList<qevercloud::Tag> tags, int tagIndex,
-    QList<std::shared_ptr<QPromise<void>>> tagPromises)
+    QList<std::shared_ptr<QPromise<void>>> tagPromises,
+    const std::shared_ptr<TagCounters> & tagCounters)
 {
     Q_ASSERT(tags.size() == tagPromises.size());
 
     const auto selfWeak = weak_from_this();
 
-    auto processTagFuture = processTag(tags, tagIndex, CheckParentTag::Yes);
+    auto processTagFuture =
+        processTag(tags, tagIndex, tagCounters, CheckParentTag::Yes);
 
     auto thenFuture = threading::then(
         std::move(processTagFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, tags = std::move(tags), tagIndex, tagPromises]() mutable {
+            [this, tags = std::move(tags), tagIndex, tagPromises,
+             tagCounters]() mutable {
                 tagPromises[tagIndex]->finish();
 
                 ++tagIndex;
@@ -299,7 +348,7 @@ void TagsProcessor::processTagsOneByOne(
                     return;
                 }
 
-                processTagsOneByOne(tags, tagIndex, tagPromises);
+                processTagsOneByOne(tags, tagIndex, tagPromises, tagCounters);
             }});
 
     threading::onFailed(
@@ -312,6 +361,7 @@ void TagsProcessor::processTagsOneByOne(
 
 void TagsProcessor::tryToFindDuplicateByName(
     const std::shared_ptr<QPromise<void>> & tagPromise,
+    const std::shared_ptr<TagCounters> & tagCounters,
     qevercloud::Tag updatedTag)
 {
     Q_ASSERT(updatedTag.name());
@@ -326,10 +376,11 @@ void TagsProcessor::tryToFindDuplicateByName(
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, updatedTag = std::move(updatedTag),
-             tagPromise = tagPromise](
-                const std::optional<qevercloud::Tag> & tag) mutable {
+             tagPromise = tagPromise,
+             tagCounters](const std::optional<qevercloud::Tag> & tag) mutable {
                 if (tag) {
-                    onFoundDuplicate(tagPromise, std::move(updatedTag), *tag);
+                    onFoundDuplicate(
+                        tagPromise, tagCounters, std::move(updatedTag), *tag);
                     return;
                 }
 
@@ -338,14 +389,10 @@ void TagsProcessor::tryToFindDuplicateByName(
                 auto putTagFuture =
                     m_localStorage->putTag(std::move(updatedTag));
 
-                auto thenFuture = threading::then(
-                    std::move(putTagFuture),
-                    threading::TrackedTask{
-                        selfWeak,
-                        [this] {
-                            ++m_syncChunksDataCounters->m_addedTags;
-                            m_syncChunksDataCounters->notifyUpdate();
-                        }});
+                auto thenFuture =
+                    threading::then(std::move(putTagFuture), [tagCounters] {
+                        tagCounters->onAddedTag();
+                    });
 
                 threading::thenOrFailed(
                     std::move(thenFuture), std::move(tagPromise));
@@ -354,6 +401,7 @@ void TagsProcessor::tryToFindDuplicateByName(
 
 void TagsProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<void>> & tagPromise,
+    const std::shared_ptr<TagCounters> & tagCounters,
     qevercloud::Tag updatedTag, qevercloud::Tag localTag)
 {
     using ConflictResolution = ISyncConflictResolver::ConflictResolution;
@@ -369,7 +417,8 @@ void TagsProcessor::onFoundDuplicate(
 
     threading::thenOrFailed(
         std::move(statusFuture), tagPromise,
-        [this, selfWeak, tagPromise, updatedTag = std::move(updatedTag),
+        [this, selfWeak, tagPromise, tagCounters,
+         updatedTag = std::move(updatedTag),
          localTagLocalId = std::move(localTagLocalId),
          localTagLocallyFavorited](
             const TagConflictResolution & resolution) mutable {
@@ -392,17 +441,12 @@ void TagsProcessor::onFoundDuplicate(
                 auto putTagFuture =
                     m_localStorage->putTag(std::move(updatedTag));
 
-                auto thenFuture = threading::then(
-                    std::move(putTagFuture),
-                    threading::TrackedTask{
-                        selfWeak,
-                        [this] {
-                            ++m_syncChunksDataCounters->m_updatedTags;
-                            m_syncChunksDataCounters->notifyUpdate();
-                        }});
+                auto thenFuture =
+                    threading::then(std::move(putTagFuture), [tagCounters] {
+                        tagCounters->onUpdatedTag();
+                    });
 
                 threading::thenOrFailed(std::move(thenFuture), tagPromise);
-
                 return;
             }
 
@@ -426,21 +470,15 @@ void TagsProcessor::onFoundDuplicate(
                     std::move(updateLocalTagFuture), tagPromise,
                     threading::TrackedTask{
                         selfWeak,
-                        [this, selfWeak, tagPromise,
+                        [this, selfWeak, tagPromise, tagCounters,
                          updatedTag = std::move(updatedTag)]() mutable {
                             auto putTagFuture =
                                 m_localStorage->putTag(std::move(updatedTag));
 
                             auto thenFuture = threading::then(
                                 std::move(putTagFuture),
-                                [selfWeak, tagPromise]() mutable {
-                                    if (const auto self = selfWeak.lock()) {
-                                        ++self->m_syncChunksDataCounters
-                                              ->m_addedTags;
-                                        self->m_syncChunksDataCounters
-                                            ->notifyUpdate();
-                                    }
-
+                                [tagPromise, tagCounters] {
+                                    tagCounters->onAddedTag();
                                     tagPromise->finish();
                                 });
 

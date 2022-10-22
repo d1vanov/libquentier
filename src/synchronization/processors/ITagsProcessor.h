@@ -23,6 +23,8 @@
 #include <QFuture>
 #include <QList>
 
+#include <memory>
+
 namespace quentier::synchronization {
 
 class ITagsProcessor
@@ -30,8 +32,21 @@ class ITagsProcessor
 public:
     virtual ~ITagsProcessor() = default;
 
+    class ICallback
+    {
+    public:
+        virtual ~ICallback() = default;
+
+        virtual void onTagsProcessingProgress(
+            qint32 totalTags, qint32 totalTagsToExpunge, qint32 addedTags,
+            qint32 updatedTags, qint32 expungedTags) = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<void> processTags(
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization
