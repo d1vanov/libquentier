@@ -32,7 +32,6 @@
 
 #include <qevercloud/types/TypeAliases.h>
 
-#include <memory>
 #include <optional>
 
 namespace quentier::synchronization {
@@ -43,15 +42,14 @@ class LinkedNotebooksProcessor final :
 {
 public:
     explicit LinkedNotebooksProcessor(
-        local_storage::ILocalStoragePtr localStorage,
-        SyncChunksDataCountersPtr syncChunksDataCounters);
+        local_storage::ILocalStoragePtr localStorage);
 
     [[nodiscard]] QFuture<void> processLinkedNotebooks(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak) override;
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
-    const SyncChunksDataCountersPtr m_syncChunksDataCounters;
 };
 
 } // namespace quentier::synchronization

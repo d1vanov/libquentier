@@ -98,7 +98,7 @@ TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.build();
 
-    auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver);

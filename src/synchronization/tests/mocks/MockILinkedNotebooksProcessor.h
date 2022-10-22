@@ -29,7 +29,8 @@ class MockILinkedNotebooksProcessor : public ILinkedNotebooksProcessor
 public:
     MOCK_METHOD(
         QFuture<void>, processLinkedNotebooks,
-        (const QList<qevercloud::SyncChunk> & syncChunk), (override));
+        (const QList<qevercloud::SyncChunk> & syncChunk,
+         ICallbackWeakPtr callbackWeak), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks
