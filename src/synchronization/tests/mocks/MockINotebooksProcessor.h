@@ -30,7 +30,7 @@ public:
     MOCK_METHOD(
         QFuture<void>, processNotebooks,
         (const QList<qevercloud::SyncChunk> & syncChunks,
-         ICallbackWeak callbackWeak), (override));
+         ICallbackWeakPtr callbackWeak), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

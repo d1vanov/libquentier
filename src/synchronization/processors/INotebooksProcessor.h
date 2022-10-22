@@ -43,11 +43,11 @@ public:
             qint32 expungedNotebooks) = 0;
     };
 
-    using ICallbackWeak = std::weak_ptr<ICallback>;
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
     [[nodiscard]] virtual QFuture<void> processNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        ICallbackWeak callbackWeak) = 0;
+        ICallbackWeakPtr callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization

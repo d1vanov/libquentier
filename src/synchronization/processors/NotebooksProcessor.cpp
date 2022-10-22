@@ -40,7 +40,7 @@ class NotebooksProcessor::NotebookCounters
 public:
     NotebookCounters(
         const qint32 totalNotebooks, const qint32 totalNotebooksToExpunge,
-        INotebooksProcessor::ICallbackWeak callbackWeak) :
+        INotebooksProcessor::ICallbackWeakPtr callbackWeak) :
         m_totalNotebooks{totalNotebooks},
         m_totalNotebooksToExpunge{totalNotebooksToExpunge},
         m_callbackWeak{std::move(callbackWeak)}
@@ -77,7 +77,7 @@ private:
 private:
     const qint32 m_totalNotebooks;
     const qint32 m_totalNotebooksToExpunge;
-    const INotebooksProcessor::ICallbackWeak m_callbackWeak;
+    const INotebooksProcessor::ICallbackWeakPtr m_callbackWeak;
 
     qint32 m_addedNotebooks{0};
     qint32 m_updatedNotebooks{0};
@@ -104,7 +104,8 @@ NotebooksProcessor::NotebooksProcessor(
 }
 
 QFuture<void> NotebooksProcessor::processNotebooks(
-    const QList<qevercloud::SyncChunk> & syncChunks, ICallbackWeak callbackWeak)
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG(
         "synchronization::NotebooksProcessor",
