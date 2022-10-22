@@ -47,7 +47,7 @@ public:
 
     [[nodiscard]] virtual QFuture<void> processNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        ICallbackWeak callbackWeak = {}) = 0;
+        ICallbackWeak callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization

@@ -48,7 +48,7 @@ public:
 
     [[nodiscard]] QFuture<void> processNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
-        ICallbackWeak callbackWeak = {}) override;
+        ICallbackWeak callbackWeak) override;
 
 private:
     class NotebookCounters;

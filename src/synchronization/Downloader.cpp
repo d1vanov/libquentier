@@ -679,7 +679,9 @@ void Downloader::processUserOwnSyncChunks(
         }
     }
 
-    auto notebooksFuture = m_notebooksProcessor->processNotebooks(syncChunks);
+    auto notebooksFuture =
+        m_notebooksProcessor->processNotebooks(syncChunks, {});
+
     auto tagsFuture = m_tagsProcessor->processTags(syncChunks);
     auto savedSearchesFuture = m_savedSearchesProcessor->processSavedSearches(
         syncChunks);
