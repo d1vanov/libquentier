@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/SavedSearchesProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -31,6 +30,7 @@
 
 #include <QSet>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -43,6 +43,21 @@ namespace quentier::synchronization::tests {
 
 using testing::StrictMock;
 
+namespace {
+
+class MockICallback : public ISavedSearchesProcessor::ICallback
+{
+public:
+    MOCK_METHOD(
+        void, onSavedSearchesProcessingProgress,
+        (qint32 totalSavedSearches, qint32 totalSavedSearchesToExpunge,
+         qint32 addedSavedSearches, qint32 updatedSavedSearches,
+         qint32 expungedSavedSearches),
+        (override));
+};
+
+} // namespace
+
 class SavedSearchesProcessorTest : public testing::Test
 {
 protected:
@@ -53,9 +68,6 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
-
-    const SyncChunksDataCountersPtr m_syncChunksDataCounters =
-        std::make_shared<SyncChunksDataCounters>();
 };
 
 TEST_F(SavedSearchesProcessorTest, Ctor)
@@ -63,8 +75,7 @@ TEST_F(SavedSearchesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver,
-                m_syncChunksDataCounters));
+                m_mockLocalStorage, m_mockSyncConflictResolver));
 }
 
 TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
@@ -72,7 +83,7 @@ TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                nullptr, m_mockSyncConflictResolver, m_syncChunksDataCounters),
+                nullptr, m_mockSyncConflictResolver),
         InvalidArgument);
 }
 
@@ -81,16 +92,7 @@ TEST_F(SavedSearchesProcessorTest, CtorNullSyncConflictResolver)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, nullptr, m_syncChunksDataCounters),
-        InvalidArgument);
-}
-
-TEST_F(SavedSearchesProcessorTest, CtorNullSyncChunksDataCounters)
-{
-    EXPECT_THROW(
-        const auto savedSearchesProcessor =
-            std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver, nullptr),
+                m_mockLocalStorage, nullptr),
         InvalidArgument);
 }
 
@@ -102,18 +104,15 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    auto future =
+        savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->addedSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->expungedSavedSearches(), 0UL);
 }
 
 TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
@@ -209,27 +208,48 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalSavedSearches = 0;
+    qint32 totalSavedSearchesToExpunge = 0;
+    qint32 addedSavedSearches = 0;
+    qint32 updatedSavedSearches = 0;
+    qint32 expungedSavedSearches = 0;
+    EXPECT_CALL(*mockCallback, onSavedSearchesProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlSavedSearches,
+                            qint32 ttlSavedSearchesToExpunge, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(
+                totalSavedSearches == 0 ||
+                totalSavedSearches == ttlSavedSearches);
+            totalSavedSearches = ttlSavedSearches;
+
+            EXPECT_TRUE(
+                totalSavedSearchesToExpunge == 0 ||
+                totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
+            totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            addedSavedSearches = added;
+            updatedSavedSearches = updated;
+            expungedSavedSearches = expunged;
+        });
+
+    auto future =
+        savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalSavedSearches(),
-        static_cast<quint64>(savedSearches.size()));
+    EXPECT_EQ(totalSavedSearches, savedSearches.size());
+    EXPECT_EQ(totalSavedSearchesToExpunge, 0);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->addedSavedSearches(),
-        static_cast<quint64>(savedSearches.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->expungedSavedSearches(), 0UL);
+    EXPECT_EQ(addedSavedSearches, savedSearches.size());
+    EXPECT_EQ(updatedSavedSearches, 0);
+    EXPECT_EQ(expungedSavedSearches, 0);
 }
 
 TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
@@ -245,8 +265,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QList<qevercloud::Guid> processedSavedSearchGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
@@ -255,24 +274,46 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
             return threading::makeReadyFuture();
         });
 
-    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalSavedSearches = 0;
+    qint32 totalSavedSearchesToExpunge = 0;
+    qint32 addedSavedSearches = 0;
+    qint32 updatedSavedSearches = 0;
+    qint32 expungedSavedSearches = 0;
+    EXPECT_CALL(*mockCallback, onSavedSearchesProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlSavedSearches,
+                            qint32 ttlSavedSearchesToExpunge, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(
+                totalSavedSearches == 0 ||
+                totalSavedSearches == ttlSavedSearches);
+            totalSavedSearches = ttlSavedSearches;
+
+            EXPECT_TRUE(
+                totalSavedSearchesToExpunge == 0 ||
+                totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
+            totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            addedSavedSearches = added;
+            updatedSavedSearches = updated;
+            expungedSavedSearches = expunged;
+        });
+
+    auto future =
+        savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalSavedSearches(), 0UL);
+    EXPECT_EQ(totalSavedSearches, 0);
+    EXPECT_EQ(totalSavedSearchesToExpunge, expungedSavedSearchGuids.size());
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalExpungedSavedSearches(),
-        static_cast<quint64>(expungedSavedSearchGuids.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->addedSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->expungedSavedSearches(),
-        static_cast<quint64>(expungedSavedSearchGuids.size()));
+    EXPECT_EQ(addedSavedSearches, 0);
+    EXPECT_EQ(updatedSavedSearches, 0);
+    EXPECT_EQ(expungedSavedSearches, expungedSavedSearchGuids.size());
 }
 
 TEST_F(
@@ -318,8 +359,7 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QList<qevercloud::Guid> processedSavedSearchGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
@@ -328,24 +368,46 @@ TEST_F(
             return threading::makeReadyFuture();
         });
 
-    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalSavedSearches = 0;
+    qint32 totalSavedSearchesToExpunge = 0;
+    qint32 addedSavedSearches = 0;
+    qint32 updatedSavedSearches = 0;
+    qint32 expungedSavedSearches = 0;
+    EXPECT_CALL(*mockCallback, onSavedSearchesProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlSavedSearches,
+                            qint32 ttlSavedSearchesToExpunge, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(
+                totalSavedSearches == 0 ||
+                totalSavedSearches == ttlSavedSearches);
+            totalSavedSearches = ttlSavedSearches;
+
+            EXPECT_TRUE(
+                totalSavedSearchesToExpunge == 0 ||
+                totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
+            totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            addedSavedSearches = added;
+            updatedSavedSearches = updated;
+            expungedSavedSearches = expunged;
+        });
+
+    auto future =
+        savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
 
-    EXPECT_EQ(m_syncChunksDataCounters->totalSavedSearches(), 0UL);
+    EXPECT_EQ(totalSavedSearches, 0);
+    EXPECT_EQ(totalSavedSearchesToExpunge, expungedSavedSearchGuids.size());
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalExpungedSavedSearches(),
-        static_cast<quint64>(expungedSavedSearchGuids.size()));
-
-    EXPECT_EQ(m_syncChunksDataCounters->addedSavedSearches(), 0UL);
-    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
-
-    EXPECT_EQ(
-        m_syncChunksDataCounters->expungedSavedSearches(),
-        static_cast<quint64>(expungedSavedSearchGuids.size()));
+    EXPECT_EQ(addedSavedSearches, 0);
+    EXPECT_EQ(updatedSavedSearches, 0);
+    EXPECT_EQ(expungedSavedSearches, expungedSavedSearchGuids.size());
 }
 
 class SavedSearchesProcessorTestWithConflict :
@@ -522,10 +584,37 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalSavedSearches = 0;
+    qint32 totalSavedSearchesToExpunge = 0;
+    qint32 addedSavedSearches = 0;
+    qint32 updatedSavedSearches = 0;
+    qint32 expungedSavedSearches = 0;
+    EXPECT_CALL(*mockCallback, onSavedSearchesProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlSavedSearches,
+                            qint32 ttlSavedSearchesToExpunge, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(
+                totalSavedSearches == 0 ||
+                totalSavedSearches == ttlSavedSearches);
+            totalSavedSearches = ttlSavedSearches;
+
+            EXPECT_TRUE(
+                totalSavedSearchesToExpunge == 0 ||
+                totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
+            totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            addedSavedSearches = added;
+            updatedSavedSearches = updated;
+            expungedSavedSearches = expunged;
+        });
+
+    auto future =
+        savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -544,11 +633,8 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 
     EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalSavedSearches(),
-        static_cast<quint64>(originalSavedSearchesSize));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
+    EXPECT_EQ(totalSavedSearches, originalSavedSearchesSize);
+    EXPECT_EQ(totalSavedSearchesToExpunge, 0);
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
@@ -558,25 +644,20 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedSavedSearches(),
-            static_cast<quint64>(originalSavedSearchesSize - 1));
+        EXPECT_EQ(addedSavedSearches, originalSavedSearchesSize - 1);
 
         if (std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
         {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+            EXPECT_EQ(updatedSavedSearches, 0);
         }
         else {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 1UL);
+            EXPECT_EQ(updatedSavedSearches, 1);
         }
     }
     else {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedSavedSearches(),
-            static_cast<quint64>(originalSavedSearchesSize));
-
-        EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+        EXPECT_EQ(addedSavedSearches, originalSavedSearchesSize);
+        EXPECT_EQ(updatedSavedSearches, 0);
     }
 }
 
@@ -721,10 +802,37 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_syncChunksDataCounters);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
-    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
+
+    qint32 totalSavedSearches = 0;
+    qint32 totalSavedSearchesToExpunge = 0;
+    qint32 addedSavedSearches = 0;
+    qint32 updatedSavedSearches = 0;
+    qint32 expungedSavedSearches = 0;
+    EXPECT_CALL(*mockCallback, onSavedSearchesProcessingProgress)
+        .WillRepeatedly([&](qint32 ttlSavedSearches,
+                            qint32 ttlSavedSearchesToExpunge, qint32 added,
+                            qint32 updated, qint32 expunged) {
+            EXPECT_TRUE(
+                totalSavedSearches == 0 ||
+                totalSavedSearches == ttlSavedSearches);
+            totalSavedSearches = ttlSavedSearches;
+
+            EXPECT_TRUE(
+                totalSavedSearchesToExpunge == 0 ||
+                totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
+            totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            addedSavedSearches = added;
+            updatedSavedSearches = updated;
+            expungedSavedSearches = expunged;
+        });
+
+    auto future =
+        savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -743,11 +851,8 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
 
     EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
 
-    EXPECT_EQ(
-        m_syncChunksDataCounters->totalSavedSearches(),
-        static_cast<quint64>(originalSavedSearchesSize));
-
-    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
+    EXPECT_EQ(totalSavedSearches, originalSavedSearchesSize);
+    EXPECT_EQ(totalSavedSearchesToExpunge, 0);
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
@@ -757,25 +862,20 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedSavedSearches(),
-            static_cast<quint64>(originalSavedSearchesSize - 1));
+        EXPECT_EQ(addedSavedSearches, originalSavedSearchesSize - 1);
 
         if (std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
         {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+            EXPECT_EQ(updatedSavedSearches, 0);
         }
         else {
-            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 1UL);
+            EXPECT_EQ(updatedSavedSearches, 1);
         }
     }
     else {
-        EXPECT_EQ(
-            m_syncChunksDataCounters->addedSavedSearches(),
-            static_cast<quint64>(originalSavedSearchesSize));
-
-        EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+        EXPECT_EQ(addedSavedSearches, originalSavedSearchesSize);
+        EXPECT_EQ(updatedSavedSearches, 0);
     }
 }
 

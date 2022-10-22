@@ -138,7 +138,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     QList<QFuture<void>> notebookFutures;
     notebookFutures.reserve(totalItemCount);
 
-    auto notebookCounters = std::make_shared<NotebookCounters>(
+    const auto notebookCounters = std::make_shared<NotebookCounters>(
         totalNotebooks, totalExpungedNotebooks, std::move(callbackWeak));
 
     for (const auto & notebook: qAsConst(notebooks)) {

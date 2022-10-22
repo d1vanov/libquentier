@@ -29,7 +29,8 @@ class MockISavedSearchesProcessor : public ISavedSearchesProcessor
 public:
     MOCK_METHOD(
         QFuture<void>, processSavedSearches,
-        (const QList<qevercloud::SyncChunk> & syncChunks), (override));
+        (const QList<qevercloud::SyncChunk> & syncChunks,
+         ICallbackWeakPtr callbackWeak), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

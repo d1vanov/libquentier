@@ -684,7 +684,7 @@ void Downloader::processUserOwnSyncChunks(
 
     auto tagsFuture = m_tagsProcessor->processTags(syncChunks);
     auto savedSearchesFuture = m_savedSearchesProcessor->processSavedSearches(
-        syncChunks);
+        syncChunks, {});
 
     auto allFirstStageFuture = threading::whenAll(
         QList<QFuture<void>>{}

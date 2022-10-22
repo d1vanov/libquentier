@@ -23,6 +23,8 @@
 #include <QFuture>
 #include <QList>
 
+#include <memory>
+
 namespace quentier::synchronization {
 
 class ISavedSearchesProcessor
@@ -30,8 +32,22 @@ class ISavedSearchesProcessor
 public:
     virtual ~ISavedSearchesProcessor() = default;
 
+    class ICallback
+    {
+    public:
+        virtual ~ICallback() = default;
+
+        virtual void onSavedSearchesProcessingProgress(
+            qint32 totalSavedSearches, qint32 totalSavedSearchesToExpunge,
+            qint32 addedSavedSearches, qint32 updatedSavedSearches,
+            qint32 expungedSavedSearches) = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
     [[nodiscard]] virtual QFuture<void> processSavedSearches(
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization
