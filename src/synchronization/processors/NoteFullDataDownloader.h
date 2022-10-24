@@ -20,7 +20,6 @@
 
 #include <qevercloud/services/Fwd.h>
 
-#include <QAtomicInteger>
 #include <QMutex>
 #include <QQueue>
 
@@ -30,6 +29,7 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <atomic>
 #include <memory>
 
 namespace quentier::synchronization {
@@ -66,7 +66,7 @@ private:
     const qevercloud::INoteStorePtr m_noteStore;
     const quint32 m_maxInFlightDownloads;
 
-    QAtomicInteger<quint32> m_inFlightDownloads{0U};
+    std::atomic<quint32> m_inFlightDownloads{0U};
 
     QQueue<QueuedRequest> m_queuedRequests;
     QMutex m_queuedRequestsMutex;

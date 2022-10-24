@@ -41,7 +41,6 @@
 #include <QPointer>
 
 #include <algorithm>
-#include <type_traits>
 
 namespace quentier::synchronization {
 

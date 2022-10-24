@@ -54,7 +54,9 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
 
-    if (m_inFlightDownloads.loadAcquire() >= m_maxInFlightDownloads) {
+    if (m_inFlightDownloads.load(std::memory_order_acquire) >=
+        m_maxInFlightDownloads)
+    {
         // Already have too much requests in flight, will enqueue this one
         // and execute it later, when some of the previous requests are finished
         const QMutexLocker lock{&m_queuedRequestsMutex};
@@ -78,7 +80,7 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
     Q_ASSERT(promise);
     promise->start();
 
-    ++m_inFlightDownloads;
+    m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
     auto getNoteFuture = m_noteStore->getNoteWithResultSpecAsync(
         std::move(noteGuid),
@@ -124,8 +126,8 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
 
 void NoteFullDataDownloader::onNoteFullDataDownloadFinished()
 {
-    Q_ASSERT(m_inFlightDownloads > 0U);
-    --m_inFlightDownloads;
+    Q_ASSERT(m_inFlightDownloads.load(std::memory_order_acquire) > 0U);
+    m_inFlightDownloads.fetch_sub(1, std::memory_order_acq_rel);
 
     QueuedRequest request;
     {

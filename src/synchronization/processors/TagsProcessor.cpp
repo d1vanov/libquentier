@@ -33,6 +33,7 @@
 #include <qevercloud/types/SyncChunk.h>
 
 #include <algorithm>
+#include <atomic>
 
 namespace quentier::synchronization {
 
@@ -49,19 +50,19 @@ public:
 
     void onAddedTag()
     {
-        ++m_addedTags;
+        m_addedTags.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
     void onUpdatedTag()
     {
-        ++m_updatedTags;
+        m_updatedTags.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
     void onExpungedTag()
     {
-        ++m_expungedTags;
+        m_expungedTags.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
@@ -70,8 +71,10 @@ private:
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onTagsProcessingProgress(
-                m_totalTags, m_totalExpungedTags, m_addedTags, m_updatedTags,
-                m_expungedTags);
+                m_totalTags, m_totalExpungedTags,
+                m_addedTags.load(std::memory_order_acquire),
+                m_updatedTags.load(std::memory_order_acquire),
+                m_expungedTags.load(std::memory_order_acquire));
         }
     }
 
@@ -80,9 +83,9 @@ private:
     const qint32 m_totalExpungedTags;
     const ITagsProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    qint32 m_addedTags{0};
-    qint32 m_updatedTags{0};
-    qint32 m_expungedTags{0};
+    std::atomic<qint32> m_addedTags{0};
+    std::atomic<qint32> m_updatedTags{0};
+    std::atomic<qint32> m_expungedTags{0};
 };
 
 TagsProcessor::TagsProcessor(

@@ -32,6 +32,7 @@
 #include <qevercloud/types/SyncChunk.h>
 
 #include <algorithm>
+#include <atomic>
 
 namespace quentier::synchronization {
 
@@ -48,19 +49,19 @@ public:
 
     void onAddedNotebook()
     {
-        ++m_addedNotebooks;
+        m_addedNotebooks.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
     void onUpdatedNotebook()
     {
-        ++m_updatedNotebooks;
+        m_updatedNotebooks.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
     void onExpungedNotebook()
     {
-        ++m_expungedNotebooks;
+        m_expungedNotebooks.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
@@ -69,8 +70,10 @@ private:
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onNotebooksProcessingProgress(
-                m_totalNotebooks, m_totalNotebooksToExpunge, m_addedNotebooks,
-                m_updatedNotebooks, m_expungedNotebooks);
+                m_totalNotebooks, m_totalNotebooksToExpunge,
+                m_addedNotebooks.load(std::memory_order_acquire),
+                m_updatedNotebooks.load(std::memory_order_acquire),
+                m_expungedNotebooks.load(std::memory_order_acquire));
         }
     }
 
@@ -79,9 +82,9 @@ private:
     const qint32 m_totalNotebooksToExpunge;
     const INotebooksProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    qint32 m_addedNotebooks{0};
-    qint32 m_updatedNotebooks{0};
-    qint32 m_expungedNotebooks{0};
+    std::atomic<qint32> m_addedNotebooks{0};
+    std::atomic<qint32> m_updatedNotebooks{0};
+    std::atomic<qint32> m_expungedNotebooks{0};
 };
 
 NotebooksProcessor::NotebooksProcessor(

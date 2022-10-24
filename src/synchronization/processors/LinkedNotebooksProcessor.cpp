@@ -30,6 +30,7 @@
 #include <qevercloud/types/SyncChunk.h>
 
 #include <algorithm>
+#include <atomic>
 
 namespace quentier::synchronization {
 
@@ -49,13 +50,13 @@ public:
 
     void onProcessedLinkedNotebook()
     {
-        ++m_processedLinkedNotebooks;
+        m_processedLinkedNotebooks.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
     void onExpungedLinkedNotebook()
     {
-        ++m_expungedLinkedNotebooks;
+        m_expungedLinkedNotebooks.fetch_add(1, std::memory_order_acq_rel);
         notifyUpdate();
     }
 
@@ -65,7 +66,8 @@ private:
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebooksProcessingProgress(
                 m_totalLinkedNotebooks, m_totalLinkedNotebooksToExpunge,
-                m_processedLinkedNotebooks, m_expungedLinkedNotebooks);
+                m_processedLinkedNotebooks.load(std::memory_order_acquire),
+                m_expungedLinkedNotebooks.load(std::memory_order_acquire));
         }
     }
 
@@ -74,8 +76,8 @@ private:
     const qint32 m_totalLinkedNotebooksToExpunge;
     const ILinkedNotebooksProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    qint32 m_processedLinkedNotebooks{0};
-    qint32 m_expungedLinkedNotebooks{0};
+    std::atomic<qint32> m_processedLinkedNotebooks{0};
+    std::atomic<qint32> m_expungedLinkedNotebooks{0};
 };
 
 } // namespace
@@ -148,8 +150,7 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             m_localStorage->putLinkedNotebook(linkedNotebook);
 
         auto thenFuture = threading::then(
-            std::move(putLinkedNotebookFuture),
-            [linkedNotebookCounters] {
+            std::move(putLinkedNotebookFuture), [linkedNotebookCounters] {
                 linkedNotebookCounters->onProcessedLinkedNotebook();
             });
 
@@ -166,8 +167,7 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             m_localStorage->expungeLinkedNotebookByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeLinkedNotebookFuture),
-            [linkedNotebookCounters] {
+            std::move(expungeLinkedNotebookFuture), [linkedNotebookCounters] {
                 linkedNotebookCounters->onExpungedLinkedNotebook();
             });
 
