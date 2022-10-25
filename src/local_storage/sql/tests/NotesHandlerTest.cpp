@@ -417,7 +417,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
     QReadWriteLockPtr m_resourceDataFilesLock;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;

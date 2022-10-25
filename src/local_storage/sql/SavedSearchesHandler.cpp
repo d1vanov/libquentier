@@ -47,7 +47,7 @@ namespace quentier::local_storage::sql {
 
 SavedSearchesHandler::SavedSearchesHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    Notifier * notifier, QThreadPtr writerThread) :
+    Notifier * notifier, threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool}, m_notifier{notifier}, m_writerThread{
                                                         std::move(writerThread)}

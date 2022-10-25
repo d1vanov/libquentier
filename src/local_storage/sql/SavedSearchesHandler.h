@@ -21,6 +21,8 @@
 #include "ISavedSearchesHandler.h"
 #include "Transaction.h"
 
+#include <quentier/threading/Fwd.h>
+
 #include <memory>
 
 namespace quentier::local_storage::sql {
@@ -32,7 +34,7 @@ class SavedSearchesHandler final :
 public:
     explicit SavedSearchesHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        Notifier * notifier, QThreadPtr writerThread);
+        Notifier * notifier, threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> savedSearchCount() const override;
 
@@ -87,7 +89,7 @@ private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     Notifier * m_notifier;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql

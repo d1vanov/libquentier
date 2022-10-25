@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 
 namespace quentier::local_storage::sql {
 
-NotifierProxy::NotifierProxy(QThreadPtr writerThread) :
+NotifierProxy::NotifierProxy(threading::QThreadPtr writerThread) :
     m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(!m_writerThread)) {

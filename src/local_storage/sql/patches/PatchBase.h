@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 #include "../Fwd.h"
 
 #include <quentier/local_storage/IPatch.h>
+#include <quentier/threading/Fwd.h>
 
 #include <QCoreApplication>
 #include <QDir>
@@ -45,7 +46,7 @@ class Q_DECL_HIDDEN PatchBase :
     Q_DECLARE_TR_FUNCTIONS(PatchBase)
 protected:
     explicit PatchBase(
-        ConnectionPoolPtr connectionPool, QThreadPtr writerThread,
+        ConnectionPoolPtr connectionPool, threading::QThreadPtr writerThread,
         const QString & localStorageDirPath, const QString & backupDirPath);
 
 public:
@@ -79,7 +80,7 @@ protected:
     ConnectionPoolPtr m_connectionPool;
     QDir m_localStorageDir;
     QDir m_backupDir;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql

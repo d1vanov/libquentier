@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ class Q_DECL_HIDDEN Patch2To3 final : public PatchBase
 public:
     explicit Patch2To3(
         Account account, ConnectionPoolPtr connectionPool,
-        QThreadPtr writerThread);
+        threading::QThreadPtr writerThread);
 
     ~Patch2To3() noexcept override = default;
 

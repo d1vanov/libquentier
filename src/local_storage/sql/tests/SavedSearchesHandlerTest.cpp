@@ -121,7 +121,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
     Notifier * m_notifier;
 };
 

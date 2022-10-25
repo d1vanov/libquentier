@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,8 +36,8 @@
 namespace quentier::local_storage::sql {
 
 PatchBase::PatchBase(
-    ConnectionPoolPtr connectionPool, QThreadPtr writerThread,
-    const QString & localStorageDirPath, const QString & backupDirPath) :
+    ConnectionPoolPtr connectionPool, threading::QThreadPtr writerThread,
+    const QString & localStorageDirPath, const QString & backupDirPath) : // NOLINT
     m_connectionPool{std::move(connectionPool)},
     m_localStorageDir{localStorageDirPath},
     m_backupDir{backupDirPath},

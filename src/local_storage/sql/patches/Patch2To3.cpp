@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,7 +69,7 @@ const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
 
 Patch2To3::Patch2To3(
     Account account, ConnectionPoolPtr connectionPool,
-    QThreadPtr writerThread) :
+    threading::QThreadPtr writerThread) :
     PatchBase(
         std::move(connectionPool), std::move(writerThread),
         accountPersistentStoragePath(account),

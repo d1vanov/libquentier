@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,7 +44,7 @@ namespace quentier::local_storage::sql {
 
 VersionHandler::VersionHandler(
     Account account, ConnectionPoolPtr connectionPool,
-    QThreadPool * threadPool, QThreadPtr writerThread) :
+    QThreadPool * threadPool, threading::QThreadPtr writerThread) :
     m_account{std::move(account)},
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},

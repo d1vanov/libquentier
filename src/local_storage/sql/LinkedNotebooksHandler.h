@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,8 @@
 
 #include "ILinkedNotebooksHandler.h"
 
+#include <quentier/threading/Fwd.h>
+
 #include <QDir>
 #include <QtGlobal>
 
@@ -35,7 +37,7 @@ class LinkedNotebooksHandler final :
 public:
     explicit LinkedNotebooksHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        Notifier * notifier, QThreadPtr writerThread,
+        Notifier * notifier, threading::QThreadPtr writerThread,
         const QString & localStorageDirPath);
 
     [[nodiscard]] QFuture<quint32> linkedNotebookCount() const override;
@@ -80,7 +82,7 @@ private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     Notifier * m_notifier;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
     QDir m_localStorageDir;
 };
 

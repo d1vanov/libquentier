@@ -21,6 +21,7 @@
 #include "ITagsHandler.h"
 #include "utils/Common.h"
 
+#include <quentier/threading/Fwd.h>
 #include <quentier/utility/StringUtils.h>
 
 #include <memory>
@@ -34,7 +35,7 @@ class TagsHandler final :
 public:
     explicit TagsHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        Notifier * notifier, QThreadPtr writerThread);
+        Notifier * notifier, threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> tagCount() const override;
     [[nodiscard]] QFuture<void> putTag(qevercloud::Tag tag) override;
@@ -130,7 +131,7 @@ private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     Notifier * m_notifier;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
 
     StringUtils m_stringUtils;
 };

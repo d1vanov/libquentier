@@ -21,6 +21,8 @@
 #include "INotesHandler.h"
 #include "Transaction.h"
 
+#include <quentier/threading/Fwd.h>
+
 #include <QDir>
 #include <QReadWriteLock>
 #include <QtGlobal>
@@ -38,7 +40,7 @@ class NotesHandler final :
 public:
     explicit NotesHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        Notifier * notifier, QThreadPtr writerThread,
+        Notifier * notifier, threading::QThreadPtr writerThread,
         const QString & localStorageDirPath,
         QReadWriteLockPtr resourceDataFilesLock);
 
@@ -224,7 +226,7 @@ private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     Notifier * m_notifier;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
     QDir m_localStorageDir;
     QReadWriteLockPtr m_resourceDataFilesLock;
 };

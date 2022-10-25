@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -63,7 +63,5 @@ class Transaction;
 struct TaskContext;
 
 using QReadWriteLockPtr = std::shared_ptr<QReadWriteLock>;
-
-using QThreadPtr = std::shared_ptr<QThread>;
 
 } // namespace quentier::local_storage::sql

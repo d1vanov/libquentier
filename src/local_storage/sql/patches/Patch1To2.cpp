@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -86,7 +86,7 @@ bool extractEntry(
 
 Patch1To2::Patch1To2(
     Account account, ConnectionPoolPtr connectionPool,
-    QThreadPtr writerThread) :
+    threading::QThreadPtr writerThread) :
     PatchBase(
         std::move(connectionPool), std::move(writerThread),
         accountPersistentStoragePath(account),
@@ -626,7 +626,7 @@ QStringList Patch1To2::listResourceLocalIds(
 
         errorDescription.details() = query.lastError().text();
         QNWARNING("tests:local_storage", errorDescription);
-        return QStringList();
+        return {};
     }
 
     QStringList resourceLocalIds;

@@ -140,7 +140,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,8 +49,10 @@ struct HighUsnRequestData
     HighUsnRequestData(
         QString tableName, QString usnColumnName, QString queryCondition) :
         m_tableName{std::move(tableName)},
-        m_usnColumnName{std::move(usnColumnName)}, m_queryCondition{std::move(
-                                                       queryCondition)}
+        // clang-format off
+        m_usnColumnName{std::move(usnColumnName)},
+        m_queryCondition{std::move(queryCondition)}
+        // clang-format on
     {}
 
     QString m_tableName;
@@ -62,7 +64,7 @@ struct HighUsnRequestData
 
 SynchronizationInfoHandler::SynchronizationInfoHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    QThreadPtr writerThread) :
+    threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool}, m_writerThread{std::move(writerThread)}
 {

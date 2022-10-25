@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,7 +52,7 @@ namespace quentier::local_storage::sql {
 
 UsersHandler::UsersHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    Notifier * notifier, QThreadPtr writerThread) :
+    Notifier * notifier, threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},
     m_notifier{notifier},

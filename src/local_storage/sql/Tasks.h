@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,7 @@
 
 #include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/threading/Fwd.h>
 #include <quentier/threading/Post.h>
 #include <quentier/threading/Runnable.h>
 #include <quentier/types/ErrorString.h>
@@ -46,29 +47,34 @@ namespace quentier::local_storage::sql {
 namespace {
 
 template <class T, class Enable = void>
-struct isOptional : std::false_type {};
+struct isOptional : std::false_type
+{};
 
 template <class T>
-struct isOptional<std::optional<T> > : std::true_type {};
+struct isOptional<std::optional<T>> : std::true_type
+{};
 
 template <class T, class Enable = void>
-struct isList : std::false_type {};
+struct isList : std::false_type
+{};
 
 template <class T>
-struct isList<QList<T>> : std::true_type {};
+struct isList<QList<T>> : std::true_type
+{};
 
 template <>
-struct isList<QStringList> : std::true_type {};
+struct isList<QStringList> : std::true_type
+{};
 
 } // namespace
 
 struct TaskContext
 {
-    QThreadPool *       m_threadPool = nullptr;
-    QThreadPtr          m_writerThread;
-    ConnectionPoolPtr   m_connectionPool;
-    ErrorString         m_holderIsDeadErrorMessage;
-    ErrorString         m_requestCanceledErrorMessage;
+    QThreadPool * m_threadPool = nullptr;
+    threading::QThreadPtr m_writerThread;
+    ConnectionPoolPtr m_connectionPool;
+    ErrorString m_holderIsDeadErrorMessage;
+    ErrorString m_requestCanceledErrorMessage;
 };
 
 template <class ResultType, class FunctionType, class HolderType>
@@ -86,8 +92,7 @@ QFuture<ResultType> makeReadTask(
 
     auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
-         taskContext = std::move(taskContext), f = std::move(f)] () mutable
-        {
+         taskContext = std::move(taskContext), f = std::move(f)]() mutable {
             const auto holder = holder_weak.lock();
             if (!holder) {
                 promise->setException(RuntimeError{
@@ -157,29 +162,27 @@ QFuture<ResultType> makeWriteTask(
     threading::postToThread(
         writerThread,
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
-         taskContext = std::move(taskContext), f = std::move(f)] () mutable
-         {
-             const auto holder = holder_weak.lock();
-             if (!holder) {
-                 promise->setException(RuntimeError{
-                     std::move(taskContext.m_holderIsDeadErrorMessage)});
-                 promise->finish();
-                 return;
-             }
+         taskContext = std::move(taskContext), f = std::move(f)]() mutable {
+            const auto holder = holder_weak.lock();
+            if (!holder) {
+                promise->setException(RuntimeError{
+                    std::move(taskContext.m_holderIsDeadErrorMessage)});
+                promise->finish();
+                return;
+            }
 
-             auto databaseConnection = taskContext.m_connectionPool->database();
+            auto databaseConnection = taskContext.m_connectionPool->database();
 
-             ErrorString errorDescription;
-             const bool res = f(
-                 *holder, databaseConnection, errorDescription);
+            ErrorString errorDescription;
+            const bool res = f(*holder, databaseConnection, errorDescription);
 
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
+            if (!res) {
+                promise->setException(
+                    DatabaseRequestException{errorDescription});
+            }
 
-             promise->finish();
-         });
+            promise->finish();
+        });
 
     return future;
 }

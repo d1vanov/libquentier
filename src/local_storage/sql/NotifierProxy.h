@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/ILocalStorage.h>
+#include <quentier/threading/Fwd.h>
 
 namespace quentier::local_storage::sql {
 
@@ -37,7 +38,7 @@ namespace quentier::local_storage::sql {
 class NotifierProxy
 {
 public:
-    explicit NotifierProxy(QThreadPtr writerThread);
+    explicit NotifierProxy(threading::QThreadPtr writerThread);
     ~NotifierProxy();
 
     // For subscription to signals
@@ -79,7 +80,7 @@ public:
     void notifySavedSearchExpunged(QString savedSearchLocalId);
 
 private:
-    const QThreadPtr m_writerThread;
+    const threading::QThreadPtr m_writerThread;
     Notifier * m_notifier;
 };
 

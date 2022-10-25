@@ -47,7 +47,7 @@ namespace quentier::local_storage::sql {
 
 LinkedNotebooksHandler::LinkedNotebooksHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    Notifier * notifier, QThreadPtr writerThread,
+    Notifier * notifier, threading::QThreadPtr writerThread,
     const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool}, m_notifier{notifier},

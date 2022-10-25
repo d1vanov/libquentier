@@ -146,6 +146,7 @@ set(SYNCHRONIZATION_HEADERS
 
 set(THREADING_HEADERS
     headers/quentier/threading/Future.h
+    headers/quentier/threading/Fwd.h
     headers/quentier/threading/Post.h
     headers/quentier/threading/QtFutureContinuations.h
     headers/quentier/threading/Runnable.h

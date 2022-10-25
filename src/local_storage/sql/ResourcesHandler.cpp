@@ -51,7 +51,7 @@ namespace quentier::local_storage::sql {
 
 ResourcesHandler::ResourcesHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    Notifier * notifier, QThreadPtr writerThread,
+    Notifier * notifier, threading::QThreadPtr writerThread,
     const QString & localStorageDirPath,
     QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},

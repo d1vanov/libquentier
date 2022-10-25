@@ -17,6 +17,7 @@
  */
 
 #include <quentier/local_storage/ILocalStorage.h>
+#include <quentier/threading/Fwd.h>
 
 #include <local_storage/sql/ConnectionPool.h>
 #include <local_storage/sql/LinkedNotebooksHandler.h>
@@ -1054,7 +1055,7 @@ ILocalStoragePtr createSqliteLocalStorage(
 
     auto resourceDataFilesLock = std::make_shared<QReadWriteLock>();
 
-    sql::QThreadPtr writerThread;
+    threading::QThreadPtr writerThread;
     {
         auto deleter = [](QThread * thread) {
             thread->quit();
@@ -1063,7 +1064,7 @@ ILocalStoragePtr createSqliteLocalStorage(
         auto writerThreadUnique = std::make_unique<QThread>();
 
         writerThread =
-            sql::QThreadPtr{writerThreadUnique.get(), std::move(deleter)};
+            threading::QThreadPtr{writerThreadUnique.get(), std::move(deleter)};
 
         Q_UNUSED(writerThreadUnique.release());
     }

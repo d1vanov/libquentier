@@ -153,7 +153,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
     QReadWriteLockPtr m_resourceDataFilesLock;
     Notifier * m_notifier;
     QTemporaryDir m_temporaryDir;

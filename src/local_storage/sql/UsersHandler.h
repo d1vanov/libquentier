@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,8 @@
 #pragma once
 
 #include "IUsersHandler.h"
+
+#include <quentier/threading/Fwd.h>
 
 #include <QtGlobal>
 
@@ -42,7 +44,7 @@ class UsersHandler final:
 public:
     explicit UsersHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        Notifier * notifier, QThreadPtr writerThread);
+        Notifier * notifier, threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> userCount() const override;
     [[nodiscard]] QFuture<void> putUser(qevercloud::User user) override;
@@ -81,7 +83,7 @@ private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     Notifier * m_notifier;
-    QThreadPtr m_writerThread;
+    threading::QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql
