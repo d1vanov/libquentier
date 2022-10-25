@@ -29,6 +29,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/threading/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QFlags>
@@ -754,6 +755,6 @@ public:
 
 [[nodiscard]] QUENTIER_EXPORT ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
-    QThreadPool * threadPool);
+    threading::QThreadPoolPtr threadPool);
 
 } // namespace quentier::local_storage

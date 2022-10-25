@@ -36,7 +36,7 @@ class ResourcesHandler final :
 {
 public:
     explicit ResourcesHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         Notifier * notifier, threading::QThreadPtr writerThread,
         const QString & localStorageDirPath,
         QReadWriteLockPtr resourceDataFilesLock);
@@ -92,7 +92,7 @@ private:
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
     threading::QThreadPtr m_writerThread;
     QDir m_localStorageDir;

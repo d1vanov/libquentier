@@ -46,13 +46,15 @@
 namespace quentier::local_storage::sql {
 
 LinkedNotebooksHandler::LinkedNotebooksHandler(
-    ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
     Notifier * notifier, threading::QThreadPtr writerThread,
     const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool}, m_notifier{notifier},
-    m_writerThread{std::move(writerThread)}, m_localStorageDir{
-                                                 localStorageDirPath}
+    // clang-format off
+    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
+    m_writerThread{std::move(writerThread)},
+    m_localStorageDir{localStorageDirPath}
+    // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(

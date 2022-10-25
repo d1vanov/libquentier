@@ -37,13 +37,13 @@ class ErrorString;
 
 namespace quentier::local_storage::sql {
 
-class UsersHandler final:
+class UsersHandler final :
     public IUsersHandler,
     public std::enable_shared_from_this<UsersHandler>
 {
 public:
     explicit UsersHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         Notifier * notifier, threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> userCount() const override;
@@ -81,7 +81,7 @@ private:
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
     threading::QThreadPtr m_writerThread;
 };

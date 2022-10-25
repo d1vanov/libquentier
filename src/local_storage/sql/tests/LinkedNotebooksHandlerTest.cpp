@@ -118,6 +118,11 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+        {
+            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
+            m_threadPool = std::shared_ptr<QThreadPool>(
+                QThreadPool::globalInstance(), std::move(nullDeleter));
+        }
 
         m_notifier = new Notifier;
         m_notifier->moveToThread(m_writerThread.get());
@@ -141,6 +146,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     threading::QThreadPtr m_writerThread;
+    threading::QThreadPoolPtr m_threadPool;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
 };
@@ -152,7 +158,7 @@ TEST_F(LinkedNotebooksHandlerTest, Ctor)
     EXPECT_NO_THROW(
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_connectionPool, m_threadPool, m_notifier,
                 m_writerThread, m_temporaryDir.path()));
 }
 
@@ -161,7 +167,7 @@ TEST_F(LinkedNotebooksHandlerTest, CtorNullConnectionPool)
     EXPECT_THROW(
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                nullptr, QThreadPool::globalInstance(), m_notifier,
+                nullptr, m_threadPool, m_notifier,
                 m_writerThread, m_temporaryDir.path()),
         IQuentierException);
 }
@@ -181,7 +187,7 @@ TEST_F(LinkedNotebooksHandlerTest, CtorNullNotifier)
     EXPECT_THROW(
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), nullptr,
+                m_connectionPool, m_threadPool, nullptr,
                 m_writerThread, m_temporaryDir.path()),
         IQuentierException);
 }
@@ -191,7 +197,7 @@ TEST_F(LinkedNotebooksHandlerTest, CtorNullWriterThread)
     EXPECT_THROW(
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_connectionPool, m_threadPool, m_notifier,
                 nullptr, m_temporaryDir.path()),
         IQuentierException);
 }
@@ -202,7 +208,7 @@ TEST_F(
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     auto linkedNotebookCountFuture =
@@ -215,7 +221,7 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldNotFindNonexistentLinkedNotebookByGuid)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     auto linkedNotebookFuture =
@@ -233,7 +239,7 @@ TEST_F(
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     auto expungeLinkedNotebookFuture =
@@ -249,7 +255,7 @@ TEST_F(
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     const auto listLinkedNotebooksOptions =
@@ -266,7 +272,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     LinkedNotebooksHandlerTestNotifierListener notifierListener;
@@ -346,7 +352,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     LinkedNotebooksHandlerTestNotifierListener notifierListener;

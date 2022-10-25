@@ -127,6 +127,11 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+        {
+            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
+            m_threadPool = std::shared_ptr<QThreadPool>(
+                QThreadPool::globalInstance(), std::move(nullDeleter));
+        }
 
         m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
 
@@ -202,7 +207,7 @@ public:
         }
 
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, testData.m_localStorageDirPath,
             m_resourceDataFilesLock);
 
@@ -235,7 +240,7 @@ public:
         testData.m_note.setUpdated(now);
 
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, testData.m_localStorageDirPath,
             m_resourceDataFilesLock);
 
@@ -358,7 +363,7 @@ public:
         }
 
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, testData.m_localStorageDirPath,
             m_resourceDataFilesLock);
 
@@ -500,6 +505,7 @@ public:
 protected:
     ConnectionPoolPtr m_connectionPool;
     threading::QThreadPtr m_writerThread;
+    threading::QThreadPoolPtr m_threadPool;
     QReadWriteLockPtr m_resourceDataFilesLock;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
@@ -622,7 +628,7 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     }
 
     const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, QThreadPool::globalInstance(),
+        account, m_connectionPool, m_threadPool,
         m_writerThread);
 
     auto versionFuture = versionHandler->version();
@@ -636,7 +642,7 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     EXPECT_NO_THROW(applyFuture.waitForFinished());
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, testData.m_localStorageDirPath,
         m_resourceDataFilesLock);
 
@@ -652,7 +658,7 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     EXPECT_EQ(findNotebookFuture.result(), testData.m_notebook);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, testData.m_localStorageDirPath,
         m_resourceDataFilesLock);
 
@@ -687,7 +693,7 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     EXPECT_EQ(findNoteFuture.result(), testNoteCopy);
 
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, testData.m_localStorageDirPath,
         m_resourceDataFilesLock);
 

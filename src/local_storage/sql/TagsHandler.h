@@ -34,7 +34,7 @@ class TagsHandler final :
 {
 public:
     explicit TagsHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         Notifier * notifier, threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> tagCount() const override;
@@ -55,8 +55,7 @@ public:
         ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
-        QString noteLocalId,
-        ListTagsOptions options = {}) const override;
+        QString noteLocalId, ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QSet<qevercloud::Guid>> listTagGuids(
         ListGuidsFilters filters,
@@ -129,7 +128,7 @@ private:
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
     threading::QThreadPtr m_writerThread;
 

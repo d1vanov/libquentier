@@ -306,7 +306,7 @@ void removeDirWithLog(const QString & dirPath)
 } // namespace
 
 SyncChunksStorage::SyncChunksStorage(
-    const QDir & rootDir, QThreadPool * threadPool) :
+    const QDir & rootDir, const threading::QThreadPoolPtr & threadPool) :
     m_rootDir{rootDir},
     m_userOwnSyncChunksDir{
         m_rootDir.absoluteFilePath(QStringLiteral("user_own"))},
@@ -667,7 +667,7 @@ void SyncChunksStorage::appendPendingSyncChunks(
 
 SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsDataAccessor(
     const QDir & rootDir, const QDir & userOwnSyncChunksDir, // NOLINT
-    QThreadPool * threadPool)
+    const threading::QThreadPoolPtr & threadPool)
 {
     if (Q_UNLIKELY(!threadPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(

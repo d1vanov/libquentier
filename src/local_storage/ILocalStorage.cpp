@@ -1044,7 +1044,7 @@ bool operator!=(
 
 ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
-    QThreadPool * threadPool)
+    threading::QThreadPoolPtr threadPool)
 {
     auto localStorageMainFilePath =
         localStorageDir.absoluteFilePath(QStringLiteral("qn.storage.sqlite"));

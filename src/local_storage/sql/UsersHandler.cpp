@@ -41,8 +41,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QThreadPool>
 
 #include <optional>
@@ -51,50 +51,43 @@
 namespace quentier::local_storage::sql {
 
 UsersHandler::UsersHandler(
-    ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
     Notifier * notifier, threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool},
-    m_notifier{notifier},
+    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
     m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "UsersHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "UsersHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "UsersHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "UsersHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "UsersHandler ctor: notifier is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "UsersHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "UsersHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "UsersHandler ctor: writer thread is null")}};
     }
 }
 
 QFuture<quint32> UsersHandler::userCount() const
 {
     return makeReadTask<quint32>(
-        makeTaskContext(),
-        weak_from_this(),
+        makeTaskContext(), weak_from_this(),
         [](const UsersHandler & handler, QSqlDatabase & database,
-           ErrorString & errorDescription)
-        {
+           ErrorString & errorDescription) {
             return handler.userCountImpl(database, errorDescription);
         });
 }
@@ -102,12 +95,10 @@ QFuture<quint32> UsersHandler::userCount() const
 QFuture<void> UsersHandler::putUser(qevercloud::User user)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [user = std::move(user)]
-        (UsersHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [user = std::move(user)](
+            UsersHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             const bool res = utils::putUser(user, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyUserPut(user);
@@ -120,11 +111,10 @@ QFuture<std::optional<qevercloud::User>> UsersHandler::findUserById(
     qevercloud::UserID userId) const
 {
     return makeReadTask<std::optional<qevercloud::User>>(
-        makeTaskContext(),
-        weak_from_this(),
-        [userId](const UsersHandler & handler, QSqlDatabase & database,
-                 ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [userId](
+            const UsersHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.findUserByIdImpl(userId, database, errorDescription);
         });
 }
@@ -132,13 +122,12 @@ QFuture<std::optional<qevercloud::User>> UsersHandler::findUserById(
 QFuture<void> UsersHandler::expungeUserById(qevercloud::UserID userId)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [userId](UsersHandler & handler, QSqlDatabase & database,
-                 ErrorString & errorDescription)
-        {
-            const bool res = handler.expungeUserByIdImpl(
-                userId, database, errorDescription);
+        makeTaskContext(), weak_from_this(),
+        [userId](
+            UsersHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            const bool res =
+                handler.expungeUserByIdImpl(userId, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyUserExpunged(userId);
             }
@@ -150,9 +139,9 @@ std::optional<quint32> UsersHandler::userCountImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     QSqlQuery query{database};
-    const bool res = query.exec(
-        QStringLiteral("SELECT COUNT(id) FROM Users WHERE "
-                       "userDeletionTimestamp IS NULL"));
+    const bool res =
+        query.exec(QStringLiteral("SELECT COUNT(id) FROM Users WHERE "
+                                  "userDeletionTimestamp IS NULL"));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
         QT_TRANSLATE_NOOP(
@@ -170,11 +159,10 @@ std::optional<quint32> UsersHandler::userCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "Cannot count users in the local storage database: failed to "
-                "convert user count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot count users in the local storage database: failed to "
+            "convert user count to int"));
         QNWARNING("local_storage:sql", errorDescription);
         return std::nullopt;
     }
@@ -230,10 +218,9 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     user.setId(userId);
     ErrorString error;
     if (!utils::fillUserFromSqlRecord(record, user, error)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "Failed to find user by id in the local storage database"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Failed to find user by id in the local storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
@@ -241,15 +228,16 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
         return std::nullopt;
     }
 
-    if (user.attributes())
-    {
+    if (user.attributes()) {
         if (!findUserAttributesViewedPromotionsById(
-                id, database, *user.mutableAttributes(), errorDescription)) {
+                id, database, *user.mutableAttributes(), errorDescription))
+        {
             return std::nullopt;
         }
 
         if (!findUserAttributesRecentMailedAddressesById(
-                id, database, *user.mutableAttributes(), errorDescription)) {
+                id, database, *user.mutableAttributes(), errorDescription))
+        {
             return std::nullopt;
         }
     }
@@ -286,8 +274,7 @@ bool UsersHandler::findUserAttributesViewedPromotionsById(
             "storage database"),
         false);
 
-    while (query.next())
-    {
+    while (query.next()) {
         const auto record = query.record();
         const int promotionIndex = record.indexOf(QStringLiteral("promotion"));
         if (promotionIndex < 0) {
@@ -338,8 +325,7 @@ bool UsersHandler::findUserAttributesRecentMailedAddressesById(
             "storage database"),
         false);
 
-    while (query.next())
-    {
+    while (query.next()) {
         const auto record = query.record();
         const int addressIndex = record.indexOf(QStringLiteral("address"));
         if (addressIndex < 0) {

@@ -46,11 +46,13 @@
 namespace quentier::local_storage::sql {
 
 SavedSearchesHandler::SavedSearchesHandler(
-    ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
     Notifier * notifier, threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool}, m_notifier{notifier}, m_writerThread{
-                                                        std::move(writerThread)}
+    // clang-format off
+    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
+    m_writerThread{std::move(writerThread)}
+// clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(

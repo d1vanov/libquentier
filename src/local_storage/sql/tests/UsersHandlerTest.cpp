@@ -255,6 +255,11 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+        {
+            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
+            m_threadPool = std::shared_ptr<QThreadPool>(
+                QThreadPool::globalInstance(), std::move(nullDeleter));
+        }
 
         m_notifier = new Notifier;
         m_notifier->moveToThread(m_writerThread.get());
@@ -280,6 +285,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     threading::QThreadPtr m_writerThread;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
 };
 
@@ -289,7 +295,7 @@ TEST_F(UsersHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread));
 }
 
@@ -297,7 +303,7 @@ TEST_F(UsersHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            nullptr, QThreadPool::globalInstance(), m_notifier, m_writerThread),
+            nullptr, m_threadPool, m_notifier, m_writerThread),
         IQuentierException);
 }
 
@@ -313,7 +319,7 @@ TEST_F(UsersHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), nullptr,
+            m_connectionPool, m_threadPool, nullptr,
             m_writerThread),
         IQuentierException);
 }
@@ -322,7 +328,7 @@ TEST_F(UsersHandlerTest, CtorNullWriterThread)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             nullptr),
         IQuentierException);
 }
@@ -330,7 +336,7 @@ TEST_F(UsersHandlerTest, CtorNullWriterThread)
 TEST_F(UsersHandlerTest, ShouldHaveZeroUserCountWhenThereAreNoUsers)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     auto userCountFuture = usersHandler->userCount();
@@ -341,7 +347,7 @@ TEST_F(UsersHandlerTest, ShouldHaveZeroUserCountWhenThereAreNoUsers)
 TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     auto userFuture = usersHandler->findUserById(qevercloud::UserID{1});
@@ -353,7 +359,7 @@ TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     auto expungeUserFuture =
@@ -422,7 +428,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     UsersHandlerTestNotifierListener notifierListener;
@@ -477,7 +483,7 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 TEST_F(UsersHandlerTest, HandleMultipleUsers)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     auto users = gUserTestValues;
@@ -549,7 +555,7 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
 TEST_F(UsersHandlerTest, RemoveUserFieldsOnUpdate)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     const auto now = QDateTime::currentMSecsSinceEpoch();

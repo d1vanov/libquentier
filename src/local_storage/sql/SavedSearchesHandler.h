@@ -33,7 +33,7 @@ class SavedSearchesHandler final :
 {
 public:
     explicit SavedSearchesHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         Notifier * notifier, threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> savedSearchCount() const override;
@@ -87,7 +87,7 @@ private:
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
     threading::QThreadPtr m_writerThread;
 };

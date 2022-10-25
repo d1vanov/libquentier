@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SynchronizationInfoHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
+#include "SynchronizationInfoHandler.h"
 #include "Tasks.h"
 #include "utils/SqlUtils.h"
 
@@ -52,7 +52,7 @@ struct HighUsnRequestData
         // clang-format off
         m_usnColumnName{std::move(usnColumnName)},
         m_queryCondition{std::move(queryCondition)}
-        // clang-format on
+    // clang-format on
     {}
 
     QString m_tableName;
@@ -63,10 +63,10 @@ struct HighUsnRequestData
 } // namespace
 
 SynchronizationInfoHandler::SynchronizationInfoHandler(
-    ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
     threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool}, m_writerThread{std::move(writerThread)}
+    m_threadPool{std::move(threadPool)}, m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -293,15 +293,13 @@ std::optional<qint32> SynchronizationInfoHandler::updateSequenceNumberFromTable(
 TaskContext SynchronizationInfoHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool,
-        m_writerThread,
-        m_connectionPool,
+        m_threadPool, m_writerThread, m_connectionPool,
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::SynchronizationInfoHandler",
-                "SynchronizationInfoHandler is already destroyed")},
+            "local_storage::sql::SynchronizationInfoHandler",
+            "SynchronizationInfoHandler is already destroyed")},
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::SynchronizationInfoHandler",
-                "Request has been canceled")}};
+            "local_storage::sql::SynchronizationInfoHandler",
+            "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

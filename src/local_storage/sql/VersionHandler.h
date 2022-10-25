@@ -37,14 +37,15 @@ class ErrorString;
 
 namespace quentier::local_storage::sql {
 
-class VersionHandler final:
+class VersionHandler final :
     public IVersionHandler,
     public std::enable_shared_from_this<VersionHandler>
 {
 public:
     explicit VersionHandler(
         Account account, ConnectionPoolPtr connectionPool,
-        QThreadPool * threadPool, threading::QThreadPtr writerThread);
+        threading::QThreadPoolPtr threadPool,
+        threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<bool> isVersionTooHigh() const override;
     [[nodiscard]] QFuture<bool> requiresUpgrade() const override;
@@ -64,7 +65,7 @@ private:
 private:
     Account m_account;
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     threading::QThreadPtr m_writerThread;
 };
 

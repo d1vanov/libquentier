@@ -266,6 +266,11 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+        {
+            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
+            m_threadPool = std::shared_ptr<QThreadPool>(
+                QThreadPool::globalInstance(), std::move(nullDeleter));
+        }
 
         m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
 
@@ -291,6 +296,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     threading::QThreadPtr m_writerThread;
+    threading::QThreadPoolPtr m_threadPool;
     QReadWriteLockPtr m_resourceDataFilesLock;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
@@ -302,7 +308,7 @@ TEST_F(ResourcesHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock));
 }
 
@@ -310,7 +316,7 @@ TEST_F(ResourcesHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            nullptr, QThreadPool::globalInstance(), m_notifier, m_writerThread,
+            nullptr, m_threadPool, m_notifier, m_writerThread,
             m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
@@ -328,7 +334,7 @@ TEST_F(ResourcesHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), nullptr,
+            m_connectionPool, m_threadPool, nullptr,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
@@ -337,7 +343,7 @@ TEST_F(ResourcesHandlerTest, CtorNullWriterThread)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             nullptr, m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
@@ -346,7 +352,7 @@ TEST_F(ResourcesHandlerTest, CtorNullResourceDataFilesLock)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), nullptr),
         IQuentierException);
 }
@@ -354,7 +360,7 @@ TEST_F(ResourcesHandlerTest, CtorNullResourceDataFilesLock)
 TEST_F(ResourcesHandlerTest, ShouldHaveZeroResourceCountWhenThereAreNoResources)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto resourceCountFuture = resourcesHandler->resourceCount(
@@ -369,7 +375,7 @@ TEST_F(ResourcesHandlerTest, ShouldHaveZeroResourceCountWhenThereAreNoResources)
 TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto resourceFuture =
@@ -391,7 +397,7 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
 TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto resourceFuture =
@@ -413,7 +419,7 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
 TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto expungeResourceFuture =
@@ -425,7 +431,7 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
 TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByGuid)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto expungeResourceFuture =
@@ -484,7 +490,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     ResourcesHandlerTestNotifierListener notifierListener;
@@ -502,14 +508,14 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
         &ResourcesHandlerTestNotifierListener::onResourceExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNoteFuture = notesHandler->putNote(*gNote);
@@ -663,7 +669,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     ResourcesHandlerTestNotifierListener notifierListener;
@@ -681,14 +687,14 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
         &ResourcesHandlerTestNotifierListener::onResourceExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNoteFuture = notesHandler->putNote(*gNote);

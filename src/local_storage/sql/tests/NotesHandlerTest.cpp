@@ -394,6 +394,12 @@ protected:
 
         m_writerThread = std::make_shared<QThread>();
 
+        {
+            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
+            m_threadPool = std::shared_ptr<QThreadPool>(
+                QThreadPool::globalInstance(), std::move(nullDeleter));
+        }
+
         m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
 
         m_notifier = new Notifier;
@@ -418,6 +424,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     threading::QThreadPtr m_writerThread;
+    threading::QThreadPoolPtr m_threadPool;
     QReadWriteLockPtr m_resourceDataFilesLock;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
@@ -429,7 +436,7 @@ TEST_F(NotesHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock));
 }
 
@@ -437,7 +444,7 @@ TEST_F(NotesHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            nullptr, QThreadPool::globalInstance(), m_notifier, m_writerThread,
+            nullptr, m_threadPool, m_notifier, m_writerThread,
             m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
@@ -455,7 +462,7 @@ TEST_F(NotesHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), nullptr,
+            m_connectionPool, m_threadPool, nullptr,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
@@ -464,7 +471,7 @@ TEST_F(NotesHandlerTest, CtorNullWriterThread)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             nullptr, m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
@@ -473,7 +480,7 @@ TEST_F(NotesHandlerTest, CtorNullResourceDataFilesLock)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), nullptr),
         IQuentierException);
 }
@@ -481,7 +488,7 @@ TEST_F(NotesHandlerTest, CtorNullResourceDataFilesLock)
 TEST_F(NotesHandlerTest, ShouldHaveZeroNonDeletedNoteCountWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -497,7 +504,7 @@ TEST_F(NotesHandlerTest, ShouldHaveZeroNonDeletedNoteCountWhenThereAreNoNotes)
 TEST_F(NotesHandlerTest, ShouldHaveZeroDeletedNoteCountWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -513,7 +520,7 @@ TEST_F(NotesHandlerTest, ShouldHaveZeroDeletedNoteCountWhenThereAreNoNotes)
 TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -532,7 +539,7 @@ TEST_F(
     ShouldHaveZeroNonDeletedNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -551,7 +558,7 @@ TEST_F(
     ShouldHaveZeroDeletedNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -570,7 +577,7 @@ TEST_F(
     ShouldHaveZeroNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -590,7 +597,7 @@ TEST_F(
     ShouldHaveZeroNonDeletedNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -609,7 +616,7 @@ TEST_F(
     ShouldHaveZeroDeletedNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -627,7 +634,7 @@ TEST_F(
     NotesHandlerTest, ShouldHaveZeroNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -647,7 +654,7 @@ TEST_F(
     ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotesNorTags)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -667,7 +674,7 @@ TEST_F(
     ShouldHaveZeroNoteCountPerNotebookAndTagLocalidsWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
@@ -685,7 +692,7 @@ TEST_F(
 TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -703,7 +710,7 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
 TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -721,7 +728,7 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
 TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto expungeNoteFuture =
@@ -733,7 +740,7 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
 TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto expungeNoteFuture =
@@ -745,7 +752,7 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
 TEST_F(NotesHandlerTest, ShouldNotListSharedNotesForNonexistentNote)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto listSharedNotesFuture =
@@ -758,7 +765,7 @@ TEST_F(NotesHandlerTest, ShouldNotListSharedNotesForNonexistentNote)
 TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -775,7 +782,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
 TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -793,7 +800,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
 TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -811,7 +818,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
 TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -830,7 +837,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
 TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
@@ -848,7 +855,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
 TEST_F(NotesHandlerTest, ShouldNotListNoteGuidsWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto listNoteGuidsFilters = ILocalStorage::ListGuidsFilters{};
@@ -930,7 +937,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     NotesHandlerTestNotifierListener notifierListener;
@@ -948,7 +955,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         &NotesHandlerTestNotifierListener::onNoteExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     // === Put ===
@@ -962,7 +969,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         (note.tagGuids() && !note.tagGuids()->isEmpty()))
     {
         const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread);
 
         if (!note.tagLocalIds().isEmpty()) {
@@ -1297,7 +1304,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 TEST_F(NotesHandlerTest, HandleMultipleNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     NotesHandlerTestNotifierListener notifierListener;
@@ -1315,14 +1322,14 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         &NotesHandlerTestNotifierListener::onNoteExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     auto notes = gNoteTestValues;
@@ -1548,14 +1555,14 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
 TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     qevercloud::Tag tag;
@@ -1567,7 +1574,7 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
     putTagFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     // Put note with a tag and a resource to the local storage
@@ -2232,7 +2239,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     auto putLinkedNotebookFuture =
@@ -2246,7 +2253,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
     putLinkedNotebookFuture.waitForFinished();
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     for (const auto & notebook: qAsConst(*gNotebooksForListGuidsTest)) {
@@ -2255,7 +2262,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
     }
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     for (const auto & note: qAsConst(gNotesForListGuidsTest)) {
@@ -2306,14 +2313,14 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     qevercloud::Tag tag1;
@@ -2333,7 +2340,7 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
     putTagFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     qevercloud::Note note;
@@ -3078,7 +3085,7 @@ class NotesHandlerNoteSearchQueryTest :
         Q_ASSERT(!m_notebooks.isEmpty());
 
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
         for (const auto & notebook: qAsConst(m_notebooks)) {
@@ -3092,7 +3099,7 @@ class NotesHandlerNoteSearchQueryTest :
         Q_ASSERT(!m_tags.isEmpty());
 
         const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread);
 
         for (const auto & tag: qAsConst(m_tags)) {
@@ -3106,7 +3113,7 @@ class NotesHandlerNoteSearchQueryTest :
         Q_ASSERT(!m_notes.isEmpty());
 
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
         for (const auto & note: qAsConst(m_notes)) {
@@ -3426,7 +3433,7 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
         FetchNoteOption::WithResourceBinaryData;
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto queryNotesFuture =

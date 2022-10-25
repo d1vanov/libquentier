@@ -50,15 +50,17 @@
 namespace quentier::local_storage::sql {
 
 ResourcesHandler::ResourcesHandler(
-    ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
     Notifier * notifier, threading::QThreadPtr writerThread,
     const QString & localStorageDirPath,
     QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool}, m_notifier{notifier}, m_writerThread{std::move(
-                                                        writerThread)},
-    m_localStorageDir{localStorageDirPath}, m_resourceDataFilesLock{std::move(
-                                                resourceDataFilesLock)}
+    // clang-format off
+    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
+    m_writerThread{std::move(writerThread)},
+    m_localStorageDir{localStorageDirPath},
+    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
+// clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -132,8 +134,7 @@ QFuture<quint32> ResourcesHandler::resourceCountPerNoteLocalId(
         });
 }
 
-QFuture<void> ResourcesHandler::putResource(
-    qevercloud::Resource resource)
+QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
 {
     return makeWriteTask<void>(
         makeTaskContext(), weak_from_this(),

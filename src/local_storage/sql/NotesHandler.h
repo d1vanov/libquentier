@@ -39,7 +39,7 @@ class NotesHandler final :
 {
 public:
     explicit NotesHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         Notifier * notifier, threading::QThreadPtr writerThread,
         const QString & localStorageDirPath,
         QReadWriteLockPtr resourceDataFilesLock);
@@ -84,8 +84,7 @@ public:
         qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotes(
-        FetchNoteOptions fetchOptions,
-        ListNotesOptions options) const override;
+        FetchNoteOptions fetchOptions, ListNotesOptions options) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SharedNote>> listSharedNotes(
         qevercloud::Guid noteGuid = {}) const override;
@@ -132,9 +131,8 @@ private:
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<QHash<QString, quint32>> noteCountsPerTagsImpl(
-        const ListTagsOptions & listTagsOptions,
-        NoteCountOptions options, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const ListTagsOptions & listTagsOptions, NoteCountOptions options,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<quint32> noteCountPerNotebookAndTagLocalIdsImpl(
         const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
@@ -184,9 +182,9 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::Note> listNotesImpl(
-        FetchNoteOptions fetchOptions,
-        const ListNotesOptions & options, QSqlDatabase & database,
-        ErrorString & errorDescription, const QString & sqlQueryCondition = {},
+        FetchNoteOptions fetchOptions, const ListNotesOptions & options,
+        QSqlDatabase & database, ErrorString & errorDescription,
+        const QString & sqlQueryCondition = {},
         std::optional<Transaction> transaction = std::nullopt) const;
 
     [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesImpl(
@@ -207,8 +205,8 @@ private:
         listNotesPerNotebookAndTagLocalIdsImpl(
             const QStringList & notebookLocalIds,
             const QStringList & tagLocalIds, FetchNoteOptions fetchOptions,
-            const ListNotesOptions & options,
-            QSqlDatabase & database, ErrorString & errorDescription) const;
+            const ListNotesOptions & options, QSqlDatabase & database,
+            ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotesByLocalIdsImpl(
         const QStringList & noteLocalIds, FetchNoteOptions fetchOptions,
@@ -224,7 +222,7 @@ private:
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
     threading::QThreadPtr m_writerThread;
     QDir m_localStorageDir;

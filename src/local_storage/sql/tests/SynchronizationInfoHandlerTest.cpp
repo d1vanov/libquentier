@@ -220,6 +220,11 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+        {
+            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
+            m_threadPool = std::shared_ptr<QThreadPool>(
+                QThreadPool::globalInstance(), std::move(nullDeleter));
+        }
 
         m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
 
@@ -245,6 +250,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     threading::QThreadPtr m_writerThread;
+    threading::QThreadPoolPtr m_threadPool;
     QReadWriteLockPtr m_resourceDataFilesLock;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
@@ -257,7 +263,7 @@ TEST_F(SynchronizationInfoHandlerTest, Ctor)
     EXPECT_NO_THROW(
         const auto synchronizationInfoHandler =
             std::make_shared<SynchronizationInfoHandler>(
-                m_connectionPool, QThreadPool::globalInstance(),
+                m_connectionPool, m_threadPool,
                 m_writerThread));
 }
 
@@ -266,7 +272,7 @@ TEST_F(SynchronizationInfoHandlerTest, CtorNullConnectionPool)
     EXPECT_THROW(
         const auto synchronizationInfoHandler =
             std::make_shared<SynchronizationInfoHandler>(
-                nullptr, QThreadPool::globalInstance(), m_writerThread),
+                nullptr, m_threadPool, m_writerThread),
         IQuentierException);
 }
 
@@ -284,7 +290,7 @@ TEST_F(SynchronizationInfoHandlerTest, CtorNullWriterThread)
     EXPECT_THROW(
         const auto synchronizationInfoHandler =
             std::make_shared<SynchronizationInfoHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), nullptr),
+                m_connectionPool, m_threadPool, nullptr),
         IQuentierException);
 }
 
@@ -292,7 +298,7 @@ TEST_F(SynchronizationInfoHandlerTest, InitialUserOwnHighUsnShouldBeZero)
 {
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -305,7 +311,7 @@ TEST_F(SynchronizationInfoHandlerTest, InitialOverallHighUsnShouldBeZero)
 {
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::
@@ -321,7 +327,7 @@ TEST_F(
 {
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         UidGenerator::Generate());
@@ -333,7 +339,7 @@ TEST_F(
 TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 3;
@@ -350,7 +356,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotebooks)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -370,7 +376,7 @@ TEST_F(
     SynchronizationInfoHandlerTest, HighestUsnWithinNotebooksFromLinkedNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 3;
@@ -379,7 +385,7 @@ TEST_F(
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_connectionPool, m_threadPool, m_notifier,
                 m_writerThread, m_temporaryDir.path());
 
         qevercloud::LinkedNotebook linkedNotebook;
@@ -402,7 +408,7 @@ TEST_F(
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -427,7 +433,7 @@ TEST_F(
 TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnTags)
 {
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     const int tagCount = 3;
@@ -442,7 +448,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnTags)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -461,7 +467,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnTags)
 TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinTagsFromLinkedNotebook)
 {
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     const int tagCount = 3;
@@ -470,7 +476,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinTagsFromLinkedNotebook)
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_connectionPool, m_threadPool, m_notifier,
                 m_writerThread, m_temporaryDir.path());
 
         qevercloud::LinkedNotebook linkedNotebook;
@@ -490,7 +496,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinTagsFromLinkedNotebook)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -515,7 +521,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinTagsFromLinkedNotebook)
 TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotes)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 1;
@@ -528,7 +534,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotes)
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int noteCount = 3;
@@ -544,7 +550,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotes)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -563,7 +569,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotes)
 TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotesFromLinkedNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 1;
@@ -572,7 +578,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotesFromLinkedNotebook)
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_connectionPool, m_threadPool, m_notifier,
                 m_writerThread, m_temporaryDir.path());
 
         qevercloud::LinkedNotebook linkedNotebook;
@@ -594,7 +600,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotesFromLinkedNotebook)
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int noteCount = 3;
@@ -610,7 +616,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotesFromLinkedNotebook)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -636,7 +642,7 @@ TEST_F(
     SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotesWithResources)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 1;
@@ -649,7 +655,7 @@ TEST_F(
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int noteCount = 3;
@@ -675,7 +681,7 @@ TEST_F(
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -698,7 +704,7 @@ TEST_F(
     HighestUsnWithinNotesWithResourcesFromLinkedNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 1;
@@ -707,7 +713,7 @@ TEST_F(
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_connectionPool, m_threadPool, m_notifier,
                 m_writerThread, m_temporaryDir.path());
 
         qevercloud::LinkedNotebook linkedNotebook;
@@ -729,7 +735,7 @@ TEST_F(
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int noteCount = 3;
@@ -755,7 +761,7 @@ TEST_F(
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -783,7 +789,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinSavedSearches)
 {
     const auto savedSearchesHandler =
         std::make_shared<SavedSearchesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread);
 
     const int savedSearchCount = 3;
@@ -800,7 +806,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinSavedSearches)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -820,7 +826,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinLinkedNotebooks)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     const int linkedNotebookCount = 3;
@@ -840,7 +846,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinLinkedNotebooks)
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -861,11 +867,11 @@ TEST_F(
     HighestUsnWithinUserOwnAccount)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const int notebookCount = 3;
@@ -909,7 +915,7 @@ TEST_F(
 
     const auto savedSearchesHandler =
         std::make_shared<SavedSearchesHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread);
 
     const int savedSearchCount = 3;
@@ -926,7 +932,7 @@ TEST_F(
     smallestUsn += savedSearchCount;
 
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     const int tagCount = 3;
@@ -942,7 +948,7 @@ TEST_F(
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     const int linkedNotebookCount = 3;
@@ -967,7 +973,7 @@ TEST_F(
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
@@ -997,7 +1003,7 @@ TEST_F(
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
     const int linkedNotebookCount = 3;
@@ -1023,15 +1029,15 @@ TEST_F(
     const int userOwnDataSmallestUsn = smallestUsn;
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
     const int notebookCount = 3;
@@ -1087,7 +1093,7 @@ TEST_F(
 
     const auto synchronizationInfoHandler =
         std::make_shared<SynchronizationInfoHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+            m_connectionPool, m_threadPool, m_writerThread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
         SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);

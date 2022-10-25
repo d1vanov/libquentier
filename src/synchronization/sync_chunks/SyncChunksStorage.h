@@ -20,14 +20,14 @@
 
 #include <synchronization/sync_chunks/ISyncChunksStorage.h>
 
+#include <quentier/threading/Fwd.h>
+
 #include <QDir>
 #include <QFuture>
 #include <QList>
 
 #include <optional>
 #include <utility>
-
-class QThreadPool;
 
 namespace quentier::synchronization {
 
@@ -38,7 +38,8 @@ namespace quentier::synchronization {
 class SyncChunksStorage final : public ISyncChunksStorage
 {
 public:
-    explicit SyncChunksStorage(const QDir & rootDir, QThreadPool * threadPool);
+    explicit SyncChunksStorage(
+        const QDir & rootDir, const threading::QThreadPoolPtr & threadPool);
 
     [[nodiscard]] QList<std::pair<qint32, qint32>>
         fetchUserOwnSyncChunksLowAndHighUsns() const override;
@@ -88,7 +89,7 @@ private:
     public:
         explicit LowAndHighUsnsDataAccessor(
             const QDir & rootDir, const QDir & userOwnSyncChunksDir,
-            QThreadPool * threadPool);
+            const threading::QThreadPoolPtr & threadPool);
 
         [[nodiscard]] LowAndHighUsnsData & data();
 

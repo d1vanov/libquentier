@@ -44,7 +44,7 @@ class SynchronizationInfoHandler final :
 {
 public:
     explicit SynchronizationInfoHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         threading::QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<qint32> highestUpdateSequenceNumber(
@@ -69,7 +69,7 @@ private:
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     threading::QThreadPtr m_writerThread;
 };
 

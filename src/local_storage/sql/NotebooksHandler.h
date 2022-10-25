@@ -37,7 +37,7 @@ class NotebooksHandler final :
 {
 public:
     explicit NotebooksHandler(
-        ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
+        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
         Notifier * notifier, threading::QThreadPtr writerThread,
         const QString & localStorageDirPath,
         QReadWriteLockPtr resourceDataFilesLock);
@@ -125,14 +125,14 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
-        const ListNotebooksOptions & options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
+        const ListNotebooksOptions & options, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;
 
 private:
     ConnectionPoolPtr m_connectionPool;
-    QThreadPool * m_threadPool;
+    threading::QThreadPoolPtr m_threadPool;
     Notifier * m_notifier;
     threading::QThreadPtr m_writerThread;
     QDir m_localStorageDir;

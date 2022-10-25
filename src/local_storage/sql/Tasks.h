@@ -70,7 +70,7 @@ struct isList<QStringList> : std::true_type
 
 struct TaskContext
 {
-    QThreadPool * m_threadPool = nullptr;
+    threading::QThreadPoolPtr m_threadPool;
     threading::QThreadPtr m_writerThread;
     ConnectionPoolPtr m_connectionPool;
     ErrorString m_holderIsDeadErrorMessage;
