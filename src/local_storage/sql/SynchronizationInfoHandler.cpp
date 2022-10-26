@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "SynchronizationInfoHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
-#include "SynchronizationInfoHandler.h"
 #include "Tasks.h"
 #include "utils/SqlUtils.h"
 

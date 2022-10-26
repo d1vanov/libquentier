@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "VersionHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
-#include "VersionHandler.h"
 
 #include "patches/Patch1To2.h"
 

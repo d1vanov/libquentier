@@ -90,6 +90,7 @@ QFuture<ResultType> makeReadTask(
 
     promise->start();
 
+    auto threadPool = taskContext.m_threadPool;
     auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
          taskContext = std::move(taskContext), f = std::move(f)]() mutable {
@@ -141,7 +142,7 @@ QFuture<ResultType> makeReadTask(
             promise->finish();
         });
 
-    taskContext.m_threadPool->start(runnable);
+    threadPool->start(runnable);
     return future;
 }
 

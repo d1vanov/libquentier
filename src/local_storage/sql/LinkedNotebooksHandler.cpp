@@ -51,9 +51,10 @@ LinkedNotebooksHandler::LinkedNotebooksHandler(
     const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     // clang-format off
-    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
+    m_threadPool{std::move(threadPool)},
     m_writerThread{std::move(writerThread)},
-    m_localStorageDir{localStorageDirPath}
+    m_localStorageDir{localStorageDirPath},
+    m_notifier{notifier}
     // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {

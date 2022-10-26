@@ -56,10 +56,11 @@ ResourcesHandler::ResourcesHandler(
     QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
     // clang-format off
-    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
+    m_threadPool{std::move(threadPool)},
     m_writerThread{std::move(writerThread)},
     m_localStorageDir{localStorageDirPath},
-    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
+    m_resourceDataFilesLock{std::move(resourceDataFilesLock)},
+    m_notifier{notifier}
 // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {

@@ -79,11 +79,11 @@ private:
     [[nodiscard]] TaskContext makeTaskContext() const;
 
 private:
-    ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPoolPtr m_threadPool;
+    const ConnectionPoolPtr m_connectionPool;
+    const threading::QThreadPoolPtr m_threadPool;
+    const threading::QThreadPtr m_writerThread;
+    const QDir m_localStorageDir;
     Notifier * m_notifier;
-    threading::QThreadPtr m_writerThread;
-    QDir m_localStorageDir;
 };
 
 } // namespace quentier::local_storage::sql

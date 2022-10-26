@@ -63,10 +63,10 @@ private:
     [[nodiscard]] qint32 highestSupportedVersionImpl() const noexcept;
 
 private:
-    Account m_account;
-    ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPoolPtr m_threadPool;
-    threading::QThreadPtr m_writerThread;
+    const Account m_account;
+    const ConnectionPoolPtr m_connectionPool;
+    const threading::QThreadPoolPtr m_threadPool;
+    const threading::QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql

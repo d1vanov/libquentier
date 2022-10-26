@@ -16,13 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "UsersHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "Notifier.h"
 #include "Tasks.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
-#include "UsersHandler.h"
 
 #include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
@@ -54,8 +54,8 @@ UsersHandler::UsersHandler(
     ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
     Notifier * notifier, threading::QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{std::move(threadPool)}, m_notifier{notifier},
-    m_writerThread{std::move(writerThread)}
+    m_threadPool{std::move(threadPool)},
+    m_writerThread{std::move(writerThread)}, m_notifier{notifier}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
