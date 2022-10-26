@@ -20,6 +20,7 @@
 
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/types/Fwd.h>
+#include <quentier/utility/cancelers/Fwd.h>
 
 #include <qevercloud/types/LinkedNotebook.h>
 
@@ -169,7 +170,8 @@ public:
     };
 
     [[nodiscard]] virtual QFuture<Result> download(
-        ICallbackWeakPtr callbackWeak = {}) = 0;
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak) = 0;
 };
 
 } // namespace quentier::synchronization

@@ -24,7 +24,6 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
-#include <quentier/utility/cancelers/Fwd.h>
 
 #include <synchronization/types/SyncState.h>
 
@@ -71,12 +70,12 @@ public:
         qevercloud::IRequestContextPtr ctx,
         qevercloud::INoteStorePtr noteStore,
         local_storage::ILocalStoragePtr localStorage,
-        utility::cancelers::ICancelerPtr canceler,
         const QDir & syncPersistentStorageDir);
 
     ~Downloader() override;
 
     [[nodiscard]] QFuture<Result> download(
+        utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak) override;
 
 private:
@@ -84,6 +83,7 @@ private:
 
     [[nodiscard]] QFuture<Result> launchDownload(
         const IAuthenticationInfo & authenticationInfo,
+        utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak);
 
     enum class SyncMode
@@ -95,12 +95,14 @@ private:
     void launchUserOwnDataDownload(
         std::shared_ptr<QPromise<Result>> promise,
         qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak,
         SyncMode syncMode);
 
     void launchLinkedNotebooksDataDownload(
         std::shared_ptr<QPromise<Result>> promise,
         qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak);
 
     [[nodiscard]] QFuture<qevercloud::User> fetchUser(
@@ -119,8 +121,9 @@ private:
     void processUserOwnSyncChunks(
         QList<qevercloud::SyncChunk> syncChunks,
         std::shared_ptr<QPromise<Result>> promise,
-        qevercloud::IRequestContextPtr ctx, ICallbackWeakPtr callbackWeak,
-        SyncMode syncMode,
+        qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak, SyncMode syncMode,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
     void cancel(QPromise<Result> & promise);
@@ -144,7 +147,6 @@ private:
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::INoteStorePtr m_noteStore;
     const local_storage::ILocalStoragePtr m_localStorage;
-    const utility::cancelers::ICancelerPtr m_canceler;
     const QDir m_syncPersistentStorageDir;
 
     QMutex m_mutex;

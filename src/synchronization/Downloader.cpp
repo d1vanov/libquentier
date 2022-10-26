@@ -156,10 +156,8 @@ Downloader::Downloader(
     ISavedSearchesProcessorPtr savedSearchesProcessor,
     ITagsProcessorPtr tagsProcessor,
     IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
-    qevercloud::IRequestContextPtr ctx,
-    qevercloud::INoteStorePtr noteStore,
+    qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
     local_storage::ILocalStoragePtr localStorage,
-    utility::cancelers::ICancelerPtr canceler,
     const QDir & syncPersistentStorageDir) :
     m_account{std::move(account)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
@@ -179,9 +177,9 @@ Downloader::Downloader(
     m_tagsProcessor{std::move(tagsProcessor)},
     m_fullSyncStaleDataExpunger{std::move(fullSyncStaleDataExpunger)},
     m_ctx{std::move(ctx)}, m_noteStore{std::move(noteStore)},
-    m_localStorage{std::move(localStorage)}, m_canceler{std::move(canceler)},
+    m_localStorage{std::move(localStorage)},
     m_syncPersistentStorageDir{syncPersistentStorageDir}
-    // clang-format on
+// clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -296,17 +294,12 @@ Downloader::Downloader(
             "synchronization::Downloader",
             "Downloader ctor: local storage is null")}};
     }
-
-    if (Q_UNLIKELY(!m_canceler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
-            "Downloader ctor: canceler is null")}};
-    }
 }
 
 Downloader::~Downloader() = default;
 
-QFuture<IDownloader::Result> Downloader::download(ICallbackWeakPtr callbackWeak)
+QFuture<IDownloader::Result> Downloader::download(
+    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG("synchronization::Downloader", "Downloader::download");
 
@@ -335,7 +328,7 @@ QFuture<IDownloader::Result> Downloader::download(ICallbackWeakPtr callbackWeak)
 
     promise->start();
 
-    if (m_canceler->isCanceled()) {
+    if (Q_UNLIKELY(canceler->isCanceled())) {
         cancel(*promise);
         // NOTE: m_future is already reset inside cancel()
         return promise->future();
@@ -354,10 +347,11 @@ QFuture<IDownloader::Result> Downloader::download(ICallbackWeakPtr callbackWeak)
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, callbackWeak = std::move(callbackWeak),
+             canceler = std::move(canceler),
              promise](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
 
-                if (m_canceler->isCanceled()) {
+                if (canceler->isCanceled()) {
                     cancel(*promise);
                     return;
                 }
@@ -371,16 +365,18 @@ QFuture<IDownloader::Result> Downloader::download(ICallbackWeakPtr callbackWeak)
                     threading::TrackedTask{
                         selfWeak,
                         [this, selfWeak, promise,
+                         canceler = std::move(canceler),
                          callbackWeak = std::move(callbackWeak),
                          authenticationInfo =
                              std::move(authenticationInfo)]() mutable {
-                            if (m_canceler->isCanceled()) {
+                            if (canceler->isCanceled()) {
                                 cancel(*promise);
                                 return;
                             }
 
                             auto downloadFuture = launchDownload(
-                                *authenticationInfo, std::move(callbackWeak));
+                                *authenticationInfo, std::move(canceler),
+                                std::move(callbackWeak));
 
                             threading::bindCancellation(
                                 promise->future(), downloadFuture);
@@ -411,6 +407,7 @@ void Downloader::readLastSyncState()
 
 QFuture<IDownloader::Result> Downloader::launchDownload(
     const IAuthenticationInfo & authenticationInfo,
+    utility::cancelers::ICancelerPtr canceler,
     ICallbackWeakPtr callbackWeak) // NOLINT
 {
     auto promise = std::make_shared<QPromise<Result>>();
@@ -418,15 +415,15 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 
     promise->start();
 
-    const auto ctx = qevercloud::RequestContextBuilder{}
-                         .setAuthenticationToken(authenticationInfo.authToken())
-                         .setCookies(authenticationInfo.userStoreCookies())
-                         .setRequestTimeout(m_ctx->requestTimeout())
-                         .setIncreaseRequestTimeoutExponentially(
-                             m_ctx->increaseRequestTimeoutExponentially())
-                         .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
-                         .setMaxRetryCount(m_ctx->maxRequestRetryCount())
-                         .build();
+    auto ctx = qevercloud::RequestContextBuilder{}
+                   .setAuthenticationToken(authenticationInfo.authToken())
+                   .setCookies(authenticationInfo.userStoreCookies())
+                   .setRequestTimeout(m_ctx->requestTimeout())
+                   .setIncreaseRequestTimeoutExponentially(
+                       m_ctx->increaseRequestTimeoutExponentially())
+                   .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
+                   .setMaxRetryCount(m_ctx->maxRequestRetryCount())
+                   .build();
 
     auto userFuture = fetchUser(ctx);
 
@@ -434,9 +431,10 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 
     auto accountLimitsFuture = threading::then(
         std::move(userFuture),
-        [selfWeak, ctx = ctx](qevercloud::User && user) mutable {
+        [selfWeak, ctx = ctx,
+         canceler = canceler](qevercloud::User && user) mutable {
             if (const auto self = selfWeak.lock()) {
-                if (self->m_canceler->isCanceled()) {
+                if (canceler->isCanceled()) {
                     return threading::makeExceptionalFuture<
                         qevercloud::AccountLimits>(OperationCanceled{});
                 }
@@ -475,7 +473,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 
     threading::thenOrFailed(
         std::move(syncStateFuture), promise,
-        [promise = promise, selfWeak, ctx = ctx,
+        [promise = promise, selfWeak, ctx = std::move(ctx),
+         canceler = std::move(canceler),
          callbackWeak = std::move(callbackWeak)](
             qevercloud::SyncState && syncState) mutable {
             if (const auto self = selfWeak.lock()) {
@@ -493,7 +492,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "incremental one");
 
                     self->launchUserOwnDataDownload(
-                        std::move(promise), std::move(ctx),
+                        std::move(promise), std::move(ctx), std::move(canceler),
                         std::move(callbackWeak), SyncMode::Full);
                 }
                 else if (
@@ -505,7 +504,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "Evernote has no updates for user own data");
 
                     self->launchLinkedNotebooksDataDownload(
-                        std::move(promise), std::move(ctx),
+                        std::move(promise), std::move(ctx), std::move(canceler),
                         std::move(callbackWeak));
                 }
                 else {
@@ -514,7 +513,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "Launching incremental sync of user own data");
 
                     self->launchUserOwnDataDownload(
-                        std::move(promise), std::move(ctx),
+                        std::move(promise), std::move(ctx), std::move(canceler),
                         std::move(callbackWeak), SyncMode::Incremental);
                 }
 
@@ -530,7 +529,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 
 void Downloader::launchUserOwnDataDownload(
     std::shared_ptr<QPromise<Result>> promise,
-    qevercloud::IRequestContextPtr ctx, ICallbackWeakPtr callbackWeak,
+    qevercloud::IRequestContextPtr ctx,
+    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak,
     const SyncMode syncMode)
 {
     Q_ASSERT(m_lastSyncState);
@@ -540,7 +540,7 @@ void Downloader::launchUserOwnDataDownload(
                                     : m_lastSyncState->m_userDataUpdateCount);
 
     auto syncChunksFuture = m_syncChunksProvider->fetchSyncChunks(
-        afterUsn, ctx, m_canceler,
+        afterUsn, ctx, canceler,
         std::make_shared<SyncChunksProviderCallback>(callbackWeak));
 
     auto selfWeak = weak_from_this();
@@ -549,10 +549,11 @@ void Downloader::launchUserOwnDataDownload(
         std::move(syncChunksFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [promise, this, ctx = std::move(ctx), syncMode,
+            [promise, this, ctx = std::move(ctx),
+             canceler = std::move(canceler), syncMode,
              callbackWeak = std::move(callbackWeak)](
                 QList<qevercloud::SyncChunk> syncChunks) mutable { // NOLINT
-                if (m_canceler->isCanceled()) {
+                if (canceler->isCanceled()) {
                     cancel(*promise);
                     return;
                 }
@@ -563,18 +564,20 @@ void Downloader::launchUserOwnDataDownload(
 
                 processUserOwnSyncChunks(
                     std::move(syncChunks), std::move(promise), std::move(ctx),
-                    std::move(callbackWeak), syncMode);
-             }});
+                    std::move(canceler), std::move(callbackWeak), syncMode);
+            }});
 }
 
 void Downloader::launchLinkedNotebooksDataDownload(
     std::shared_ptr<QPromise<Result>> promise, // NOLINT
     qevercloud::IRequestContextPtr ctx,        // NOLINT
+    utility::cancelers::ICancelerPtr canceler, // NOLINT
     ICallbackWeakPtr callbackWeak)             // NOLINT
 {
     // TODO: implement
     Q_UNUSED(promise)
     Q_UNUSED(ctx)
+    Q_UNUSED(canceler)
     Q_UNUSED(callbackWeak)
 }
 
@@ -638,7 +641,7 @@ void Downloader::processUserOwnSyncChunks(
     QList<qevercloud::SyncChunk> syncChunks,
     std::shared_ptr<QPromise<Result>> promise,
     qevercloud::IRequestContextPtr ctx,
-    ICallbackWeakPtr callbackWeak,
+    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak,
     SyncMode syncMode, CheckForFirstSync checkForFirstSync)
 {
     Q_ASSERT(m_lastSyncState);
@@ -648,7 +651,7 @@ void Downloader::processUserOwnSyncChunks(
             "synchronization::Downloader",
             "No new data found in Evernote for user's own account");
         launchLinkedNotebooksDataDownload(
-            std::move(promise), std::move(ctx),
+            std::move(promise), std::move(ctx), std::move(canceler),
             std::move(callbackWeak));
         return;
     }
@@ -668,11 +671,13 @@ void Downloader::processUserOwnSyncChunks(
                     selfWeak,
                     [this, syncChunks = std::move(syncChunks),
                      promise = std::move(promise), ctx = std::move(ctx),
+                     canceler = std::move(canceler),
                      callbackWeak = std::move(callbackWeak),
                      syncMode]() mutable {
                         processUserOwnSyncChunks(
                             std::move(syncChunks), std::move(promise),
-                            std::move(ctx), std::move(callbackWeak), syncMode,
+                            std::move(ctx), std::move(canceler),
+                            std::move(callbackWeak), syncMode,
                             CheckForFirstSync::No);
                     }});
             return;
@@ -683,12 +688,12 @@ void Downloader::processUserOwnSyncChunks(
         m_notebooksProcessor->processNotebooks(syncChunks, {});
 
     auto tagsFuture = m_tagsProcessor->processTags(syncChunks, {});
-    auto savedSearchesFuture = m_savedSearchesProcessor->processSavedSearches(
-        syncChunks, {});
+    auto savedSearchesFuture =
+        m_savedSearchesProcessor->processSavedSearches(syncChunks, {});
 
     auto allFirstStageFuture = threading::whenAll(
-        QList<QFuture<void>>{}
-            << notebooksFuture << tagsFuture << savedSearchesFuture);
+        QList<QFuture<void>>{} << notebooksFuture << tagsFuture
+                               << savedSearchesFuture);
 
     auto notesFuture = threading::then(
         std::move(allFirstStageFuture),
