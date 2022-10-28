@@ -25,6 +25,8 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 
+#include <synchronization/Fwd.h>
+#include <synchronization/types/Fwd.h>
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/EDAMErrorCode.h>
@@ -92,19 +94,6 @@ private:
         Incremental
     };
 
-    void launchUserOwnDataDownload(
-        std::shared_ptr<QPromise<Result>> promise,
-        qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler,
-        ICallbackWeakPtr callbackWeak,
-        SyncMode syncMode);
-
-    void launchLinkedNotebooksDataDownload(
-        std::shared_ptr<QPromise<Result>> promise,
-        qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler,
-        ICallbackWeakPtr callbackWeak);
-
     [[nodiscard]] QFuture<qevercloud::User> fetchUser(
         qevercloud::IRequestContextPtr ctx);
 
@@ -118,13 +107,43 @@ private:
         No
     };
 
-    void processUserOwnSyncChunks(
-        QList<qevercloud::SyncChunk> syncChunks,
-        std::shared_ptr<QPromise<Result>> promise,
-        qevercloud::IRequestContextPtr ctx,
-        utility::cancelers::ICancelerPtr canceler,
-        ICallbackWeakPtr callbackWeak, SyncMode syncMode,
+    enum class ContentSource
+    {
+        UserAccount,
+        LinkedNotebook
+    };
+
+    struct DownloadContext
+    {
+        QList<qevercloud::SyncChunk> syncChunks;
+        std::shared_ptr<QPromise<Result>> promise;
+        qevercloud::IRequestContextPtr ctx;
+        utility::cancelers::ICancelerPtr canceler;
+        ICallbackWeakPtr callbackWeak;
+
+        // Running result
+        SyncChunksDataCountersPtr syncChunkDataCounters;
+        DownloadNotesStatusPtr downloadNotesStatus;
+        DownloadResourcesStatusPtr downloadResourcesStatus;
+    };
+
+    using DownloadContextPtr = std::shared_ptr<DownloadContext>;
+
+    void launchUserOwnDataDownload(
+        DownloadContextPtr downloadContext, SyncMode syncMode);
+
+    void launchLinkedNotebooksDataDownload(DownloadContextPtr downloadContext);
+
+    void processSyncChunks(
+        DownloadContextPtr downloadContext,
+        SyncMode syncMode, ContentSource contentSource,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
+
+    void downloadNotes(
+        DownloadContextPtr downloadContext, ContentSource contentSource);
+
+    void downloadResources(
+        DownloadContextPtr downloadContext, ContentSource contentSource);
 
     void cancel(QPromise<Result> & promise);
 

@@ -50,14 +50,6 @@ namespace quentier::synchronization {
 
 namespace {
 
-[[nodiscard]] IDownloader::Result createEmptyResult()
-{
-    return IDownloader::Result{
-        std::make_shared<SyncChunksDataCounters>(),
-        std::make_shared<DownloadNotesStatus>(),
-        std::make_shared<DownloadResourcesStatus>()};
-}
-
 class SyncChunksProviderCallback final : public ISyncChunksProvider::ICallback
 {
 public:
@@ -471,11 +463,15 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                 OperationCanceled{});
         });
 
+    auto downloadContext = std::make_shared<DownloadContext>();
+    downloadContext->promise = promise;
+    downloadContext->ctx = std::move(ctx);
+    downloadContext->canceler = std::move(canceler);
+    downloadContext->callbackWeak = std::move(callbackWeak);
+
     threading::thenOrFailed(
         std::move(syncStateFuture), promise,
-        [promise = promise, selfWeak, ctx = std::move(ctx),
-         canceler = std::move(canceler),
-         callbackWeak = std::move(callbackWeak)](
+        [selfWeak, downloadContext = std::move(downloadContext)](
             qevercloud::SyncState && syncState) mutable {
             if (const auto self = selfWeak.lock()) {
                 QNDEBUG(
@@ -492,8 +488,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "incremental one");
 
                     self->launchUserOwnDataDownload(
-                        std::move(promise), std::move(ctx), std::move(canceler),
-                        std::move(callbackWeak), SyncMode::Full);
+                        std::move(downloadContext), SyncMode::Full);
                 }
                 else if (
                     syncState.updateCount() ==
@@ -504,8 +499,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "Evernote has no updates for user own data");
 
                     self->launchLinkedNotebooksDataDownload(
-                        std::move(promise), std::move(ctx), std::move(canceler),
-                        std::move(callbackWeak));
+                        std::move(downloadContext));
                 }
                 else {
                     QNDEBUG(
@@ -513,26 +507,24 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "Launching incremental sync of user own data");
 
                     self->launchUserOwnDataDownload(
-                        std::move(promise), std::move(ctx), std::move(canceler),
-                        std::move(callbackWeak), SyncMode::Incremental);
+                        std::move(downloadContext), SyncMode::Incremental);
                 }
 
                 return;
             }
 
-            promise->setException(OperationCanceled{});
-            promise->finish();
+            downloadContext->promise->setException(OperationCanceled{});
+            downloadContext->promise->finish();
         });
 
     return future;
 }
 
 void Downloader::launchUserOwnDataDownload(
-    std::shared_ptr<QPromise<Result>> promise,
-    qevercloud::IRequestContextPtr ctx,
-    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak,
+    DownloadContextPtr downloadContext,
     const SyncMode syncMode)
 {
+    Q_ASSERT(downloadContext);
     Q_ASSERT(m_lastSyncState);
 
     const qint32 afterUsn =
@@ -540,45 +532,36 @@ void Downloader::launchUserOwnDataDownload(
                                     : m_lastSyncState->m_userDataUpdateCount);
 
     auto syncChunksFuture = m_syncChunksProvider->fetchSyncChunks(
-        afterUsn, ctx, canceler,
-        std::make_shared<SyncChunksProviderCallback>(callbackWeak));
+        afterUsn, downloadContext->ctx, downloadContext->canceler,
+        std::make_shared<SyncChunksProviderCallback>(
+            downloadContext->callbackWeak));
 
     auto selfWeak = weak_from_this();
+    auto promise = downloadContext->promise;
 
     threading::thenOrFailed(
         std::move(syncChunksFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [promise, this, ctx = std::move(ctx),
-             canceler = std::move(canceler), syncMode,
-             callbackWeak = std::move(callbackWeak)](
+            [this, downloadContext = std::move(downloadContext), syncMode](
                 QList<qevercloud::SyncChunk> syncChunks) mutable { // NOLINT
-                if (canceler->isCanceled()) {
-                    cancel(*promise);
-                    return;
-                }
-
-                if (const auto callback = callbackWeak.lock()) {
+                if (const auto callback = downloadContext->callbackWeak.lock())
+                {
                     callback->onSyncChunksDownloaded();
                 }
 
-                processUserOwnSyncChunks(
-                    std::move(syncChunks), std::move(promise), std::move(ctx),
-                    std::move(canceler), std::move(callbackWeak), syncMode);
+                downloadContext->syncChunks = std::move(syncChunks);
+                processSyncChunks(
+                    std::move(downloadContext), syncMode,
+                    ContentSource::UserAccount);
             }});
 }
 
 void Downloader::launchLinkedNotebooksDataDownload(
-    std::shared_ptr<QPromise<Result>> promise, // NOLINT
-    qevercloud::IRequestContextPtr ctx,        // NOLINT
-    utility::cancelers::ICancelerPtr canceler, // NOLINT
-    ICallbackWeakPtr callbackWeak)             // NOLINT
+    DownloadContextPtr downloadContext) // NOLINT
 {
     // TODO: implement
-    Q_UNUSED(promise)
-    Q_UNUSED(ctx)
-    Q_UNUSED(canceler)
-    Q_UNUSED(callbackWeak)
+    Q_UNUSED(downloadContext)
 }
 
 QFuture<qevercloud::User> Downloader::fetchUser(
@@ -637,22 +620,35 @@ QFuture<qevercloud::AccountLimits> Downloader::fetchAccountLimits(
     return promise->future();
 }
 
-void Downloader::processUserOwnSyncChunks(
-    QList<qevercloud::SyncChunk> syncChunks,
-    std::shared_ptr<QPromise<Result>> promise,
-    qevercloud::IRequestContextPtr ctx,
-    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak,
-    SyncMode syncMode, CheckForFirstSync checkForFirstSync)
+void Downloader::processSyncChunks(
+    DownloadContextPtr downloadContext,
+    SyncMode syncMode, ContentSource contentSource,
+    CheckForFirstSync checkForFirstSync)
 {
+    Q_ASSERT(downloadContext);
+
+    if (downloadContext->canceler->isCanceled()) {
+        cancel(*downloadContext->promise);
+        return;
+    }
+
     Q_ASSERT(m_lastSyncState);
 
-    if (syncChunks.isEmpty()) {
-        QNINFO(
-            "synchronization::Downloader",
-            "No new data found in Evernote for user's own account");
-        launchLinkedNotebooksDataDownload(
-            std::move(promise), std::move(ctx), std::move(canceler),
-            std::move(callbackWeak));
+    if (downloadContext->syncChunks.isEmpty()) {
+        switch (contentSource) {
+        case ContentSource::UserAccount:
+        {
+            QNINFO(
+                "synchronization::Downloader",
+                "No new data found in Evernote for user's own account");
+            launchLinkedNotebooksDataDownload(
+                std::move(downloadContext));
+        } break;
+        case ContentSource::LinkedNotebook:
+            // TODO: implement
+            break;
+        }
+
         return;
     }
 
@@ -661,23 +657,21 @@ void Downloader::processUserOwnSyncChunks(
     if (checkForFirstSync == CheckForFirstSync::Yes) {
         const bool isFirstSync = (m_lastSyncState->userDataUpdateCount() == 0);
         if (!isFirstSync && (syncMode == SyncMode::Full)) {
-            auto preservedGuids = collectPreservedGuids(syncChunks);
+            auto preservedGuids = collectPreservedGuids(
+                downloadContext->syncChunks);
+
             auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
                 std::move(preservedGuids));
 
+            auto promise = downloadContext->promise;
             threading::thenOrFailed(
                 std::move(future), promise,
                 threading::TrackedTask{
                     selfWeak,
-                    [this, syncChunks = std::move(syncChunks),
-                     promise = std::move(promise), ctx = std::move(ctx),
-                     canceler = std::move(canceler),
-                     callbackWeak = std::move(callbackWeak),
-                     syncMode]() mutable {
-                        processUserOwnSyncChunks(
-                            std::move(syncChunks), std::move(promise),
-                            std::move(ctx), std::move(canceler),
-                            std::move(callbackWeak), syncMode,
+                    [this, downloadContext = std::move(downloadContext),
+                     syncMode, contentSource]() mutable {
+                        processSyncChunks(
+                            std::move(downloadContext), syncMode, contentSource,
                             CheckForFirstSync::No);
                     }});
             return;
@@ -685,32 +679,86 @@ void Downloader::processUserOwnSyncChunks(
     }
 
     auto notebooksFuture =
-        m_notebooksProcessor->processNotebooks(syncChunks, {});
+        m_notebooksProcessor->processNotebooks(downloadContext->syncChunks, {});
 
-    auto tagsFuture = m_tagsProcessor->processTags(syncChunks, {});
+    auto tagsFuture = m_tagsProcessor->processTags(
+        downloadContext->syncChunks, {});
+
     auto savedSearchesFuture =
-        m_savedSearchesProcessor->processSavedSearches(syncChunks, {});
+        (contentSource == ContentSource::UserAccount
+             ? m_savedSearchesProcessor->processSavedSearches(
+                 downloadContext->syncChunks, {})
+             : threading::makeReadyFuture());
 
     auto allFirstStageFuture = threading::whenAll(
         QList<QFuture<void>>{} << notebooksFuture << tagsFuture
                                << savedSearchesFuture);
 
-    auto notesFuture = threading::then(
-        std::move(allFirstStageFuture),
+    auto promise = downloadContext->promise;
+    threading::thenOrFailed(
+        std::move(allFirstStageFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [this, syncChunks = std::move(syncChunks),
-             promise = std::move(promise), ctx = std::move(ctx),
-             callbackWeak = std::move(callbackWeak), syncMode]() mutable {
-                // TODO: download notes and find a way to propagate the result
+            [this, downloadContext = std::move(downloadContext),
+             contentSource]() mutable {
+                downloadNotes(std::move(downloadContext), contentSource);
             }});
+}
 
-    // TODO: implement
-    Q_UNUSED(syncChunks)
-    Q_UNUSED(promise)
-    Q_UNUSED(ctx)
-    Q_UNUSED(callbackWeak)
-    Q_UNUSED(syncMode)
+void Downloader::downloadNotes(
+    DownloadContextPtr downloadContext,
+    const ContentSource contentSource)
+{
+    Q_ASSERT(downloadContext);
+
+    if (downloadContext->canceler->isCanceled()) {
+        cancel(*downloadContext->promise);
+        return;
+    }
+
+    auto notesFuture = m_notesProcessor->processNotes(
+        downloadContext->syncChunks, downloadContext->canceler, {});
+
+    auto promise = downloadContext->promise;
+    const auto selfWeak = weak_from_this();
+    threading::thenOrFailed(
+        std::move(notesFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, downloadContext = std::move(downloadContext), contentSource](
+                DownloadNotesStatusPtr notesStatus) mutable {
+                downloadContext->downloadNotesStatus = std::move(notesStatus);
+                downloadResources(
+                    std::move(downloadContext),
+                    contentSource);
+            }});
+}
+
+void Downloader::downloadResources(
+    DownloadContextPtr downloadContext,
+    ContentSource contentSource)
+{
+    Q_ASSERT(downloadContext);
+
+    if (downloadContext->canceler->isCanceled()) {
+        cancel(*downloadContext->promise);
+        return;
+    }
+
+    auto resourcesFuture = m_resourcesProcessor->processResources(
+        downloadContext->syncChunks, downloadContext->canceler, {});
+
+    const auto selfWeak = weak_from_this();
+    auto promise = downloadContext->promise;
+    threading::thenOrFailed(
+        std::move(resourcesFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, downloadContext = std::move(downloadContext), contentSource](
+                [[maybe_unused]] DownloadResourcesStatusPtr resourcesStatus) { // NOLINT
+                // TODO: either report sync finalization or start linked
+                // notebooks sync
+            }});
 }
 
 void Downloader::cancel(QPromise<IDownloader::Result> & promise)
