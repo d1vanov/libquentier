@@ -40,8 +40,8 @@ class LinkedNotebookCounters
 {
 public:
     LinkedNotebookCounters(
-        const qint32 totalLinkedNotebooks,
-        const qint32 totalLinkedNotebooksToExpunge,
+        const qint32 totalLinkedNotebooks, // NOLINT
+        const qint32 totalLinkedNotebooksToExpunge, // NOLINT
         ILinkedNotebooksProcessor::ICallbackWeakPtr callbackWeak) :
         m_totalLinkedNotebooks{totalLinkedNotebooks},
         m_totalLinkedNotebooksToExpunge{totalLinkedNotebooksToExpunge},

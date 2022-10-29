@@ -129,6 +129,13 @@ private:
 
     using DownloadContextPtr = std::shared_ptr<DownloadContext>;
 
+    class LinkedNotebooksProcessorCallback;
+    class NotebooksProcessorCallback;
+    class NotesProcessorCallback;
+    class ResourcesProcessorCallback;
+    class SavedSearchesProcessorCallback;
+    class TagsProcessorCallback;
+
     void launchUserOwnDataDownload(
         DownloadContextPtr downloadContext, SyncMode syncMode);
 
@@ -168,7 +175,7 @@ private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const QDir m_syncPersistentStorageDir;
 
-    QMutex m_mutex;
+    std::shared_ptr<QMutex> m_mutex;
     std::optional<QFuture<Result>> m_future;
     std::optional<SyncState> m_lastSyncState;
     std::optional<QFuture<qevercloud::User>> m_userFuture;

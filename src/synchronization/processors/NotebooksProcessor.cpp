@@ -40,7 +40,7 @@ class NotebooksProcessor::NotebookCounters
 {
 public:
     NotebookCounters(
-        const qint32 totalNotebooks, const qint32 totalNotebooksToExpunge,
+        const qint32 totalNotebooks, const qint32 totalNotebooksToExpunge, // NOLINT
         INotebooksProcessor::ICallbackWeakPtr callbackWeak) :
         m_totalNotebooks{totalNotebooks},
         m_totalNotebooksToExpunge{totalNotebooksToExpunge},
