@@ -33,6 +33,7 @@
 #include <qevercloud/Fwd.h>
 #include <qevercloud/services/Fwd.h>
 #include <qevercloud/types/AccountLimits.h>
+#include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/User.h>
 
 #include <QDir>
@@ -121,8 +122,11 @@ private:
         utility::cancelers::ICancelerPtr canceler;
         ICallbackWeakPtr callbackWeak;
 
+        // Linked notebook to which this DownloadContext belongs
+        std::optional<qevercloud::LinkedNotebook> linkedNotebook;
+
         // Running result
-        SyncChunksDataCountersPtr syncChunkDataCounters;
+        SyncChunksDataCountersPtr syncChunksDataCounters;
         DownloadNotesStatusPtr downloadNotesStatus;
         DownloadResourcesStatusPtr downloadResourcesStatus;
     };
@@ -139,19 +143,27 @@ private:
     void launchUserOwnDataDownload(
         DownloadContextPtr downloadContext, SyncMode syncMode);
 
-    void launchLinkedNotebooksDataDownload(DownloadContextPtr downloadContext);
+    void listLinkedNotebooksAndLaunchDataDownload(
+        DownloadContextPtr downloadContext, SyncMode syncMode);
+
+    void launchLinkedNotebooksDataDownload(
+        DownloadContextPtr downloadContext, SyncMode syncMode,
+        QList<qevercloud::LinkedNotebook> linkedNotebooks);
+
+    [[nodiscard]] QFuture<Result> startLinkedNotebookDataDownload(
+        const DownloadContextPtr & downloadContext, SyncMode syncMode,
+        qevercloud::LinkedNotebook linkedNotebook);
 
     void processSyncChunks(
-        DownloadContextPtr downloadContext,
-        SyncMode syncMode, ContentSource contentSource,
+        DownloadContextPtr downloadContext, SyncMode syncMode,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
-    void downloadNotes(
-        DownloadContextPtr downloadContext, ContentSource contentSource);
+    void downloadNotes(DownloadContextPtr downloadContext, SyncMode syncMode);
 
     void downloadResources(
-        DownloadContextPtr downloadContext, ContentSource contentSource);
+        DownloadContextPtr downloadContext, SyncMode syncMode);
 
+    static void finalize(DownloadContextPtr & downloadContext);
     void cancel(QPromise<Result> & promise);
 
 private:
@@ -176,7 +188,6 @@ private:
     const QDir m_syncPersistentStorageDir;
 
     std::shared_ptr<QMutex> m_mutex;
-    std::optional<QFuture<Result>> m_future;
     std::optional<SyncState> m_lastSyncState;
     std::optional<QFuture<qevercloud::User>> m_userFuture;
     std::optional<QFuture<qevercloud::AccountLimits>> m_accountLimitsFuture;

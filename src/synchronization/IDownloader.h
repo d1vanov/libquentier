@@ -25,6 +25,7 @@
 #include <qevercloud/types/LinkedNotebook.h>
 
 #include <QFuture>
+#include <QHash>
 
 #include <memory>
 
@@ -162,11 +163,20 @@ public:
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
-    struct Result
+    struct LocalResult
     {
         ISyncChunksDataCountersPtr syncChunksDataCounters;
         IDownloadNotesStatusPtr downloadNotesStatus;
         IDownloadResourcesStatusPtr downloadResourcesStatus;
+    };
+
+    struct Result
+    {
+        // Result for user own account
+        LocalResult userOwnResult;
+
+        // Results for linked notebooks
+        QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
     };
 
     [[nodiscard]] virtual QFuture<Result> download(
