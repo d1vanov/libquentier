@@ -108,12 +108,6 @@ private:
         No
     };
 
-    enum class ContentSource
-    {
-        UserAccount,
-        LinkedNotebook
-    };
-
     struct DownloadContext
     {
         QList<qevercloud::SyncChunk> syncChunks;
@@ -152,6 +146,7 @@ private:
 
     [[nodiscard]] QFuture<Result> startLinkedNotebookDataDownload(
         const DownloadContextPtr & downloadContext, SyncMode syncMode,
+        std::shared_ptr<QPromise<void>> syncChunksDownloadedPromise,
         qevercloud::LinkedNotebook linkedNotebook);
 
     void processSyncChunks(
