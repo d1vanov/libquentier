@@ -921,6 +921,8 @@ QFuture<IDownloader::Result> Downloader::download(
 void Downloader::readLastSyncState()
 {
     const auto syncState = m_syncStateStorage->getSyncState(m_account);
+    Q_ASSERT(syncState);
+
     m_lastSyncState = SyncState{
         syncState->userDataUpdateCount(), syncState->userDataLastSyncTime(),
         syncState->linkedNotebookUpdateCounts(),
@@ -1193,7 +1195,6 @@ void Downloader::launchLinkedNotebooksDataDownload(
                 std::move(results)});
 
             downloadContext->promise->finish();
-            return;
         });
 }
 
