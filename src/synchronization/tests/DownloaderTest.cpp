@@ -22,7 +22,9 @@
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
+#include <quentier/threading/Future.h>
 #include <quentier/utility/FileSystem.h>
+#include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <synchronization/tests/mocks/MockIAccountLimitsProvider.h>
@@ -40,6 +42,22 @@
 #include <synchronization/tests/mocks/MockIUserInfoProvider.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
+#include <synchronization/types/AuthenticationInfo.h>
+#include <synchronization/types/SyncState.h>
+
+#include <qevercloud/types/builders/DataBuilder.h>
+#include <qevercloud/types/builders/LinkedNotebookBuilder.h>
+#include <qevercloud/types/builders/NoteBuilder.h>
+#include <qevercloud/types/builders/NotebookBuilder.h>
+#include <qevercloud/types/builders/ResourceBuilder.h>
+#include <qevercloud/types/builders/SavedSearchBuilder.h>
+#include <qevercloud/types/builders/SyncChunkBuilder.h>
+#include <qevercloud/types/builders/TagBuilder.h>
+
+#include <QCryptographicHash>
+#include <QDateTime>
+#include <QFlags>
+#include <QList>
 #include <QTemporaryDir>
 
 #include <gtest/gtest.h>
@@ -49,7 +67,142 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::Return;
 using testing::StrictMock;
+
+namespace {
+
+enum class SyncChunksFlag
+{
+    WithLinkedNotebooks = 1 << 0,
+    WithNotes = 1 << 1,
+    WithNotebooks = 1 << 2,
+    WithResources = 1 << 3,
+    WithSavedSearches = 1 << 4,
+    WithTags = 1 << 5,
+};
+
+Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
+
+[[nodiscard]] QList<qevercloud::SyncChunk> generateSynChunks(
+    const SyncChunksFlags flags, const qint32 afterUsn = 0,
+    const qint32 syncChunksCount = 3, const qint32 itemCountPerSyncChunk = 3)
+{
+    Q_ASSERT(syncChunksCount > 0);
+    Q_ASSERT(itemCountPerSyncChunk > 0);
+    Q_ASSERT(afterUsn > 0);
+
+    QList<qevercloud::SyncChunk> result;
+    result.reserve(syncChunksCount);
+
+    qint32 usn = afterUsn + 1;
+
+    for (qint32 i = 0; i < syncChunksCount; ++i) {
+        qevercloud::SyncChunkBuilder builder;
+
+        if (flags.testFlag(SyncChunksFlag::WithLinkedNotebooks)) {
+            QList<qevercloud::LinkedNotebook> linkedNotebooks;
+            linkedNotebooks.reserve(itemCountPerSyncChunk);
+            for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
+                linkedNotebooks
+                    << qevercloud::LinkedNotebookBuilder{}
+                           .setGuid(UidGenerator::Generate())
+                           .setUpdateSequenceNum(usn++)
+                           .setUsername(QString::fromUtf8("Linked notebook #%1")
+                                            .arg(j + 1))
+                           .build();
+            }
+            builder.setLinkedNotebooks(std::move(linkedNotebooks));
+        }
+
+        if (flags.testFlag(SyncChunksFlag::WithNotes)) {
+            QList<qevercloud::Note> notes;
+            notes.reserve(itemCountPerSyncChunk);
+            for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
+                notes << qevercloud::NoteBuilder{}
+                             .setGuid(UidGenerator::Generate())
+                             .setUpdateSequenceNum(usn++)
+                             .setTitle(QString::fromUtf8("Note #%1").arg(j + 1))
+                             .setNotebookGuid(UidGenerator::Generate())
+                             .build();
+            }
+            builder.setNotes(std::move(notes));
+        }
+
+        if (flags.testFlag(SyncChunksFlag::WithNotebooks)) {
+            QList<qevercloud::Notebook> notebooks;
+            notebooks.reserve(itemCountPerSyncChunk);
+            for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
+                notebooks << qevercloud::NotebookBuilder{}
+                                 .setGuid(UidGenerator::Generate())
+                                 .setUpdateSequenceNum(usn++)
+                                 .setName(QString::fromUtf8("Notebook #%1")
+                                              .arg(j + 1))
+                                 .build();
+            }
+            builder.setNotebooks(std::move(notebooks));
+        }
+
+        if (flags.testFlag(SyncChunksFlag::WithResources)) {
+            QList<qevercloud::Resource> resources;
+            resources.reserve(itemCountPerSyncChunk);
+            for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
+                QByteArray dataBody =
+                    QString::fromUtf8("Resource #%1").arg(j + 1).toUtf8();
+                const int dataBodySize = dataBody.size();
+                QByteArray dataBodyHash =
+                    QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
+
+                resources << qevercloud::ResourceBuilder{}
+                                 .setGuid(UidGenerator::Generate())
+                                 .setUpdateSequenceNum(usn++)
+                                 .setNoteGuid(UidGenerator::Generate())
+                                 .setData(
+                                     qevercloud::DataBuilder{}
+                                         .setBody(std::move(dataBody))
+                                         .setSize(dataBodySize)
+                                         .setBodyHash(std::move(dataBodyHash))
+                                         .build())
+                                 .build();
+            }
+            builder.setResources(std::move(resources));
+        }
+
+        if (flags.testFlag(SyncChunksFlag::WithSavedSearches)) {
+            QList<qevercloud::SavedSearch> savedSearches;
+            savedSearches.reserve(itemCountPerSyncChunk);
+            for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
+                savedSearches
+                    << qevercloud::SavedSearchBuilder{}
+                           .setGuid(UidGenerator::Generate())
+                           .setUpdateSequenceNum(usn++)
+                           .setName(
+                               QString::fromUtf8("Saved search #%1").arg(j + 1))
+                           .build();
+            }
+            builder.setSearches(std::move(savedSearches));
+        }
+
+        if (flags.testFlag(SyncChunksFlag::WithTags)) {
+            QList<qevercloud::Tag> tags;
+            tags.reserve(itemCountPerSyncChunk);
+            for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
+                tags << qevercloud::TagBuilder{}
+                            .setGuid(UidGenerator::Generate())
+                            .setUpdateSequenceNum(usn++)
+                            .setName(QString::fromUtf8("Tag #%1").arg(j + 1))
+                            .build();
+            }
+            builder.setTags(std::move(tags));
+        }
+
+        result << builder.build();
+    }
+
+    return result;
+}
+
+} // namespace
 
 class DownloaderTest : public testing::Test
 {
@@ -455,5 +608,49 @@ TEST_F(DownloaderTest, CtorNullLocalStorage)
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
+
+/*
+TEST_F(DownloaderTest, DownloadUserOwnData)
+{
+    const auto downloader = std::make_shared<Downloader>(
+        m_account, m_mockAuthenticationInfoProvider,
+        m_mockProtocolVersionChecker, m_mockUserInfoProvider,
+        m_mockAccountLimitsProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksProvider, m_mockSyncChunksStorage,
+        m_mockLinkedNotebooksProcessor, m_mockNotebooksProcessor,
+        m_mockNotesProcessor, m_mockResourcesProcessor,
+        m_mockSavedSearchesProcessor, m_mockTagsProcessor,
+        m_mockFullSyncStaleDataExpunger, m_ctx, m_mockNoteStore,
+        m_mockLocalStorage, QDir{m_temporaryDir.path()});
+
+    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
+        .WillOnce(Return(std::make_shared<SyncState>()));
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    auto authenticationInfo = std::make_shared<AuthenticationInfo>();
+    authenticationInfo->m_userId = m_account.id();
+    authenticationInfo->m_authToken = QStringLiteral("authToken");
+    authenticationInfo->m_authTokenExpirationTime = now + 100000000;
+    authenticationInfo->m_authenticationTime = now;
+    authenticationInfo->m_shardId = QStringLiteral("shardId");
+    authenticationInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
+    authenticationInfo->m_webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
+
+    EXPECT_CALL(
+        *m_mockAuthenticationInfoProvider,
+        authenticateAccount(
+            m_account, IAuthenticationInfoProvider::Mode::Cache))
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            authenticationInfo)));
+
+    EXPECT_CALL(
+        *m_mockProtocolVersionChecker,
+        checkProtocolVersion(*authenticationInfo))
+        .WillOnce(Return(threading::makeReadyFuture()));
+
+    // TODO: continue from here
+}
+*/
 
 } // namespace quentier::synchronization::tests
