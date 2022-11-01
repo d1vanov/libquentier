@@ -58,8 +58,6 @@ public:
         Account account,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         IProtocolVersionCheckerPtr protocolVersionChecker,
-        IUserInfoProviderPtr userInfoProvider,
-        IAccountLimitsProviderPtr accountLimitsProvider,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
         ISyncChunksStoragePtr syncChunksStorage,
@@ -94,13 +92,6 @@ private:
         Full,
         Incremental
     };
-
-    [[nodiscard]] QFuture<qevercloud::User> fetchUser(
-        qevercloud::IRequestContextPtr ctx);
-
-    [[nodiscard]] QFuture<qevercloud::AccountLimits> fetchAccountLimits(
-        qevercloud::ServiceLevel serviceLevel,
-        qevercloud::IRequestContextPtr ctx);
 
     enum class CheckForFirstSync
     {
@@ -165,8 +156,6 @@ private:
     const Account m_account;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const IProtocolVersionCheckerPtr m_protocolVersionChecker;
-    const IUserInfoProviderPtr m_userInfoProvider;
-    const IAccountLimitsProviderPtr m_accountLimitsProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
     const ISyncChunksStoragePtr m_syncChunksStorage;
@@ -184,8 +173,6 @@ private:
 
     std::shared_ptr<QMutex> m_mutex;
     std::optional<SyncState> m_lastSyncState;
-    std::optional<QFuture<qevercloud::User>> m_userFuture;
-    std::optional<QFuture<qevercloud::AccountLimits>> m_accountLimitsFuture;
 
     SyncChunksDataCountersPtr m_syncChunksDataCounters;
     SyncChunksDataCountersPtr m_linkedNotebookSyncChunksDataCounters;
