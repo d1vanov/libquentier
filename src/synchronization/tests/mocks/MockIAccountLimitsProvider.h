@@ -26,6 +26,7 @@ namespace quentier::synchronization::tests::mocks {
 
 class MockIAccountLimitsProvider : public IAccountLimitsProvider
 {
+public:
     MOCK_METHOD(
         QFuture<qevercloud::AccountLimits>, accountLimits,
         (qevercloud::ServiceLevel serviceLevel,
