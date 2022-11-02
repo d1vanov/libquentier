@@ -28,6 +28,7 @@
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
+#include <synchronization/tests/mocks/MockIDownloader.h>
 #include <synchronization/tests/mocks/MockIDurableNotesProcessor.h>
 #include <synchronization/tests/mocks/MockIDurableResourcesProcessor.h>
 #include <synchronization/tests/mocks/MockIFullSyncStaleDataExpunger.h>
@@ -41,6 +42,8 @@
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <synchronization/types/AuthenticationInfo.h>
+#include <synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/types/builders/DataBuilder.h>
@@ -61,11 +64,14 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
 namespace quentier::synchronization::tests {
 
+using testing::_;
 using testing::Return;
 using testing::StrictMock;
 
@@ -85,11 +91,12 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
 [[nodiscard]] QList<qevercloud::SyncChunk> generateSynChunks(
     const SyncChunksFlags flags, const qint32 afterUsn = 0, // NOLINT
-    const qint32 syncChunksCount = 3, const qint32 itemCountPerSyncChunk = 3) // NOLINT
+    const qint32 syncChunksCount = 3,
+    const qint32 itemCountPerSyncChunk = 3) // NOLINT
 {
     Q_ASSERT(syncChunksCount > 0);
     Q_ASSERT(itemCountPerSyncChunk > 0);
-    Q_ASSERT(afterUsn > 0);
+    Q_ASSERT(afterUsn >= 0);
 
     QList<qevercloud::SyncChunk> result;
     result.reserve(syncChunksCount);
@@ -554,7 +561,37 @@ TEST_F(DownloaderTest, CtorNullLocalStorage)
 }
 
 /*
-TEST_F(DownloaderTest, DownloadUserOwnData)
+constexpr std::array gSyncChunksFlags{
+    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks,
+    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+        SyncChunksFlag::WithNotes,
+    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+        SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources,
+    SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches,
+    SyncChunksFlags{} | SyncChunksFlag::WithTags,
+    SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches |
+        SyncChunksFlag::WithTags,
+    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+        SyncChunksFlag::WithSavedSearches,
+    SyncChunksFlags{} | SyncChunksFlag::WithTags |
+        SyncChunksFlag::WithSavedSearches,
+    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+        SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+        SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+        SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+};
+
+class DownloaderSyncChunksTest :
+    public DownloaderTest,
+    public testing::WithParamInterface<SyncChunksFlags>
+{};
+
+INSTANTIATE_TEST_SUITE_P(
+    DownloaderSyncChunksTestInstance, DownloaderSyncChunksTest,
+    testing::ValuesIn(gSyncChunksFlags));
+
+TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
 {
     const auto downloader = std::make_shared<Downloader>(
         m_account, m_mockAuthenticationInfoProvider,
@@ -587,25 +624,116 @@ TEST_F(DownloaderTest, DownloadUserOwnData)
         .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
             authenticationInfo)));
 
-    EXPECT_CALL(
-        *m_mockProtocolVersionChecker,
-        checkProtocolVersion(*authenticationInfo))
-        .WillOnce(Return(threading::makeReadyFuture()));
+    EXPECT_CALL(*m_mockProtocolVersionChecker, checkProtocolVersion)
+        .WillOnce([&](const IAuthenticationInfo & authInfo) {
+            EXPECT_EQ(authInfo.userId(), authenticationInfo->userId());
+
+            EXPECT_EQ(authInfo.authToken(), authenticationInfo->authToken());
+
+            EXPECT_EQ(
+                authInfo.authTokenExpirationTime(),
+                authenticationInfo->authTokenExpirationTime());
+
+            EXPECT_EQ(
+                authInfo.authenticationTime(),
+                authenticationInfo->authenticationTime());
+
+            EXPECT_EQ(authInfo.shardId(), authenticationInfo->shardId());
+
+            EXPECT_EQ(
+                authInfo.noteStoreUrl(), authenticationInfo->noteStoreUrl());
+
+            EXPECT_EQ(
+                authInfo.webApiUrlPrefix(),
+                authenticationInfo->webApiUrlPrefix());
+
+            return threading::makeReadyFuture();
+        });
 
     EXPECT_CALL(*m_mockNoteStore, getSyncStateAsync)
+        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(
+                    ctx->authenticationToken(),
+                    authenticationInfo->authToken());
+            }
+            return threading::makeReadyFuture<qevercloud::SyncState>({});
+        });
+
+    const auto syncChunksFlags = GetParam();
+    const auto syncChunks = generateSynChunks(syncChunksFlags);
+
+    EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
         .WillOnce(
-            [&](const qevercloud::IRequestContextPtr & ctx)
-            {
+            [&](const qint32 afterUsn,
+                const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                    canceler,
+                const ISyncChunksProvider::ICallbackWeakPtr & callbackWeak) {
+                EXPECT_EQ(afterUsn, 0);
                 EXPECT_TRUE(ctx);
                 if (ctx) {
                     EXPECT_EQ(
                         ctx->authenticationToken(),
                         authenticationInfo->authToken());
                 }
-                return threading::makeReadyFuture<qevercloud::SyncState>({});
+
+                EXPECT_FALSE(callbackWeak.expired());
+
+                return threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                    syncChunks);
             });
 
-    // TODO: continue from here
+    std::shared_ptr<mocks::MockIDownloaderICallback> downloaderCallback =
+        std::make_shared<StrictMock<mocks::MockIDownloaderICallback>>();
+
+    EXPECT_CALL(*downloaderCallback, onSyncChunksDownloaded);
+
+    EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
+        .WillOnce(Return(threading::makeReadyFuture()));
+
+    EXPECT_CALL(*m_mockTagsProcessor, processTags(syncChunks, _))
+        .WillOnce(Return(threading::makeReadyFuture()));
+
+    EXPECT_CALL(
+        *m_mockSavedSearchesProcessor, processSavedSearches(syncChunks, _))
+        .WillOnce(Return(threading::makeReadyFuture()));
+
+    EXPECT_CALL(
+        *m_mockLinkedNotebooksProcessor, processLinkedNotebooks(syncChunks, _))
+        .WillOnce(Return(threading::makeReadyFuture()));
+
+    EXPECT_CALL(*m_mockNotesProcessor, processNotes)
+        .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
+                          chunks,
+                      [[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                          canceler,
+                      [[maybe_unused]] const IDurableNotesProcessor::
+                          ICallbackWeakPtr & callbackWeak) {
+            EXPECT_EQ(chunks, syncChunks);
+            return threading::makeReadyFuture<DownloadNotesStatusPtr>(
+                std::make_shared<DownloadNotesStatus>());
+        });
+
+    EXPECT_CALL(*m_mockResourcesProcessor, processResources)
+        .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
+                          chunks,
+                      [[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                          canceler,
+                      [[maybe_unused]] const IDurableResourcesProcessor::
+                          ICallbackWeakPtr & callbackWeak) {
+            EXPECT_EQ(chunks, syncChunks);
+            return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
+                std::make_shared<DownloadResourcesStatus>());
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>({})));
+
+    auto result = downloader->download(m_manualCanceler, downloaderCallback);
+    ASSERT_TRUE(result.isFinished());
 }
 */
 
