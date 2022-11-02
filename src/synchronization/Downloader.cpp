@@ -936,7 +936,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
     downloadContext->canceler = std::move(canceler);
     downloadContext->callbackWeak = std::move(callbackWeak);
 
-    auto syncStateFuture = m_noteStore->getSyncStateAsync(ctx);
+    auto syncStateFuture = m_noteStore->getSyncStateAsync(downloadContext->ctx);
     threading::thenOrFailed(
         std::move(syncStateFuture), promise,
         [selfWeak = weak_from_this(),
