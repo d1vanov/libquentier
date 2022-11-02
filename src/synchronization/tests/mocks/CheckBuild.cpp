@@ -3,6 +3,7 @@
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include "MockIAccountLimitsProvider.h"
 #include "MockIAuthenticationInfoProvider.h"
+#include "MockIDownloader.h"
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
 #include "MockIFullSyncStaleDataExpunger.h"
