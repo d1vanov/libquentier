@@ -53,6 +53,7 @@
 #include <qevercloud/types/builders/ResourceBuilder.h>
 #include <qevercloud/types/builders/SavedSearchBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
+#include <qevercloud/types/builders/SyncStateBuilder.h>
 #include <qevercloud/types/builders/TagBuilder.h>
 #include <qevercloud/types/builders/UserBuilder.h>
 
@@ -118,6 +119,9 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                                             .arg(j + 1))
                            .build();
             }
+            builder.setChunkHighUSN(
+                linkedNotebooks.last().updateSequenceNum().value());
+
             builder.setLinkedNotebooks(std::move(linkedNotebooks));
         }
 
@@ -132,6 +136,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                              .setNotebookGuid(UidGenerator::Generate())
                              .build();
             }
+            builder.setChunkHighUSN(notes.last().updateSequenceNum().value());
             builder.setNotes(std::move(notes));
         }
 
@@ -146,6 +151,9 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                                               .arg(j + 1))
                                  .build();
             }
+            builder.setChunkHighUSN(
+                notebooks.last().updateSequenceNum().value());
+
             builder.setNotebooks(std::move(notebooks));
         }
 
@@ -171,6 +179,9 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                                          .build())
                                  .build();
             }
+            builder.setChunkHighUSN(
+                resources.last().updateSequenceNum().value());
+
             builder.setResources(std::move(resources));
         }
 
@@ -186,6 +197,9 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                                QString::fromUtf8("Saved search #%1").arg(j + 1))
                            .build();
             }
+            builder.setChunkHighUSN(
+                savedSearches.last().updateSequenceNum().value());
+
             builder.setSearches(std::move(savedSearches));
         }
 
@@ -199,6 +213,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                             .setName(QString::fromUtf8("Tag #%1").arg(j + 1))
                             .build();
             }
+            builder.setChunkHighUSN(tags.last().updateSequenceNum().value());
             builder.setTags(std::move(tags));
         }
 
@@ -560,7 +575,6 @@ TEST_F(DownloaderTest, CtorNullLocalStorage)
         InvalidArgument);
 }
 
-/*
 constexpr std::array gSyncChunksFlags{
     SyncChunksFlags{} | SyncChunksFlag::WithNotebooks,
     SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
@@ -650,6 +664,10 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
             return threading::makeReadyFuture();
         });
 
+    const auto syncChunksFlags = GetParam();
+    const auto syncChunks = generateSynChunks(syncChunksFlags);
+    ASSERT_FALSE(syncChunks.isEmpty());
+
     EXPECT_CALL(*m_mockNoteStore, getSyncStateAsync)
         .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
             EXPECT_TRUE(ctx);
@@ -658,11 +676,11 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                     ctx->authenticationToken(),
                     authenticationInfo->authToken());
             }
-            return threading::makeReadyFuture<qevercloud::SyncState>({});
+            return threading::makeReadyFuture<qevercloud::SyncState>(
+                qevercloud::SyncStateBuilder{}
+                    .setUpdateCount(syncChunks.last().chunkHighUSN().value())
+                    .build());
         });
-
-    const auto syncChunksFlags = GetParam();
-    const auto syncChunks = generateSynChunks(syncChunksFlags);
 
     EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
         .WillOnce(
@@ -705,28 +723,28 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
         .WillOnce(Return(threading::makeReadyFuture()));
 
     EXPECT_CALL(*m_mockNotesProcessor, processNotes)
-        .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
-                          chunks,
-                      [[maybe_unused]] const utility::cancelers::ICancelerPtr &
-                          canceler,
-                      [[maybe_unused]] const IDurableNotesProcessor::
-                          ICallbackWeakPtr & callbackWeak) {
-            EXPECT_EQ(chunks, syncChunks);
-            return threading::makeReadyFuture<DownloadNotesStatusPtr>(
-                std::make_shared<DownloadNotesStatus>());
-        });
+        .WillOnce(
+            [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> & chunks,
+                [[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                    canceler,
+                [[maybe_unused]] const IDurableNotesProcessor::
+                    ICallbackWeakPtr & callbackWeak) {
+                EXPECT_EQ(chunks, syncChunks);
+                return threading::makeReadyFuture<DownloadNotesStatusPtr>(
+                    std::make_shared<DownloadNotesStatus>());
+            });
 
     EXPECT_CALL(*m_mockResourcesProcessor, processResources)
-        .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
-                          chunks,
-                      [[maybe_unused]] const utility::cancelers::ICancelerPtr &
-                          canceler,
-                      [[maybe_unused]] const IDurableResourcesProcessor::
-                          ICallbackWeakPtr & callbackWeak) {
-            EXPECT_EQ(chunks, syncChunks);
-            return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
-                std::make_shared<DownloadResourcesStatus>());
-        });
+        .WillOnce(
+            [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> & chunks,
+                [[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                    canceler,
+                [[maybe_unused]] const IDurableResourcesProcessor::
+                    ICallbackWeakPtr & callbackWeak) {
+                EXPECT_EQ(chunks, syncChunks);
+                return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
+                    std::make_shared<DownloadResourcesStatus>());
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
         .WillOnce(Return(
@@ -735,6 +753,5 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
     auto result = downloader->download(m_manualCanceler, downloaderCallback);
     ASSERT_TRUE(result.isFinished());
 }
-*/
 
 } // namespace quentier::synchronization::tests
