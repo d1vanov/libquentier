@@ -506,7 +506,7 @@ jobs:
             git checkout v0.13.2
             mkdir build
             cd build
-            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain -DBUILD_TRANSLATIONS=OFF -DBUILD_SHARED_LIBS=ON -DBUILD_WITH_QT6=OFF ..
+            cmake -G Ninja -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain -DBUILD_TRANSLATIONS=OFF -DBUILD_SHARED_LIBS=ON -DBUILD_WITH_QT6=OFF ..
             cmake --build . --target all
             cmake --build . --target install
           fi
