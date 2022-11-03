@@ -705,7 +705,7 @@ Downloader::Downloader(
     m_ctx{std::move(ctx)}, m_noteStore{std::move(noteStore)},
     m_localStorage{std::move(localStorage)},
     m_syncPersistentStorageDir{syncPersistentStorageDir},
-    m_mutex{std::shared_ptr<QMutex>()}
+    m_mutex{std::make_shared<QMutex>()}
 // clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
