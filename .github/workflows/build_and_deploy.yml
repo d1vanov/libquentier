@@ -513,7 +513,7 @@ jobs:
             curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_macos_x86_64.zip -o QEverCloud_macos_x86_64.zip || true
             if [ -f QEverCloud_macos_x86_64.zip ]; then
               echo "Downloaded prebuilt QEverCloud from continuous-master release"
-              7z -o$RUNNER_WORKSPACE/qevercloud_master_qt_modern x QEverCloud_macos_x86_64.zip
+              7z -o$RUNNER_WORKSPACE/qevercloud_master x QEverCloud_macos_x86_64.zip
             else
               git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_src
               cd qevercloud_master_src
@@ -538,7 +538,7 @@ jobs:
             curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_macos_x86_64.zip -o QEverCloud_macos_x86_64.zip || true
             if [ -f QEverCloud_macos_x86_64.zip ]; then
               echo "Downloaded prebuilt QEverCloud from continuous-development release"
-              7z -o$RUNNER_WORKSPACE/qevercloud_development_qt_modern x QEverCloud_macos_x86_64.zip
+              7z -o$RUNNER_WORKSPACE/qevercloud_development x QEverCloud_macos_x86_64.zip
             else
               git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_src
               cd qevercloud_development_src
