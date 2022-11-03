@@ -571,6 +571,8 @@ jobs:
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
           fi
+          echo "QEVERCLOUD_DIR=${QEVERCLOUD_DIR}"
+          tree $QEVERCLOUD_DIR
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
