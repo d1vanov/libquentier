@@ -483,11 +483,34 @@ jobs:
           brew list p7zip || brew install p7zip --force-bottle
           brew install qt5 --force-bottle
           brew install hunspell --force-bottle
-          brew install qtkeychain --force-bottle
           brew install tidy-html5 --force-bottle
           brew install openssl@1.1 --force-bottle
           brew install boost --force-bottle
           brew install tree
+
+      - name: Cache QtKeychain
+        id: cache_qtkeychain
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/qtkeychain'
+          key: ${{ runner.os }}-qtkeychain
+
+      - name: Build QtKeychain
+        id: build_qtkeychain
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if [ ! -d "$RUNNER_WORKSPACE/qtkeychain" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qtkeychain)" ]; then
+            git clone https://github.com/frankosterfeld/qtkeychain.git $RUNNER_WORKSPACE/qtkeychain_src
+            cd $RUNNER_WORKSPACE/qtkeychain_src
+            git checkout v0.13.2
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain -DBUILD_TRANSLATIONS=OFF -DBUILD_SHARED_LIBS=ON -DBUILD_WITH_QT6=OFF ..
+            cmake --build . --target all
+            cmake --build . --target install
+          fi
+        shell: bash
 
       - name: Cache QEverCloud master
         id: cache_qevercloud_master
@@ -572,11 +595,11 @@ jobs:
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
           fi
-          echo "QEVERCLOUD_DIR=${QEVERCLOUD_DIR}"
-          tree $QEVERCLOUD_DIR
+          export QTKEYCHAIN_DIR=$RUNNER_WORKSPACE/qtkeychain
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
+            -DQt5Keychain_DIR=$QTKEYCHAIN_DIR/lib/cmake/Qt5Keychain \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
             -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
             ..
