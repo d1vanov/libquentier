@@ -73,6 +73,7 @@
 namespace quentier::synchronization::tests {
 
 using testing::_;
+using testing::InSequence;
 using testing::Return;
 using testing::StrictMock;
 
@@ -617,6 +618,8 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
         m_mockFullSyncStaleDataExpunger, m_ctx, m_mockNoteStore,
         m_mockLocalStorage, QDir{m_temporaryDir.path()});
 
+    InSequence s;
+
     EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
         .WillOnce(Return(std::make_shared<SyncState>()));
 
@@ -698,15 +701,39 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                 }
 
                 EXPECT_FALSE(callbackWeak.expired());
+                if (const auto callback = callbackWeak.lock()) {
+                    const qint32 lastPreviousUsn = afterUsn;
+                    const qint32 highestServerUsn =
+                        syncChunks.last().chunkHighUSN().value();
+                    for (const auto & syncChunk: qAsConst(syncChunks)) {
+                        callback->onUserOwnSyncChunksDownloadProgress(
+                            syncChunk.chunkHighUSN().value(), highestServerUsn,
+                            lastPreviousUsn);
+                    }
+                }
 
                 return threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
                     syncChunks);
             });
 
-    std::shared_ptr<mocks::MockIDownloaderICallback> downloaderCallback =
+    std::shared_ptr<mocks::MockIDownloaderICallback> mockDownloaderCallback =
         std::make_shared<StrictMock<mocks::MockIDownloaderICallback>>();
 
-    EXPECT_CALL(*downloaderCallback, onSyncChunksDownloaded);
+    {
+        const qint32 lastPreviousUsn = 0;
+        const qint32 highestServerUsn =
+            syncChunks.last().chunkHighUSN().value();
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            EXPECT_CALL(
+                *mockDownloaderCallback,
+                onSyncChunksDownloadProgress(
+                    syncChunk.chunkHighUSN().value(), highestServerUsn,
+                    lastPreviousUsn))
+                .Times(1);
+        }
+    }
+
+    EXPECT_CALL(*mockDownloaderCallback, onSyncChunksDownloaded);
 
     EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
         .WillOnce(Return(threading::makeReadyFuture()));
@@ -750,7 +777,8 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
         .WillOnce(Return(
             threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>({})));
 
-    auto result = downloader->download(m_manualCanceler, downloaderCallback);
+    auto result =
+        downloader->download(m_manualCanceler, mockDownloaderCallback);
     ASSERT_TRUE(result.isFinished());
 }
 
