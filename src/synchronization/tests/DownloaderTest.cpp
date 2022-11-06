@@ -19,7 +19,9 @@
 #include <synchronization/Downloader.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
+#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/threading/Future.h>
@@ -72,7 +74,10 @@
 namespace quentier::synchronization::tests {
 
 using testing::_;
+using testing::AnyNumber;
+using testing::AtMost;
 using testing::InSequence;
+using testing::Ne;
 using testing::Return;
 using testing::StrictMock;
 
@@ -110,6 +115,10 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
         if (flags.testFlag(SyncChunksFlag::WithLinkedNotebooks)) {
             QList<qevercloud::LinkedNotebook> linkedNotebooks;
             linkedNotebooks.reserve(itemCountPerSyncChunk);
+
+            QList<qevercloud::Guid> expungedLinkedNotebooks;
+            expungedLinkedNotebooks.reserve(itemCountPerSyncChunk);
+
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 linkedNotebooks
                     << qevercloud::LinkedNotebookBuilder{}
@@ -118,16 +127,25 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                            .setUsername(QString::fromUtf8("Linked notebook #%1")
                                             .arg(j + 1))
                            .build();
+
+                expungedLinkedNotebooks << UidGenerator::Generate();
             }
             builder.setChunkHighUSN(
                 linkedNotebooks.last().updateSequenceNum().value());
 
             builder.setLinkedNotebooks(std::move(linkedNotebooks));
+
+            builder.setExpungedLinkedNotebooks(
+                std::move(expungedLinkedNotebooks));
         }
 
         if (flags.testFlag(SyncChunksFlag::WithNotes)) {
             QList<qevercloud::Note> notes;
             notes.reserve(itemCountPerSyncChunk);
+
+            QList<qevercloud::Guid> expungedNotes;
+            expungedNotes.reserve(itemCountPerSyncChunk);
+
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 notes << qevercloud::NoteBuilder{}
                              .setGuid(UidGenerator::Generate())
@@ -135,14 +153,21 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                              .setTitle(QString::fromUtf8("Note #%1").arg(j + 1))
                              .setNotebookGuid(UidGenerator::Generate())
                              .build();
+
+                expungedNotes << UidGenerator::Generate();
             }
             builder.setChunkHighUSN(notes.last().updateSequenceNum().value());
             builder.setNotes(std::move(notes));
+            builder.setExpungedNotes(std::move(expungedNotes));
         }
 
         if (flags.testFlag(SyncChunksFlag::WithNotebooks)) {
             QList<qevercloud::Notebook> notebooks;
             notebooks.reserve(itemCountPerSyncChunk);
+
+            QList<qevercloud::Guid> expungedNotebooks;
+            expungedNotebooks.reserve(itemCountPerSyncChunk);
+
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 notebooks << qevercloud::NotebookBuilder{}
                                  .setGuid(UidGenerator::Generate())
@@ -150,11 +175,14 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                                  .setName(QString::fromUtf8("Notebook #%1")
                                               .arg(j + 1))
                                  .build();
+
+                expungedNotebooks << UidGenerator::Generate();
             }
             builder.setChunkHighUSN(
                 notebooks.last().updateSequenceNum().value());
 
             builder.setNotebooks(std::move(notebooks));
+            builder.setExpungedNotebooks(std::move(expungedNotebooks));
         }
 
         if (flags.testFlag(SyncChunksFlag::WithResources)) {
@@ -188,6 +216,10 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
         if (flags.testFlag(SyncChunksFlag::WithSavedSearches)) {
             QList<qevercloud::SavedSearch> savedSearches;
             savedSearches.reserve(itemCountPerSyncChunk);
+
+            QList<qevercloud::Guid> expungedSavedSearches;
+            expungedSavedSearches.reserve(itemCountPerSyncChunk);
+
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 savedSearches
                     << qevercloud::SavedSearchBuilder{}
@@ -196,25 +228,35 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                            .setName(
                                QString::fromUtf8("Saved search #%1").arg(j + 1))
                            .build();
+
+                expungedSavedSearches << UidGenerator::Generate();
             }
             builder.setChunkHighUSN(
                 savedSearches.last().updateSequenceNum().value());
 
             builder.setSearches(std::move(savedSearches));
+            builder.setExpungedSearches(std::move(expungedSavedSearches));
         }
 
         if (flags.testFlag(SyncChunksFlag::WithTags)) {
             QList<qevercloud::Tag> tags;
             tags.reserve(itemCountPerSyncChunk);
+
+            QList<qevercloud::Guid> expungedTags;
+            expungedTags.reserve(itemCountPerSyncChunk);
+
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 tags << qevercloud::TagBuilder{}
                             .setGuid(UidGenerator::Generate())
                             .setUpdateSequenceNum(usn++)
                             .setName(QString::fromUtf8("Tag #%1").arg(j + 1))
                             .build();
+
+                expungedTags << UidGenerator::Generate();
             }
             builder.setChunkHighUSN(tags.last().updateSequenceNum().value());
             builder.setTags(std::move(tags));
+            builder.setExpungedTags(std::move(expungedTags));
         }
 
         result << builder.build();
@@ -583,11 +625,6 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
         m_mockFullSyncStaleDataExpunger, m_ctx, m_mockNoteStore,
         m_mockLocalStorage, QDir{m_temporaryDir.path()});
 
-    InSequence s;
-
-    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
-        .WillOnce(Return(std::make_shared<SyncState>()));
-
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
     auto authenticationInfo = std::make_shared<AuthenticationInfo>();
@@ -599,38 +636,48 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
     authenticationInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
     authenticationInfo->m_webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
 
-    EXPECT_CALL(
-        *m_mockAuthenticationInfoProvider,
-        authenticateAccount(
-            m_account, IAuthenticationInfoProvider::Mode::Cache))
-        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            authenticationInfo)));
-
     const auto syncChunksFlags = GetParam();
     const auto syncChunks = generateSynChunks(syncChunksFlags);
     ASSERT_FALSE(syncChunks.isEmpty());
 
-    EXPECT_CALL(*m_mockNoteStore, getSyncStateAsync)
-        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
-            EXPECT_TRUE(ctx);
-            if (ctx) {
-                EXPECT_EQ(
-                    ctx->authenticationToken(),
-                    authenticationInfo->authToken());
-            }
-            return threading::makeReadyFuture<qevercloud::SyncState>(
-                qevercloud::SyncStateBuilder{}
-                    .setUpdateCount(syncChunks.last().chunkHighUSN().value())
-                    .build());
-        });
+    std::shared_ptr<mocks::MockIDownloaderICallback> mockDownloaderCallback =
+        std::make_shared<StrictMock<mocks::MockIDownloaderICallback>>();
 
-    EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
-        .WillOnce(
-            [&](const qint32 afterUsn,
-                const qevercloud::IRequestContextPtr & ctx,
-                [[maybe_unused]] const utility::cancelers::ICancelerPtr &
-                    canceler,
-                const ISyncChunksProvider::ICallbackWeakPtr & callbackWeak) {
+    {
+        InSequence s;
+
+        EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
+            .WillOnce(Return(std::make_shared<SyncState>()));
+
+        EXPECT_CALL(
+            *m_mockAuthenticationInfoProvider,
+            authenticateAccount(
+                m_account, IAuthenticationInfoProvider::Mode::Cache))
+            .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                authenticationInfo)));
+
+        EXPECT_CALL(*m_mockNoteStore, getSyncStateAsync)
+            .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_TRUE(ctx);
+                if (ctx) {
+                    EXPECT_EQ(
+                        ctx->authenticationToken(),
+                        authenticationInfo->authToken());
+                }
+                return threading::makeReadyFuture<qevercloud::SyncState>(
+                    qevercloud::SyncStateBuilder{}
+                        .setUpdateCount(
+                            syncChunks.last().chunkHighUSN().value())
+                        .build());
+            });
+
+        EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
+            .WillOnce([&](const qint32 afterUsn,
+                          const qevercloud::IRequestContextPtr & ctx,
+                          [[maybe_unused]] const utility::cancelers::
+                              ICancelerPtr & canceler,
+                          const ISyncChunksProvider::ICallbackWeakPtr &
+                              callbackWeak) {
                 EXPECT_EQ(afterUsn, 0);
                 EXPECT_TRUE(ctx);
                 if (ctx) {
@@ -655,70 +702,703 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                     syncChunks);
             });
 
-    std::shared_ptr<mocks::MockIDownloaderICallback> mockDownloaderCallback =
-        std::make_shared<StrictMock<mocks::MockIDownloaderICallback>>();
-
-    {
-        const qint32 lastPreviousUsn = 0;
-        const qint32 highestServerUsn =
-            syncChunks.last().chunkHighUSN().value();
-        for (const auto & syncChunk: qAsConst(syncChunks)) {
-            EXPECT_CALL(
-                *mockDownloaderCallback,
-                onSyncChunksDownloadProgress(
-                    syncChunk.chunkHighUSN().value(), highestServerUsn,
-                    lastPreviousUsn))
-                .Times(1);
+        {
+            const qint32 lastPreviousUsn = 0;
+            const qint32 highestServerUsn =
+                syncChunks.last().chunkHighUSN().value();
+            for (const auto & syncChunk: qAsConst(syncChunks)) {
+                EXPECT_CALL(
+                    *mockDownloaderCallback,
+                    onSyncChunksDownloadProgress(
+                        syncChunk.chunkHighUSN().value(), highestServerUsn,
+                        lastPreviousUsn))
+                    .Times(1);
+            }
         }
+    }
+
+    ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
+    EXPECT_CALL(*mockDownloaderCallback, onSyncChunksDataProcessingProgress)
+        .Times(AnyNumber())
+        .WillRepeatedly([&](ISyncChunksDataCountersPtr counters) {
+            ASSERT_TRUE(counters);
+            if (!lastSyncChunksDataCounters) {
+                lastSyncChunksDataCounters = counters;
+                return;
+            }
+
+            EXPECT_GE(
+                counters->totalSavedSearches(),
+                lastSyncChunksDataCounters->totalSavedSearches());
+
+            EXPECT_GE(
+                counters->totalExpungedSavedSearches(),
+                lastSyncChunksDataCounters->totalExpungedSavedSearches());
+
+            EXPECT_GE(
+                counters->addedSavedSearches(),
+                lastSyncChunksDataCounters->addedSavedSearches());
+
+            EXPECT_GE(
+                counters->updatedSavedSearches(),
+                lastSyncChunksDataCounters->updatedSavedSearches());
+
+            EXPECT_GE(
+                counters->expungedSavedSearches(),
+                lastSyncChunksDataCounters->expungedSavedSearches());
+
+            EXPECT_GE(
+                counters->totalTags(), lastSyncChunksDataCounters->totalTags());
+
+            EXPECT_GE(
+                counters->totalExpungedTags(),
+                lastSyncChunksDataCounters->totalExpungedTags());
+
+            EXPECT_GE(
+                counters->addedTags(), lastSyncChunksDataCounters->addedTags());
+
+            EXPECT_GE(
+                counters->updatedTags(),
+                lastSyncChunksDataCounters->updatedTags());
+
+            EXPECT_GE(
+                counters->expungedTags(),
+                lastSyncChunksDataCounters->expungedTags());
+
+            EXPECT_GE(
+                counters->totalLinkedNotebooks(),
+                lastSyncChunksDataCounters->totalLinkedNotebooks());
+
+            EXPECT_GE(
+                counters->totalExpungedLinkedNotebooks(),
+                lastSyncChunksDataCounters->totalExpungedLinkedNotebooks());
+
+            EXPECT_GE(
+                counters->addedLinkedNotebooks(),
+                lastSyncChunksDataCounters->addedLinkedNotebooks());
+
+            EXPECT_GE(
+                counters->updatedLinkedNotebooks(),
+                lastSyncChunksDataCounters->updatedLinkedNotebooks());
+
+            EXPECT_GE(
+                counters->expungedLinkedNotebooks(),
+                lastSyncChunksDataCounters->expungedLinkedNotebooks());
+
+            EXPECT_GE(
+                counters->totalNotebooks(),
+                lastSyncChunksDataCounters->totalNotebooks());
+
+            EXPECT_GE(
+                counters->totalExpungedNotebooks(),
+                lastSyncChunksDataCounters->totalExpungedNotebooks());
+
+            EXPECT_GE(
+                counters->addedNotebooks(),
+                lastSyncChunksDataCounters->addedNotebooks());
+
+            EXPECT_GE(
+                counters->updatedNotebooks(),
+                lastSyncChunksDataCounters->updatedNotebooks());
+
+            EXPECT_GE(
+                counters->expungedNotebooks(),
+                lastSyncChunksDataCounters->expungedNotebooks());
+
+            lastSyncChunksDataCounters = counters;
+        });
+
+    quint32 lastDownloadedNotes = 0U;
+    quint32 lastTotalNotesToDownload = 0U;
+    if (syncChunksFlags.testFlag(SyncChunksFlag::WithNotes)) {
+        const qint32 noteCount = [&] {
+            qint32 result = 0;
+            for (const auto & syncChunk: qAsConst(syncChunks)) {
+                if (syncChunk.notes()) {
+                    result += syncChunk.notes()->size();
+                }
+            }
+            return result;
+        }();
+
+        EXPECT_CALL(*mockDownloaderCallback, onNotesDownloadProgress)
+            .Times(AtMost(noteCount))
+            .WillRepeatedly([&](const quint32 notesDownloaded,
+                                const quint32 totalNotesToDownload) {
+                EXPECT_GT(notesDownloaded, lastDownloadedNotes);
+
+                EXPECT_TRUE(
+                    lastTotalNotesToDownload == 0U ||
+                    lastTotalNotesToDownload == totalNotesToDownload);
+
+                lastDownloadedNotes = notesDownloaded;
+                lastTotalNotesToDownload = totalNotesToDownload;
+            });
+    }
+
+    quint32 lastDownloadedResources = 0U;
+    quint32 lastTotalResourcesToDownload = 0U;
+    if (syncChunksFlags.testFlag(SyncChunksFlag::WithResources)) {
+        const qint32 resourceCount = [&] {
+            qint32 result = 0;
+            for (const auto & syncChunk: qAsConst(syncChunks)) {
+                if (syncChunk.resources()) {
+                    result += syncChunk.resources()->size();
+                }
+            }
+            return result;
+        }();
+
+        EXPECT_CALL(*mockDownloaderCallback, onResourcesDownloadProgress)
+            .Times(AtMost(resourceCount))
+            .WillRepeatedly([&](const quint32 resourcesDownloaded,
+                                const quint32 totalResourcesToDownload) {
+                EXPECT_GT(resourcesDownloaded, lastDownloadedResources);
+
+                EXPECT_TRUE(
+                    lastTotalResourcesToDownload == 0U ||
+                    lastTotalResourcesToDownload == totalResourcesToDownload);
+
+                lastDownloadedResources = resourcesDownloaded;
+                lastTotalResourcesToDownload = totalResourcesToDownload;
+            });
     }
 
     EXPECT_CALL(*mockDownloaderCallback, onSyncChunksDownloaded);
 
-    EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture()));
+    {
+        InSequence s;
 
-    EXPECT_CALL(*m_mockTagsProcessor, processTags(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture()));
+        EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
+            .WillOnce(
+                [&](const QList<qevercloud::SyncChunk> & chunks,
+                    const INotebooksProcessor::ICallbackWeakPtr callbackWeak) {
+                    const auto callback = callbackWeak.lock();
+                    EXPECT_TRUE(callback);
+                    if (callback) {
+                        const qint32 totalNotebooks = [&] {
+                            qint32 result = 0;
+                            for (const auto & syncChunk: qAsConst(chunks)) {
+                                if (syncChunk.notebooks()) {
+                                    result += syncChunk.notebooks()->size();
+                                }
+                            }
+                            return result;
+                        }();
 
-    EXPECT_CALL(
-        *m_mockSavedSearchesProcessor, processSavedSearches(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture()));
+                        const qint32 totalExpungedNotebooks = [&] {
+                            qint32 result = 0;
+                            for (const auto & syncChunk: qAsConst(chunks)) {
+                                if (syncChunk.expungedNotebooks()) {
+                                    result +=
+                                        syncChunk.expungedNotebooks()->size();
+                                }
+                            }
+                            return result;
+                        }();
 
-    EXPECT_CALL(
-        *m_mockLinkedNotebooksProcessor, processLinkedNotebooks(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture()));
+                        const qint32 addedNotebooks = totalNotebooks / 2;
+                        const qint32 updatedNotebooks =
+                            totalNotebooks - addedNotebooks;
 
-    EXPECT_CALL(*m_mockNotesProcessor, processNotes)
-        .WillOnce(
-            [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> & chunks,
-                [[maybe_unused]] const utility::cancelers::ICancelerPtr &
-                    canceler,
-                [[maybe_unused]] const IDurableNotesProcessor::
-                    ICallbackWeakPtr & callbackWeak) {
-                EXPECT_EQ(chunks, syncChunks);
+                        callback->onNotebooksProcessingProgress(
+                            totalNotebooks, totalExpungedNotebooks,
+                            addedNotebooks, updatedNotebooks,
+                            totalExpungedNotebooks);
+                    }
+
+                    return threading::makeReadyFuture();
+                });
+
+        EXPECT_CALL(*m_mockTagsProcessor, processTags(syncChunks, _))
+            .WillOnce(
+                [&](const QList<qevercloud::SyncChunk> & chunks,
+                    const ITagsProcessor::ICallbackWeakPtr & callbackWeak) {
+                    const auto callback = callbackWeak.lock();
+                    EXPECT_TRUE(callback);
+                    if (callback) {
+                        const qint32 totalTags = [&] {
+                            qint32 result = 0;
+                            for (const auto & syncChunk: qAsConst(chunks)) {
+                                if (syncChunk.tags()) {
+                                    result += syncChunk.tags()->size();
+                                }
+                            }
+                            return result;
+                        }();
+
+                        const qint32 totalExpungedTags = [&] {
+                            qint32 result = 0;
+                            for (const auto & syncChunk: qAsConst(chunks)) {
+                                if (syncChunk.expungedTags()) {
+                                    result += syncChunk.expungedTags()->size();
+                                }
+                            }
+                            return result;
+                        }();
+
+                        const qint32 addedTags = totalTags / 2;
+                        const qint32 updatedTags = totalTags - addedTags;
+
+                        callback->onTagsProcessingProgress(
+                            totalTags, totalExpungedTags, addedTags,
+                            updatedTags, totalExpungedTags);
+                    }
+
+                    return threading::makeReadyFuture();
+                });
+
+        EXPECT_CALL(
+            *m_mockSavedSearchesProcessor, processSavedSearches(syncChunks, _))
+            .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
+                          const ISavedSearchesProcessor::ICallbackWeakPtr &
+                              callbackWeak) {
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    const qint32 totalSavedSearches = [&] {
+                        qint32 result = 0;
+                        for (const auto & syncChunk: qAsConst(chunks)) {
+                            if (syncChunk.searches()) {
+                                result += syncChunk.searches()->size();
+                            }
+                        }
+                        return result;
+                    }();
+
+                    const qint32 totalExpungedSavedSearches = [&] {
+                        qint32 result = 0;
+                        for (const auto & syncChunk: qAsConst(chunks)) {
+                            if (syncChunk.expungedSearches()) {
+                                result += syncChunk.expungedSearches()->size();
+                            }
+                        }
+                        return result;
+                    }();
+
+                    const qint32 addedSavedSearches = totalSavedSearches / 2;
+                    const qint32 updatedSavedSearches =
+                        totalSavedSearches - addedSavedSearches;
+
+                    callback->onSavedSearchesProcessingProgress(
+                        totalSavedSearches, totalExpungedSavedSearches,
+                        addedSavedSearches, updatedSavedSearches,
+                        totalExpungedSavedSearches);
+                }
+
+                return threading::makeReadyFuture();
+            });
+
+        EXPECT_CALL(
+            *m_mockLinkedNotebooksProcessor,
+            processLinkedNotebooks(syncChunks, _))
+            .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
+                          const ILinkedNotebooksProcessor::ICallbackWeakPtr &
+                              callbackWeak) {
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    const qint32 totalLinkedNotebooks = [&] {
+                        qint32 result = 0;
+                        for (const auto & syncChunk: qAsConst(chunks)) {
+                            if (syncChunk.linkedNotebooks()) {
+                                result += syncChunk.linkedNotebooks()->size();
+                            }
+                        }
+                        return result;
+                    }();
+
+                    const qint32 totalExpungedLinkedNotebooks = [&] {
+                        qint32 result = 0;
+                        for (const auto & syncChunk: qAsConst(chunks)) {
+                            if (syncChunk.expungedLinkedNotebooks()) {
+                                result +=
+                                    syncChunk.expungedLinkedNotebooks()->size();
+                            }
+                        }
+                        return result;
+                    }();
+
+                    callback->onLinkedNotebooksProcessingProgress(
+                        totalLinkedNotebooks, totalExpungedLinkedNotebooks,
+                        totalLinkedNotebooks, totalExpungedLinkedNotebooks);
+                }
+
+                return threading::makeReadyFuture();
+            });
+
+        EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _, _))
+            .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
+                          const utility::cancelers::ICancelerPtr & canceler,
+                          const IDurableNotesProcessor::ICallbackWeakPtr &
+                              callbackWeak) {
+                EXPECT_TRUE(canceler);
+
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+
+                auto downloadNotesStatus =
+                    std::make_shared<DownloadNotesStatus>();
+
+                int noteIndex = 0;
+                for (const auto & syncChunk: qAsConst(chunks)) {
+                    if (!syncChunk.notes()) {
+                        continue;
+                    }
+
+                    for (const auto & note: qAsConst(*syncChunk.notes())) {
+                        if (noteIndex % 4 == 0) {
+                            const auto noteGuid = note.guid().value();
+                            const auto noteUsn =
+                                note.updateSequenceNum().value();
+
+                            if (callback) {
+                                callback->onProcessedNote(noteGuid, noteUsn);
+                            }
+
+                            downloadNotesStatus
+                                ->m_processedNoteGuidsAndUsns[noteGuid] =
+                                noteUsn;
+                        }
+                        else if (noteIndex % 4 == 1) {
+                            auto exc = std::make_shared<RuntimeError>(
+                                ErrorString{"some error"});
+
+                            if (callback) {
+                                callback->onNoteFailedToDownload(note, *exc);
+                            }
+
+                            downloadNotesStatus->m_notesWhichFailedToDownload
+                                << DownloadNotesStatus::NoteWithException{
+                                       note, std::move(exc)};
+                        }
+                        else if (noteIndex % 4 == 2) {
+                            auto exc = std::make_shared<RuntimeError>(
+                                ErrorString{"some error"});
+
+                            if (callback) {
+                                callback->onNoteFailedToProcess(note, *exc);
+                            }
+
+                            downloadNotesStatus->m_notesWhichFailedToProcess
+                                << DownloadNotesStatus::NoteWithException{
+                                       note, std::move(exc)};
+                        }
+                        else if (noteIndex % 4 == 3) {
+                            if (callback) {
+                                callback->onNoteProcessingCancelled(note);
+                            }
+
+                            const auto noteGuid = note.guid().value();
+                            const auto noteUsn =
+                                note.updateSequenceNum().value();
+
+                            downloadNotesStatus
+                                ->m_cancelledNoteGuidsAndUsns[noteGuid] =
+                                noteUsn;
+                        }
+                        else {
+                            EXPECT_FALSE(true) << "Unreachable code";
+                        }
+
+                        ++noteIndex;
+                    }
+                }
+
+                noteIndex = 0;
+                for (const auto & syncChunk: qAsConst(chunks)) {
+                    if (!syncChunk.expungedNotes()) {
+                        continue;
+                    }
+
+                    for (const auto & expungedNoteGuid:
+                         qAsConst(*syncChunk.expungedNotes())) {
+                        if (noteIndex % 2 == 0) {
+                            if (callback) {
+                                callback->onExpungedNote(expungedNoteGuid);
+                            }
+
+                            downloadNotesStatus->m_expungedNoteGuids
+                                << expungedNoteGuid;
+                        }
+                        else if (noteIndex % 2 == 1) {
+                            auto exc = std::make_shared<RuntimeError>(
+                                ErrorString{"some error"});
+
+                            if (callback) {
+                                callback->onFailedToExpungeNote(
+                                    expungedNoteGuid, *exc);
+                            }
+
+                            downloadNotesStatus->m_noteGuidsWhichFailedToExpunge
+                                << DownloadNotesStatus::GuidWithException{
+                                       expungedNoteGuid, std::move(exc)};
+                        }
+                        else {
+                            EXPECT_FALSE(true) << "Unreachable code";
+                        }
+
+                        ++noteIndex;
+                    }
+                }
+
                 return threading::makeReadyFuture<DownloadNotesStatusPtr>(
                     std::make_shared<DownloadNotesStatus>());
             });
 
-    EXPECT_CALL(*m_mockResourcesProcessor, processResources)
-        .WillOnce(
-            [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> & chunks,
-                [[maybe_unused]] const utility::cancelers::ICancelerPtr &
-                    canceler,
-                [[maybe_unused]] const IDurableResourcesProcessor::
-                    ICallbackWeakPtr & callbackWeak) {
-                EXPECT_EQ(chunks, syncChunks);
+        EXPECT_CALL(
+            *m_mockResourcesProcessor, processResources(syncChunks, _, _))
+            .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
+                          const utility::cancelers::ICancelerPtr & canceler,
+                          const IDurableResourcesProcessor::ICallbackWeakPtr &
+                              callbackWeak) {
+                EXPECT_TRUE(canceler);
+
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+
+                auto downloadResourcesStatus =
+                    std::make_shared<DownloadResourcesStatus>();
+
+                int resourceIndex = 0;
+                for (const auto & syncChunk: qAsConst(chunks)) {
+                    if (!syncChunk.resources()) {
+                        continue;
+                    }
+
+                    for (const auto & resource:
+                         qAsConst(*syncChunk.resources())) {
+                        if (resourceIndex % 4 == 0) {
+                            const auto resourceGuid = resource.guid().value();
+                            const auto resourceUsn =
+                                resource.updateSequenceNum().value();
+
+                            if (callback) {
+                                callback->onProcessedResource(
+                                    resourceGuid, resourceUsn);
+                            }
+
+                            downloadResourcesStatus
+                                ->m_processedResourceGuidsAndUsns
+                                    [resourceGuid] = resourceUsn;
+                        }
+                        else if (resourceIndex % 4 == 1) {
+                            auto exc = std::make_shared<RuntimeError>(
+                                ErrorString{"some error"});
+
+                            if (callback) {
+                                callback->onResourceFailedToDownload(
+                                    resource, *exc);
+                            }
+
+                            downloadResourcesStatus
+                                    ->m_resourcesWhichFailedToDownload
+                                << DownloadResourcesStatus::
+                                       ResourceWithException{
+                                           resource, std::move(exc)};
+                        }
+                        else if (resourceIndex % 4 == 2) {
+                            auto exc = std::make_shared<RuntimeError>(
+                                ErrorString{"some error"});
+
+                            if (callback) {
+                                callback->onResourceFailedToProcess(
+                                    resource, *exc);
+                            }
+
+                            downloadResourcesStatus
+                                    ->m_resourcesWhichFailedToProcess
+                                << DownloadResourcesStatus::
+                                       ResourceWithException{
+                                           resource, std::move(exc)};
+                        }
+                        else if (resourceIndex % 4 == 3) {
+                            if (callback) {
+                                callback->onResourceProcessingCancelled(
+                                    resource);
+                            }
+
+                            const auto resourceGuid = resource.guid().value();
+                            const auto resourceUsn =
+                                resource.updateSequenceNum().value();
+
+                            downloadResourcesStatus
+                                ->m_cancelledResourceGuidsAndUsns
+                                    [resourceGuid] = resourceUsn;
+                        }
+                        else {
+                            EXPECT_FALSE(true) << "Unreachable code";
+                        }
+
+                        ++resourceIndex;
+                    }
+                }
+
                 return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
                     std::make_shared<DownloadResourcesStatus>());
             });
 
-    EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
-        .WillOnce(Return(
-            threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>({})));
+        EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
+            .WillOnce(Return(
+                threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
+                    {})));
+    }
 
     auto result =
         downloader->download(m_manualCanceler, mockDownloaderCallback);
     ASSERT_TRUE(result.isFinished());
+
+    // Checking the state of the last reported sync chunks data counters
+    ASSERT_TRUE(lastSyncChunksDataCounters);
+
+    // Saved searches
+
+    const qint32 savedSearchCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.searches()) {
+                result += syncChunk.searches()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->totalSavedSearches(), savedSearchCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->addedSavedSearches() +
+            lastSyncChunksDataCounters->updatedSavedSearches(),
+        savedSearchCount);
+
+    const qint32 expungedSavedSearchCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.expungedSearches()) {
+                result += syncChunk.expungedSearches()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->totalExpungedSavedSearches(),
+        expungedSavedSearchCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->expungedSavedSearches(),
+        expungedSavedSearchCount);
+
+    // Tags
+
+    const qint32 tagCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.tags()) {
+                result += syncChunk.tags()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(lastSyncChunksDataCounters->totalTags(), tagCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->addedTags() +
+            lastSyncChunksDataCounters->updatedTags(),
+        tagCount);
+
+    const qint32 expungedTagCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.expungedTags()) {
+                result += syncChunk.expungedTags()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->totalExpungedTags(), expungedTagCount);
+
+    EXPECT_EQ(lastSyncChunksDataCounters->expungedTags(), expungedTagCount);
+
+    // Linked notebooks
+
+    const qint32 linkedNotebookCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.linkedNotebooks()) {
+                result += syncChunk.linkedNotebooks()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->totalLinkedNotebooks(),
+        linkedNotebookCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->addedLinkedNotebooks() +
+            lastSyncChunksDataCounters->updatedLinkedNotebooks(),
+        linkedNotebookCount);
+
+    const qint32 expungedLinkedNotebookCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.expungedLinkedNotebooks()) {
+                result += syncChunk.expungedLinkedNotebooks()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->totalExpungedLinkedNotebooks(),
+        expungedLinkedNotebookCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->expungedLinkedNotebooks(),
+        expungedLinkedNotebookCount);
+
+    // Notebooks
+
+    const qint32 notebookCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.notebooks()) {
+                result += syncChunk.notebooks()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(lastSyncChunksDataCounters->totalNotebooks(), notebookCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->addedNotebooks() +
+            lastSyncChunksDataCounters->updatedNotebooks(),
+        notebookCount);
+
+    const qint32 expungedNotebookCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.expungedNotebooks()) {
+                result += syncChunk.expungedNotebooks()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->totalExpungedNotebooks(),
+        expungedNotebookCount);
+
+    EXPECT_EQ(
+        lastSyncChunksDataCounters->expungedNotebooks(), expungedNotebookCount);
+
+    // TODO: check the returned status
 }
 
 } // namespace quentier::synchronization::tests
