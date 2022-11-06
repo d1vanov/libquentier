@@ -20,8 +20,6 @@
 
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 
-#include <functional>
-
 namespace quentier {
 
 /**
@@ -134,13 +132,6 @@ struct SyncChunksDataCounters final : public ISyncChunksDataCounters
 
     QTextStream & print(QTextStream & strm) const override;
 
-    void notifyUpdate() const
-    {
-        if (m_updateCallback) {
-            m_updateCallback();
-        }
-    }
-
     quint64 m_totalSavedSearches = 0UL;
     quint64 m_totalExpungedSavedSearches = 0UL;
     quint64 m_addedSavedSearches = 0UL;
@@ -164,8 +155,6 @@ struct SyncChunksDataCounters final : public ISyncChunksDataCounters
     quint64 m_addedNotebooks = 0UL;
     quint64 m_updatedNotebooks = 0UL;
     quint64 m_expungedNotebooks = 0UL;
-
-    std::function<void()> m_updateCallback;
 };
 
 } // namespace quentier
