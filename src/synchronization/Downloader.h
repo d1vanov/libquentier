@@ -57,7 +57,6 @@ public:
     Downloader(
         Account account,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        IProtocolVersionCheckerPtr protocolVersionChecker,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
         ISyncChunksStoragePtr syncChunksStorage,
@@ -155,7 +154,6 @@ private:
 private:
     const Account m_account;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
-    const IProtocolVersionCheckerPtr m_protocolVersionChecker;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
     const ISyncChunksStoragePtr m_syncChunksStorage;

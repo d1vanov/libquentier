@@ -673,7 +673,6 @@ private:
 
 Downloader::Downloader(
     Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
-    IProtocolVersionCheckerPtr protocolVersionChecker,
     ISyncStateStoragePtr syncStateStorage,
     ISyncChunksProviderPtr syncChunksProvider,
     ISyncChunksStoragePtr syncChunksStorage,
@@ -689,7 +688,6 @@ Downloader::Downloader(
     const QDir & syncPersistentStorageDir) :
     m_account{std::move(account)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
-    m_protocolVersionChecker{std::move(protocolVersionChecker)},
     m_syncStateStorage{std::move(syncStateStorage)},
     m_syncChunksProvider{std::move(syncChunksProvider)},
     m_syncChunksStorage{std::move(syncChunksStorage)},
@@ -724,12 +722,6 @@ Downloader::Downloader(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
             "Downloader ctor: authentication info provider is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_protocolVersionChecker)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
-            "Downloader ctor: protocol version checker is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncStateStorage)) {
@@ -860,41 +852,22 @@ QFuture<IDownloader::Result> Downloader::download(
                     return;
                 }
 
-                auto protocolVersionFuture =
-                    m_protocolVersionChecker->checkProtocolVersion(
-                        *authenticationInfo);
+                auto downloadFuture = launchDownload(
+                    *authenticationInfo, std::move(canceler),
+                    std::move(callbackWeak));
+
+                threading::bindCancellation(
+                    promise->future(), downloadFuture);
+
+                threading::mapFutureProgress(
+                    downloadFuture, promise);
 
                 threading::thenOrFailed(
-                    std::move(protocolVersionFuture), promise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [this, selfWeak, promise,
-                         canceler = std::move(canceler),
-                         callbackWeak = std::move(callbackWeak),
-                         authenticationInfo =
-                             std::move(authenticationInfo)]() mutable {
-                            if (canceler->isCanceled()) {
-                                cancel(*promise);
-                                return;
-                            }
-
-                            auto downloadFuture = launchDownload(
-                                *authenticationInfo, std::move(canceler),
-                                std::move(callbackWeak));
-
-                            threading::bindCancellation(
-                                promise->future(), downloadFuture);
-
-                            threading::mapFutureProgress(
-                                downloadFuture, promise);
-
-                            threading::thenOrFailed(
-                                std::move(downloadFuture), promise,
-                                [promise](Result result) {
-                                    promise->addResult(std::move(result));
-                                    promise->finish();
-                                });
-                        }});
+                    std::move(downloadFuture), promise,
+                    [promise](Result result) {
+                        promise->addResult(std::move(result));
+                        promise->finish();
+                    });
             }});
 
     return future;
