@@ -403,12 +403,12 @@ private:
 
         switch (m_contentSource) {
         case ContentSource::UserAccount:
-            callback->onLinkedNotebooksNotesDownloadProgress(
+            callback->onNotesDownloadProgress(
                 static_cast<quint32>(downloadedNotes),
                 static_cast<quint32>(m_totalNotesToDownload));
             break;
         case ContentSource::LinkedNotebook:
-            callback->onNotesDownloadProgress(
+            callback->onLinkedNotebooksNotesDownloadProgress(
                 static_cast<quint32>(downloadedNotes),
                 static_cast<quint32>(m_totalNotesToDownload));
             break;
@@ -491,12 +491,12 @@ private:
 
         switch (m_contentSource) {
         case ContentSource::UserAccount:
-            callback->onLinkedNotebooksResourcesDownloadProgress(
+            callback->onResourcesDownloadProgress(
                 static_cast<quint32>(downloadedResources),
                 static_cast<quint32>(m_totalResourcesToDownload));
             break;
         case ContentSource::LinkedNotebook:
-            callback->onResourcesDownloadProgress(
+            callback->onLinkedNotebooksResourcesDownloadProgress(
                 static_cast<quint32>(downloadedResources),
                 static_cast<quint32>(m_totalResourcesToDownload));
             break;
@@ -856,11 +856,9 @@ QFuture<IDownloader::Result> Downloader::download(
                     *authenticationInfo, std::move(canceler),
                     std::move(callbackWeak));
 
-                threading::bindCancellation(
-                    promise->future(), downloadFuture);
+                threading::bindCancellation(promise->future(), downloadFuture);
 
-                threading::mapFutureProgress(
-                    downloadFuture, promise);
+                threading::mapFutureProgress(downloadFuture, promise);
 
                 threading::thenOrFailed(
                     std::move(downloadFuture), promise,
