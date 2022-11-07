@@ -810,17 +810,18 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
 
     quint32 lastDownloadedNotes = 0U;
     quint32 lastTotalNotesToDownload = 0U;
-    if (syncChunksFlags.testFlag(SyncChunksFlag::WithNotes)) {
-        const qint32 noteCount = [&] {
-            qint32 result = 0;
-            for (const auto & syncChunk: qAsConst(syncChunks)) {
-                if (syncChunk.notes()) {
-                    result += syncChunk.notes()->size();
-                }
-            }
-            return result;
-        }();
 
+    const qint32 noteCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.notes()) {
+                result += syncChunk.notes()->size();
+            }
+        }
+        return result;
+    }();
+
+    if (noteCount != 0) {
         EXPECT_CALL(*mockDownloaderCallback, onNotesDownloadProgress)
             .Times(AtMost(noteCount))
             .WillRepeatedly([&](const quint32 notesDownloaded,
@@ -838,17 +839,18 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
 
     quint32 lastDownloadedResources = 0U;
     quint32 lastTotalResourcesToDownload = 0U;
-    if (syncChunksFlags.testFlag(SyncChunksFlag::WithResources)) {
-        const qint32 resourceCount = [&] {
-            qint32 result = 0;
-            for (const auto & syncChunk: qAsConst(syncChunks)) {
-                if (syncChunk.resources()) {
-                    result += syncChunk.resources()->size();
-                }
-            }
-            return result;
-        }();
 
+    const qint32 resourceCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.resources()) {
+                result += syncChunk.resources()->size();
+            }
+        }
+        return result;
+    }();
+
+    if (resourceCount != 0) {
         EXPECT_CALL(*mockDownloaderCallback, onResourcesDownloadProgress)
             .Times(AtMost(resourceCount))
             .WillRepeatedly([&](const quint32 resourcesDownloaded,
@@ -1105,6 +1107,10 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                     }
                 }
 
+                downloadNotesStatus->m_totalNewNotes = noteIndex / 2;
+                downloadNotesStatus->m_totalUpdatedNotes =
+                    noteIndex - downloadNotesStatus->m_totalNewNotes;
+
                 noteIndex = 0;
                 for (const auto & syncChunk: qAsConst(chunks)) {
                     if (!syncChunk.expungedNotes()) {
@@ -1142,8 +1148,10 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                     }
                 }
 
+                downloadNotesStatus->m_totalExpungedNotes = noteIndex;
+
                 return threading::makeReadyFuture<DownloadNotesStatusPtr>(
-                    std::make_shared<DownloadNotesStatus>());
+                    std::move(downloadNotesStatus));
             });
 
         EXPECT_CALL(
@@ -1234,8 +1242,15 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                     }
                 }
 
+                downloadResourcesStatus->m_totalNewResources =
+                    resourceIndex / 2;
+
+                downloadResourcesStatus->m_totalUpdatedResources =
+                    resourceIndex -
+                    downloadResourcesStatus->m_totalNewResources;
+
                 return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
-                    std::make_shared<DownloadResourcesStatus>());
+                    std::move(downloadResourcesStatus));
             });
 
         EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
@@ -1398,7 +1413,162 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
     EXPECT_EQ(
         lastSyncChunksDataCounters->expungedNotebooks(), expungedNotebookCount);
 
-    // TODO: check the returned status
+    // Checking the returned status
+
+    ASSERT_EQ(result.resultCount(), 1);
+    const auto status = result.result();
+
+    EXPECT_TRUE(status.linkedNotebookResults.isEmpty());
+
+    // Checking sync chunk data counters (similar to the above but for
+    // counters from callback)
+
+    // Saved searches
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->totalSavedSearches(),
+        savedSearchCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->addedSavedSearches() +
+            status.userOwnResult.syncChunksDataCounters->updatedSavedSearches(),
+        savedSearchCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters
+            ->totalExpungedSavedSearches(),
+        expungedSavedSearchCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->expungedSavedSearches(),
+        expungedSavedSearchCount);
+
+    // Tags
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->totalTags(), tagCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->addedTags() +
+            status.userOwnResult.syncChunksDataCounters->updatedTags(),
+        tagCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->totalExpungedTags(),
+        expungedTagCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->expungedTags(),
+        expungedTagCount);
+
+    // Linked notebooks
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->totalLinkedNotebooks(),
+        linkedNotebookCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->addedLinkedNotebooks() +
+            status.userOwnResult.syncChunksDataCounters
+                ->updatedLinkedNotebooks(),
+        linkedNotebookCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters
+            ->totalExpungedLinkedNotebooks(),
+        expungedLinkedNotebookCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->expungedLinkedNotebooks(),
+        expungedLinkedNotebookCount);
+
+    // Notebooks
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->totalNotebooks(),
+        notebookCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->addedNotebooks() +
+            status.userOwnResult.syncChunksDataCounters->updatedNotebooks(),
+        notebookCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->totalExpungedNotebooks(),
+        expungedNotebookCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.syncChunksDataCounters->expungedNotebooks(),
+        expungedNotebookCount);
+
+    // Notes
+
+    EXPECT_EQ(lastTotalNotesToDownload, noteCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.downloadNotesStatus->totalNewNotes() +
+            status.userOwnResult.downloadNotesStatus->totalUpdatedNotes(),
+        noteCount);
+
+    const qint32 expungedNoteCount = [&] {
+        qint32 result = 0;
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            if (syncChunk.expungedNotes()) {
+                result += syncChunk.expungedNotes()->size();
+            }
+        }
+        return result;
+    }();
+
+    EXPECT_EQ(
+        status.userOwnResult.downloadNotesStatus->totalExpungedNotes(),
+        expungedNoteCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.downloadNotesStatus->notesWhichFailedToDownload()
+                .size() +
+            status.userOwnResult.downloadNotesStatus
+                ->notesWhichFailedToProcess()
+                .size() +
+            status.userOwnResult.downloadNotesStatus
+                ->processedNoteGuidsAndUsns()
+                .size() +
+            status.userOwnResult.downloadNotesStatus
+                ->cancelledNoteGuidsAndUsns()
+                .size(),
+        noteCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.downloadNotesStatus->expungedNoteGuids().size() +
+            status.userOwnResult.downloadNotesStatus
+                ->noteGuidsWhichFailedToExpunge()
+                .size(),
+        expungedNoteCount);
+
+    // Resources
+
+    EXPECT_EQ(lastTotalResourcesToDownload, resourceCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.downloadResourcesStatus->totalNewResources() +
+            status.userOwnResult.downloadResourcesStatus
+                ->totalUpdatedResources(),
+        resourceCount);
+
+    EXPECT_EQ(
+        status.userOwnResult.downloadResourcesStatus
+                ->resourcesWhichFailedToDownload()
+                .size() +
+            status.userOwnResult.downloadResourcesStatus
+                ->resourcesWhichFailedToProcess()
+                .size() +
+            status.userOwnResult.downloadResourcesStatus
+                ->processedResourceGuidsAndUsns()
+                .size() +
+            status.userOwnResult.downloadResourcesStatus
+                ->cancelledResourceGuidsAndUsns()
+                .size(),
+        resourceCount);
 }
 
 } // namespace quentier::synchronization::tests
