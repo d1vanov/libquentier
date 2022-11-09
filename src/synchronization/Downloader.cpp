@@ -75,12 +75,12 @@ public:
     void onLinkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
         qint32 lastPreviousUsn,
-        qevercloud::LinkedNotebook linkedNotebook) override
+        const qevercloud::LinkedNotebook & linkedNotebook) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
-                std::move(linkedNotebook));
+                linkedNotebook);
         }
     }
 
@@ -165,12 +165,6 @@ private:
     return result;
 }
 
-enum class ContentSource
-{
-    UserAccount,
-    LinkedNotebook
-};
-
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -253,12 +247,10 @@ public:
         SyncChunksDataCountersPtr syncChunksDataCounters,
         IDownloader::ICallbackWeakPtr callbackWeak,
         std::shared_ptr<QMutex> mutex,
-        const std::optional<qevercloud::LinkedNotebook> & linkedNotebook) :
+        std::optional<qevercloud::LinkedNotebook> linkedNotebook) :
         m_syncChunksDataCounters{std::move(syncChunksDataCounters)},
         m_callbackWeak{std::move(callbackWeak)}, m_mutex{std::move(mutex)},
-        m_contentSource{
-            linkedNotebook ? ContentSource::LinkedNotebook
-                           : ContentSource::UserAccount}
+        m_linkedNotebook{std::move(linkedNotebook)}
     {
         Q_ASSERT(m_syncChunksDataCounters);
         Q_ASSERT(!m_callbackWeak.expired());
@@ -309,17 +301,16 @@ public:
         m_syncChunksDataCounters->m_expungedNotebooks =
             static_cast<quint64>(expungedNotebooks);
 
-        switch (m_contentSource) {
-        case ContentSource::UserAccount:
+        if (m_linkedNotebook) {
+            callback->onLinkedNotebookSyncChunksDataProcessingProgress(
+                std::make_shared<SyncChunksDataCounters>(
+                    *m_syncChunksDataCounters),
+                *m_linkedNotebook);
+        }
+        else {
             callback->onSyncChunksDataProcessingProgress(
                 std::make_shared<SyncChunksDataCounters>(
                     *m_syncChunksDataCounters));
-            break;
-        case ContentSource::LinkedNotebook:
-            callback->onLinkedNotebookSyncChunksDataProcessingProgress(
-                std::make_shared<SyncChunksDataCounters>(
-                    *m_syncChunksDataCounters));
-            break;
         }
     }
 
@@ -327,7 +318,7 @@ private:
     const SyncChunksDataCountersPtr m_syncChunksDataCounters;
     const IDownloader::ICallbackWeakPtr m_callbackWeak;
     const std::shared_ptr<QMutex> m_mutex;
-    const ContentSource m_contentSource;
+    const std::optional<qevercloud::LinkedNotebook> m_linkedNotebook;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -340,13 +331,11 @@ public:
         SyncChunksDataCountersPtr syncChunksDataCounters,
         IDownloader::ICallbackWeakPtr callbackWeak,
         std::shared_ptr<QMutex> mutex, const quint64 totalNotesToDownload,
-        const std::optional<qevercloud::LinkedNotebook> & linkedNotebook) :
+        std::optional<qevercloud::LinkedNotebook> linkedNotebook) :
         m_syncChunksDataCounters{std::move(syncChunksDataCounters)},
         m_callbackWeak{std::move(callbackWeak)}, m_mutex{std::move(mutex)},
         m_totalNotesToDownload{totalNotesToDownload},
-        m_contentSource{
-            linkedNotebook ? ContentSource::LinkedNotebook
-                           : ContentSource::UserAccount}
+        m_linkedNotebook{std::move(linkedNotebook)}
     {
         Q_ASSERT(m_syncChunksDataCounters);
         Q_ASSERT(!m_callbackWeak.expired());
@@ -401,17 +390,16 @@ private:
             m_downloadedNotes.fetch_add(1UL, std::memory_order_acq_rel) + 1;
         Q_ASSERT(downloadedNotes <= std::numeric_limits<quint32>::max());
 
-        switch (m_contentSource) {
-        case ContentSource::UserAccount:
+        if (m_linkedNotebook) {
+            callback->onLinkedNotebookNotesDownloadProgress(
+                static_cast<quint32>(downloadedNotes),
+                static_cast<quint32>(m_totalNotesToDownload),
+                *m_linkedNotebook);
+        }
+        else {
             callback->onNotesDownloadProgress(
                 static_cast<quint32>(downloadedNotes),
                 static_cast<quint32>(m_totalNotesToDownload));
-            break;
-        case ContentSource::LinkedNotebook:
-            callback->onLinkedNotebooksNotesDownloadProgress(
-                static_cast<quint32>(downloadedNotes),
-                static_cast<quint32>(m_totalNotesToDownload));
-            break;
         }
     }
 
@@ -420,7 +408,7 @@ private:
     const IDownloader::ICallbackWeakPtr m_callbackWeak;
     const std::shared_ptr<QMutex> m_mutex;
     const quint64 m_totalNotesToDownload;
-    const ContentSource m_contentSource;
+    const std::optional<qevercloud::LinkedNotebook> m_linkedNotebook;
 
     std::atomic<quint64> m_downloadedNotes{0UL};
 };
@@ -435,13 +423,11 @@ public:
         SyncChunksDataCountersPtr syncChunksDataCounters,
         IDownloader::ICallbackWeakPtr callbackWeak,
         std::shared_ptr<QMutex> mutex, const quint64 totalResourcesToDownload,
-        const std::optional<qevercloud::LinkedNotebook> & linkedNotebook) :
+        std::optional<qevercloud::LinkedNotebook> linkedNotebook) :
         m_syncChunksDataCounters{std::move(syncChunksDataCounters)},
         m_callbackWeak{std::move(callbackWeak)}, m_mutex{std::move(mutex)},
         m_totalResourcesToDownload{totalResourcesToDownload},
-        m_contentSource{
-            linkedNotebook ? ContentSource::LinkedNotebook
-                           : ContentSource::UserAccount}
+        m_linkedNotebook{std::move(linkedNotebook)}
     {
         Q_ASSERT(m_syncChunksDataCounters);
         Q_ASSERT(!m_callbackWeak.expired());
@@ -489,17 +475,16 @@ private:
             m_downloadedResources.fetch_add(1UL, std::memory_order_acq_rel) + 1;
         Q_ASSERT(downloadedResources <= std::numeric_limits<quint32>::max());
 
-        switch (m_contentSource) {
-        case ContentSource::UserAccount:
+        if (m_linkedNotebook) {
+            callback->onLinkedNotebookResourcesDownloadProgress(
+                static_cast<quint32>(downloadedResources),
+                static_cast<quint32>(m_totalResourcesToDownload),
+                *m_linkedNotebook);
+        }
+        else {
             callback->onResourcesDownloadProgress(
                 static_cast<quint32>(downloadedResources),
                 static_cast<quint32>(m_totalResourcesToDownload));
-            break;
-        case ContentSource::LinkedNotebook:
-            callback->onLinkedNotebooksResourcesDownloadProgress(
-                static_cast<quint32>(downloadedResources),
-                static_cast<quint32>(m_totalResourcesToDownload));
-            break;
         }
     }
 
@@ -508,7 +493,7 @@ private:
     const IDownloader::ICallbackWeakPtr m_callbackWeak;
     const std::shared_ptr<QMutex> m_mutex;
     const quint64 m_totalResourcesToDownload;
-    const ContentSource m_contentSource;
+    const std::optional<qevercloud::LinkedNotebook> m_linkedNotebook;
 
     std::atomic<quint64> m_downloadedResources{0UL};
 };
@@ -595,12 +580,10 @@ public:
         SyncChunksDataCountersPtr syncChunksDataCounters,
         IDownloader::ICallbackWeakPtr callbackWeak,
         std::shared_ptr<QMutex> mutex,
-        const std::optional<qevercloud::LinkedNotebook> & linkedNotebook) :
+        std::optional<qevercloud::LinkedNotebook> linkedNotebook) :
         m_syncChunksDataCounters{std::move(syncChunksDataCounters)},
         m_callbackWeak{std::move(callbackWeak)}, m_mutex{std::move(mutex)},
-        m_contentSource{
-            linkedNotebook ? ContentSource::LinkedNotebook
-                           : ContentSource::UserAccount}
+        m_linkedNotebook{std::move(linkedNotebook)}
     {
         Q_ASSERT(m_syncChunksDataCounters);
         Q_ASSERT(!m_callbackWeak.expired());
@@ -648,17 +631,16 @@ public:
         m_syncChunksDataCounters->m_expungedTags =
             static_cast<quint64>(expungedTags);
 
-        switch (m_contentSource) {
-        case ContentSource::UserAccount:
+        if (m_linkedNotebook) {
+            callback->onLinkedNotebookSyncChunksDataProcessingProgress(
+                std::make_shared<SyncChunksDataCounters>(
+                    *m_syncChunksDataCounters),
+                *m_linkedNotebook);
+        }
+        else {
             callback->onSyncChunksDataProcessingProgress(
                 std::make_shared<SyncChunksDataCounters>(
                     *m_syncChunksDataCounters));
-            break;
-        case ContentSource::LinkedNotebook:
-            callback->onLinkedNotebookSyncChunksDataProcessingProgress(
-                std::make_shared<SyncChunksDataCounters>(
-                    *m_syncChunksDataCounters));
-            break;
         }
     }
 
@@ -666,7 +648,7 @@ private:
     const SyncChunksDataCountersPtr m_syncChunksDataCounters;
     const IDownloader::ICallbackWeakPtr m_callbackWeak;
     const std::shared_ptr<QMutex> m_mutex;
-    const ContentSource m_contentSource;
+    const std::optional<qevercloud::LinkedNotebook> m_linkedNotebook;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -843,8 +825,8 @@ QFuture<IDownloader::Result> Downloader::download(
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, callbackWeak = std::move(callbackWeak),
-             canceler = std::move(canceler),
-             promise](IAuthenticationInfoPtr authenticationInfo) mutable {
+             canceler = std::move(canceler), promise](
+                const IAuthenticationInfoPtr & authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
 
                 if (canceler->isCanceled()) {
@@ -1010,6 +992,11 @@ void Downloader::listLinkedNotebooksAndLaunchDataDownload(
             selfWeak,
             [this, downloadContext = std::move(downloadContext), syncMode](
                 QList<qevercloud::LinkedNotebook> linkedNotebooks) mutable {
+                if (downloadContext->canceler->isCanceled()) {
+                    cancel(*downloadContext->promise);
+                    return;
+                }
+
                 launchLinkedNotebooksDataDownload(
                     std::move(downloadContext), syncMode,
                     std::move(linkedNotebooks));
@@ -1026,10 +1013,6 @@ void Downloader::launchLinkedNotebooksDataDownload(
     QList<QFuture<Result>> linkedNotebookFutures;
     linkedNotebookFutures.reserve(std::max(linkedNotebooks.size(), 0));
 
-    QList<QFuture<void>> linkedNotebookSyncChunksDownloadedFutures;
-    linkedNotebookSyncChunksDownloadedFutures.reserve(
-        std::max(linkedNotebooks.size(), 0));
-
     for (auto & linkedNotebook: linkedNotebooks) {
         if (Q_UNLIKELY(!linkedNotebook.guid())) {
             QNWARNING(
@@ -1040,31 +1023,18 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
         linkedNotebookGuids << *linkedNotebook.guid();
 
-        auto syncChunksDownloadedPromise = std::make_shared<QPromise<void>>();
-
-        linkedNotebookSyncChunksDownloadedFutures
-            << syncChunksDownloadedPromise->future();
-
         linkedNotebookFutures << startLinkedNotebookDataDownload(
-            downloadContext, syncMode, std::move(syncChunksDownloadedPromise),
-            std::move(linkedNotebook));
+            downloadContext, syncMode, std::move(linkedNotebook));
     }
 
-    if (Q_UNLIKELY(linkedNotebookFutures.isEmpty())) {
+    if (linkedNotebookFutures.isEmpty()) {
         finalize(downloadContext);
         return;
     }
 
-    auto allLinkedNotebookSyncChunksDownloadedFuture = threading::whenAll(
-        std::move(linkedNotebookSyncChunksDownloadedFutures));
-
-    threading::then(
-        std::move(allLinkedNotebookSyncChunksDownloadedFuture),
-        [callbackWeak = downloadContext->callbackWeak] {
-            if (const auto callback = callbackWeak.lock()) {
-                callback->onLinkedNotebooksSyncChunksDownloaded();
-            }
-        });
+    if (const auto callback = downloadContext->callbackWeak.lock()) {
+        callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
+    }
 
     auto allLinkedNotebooksFuture =
         threading::whenAll<Result>(std::move(linkedNotebookFutures));
@@ -1109,7 +1079,6 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
 QFuture<IDownloader::Result> Downloader::startLinkedNotebookDataDownload(
     const DownloadContextPtr & downloadContext, const SyncMode syncMode,
-    std::shared_ptr<QPromise<void>> syncChunksDownloadedPromise,
     qevercloud::LinkedNotebook linkedNotebook)
 {
     Q_ASSERT(downloadContext);
@@ -1159,14 +1128,13 @@ QFuture<IDownloader::Result> Downloader::startLinkedNotebookDataDownload(
         threading::TrackedTask{
             weak_from_this(),
             [this, syncMode,
-             syncChunksDownloadedPromise =
-                 std::move(syncChunksDownloadedPromise),
              linkedNotebookDownloadContext =
                  std::move(linkedNotebookDownloadContext)](
                 QList<qevercloud::SyncChunk> syncChunks) mutable {
                 if (const auto callback =
                         linkedNotebookDownloadContext->callbackWeak.lock()) {
-                    syncChunksDownloadedPromise->finish();
+                    callback->onLinkedNotebookSyncChunksDownloaded(
+                        *linkedNotebookDownloadContext->linkedNotebook);
                 }
 
                 linkedNotebookDownloadContext->syncChunks =

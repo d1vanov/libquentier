@@ -136,7 +136,6 @@ private:
 
     [[nodiscard]] QFuture<Result> startLinkedNotebookDataDownload(
         const DownloadContextPtr & downloadContext, SyncMode syncMode,
-        std::shared_ptr<QPromise<void>> syncChunksDownloadedPromise,
         qevercloud::LinkedNotebook linkedNotebook);
 
     void processSyncChunks(

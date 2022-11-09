@@ -75,6 +75,16 @@ public:
             ISyncChunksDataCountersPtr counters) = 0;
 
         /**
+         * This method is called before the downloading of data corresponding
+         * to linked notebooks starts.
+         * @param linkedNotebooks           Linked notebooks the data from which
+         *                                  will start being downloaded after
+         *                                  the execution of this callback
+         */
+        virtual void onStartLinkedNotebooksDataDownloading(
+            const QList<qevercloud::LinkedNotebook> & linkedNotebooks) = 0;
+
+        /**
         * This method is called during linked notebooks sync chunks downloading
         * and denotes the progress of that step, individually for each linked
         * notebook. The percentage of completeness can be computed roughly as
@@ -96,20 +106,28 @@ public:
         virtual void onLinkedNotebookSyncChunksDownloadProgress(
             qint32 highestDownloadedUsn, qint32 highestServerUsn,
             qint32 lastPreviousUsn,
-            qevercloud::LinkedNotebook linkedNotebook) = 0;
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
 
         /**
-        * This method is called when the sync chunks for data from linked
-        * notebooks are downloaded during "remote to local" synchronization step
+        * This method is called when the sync chunks for data from some linked
+        * notebook are downloaded during "remote to local" synchronization step
+        * @param linkedNotebook             The linked notebook which sync
+        *                                   chunks were downloaded
         */
-        virtual void onLinkedNotebooksSyncChunksDownloaded() = 0;
+        virtual void onLinkedNotebookSyncChunksDownloaded(
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
 
         /**
-        * This method is called during linked notebooks' downloaded sync chunks
-        * contents processing and denotes the progress on that step.
+        * This method is called during some linked notebook's downloaded sync
+        * chunks contents processing and denotes the progress on that step.
+        * @param counters                   Updated sync chunks data counters
+        * @param linkedNotebook             The linked notebook which sync
+        *                                   chunks data processing progress
+        *                                   is being reported
         */
         virtual void onLinkedNotebookSyncChunksDataProcessingProgress(
-            ISyncChunksDataCountersPtr counters) = 0;
+            ISyncChunksDataCountersPtr counters,
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
 
         /**
         * This method is called on each successful download of full note data
@@ -125,15 +143,17 @@ public:
 
         /**
         * This method is called on each successful download of full note data
-        * from linked notebooks.
-        *
+        * from some linked notebook.
         * @param notesDownloaded       The number of notes downloaded by the
         *                              moment
         * @param totalNotesToDownload  The total number of notes that need to be
         *                              downloaded
+        * @param linkedNotebook        The linked notebook which notes download
+        *                              progress is being reported
         */
-        virtual void onLinkedNotebooksNotesDownloadProgress(
-            quint32 notesDownloaded, quint32 totalNotesToDownload) = 0;
+        virtual void onLinkedNotebookNotesDownloadProgress(
+            quint32 notesDownloaded, quint32 totalNotesToDownload,
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
 
         /**
         * This method is called on each successful doenload of full resource
@@ -156,9 +176,12 @@ public:
         *                                  by the moment
         * @param totalResourcesToDownload  The total number of resources that
         *                                  need to be downloaded
+        * @param linkedNotebook            The linked notebook which resources
+        *                                  download progress is being reported
         */
-        virtual void onLinkedNotebooksResourcesDownloadProgress(
-            quint32 resourcesDownloaded, quint32 totalResourcesToDownload) = 0;
+        virtual void onLinkedNotebookResourcesDownloadProgress(
+            quint32 resourcesDownloaded, quint32 totalResourcesToDownload,
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
     };
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;

@@ -51,24 +51,33 @@ public:
         (ISyncChunksDataCountersPtr counters), (override));
 
     MOCK_METHOD(
+        void, onStartLinkedNotebooksDataDownloading,
+        (const QList<qevercloud::LinkedNotebook> & linkedNotebooks),
+        (override));
+
+    MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloadProgress,
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
          qint32 lastPreviousUsn,
-         qevercloud::LinkedNotebook linkedNotebook), (override));
+         const qevercloud::LinkedNotebook & linkedNotebook), (override));
 
-    MOCK_METHOD(void, onLinkedNotebooksSyncChunksDownloaded, (), (override));
+    MOCK_METHOD(
+        void, onLinkedNotebookSyncChunksDownloaded,
+        (const qevercloud::LinkedNotebook & linkedNotebook), (override));
 
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDataProcessingProgress,
-        (ISyncChunksDataCountersPtr counters), (override));
+        (ISyncChunksDataCountersPtr counters,
+         const qevercloud::LinkedNotebook & linkedNotebook), (override));
 
     MOCK_METHOD(
         void, onNotesDownloadProgress,
         (quint32 notesDownloaded, quint32 totalNotesToDownload), (override));
 
     MOCK_METHOD(
-        void, onLinkedNotebooksNotesDownloadProgress,
-        (quint32 notesDownloaded, quint32 totalNotesToDownload), (override));
+        void, onLinkedNotebookNotesDownloadProgress,
+        (quint32 notesDownloaded, quint32 totalNotesToDownload,
+         const qevercloud::LinkedNotebook & linkedNotebook), (override));
 
     MOCK_METHOD(
         void, onResourcesDownloadProgress,
@@ -76,8 +85,9 @@ public:
         (override));
 
     MOCK_METHOD(
-        void, onLinkedNotebooksResourcesDownloadProgress,
-        (quint32 resourcesDownloaded, quint32 totalResourcesToDownload),
+        void, onLinkedNotebookResourcesDownloadProgress,
+        (quint32 resourcesDownloaded, quint32 totalResourcesToDownload,
+         const qevercloud::LinkedNotebook & linkedNotebook),
         (override));
 };
 

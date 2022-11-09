@@ -74,7 +74,6 @@
 namespace quentier::synchronization::tests {
 
 using testing::_;
-using testing::AnyNumber;
 using testing::AtMost;
 using testing::InSequence;
 using testing::Ne;
@@ -95,7 +94,7 @@ enum class SyncChunksFlag
 
 Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
-[[nodiscard]] QList<qevercloud::SyncChunk> generateSynChunks(
+[[nodiscard]] QList<qevercloud::SyncChunk> generateSyncChunks(
     const SyncChunksFlags flags, const qint32 afterUsn = 0, // NOLINT
     const qint32 syncChunksCount = 3,
     const qint32 itemCountPerSyncChunk = 3) // NOLINT
@@ -507,6 +506,91 @@ void checkDownloadResourcesStatus(
         syncChunksItemCounts.totalResources);
 }
 
+void checkSyncChunksDataCountersUpdate(
+    const ISyncChunksDataCounters & previousSyncChunksDataCounters,
+    const ISyncChunksDataCounters & currentSyncChunksDataCounters)
+{
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalSavedSearches(),
+        previousSyncChunksDataCounters.totalSavedSearches());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalExpungedSavedSearches(),
+        previousSyncChunksDataCounters.totalExpungedSavedSearches());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.addedSavedSearches(),
+        previousSyncChunksDataCounters.addedSavedSearches());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.updatedSavedSearches(),
+        previousSyncChunksDataCounters.updatedSavedSearches());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.expungedSavedSearches(),
+        previousSyncChunksDataCounters.expungedSavedSearches());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalTags(),
+        previousSyncChunksDataCounters.totalTags());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalExpungedTags(),
+        previousSyncChunksDataCounters.totalExpungedTags());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.addedTags(),
+        previousSyncChunksDataCounters.addedTags());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.updatedTags(),
+        previousSyncChunksDataCounters.updatedTags());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.expungedTags(),
+        previousSyncChunksDataCounters.expungedTags());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalLinkedNotebooks(),
+        previousSyncChunksDataCounters.totalLinkedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalExpungedLinkedNotebooks(),
+        previousSyncChunksDataCounters.totalExpungedLinkedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.addedLinkedNotebooks(),
+        previousSyncChunksDataCounters.addedLinkedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.updatedLinkedNotebooks(),
+        previousSyncChunksDataCounters.updatedLinkedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.expungedLinkedNotebooks(),
+        previousSyncChunksDataCounters.expungedLinkedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalNotebooks(),
+        previousSyncChunksDataCounters.totalNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.totalExpungedNotebooks(),
+        previousSyncChunksDataCounters.totalExpungedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.addedNotebooks(),
+        previousSyncChunksDataCounters.addedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.updatedNotebooks(),
+        previousSyncChunksDataCounters.updatedNotebooks());
+
+    EXPECT_GE(
+        currentSyncChunksDataCounters.expungedNotebooks(),
+        previousSyncChunksDataCounters.expungedNotebooks());
+}
+
 } // namespace
 
 class DownloaderTest : public testing::Test
@@ -879,7 +963,7 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
     authenticationInfo->m_webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
 
     const auto syncChunksFlags = GetParam();
-    const auto syncChunks = generateSynChunks(syncChunksFlags);
+    const auto syncChunks = generateSyncChunks(syncChunksFlags);
     ASSERT_FALSE(syncChunks.isEmpty());
 
     const SyncChunksItemCounts syncChunksItemCounts{syncChunks};
@@ -918,8 +1002,7 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
         EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
             .WillOnce([&](const qint32 afterUsn,
                           const qevercloud::IRequestContextPtr & ctx,
-                          [[maybe_unused]] const utility::cancelers::
-                              ICancelerPtr & canceler,
+                          const utility::cancelers::ICancelerPtr & canceler,
                           const ISyncChunksProvider::ICallbackWeakPtr &
                               callbackWeak) {
                 EXPECT_EQ(afterUsn, 0);
@@ -929,6 +1012,7 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                         ctx->authenticationToken(),
                         authenticationInfo->authToken());
                 }
+                EXPECT_TRUE(canceler);
 
                 EXPECT_FALSE(callbackWeak.expired());
                 if (const auto callback = callbackWeak.lock()) {
@@ -963,91 +1047,15 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
 
     ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
     EXPECT_CALL(*mockDownloaderCallback, onSyncChunksDataProcessingProgress)
-        .Times(AnyNumber())
-        .WillRepeatedly([&](ISyncChunksDataCountersPtr counters) {
+        .WillRepeatedly([&](const ISyncChunksDataCountersPtr & counters) {
             ASSERT_TRUE(counters);
             if (!lastSyncChunksDataCounters) {
                 lastSyncChunksDataCounters = counters;
                 return;
             }
 
-            EXPECT_GE(
-                counters->totalSavedSearches(),
-                lastSyncChunksDataCounters->totalSavedSearches());
-
-            EXPECT_GE(
-                counters->totalExpungedSavedSearches(),
-                lastSyncChunksDataCounters->totalExpungedSavedSearches());
-
-            EXPECT_GE(
-                counters->addedSavedSearches(),
-                lastSyncChunksDataCounters->addedSavedSearches());
-
-            EXPECT_GE(
-                counters->updatedSavedSearches(),
-                lastSyncChunksDataCounters->updatedSavedSearches());
-
-            EXPECT_GE(
-                counters->expungedSavedSearches(),
-                lastSyncChunksDataCounters->expungedSavedSearches());
-
-            EXPECT_GE(
-                counters->totalTags(), lastSyncChunksDataCounters->totalTags());
-
-            EXPECT_GE(
-                counters->totalExpungedTags(),
-                lastSyncChunksDataCounters->totalExpungedTags());
-
-            EXPECT_GE(
-                counters->addedTags(), lastSyncChunksDataCounters->addedTags());
-
-            EXPECT_GE(
-                counters->updatedTags(),
-                lastSyncChunksDataCounters->updatedTags());
-
-            EXPECT_GE(
-                counters->expungedTags(),
-                lastSyncChunksDataCounters->expungedTags());
-
-            EXPECT_GE(
-                counters->totalLinkedNotebooks(),
-                lastSyncChunksDataCounters->totalLinkedNotebooks());
-
-            EXPECT_GE(
-                counters->totalExpungedLinkedNotebooks(),
-                lastSyncChunksDataCounters->totalExpungedLinkedNotebooks());
-
-            EXPECT_GE(
-                counters->addedLinkedNotebooks(),
-                lastSyncChunksDataCounters->addedLinkedNotebooks());
-
-            EXPECT_GE(
-                counters->updatedLinkedNotebooks(),
-                lastSyncChunksDataCounters->updatedLinkedNotebooks());
-
-            EXPECT_GE(
-                counters->expungedLinkedNotebooks(),
-                lastSyncChunksDataCounters->expungedLinkedNotebooks());
-
-            EXPECT_GE(
-                counters->totalNotebooks(),
-                lastSyncChunksDataCounters->totalNotebooks());
-
-            EXPECT_GE(
-                counters->totalExpungedNotebooks(),
-                lastSyncChunksDataCounters->totalExpungedNotebooks());
-
-            EXPECT_GE(
-                counters->addedNotebooks(),
-                lastSyncChunksDataCounters->addedNotebooks());
-
-            EXPECT_GE(
-                counters->updatedNotebooks(),
-                lastSyncChunksDataCounters->updatedNotebooks());
-
-            EXPECT_GE(
-                counters->expungedNotebooks(),
-                lastSyncChunksDataCounters->expungedNotebooks());
+            checkSyncChunksDataCountersUpdate(
+                *lastSyncChunksDataCounters, *counters);
 
             lastSyncChunksDataCounters = counters;
         });
@@ -1096,31 +1104,30 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
         InSequence s;
 
         EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
-            .WillOnce(
-                [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
-                        chunks,
-                    const INotebooksProcessor::ICallbackWeakPtr callbackWeak) {
-                    const auto callback = callbackWeak.lock();
-                    EXPECT_TRUE(callback);
-                    if (callback) {
-                        const qint32 totalNotebooks =
-                            syncChunksItemCounts.totalNotebooks;
+            .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
+                              chunks,
+                          const INotebooksProcessor::ICallbackWeakPtr &
+                              callbackWeak) {
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    const qint32 totalNotebooks =
+                        syncChunksItemCounts.totalNotebooks;
 
-                        const qint32 totalExpungedNotebooks =
-                            syncChunksItemCounts.totalExpungedNotebooks;
+                    const qint32 totalExpungedNotebooks =
+                        syncChunksItemCounts.totalExpungedNotebooks;
 
-                        const qint32 addedNotebooks = totalNotebooks / 2;
-                        const qint32 updatedNotebooks =
-                            totalNotebooks - addedNotebooks;
+                    const qint32 addedNotebooks = totalNotebooks / 2;
+                    const qint32 updatedNotebooks =
+                        totalNotebooks - addedNotebooks;
 
-                        callback->onNotebooksProcessingProgress(
-                            totalNotebooks, totalExpungedNotebooks,
-                            addedNotebooks, updatedNotebooks,
-                            totalExpungedNotebooks);
-                    }
+                    callback->onNotebooksProcessingProgress(
+                        totalNotebooks, totalExpungedNotebooks, addedNotebooks,
+                        updatedNotebooks, totalExpungedNotebooks);
+                }
 
-                    return threading::makeReadyFuture();
-                });
+                return threading::makeReadyFuture();
+            });
 
         EXPECT_CALL(*m_mockTagsProcessor, processTags(syncChunks, _))
             .WillOnce(
@@ -1211,7 +1218,7 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                 auto downloadNotesStatus =
                     std::make_shared<DownloadNotesStatus>();
 
-                int noteIndex = 0;
+                quint64 noteIndex = 0UL;
                 for (const auto & syncChunk: qAsConst(chunks)) {
                     if (!syncChunk.notes()) {
                         continue;
@@ -1337,7 +1344,7 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                 auto downloadResourcesStatus =
                     std::make_shared<DownloadResourcesStatus>();
 
-                int resourceIndex = 0;
+                quint64 resourceIndex = 0UL;
                 for (const auto & syncChunk: qAsConst(chunks)) {
                     if (!syncChunk.resources()) {
                         continue;

@@ -55,7 +55,8 @@ struct MockICallback : public ISyncChunksProvider::ICallback
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloadProgress,
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
-         qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook),
+         qint32 lastPreviousUsn,
+         const qevercloud::LinkedNotebook & linkedNotebook),
         (override));
 };
 
