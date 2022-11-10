@@ -591,6 +591,20 @@ void checkSyncChunksDataCountersUpdate(
         previousSyncChunksDataCounters.expungedNotebooks());
 }
 
+/*
+[[nodiscard]] QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
+    const QList<qevercloud::SyncChunk> & syncChunks)
+{
+    QList<qevercloud::LinkedNotebook> result;
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        if (syncChunk.linkedNotebooks()) {
+            result << *syncChunk.linkedNotebooks();
+        }
+    }
+    return result;
+}
+*/
+
 } // namespace
 
 class DownloaderTest : public testing::Test
@@ -1434,6 +1448,124 @@ TEST_P(DownloaderSyncChunksTest, DownloadUserOwnData)
                 threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
                     {})));
     }
+
+    /*
+    const auto linkedNotebooks = collectLinkedNotebooks(syncChunks);
+    EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
+                linkedNotebooks)));
+
+    for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+        const auto linkedNotebookSyncChunks = generateSyncChunks(
+            SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+                SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+                SyncChunksFlag::WithTags);
+
+        EXPECT_CALL(
+            *m_mockSyncChunksProvider,
+            fetchLinkedNotebookSyncChunks)
+            .WillOnce(
+                [&](const qevercloud::LinkedNotebook & ln,
+                    [[maybe_unused]] qint32 afterUsn,
+                    const qevercloud::IRequestContextPtr & ctx,
+                    const utility::cancelers::ICancelerPtr & canceler,
+                    const ISyncChunksProvider::ICallbackWeakPtr &
+                        callbackWeak) {
+                    EXPECT_EQ(ln, linkedNotebook);
+                    EXPECT_EQ(afterUsn, 0);
+                    EXPECT_TRUE(ctx);
+                    if (ctx) {
+                        EXPECT_EQ(
+                            ctx->authenticationToken(),
+                            authenticationInfo->authToken());
+                    }
+
+                    EXPECT_FALSE(callbackWeak.expired());
+                    if (const auto callback = callbackWeak.lock()) {
+                        const qint32 lastPreviousUsn = afterUsn;
+                        const qint32 highestServerUsn =
+                            linkedNotebookSyncChunks.last()
+                                .chunkHighUSN()
+                                .value();
+                        for (const auto & syncChunk:
+                                qAsConst(linkedNotebookSyncChunks)) {
+                            callback
+                                ->onLinkedNotebookSyncChunksDownloadProgress(
+                                    syncChunk.chunkHighUSN().value(),
+                                    highestServerUsn, lastPreviousUsn, ln);
+                        }
+                    }
+
+                    return threading::makeReadyFuture<
+                        QList<qevercloud::SyncChunk>>(
+                            linkedNotebookSyncChunks);
+                });
+
+        const qint32 lastPreviousUsn = 0;
+        const qint32 highestServerUsn =
+            linkedNotebookSyncChunks.last().chunkHighUSN().value();
+        for (const auto & syncChunk: qAsConst(linkedNotebookSyncChunks)) {
+            EXPECT_CALL(
+                *mockDownloaderCallback,
+                onLinkedNotebookSyncChunksDownloadProgress(
+                    syncChunk.chunkHighUSN().value(), highestServerUsn,
+                    lastPreviousUsn, linkedNotebook))
+                .Times(1);
+        }
+
+        EXPECT_CALL(
+            *mockDownloaderCallback,
+            onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+
+        ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
+        EXPECT_CALL(
+            *mockDownloaderCallback,
+            onLinkedNotebookSyncChunksDataProcessingProgress(
+                Ne(nullptr), linkedNotebook))
+            .WillRepeatedly(
+                [&](const ISyncChunksDataCountersPtr & counters,
+                    [[maybe_unused]] const qevercloud::LinkedNotebook & ln) {
+                ASSERT_TRUE(counters);
+                if (!lastSyncChunksDataCounters) {
+                    lastSyncChunksDataCounters = counters;
+                    return;
+                }
+
+                checkSyncChunksDataCountersUpdate(
+                    *lastSyncChunksDataCounters, *counters);
+
+                lastSyncChunksDataCounters = counters;
+            });
+
+        const SyncChunksItemCounts linkedNotebookSyncChunksItemCounts{
+            linkedNotebookSyncChunks};
+
+        quint32 lastLinkedNotebookDownloadedNotes = 0UL;
+        quint32 lastTotalLinkedNotebookNotesToDownload = 0UL;
+
+        if (linkedNotebookSyncChunksItemCounts.totalNotes != 0) {
+            EXPECT_CALL(
+                *mockDownloaderCallback,
+                onLinkedNotebookNotesDownloadProgress(_, _, linkedNotebook))
+                .Times(AtMost(linkedNotebookSyncChunksItemCounts.totalNotes))
+                .WillRepeatedly([&](const quint32 notesDownloaded,
+                                    const quint32 totalNotesToDownload,
+                                    [[maybe_unused]] const qevercloud::LinkedNotebook &ln) {
+                    EXPECT_GT(notesDownloaded, lastLinkedNotebookDownloadedNotes);
+
+                    EXPECT_TRUE(
+                        lastTotalLinkedNotebookNotesToDownload == 0 ||
+                        lastTotalLinkedNotebookNotesToDownload == totalNotesToDownload);
+
+                    lastLinkedNotebookDownloadedNotes = notesDownloaded;
+                    lastTotalLinkedNotebookNotesToDownload = totalNotesToDownload;
+                });
+
+            // TODO: continue from here
+        }
+    }
+    */
 
     auto result =
         downloader->download(m_manualCanceler, mockDownloaderCallback);
