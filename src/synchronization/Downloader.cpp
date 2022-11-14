@@ -1007,6 +1007,12 @@ void Downloader::launchLinkedNotebooksDataDownload(
     DownloadContextPtr downloadContext, const SyncMode syncMode,
     QList<qevercloud::LinkedNotebook> linkedNotebooks)
 {
+    if (!linkedNotebooks.isEmpty()) {
+        if (const auto callback = downloadContext->callbackWeak.lock()) {
+            callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
+        }
+    }
+
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(std::max(linkedNotebooks.size(), 0));
 
@@ -1030,10 +1036,6 @@ void Downloader::launchLinkedNotebooksDataDownload(
     if (linkedNotebookFutures.isEmpty()) {
         finalize(downloadContext);
         return;
-    }
-
-    if (const auto callback = downloadContext->callbackWeak.lock()) {
-        callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
     }
 
     auto allLinkedNotebooksFuture =
