@@ -16,8 +16,10 @@ Checks: >
         -readability-function-cognitive-complexity,
         -readability-function-size,
         -readability-redundant-access-specifiers,
+        -readability-suspicious-call-argument,
         bugprone-*,
         -bugprone-macro-parentheses,
+        -bugprone-easily-swappable-parameters,
         modernize-*,
         -modernize-use-trailing-return-type,
 WarningsAsErrors:    false
