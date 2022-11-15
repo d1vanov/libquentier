@@ -92,4 +92,12 @@ public:
         std::optional<qevercloud::Guid> linkedNotebookGuid = {}) = 0;
 };
 
+[[nodiscard]] bool operator==(
+    const IFullSyncStaleDataExpunger::PreservedGuids & lhs,
+    const IFullSyncStaleDataExpunger::PreservedGuids & rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const IFullSyncStaleDataExpunger::PreservedGuids & lhs,
+    const IFullSyncStaleDataExpunger::PreservedGuids & rhs) noexcept;
+
 } // namespace quentier::synchronization

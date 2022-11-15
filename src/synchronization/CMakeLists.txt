@@ -18,6 +18,7 @@ target_sources(${LIBRARY_NAME}
   IAccountLimitsProvider.h
   IAuthenticationInfoProvider.h
   IDownloader.h
+  IFullSyncStaleDataExpunger.cpp
   IFullSyncStaleDataExpunger.h
   INoteStoreFactory.h
   IProtocolVersionChecker.h
