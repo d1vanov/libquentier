@@ -604,6 +604,40 @@ void checkSyncChunksDataCountersUpdate(
     return result;
 }
 
+[[nodiscard]] IFullSyncStaleDataExpunger::PreservedGuids collectPreservedGuids(
+    const QList<qevercloud::SyncChunk> & syncChunks)
+{
+    IFullSyncStaleDataExpunger::PreservedGuids preservedGuids;
+
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        if (syncChunk.notebooks()) {
+            for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
+                preservedGuids.notebookGuids << notebook.guid().value();
+            }
+        }
+
+        if (syncChunk.notes()) {
+            for (const auto & note: qAsConst(*syncChunk.notes())) {
+                preservedGuids.noteGuids << note.guid().value();
+            }
+        }
+
+        if (syncChunk.tags()) {
+            for (const auto & tag: qAsConst(*syncChunk.tags())) {
+                preservedGuids.tagGuids << tag.guid().value();
+            }
+        }
+
+        if (syncChunk.searches()) {
+            for (const auto & savedSearch: qAsConst(*syncChunk.searches())) {
+                preservedGuids.savedSearchGuids << savedSearch.guid().value();
+            }
+        }
+    }
+
+    return preservedGuids;
+}
+
 void emulateSyncChunksNotesProcessing(
     const QList<qevercloud::SyncChunk> & syncChunks,
     const std::shared_ptr<IDurableNotesProcessor::ICallback> & callback,
@@ -1441,7 +1475,16 @@ TEST_P(DownloaderSyncChunksTest, Download)
             EXPECT_CALL(
                 *m_mockFullSyncStaleDataExpunger,
                 expungeStaleData(_, Eq(std::nullopt)))
-                .WillOnce(Return(threading::makeReadyFuture()));
+                .WillOnce(
+                    [&](const IFullSyncStaleDataExpunger::PreservedGuids &
+                            preservedGuids,
+                        [[maybe_unused]] const std::optional<qevercloud::Guid> &
+                            linkedNotebookGuid) {
+                        const auto expectedPreservedGuids =
+                            collectPreservedGuids(syncChunks);
+                        EXPECT_EQ(preservedGuids, expectedPreservedGuids);
+                        return threading::makeReadyFuture();
+                    });
         }
 
         EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
@@ -1701,7 +1744,16 @@ TEST_P(DownloaderSyncChunksTest, Download)
             EXPECT_CALL(
                 *m_mockFullSyncStaleDataExpunger,
                 expungeStaleData(_, Eq(linkedNotebook.guid())))
-                .WillOnce(Return(threading::makeReadyFuture()));
+                .WillOnce(
+                    [&](const IFullSyncStaleDataExpunger::PreservedGuids &
+                            preservedGuids,
+                        [[maybe_unused]] const std::optional<qevercloud::Guid> &
+                            linkedNotebookGuid) {
+                        const auto expectedPreservedGuids =
+                            collectPreservedGuids(linkedNotebookSyncChunks);
+                        EXPECT_EQ(preservedGuids, expectedPreservedGuids);
+                        return threading::makeReadyFuture();
+                    });
         }
 
         ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
@@ -1740,7 +1792,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 onLinkedNotebookNotesDownloadProgress(_, _, linkedNotebook))
                 .Times(AtMost(linkedNotebookSyncChunksItemCounts.totalNotes))
                 .WillRepeatedly(
-                    [&](const quint32 notesDownloaded,
+                    [&](const quint32 notesDownloaded, // NOLINT
                         const quint32 totalNotesToDownload,
                         [[maybe_unused]] const qevercloud::LinkedNotebook &
                             ln) {
@@ -1768,7 +1820,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 .Times(
                     AtMost(linkedNotebookSyncChunksItemCounts.totalResources))
                 .WillRepeatedly(
-                    [&](const quint32 resourcesDownloaded,
+                    [&](const quint32 resourcesDownloaded, // NOLINT
                         const quint32 totalResourcesToDownload,
                         [[maybe_unused]] const qevercloud::LinkedNotebook &
                             ln) {
