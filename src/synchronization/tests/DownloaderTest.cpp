@@ -75,6 +75,7 @@ namespace quentier::synchronization::tests {
 
 using testing::_;
 using testing::AtMost;
+using testing::Eq;
 using testing::InSequence;
 using testing::Ne;
 using testing::Return;
@@ -617,8 +618,7 @@ void emulateSyncChunksNotesProcessing(
         for (const auto & note: qAsConst(*syncChunk.notes())) {
             if (noteIndex % 4 == 0) {
                 const auto noteGuid = note.guid().value();
-                const auto noteUsn =
-                    note.updateSequenceNum().value();
+                const auto noteUsn = note.updateSequenceNum().value();
 
                 if (callback) {
                     callback->onProcessedNote(noteGuid, noteUsn);
@@ -628,8 +628,8 @@ void emulateSyncChunksNotesProcessing(
                     noteUsn;
             }
             else if (noteIndex % 4 == 1) {
-                auto exc = std::make_shared<RuntimeError>(
-                    ErrorString{"some error"});
+                auto exc =
+                    std::make_shared<RuntimeError>(ErrorString{"some error"});
 
                 if (callback) {
                     callback->onNoteFailedToDownload(note, *exc);
@@ -637,11 +637,11 @@ void emulateSyncChunksNotesProcessing(
 
                 downloadNotesStatus.m_notesWhichFailedToDownload
                     << DownloadNotesStatus::NoteWithException{
-                        note, std::move(exc)};
+                           note, std::move(exc)};
             }
             else if (noteIndex % 4 == 2) {
-                auto exc = std::make_shared<RuntimeError>(
-                    ErrorString{"some error"});
+                auto exc =
+                    std::make_shared<RuntimeError>(ErrorString{"some error"});
 
                 if (callback) {
                     callback->onNoteFailedToProcess(note, *exc);
@@ -649,7 +649,7 @@ void emulateSyncChunksNotesProcessing(
 
                 downloadNotesStatus.m_notesWhichFailedToProcess
                     << DownloadNotesStatus::NoteWithException{
-                        note, std::move(exc)};
+                           note, std::move(exc)};
             }
             else if (noteIndex % 4 == 3) {
                 if (callback) {
@@ -657,8 +657,7 @@ void emulateSyncChunksNotesProcessing(
                 }
 
                 const auto noteGuid = note.guid().value();
-                const auto noteUsn =
-                    note.updateSequenceNum().value();
+                const auto noteUsn = note.updateSequenceNum().value();
 
                 downloadNotesStatus.m_cancelledNoteGuidsAndUsns[noteGuid] =
                     noteUsn;
@@ -688,21 +687,19 @@ void emulateSyncChunksNotesProcessing(
                     callback->onExpungedNote(expungedNoteGuid);
                 }
 
-                downloadNotesStatus.m_expungedNoteGuids
-                    << expungedNoteGuid;
+                downloadNotesStatus.m_expungedNoteGuids << expungedNoteGuid;
             }
             else if (noteIndex % 2 == 1) {
-                auto exc = std::make_shared<RuntimeError>(
-                    ErrorString{"some error"});
+                auto exc =
+                    std::make_shared<RuntimeError>(ErrorString{"some error"});
 
                 if (callback) {
-                    callback->onFailedToExpungeNote(
-                        expungedNoteGuid, *exc);
+                    callback->onFailedToExpungeNote(expungedNoteGuid, *exc);
                 }
 
                 downloadNotesStatus.m_noteGuidsWhichFailedToExpunge
                     << DownloadNotesStatus::GuidWithException{
-                        expungedNoteGuid, std::move(exc)};
+                           expungedNoteGuid, std::move(exc)};
             }
             else {
                 EXPECT_FALSE(true) << "Unreachable code";
@@ -726,61 +723,54 @@ void emulateSyncChunksResourcesProcessing(
             continue;
         }
 
-        for (const auto & resource:
-             qAsConst(*syncChunk.resources())) {
+        for (const auto & resource: qAsConst(*syncChunk.resources())) {
             if (resourceIndex % 4 == 0) {
                 const auto resourceGuid = resource.guid().value();
-                const auto resourceUsn =
-                    resource.updateSequenceNum().value();
+                const auto resourceUsn = resource.updateSequenceNum().value();
 
                 if (callback) {
-                    callback->onProcessedResource(
-                        resourceGuid, resourceUsn);
+                    callback->onProcessedResource(resourceGuid, resourceUsn);
                 }
 
-                downloadResourcesStatus.m_processedResourceGuidsAndUsns
-                    [resourceGuid] = resourceUsn;
+                downloadResourcesStatus
+                    .m_processedResourceGuidsAndUsns[resourceGuid] =
+                    resourceUsn;
             }
             else if (resourceIndex % 4 == 1) {
-                auto exc = std::make_shared<RuntimeError>(
-                    ErrorString{"some error"});
+                auto exc =
+                    std::make_shared<RuntimeError>(ErrorString{"some error"});
 
                 if (callback) {
-                    callback->onResourceFailedToDownload(
-                        resource, *exc);
+                    callback->onResourceFailedToDownload(resource, *exc);
                 }
 
                 downloadResourcesStatus.m_resourcesWhichFailedToDownload
-                    << DownloadResourcesStatus::
-                    ResourceWithException{
-                        resource, std::move(exc)};
+                    << DownloadResourcesStatus::ResourceWithException{
+                           resource, std::move(exc)};
             }
             else if (resourceIndex % 4 == 2) {
-                auto exc = std::make_shared<RuntimeError>(
-                    ErrorString{"some error"});
+                auto exc =
+                    std::make_shared<RuntimeError>(ErrorString{"some error"});
 
                 if (callback) {
-                    callback->onResourceFailedToProcess(
-                        resource, *exc);
+                    callback->onResourceFailedToProcess(resource, *exc);
                 }
 
                 downloadResourcesStatus.m_resourcesWhichFailedToProcess
-                    << DownloadResourcesStatus::
-                    ResourceWithException{
-                        resource, std::move(exc)};
+                    << DownloadResourcesStatus::ResourceWithException{
+                           resource, std::move(exc)};
             }
             else if (resourceIndex % 4 == 3) {
                 if (callback) {
-                    callback->onResourceProcessingCancelled(
-                        resource);
+                    callback->onResourceProcessingCancelled(resource);
                 }
 
                 const auto resourceGuid = resource.guid().value();
-                const auto resourceUsn =
-                    resource.updateSequenceNum().value();
+                const auto resourceUsn = resource.updateSequenceNum().value();
 
-                downloadResourcesStatus.m_cancelledResourceGuidsAndUsns
-                    [resourceGuid] = resourceUsn;
+                downloadResourcesStatus
+                    .m_cancelledResourceGuidsAndUsns[resourceGuid] =
+                    resourceUsn;
             }
             else {
                 EXPECT_FALSE(true) << "Unreachable code";
@@ -790,12 +780,10 @@ void emulateSyncChunksResourcesProcessing(
         }
     }
 
-    downloadResourcesStatus.m_totalNewResources =
-        resourceIndex / 2;
+    downloadResourcesStatus.m_totalNewResources = resourceIndex / 2;
 
     downloadResourcesStatus.m_totalUpdatedResources =
-        resourceIndex -
-        downloadResourcesStatus.m_totalNewResources;
+        resourceIndex - downloadResourcesStatus.m_totalNewResources;
 }
 
 } // namespace
@@ -1117,35 +1105,140 @@ TEST_F(DownloaderTest, CtorNullLocalStorage)
         InvalidArgument);
 }
 
-constexpr std::array gSyncChunksFlags{
-    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks,
-    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
-        SyncChunksFlag::WithNotes,
-    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
-        SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources,
-    SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches,
-    SyncChunksFlags{} | SyncChunksFlag::WithTags,
-    SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches |
-        SyncChunksFlag::WithTags,
-    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
-        SyncChunksFlag::WithSavedSearches,
-    SyncChunksFlags{} | SyncChunksFlag::WithTags |
-        SyncChunksFlag::WithSavedSearches,
-    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
-        SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
-    SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
-        SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
-        SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+enum class SyncMode
+{
+    FullFirst,
+    FullNonFirst,
+    Incremental
+};
+
+struct DownloaderSyncChunksTestData
+{
+    SyncChunksFlags m_syncChunksFlags;
+    SyncMode m_syncMode;
+};
+
+constexpr std::array gSyncChunksTestData{
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks, SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithTags, SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithTags, SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithTags, SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches |
+            SyncChunksFlag::WithTags,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches |
+            SyncChunksFlag::WithTags,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithSavedSearches |
+            SyncChunksFlag::WithTags,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithSavedSearches,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithSavedSearches,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithSavedSearches,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithTags |
+            SyncChunksFlag::WithSavedSearches,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithTags |
+            SyncChunksFlag::WithSavedSearches,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithTags |
+            SyncChunksFlag::WithSavedSearches,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+        SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
+        SyncMode::Incremental},
 };
 
 class DownloaderSyncChunksTest :
     public DownloaderTest,
-    public testing::WithParamInterface<SyncChunksFlags>
+    public testing::WithParamInterface<DownloaderSyncChunksTestData>
 {};
 
 INSTANTIATE_TEST_SUITE_P(
     DownloaderSyncChunksTestInstance, DownloaderSyncChunksTest,
-    testing::ValuesIn(gSyncChunksFlags));
+    testing::ValuesIn(gSyncChunksTestData));
 
 TEST_P(DownloaderSyncChunksTest, Download)
 {
@@ -1169,8 +1262,21 @@ TEST_P(DownloaderSyncChunksTest, Download)
     authenticationInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
     authenticationInfo->m_webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
 
-    const auto syncChunksFlags = GetParam();
-    const auto syncChunks = generateSyncChunks(syncChunksFlags);
+    const auto testData = GetParam();
+
+    const qint32 userOwnAfterUsn = [&] {
+        switch (testData.m_syncMode) {
+        case SyncMode::FullFirst:
+            return 0;
+        case SyncMode::FullNonFirst:
+            [[fallthrough]];
+        case SyncMode::Incremental:
+            return 42;
+        }
+    }();
+
+    const auto syncChunks =
+        generateSyncChunks(testData.m_syncChunksFlags, userOwnAfterUsn);
     ASSERT_FALSE(syncChunks.isEmpty());
 
     const auto linkedNotebooks = collectLinkedNotebooks(syncChunks);
@@ -1184,7 +1290,14 @@ TEST_P(DownloaderSyncChunksTest, Download)
         InSequence s;
 
         EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
-            .WillOnce(Return(std::make_shared<SyncState>()));
+            .WillOnce([&]([[maybe_unused]] const Account & account) {
+                auto syncState = std::make_shared<SyncState>();
+                syncState->m_userDataUpdateCount = userOwnAfterUsn;
+                if (testData.m_syncMode == SyncMode::FullNonFirst) {
+                    syncState->m_userDataLastSyncTime = now;
+                }
+                return syncState;
+            });
 
         EXPECT_CALL(
             *m_mockAuthenticationInfoProvider,
@@ -1205,6 +1318,10 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     qevercloud::SyncStateBuilder{}
                         .setUpdateCount(
                             syncChunks.last().chunkHighUSN().value())
+                        .setFullSyncBefore(
+                            testData.m_syncMode == SyncMode::FullNonFirst
+                                ? (now + 100500)
+                                : 0)
                         .build());
             });
 
@@ -1214,7 +1331,14 @@ TEST_P(DownloaderSyncChunksTest, Download)
                           const utility::cancelers::ICancelerPtr & canceler,
                           const ISyncChunksProvider::ICallbackWeakPtr &
                               callbackWeak) {
-                EXPECT_EQ(afterUsn, 0);
+                if (testData.m_syncMode == SyncMode::FullNonFirst) {
+                    EXPECT_EQ(afterUsn, 0);
+                    EXPECT_NE(afterUsn, userOwnAfterUsn);
+                }
+                else {
+                    EXPECT_EQ(afterUsn, userOwnAfterUsn);
+                }
+
                 EXPECT_TRUE(ctx);
                 if (ctx) {
                     EXPECT_EQ(
@@ -1239,18 +1363,19 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     syncChunks);
             });
 
-        {
-            const qint32 lastPreviousUsn = 0;
-            const qint32 highestServerUsn =
-                syncChunks.last().chunkHighUSN().value();
-            for (const auto & syncChunk: qAsConst(syncChunks)) {
-                EXPECT_CALL(
-                    *mockDownloaderCallback,
-                    onSyncChunksDownloadProgress(
-                        syncChunk.chunkHighUSN().value(), highestServerUsn,
-                        lastPreviousUsn))
-                    .Times(1);
-            }
+        const qint32 lastPreviousUsn =
+            (testData.m_syncMode == SyncMode::FullNonFirst ? 0
+                                                           : userOwnAfterUsn);
+
+        const qint32 highestServerUsn =
+            syncChunks.last().chunkHighUSN().value();
+        for (const auto & syncChunk: qAsConst(syncChunks)) {
+            EXPECT_CALL(
+                *mockDownloaderCallback,
+                onSyncChunksDownloadProgress(
+                    syncChunk.chunkHighUSN().value(), highestServerUsn,
+                    lastPreviousUsn))
+                .Times(1);
         }
     }
 
@@ -1311,6 +1436,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
     {
         InSequence s;
+
+        if (testData.m_syncMode == SyncMode::FullNonFirst) {
+            EXPECT_CALL(
+                *m_mockFullSyncStaleDataExpunger,
+                expungeStaleData(_, Eq(std::nullopt)))
+                .WillOnce(Return(threading::makeReadyFuture()));
+        }
 
         EXPECT_CALL(*m_mockNotebooksProcessor, processNotebooks(syncChunks, _))
             .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
@@ -1470,8 +1602,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
     struct LinkedNotebookData
     {
         explicit LinkedNotebookData(
-            const QList<qevercloud::SyncChunk> & syncChunks)
-            : syncChunksItemCounts{syncChunks}
+            const QList<qevercloud::SyncChunk> & syncChunks) :
+            syncChunksItemCounts{syncChunks}
         {}
 
         SyncChunksItemCounts syncChunksItemCounts;
@@ -1487,10 +1619,22 @@ TEST_P(DownloaderSyncChunksTest, Download)
     linkedNotebooksData.reserve(linkedNotebooks.size());
 
     for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+        const qint32 linkedNotebookAfterUsn = [&] {
+            switch (testData.m_syncMode) {
+            case SyncMode::FullFirst:
+                return 0;
+            case SyncMode::FullNonFirst:
+                [[fallthrough]];
+            case SyncMode::Incremental:
+                return 15;
+            }
+        }();
+
         const auto linkedNotebookSyncChunks = generateSyncChunks(
             SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
-            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
-            SyncChunksFlag::WithTags);
+                SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+                SyncChunksFlag::WithTags,
+            linkedNotebookAfterUsn);
 
         EXPECT_CALL(*m_mockSyncChunksProvider, fetchLinkedNotebookSyncChunks)
             .WillOnce([&](const qevercloud::LinkedNotebook & ln,
@@ -1500,7 +1644,15 @@ TEST_P(DownloaderSyncChunksTest, Download)
                           const ISyncChunksProvider::ICallbackWeakPtr &
                               callbackWeak) {
                 EXPECT_EQ(ln, linkedNotebook);
-                EXPECT_EQ(afterUsn, 0);
+
+                if (testData.m_syncMode == SyncMode::FullNonFirst) {
+                    EXPECT_EQ(afterUsn, 0);
+                    EXPECT_NE(afterUsn, linkedNotebookAfterUsn);
+                }
+                else {
+                    EXPECT_EQ(afterUsn, linkedNotebookAfterUsn);
+                }
+
                 EXPECT_TRUE(ctx);
                 if (ctx) {
                     EXPECT_EQ(
@@ -1511,7 +1663,10 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
                 EXPECT_FALSE(callbackWeak.expired());
                 if (const auto callback = callbackWeak.lock()) {
-                    const qint32 lastPreviousUsn = afterUsn;
+                    const qint32 lastPreviousUsn =
+                        (testData.m_syncMode == SyncMode::FullNonFirst
+                             ? 0
+                             : afterUsn);
                     const qint32 highestServerUsn =
                         linkedNotebookSyncChunks.last().chunkHighUSN().value();
                     for (const auto & syncChunk:
@@ -1526,7 +1681,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     linkedNotebookSyncChunks);
             });
 
-        const qint32 lastPreviousUsn = 0;
+        const qint32 lastPreviousUsn = linkedNotebookAfterUsn;
         const qint32 highestServerUsn =
             linkedNotebookSyncChunks.last().chunkHighUSN().value();
         for (const auto & syncChunk: qAsConst(linkedNotebookSyncChunks)) {
@@ -1541,6 +1696,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
         EXPECT_CALL(
             *mockDownloaderCallback,
             onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+
+        if (testData.m_syncMode == SyncMode::FullNonFirst) {
+            EXPECT_CALL(
+                *m_mockFullSyncStaleDataExpunger,
+                expungeStaleData(_, Eq(linkedNotebook.guid())))
+                .WillOnce(Return(threading::makeReadyFuture()));
+        }
 
         ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
         EXPECT_CALL(
@@ -1615,7 +1777,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
                             linkedNotebookData.lastDownloadedResources);
 
                         EXPECT_TRUE(
-                            linkedNotebookData.lastTotalResourcesToDownload == 0 ||
+                            linkedNotebookData.lastTotalResourcesToDownload ==
+                                0 ||
                             linkedNotebookData.lastTotalResourcesToDownload ==
                                 totalResourcesToDownload);
 
@@ -1633,8 +1796,10 @@ TEST_P(DownloaderSyncChunksTest, Download)
             EXPECT_CALL(
                 *m_mockNotebooksProcessor,
                 processNotebooks(linkedNotebookSyncChunks, _))
-                .WillOnce([&]([[maybe_unused]] const QList<qevercloud::SyncChunk> & chunks,
-                              const INotebooksProcessor::ICallbackWeakPtr & callbackWeak) {
+                .WillOnce([&]([[maybe_unused]] const QList<
+                                  qevercloud::SyncChunk> & chunks,
+                              const INotebooksProcessor::ICallbackWeakPtr &
+                                  callbackWeak) {
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
                     if (callback) {
@@ -1642,7 +1807,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
                             linkedNotebookSyncChunksItemCounts.totalNotebooks;
 
                         const qint32 totalExpungedNotebooks =
-                            linkedNotebookSyncChunksItemCounts.totalExpungedNotebooks;
+                            linkedNotebookSyncChunksItemCounts
+                                .totalExpungedNotebooks;
 
                         const qint32 addedNotebooks = totalNotebooks / 2;
                         const qint32 updatedNotebooks =
@@ -1660,7 +1826,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
             EXPECT_CALL(
                 *m_mockTagsProcessor, processTags(linkedNotebookSyncChunks, _))
                 .WillOnce(
-                    [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> & chunks,
+                    [&]([[maybe_unused]] const QList<qevercloud::SyncChunk> &
+                            chunks,
                         const ITagsProcessor::ICallbackWeakPtr & callbackWeak) {
                         const auto callback = callbackWeak.lock();
                         EXPECT_TRUE(callback);
@@ -1669,7 +1836,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
                                 linkedNotebookSyncChunksItemCounts.totalTags;
 
                             const qint32 totalExpungedTags =
-                                linkedNotebookSyncChunksItemCounts.totalExpungedTags;
+                                linkedNotebookSyncChunksItemCounts
+                                    .totalExpungedTags;
 
                             const qint32 addedTags = totalTags / 2;
                             const qint32 updatedTags = totalTags - addedTags;
@@ -1688,7 +1856,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
                               const utility::cancelers::ICancelerPtr & canceler,
                               const IDurableNotesProcessor::ICallbackWeakPtr &
-                                callbackWeak) {
+                                  callbackWeak) {
                     EXPECT_TRUE(canceler);
 
                     const auto callback = callbackWeak.lock();
@@ -1707,24 +1875,26 @@ TEST_P(DownloaderSyncChunksTest, Download)
             EXPECT_CALL(
                 *m_mockResourcesProcessor,
                 processResources(linkedNotebookSyncChunks, _, _))
-                .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
-                              const utility::cancelers::ICancelerPtr & canceler,
-                              const IDurableResourcesProcessor::ICallbackWeakPtr &
-                                callbackWeak) {
-                    EXPECT_TRUE(canceler);
+                .WillOnce(
+                    [&](const QList<qevercloud::SyncChunk> & chunks,
+                        const utility::cancelers::ICancelerPtr & canceler,
+                        const IDurableResourcesProcessor::ICallbackWeakPtr &
+                            callbackWeak) {
+                        EXPECT_TRUE(canceler);
 
-                    const auto callback = callbackWeak.lock();
-                    EXPECT_TRUE(callback);
+                        const auto callback = callbackWeak.lock();
+                        EXPECT_TRUE(callback);
 
-                    auto downloadResourcesStatus =
-                        std::make_shared<DownloadResourcesStatus>();
+                        auto downloadResourcesStatus =
+                            std::make_shared<DownloadResourcesStatus>();
 
-                    emulateSyncChunksResourcesProcessing(
-                        chunks, callback, *downloadResourcesStatus);
+                        emulateSyncChunksResourcesProcessing(
+                            chunks, callback, *downloadResourcesStatus);
 
-                    return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
-                        std::move(downloadResourcesStatus));
-                });
+                        return threading::makeReadyFuture<
+                            DownloadResourcesStatusPtr>(
+                            std::move(downloadResourcesStatus));
+                    });
         }
     }
 
