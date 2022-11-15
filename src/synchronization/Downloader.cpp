@@ -1186,13 +1186,33 @@ void Downloader::processSyncChunks(
     const auto selfWeak = weak_from_this();
 
     if (checkForFirstSync == CheckForFirstSync::Yes) {
-        const bool isFirstSync = (m_lastSyncState->userDataUpdateCount() == 0);
+        const bool isFirstSync = [&] {
+            if (downloadContext->linkedNotebook) {
+                Q_ASSERT(downloadContext->linkedNotebook->guid());
+                const auto it =
+                    m_lastSyncState->m_linkedNotebookUpdateCounts.constFind(
+                        *downloadContext->linkedNotebook->guid());
+                if (it ==
+                    m_lastSyncState->m_linkedNotebookUpdateCounts.constEnd())
+                {
+                    return true;
+                }
+
+                return it.value() == 0;
+            }
+
+            return m_lastSyncState->userDataUpdateCount() == 0;
+        }();
+
         if (!isFirstSync && (syncMode == SyncMode::Full)) {
             auto preservedGuids =
                 collectPreservedGuids(downloadContext->syncChunks);
 
             auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
-                std::move(preservedGuids));
+                std::move(preservedGuids),
+                downloadContext->linkedNotebook
+                    ? downloadContext->linkedNotebook->guid()
+                    : std::nullopt);
 
             auto promise = downloadContext->promise;
             threading::thenOrFailed(
