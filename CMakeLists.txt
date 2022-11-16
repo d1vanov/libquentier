@@ -138,6 +138,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/IAuthenticationInfo.h
     headers/quentier/synchronization/types/IDownloadNotesStatus.h
     headers/quentier/synchronization/types/IDownloadResourcesStatus.h
+    headers/quentier/synchronization/types/ISendStatus.h
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncResult.h

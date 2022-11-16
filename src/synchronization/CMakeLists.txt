@@ -22,7 +22,7 @@ target_sources(${LIBRARY_NAME}
   IFullSyncStaleDataExpunger.h
   INoteStoreFactory.h
   IProtocolVersionChecker.h
-  IReceiver.h
+  ISender.h
   IUserInfoProvider.h
   NoteStoreFactory.cpp
   NoteStoreFactory.h

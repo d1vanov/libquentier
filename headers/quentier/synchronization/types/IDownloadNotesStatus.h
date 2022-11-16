@@ -25,6 +25,7 @@
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QException>
+#include <QList>
 
 #include <memory>
 #include <utility>

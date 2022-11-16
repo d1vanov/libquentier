@@ -31,6 +31,9 @@ using IDownloadNotesStatusPtr = std::shared_ptr<IDownloadNotesStatus>;
 class IDownloadResourcesStatus;
 using IDownloadResourcesStatusPtr = std::shared_ptr<IDownloadResourcesStatus>;
 
+class ISendStatus;
+using ISendStatusPtr = std::shared_ptr<ISendStatus>;
+
 class ISyncOptions;
 using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 
