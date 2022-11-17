@@ -28,11 +28,15 @@ target_sources(${LIBRARY_NAME}
   NoteStoreFactory.h
   ProtocolVersionChecker.cpp
   ProtocolVersionChecker.h
+  Sender.cpp
+  Sender.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
   UserInfoProvider.cpp
   UserInfoProvider.h
+  Utils.cpp
+  Utils.h
   conflict_resolvers/Factory.cpp
   conflict_resolvers/Factory.h
   conflict_resolvers/ISimpleNotebookSyncConflictResolver.h
@@ -102,6 +106,8 @@ target_sources(${LIBRARY_NAME}
   types/DownloadResourcesStatus.cpp
   types/DownloadResourcesStatus.h
   types/Fwd.h
+  types/SendStatus.cpp
+  types/SendStatus.h
   types/SyncOptions.cpp
   types/SyncOptions.h
   types/SyncOptionsBuilder.cpp

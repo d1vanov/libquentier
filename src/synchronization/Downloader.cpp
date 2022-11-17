@@ -17,6 +17,7 @@
  */
 
 #include "Downloader.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>
@@ -792,7 +793,7 @@ QFuture<IDownloader::Result> Downloader::download(
 {
     QNDEBUG("synchronization::Downloader", "Downloader::download");
 
-    auto lastSyncState = readLastSyncState();
+    auto lastSyncState = readLastSyncState(m_syncStateStorage, m_account);
     Q_ASSERT(lastSyncState);
 
     QNDEBUG(
@@ -847,17 +848,6 @@ QFuture<IDownloader::Result> Downloader::download(
             }});
 
     return future;
-}
-
-SyncStateConstPtr Downloader::readLastSyncState() const
-{
-    const auto syncState = m_syncStateStorage->getSyncState(m_account);
-    Q_ASSERT(syncState);
-
-    return std::make_shared<SyncState>(
-        syncState->userDataUpdateCount(), syncState->userDataLastSyncTime(),
-        syncState->linkedNotebookUpdateCounts(),
-        syncState->linkedNotebookLastSyncTimes());
 }
 
 QFuture<IDownloader::Result> Downloader::launchDownload(

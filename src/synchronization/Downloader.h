@@ -78,8 +78,6 @@ public:
         ICallbackWeakPtr callbackWeak) override;
 
 private:
-    [[nodiscard]] SyncStateConstPtr readLastSyncState() const;
-
     [[nodiscard]] QFuture<Result> launchDownload(
         const IAuthenticationInfo & authenticationInfo,
         SyncStateConstPtr lastSyncState,
