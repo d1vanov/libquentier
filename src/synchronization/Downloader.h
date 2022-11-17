@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "IDownloader.h"
 #include "Fwd.h"
+#include "IDownloader.h"
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
@@ -67,8 +67,7 @@ public:
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
         IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
-        qevercloud::IRequestContextPtr ctx,
-        qevercloud::INoteStorePtr noteStore,
+        qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
         local_storage::ILocalStoragePtr localStorage,
         const QDir & syncPersistentStorageDir);
 
@@ -79,10 +78,11 @@ public:
         ICallbackWeakPtr callbackWeak) override;
 
 private:
-    void readLastSyncState();
+    [[nodiscard]] SyncStateConstPtr readLastSyncState() const;
 
     [[nodiscard]] QFuture<Result> launchDownload(
         const IAuthenticationInfo & authenticationInfo,
+        SyncStateConstPtr lastSyncState,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak);
 
@@ -100,6 +100,7 @@ private:
 
     struct DownloadContext
     {
+        SyncStateConstPtr lastSyncState;
         QList<qevercloud::SyncChunk> syncChunks;
         std::shared_ptr<QPromise<Result>> promise;
         qevercloud::IRequestContextPtr ctx;
@@ -169,7 +170,6 @@ private:
     const QDir m_syncPersistentStorageDir;
 
     std::shared_ptr<QMutex> m_mutex;
-    std::optional<SyncState> m_lastSyncState;
 
     SyncChunksDataCountersPtr m_syncChunksDataCounters;
     SyncChunksDataCountersPtr m_linkedNotebookSyncChunksDataCounters;

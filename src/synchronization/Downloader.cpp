@@ -792,16 +792,11 @@ QFuture<IDownloader::Result> Downloader::download(
 {
     QNDEBUG("synchronization::Downloader", "Downloader::download");
 
-    {
-        const QMutexLocker locker{m_mutex.get()};
-        if (!m_lastSyncState) {
-            readLastSyncState();
-            Q_ASSERT(m_lastSyncState);
-        }
-    }
+    auto lastSyncState = readLastSyncState();
+    Q_ASSERT(lastSyncState);
 
     QNDEBUG(
-        "synchronization::Downloader", "Last sync state: " << *m_lastSyncState);
+        "synchronization::Downloader", "Last sync state: " << *lastSyncState);
 
     auto promise = std::make_shared<QPromise<Result>>();
     auto future = promise->future();
@@ -825,7 +820,8 @@ QFuture<IDownloader::Result> Downloader::download(
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, callbackWeak = std::move(callbackWeak),
-             canceler = std::move(canceler), promise](
+             canceler = std::move(canceler),
+             lastSyncState = std::move(lastSyncState), promise](
                 const IAuthenticationInfoPtr & authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
 
@@ -835,8 +831,8 @@ QFuture<IDownloader::Result> Downloader::download(
                 }
 
                 auto downloadFuture = launchDownload(
-                    *authenticationInfo, std::move(canceler),
-                    std::move(callbackWeak));
+                    *authenticationInfo, std::move(lastSyncState),
+                    std::move(canceler), std::move(callbackWeak));
 
                 threading::bindCancellation(promise->future(), downloadFuture);
 
@@ -853,21 +849,24 @@ QFuture<IDownloader::Result> Downloader::download(
     return future;
 }
 
-void Downloader::readLastSyncState()
+SyncStateConstPtr Downloader::readLastSyncState() const
 {
     const auto syncState = m_syncStateStorage->getSyncState(m_account);
     Q_ASSERT(syncState);
 
-    m_lastSyncState = SyncState{
+    return std::make_shared<SyncState>(
         syncState->userDataUpdateCount(), syncState->userDataLastSyncTime(),
         syncState->linkedNotebookUpdateCounts(),
-        syncState->linkedNotebookLastSyncTimes()};
+        syncState->linkedNotebookLastSyncTimes());
 }
 
 QFuture<IDownloader::Result> Downloader::launchDownload(
     const IAuthenticationInfo & authenticationInfo,
-    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
+    SyncStateConstPtr lastSyncState, utility::cancelers::ICancelerPtr canceler,
+    ICallbackWeakPtr callbackWeak)
 {
+    Q_ASSERT(lastSyncState);
+
     auto promise = std::make_shared<QPromise<Result>>();
     auto future = promise->future();
 
@@ -884,6 +883,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                    .build();
 
     auto downloadContext = std::make_shared<DownloadContext>();
+    downloadContext->lastSyncState = std::move(lastSyncState);
     downloadContext->promise = promise;
     downloadContext->ctx = std::move(ctx);
     downloadContext->canceler = std::move(canceler);
@@ -900,10 +900,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                     "synchronization::Downloader",
                     "Sync state from Evernote: " << syncState);
 
-                Q_ASSERT(self->m_lastSyncState);
-
                 if (syncState.fullSyncBefore() >
-                    self->m_lastSyncState->m_userDataLastSyncTime) {
+                    downloadContext->lastSyncState->m_userDataLastSyncTime) {
                     QNDEBUG(
                         "synchronization::Downloader",
                         "Performing full synchronization instead of "
@@ -914,8 +912,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                 }
                 else if (
                     syncState.updateCount() ==
-                    self->m_lastSyncState->m_userDataUpdateCount)
-                {
+                    downloadContext->lastSyncState->m_userDataUpdateCount) {
                     QNDEBUG(
                         "synchronization::Downloader",
                         "Evernote has no updates for user own data");
@@ -946,11 +943,11 @@ void Downloader::launchUserOwnDataDownload(
     DownloadContextPtr downloadContext, const SyncMode syncMode)
 {
     Q_ASSERT(downloadContext);
-    Q_ASSERT(m_lastSyncState);
 
     const qint32 afterUsn =
-        (syncMode == SyncMode::Full ? 0
-                                    : m_lastSyncState->m_userDataUpdateCount);
+        (syncMode == SyncMode::Full
+             ? 0
+             : downloadContext->lastSyncState->m_userDataUpdateCount);
 
     auto syncChunksProviderCallback =
         std::make_shared<SyncChunksProviderCallback>(
@@ -1093,6 +1090,9 @@ QFuture<IDownloader::Result> Downloader::startLinkedNotebookDataDownload(
     auto future = linkedNotebookDownloadContext->promise->future();
     linkedNotebookDownloadContext->promise->start();
 
+    linkedNotebookDownloadContext->lastSyncState =
+        downloadContext->lastSyncState;
+
     linkedNotebookDownloadContext->ctx = downloadContext->ctx;
     linkedNotebookDownloadContext->canceler = downloadContext->canceler;
     linkedNotebookDownloadContext->callbackWeak = downloadContext->callbackWeak;
@@ -1106,9 +1106,12 @@ QFuture<IDownloader::Result> Downloader::startLinkedNotebookDataDownload(
             return 0;
         }
 
-        const auto it = m_lastSyncState->m_linkedNotebookUpdateCounts.constFind(
+        const auto & linkedNotebookUpdateCounts =
+            downloadContext->lastSyncState->m_linkedNotebookUpdateCounts;
+
+        const auto it = linkedNotebookUpdateCounts.constFind(
             *linkedNotebookDownloadContext->linkedNotebook->guid());
-        if (it != m_lastSyncState->m_linkedNotebookUpdateCounts.constEnd()) {
+        if (it != linkedNotebookUpdateCounts.constEnd()) {
             return it.value();
         }
 
@@ -1160,7 +1163,7 @@ void Downloader::processSyncChunks(
         return;
     }
 
-    Q_ASSERT(m_lastSyncState);
+    Q_ASSERT(downloadContext->lastSyncState);
 
     if (downloadContext->syncChunks.isEmpty()) {
         if (downloadContext->linkedNotebook) {
@@ -1189,19 +1192,19 @@ void Downloader::processSyncChunks(
         const bool isFirstSync = [&] {
             if (downloadContext->linkedNotebook) {
                 Q_ASSERT(downloadContext->linkedNotebook->guid());
-                const auto it =
-                    m_lastSyncState->m_linkedNotebookUpdateCounts.constFind(
-                        *downloadContext->linkedNotebook->guid());
-                if (it ==
-                    m_lastSyncState->m_linkedNotebookUpdateCounts.constEnd())
-                {
+                const auto & linkedNotebookUpdateCounts =
+                    downloadContext->lastSyncState
+                        ->m_linkedNotebookUpdateCounts;
+                const auto it = linkedNotebookUpdateCounts.constFind(
+                    *downloadContext->linkedNotebook->guid());
+                if (it == linkedNotebookUpdateCounts.constEnd()) {
                     return true;
                 }
 
                 return it.value() == 0;
             }
 
-            return m_lastSyncState->userDataUpdateCount() == 0;
+            return downloadContext->lastSyncState->userDataUpdateCount() == 0;
         }();
 
         if (!isFirstSync && (syncMode == SyncMode::Full)) {
