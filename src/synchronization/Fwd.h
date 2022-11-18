@@ -110,6 +110,11 @@ using ISavedSearchesProcessorPtr = std::shared_ptr<ISavedSearchesProcessor>;
 class ITagsProcessor;
 using ITagsProcessorPtr = std::shared_ptr<ITagsProcessor>;
 
+////////////////////////////////////////////////////////////////////////////////
+
+struct SendStatus;
+using SendStatusPtr = std::shared_ptr<SendStatus>;
+
 } // namespace quentier::synchronization
 
 namespace quentier {
