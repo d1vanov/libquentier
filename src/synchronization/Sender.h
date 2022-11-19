@@ -31,6 +31,8 @@
 #include <qevercloud/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
 
+#include <QHash>
+#include <QSet>
 #include <QtGlobal>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -44,9 +46,7 @@
 
 namespace quentier::synchronization {
 
-class Sender final :
-    public ISender,
-    public std::enable_shared_from_this<Sender>
+class Sender final : public ISender, public std::enable_shared_from_this<Sender>
 {
 public:
     Sender(
@@ -83,6 +83,62 @@ private:
         // Running result
         SendStatusPtr sendStatus;
     };
+
+    using SendContextPtr = std::shared_ptr<SendContext>;
+
+    struct SendTagsResult
+    {
+        struct LocalResult
+        {
+            QSet<QString> successfullySentTagLocalIds;
+            QHash<QString, SendStatus::TagWithException>
+                failedToSendTagsByLocalId;
+        };
+
+        LocalResult userOwnResult;
+        QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
+    };
+
+    [[nodiscard]] QFuture<SendTagsResult> processTags(
+        SendContextPtr sendContext) const;
+
+    void sendTags(
+        SendContextPtr sendContext, QList<qevercloud::Tag> tags,
+        std::shared_ptr<QPromise<SendTagsResult>> promise) const;
+
+    struct SendNotebooksResult
+    {
+        struct LocalResult
+        {
+            QSet<QString> successfullySentNotebookLocalIds;
+            QHash<QString, SendStatus::NotebookWithException>
+                failedToSendNotebooksByLocalId;
+        };
+
+        LocalResult userOwnResult;
+        QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
+    };
+
+    [[nodiscard]] QFuture<SendNotebooksResult> processNotebooks(
+        SendContextPtr sendContext) const;
+
+    void sendNotebooks(
+        SendContextPtr sendContext, QList<qevercloud::Notebook> notebooks,
+        std::shared_ptr<QPromise<SendNotebooksResult>> promise) const;
+
+    struct SendSavedSearchesResult
+    {
+        QSet<QString> successfullySentSavedSearchLocalIds;
+        QList<SendStatus::SavedSearchWithException> failedToSendSavedSearches;
+    };
+
+    [[nodiscard]] QFuture<SendSavedSearchesResult> processSavedSearches(
+        SendContextPtr sendContext) const;
+
+    void sendSavedSearches(
+        SendContextPtr sendContext,
+        QList<qevercloud::SavedSearch> savedSearches,
+        std::shared_ptr<QPromise<SendSavedSearchesResult>> promise) const;
 
 private:
     const Account m_account;

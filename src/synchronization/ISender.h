@@ -52,7 +52,7 @@ public:
 
     struct Result
     {
-        // Send status or user own account
+        // Send status for user own account
         ISendStatusPtr userOwnResult;
 
         // Send statuses for modified data in linked notebooks
