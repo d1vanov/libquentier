@@ -20,13 +20,14 @@
 
 #include <memory>
 
+class QMutex;
 class QThread;
 class QThreadPool;
 
 namespace quentier::threading {
 
+using QMutexPtr = std::shared_ptr<QMutex>;
 using QThreadPtr = std::shared_ptr<QThread>;
-
 using QThreadPoolPtr = std::shared_ptr<QThreadPool>;
 
 } // namespace quentier::threading

@@ -22,6 +22,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/threading/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <synchronization/Fwd.h>
@@ -29,6 +30,7 @@
 #include <synchronization/types/SendStatus.h>
 
 #include <qevercloud/Fwd.h>
+#include <qevercloud/services/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
 
 #include <QHash>
@@ -53,7 +55,7 @@ public:
         Account account,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         ISyncStateStoragePtr syncStateStorage,
-        qevercloud::IRequestContextPtr ctx,
+        qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
         local_storage::ILocalStoragePtr localStorage);
 
     [[nodiscard]] QFuture<Result> send(
@@ -82,69 +84,38 @@ private:
 
         // Running result
         SendStatusPtr sendStatus;
+        threading::QMutexPtr sendStatusMutex;
     };
 
     using SendContextPtr = std::shared_ptr<SendContext>;
 
-    struct SendTagsResult
-    {
-        struct LocalResult
-        {
-            QSet<QString> successfullySentTagLocalIds;
-            QHash<QString, SendStatus::TagWithException>
-                failedToSendTagsByLocalId;
-        };
-
-        LocalResult userOwnResult;
-        QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
-    };
-
-    [[nodiscard]] QFuture<SendTagsResult> processTags(
-        SendContextPtr sendContext) const;
+    [[nodiscard]] QFuture<void> processTags(SendContextPtr sendContext) const;
 
     void sendTags(
         SendContextPtr sendContext, QList<qevercloud::Tag> tags,
-        std::shared_ptr<QPromise<SendTagsResult>> promise) const;
+        std::shared_ptr<QPromise<void>> promise) const;
 
-    struct SendNotebooksResult
-    {
-        struct LocalResult
-        {
-            QSet<QString> successfullySentNotebookLocalIds;
-            QHash<QString, SendStatus::NotebookWithException>
-                failedToSendNotebooksByLocalId;
-        };
-
-        LocalResult userOwnResult;
-        QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
-    };
-
-    [[nodiscard]] QFuture<SendNotebooksResult> processNotebooks(
+    [[nodiscard]] QFuture<void> processNotebooks(
         SendContextPtr sendContext) const;
 
     void sendNotebooks(
         SendContextPtr sendContext, QList<qevercloud::Notebook> notebooks,
-        std::shared_ptr<QPromise<SendNotebooksResult>> promise) const;
+        std::shared_ptr<QPromise<void>> promise) const;
 
-    struct SendSavedSearchesResult
-    {
-        QSet<QString> successfullySentSavedSearchLocalIds;
-        QList<SendStatus::SavedSearchWithException> failedToSendSavedSearches;
-    };
-
-    [[nodiscard]] QFuture<SendSavedSearchesResult> processSavedSearches(
+    [[nodiscard]] QFuture<void> processSavedSearches(
         SendContextPtr sendContext) const;
 
     void sendSavedSearches(
         SendContextPtr sendContext,
-        QList<qevercloud::SavedSearch> savedSearches,
-        std::shared_ptr<QPromise<SendSavedSearchesResult>> promise) const;
+        const QList<qevercloud::SavedSearch> & savedSearches,
+        std::shared_ptr<QPromise<void>> promise) const;
 
 private:
     const Account m_account;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
     const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::INoteStorePtr m_noteStore;
     const local_storage::ILocalStoragePtr m_localStorage;
 };
 
