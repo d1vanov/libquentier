@@ -44,7 +44,7 @@ public:
             ISendStatusPtr sendStatus) const = 0;
 
         virtual void onLinkedNotebookSendStatusUpdate(
-            const qevercloud::LinkedNotebook & linkedNotebook,
+            const qevercloud::Guid & linkedNotebookGuid,
             ISendStatusPtr sendStatus) const = 0;
     };
 

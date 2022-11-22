@@ -84,6 +84,8 @@ private:
 
         // Running result
         SendStatusPtr sendStatus;
+        QSet<QString> failedToSendNotebookLocalIds;
+        QSet<QString> failedToSendTagLocalIds;
         threading::QMutexPtr sendStatusMutex;
     };
 
@@ -99,8 +101,17 @@ private:
         SendContextPtr sendContext) const;
 
     void sendNotebooks(
-        SendContextPtr sendContext, QList<qevercloud::Notebook> notebooks,
+        SendContextPtr sendContext,
+        const QList<qevercloud::Notebook> & notebooks,
         std::shared_ptr<QPromise<void>> promise) const;
+
+    void processNotebook(
+        const SendContextPtr & sendContext, qevercloud::Notebook notebook,
+        const std::shared_ptr<QPromise<void>> & promise) const;
+
+    static void processNotebookFailure(
+        const SendContextPtr & sendContext, qevercloud::Notebook notebook,
+        const QException & e, const std::shared_ptr<QPromise<void>> & promise);
 
     [[nodiscard]] QFuture<void> processSavedSearches(
         SendContextPtr sendContext) const;
@@ -109,6 +120,14 @@ private:
         SendContextPtr sendContext,
         const QList<qevercloud::SavedSearch> & savedSearches,
         std::shared_ptr<QPromise<void>> promise) const;
+
+    void processSavedSearch(
+        const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
+        const std::shared_ptr<QPromise<void>> & promise) const;
+
+    static void processSavedSearchFailure(
+        const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
+        const QException & e, const std::shared_ptr<QPromise<void>> & promise);
 
 private:
     const Account m_account;

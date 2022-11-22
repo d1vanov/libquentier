@@ -281,7 +281,7 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
     auto listLocallyModifiedNotebooksThenFuture = threading::then(
         std::move(listLocallyModifiedNotebooksFuture),
         [selfWeak, this, promise, sendContext = std::move(sendContext)](
-            QList<qevercloud::Notebook> && notebooks) mutable {
+            const QList<qevercloud::Notebook> & notebooks) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -292,8 +292,7 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
             }
 
             sendNotebooks(
-                std::move(sendContext), std::move(notebooks),
-                std::move(promise));
+                std::move(sendContext), notebooks, std::move(promise));
         });
 
     threading::onFailed(
@@ -307,12 +306,200 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
 }
 
 void Sender::sendNotebooks(
-    [[maybe_unused]] SendContextPtr sendContext,              // NOLINT
-    [[maybe_unused]] QList<qevercloud::Notebook> notebooks,   // NOLINT
-    [[maybe_unused]] std::shared_ptr<QPromise<void>> promise) // NOLINT
-    const
+    SendContextPtr sendContext, const QList<qevercloud::Notebook> & notebooks,
+    std::shared_ptr<QPromise<void>> promise) const
 {
-    // TODO: implement
+    if (notebooks.isEmpty()) {
+        promise->finish();
+        return;
+    }
+
+    const auto selfWeak = weak_from_this();
+    QList<QFuture<void>> notebookProcessingFutures;
+    notebookProcessingFutures.reserve(notebooks.size());
+
+    for (const auto & notebook: qAsConst(notebooks)) {
+        QFuture<qevercloud::Notebook> notebookFuture = [&] {
+            auto notebookPromise =
+                std::make_shared<QPromise<qevercloud::Notebook>>();
+
+            auto future = notebookPromise->future();
+            notebookPromise->start();
+
+            const bool newNotebook = !notebook.updateSequenceNum().has_value();
+
+            if (newNotebook) {
+                QString originalLocalId = notebook.localId();
+                auto originalLocalData = notebook.localData();
+                const bool originalLocallyFavorited =
+                    notebook.isLocallyFavorited();
+
+                auto createFuture = m_noteStore->createNotebookAsync(
+                    notebook, sendContext->ctx);
+
+                auto createThenFuture = threading::then(
+                    std::move(createFuture),
+                    [notebookPromise,
+                     originalLocalId = std::move(originalLocalId),
+                     originalLocallyFavorited,
+                     originalLocalData = std::move(originalLocalData)](
+                        qevercloud::Notebook n) mutable {
+                        n.setLocalId(std::move(originalLocalId));
+                        n.setLocallyFavorited(originalLocallyFavorited);
+                        n.setLocalData(std::move(originalLocalData));
+                        n.setLocallyModified(false);
+                        notebookPromise->addResult(std::move(n));
+                        notebookPromise->finish();
+                    });
+
+                threading::onFailed(
+                    std::move(createThenFuture),
+                    [notebookPromise](const QException & e) {
+                        notebookPromise->setException(e);
+                        notebookPromise->finish();
+                    });
+            }
+            else {
+                auto updateFuture = m_noteStore->updateNotebookAsync(
+                    notebook, sendContext->ctx);
+
+                auto updateThenFuture = threading::then(
+                    std::move(updateFuture),
+                    [notebookPromise, notebook = notebook](
+                        const qint32 newUpdateSequenceNum) mutable {
+                        notebook.setUpdateSequenceNum(newUpdateSequenceNum);
+                        notebook.setLocallyModified(false);
+                        notebookPromise->addResult(std::move(notebook));
+                        notebookPromise->finish();
+                    });
+
+                threading::onFailed(
+                    std::move(updateThenFuture),
+                    [notebookPromise](const QException & e) {
+                        notebookPromise->setException(e);
+                        notebookPromise->finish();
+                    });
+            }
+
+            return future;
+        }();
+
+        auto notebookProcessingPromise = std::make_shared<QPromise<void>>();
+        notebookProcessingFutures << notebookProcessingPromise->future();
+        notebookProcessingPromise->start();
+
+        auto notebookThenFuture = threading::then(
+            std::move(notebookFuture),
+            [sendContext, selfWeak, this,
+             notebookProcessingPromise](qevercloud::Notebook notebook) {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                processNotebook(
+                    sendContext, std::move(notebook),
+                    notebookProcessingPromise);
+            });
+
+        threading::onFailed(
+            std::move(notebookThenFuture),
+            [sendContext, notebook = notebook,
+             notebookProcessingPromise](const QException & e) mutable {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                Sender::processNotebookFailure(
+                    sendContext, std::move(notebook), e,
+                    notebookProcessingPromise);
+            });
+    }
+
+    auto allNotebooksProcessingFuture =
+        threading::whenAll(std::move(notebookProcessingFutures));
+
+    threading::thenOrFailed(
+        std::move(allNotebooksProcessingFuture), std::move(promise));
+}
+
+void Sender::processNotebook(
+    const SendContextPtr & sendContext, qevercloud::Notebook notebook,
+    const std::shared_ptr<QPromise<void>> & promise) const
+{
+    auto putNotebookFuture = m_localStorage->putNotebook(notebook);
+    auto putNotebookThenFuture = threading::then(
+        std::move(putNotebookFuture),
+        [sendContext, promise,
+         linkedNotebookGuid = notebook.linkedNotebookGuid()] {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            {
+                const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                ++sendContext->sendStatus->m_totalSuccessfullySentNotebooks;
+
+                if (const auto callback = sendContext->callbackWeak.lock()) {
+                    auto sendStatus =
+                        std::make_shared<SendStatus>(*sendContext->sendStatus);
+                    if (linkedNotebookGuid) {
+                        callback->onLinkedNotebookSendStatusUpdate(
+                            *linkedNotebookGuid, std::move(sendStatus));
+                    }
+                    else {
+                        callback->onUserOwnSendStatusUpdate(
+                            std::move(sendStatus));
+                    }
+                }
+            }
+
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(putNotebookThenFuture),
+        [sendContext, promise,
+         notebook = std::move(notebook)](const QException & e) mutable {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            Sender::processNotebookFailure(
+                sendContext, std::move(notebook), e, promise);
+        });
+}
+
+void Sender::processNotebookFailure(
+    const SendContextPtr & sendContext, qevercloud::Notebook notebook,
+    const QException & e, const std::shared_ptr<QPromise<void>> & promise)
+{
+    {
+        const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+        const auto linkedNotebookGuid = notebook.linkedNotebookGuid();
+
+        sendContext->sendStatus->m_failedToSendNotebooks
+            << ISendStatus::NotebookWithException{
+                   std::move(notebook), std::shared_ptr<QException>(e.clone())};
+
+        if (const auto callback = sendContext->callbackWeak.lock()) {
+            auto sendStatus =
+                std::make_shared<SendStatus>(*sendContext->sendStatus);
+            if (linkedNotebookGuid) {
+                callback->onLinkedNotebookSendStatusUpdate(
+                    *linkedNotebookGuid, std::move(sendStatus));
+            }
+            else {
+                callback->onUserOwnSendStatusUpdate(std::move(sendStatus));
+            }
+        }
+    }
+    promise->finish();
 }
 
 QFuture<void> Sender::processSavedSearches(SendContextPtr sendContext) const
@@ -376,13 +563,8 @@ void Sender::sendSavedSearches(
     QList<QFuture<void>> savedSearchProcessingFutures;
     savedSearchProcessingFutures.reserve(savedSearches.size());
 
-    for (const auto & savedSearch: savedSearches) {
+    for (const auto & savedSearch: qAsConst(savedSearches)) {
         QFuture<qevercloud::SavedSearch> savedSearchFuture = [&] {
-            QString originalLocalId = savedSearch.localId();
-            auto originalLocalData = savedSearch.localData();
-            const bool originalLocallyFavorited =
-                savedSearch.isLocallyFavorited();
-
             auto savedSearchPromise =
                 std::make_shared<QPromise<qevercloud::SavedSearch>>();
 
@@ -393,12 +575,17 @@ void Sender::sendSavedSearches(
                 !savedSearch.updateSequenceNum().has_value();
 
             if (newSavedSearch) {
+                QString originalLocalId = savedSearch.localId();
+                auto originalLocalData = savedSearch.localData();
+                const bool originalLocallyFavorited =
+                    savedSearch.isLocallyFavorited();
+
                 auto createFuture = m_noteStore->createSearchAsync(
                     savedSearch, sendContext->ctx);
 
                 auto createThenFuture = threading::then(
                     std::move(createFuture),
-                    [savedSearchPromise, savedSearch,
+                    [savedSearchPromise,
                      originalLocalId = std::move(originalLocalId),
                      originalLocallyFavorited,
                      originalLocalData = std::move(originalLocalData)](
@@ -424,16 +611,9 @@ void Sender::sendSavedSearches(
 
                 auto updateThenFuture = threading::then(
                     std::move(updateFuture),
-                    [savedSearchPromise, savedSearch = savedSearch,
-                     originalLocalId = std::move(originalLocalId),
-                     originalLocallyFavorited,
-                     originalLocalData = std::move(originalLocalData)](
+                    [savedSearchPromise, savedSearch = savedSearch](
                         const qint32 newUpdateSequenceNum) mutable {
                         savedSearch.setUpdateSequenceNum(newUpdateSequenceNum);
-                        savedSearch.setLocalId(std::move(originalLocalId));
-                        savedSearch.setLocallyFavorited(
-                            originalLocallyFavorited);
-                        savedSearch.setLocalData(std::move(originalLocalData));
                         savedSearch.setLocallyModified(false);
                         savedSearchPromise->addResult(std::move(savedSearch));
                         savedSearchPromise->finish();
@@ -450,14 +630,14 @@ void Sender::sendSavedSearches(
             return future;
         }();
 
-        auto savedSearchProcessedPromise = std::make_shared<QPromise<void>>();
-        savedSearchProcessingFutures << savedSearchProcessedPromise->future();
-        savedSearchProcessedPromise->start();
+        auto savedSearchProcessingPromise = std::make_shared<QPromise<void>>();
+        savedSearchProcessingFutures << savedSearchProcessingPromise->future();
+        savedSearchProcessingPromise->start();
 
         auto savedSearchThenFuture = threading::then(
             std::move(savedSearchFuture),
             [sendContext, selfWeak, this,
-             savedSearchProcessedPromise](qevercloud::SavedSearch search) {
+             savedSearchProcessingPromise](qevercloud::SavedSearch search) {
                 if (sendContext->canceler->isCanceled()) {
                     return;
                 }
@@ -467,90 +647,22 @@ void Sender::sendSavedSearches(
                     return;
                 }
 
-                auto putSavedSearchFuture =
-                    m_localStorage->putSavedSearch(search);
-
-                auto putSavedSearchThenFuture = threading::then(
-                    std::move(putSavedSearchFuture),
-                    [sendContext, savedSearchProcessedPromise] {
-                        if (sendContext->canceler->isCanceled()) {
-                            return;
-                        }
-
-                        {
-                            const QMutexLocker locker{
-                                sendContext->sendStatusMutex.get()};
-
-                            ++sendContext->sendStatus
-                                  ->m_totalSuccessfullySentSavedSearches;
-
-                            if (const auto callback =
-                                    sendContext->callbackWeak.lock()) {
-                                auto sendStatus = std::make_shared<SendStatus>(
-                                    *sendContext->sendStatus);
-                                callback->onUserOwnSendStatusUpdate(
-                                    std::move(sendStatus));
-                            }
-                        }
-
-                        savedSearchProcessedPromise->finish();
-                    });
-
-                threading::onFailed(
-                    std::move(putSavedSearchFuture),
-                    [sendContext, savedSearchProcessedPromise,
-                     search = std::move(search)](const QException & e) mutable {
-                        if (sendContext->canceler->isCanceled()) {
-                            return;
-                        }
-
-                        {
-                            const QMutexLocker locker{
-                                sendContext->sendStatusMutex.get()};
-
-                            sendContext->sendStatus->m_failedToSendSavedSearches
-                                << ISendStatus::SavedSearchWithException{
-                                       std::move(search),
-                                       std::shared_ptr<QException>(e.clone())};
-
-                            if (const auto callback =
-                                    sendContext->callbackWeak.lock()) {
-                                auto sendStatus = std::make_shared<SendStatus>(
-                                    *sendContext->sendStatus);
-                                callback->onUserOwnSendStatusUpdate(
-                                    std::move(sendStatus));
-                            }
-                        }
-                        savedSearchProcessedPromise->finish();
-                    });
+                processSavedSearch(
+                    sendContext, std::move(search),
+                    savedSearchProcessingPromise);
             });
 
         threading::onFailed(
             std::move(savedSearchThenFuture),
             [sendContext, savedSearch = savedSearch,
-             savedSearchProcessedPromise](const QException & e) mutable {
+             savedSearchProcessingPromise](const QException & e) mutable {
                 if (sendContext->canceler->isCanceled()) {
                     return;
                 }
 
-                {
-                    const QMutexLocker locker{
-                        sendContext->sendStatusMutex.get()};
-
-                    sendContext->sendStatus->m_failedToSendSavedSearches
-                        << ISendStatus::SavedSearchWithException{
-                               std::move(savedSearch),
-                               std::shared_ptr<QException>(e.clone())};
-
-                    if (const auto callback = sendContext->callbackWeak.lock())
-                    {
-                        auto sendStatus = std::make_shared<SendStatus>(
-                            *sendContext->sendStatus);
-                        callback->onUserOwnSendStatusUpdate(
-                            std::move(sendStatus));
-                    }
-                }
-                savedSearchProcessedPromise->finish();
+                Sender::processSavedSearchFailure(
+                    sendContext, std::move(savedSearch), e,
+                    savedSearchProcessingPromise);
             });
     }
 
@@ -559,6 +671,66 @@ void Sender::sendSavedSearches(
 
     threading::thenOrFailed(
         std::move(allSavedSearchesProcessingFuture), std::move(promise));
+}
+
+void Sender::processSavedSearch(
+    const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
+    const std::shared_ptr<QPromise<void>> & promise) const
+{
+    auto putSavedSearchFuture = m_localStorage->putSavedSearch(savedSearch);
+    auto putSavedSearchThenFuture = threading::then(
+        std::move(putSavedSearchFuture), [sendContext, promise] {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            {
+                const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                ++sendContext->sendStatus->m_totalSuccessfullySentSavedSearches;
+
+                if (const auto callback = sendContext->callbackWeak.lock()) {
+                    auto sendStatus =
+                        std::make_shared<SendStatus>(*sendContext->sendStatus);
+                    callback->onUserOwnSendStatusUpdate(std::move(sendStatus));
+                }
+            }
+
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(putSavedSearchThenFuture),
+        [sendContext, promise,
+         savedSearch = std::move(savedSearch)](const QException & e) mutable {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            Sender::processSavedSearchFailure(
+                sendContext, std::move(savedSearch), e, promise);
+        });
+}
+
+void Sender::processSavedSearchFailure(
+    const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
+    const QException & e, const std::shared_ptr<QPromise<void>> & promise)
+{
+    {
+        const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+        sendContext->sendStatus->m_failedToSendSavedSearches
+            << ISendStatus::SavedSearchWithException{
+                   std::move(savedSearch),
+                   std::shared_ptr<QException>(e.clone())};
+
+        if (const auto callback = sendContext->callbackWeak.lock()) {
+            auto sendStatus =
+                std::make_shared<SendStatus>(*sendContext->sendStatus);
+            callback->onUserOwnSendStatusUpdate(std::move(sendStatus));
+        }
+    }
+    promise->finish();
 }
 
 } // namespace quentier::synchronization
