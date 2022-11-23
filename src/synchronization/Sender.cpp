@@ -21,12 +21,14 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
+#include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/cancelers/ICanceler.h>
 
 #include <synchronization/IAuthenticationInfoProvider.h>
@@ -250,12 +252,276 @@ QFuture<void> Sender::processTags(SendContextPtr sendContext) const
 }
 
 void Sender::sendTags(
-    [[maybe_unused]] SendContextPtr sendContext,              // NOLINT
-    [[maybe_unused]] QList<qevercloud::Tag> tags,             // NOLINT
-    [[maybe_unused]] std::shared_ptr<QPromise<void>> promise) // NOLINT
-    const
+    SendContextPtr sendContext, QList<qevercloud::Tag> tags,
+    std::shared_ptr<QPromise<void>> promise) const
 {
-    // TODO: implement
+    if (tags.isEmpty()) {
+        promise->finish();
+        return;
+    }
+
+    // Processing of tags is special compared to processing of notebooks or
+    // saved searches in one crucial aspect: tags may depend on each other,
+    // some tag can be children of some other tag. Due to that, we need to
+    // process tags strictly sequentially, one by one, and in proper order:
+    // parent tags go first, child tags go next.
+
+    ErrorString errorDescription;
+    if (!sortTagsByParentChildRelations(tags, errorDescription)) {
+        promise->setException(RuntimeError{std::move(errorDescription)});
+        promise->finish();
+        return;
+    }
+
+    const auto selfWeak = weak_from_this();
+    QList<QFuture<void>> tagProcessingFutures;
+    tagProcessingFutures.reserve(tags.size());
+
+    QFuture<void> previousTagFuture = threading::makeReadyFuture();
+    for (int index = 0, size = tags.size(); index < size; ++index) {
+        const auto & tag = tags[index];
+
+        auto tagParentLocalId = tag.parentTagLocalId();
+        if (!tagParentLocalId.isEmpty()) {
+            const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+            if (sendContext->failedToSendTagLocalIds.contains(tagParentLocalId))
+            {
+                sendContext->failedToSendTagLocalIds.insert(tag.localId());
+                sendContext->sendStatus->m_failedToSendTags
+                    << ISendStatus::TagWithException{
+                           tag,
+                           std::make_shared<
+                               RuntimeError>(ErrorString{QT_TRANSLATE_NOOP(
+                               "synchronization::Sender",
+                               "Cannot send tag which parent also could not be "
+                               "sent")})};
+                continue;
+            }
+        }
+
+        if (index != 0) {
+            Q_ASSERT(!tagProcessingFutures.isEmpty());
+            previousTagFuture = tagProcessingFutures.constLast();
+        }
+
+        QFuture<qevercloud::Tag> tagFuture = [&] {
+            auto tagPromise = std::make_shared<QPromise<qevercloud::Tag>>();
+            auto future = tagPromise->future();
+            tagPromise->start();
+
+            const bool newTag = !tag.updateSequenceNum().has_value();
+
+            if (newTag) {
+                QString originalLocalId = tag.localId();
+                auto originalLocalData = tag.localData();
+                const bool originalLocallyFavorited = tag.isLocallyFavorited();
+
+                auto createTagThenFuture = threading::then(
+                    std::move(previousTagFuture),
+                    threading::TrackedTask{
+                        selfWeak,
+                        [this, tagPromise, tag, sendContext,
+                         originalLocalId = std::move(originalLocalId),
+                         originalLocallyFavorited,
+                         originalLocalData = std::move(originalLocalData),
+                         originalParentTagLocalId =
+                             std::move(tagParentLocalId)]() mutable {
+                            if (sendContext->canceler->isCanceled()) {
+                                return;
+                            }
+
+                            auto createFuture = m_noteStore->createTagAsync(
+                                tag, sendContext->ctx);
+
+                            auto createThenFuture = threading::then(
+                                std::move(createFuture),
+                                [tagPromise,
+                                 originalLocalId = std::move(originalLocalId),
+                                 originalLocallyFavorited,
+                                 originalLocalData =
+                                     std::move(originalLocalData),
+                                 originalParentTagLocalId =
+                                     std::move(originalParentTagLocalId)](
+                                    qevercloud::Tag t) mutable {
+                                    t.setLocalId(std::move(originalLocalId));
+                                    t.setLocallyFavorited(
+                                        originalLocallyFavorited);
+                                    t.setLocalData(
+                                        std::move(originalLocalData));
+                                    t.setParentTagLocalId(
+                                        std::move(originalParentTagLocalId));
+                                    t.setLocallyModified(false);
+                                    tagPromise->addResult(std::move(t));
+                                });
+
+                            threading::onFailed(
+                                std::move(createThenFuture),
+                                [tagPromise](const QException & e) {
+                                    tagPromise->setException(e);
+                                    tagPromise->finish();
+                                });
+                        }});
+
+                threading::onFailed(
+                    std::move(createTagThenFuture),
+                    [tagPromise](const QException & e) {
+                        tagPromise->setException(e);
+                        tagPromise->finish();
+                    });
+            }
+            else {
+                auto updateTagThenFuture = threading::then(
+                    std::move(previousTagFuture),
+                    threading::TrackedTask{
+                        selfWeak,
+                        [this, tag, tagPromise, sendContext]() mutable {
+                            if (sendContext->canceler->isCanceled()) {
+                                return;
+                            }
+
+                            auto updateFuture = m_noteStore->updateTagAsync(
+                                tag, sendContext->ctx);
+
+                            auto updateThenFuture = threading::then(
+                                std::move(updateFuture),
+                                [tagPromise, tag = tag](
+                                    const qint32 newUpdateSequenceNum) mutable {
+                                    tag.setUpdateSequenceNum(
+                                        newUpdateSequenceNum);
+                                    tag.setLocallyModified(false);
+                                    tagPromise->addResult(std::move(tag));
+                                    tagPromise->finish();
+                                });
+
+                            threading::onFailed(
+                                std::move(updateThenFuture),
+                                [tagPromise](const QException & e) {
+                                    tagPromise->setException(e);
+                                    tagPromise->finish();
+                                });
+                        }});
+
+                threading::onFailed(
+                    std::move(updateTagThenFuture),
+                    [tagPromise](const QException & e) {
+                        tagPromise->setException(e);
+                        tagPromise->finish();
+                    });
+            }
+
+            return future;
+        }();
+
+        auto tagProcessingPromise = std::make_shared<QPromise<void>>();
+        tagProcessingFutures << tagProcessingPromise->future();
+        tagProcessingPromise->start();
+
+        auto tagThenFuture = threading::then(
+            std::move(tagFuture),
+            [sendContext, selfWeak, this,
+             tagProcessingPromise](qevercloud::Tag tag) {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                processTag(sendContext, std::move(tag), tagProcessingPromise);
+            });
+
+        threading::onFailed(
+            std::move(tagThenFuture),
+            [sendContext, tag = tag,
+             tagProcessingPromise](const QException & e) mutable {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                Sender::processTagFailure(
+                    sendContext, std::move(tag), e, tagProcessingPromise);
+            });
+    }
+
+    auto allTagsProcessingFuture =
+        threading::whenAll(std::move(tagProcessingFutures));
+
+    threading::thenOrFailed(
+        std::move(allTagsProcessingFuture), std::move(promise));
+}
+
+void Sender::processTag(
+    const SendContextPtr & sendContext, qevercloud::Tag tag,
+    const std::shared_ptr<QPromise<void>> & promise) const
+{
+    auto putTagFuture = m_localStorage->putTag(tag);
+    auto putTagThenFuture = threading::then(
+        std::move(putTagFuture),
+        [sendContext, promise, linkedNotebookGuid = tag.linkedNotebookGuid()] {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            {
+                const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+                ++sendContext->sendStatus->m_totalSuccessfullySentTags;
+
+                if (const auto callback = sendContext->callbackWeak.lock()) {
+                    auto sendStatus =
+                        std::make_shared<SendStatus>(*sendContext->sendStatus);
+                    if (linkedNotebookGuid) {
+                        callback->onLinkedNotebookSendStatusUpdate(
+                            *linkedNotebookGuid, std::move(sendStatus));
+                    }
+                    else {
+                        callback->onUserOwnSendStatusUpdate(
+                            std::move(sendStatus));
+                    }
+                }
+            }
+
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(putTagThenFuture),
+        [sendContext, promise,
+         tag = std::move(tag)](const QException & e) mutable {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            Sender::processTagFailure(sendContext, std::move(tag), e, promise);
+        });
+}
+
+void Sender::processTagFailure(
+    const SendContextPtr & sendContext, qevercloud::Tag tag,
+    const QException & e, const std::shared_ptr<QPromise<void>> & promise)
+{
+    {
+        const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+        const auto linkedNotebookGuid = tag.linkedNotebookGuid();
+
+        sendContext->sendStatus->m_failedToSendTags
+            << ISendStatus::TagWithException{
+                   std::move(tag), std::shared_ptr<QException>(e.clone())};
+
+        if (const auto callback = sendContext->callbackWeak.lock()) {
+            auto sendStatus =
+                std::make_shared<SendStatus>(*sendContext->sendStatus);
+            if (linkedNotebookGuid) {
+                callback->onLinkedNotebookSendStatusUpdate(
+                    *linkedNotebookGuid, std::move(sendStatus));
+            }
+            else {
+                callback->onUserOwnSendStatusUpdate(std::move(sendStatus));
+            }
+        }
+    }
+    promise->finish();
 }
 
 QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
@@ -442,7 +708,6 @@ void Sender::processNotebook(
 
             {
                 const QMutexLocker locker{sendContext->sendStatusMutex.get()};
-
                 ++sendContext->sendStatus->m_totalSuccessfullySentNotebooks;
 
                 if (const auto callback = sendContext->callbackWeak.lock()) {

@@ -97,6 +97,14 @@ private:
         SendContextPtr sendContext, QList<qevercloud::Tag> tags,
         std::shared_ptr<QPromise<void>> promise) const;
 
+    void processTag(
+        const SendContextPtr & sendContext, qevercloud::Tag tag,
+        const std::shared_ptr<QPromise<void>> & promise) const;
+
+    static void processTagFailure(
+        const SendContextPtr & sendContext, qevercloud::Tag tag,
+        const QException & e, const std::shared_ptr<QPromise<void>> & promise);
+
     [[nodiscard]] QFuture<void> processNotebooks(
         SendContextPtr sendContext) const;
 
