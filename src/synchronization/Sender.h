@@ -83,13 +83,24 @@ private:
         std::optional<qevercloud::LinkedNotebook> linkedNotebook;
 
         // Running result
-        SendStatusPtr sendStatus;
+        SendStatusPtr userOwnSendStatus;
+        QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookSendStatuses;
+
         QSet<QString> failedToSendNotebookLocalIds;
         QSet<QString> failedToSendTagLocalIds;
+        QHash<qevercloud::Guid, qevercloud::Guid>
+            linkedNotebookGuidByNotebookGuid;
+
         threading::QMutexPtr sendStatusMutex;
     };
 
     using SendContextPtr = std::shared_ptr<SendContext>;
+
+    [[nodiscard]] QFuture<void> processNotes(SendContextPtr sendContext) const;
+
+    void sendNotes(
+        SendContextPtr sendContext, QList<qevercloud::Note> notes,
+        std::shared_ptr<QPromise<void>> promise) const;
 
     [[nodiscard]] QFuture<void> processTags(SendContextPtr sendContext) const;
 
@@ -136,6 +147,15 @@ private:
     static void processSavedSearchFailure(
         const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
         const QException & e, const std::shared_ptr<QPromise<void>> & promise);
+
+    [[nodiscard]] static SendStatusPtr sendStatus(
+        const SendContextPtr & sendContext,
+        const std::optional<qevercloud::Guid> & linkedNotebooKGuid);
+
+    static void sendUpdate(
+        const SendContextPtr & sendContext,
+        const SendStatusPtr & sendStatus,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 private:
     const Account m_account;

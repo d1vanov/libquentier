@@ -28,6 +28,9 @@ using DownloadNotesStatusPtr = std::shared_ptr<DownloadNotesStatus>;
 struct DownloadResourcesStatus;
 using DownloadResourcesStatusPtr = std::shared_ptr<DownloadResourcesStatus>;
 
+struct SendStatus;
+using SendStatusPtr = std::shared_ptr<SendStatus>;
+
 struct SyncState;
 using SyncStatePtr = std::shared_ptr<SyncState>;
 using SyncStateConstPtr = std::shared_ptr<const SyncState>;
