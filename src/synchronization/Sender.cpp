@@ -225,7 +225,7 @@ QFuture<ISender::Result> Sender::launchSend(
             result.userOwnResult = sendContext->userOwnSendStatus;
             result.linkedNotebookResults.reserve(
                 sendContext->linkedNotebookSendStatuses.size());
-            for (const auto & it: qevercloud::toRange(
+            for (const auto it: qevercloud::toRange(
                      qAsConst(sendContext->linkedNotebookSendStatuses)))
             {
                 result.linkedNotebookResults[it.key()] = it.value();
@@ -290,9 +290,240 @@ QFuture<void> Sender::processNotes(SendContextPtr sendContext) const
 }
 
 void Sender::sendNotes(
-    [[maybe_unused]] SendContextPtr sendContext,                    // NOLINT
-    [[maybe_unused]] QList<qevercloud::Note> notes,                 // NOLINT
-    [[maybe_unused]] std::shared_ptr<QPromise<void>> promise) const // NOLINT
+    SendContextPtr sendContext, QList<qevercloud::Note> notes,
+    std::shared_ptr<QPromise<void>> promise) const
+{
+    if (notes.isEmpty()) {
+        promise->finish();
+        return;
+    }
+
+    // There are two details making processing of notes special compared to
+    // other kinds of data items:
+    // 1. If some note is linked with tags which we failed to send, we need
+    //    to understand whether this tag is new. If it is, we will send the note
+    //    but without linkage to this tag. And we won't clear the locally
+    //    modified flag from such note so that the next sync would attempt
+    //    to send the offending tag and the note linked with it again.
+    // 2. If some note belongs to a notebook which we failed to send, if this
+    //    notebook was new, we cannot send the note because Evernote has no
+    //    counterpart for that notebook and thus has no notebook to put the
+    //    note into. So we skip sending this note and don't clear the locally
+    //    modified flag from it so that the next sync would attempt to send
+    //    the notebook and its notes again.
+
+    const auto selfWeak = weak_from_this();
+    QList<QFuture<void>> noteProcessingFutures;
+    noteProcessingFutures.reserve(notes.size());
+
+    for (const auto & note: qAsConst(notes)) {
+        std::optional<qevercloud::Note> modifiedNote;
+        {
+            const QMutexLocker locked{sendContext->sendStatusMutex.get()};
+
+            if (sendContext->failedToSendNewNotebookLocalIds.contains(
+                    note.notebookLocalId()))
+            {
+                // This note cannot be sent to Evernote because we could not
+                // send the notebook which it resides in to Evernote.
+                // Since the notebook is new, we can be sure it doesn't come
+                // from a linked notebook.
+                auto status = sendStatus(sendContext, std::nullopt);
+
+                status->m_failedToSendNotes << ISendStatus::NoteWithException{
+                    note,
+                    std::make_shared<RuntimeError>(
+                        ErrorString{QT_TRANSLATE_NOOP(
+                            "synchronization::Sender",
+                            "Cannot send note which notebook could not be "
+                            "sent")})};
+
+                Sender::sendUpdate(sendContext, status, std::nullopt);
+                continue;
+            }
+
+            const QStringList & tagLocalIds = note.tagLocalIds();
+            std::optional<QStringList> filteredTagLocalIds;
+            for (const QString & tagLocalId: qAsConst(tagLocalIds)) {
+                if (sendContext->failedToSendNewTagLocalIds.contains(
+                        tagLocalId)) {
+                    if (!filteredTagLocalIds) {
+                        filteredTagLocalIds.emplace(tagLocalIds);
+                    }
+
+                    filteredTagLocalIds->removeOne(tagLocalId);
+                }
+            }
+
+            if (filteredTagLocalIds) {
+                modifiedNote.emplace(note);
+                modifiedNote->setTagLocalIds(*filteredTagLocalIds);
+            }
+        }
+
+        QFuture<qevercloud::Note> noteFuture = [&] {
+            const bool noteTagListModified = modifiedNote.has_value();
+
+            const qevercloud::Note & noteToSend =
+                (modifiedNote ? *modifiedNote : note);
+
+            auto notePromise = std::make_shared<QPromise<qevercloud::Note>>();
+
+            auto future = notePromise->future();
+            notePromise->start();
+
+            // Unfiltered tag local ids, even those which failed to be sent
+            // to Evernote
+            auto originalTagLocalIds = note.tagLocalIds();
+            QString originalLocalId = noteToSend.localId();
+            auto originalLocalData = noteToSend.localData();
+            const bool originalLocallyFavorited =
+                noteToSend.isLocallyFavorited();
+
+            const bool newNote = !noteToSend.updateSequenceNum().has_value();
+
+            auto noteFuture =
+                (newNote ? m_noteStore->createNoteAsync(
+                               noteToSend, sendContext->ctx)
+                         : m_noteStore->updateNoteAsync(
+                               noteToSend, sendContext->ctx));
+
+            auto noteThenFuture = threading::then(
+                std::move(noteFuture),
+                [notePromise, noteTagListModified,
+                 originalLocalId = std::move(originalLocalId),
+                 originalLocallyFavorited,
+                 originalLocalData = std::move(originalLocalData),
+                 originalTagLocalIds = std::move(originalTagLocalIds)](
+                    qevercloud::Note n) mutable {
+                    n.setLocalId(std::move(originalLocalId));
+                    n.setLocallyFavorited(originalLocallyFavorited);
+                    n.setLocalData(std::move(originalLocalData));
+                    if (noteTagListModified) {
+                        n.setTagLocalIds(std::move(originalTagLocalIds));
+                    }
+                    n.setLocallyModified(!noteTagListModified);
+                    notePromise->addResult(std::move(n));
+                    notePromise->finish();
+                });
+
+            threading::onFailed(
+                std::move(noteThenFuture), [notePromise](const QException & e) {
+                    notePromise->setException(e);
+                    notePromise->finish();
+                });
+
+            return future;
+        }();
+
+        auto noteProcessingPromise = std::make_shared<QPromise<void>>();
+        noteProcessingFutures << noteProcessingPromise->future();
+        noteProcessingPromise->start();
+
+        auto noteThenFuture = threading::then(
+            std::move(noteFuture),
+            [sendContext, selfWeak, this,
+             noteProcessingPromise](qevercloud::Note note) {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                processNote(
+                    sendContext, std::move(note), noteProcessingPromise);
+            });
+
+        threading::onFailed(
+            std::move(noteThenFuture),
+            [selfWeak, this, sendContext, note = note,
+             noteProcessingPromise](const QException & e) mutable {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                processNoteFailure(
+                    sendContext, std::move(note), e, noteProcessingPromise);
+            });
+    }
+
+    auto allNotesProcessingFuture =
+        threading::whenAll(std::move(noteProcessingFutures));
+
+    threading::thenOrFailed(
+        std::move(allNotesProcessingFuture), std::move(promise));
+}
+
+void Sender::processNote(
+    const SendContextPtr & sendContext, qevercloud::Note note,
+    const std::shared_ptr<QPromise<void>> & promise) const
+{
+    auto putNoteFuture = m_localStorage->putNote(note);
+    auto putNoteThenFuture = threading::then(
+        std::move(putNoteFuture),
+        [sendContext, promise, notebookLocalId = note.notebookLocalId()] {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            {
+                QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                const auto linkedNotebookGuidIt =
+                    sendContext->notebookLocalIdsToLinkedNotebookGuids
+                        .constFind(notebookLocalId);
+                if (linkedNotebookGuidIt !=
+                    sendContext->notebookLocalIdsToLinkedNotebookGuids
+                        .constEnd())
+                {
+                    auto status =
+                        sendStatus(sendContext, linkedNotebookGuidIt.value());
+
+                    ++status->m_totalSuccessfullySentNotes;
+                    Sender::sendUpdate(
+                        sendContext, status, linkedNotebookGuidIt.value());
+                    return;
+                }
+
+                // We don't have cached info on linked notebook guid for this
+                // notebook yet, need to find it out
+                // TODO: actually find it out
+            }
+
+            promise->finish();
+        });
+
+    const auto selfWeak = weak_from_this();
+    threading::onFailed(
+        std::move(putNoteThenFuture),
+        [selfWeak, this, sendContext, promise,
+         note = std::move(note)](const QException & e) mutable {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            const auto self = selfWeak.lock();
+            if (!self) {
+                return;
+            }
+
+            processNoteFailure(sendContext, std::move(note), e, promise);
+        });
+}
+
+void Sender::processNoteFailure(
+    [[maybe_unused]] const SendContextPtr & sendContext,
+    [[maybe_unused]] qevercloud::Note note, // NOLINT
+    [[maybe_unused]] const QException & e,
+    [[maybe_unused]] const std::shared_ptr<QPromise<void>> & promise) const
 {
     // TODO: implement
 }
@@ -370,9 +601,13 @@ void Sender::sendTags(
         auto tagParentLocalId = tag.parentTagLocalId();
         if (!tagParentLocalId.isEmpty()) {
             const QMutexLocker locker{sendContext->sendStatusMutex.get()};
-            if (sendContext->failedToSendTagLocalIds.contains(tagParentLocalId))
-            {
-                sendContext->failedToSendTagLocalIds.insert(tag.localId());
+            if (sendContext->failedToSendNewTagLocalIds.contains(
+                    tagParentLocalId)) {
+                if (!tag.guid()) {
+                    sendContext->failedToSendNewTagLocalIds.insert(
+                        tag.localId());
+                }
+
                 auto status = sendStatus(sendContext, tag.linkedNotebookGuid());
 
                 status->m_failedToSendTags << ISendStatus::TagWithException{
@@ -583,6 +818,11 @@ void Sender::processTagFailure(
 {
     {
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+        if (!tag.guid()) {
+            sendContext->failedToSendNewTagLocalIds.insert(tag.localId());
+        }
+
         const auto & linkedNotebookGuid = tag.linkedNotebookGuid();
         auto status = sendStatus(sendContext, linkedNotebookGuid);
 
@@ -798,6 +1038,12 @@ void Sender::processNotebookFailure(
 {
     {
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+        if (!notebook.guid()) {
+            sendContext->failedToSendNewNotebookLocalIds.insert(
+                notebook.localId());
+        }
+
         const auto & linkedNotebookGuid = notebook.linkedNotebookGuid();
         auto status = sendStatus(sendContext, linkedNotebookGuid);
 

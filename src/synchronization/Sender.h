@@ -86,10 +86,18 @@ private:
         SendStatusPtr userOwnSendStatus;
         QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookSendStatuses;
 
-        QSet<QString> failedToSendNotebookLocalIds;
-        QSet<QString> failedToSendTagLocalIds;
-        QHash<qevercloud::Guid, qevercloud::Guid>
-            linkedNotebookGuidByNotebookGuid;
+        // Local ids of new notebooks which could not be sent to Evernote
+        // due to some error
+        QSet<QString> failedToSendNewNotebookLocalIds;
+
+        // Local ids of new tags which could not be sent to Evernote due to
+        // some error
+        QSet<QString> failedToSendNewTagLocalIds;
+
+        // Local cache mapping notebook local ids to linked notebook guid
+        // or lack thereof
+        QHash<QString, std::optional<qevercloud::Guid>>
+            notebookLocalIdsToLinkedNotebookGuids;
 
         threading::QMutexPtr sendStatusMutex;
     };
@@ -101,6 +109,15 @@ private:
     void sendNotes(
         SendContextPtr sendContext, QList<qevercloud::Note> notes,
         std::shared_ptr<QPromise<void>> promise) const;
+
+    void processNote(
+        const SendContextPtr & sendContext, qevercloud::Note note,
+        const std::shared_ptr<QPromise<void>> & promise) const;
+
+    void processNoteFailure(
+        const SendContextPtr & sendContext, qevercloud::Note note,
+        const QException & e,
+        const std::shared_ptr<QPromise<void>> & promise) const;
 
     [[nodiscard]] QFuture<void> processTags(SendContextPtr sendContext) const;
 
@@ -153,8 +170,7 @@ private:
         const std::optional<qevercloud::Guid> & linkedNotebooKGuid);
 
     static void sendUpdate(
-        const SendContextPtr & sendContext,
-        const SendStatusPtr & sendStatus,
+        const SendContextPtr & sendContext, const SendStatusPtr & sendStatus,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
 private:
