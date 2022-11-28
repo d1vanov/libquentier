@@ -469,7 +469,8 @@ void Sender::processNote(
     auto putNoteFuture = m_localStorage->putNote(note);
     auto putNoteThenFuture = threading::then(
         std::move(putNoteFuture),
-        [sendContext, promise, notebookLocalId = note.notebookLocalId()] {
+        [sendContext, promise, notebookLocalId = note.notebookLocalId(),
+         localStorageWeak = std::weak_ptr{m_localStorage}]() mutable {
             if (sendContext->canceler->isCanceled()) {
                 return;
             }
@@ -490,15 +491,78 @@ void Sender::processNote(
                     ++status->m_totalSuccessfullySentNotes;
                     Sender::sendUpdate(
                         sendContext, status, linkedNotebookGuidIt.value());
+
+                    locker.unlock();
+                    promise->finish();
                     return;
                 }
-
-                // We don't have cached info on linked notebook guid for this
-                // notebook yet, need to find it out
-                // TODO: actually find it out
             }
 
-            promise->finish();
+            // We don't have cached info on linked notebook guid for this
+            // notebook yet, need to find it out
+            const auto localStorage = localStorageWeak.lock();
+            if (!localStorage) {
+                return;
+            }
+
+            auto notebookFuture =
+                localStorage->findNotebookByLocalId(notebookLocalId);
+
+            auto notebookThenFuture = threading::then(
+                std::move(notebookFuture),
+                [sendContext, promise,
+                 notebookLocalId = std::move(notebookLocalId)](
+                    const std::optional<qevercloud::Notebook> & notebook) {
+                    if (sendContext->canceler->isCanceled()) {
+                        return;
+                    }
+
+                    if (Q_UNLIKELY(!notebook)) {
+                        // Impossible situation indicating of some serious
+                        // internal error - we got this notebook local id from
+                        // a locally modified note which cannot exist without
+                        // a notebook.
+                        // Just complaining to the log and doing nothing else.
+                        QNWARNING(
+                            "synchronization::Sender",
+                            "Could not find notebook by local id in the local "
+                                << "storage: " << notebookLocalId);
+                        promise->finish();
+                        return;
+                    }
+
+                    {
+                        const auto & linkedNotebookGuid =
+                            notebook->linkedNotebookGuid();
+
+                        QMutexLocker locker{sendContext->sendStatusMutex.get()};
+                        sendContext->notebookLocalIdsToLinkedNotebookGuids
+                            [notebookLocalId] = linkedNotebookGuid;
+
+                        auto status =
+                            sendStatus(sendContext, linkedNotebookGuid);
+
+                        ++status->m_totalSuccessfullySentNotes;
+                        Sender::sendUpdate(
+                            sendContext, status, linkedNotebookGuid);
+                    }
+                    promise->finish();
+                });
+
+            threading::onFailed(
+                std::move(notebookThenFuture),
+                [sendContext, promise, notebookLocalId](const QException & e) {
+                    if (sendContext->canceler->isCanceled()) {
+                        return;
+                    }
+
+                    QNWARNING(
+                        "synchronization::Sender",
+                        "Failed to find notebook by local id in the local "
+                            << "storage: local id = " << notebookLocalId
+                            << ", error: " << e.what());
+                    promise->finish();
+                });
         });
 
     const auto selfWeak = weak_from_this();
@@ -520,12 +584,95 @@ void Sender::processNote(
 }
 
 void Sender::processNoteFailure(
-    [[maybe_unused]] const SendContextPtr & sendContext,
-    [[maybe_unused]] qevercloud::Note note, // NOLINT
-    [[maybe_unused]] const QException & e,
-    [[maybe_unused]] const std::shared_ptr<QPromise<void>> & promise) const
+    const SendContextPtr & sendContext, qevercloud::Note note,
+    const QException & e, const std::shared_ptr<QPromise<void>> & promise) const
 {
-    // TODO: implement
+    const auto & notebookLocalId = note.notebookLocalId();
+    auto exc = std::shared_ptr<QException>(e.clone());
+
+    {
+        QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+        const auto linkedNotebookGuidIt =
+            sendContext->notebookLocalIdsToLinkedNotebookGuids.constFind(
+                notebookLocalId);
+        if (linkedNotebookGuidIt !=
+            sendContext->notebookLocalIdsToLinkedNotebookGuids.constEnd())
+        {
+            auto status = sendStatus(sendContext, linkedNotebookGuidIt.value());
+            status->m_failedToSendNotes << ISendStatus::NoteWithException{
+                std::move(note), std::move(exc)};
+
+            Sender::sendUpdate(
+                sendContext, status, linkedNotebookGuidIt.value());
+
+            locker.unlock();
+            promise->finish();
+            return;
+        }
+    }
+
+    // We don't have cached info on linked notebook guid for this
+    // notebook yet, need to find it out
+    auto notebookFuture =
+        m_localStorage->findNotebookByLocalId(notebookLocalId);
+
+    auto notebookThenFuture = threading::then(
+        std::move(notebookFuture),
+        [sendContext, promise, notebookLocalId, exc = std::move(exc),
+         note = std::move(note)](
+            const std::optional<qevercloud::Notebook> & notebook) mutable {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            if (Q_UNLIKELY(!notebook)) {
+                // Impossible situation indicating of some serious
+                // internal error - we got this notebook local id from
+                // a locally modified note which cannot exist without
+                // a notebook.
+                // Just complaining to the log and doing nothing else.
+                QNWARNING(
+                    "synchronization::Sender",
+                    "Could not find notebook by local id in the local "
+                        << "storage: " << notebookLocalId);
+                promise->finish();
+                return;
+            }
+
+            {
+                const auto & linkedNotebookGuid =
+                    notebook->linkedNotebookGuid();
+
+                QMutexLocker locker{sendContext->sendStatusMutex.get()};
+                sendContext
+                    ->notebookLocalIdsToLinkedNotebookGuids[notebookLocalId] =
+                    linkedNotebookGuid;
+
+                auto status = sendStatus(sendContext, linkedNotebookGuid);
+
+                status->m_failedToSendNotes << ISendStatus::NoteWithException{
+                    std::move(note), std::move(exc)};
+
+                Sender::sendUpdate(sendContext, status, linkedNotebookGuid);
+            }
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(notebookThenFuture),
+        [sendContext, promise, notebookLocalId](const QException & e) {
+            if (sendContext->canceler->isCanceled()) {
+                return;
+            }
+
+            QNWARNING(
+                "synchronization::Sender",
+                "Failed to find notebook by local id in the local "
+                    << "storage: local id = " << notebookLocalId
+                    << ", error: " << e.what());
+            promise->finish();
+        });
 }
 
 QFuture<void> Sender::processTags(SendContextPtr sendContext) const
@@ -1003,7 +1150,7 @@ void Sender::processNotebook(
     auto putNotebookFuture = m_localStorage->putNotebook(notebook);
     auto putNotebookThenFuture = threading::then(
         std::move(putNotebookFuture),
-        [sendContext, promise,
+        [sendContext, promise, notebookLocalId = notebook.localId(),
          linkedNotebookGuid = notebook.linkedNotebookGuid()] {
             if (sendContext->canceler->isCanceled()) {
                 return;
@@ -1011,6 +1158,15 @@ void Sender::processNotebook(
 
             {
                 const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                // Will cache this notebook's local id to linked notebook guid
+                // mapping until the end of the sending step of the sync just
+                // in case this mapping would be needed when sending locally
+                // modified notes from this notebook.
+                sendContext
+                    ->notebookLocalIdsToLinkedNotebookGuids[notebookLocalId] =
+                    linkedNotebookGuid;
+
                 auto status = sendStatus(sendContext, linkedNotebookGuid);
                 ++status->m_totalSuccessfullySentNotebooks;
                 Sender::sendUpdate(sendContext, status, linkedNotebookGuid);
