@@ -99,6 +99,10 @@ private:
         QHash<QString, std::optional<qevercloud::Guid>>
             notebookLocalIdsToLinkedNotebookGuids;
 
+        // Local cache mapping local ids of newly created tags to their guids
+        // so that this guid can be set as parent guid onto the child tags
+        QHash<QString, qevercloud::Guid> newTagLocalIdsToGuids;
+
         threading::QMutexPtr sendStatusMutex;
     };
 
