@@ -40,6 +40,9 @@
 #include <QMutex>
 #include <QMutexLocker>
 
+#include <algorithm>
+#include <utility>
+
 namespace quentier::synchronization {
 
 Sender::Sender(
@@ -372,64 +375,15 @@ void Sender::sendNotes(
             previousNoteFuture = noteProcessingFutures.constLast();
         }
 
-        QFuture<qevercloud::Note> noteFuture = [&] {
+        QFuture<qevercloud::Note> noteFuture = [&, this] {
             auto notePromise = std::make_shared<QPromise<qevercloud::Note>>();
 
             auto future = notePromise->future();
             notePromise->start();
 
-            // Unfiltered tag local ids, even those which failed to be sent
-            // to Evernote
-            auto originalTagLocalIds = note.tagLocalIds();
-            QString originalLocalId = note.localId();
-            auto originalLocalData = note.localData();
-            const bool originalLocallyFavorited = note.isLocallyFavorited();
-
-            threading::thenOrFailed(
-                std::move(previousNoteFuture), notePromise,
-                threading::TrackedTask{
-                    selfWeak,
-                    [this, notePromise, note, sendContext,
-                     containsFailedToSendTags,
-                     originalLocalId = std::move(originalLocalId),
-                     originalLocallyFavorited,
-                     originalLocalData = std::move(originalLocalData),
-                     originalTagLocalIds =
-                         std::move(originalTagLocalIds)]() mutable {
-                        if (sendContext->canceler->isCanceled()) {
-                            return;
-                        }
-
-                        const bool newNote =
-                            !note.updateSequenceNum().has_value();
-
-                        auto noteFuture =
-                            (newNote ? m_noteStore->createNoteAsync(
-                                           note, sendContext->ctx)
-                                     : m_noteStore->updateNoteAsync(
-                                           note, sendContext->ctx));
-
-                        threading::thenOrFailed(
-                            std::move(noteFuture), notePromise,
-                            [notePromise, containsFailedToSendTags,
-                             originalLocalId = std::move(originalLocalId),
-                             originalLocallyFavorited,
-                             originalLocalData = std::move(originalLocalData),
-                             originalTagLocalIds =
-                                 std::move(originalTagLocalIds)](
-                                qevercloud::Note n) mutable {
-                                n.setLocalId(std::move(originalLocalId));
-                                n.setLocallyFavorited(originalLocallyFavorited);
-                                n.setLocalData(std::move(originalLocalData));
-                                n.setTagLocalIds(
-                                    std::move(originalTagLocalIds));
-                                n.setLocallyModified(!containsFailedToSendTags);
-                                // FIXME: need what about resources? Their local
-                                // ids need to be preserved as well
-                                notePromise->addResult(std::move(n));
-                                notePromise->finish();
-                            });
-                    }});
+            createOrUpdateNote(
+                sendContext, note, containsFailedToSendTags,
+                std::move(previousNoteFuture), notePromise);
 
             return future;
         }();
@@ -478,6 +432,125 @@ void Sender::sendNotes(
 
     threading::thenOrFailed(
         std::move(allNotesProcessingFuture), std::move(promise));
+}
+
+void Sender::createOrUpdateNote(
+    SendContextPtr sendContext, const qevercloud::Note & note,
+    const bool containsFailedToSendTags, QFuture<void> previousNoteFuture,
+    const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const
+{
+    struct ResourceLocalData
+    {
+        QString localId;
+        std::optional<qevercloud::Guid> guid;
+        bool locallyFavorited = false;
+        QHash<QString, QVariant> localData;
+    };
+
+    struct NoteLocalData
+    {
+        QString localId;
+        QStringList tagLocalIds;
+        bool locallyFavorited = false;
+        QHash<QString, QVariant> localData;
+        QList<ResourceLocalData> resourcesLocalData;
+    };
+
+    NoteLocalData noteLocalData;
+    noteLocalData.localId = note.localId();
+    noteLocalData.tagLocalIds = note.tagLocalIds();
+    noteLocalData.locallyFavorited = note.isLocallyFavorited();
+    noteLocalData.localData = note.localData();
+
+    if (note.resources())
+    {
+        noteLocalData.resourcesLocalData.reserve(note.resources()->size());
+        for (const auto & resource: qAsConst(*note.resources())) {
+            noteLocalData.resourcesLocalData << ResourceLocalData{};
+            ResourceLocalData & resourceLocalData =
+                noteLocalData.resourcesLocalData.last();
+
+            resourceLocalData.localId = resource.localId();
+            resourceLocalData.guid = resource.guid();
+            resourceLocalData.locallyFavorited = resource.isLocallyFavorited();
+            resourceLocalData.localData = resource.localData();
+        }
+    }
+
+    const auto selfWeak = weak_from_this();
+    threading::thenOrFailed(
+        std::move(previousNoteFuture), notePromise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, notePromise, note, containsFailedToSendTags,
+             sendContext = std::move(sendContext),
+             noteLocalData = std::move(noteLocalData)]() mutable {
+                 if (sendContext->canceler->isCanceled()) {
+                     return;
+                 }
+
+                 const bool newNote =
+                     !note.updateSequenceNum().has_value();
+
+                 // FIXME: for notes from linked notebooks special request
+                 // context (i.e. special authentication token) and special note
+                 // store instance (with special note store url and web api url
+                 // prefix) must be used.
+
+                 auto noteFuture =
+                     (newNote ? m_noteStore->createNoteAsync(
+                             note, sendContext->ctx)
+                         : m_noteStore->updateNoteAsync(
+                             note, sendContext->ctx));
+
+                 threading::thenOrFailed(
+                     std::move(noteFuture), notePromise,
+                     [notePromise, containsFailedToSendTags,
+                      noteLocalData = std::move(noteLocalData)](
+                         qevercloud::Note n) mutable {
+                         n.setLocalId(std::move(noteLocalData.localId));
+                         n.setLocallyFavorited(noteLocalData.locallyFavorited);
+                         n.setLocalData(std::move(noteLocalData.localData));
+                         n.setTagLocalIds(
+                             std::move(noteLocalData.tagLocalIds));
+                         n.setLocallyModified(!containsFailedToSendTags);
+                         if (n.resources()) {
+                             Q_ASSERT(
+                                 noteLocalData.resourcesLocalData.size()
+                                 == n.resources()->size());
+
+                             for (int i = 0; i < n.resources()->size(); ++i)
+                             {
+                                 auto & resource = (*n.mutableResources())[i];
+                                 Q_ASSERT(resource.guid());
+                                 if (Q_UNLIKELY(!resource.guid())) {
+                                     continue;
+                                 }
+
+                                 resource.setNoteLocalId(n.localId());
+
+                                 auto & resourceLocalData =
+                                     noteLocalData.resourcesLocalData[i];
+
+                                 Q_ASSERT(
+                                     !resourceLocalData.guid ||
+                                     resourceLocalData.guid ==
+                                         resource.guid());
+
+                                 resource.setLocalId(
+                                     std::move(resourceLocalData.localId));
+
+                                 resource.setLocallyFavorited(
+                                     resourceLocalData.locallyFavorited);
+
+                                 resource.setLocalData(
+                                     std::move(resourceLocalData.localData));
+                             }
+                         }
+                         notePromise->addResult(std::move(n));
+                         notePromise->finish();
+                     });
+        }});
 }
 
 void Sender::processNote(

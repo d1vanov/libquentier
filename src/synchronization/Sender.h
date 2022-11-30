@@ -32,6 +32,7 @@
 #include <qevercloud/Fwd.h>
 #include <qevercloud/services/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QHash>
 #include <QSet>
@@ -113,6 +114,11 @@ private:
     void sendNotes(
         SendContextPtr sendContext, QList<qevercloud::Note> notes,
         std::shared_ptr<QPromise<void>> promise) const;
+
+    void createOrUpdateNote(
+        SendContextPtr sendContext, const qevercloud::Note & note,
+        bool containsFailedToSendTags, QFuture<void> previousNoteFuture,
+        const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
 
     void processNote(
         const SendContextPtr & sendContext, qevercloud::Note note,
