@@ -27,6 +27,14 @@ namespace quentier::synchronization::tests::mocks::qevercloud {
 class MockIUserStore : public ::qevercloud::IUserStore
 {
 public:
+    MOCK_METHOD(
+        ::qevercloud::IRequestContextPtr, defaultRequestContext, (),
+        (const, override));
+
+    MOCK_METHOD(
+        void, setDefaultRequestContext, (::qevercloud::IRequestContextPtr ctx),
+        (override));
+
     MOCK_METHOD(QString, userStoreUrl, (), (const, override));
     MOCK_METHOD(void, setUserStoreUrl, (QString url), (override));
 
