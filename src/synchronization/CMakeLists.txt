@@ -21,11 +21,14 @@ target_sources(${LIBRARY_NAME}
   IFullSyncStaleDataExpunger.cpp
   IFullSyncStaleDataExpunger.h
   INoteStoreFactory.h
+  INoteStoreProvider.h
   IProtocolVersionChecker.h
   ISender.h
   IUserInfoProvider.h
   NoteStoreFactory.cpp
   NoteStoreFactory.h
+  NoteStoreProvider.cpp
+  NoteStoreProvider.h
   ProtocolVersionChecker.cpp
   ProtocolVersionChecker.h
   Sender.cpp
