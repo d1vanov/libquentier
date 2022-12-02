@@ -48,18 +48,26 @@ public:
     NoteStoreProvider(
         local_storage::ILocalStoragePtr localStorage,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        INoteStoreFactoryPtr noteStoreFactory,
-        Account account);
+        INoteStoreFactoryPtr noteStoreFactory, Account account);
 
     [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStore(
-        QString notebookLocalId,
+        QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> linkedNotebookNoteStore(
+        qevercloud::Guid linkedNotebookGuid,
         qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
 private:
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
-        findLinkedNotebookByNotebookLocalId(
-            const QString & notebookLocalId) const;
+        findLinkedNotebookByNotebookLocalId(const QString & notebookLocalId);
+
+    void onFindLinkedNotebookResult(
+        const std::optional<qevercloud::LinkedNotebook> & linkedNotebook,
+        qevercloud::IRequestContextPtr ctx,
+        qevercloud::IRetryPolicyPtr retryPolicy,
+        const std::shared_ptr<QPromise<qevercloud::INoteStorePtr>> & promise);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
@@ -70,7 +78,12 @@ private:
     QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
         m_linkedNotebooksByNotebookLocalId;
 
-    QMutex m_mutex;
+    QMutex m_linkedNotebooksByNotebookLocalIdMutex;
+
+    QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
+        m_linkedNotebooksByGuid;
+
+    QMutex m_linkedNotebooksByGuidMutex;
 };
 
 } // namespace quentier::synchronization

@@ -34,9 +34,14 @@ public:
     virtual ~INoteStoreProvider() = default;
 
     [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr> noteStore(
-        QString notebookLocalId,
-        qevercloud::IRequestContextPtr ctx = {},
+        QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
+
+    [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr>
+        linkedNotebookNoteStore(
+            qevercloud::Guid linkedNotebookGuid,
+            qevercloud::IRequestContextPtr ctx = {},
+            qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
 };
 
 } // namespace quentier::synchronization

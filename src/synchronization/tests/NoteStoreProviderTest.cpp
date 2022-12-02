@@ -399,4 +399,132 @@ TEST_F(
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
+TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
+{
+    const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
+        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockNoteStoreFactory, m_account);
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
+                                    .setGuid(linkedNotebookGuid)
+                                    .setUsername(QStringLiteral("username"))
+                                    .setUpdateSequenceNum(43)
+                                    .build();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        .WillOnce(
+            Return(threading::makeReadyFuture<
+                   std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
+
+    const auto authInfo = std::make_shared<AuthenticationInfo>();
+    authInfo->m_userId = m_account.id();
+    authInfo->m_authToken = QStringLiteral("authToken");
+    authInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
+
+    EXPECT_CALL(
+        *m_mockAuthenticationInfoProvider,
+        authenticateToLinkedNotebook(
+            m_account, linkedNotebook,
+            IAuthenticationInfoProvider::Mode::Cache))
+        .WillOnce(Return(
+            threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
+
+    const auto noteStore =
+        std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    const auto defaultCtx = qevercloud::newRequestContext();
+    const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
+
+    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+        .WillOnce([&](const QString & noteStoreUrl,
+                      const std::optional<qevercloud::Guid> & guid,
+                      const qevercloud::IRequestContextPtr & ctx,
+                      const qevercloud::IRetryPolicyPtr & retryPolicy) {
+            EXPECT_EQ(noteStoreUrl, authInfo->m_noteStoreUrl);
+            EXPECT_EQ(guid, linkedNotebookGuid);
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(ctx->authenticationToken(), authInfo->authToken());
+            }
+            EXPECT_NE(ctx.get(), defaultCtx.get());
+            EXPECT_EQ(defaultRetryPolicy, retryPolicy);
+            return noteStore;
+        });
+
+    auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
+        linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
+    ASSERT_TRUE(resultFuture.isFinished());
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+
+    const auto result = resultFuture.result();
+    EXPECT_EQ(result, noteStore);
+}
+
+TEST_F(
+    NoteStoreProviderTest, NoLinkedNotebookNoteStoreIfCannotFindLinkedNotebook)
+{
+    const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
+        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockNoteStoreFactory, m_account);
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        .WillOnce(
+            Return(threading::makeReadyFuture<
+                   std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
+
+    const auto defaultCtx = qevercloud::newRequestContext();
+    const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
+
+    auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
+        linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
+    ASSERT_TRUE(resultFuture.isFinished());
+    EXPECT_THROW(resultFuture.result(), RuntimeError);
+}
+
+TEST_F(
+    NoteStoreProviderTest,
+    NoLinkedNotebookNoteStoreIfCannotGetAuthenticationInfo)
+{
+    const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
+        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockNoteStoreFactory, m_account);
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
+                                    .setGuid(linkedNotebookGuid)
+                                    .setUsername(QStringLiteral("username"))
+                                    .setUpdateSequenceNum(43)
+                                    .build();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        .WillOnce(
+            Return(threading::makeReadyFuture<
+                   std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
+
+    EXPECT_CALL(
+        *m_mockAuthenticationInfoProvider,
+        authenticateToLinkedNotebook(
+            m_account, linkedNotebook,
+            IAuthenticationInfoProvider::Mode::Cache))
+        .WillOnce(
+            Return(threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+                RuntimeError{ErrorString{QStringLiteral("error")}})));
+
+    const auto defaultCtx = qevercloud::newRequestContext();
+    const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
+
+    auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
+        linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
+    ASSERT_TRUE(resultFuture.isFinished());
+    EXPECT_THROW(resultFuture.result(), RuntimeError);
+}
+
 } // namespace quentier::synchronization::tests
