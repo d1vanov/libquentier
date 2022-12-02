@@ -320,10 +320,11 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
     {
         const QReadLocker locker{&m_authenticationInfosRWLock};
         if (const auto it = m_authenticationInfos.find(account.id());
-            it != m_authenticationInfos.end())
+            it != m_authenticationInfos.end() &&
+            !isTimestampAboutToExpire(it.value()->authTokenExpirationTime()))
         {
             return threading::makeReadyFuture<IAuthenticationInfoPtr>(
-                IAuthenticationInfoPtr{it.value()});
+                it.value());
         }
     }
 
@@ -467,7 +468,8 @@ QFuture<IAuthenticationInfoPtr>
         QReadLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
         if (const auto it = m_linkedNotebookAuthenticationInfos.find(
                 *linkedNotebook.guid());
-            it != m_linkedNotebookAuthenticationInfos.end())
+            it != m_linkedNotebookAuthenticationInfos.end() &&
+            !isTimestampAboutToExpire(it.value()->authTokenExpirationTime()))
         {
             const auto authenticationInfo = it.value();
 
