@@ -31,8 +31,11 @@
 // build fails. Probably something related to #pragma once not being perfectly
 // implemented in the compiler.
 #include <synchronization/tests/mocks/MockINoteFullDataDownloader.h>
+#include <synchronization/tests/mocks/MockINoteStoreProvider.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
+#include <qevercloud/DurableService.h>
+#include <qevercloud/RequestContext.h>
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
@@ -49,6 +52,7 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::Return;
 using testing::ReturnRef;
 using testing::StrictMock;
 
@@ -69,6 +73,10 @@ protected:
 
     const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    const std::shared_ptr<mocks::MockINoteStoreProvider>
+        m_mockNoteStoreProvider =
+            std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
 
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -136,7 +144,8 @@ TEST_F(NotesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_mockNoteFullDataDownloader, m_mockNoteStore));
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()));
 }
 
 TEST_F(NotesProcessorTest, CtorNullLocalStorage)
@@ -144,7 +153,8 @@ TEST_F(NotesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             nullptr, m_mockSyncConflictResolver, m_mockNoteFullDataDownloader,
-            m_mockNoteStore),
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -153,7 +163,8 @@ TEST_F(NotesProcessorTest, CtorNullSyncConflictResolver)
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, nullptr, m_mockNoteFullDataDownloader,
-            m_mockNoteStore),
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -162,17 +173,37 @@ TEST_F(NotesProcessorTest, CtorNullNoteFullDataDownloader)
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver, nullptr,
-            m_mockNoteStore),
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
-TEST_F(NotesProcessorTest, CtorNullNoteStore)
+TEST_F(NotesProcessorTest, CtorNullNoteStoreProvider)
 {
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_mockNoteFullDataDownloader, nullptr),
+            m_mockNoteFullDataDownloader, nullptr,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
+}
+
+TEST_F(NotesProcessorTest, CtorNullRequestContext)
+{
+    EXPECT_NO_THROW(
+        const auto notesProcessor = std::make_shared<NotesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider, nullptr,
+            qevercloud::newRetryPolicy()));
+}
+
+TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
+{
+    EXPECT_NO_THROW(
+        const auto notesProcessor = std::make_shared<NotesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            qevercloud::newRequestContext(), nullptr));
 }
 
 TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
@@ -182,7 +213,7 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -303,23 +334,17 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
                 std::nullopt);
         });
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
-
-            if (linkedNotebookGuid) {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::Yes);
-            }
-            else {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::No);
-            }
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -356,7 +381,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -489,23 +514,17 @@ TEST_P(
                 std::nullopt);
         });
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
-
-            if (linkedNotebookGuid) {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::Yes);
-            }
-            else {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::No);
-            }
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -548,7 +567,7 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -709,23 +728,17 @@ TEST_P(
                 std::nullopt);
         });
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
-
-            if (linkedNotebookGuid) {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::Yes);
-            }
-            else {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::No);
-            }
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -762,7 +775,7 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -920,23 +933,17 @@ TEST_P(
                 std::nullopt);
         });
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
-
-            if (linkedNotebookGuid) {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::Yes);
-            }
-            else {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::No);
-            }
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -978,7 +985,7 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1144,23 +1151,17 @@ TEST_P(
                 std::nullopt);
         });
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
-
-            if (linkedNotebookGuid) {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::Yes);
-            }
-            else {
-                EXPECT_EQ(
-                    includeNoteLimitsOption,
-                    INoteFullDataDownloader::IncludeNoteLimits::No);
-            }
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -1212,7 +1213,7 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1377,19 +1378,21 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
             return findNoteByGuidPromises.back()->future();
         });
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     int downloadFullNoteDataCallCount = 0;
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
 
             ++downloadFullNoteDataCallCount;
 
-            EXPECT_EQ(
-                includeNoteLimitsOption,
-                INoteFullDataDownloader::IncludeNoteLimits::No);
+            EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -1434,7 +1437,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1582,7 +1585,7 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     QList<qevercloud::Guid> processedNoteGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
@@ -1640,7 +1643,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     QList<qevercloud::Guid> processedNoteGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
@@ -1753,7 +1756,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     QList<qevercloud::Guid> processedNoteGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
@@ -1968,16 +1971,17 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         return note;
     };
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
         .WillRepeatedly([&](qevercloud::Guid noteGuid,
-                            const INoteFullDataDownloader::IncludeNoteLimits
-                                includeNoteLimitsOption,
+                            const qevercloud::INoteStorePtr & noteStore,
                             const qevercloud::IRequestContextPtr & ctx) {
             Q_UNUSED(ctx)
-
-            EXPECT_EQ(
-                includeNoteLimitsOption,
-                INoteFullDataDownloader::IncludeNoteLimits::No);
+            EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
 
             const auto it = std::find_if(
                 notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
@@ -1998,7 +2002,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStore);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 

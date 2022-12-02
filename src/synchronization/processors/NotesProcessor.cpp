@@ -19,11 +19,13 @@
 #include "NotesProcessor.h"
 #include "Utils.h"
 
+#include <synchronization/INoteStoreProvider.h>
 #include <synchronization/processors/INoteFullDataDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/OperationCanceled.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
@@ -48,11 +50,13 @@ NotesProcessor::NotesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     ISyncConflictResolverPtr syncConflictResolver,
     INoteFullDataDownloaderPtr noteFullDataDownloader,
-    qevercloud::INoteStorePtr noteStore) :
+    INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy) :
     m_localStorage{std::move(localStorage)},
     m_syncConflictResolver{std::move(syncConflictResolver)},
     m_noteFullDataDownloader{std::move(noteFullDataDownloader)},
-    m_noteStore{std::move(noteStore)}
+    m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
+    m_retryPolicy{std::move(retryPolicy)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -72,10 +76,10 @@ NotesProcessor::NotesProcessor(
             "NotesProcessor ctor: note full data downloader is null")}};
     }
 
-    if (Q_UNLIKELY(!m_noteStore)) {
+    if (Q_UNLIKELY(!m_noteStoreProvider)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::NotesProcessor",
-            "NotesProcessor ctor: note store is null")}};
+            "NotesProcessor ctor: note store provider is null")}};
     }
 }
 
@@ -435,20 +439,31 @@ void NotesProcessor::downloadFullNoteData(
 {
     Q_ASSERT(note.guid());
 
-    auto downloadFullNoteDataFuture =
-        m_noteFullDataDownloader->downloadFullNoteData(
-            *note.guid(),
-            m_noteStore->linkedNotebookGuid().has_value()
-                ? INoteFullDataDownloader::IncludeNoteLimits::Yes
-                : INoteFullDataDownloader::IncludeNoteLimits::No);
+    auto noteStoreFuture = m_noteStoreProvider->noteStore(
+        note.notebookLocalId(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
+
+    auto downloadFullNoteDataFuture = threading::then(
+        std::move(noteStoreFuture),
+        [notePromise, status, canceler = manualCanceler,
+         noteFullDataDownloader = m_noteFullDataDownloader, callbackWeak,
+         noteGuid = *note.guid()](qevercloud::INoteStorePtr noteStore) {
+            Q_ASSERT(noteStore);
+            if (canceler->isCanceled()) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    OperationCanceled{});
+            }
+
+            return noteFullDataDownloader->downloadFullNoteData(
+                noteGuid, std::move(noteStore));
+        });
 
     auto thenFuture = threading::then(
         std::move(downloadFullNoteDataFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, notePromise, status, noteKind,
+            [this, notePromise, status, noteKind, canceler = manualCanceler,
              callbackWeak](qevercloud::Note note) mutable {
                 putNoteToLocalStorage(
                     notePromise, status, std::move(callbackWeak),

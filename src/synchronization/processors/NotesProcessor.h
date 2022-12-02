@@ -32,7 +32,7 @@
 
 #include <synchronization/Fwd.h>
 
-#include <qevercloud/services/Fwd.h>
+#include <qevercloud/Fwd.h>
 
 namespace quentier::synchronization {
 
@@ -45,7 +45,9 @@ public:
         local_storage::ILocalStoragePtr localStorage,
         ISyncConflictResolverPtr syncConflictResolver,
         INoteFullDataDownloaderPtr noteFullDataDownloader,
-        qevercloud::INoteStorePtr noteStore);
+        INoteStoreProviderPtr noteStoreProvider,
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {});
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -96,7 +98,9 @@ private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
     const INoteFullDataDownloaderPtr m_noteFullDataDownloader;
-    const qevercloud::INoteStorePtr m_noteStore;
+    const INoteStoreProviderPtr m_noteStoreProvider;
+    const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
 
 } // namespace quentier::synchronization
