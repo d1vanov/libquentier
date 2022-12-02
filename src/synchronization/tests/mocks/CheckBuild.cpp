@@ -11,6 +11,7 @@
 #include "MockINotebooksProcessor.h"
 #include "MockINoteFullDataDownloader.h"
 #include "MockINoteStoreFactory.h"
+#include "MockINoteStoreProvider.h"
 #include "MockINotesProcessor.h"
 #include "MockIProtocolVersionChecker.h"
 #include "MockISavedSearchesProcessor.h"
