@@ -29,7 +29,7 @@ class MockINoteFullDataDownloader : public INoteFullDataDownloader
 public:
     MOCK_METHOD(
         QFuture<qevercloud::Note>, downloadFullNoteData,
-        (qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        (qevercloud::Guid noteGuid, qevercloud::INoteStorePtr noteStore,
          qevercloud::IRequestContextPtr ctx), (override));
 };
 

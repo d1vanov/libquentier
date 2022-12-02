@@ -39,16 +39,15 @@ class NoteFullDataDownloader final :
     public std::enable_shared_from_this<NoteFullDataDownloader>
 {
 public:
-    explicit NoteFullDataDownloader(
-        qevercloud::INoteStorePtr noteStore, quint32 maxInFlightDownloads);
+    explicit NoteFullDataDownloader(quint32 maxInFlightDownloads);
 
     [[nodiscard]] QFuture<qevercloud::Note> downloadFullNoteData(
-        qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::Guid noteGuid, qevercloud::INoteStorePtr noteStore,
         qevercloud::IRequestContextPtr ctx = {}) override;
 
 private:
     void downloadFullNoteDataImpl(
-        qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::Guid noteGuid, const qevercloud::INoteStorePtr & noteStore,
         qevercloud::IRequestContextPtr ctx,
         const std::shared_ptr<QPromise<qevercloud::Note>> & promise);
 
@@ -58,12 +57,11 @@ private:
     {
         qevercloud::Guid m_noteGuid;
         qevercloud::IRequestContextPtr m_ctx;
-        IncludeNoteLimits m_includeNoteLimits = IncludeNoteLimits::No;
+        qevercloud::INoteStorePtr m_noteStore;
         std::shared_ptr<QPromise<qevercloud::Note>> m_promise;
     };
 
 private:
-    const qevercloud::INoteStorePtr m_noteStore;
     const quint32 m_maxInFlightDownloads;
 
     std::atomic<quint32> m_inFlightDownloads{0U};

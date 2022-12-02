@@ -28,17 +28,9 @@
 
 namespace quentier::synchronization {
 
-NoteFullDataDownloader::NoteFullDataDownloader(
-    qevercloud::INoteStorePtr noteStore, quint32 maxInFlightDownloads) :
-    m_noteStore{std::move(noteStore)},
+NoteFullDataDownloader::NoteFullDataDownloader(quint32 maxInFlightDownloads) :
     m_maxInFlightDownloads{maxInFlightDownloads}
 {
-    if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NoteFullDataDownloader",
-            "NoteFullDataDownloader ctor: note store is null")}};
-    }
-
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::NoteFullDataDownloader",
@@ -48,7 +40,7 @@ NoteFullDataDownloader::NoteFullDataDownloader(
 }
 
 QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
-    qevercloud::Guid noteGuid, const IncludeNoteLimits includeNoteLimitsOption,
+    qevercloud::Guid noteGuid, qevercloud::INoteStorePtr noteStore,
     qevercloud::IRequestContextPtr ctx)
 {
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
@@ -61,19 +53,19 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
         // and execute it later, when some of the previous requests are finished
         const QMutexLocker lock{&m_queuedRequestsMutex};
         m_queuedRequests.append(QueuedRequest{
-            std::move(noteGuid), std::move(ctx), includeNoteLimitsOption,
+            std::move(noteGuid), std::move(ctx), std::move(noteStore),
             std::move(promise)});
         return future;
     }
 
     downloadFullNoteDataImpl(
-        std::move(noteGuid), includeNoteLimitsOption, std::move(ctx), promise);
+        std::move(noteGuid), noteStore, std::move(ctx), promise);
 
     return future;
 }
 
 void NoteFullDataDownloader::downloadFullNoteDataImpl(
-    qevercloud::Guid noteGuid, const IncludeNoteLimits includeNoteLimitsOption,
+    qevercloud::Guid noteGuid, const qevercloud::INoteStorePtr & noteStore,
     qevercloud::IRequestContextPtr ctx,
     const std::shared_ptr<QPromise<qevercloud::Note>> & promise)
 {
@@ -82,7 +74,7 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
 
     m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
-    auto getNoteFuture = m_noteStore->getNoteWithResultSpecAsync(
+    auto getNoteFuture = noteStore->getNoteWithResultSpecAsync(
         std::move(noteGuid),
         qevercloud::NoteResultSpecBuilder{}
             .setIncludeContent(true)
@@ -93,7 +85,7 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
             .setIncludeNoteAppDataValues(true)
             .setIncludeResourceAppDataValues(true)
             .setIncludeAccountLimits(
-                includeNoteLimitsOption == IncludeNoteLimits::Yes)
+                noteStore->linkedNotebookGuid().has_value())
             .build(),
         std::move(ctx));
 
@@ -140,7 +132,7 @@ void NoteFullDataDownloader::onNoteFullDataDownloadFinished()
     }
 
     downloadFullNoteDataImpl(
-        std::move(request.m_noteGuid), request.m_includeNoteLimits,
+        std::move(request.m_noteGuid), request.m_noteStore,
         std::move(request.m_ctx), request.m_promise);
 }
 

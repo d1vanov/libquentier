@@ -46,6 +46,7 @@
 namespace quentier::synchronization::tests {
 
 using testing::Return;
+using testing::ReturnRef;
 using testing::StrictMock;
 
 class NoteFullDataDownloaderTest : public testing::Test
@@ -61,47 +62,49 @@ TEST_F(NoteFullDataDownloaderTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto noteFullDataDownloader =
-            std::make_shared<NoteFullDataDownloader>(
-                m_mockNoteStore, m_maxInFlightDownloads));
-}
-
-TEST_F(NoteFullDataDownloaderTest, CtorNullNoteStore)
-{
-    EXPECT_THROW(
-        const auto noteFullDataDownloader =
-            std::make_shared<NoteFullDataDownloader>(
-                nullptr, m_maxInFlightDownloads),
-        InvalidArgument);
+            std::make_shared<NoteFullDataDownloader>(m_maxInFlightDownloads));
 }
 
 TEST_F(NoteFullDataDownloaderTest, CtorZeroMaxInFlightDownloads)
 {
     EXPECT_THROW(
         const auto noteFullDataDownloader =
-            std::make_shared<NoteFullDataDownloader>(m_mockNoteStore, 0U),
+            std::make_shared<NoteFullDataDownloader>(0U),
         InvalidArgument);
 }
 
-const std::array gIncludeNoteLimits{
-    INoteFullDataDownloader::IncludeNoteLimits::Yes,
-    INoteFullDataDownloader::IncludeNoteLimits::No,
+enum class WithLinkedNotebookGuid
+{
+    Yes,
+    No
+};
+
+const std::array gWithLinkedNotebookGuids{
+    WithLinkedNotebookGuid::Yes,
+    WithLinkedNotebookGuid::No,
 };
 
 class NoteFullDataDownloaderGroupTest :
     public NoteFullDataDownloaderTest,
-    public testing::WithParamInterface<
-        INoteFullDataDownloader::IncludeNoteLimits>
+    public testing::WithParamInterface<WithLinkedNotebookGuid>
 {};
 
 INSTANTIATE_TEST_SUITE_P(
     NoteFullDataDownloaderGroupTestInstance, NoteFullDataDownloaderGroupTest,
-    testing::ValuesIn(gIncludeNoteLimits));
+    testing::ValuesIn(gWithLinkedNotebookGuids));
 
 TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
 {
     const auto noteFullDataDownloader =
-        std::make_shared<NoteFullDataDownloader>(
-            m_mockNoteStore, m_maxInFlightDownloads);
+        std::make_shared<NoteFullDataDownloader>(m_maxInFlightDownloads);
+
+    const std::optional<qevercloud::Guid> linkedNotebookGuid =
+        (GetParam() == WithLinkedNotebookGuid::Yes
+             ? std::make_optional(UidGenerator::Generate())
+             : std::nullopt);
+
+    EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid())
+        .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -115,8 +118,7 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
             .setIncludeSharedNotes(true)
             .setIncludeNoteAppDataValues(true)
             .setIncludeResourceAppDataValues(true)
-            .setIncludeAccountLimits(
-                GetParam() == INoteFullDataDownloader::IncludeNoteLimits::Yes)
+            .setIncludeAccountLimits(GetParam() == WithLinkedNotebookGuid::Yes)
             .build();
 
     const auto note = qevercloud::NoteBuilder{}
@@ -132,7 +134,7 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
         .WillOnce(Return(threading::makeReadyFuture(note)));
 
     auto future = noteFullDataDownloader->downloadFullNoteData(
-        note.guid().value(), GetParam(), ctx);
+        note.guid().value(), m_mockNoteStore, ctx);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
@@ -145,7 +147,15 @@ TEST_P(
     const quint32 noteCount = 5;
 
     const auto noteFullDataDownloader =
-        std::make_shared<NoteFullDataDownloader>(m_mockNoteStore, noteCount);
+        std::make_shared<NoteFullDataDownloader>(noteCount);
+
+    const std::optional<qevercloud::Guid> linkedNotebookGuid =
+        (GetParam() == WithLinkedNotebookGuid::Yes
+             ? std::make_optional(UidGenerator::Generate())
+             : std::nullopt);
+
+    EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid())
+        .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -159,8 +169,7 @@ TEST_P(
             .setIncludeSharedNotes(true)
             .setIncludeNoteAppDataValues(true)
             .setIncludeResourceAppDataValues(true)
-            .setIncludeAccountLimits(
-                GetParam() == INoteFullDataDownloader::IncludeNoteLimits::Yes)
+            .setIncludeAccountLimits(GetParam() == WithLinkedNotebookGuid::Yes)
             .build();
 
     const QList<qevercloud::Note> notes = [&] {
@@ -196,7 +205,7 @@ TEST_P(
 
     for (const auto & note: qAsConst(notes)) {
         futures << noteFullDataDownloader->downloadFullNoteData(
-            note.guid().value(), GetParam(), ctx);
+            note.guid().value(), m_mockNoteStore, ctx);
         EXPECT_FALSE(futures.back().isFinished());
     }
 
@@ -223,8 +232,15 @@ TEST_P(
     const quint32 noteCount = 10;
 
     const auto noteFullDataDownloader =
-        std::make_shared<NoteFullDataDownloader>(
-            m_mockNoteStore, noteCount / 2);
+        std::make_shared<NoteFullDataDownloader>(noteCount / 2);
+
+    const std::optional<qevercloud::Guid> linkedNotebookGuid =
+        (GetParam() == WithLinkedNotebookGuid::Yes
+             ? std::make_optional(UidGenerator::Generate())
+             : std::nullopt);
+
+    EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid())
+        .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -238,8 +254,7 @@ TEST_P(
             .setIncludeSharedNotes(true)
             .setIncludeNoteAppDataValues(true)
             .setIncludeResourceAppDataValues(true)
-            .setIncludeAccountLimits(
-                GetParam() == INoteFullDataDownloader::IncludeNoteLimits::Yes)
+            .setIncludeAccountLimits(GetParam() == WithLinkedNotebookGuid::Yes)
             .build();
 
     const QList<qevercloud::Note> notes = [&] {
@@ -275,7 +290,7 @@ TEST_P(
 
     for (const auto & note: qAsConst(notes)) {
         futures << noteFullDataDownloader->downloadFullNoteData(
-            note.guid().value(), GetParam(), ctx);
+            note.guid().value(), m_mockNoteStore, ctx);
         EXPECT_FALSE(futures.back().isFinished());
     }
 

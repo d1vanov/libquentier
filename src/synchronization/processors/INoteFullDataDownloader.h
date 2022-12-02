@@ -19,7 +19,9 @@
 #pragma once
 
 #include <qevercloud/Fwd.h>
+#include <qevercloud/services/Fwd.h>
 #include <qevercloud/types/Note.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 
@@ -30,14 +32,8 @@ class INoteFullDataDownloader
 public:
     virtual ~INoteFullDataDownloader() = default;
 
-    enum class IncludeNoteLimits
-    {
-        Yes,
-        No
-    };
-
     [[nodiscard]] virtual QFuture<qevercloud::Note> downloadFullNoteData(
-        qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::Guid noteGuid, qevercloud::INoteStorePtr noteStore,
         qevercloud::IRequestContextPtr ctx = {}) = 0;
 };
 
