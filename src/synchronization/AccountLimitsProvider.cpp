@@ -145,7 +145,7 @@ QFuture<qevercloud::AccountLimits> AccountLimitsProvider::accountLimits(
 
     threading::thenOrFailed(
         std::move(accountLimitsFuture), promise,
-        [promise, selfWeak, serviceLevel, ctx = std::move(ctx)](
+        [promise, selfWeak, serviceLevel](
             qevercloud::AccountLimits accountLimits) {
             if (const auto self = selfWeak.lock()) {
                 const QMutexLocker locker{
