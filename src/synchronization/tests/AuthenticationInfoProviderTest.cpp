@@ -256,7 +256,7 @@ protected:
     const std::shared_ptr<mocks::MockINoteStoreFactory> m_mockNoteStoreFactory =
         std::make_shared<StrictMock<mocks::MockINoteStoreFactory>>();
 
-    const QString m_host = QStringLiteral("https://www.evernote.com");
+    const QString m_host = QStringLiteral("www.evernote.com");
 
     const std::shared_ptr<AuthenticationInfo> m_authenticationInfo =
         createSampleAuthenticationInfo();

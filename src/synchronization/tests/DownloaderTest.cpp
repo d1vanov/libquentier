@@ -848,7 +848,7 @@ protected:
         Account::Type::Evernote,
         qevercloud::UserID{42},
         Account::EvernoteAccountType::Free,
-        QStringLiteral("https://www.evernote.com"),
+        QStringLiteral("www.evernote.com"),
         QStringLiteral("shard id")};
 
     const std::shared_ptr<mocks::MockIAuthenticationInfoProvider>
