@@ -55,8 +55,7 @@ struct MockICallback : public ISyncChunksProvider::ICallback
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloadProgress,
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
-         qint32 lastPreviousUsn,
-         const qevercloud::LinkedNotebook & linkedNotebook),
+         qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook),
         (override));
 };
 
@@ -870,31 +869,31 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
     EXPECT_CALL(
         *m_mockSyncChunksDownloader,
         downloadLinkedNotebookSyncChunks(linkedNotebook, 54, _, _, _))
-        .WillOnce([downloadedSyncChunks, &linkedNotebook](
-                      qevercloud::LinkedNotebook ln, // NOLINT
-                      qint32 afterUsn,
-                      qevercloud::IRequestContextPtr ctx,        // NOLINT
-                      utility::cancelers::ICancelerPtr canceler, // NOLINT
-                      ISyncChunksDownloader::ICallbackWeakPtr
-                          callbackWeak) mutable // NOLINT
-                  {
-                      EXPECT_EQ(ln, linkedNotebook);
-                      Q_UNUSED(afterUsn)
-                      Q_UNUSED(ctx)
-                      Q_UNUSED(canceler)
+        .WillOnce(
+            [downloadedSyncChunks, &linkedNotebook](
+                const qevercloud::LinkedNotebook & ln, const qint32 afterUsn,
+                const qevercloud::IRequestContextPtr & ctx,
+                const utility::cancelers::ICancelerPtr & canceler,
+                ISyncChunksDownloader::ICallbackWeakPtr
+                    callbackWeak) mutable // NOLINT
+            {
+                EXPECT_EQ(ln, linkedNotebook);
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+                Q_UNUSED(canceler)
 
-                      const auto callback = callbackWeak.lock();
-                      EXPECT_TRUE(callback);
-                      if (callback) {
-                          callback->onLinkedNotebookSyncChunksDownloadProgress(
-                              82, 82, 54, ln);
-                      }
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    callback->onLinkedNotebookSyncChunksDownloadProgress(
+                        82, 82, 54, ln);
+                }
 
-                      return threading::makeReadyFuture<
-                          ISyncChunksDownloader::SyncChunksResult>(
-                          ISyncChunksDownloader::SyncChunksResult{
-                              std::move(downloadedSyncChunks), nullptr});
-                  });
+                return threading::makeReadyFuture<
+                    ISyncChunksDownloader::SyncChunksResult>(
+                    ISyncChunksDownloader::SyncChunksResult{
+                        std::move(downloadedSyncChunks), nullptr});
+            });
 
     EXPECT_CALL(
         *m_mockCallback,

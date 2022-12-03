@@ -76,12 +76,12 @@ public:
     void onLinkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
         qint32 lastPreviousUsn,
-        const qevercloud::LinkedNotebook & linkedNotebook) override
+        qevercloud::LinkedNotebook linkedNotebook) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
-                linkedNotebook);
+                std::move(linkedNotebook));
         }
     }
 
