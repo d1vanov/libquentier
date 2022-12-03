@@ -34,6 +34,8 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT IDownloadResourcesStatus : public Printable
 {
 public:
+    ~IDownloadResourcesStatus() noexcept override;
+
     using QExceptionPtr = std::shared_ptr<QException>;
 
     using ResourceWithException =

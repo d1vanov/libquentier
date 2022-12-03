@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "INoteStoreFactory.h"
 #include "NoteStoreProvider.h"
+#include "INoteStoreFactory.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -113,10 +113,8 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStore(
     QFuture<std::optional<qevercloud::LinkedNotebook>> linkedNotebookFuture =
         [&] {
             const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
-            auto it =
-                m_linkedNotebooksByNotebookLocalId.constFind(notebookLocalId);
-
-            if (it != m_linkedNotebooksByNotebookLocalId.constEnd() &&
+            auto it = m_linkedNotebooksByNotebookLocalId.find(notebookLocalId);
+            if (it != m_linkedNotebooksByNotebookLocalId.end() &&
                 isLinkedNotebookFutureReady(it.value()))
             {
                 return it.value();
@@ -237,10 +235,8 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
                 linkedNotebookFuture = [&] {
                     const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
 
-                    auto it =
-                        m_linkedNotebooksByGuid.constFind(linkedNotebookGuid);
-
-                    if (it != m_linkedNotebooksByGuid.constEnd() &&
+                    auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
+                    if (it != m_linkedNotebooksByGuid.end() &&
                         isLinkedNotebookFutureReady(it.value()))
                     {
                         return it.value();

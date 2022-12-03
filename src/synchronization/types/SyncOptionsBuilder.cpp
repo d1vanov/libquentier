@@ -49,9 +49,4 @@ ISyncOptionsPtr SyncOptionsBuilder::build()
     return options;
 }
 
-ISyncOptionsBuilderPtr createSyncOptionsBuilder()
-{
-    return std::make_shared<SyncOptionsBuilder>();
-}
-
 } // namespace quentier::synchronization

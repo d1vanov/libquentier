@@ -30,7 +30,7 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISyncOptionsBuilder
 {
 public:
-    virtual ~ISyncOptionsBuilder() noexcept = default;
+    virtual ~ISyncOptionsBuilder() noexcept;
 
     virtual ISyncOptionsBuilder & setDownloadNoteThumbnails(bool value) = 0;
 
@@ -40,6 +40,6 @@ public:
     [[nodiscard]] virtual ISyncOptionsPtr build() = 0;
 };
 
-[[nodiscard]] ISyncOptionsBuilderPtr QUENTIER_EXPORT createSyncOptionsBuilder();
+[[nodiscard]] QUENTIER_EXPORT ISyncOptionsBuilderPtr createSyncOptionsBuilder();
 
 } // namespace quentier::synchronization

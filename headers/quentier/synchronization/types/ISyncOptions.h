@@ -33,6 +33,8 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISyncOptions : public Printable
 {
 public:
+    virtual ~ISyncOptions() noexcept;
+
     /**
      * Flag to enable or disable downloading of note thumbnails during the sync.
      * Note thumbnails are stored inside the local storage along with other

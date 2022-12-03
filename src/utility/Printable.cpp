@@ -20,6 +20,8 @@
 
 namespace quentier {
 
+Printable::~Printable() noexcept = default;
+
 QString Printable::toString() const
 {
     QString str;

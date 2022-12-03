@@ -29,7 +29,7 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT IAuthenticator
 {
 public:
-    virtual ~IAuthenticator() = default;
+    virtual ~IAuthenticator() noexcept;
 
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
         authenticateNewAccount() = 0;

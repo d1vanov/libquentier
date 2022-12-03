@@ -141,7 +141,7 @@ bool EncryptionManagerPrivate::encrypt(
     size_t & keyLength, QString & encryptedText, ErrorString & errorDescription)
 {
     constexpr std::string_view ident = "ENC0"sv;
-    QByteArray encryptedTextData(ident.data(), ident.size());
+    QByteArray encryptedTextData(ident.data(), static_cast<int>(ident.size()));
 
 #define GET_OPENSSL_ERROR                                                      \
     unsigned long errorCode = ERR_get_error();                                 \

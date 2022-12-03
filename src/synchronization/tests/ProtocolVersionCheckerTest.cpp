@@ -183,7 +183,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionExplicitFailure)
     try {
         future.waitForFinished();
     }
-    catch (const IQuentierException & e) {
+    catch ([[maybe_unused]] const IQuentierException & e) {
         caughtException = true;
     }
 

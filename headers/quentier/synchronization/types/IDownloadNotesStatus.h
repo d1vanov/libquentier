@@ -35,6 +35,8 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT IDownloadNotesStatus : public Printable
 {
 public:
+    ~IDownloadNotesStatus() noexcept override;
+
     using QExceptionPtr = std::shared_ptr<QException>;
     using NoteWithException = std::pair<qevercloud::Note, QExceptionPtr>;
     using GuidWithException = std::pair<qevercloud::Guid, QExceptionPtr>;

@@ -16,24 +16,19 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <quentier/synchronization/types/ISyncOptionsBuilder.h>
 
-#include <quentier/synchronization/IAuthenticator.h>
+#include "SyncOptionsBuilder.h"
 
-#include <gmock/gmock.h>
+#include <memory>
 
-namespace quentier::synchronization::tests::mocks {
+namespace quentier::synchronization {
 
-class MockIAuthenticator : public IAuthenticator
+ISyncOptionsBuilder::~ISyncOptionsBuilder() noexcept = default;
+
+ISyncOptionsBuilderPtr createSyncOptionsBuilder()
 {
-public:
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
-        (override));
+    return std::make_shared<SyncOptionsBuilder>();
+}
 
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateAccount, (Account account),
-        (override));
-};
-
-} // namespace quentier::synchronization::tests::mocks
+} // namespace quentier::synchronization

@@ -16,24 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
 #include <quentier/synchronization/IAuthenticator.h>
 
-#include <gmock/gmock.h>
+namespace quentier::synchronization {
 
-namespace quentier::synchronization::tests::mocks {
+IAuthenticator::~IAuthenticator() noexcept = default;
 
-class MockIAuthenticator : public IAuthenticator
-{
-public:
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
-        (override));
-
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateAccount, (Account account),
-        (override));
-};
-
-} // namespace quentier::synchronization::tests::mocks
+} // namespace quentier::synchronization

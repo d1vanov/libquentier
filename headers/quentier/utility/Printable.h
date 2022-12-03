@@ -37,7 +37,7 @@ namespace quentier {
 class QUENTIER_EXPORT Printable
 {
 public:
-    virtual ~Printable() noexcept = default;
+    virtual ~Printable() noexcept;
 
     virtual QTextStream & print(QTextStream & strm) const = 0;
 

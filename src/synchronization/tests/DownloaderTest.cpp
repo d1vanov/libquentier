@@ -27,6 +27,7 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/Unreachable.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
@@ -1307,6 +1308,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
         case SyncMode::Incremental:
             return 42;
         }
+
+        UNREACHABLE;
     }();
 
     const auto syncChunks =
@@ -1671,6 +1674,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
             case SyncMode::Incremental:
                 return 15;
             }
+
+            UNREACHABLE;
         }();
 
         const auto linkedNotebookSyncChunks = generateSyncChunks(

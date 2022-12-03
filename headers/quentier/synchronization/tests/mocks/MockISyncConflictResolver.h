@@ -24,7 +24,7 @@
 
 namespace quentier::synchronization::tests::mocks {
 
-class QUENTIER_EXPORT MockISyncConflictResolver : public ISyncConflictResolver
+class MockISyncConflictResolver : public ISyncConflictResolver
 {
 public:
     MOCK_METHOD(

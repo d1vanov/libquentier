@@ -18,22 +18,10 @@
 
 #pragma once
 
-#include <quentier/synchronization/IAuthenticator.h>
+#include <QtGlobal>
 
-#include <gmock/gmock.h>
-
-namespace quentier::synchronization::tests::mocks {
-
-class MockIAuthenticator : public IAuthenticator
-{
-public:
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
-        (override));
-
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateAccount, (Account account),
-        (override));
-};
-
-} // namespace quentier::synchronization::tests::mocks
+#ifdef _MSC_VER
+#define UNREACHABLE do { Q_ASSERT(false); __assume(0); } while (false)
+#else
+#define UNREACHABLE do { Q_ASSERT(false); __builtin_unreachable(); } while (false)
+#endif

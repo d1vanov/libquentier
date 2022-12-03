@@ -35,9 +35,9 @@ add_executable(${TESTS_NAME}
 target_link_libraries(${TESTS_NAME}
   PRIVATE
     ${LIBNAME}_private
-    ${LIBNAME}
     ${LIBRARY_NAME}
     ${LIBRARY_NAME}_testing_mocks
+    ${LIBNAME}
     ${GMOCK_LIBRARIES}
     GTest::GTest
     Qt5::Core)

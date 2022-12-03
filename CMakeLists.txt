@@ -214,6 +214,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
+    headers/quentier/utility/Unreachable.h
     headers/quentier/utility/cancelers/AnyOfCanceler.h
     headers/quentier/utility/cancelers/Fwd.h
     headers/quentier/utility/cancelers/FutureCanceler.h
@@ -267,9 +268,7 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/types/AuthenticationInfo.h
-    src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncOptions.h
-    src/synchronization/types/SyncOptionsBuilder.cpp
     src/synchronization/types/SyncOptionsBuilder.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
@@ -419,6 +418,7 @@ set(${PROJECT_NAME}_SOURCES
     src/logging/QuentierLogger.cpp
     src/logging/QuentierLogger_p.cpp
     src/synchronization/IAuthenticationManager.cpp
+    src/synchronization/IAuthenticator.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
     src/synchronization/ISyncConflictResolver.cpp
@@ -444,6 +444,12 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NoteSyncCache.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/SyncChunksDataCounters.cpp
+    src/synchronization/types/IDownloadNotesStatus.cpp
+    src/synchronization/types/IDownloadResourcesStatus.cpp
+    src/synchronization/types/ISyncOptions.cpp
+    src/synchronization/types/ISyncOptionsBuilder.cpp
+    src/synchronization/types/SyncOptions.cpp
+    src/synchronization/types/SyncOptionsBuilder.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp
     src/types/Account.cpp
