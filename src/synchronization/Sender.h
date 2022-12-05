@@ -53,30 +53,21 @@ class Sender final : public ISender, public std::enable_shared_from_this<Sender>
 {
 public:
     Sender(
-        Account account,
-        IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        Account account, local_storage::ILocalStoragePtr localStorage,
         ISyncStateStoragePtr syncStateStorage,
-        qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
-        local_storage::ILocalStoragePtr localStorage);
+        INoteStoreProviderPtr noteStoreProvider,
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {});
 
     [[nodiscard]] QFuture<Result> send(
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak) override;
 
 private:
-    [[nodiscard]] QFuture<Result> launchSend(
-        const IAuthenticationInfo & authenticationInfo,
-        SyncStateConstPtr lastSyncState,
-        utility::cancelers::ICancelerPtr canceler,
-        ICallbackWeakPtr callbackWeak);
-
-    void cancel(QPromise<Result> & promise);
-
     struct SendContext
     {
         SyncStateConstPtr lastSyncState;
         std::shared_ptr<QPromise<Result>> promise;
-        qevercloud::IRequestContextPtr ctx;
         utility::cancelers::ICancelerPtr canceler;
         ICallbackWeakPtr callbackWeak;
 
@@ -185,11 +176,11 @@ private:
 
 private:
     const Account m_account;
-    const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
-    const ISyncStateStoragePtr m_syncStateStorage;
-    const qevercloud::IRequestContextPtr m_ctx;
-    const qevercloud::INoteStorePtr m_noteStore;
     const local_storage::ILocalStoragePtr m_localStorage;
+    const ISyncStateStoragePtr m_syncStateStorage;
+    const INoteStoreProviderPtr m_noteStoreProvider;
+    const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
 
 } // namespace quentier::synchronization
