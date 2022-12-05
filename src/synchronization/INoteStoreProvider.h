@@ -37,6 +37,10 @@ public:
         QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
 
+    [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr> userOwnNoteStore(
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
+
     [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr>
         linkedNotebookNoteStore(
             qevercloud::Guid linkedNotebookGuid,

@@ -133,10 +133,23 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStore(
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
              promise](const std::optional<qevercloud::LinkedNotebook> &
                           linkedNotebook) mutable {
-                onFindLinkedNotebookResult(
+                createNoteStore(
                     linkedNotebook, std::move(ctx), std::move(retryPolicy),
                     promise);
             }});
+
+    return future;
+}
+
+QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::userOwnNoteStore(
+    qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy)
+{
+    auto promise = std::make_shared<QPromise<qevercloud::INoteStorePtr>>();
+    auto future = promise->future();
+    promise->start();
+
+    createNoteStore(
+        std::nullopt, std::move(ctx), std::move(retryPolicy), promise);
 
     return future;
 }
@@ -177,7 +190,7 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::linkedNotebookNoteStore(
                     return;
                 }
 
-                onFindLinkedNotebookResult(
+                createNoteStore(
                     linkedNotebook, std::move(ctx), std::move(retryPolicy),
                     promise);
             }});
@@ -294,7 +307,7 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
     return future;
 }
 
-void NoteStoreProvider::onFindLinkedNotebookResult(
+void NoteStoreProvider::createNoteStore(
     const std::optional<qevercloud::LinkedNotebook> & linkedNotebook,
     qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy,
     const std::shared_ptr<QPromise<qevercloud::INoteStorePtr>> & promise)

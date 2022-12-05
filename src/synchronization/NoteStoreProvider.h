@@ -54,6 +54,10 @@ public:
         QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> userOwnNoteStore(
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+
     [[nodiscard]] QFuture<qevercloud::INoteStorePtr> linkedNotebookNoteStore(
         qevercloud::Guid linkedNotebookGuid,
         qevercloud::IRequestContextPtr ctx = {},
@@ -63,7 +67,7 @@ private:
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByNotebookLocalId(const QString & notebookLocalId);
 
-    void onFindLinkedNotebookResult(
+    void createNoteStore(
         const std::optional<qevercloud::LinkedNotebook> & linkedNotebook,
         qevercloud::IRequestContextPtr ctx,
         qevercloud::IRetryPolicyPtr retryPolicy,
