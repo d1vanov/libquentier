@@ -249,7 +249,7 @@ void Sender::sendNotes(
 
     QFuture<void> previousNoteFuture = threading::makeReadyFuture();
     for (int index = 0, size = notes.size(); index < size; ++index) {
-        const auto & note = notes[index];
+        auto & note = notes[index];
 
         bool containsFailedToSendTags = false;
         {
@@ -296,7 +296,7 @@ void Sender::sendNotes(
             auto future = notePromise->future();
             notePromise->start();
 
-            createOrUpdateNote(
+            sendNote(
                 sendContext, note, containsFailedToSendTags,
                 std::move(previousNoteFuture), notePromise);
 
@@ -326,7 +326,7 @@ void Sender::sendNotes(
 
         threading::onFailed(
             std::move(noteThenFuture),
-            [selfWeak, this, sendContext, note = note,
+            [selfWeak, this, sendContext, note = std::move(note),
              noteProcessingPromise](const QException & e) mutable {
                 if (sendContext->canceler->isCanceled()) {
                     return;
@@ -349,56 +349,19 @@ void Sender::sendNotes(
         std::move(allNotesProcessingFuture), std::move(promise));
 }
 
-void Sender::createOrUpdateNote(
-    SendContextPtr sendContext, const qevercloud::Note & note,
+void Sender::sendNote(
+    SendContextPtr sendContext, qevercloud::Note note,
     const bool containsFailedToSendTags, QFuture<void> previousNoteFuture,
     const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const
 {
-    struct ResourceLocalData
-    {
-        QString localId;
-        std::optional<qevercloud::Guid> guid;
-        bool locallyFavorited = false;
-        QHash<QString, QVariant> localData;
-    };
-
-    struct NoteLocalData
-    {
-        QString localId;
-        QStringList tagLocalIds;
-        bool locallyFavorited = false;
-        QHash<QString, QVariant> localData;
-        QList<ResourceLocalData> resourcesLocalData;
-    };
-
-    NoteLocalData noteLocalData;
-    noteLocalData.localId = note.localId();
-    noteLocalData.tagLocalIds = note.tagLocalIds();
-    noteLocalData.locallyFavorited = note.isLocallyFavorited();
-    noteLocalData.localData = note.localData();
-
-    if (note.resources()) {
-        noteLocalData.resourcesLocalData.reserve(note.resources()->size());
-        for (const auto & resource: qAsConst(*note.resources())) {
-            noteLocalData.resourcesLocalData << ResourceLocalData{};
-            ResourceLocalData & resourceLocalData =
-                noteLocalData.resourcesLocalData.last();
-
-            resourceLocalData.localId = resource.localId();
-            resourceLocalData.guid = resource.guid();
-            resourceLocalData.locallyFavorited = resource.isLocallyFavorited();
-            resourceLocalData.localData = resource.localData();
-        }
-    }
-
     const auto selfWeak = weak_from_this();
     threading::thenOrFailed(
         std::move(previousNoteFuture), notePromise,
         threading::TrackedTask{
             selfWeak,
-            [selfWeak, this, notePromise, note = note, containsFailedToSendTags,
-             sendContext = std::move(sendContext),
-             noteLocalData = std::move(noteLocalData)]() mutable {
+            [selfWeak, this, notePromise, note = std::move(note),
+             containsFailedToSendTags,
+             sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
                     return;
                 }
@@ -408,10 +371,9 @@ void Sender::createOrUpdateNote(
 
                 threading::thenOrFailed(
                     std::move(noteStoreFuture), notePromise,
-                    [selfWeak, notePromise, note = std::move(note),
+                    [selfWeak, this, notePromise, note = std::move(note),
                      containsFailedToSendTags,
-                     sendContext = std::move(sendContext),
-                     noteLocalData = std::move(noteLocalData)](
+                     sendContext = std::move(sendContext)](
                         const qevercloud::INoteStorePtr & noteStore) mutable {
                         Q_ASSERT(noteStore);
                         const auto self = selfWeak.lock();
@@ -423,65 +385,65 @@ void Sender::createOrUpdateNote(
                             return;
                         }
 
-                        const bool newNote =
-                            !note.updateSequenceNum().has_value();
-
-                        auto noteFuture =
-                            (newNote ? noteStore->createNoteAsync(note)
-                                     : noteStore->updateNoteAsync(note));
-
-                        threading::thenOrFailed(
-                            std::move(noteFuture), notePromise,
-                            [notePromise, containsFailedToSendTags,
-                             noteLocalData = std::move(noteLocalData)](
-                                qevercloud::Note n) mutable {
-                                n.setLocalId(std::move(noteLocalData.localId));
-                                n.setLocallyFavorited(
-                                    noteLocalData.locallyFavorited);
-                                n.setLocalData(
-                                    std::move(noteLocalData.localData));
-                                n.setTagLocalIds(
-                                    std::move(noteLocalData.tagLocalIds));
-                                n.setLocallyModified(!containsFailedToSendTags);
-                                if (n.resources()) {
-                                    Q_ASSERT(
-                                        noteLocalData.resourcesLocalData
-                                            .size() == n.resources()->size());
-
-                                    for (int i = 0; i < n.resources()->size();
-                                         ++i) {
-                                        auto & resource =
-                                            (*n.mutableResources())[i];
-                                        Q_ASSERT(resource.guid());
-                                        if (Q_UNLIKELY(!resource.guid())) {
-                                            continue;
-                                        }
-
-                                        resource.setNoteLocalId(n.localId());
-
-                                        auto & resourceLocalData =
-                                            noteLocalData.resourcesLocalData[i];
-
-                                        Q_ASSERT(
-                                            !resourceLocalData.guid ||
-                                            resourceLocalData.guid ==
-                                                resource.guid());
-
-                                        resource.setLocalId(std::move(
-                                            resourceLocalData.localId));
-
-                                        resource.setLocallyFavorited(
-                                            resourceLocalData.locallyFavorited);
-
-                                        resource.setLocalData(std::move(
-                                            resourceLocalData.localData));
-                                    }
-                                }
-                                notePromise->addResult(std::move(n));
-                                notePromise->finish();
-                            });
+                        sendNoteImpl(
+                            std::move(note), containsFailedToSendTags,
+                            noteStore, notePromise);
                     });
             }});
+}
+
+void Sender::sendNoteImpl(
+    qevercloud::Note note, const bool containsFailedToSendTags,
+    const qevercloud::INoteStorePtr & noteStore,
+    const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const
+{
+    Q_ASSERT(noteStore);
+
+    const bool newNote = !note.updateSequenceNum().has_value();
+
+    auto noteFuture =
+        (newNote ? noteStore->createNoteAsync(note)
+                 : noteStore->updateNoteAsync(note));
+
+    threading::thenOrFailed(
+        std::move(noteFuture), notePromise,
+        [notePromise, containsFailedToSendTags,
+         note = std::move(note)](qevercloud::Note n) mutable {
+            n.setLocalId(note.localId());
+            n.setLocallyFavorited(note.isLocallyFavorited());
+            n.setLocalData(std::move(note.mutableLocalData()));
+            n.setTagLocalIds(std::move(note.mutableTagLocalIds()));
+            n.setLocallyModified(!containsFailedToSendTags);
+            if (n.resources()) {
+                Q_ASSERT(note.resources());
+                Q_ASSERT(note.resources()->size() == n.resources()->size());
+                for (int i = 0; i < n.resources()->size(); ++i) {
+                    auto & resource = (*n.mutableResources())[i];
+                    Q_ASSERT(resource.guid());
+                    if (Q_UNLIKELY(!resource.guid())) {
+                        continue;
+                    }
+
+                    resource.setNoteLocalId(n.localId());
+
+                    auto & originalResource = (*note.mutableResources())[i];
+
+                    Q_ASSERT(
+                        !originalResource.guid() ||
+                        originalResource.guid() == resource.guid());
+
+                    resource.setLocalId(originalResource.localId());
+
+                    resource.setLocallyFavorited(
+                        originalResource.isLocallyFavorited());
+
+                    resource.setLocalData(
+                        std::move(originalResource.mutableLocalData()));
+                }
+            }
+            notePromise->addResult(std::move(n));
+            notePromise->finish();
+        });
 }
 
 void Sender::processNote(
@@ -762,14 +724,6 @@ void Sender::sendTags(
         return;
     }
 
-    struct TagLocalData
-    {
-        QString localId;
-        QString parentLocalId;
-        bool locallyFavorited = false;
-        QHash<QString, QVariant> localData;
-    };
-
     const auto selfWeak = weak_from_this();
     QList<QFuture<void>> tagProcessingFutures;
     tagProcessingFutures.reserve(tags.size());
@@ -818,153 +772,7 @@ void Sender::sendTags(
             auto future = tagPromise->future();
             tagPromise->start();
 
-            const bool newTag = !tag.updateSequenceNum().has_value();
-
-            if (newTag) {
-                TagLocalData tagLocalData;
-                tagLocalData.localId = tag.localId();
-                tagLocalData.parentLocalId = std::move(tagParentLocalId);
-                tagLocalData.localData = tag.localData();
-                tagLocalData.locallyFavorited = tag.isLocallyFavorited();
-
-                threading::thenOrFailed(
-                    std::move(previousTagFuture), tagPromise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [selfWeak, this, tagPromise, tag = tag,
-                         sendContext = sendContext,
-                         tagLocalData = std::move(tagLocalData)]() mutable {
-                            if (sendContext->canceler->isCanceled()) {
-                                return;
-                            }
-
-                            auto noteStoreFuture =
-                                (tag.linkedNotebookGuid()
-                                     ? m_noteStoreProvider
-                                           ->linkedNotebookNoteStore(
-                                               *tag.linkedNotebookGuid(), m_ctx,
-                                               m_retryPolicy)
-                                     : m_noteStoreProvider->userOwnNoteStore(
-                                           m_ctx, m_retryPolicy));
-
-                            threading::thenOrFailed(
-                                std::move(noteStoreFuture), tagPromise,
-                                [selfWeak, tagPromise,
-                                 sendContext = std::move(sendContext),
-                                 tag = std::move(tag),
-                                 tagLocalData = std::move(tagLocalData)](
-                                    const qevercloud::INoteStorePtr &
-                                        noteStore) mutable {
-                                    Q_ASSERT(noteStore);
-
-                                    const auto self = selfWeak.lock();
-                                    if (!self) {
-                                        return;
-                                    }
-
-                                    if (sendContext->canceler->isCanceled()) {
-                                        return;
-                                    }
-
-                                    auto createFuture =
-                                        noteStore->createTagAsync(tag);
-
-                                    threading::thenOrFailed(
-                                        std::move(createFuture), tagPromise,
-                                        [tagPromise, sendContext,
-                                         tag = std::move(tag),
-                                         tagLocalData =
-                                             std::move(tagLocalData)](
-                                            qevercloud::Tag t) mutable {
-                                            {
-                                                // This tag was sent to Evernote
-                                                // for the first time so it has
-                                                // acquired guid for the first
-                                                // time. Will cache this local
-                                                // id to guid mapping in order
-                                                // to be able to set parent guid
-                                                // to its child tags (if there
-                                                // are any).
-                                                Q_ASSERT(t.guid());
-                                                const QMutexLocker locker{
-                                                    sendContext->sendStatusMutex
-                                                        .get()};
-                                                sendContext
-                                                    ->newTagLocalIdsToGuids
-                                                        [tagLocalData.localId] =
-                                                    *t.guid();
-                                            }
-                                            t.setLocalId(std::move(
-                                                tagLocalData.localId));
-                                            t.setLocallyFavorited(
-                                                tagLocalData.locallyFavorited);
-                                            t.setLocalData(std::move(
-                                                tagLocalData.localData));
-                                            t.setParentTagLocalId(std::move(
-                                                tagLocalData.parentLocalId));
-                                            t.setLocallyModified(false);
-                                            tagPromise->addResult(std::move(t));
-                                            tagPromise->finish();
-                                        });
-                                });
-                        }});
-            }
-            else {
-                threading::thenOrFailed(
-                    std::move(previousTagFuture), tagPromise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [selfWeak, this, tag = tag, tagPromise,
-                         sendContext = sendContext]() mutable {
-                            if (sendContext->canceler->isCanceled()) {
-                                return;
-                            }
-
-                            auto noteStoreFuture =
-                                (tag.linkedNotebookGuid()
-                                     ? m_noteStoreProvider
-                                           ->linkedNotebookNoteStore(
-                                               *tag.linkedNotebookGuid(), m_ctx,
-                                               m_retryPolicy)
-                                     : m_noteStoreProvider->userOwnNoteStore(
-                                           m_ctx, m_retryPolicy));
-
-                            threading::thenOrFailed(
-                                std::move(noteStoreFuture), tagPromise,
-                                [selfWeak, tagPromise,
-                                 tag = std::move(tag),
-                                 sendContext = std::move(sendContext)](
-                                    const qevercloud::INoteStorePtr &
-                                        noteStore) mutable {
-                                    Q_ASSERT(noteStore);
-
-                                    const auto self = selfWeak.lock();
-                                    if (!self) {
-                                        return;
-                                    }
-
-                                    if (sendContext->canceler->isCanceled()) {
-                                        return;
-                                    }
-
-                                    auto updateFuture =
-                                        noteStore->updateTagAsync(tag);
-
-                                    threading::thenOrFailed(
-                                        std::move(updateFuture), tagPromise,
-                                        [tagPromise, tag = std::move(tag)](
-                                            const qint32
-                                                newUpdateSequenceNum) mutable {
-                                            tag.setUpdateSequenceNum(
-                                                newUpdateSequenceNum);
-                                            tag.setLocallyModified(false);
-                                            tagPromise->addResult(
-                                                std::move(tag));
-                                            tagPromise->finish();
-                                        });
-                                });
-                        }});
-            }
+            sendTag(sendContext, tag, std::move(previousTagFuture), tagPromise);
 
             return future;
         }();
@@ -1007,6 +815,102 @@ void Sender::sendTags(
 
     threading::thenOrFailed(
         std::move(allTagsProcessingFuture), std::move(promise));
+}
+
+void Sender::sendTag(
+    SendContextPtr sendContext, qevercloud::Tag tag,
+    QFuture<void> previousTagFuture,
+    const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const
+{
+    const auto selfWeak = weak_from_this();
+    threading::thenOrFailed(
+        std::move(previousTagFuture), tagPromise,
+        threading::TrackedTask{
+            selfWeak,
+            [selfWeak, this, tagPromise, tag = std::move(tag),
+             sendContext = std::move(sendContext)]() mutable {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                auto noteStoreFuture =
+                    (tag.linkedNotebookGuid()
+                         ? m_noteStoreProvider->linkedNotebookNoteStore(
+                               *tag.linkedNotebookGuid(), m_ctx, m_retryPolicy)
+                         : m_noteStoreProvider->userOwnNoteStore(
+                               m_ctx, m_retryPolicy));
+
+                threading::thenOrFailed(
+                    std::move(noteStoreFuture), tagPromise,
+                    [selfWeak, this, tagPromise,
+                     sendContext = std::move(sendContext),
+                     tag = std::move(tag)](
+                        const qevercloud::INoteStorePtr & noteStore) mutable {
+                        Q_ASSERT(noteStore);
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            return;
+                        }
+
+                        if (sendContext->canceler->isCanceled()) {
+                            return;
+                        }
+
+                        sendTagImpl(
+                            std::move(sendContext), std::move(tag), noteStore,
+                            tagPromise);
+                    });
+            }});
+}
+
+void Sender::sendTagImpl(
+    SendContextPtr sendContext, qevercloud::Tag tag,
+    const qevercloud::INoteStorePtr & noteStore,
+    const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const
+{
+    const bool newTag = !tag.updateSequenceNum().has_value();
+    if (newTag) {
+        auto createTagFuture = noteStore->createTagAsync(tag);
+        threading::thenOrFailed(
+            std::move(createTagFuture), tagPromise,
+            [tagPromise, sendContext = std::move(sendContext),
+             tag = std::move(tag)](qevercloud::Tag t) mutable {
+                {
+                    // This tag was sent to Evernote
+                    // for the first time so it has
+                    // acquired guid for the first
+                    // time. Will cache this local
+                    // id to guid mapping in order
+                    // to be able to set parent guid
+                    // to its child tags (if there
+                    // are any).
+                    Q_ASSERT(t.guid());
+                    const QMutexLocker locker{
+                        sendContext->sendStatusMutex.get()};
+                    sendContext->newTagLocalIdsToGuids[tag.localId()] =
+                        *t.guid();
+                }
+                t.setLocalId(tag.localId());
+                t.setLocallyFavorited(tag.isLocallyFavorited());
+                t.setLocalData(std::move(tag.mutableLocalData()));
+                t.setParentTagLocalId(tag.parentTagLocalId());
+                t.setLocallyModified(false);
+                tagPromise->addResult(std::move(t));
+                tagPromise->finish();
+            });
+    }
+    else {
+        auto updateTagFuture = noteStore->updateTagAsync(tag);
+        threading::thenOrFailed(
+            std::move(updateTagFuture), tagPromise,
+            [tagPromise,
+             tag = std::move(tag)](const qint32 newUpdateSequenceNum) mutable {
+                tag.setUpdateSequenceNum(newUpdateSequenceNum);
+                tag.setLocallyModified(false);
+                tagPromise->addResult(std::move(tag));
+                tagPromise->finish();
+            });
+    }
 }
 
 void Sender::processTag(
@@ -1118,13 +1022,6 @@ void Sender::sendNotebooks(
     QList<QFuture<void>> notebookProcessingFutures;
     notebookProcessingFutures.reserve(notebooks.size());
 
-    struct NotebookLocalData
-    {
-        QString localId;
-        bool locallyFavorited = false;
-        QHash<QString, QVariant> localData;
-    };
-
     QFuture<void> previousNotebookFuture = threading::makeReadyFuture();
     for (int index = 0, size = notebooks.size(); index < size; ++index) {
         const auto & notebook = notebooks[index];
@@ -1140,135 +1037,9 @@ void Sender::sendNotebooks(
             auto future = notebookPromise->future();
             notebookPromise->start();
 
-            const bool newNotebook = !notebook.updateSequenceNum().has_value();
-
-            if (newNotebook) {
-                NotebookLocalData notebookLocalData;
-                notebookLocalData.localId = notebook.localId();
-                notebookLocalData.localData = notebook.localData();
-                notebookLocalData.locallyFavorited =
-                    notebook.isLocallyFavorited();
-
-                threading::thenOrFailed(
-                    std::move(previousNotebookFuture), notebookPromise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [selfWeak, this, notebookPromise, notebook = notebook,
-                         sendContext = sendContext,
-                         notebookLocalData =
-                             std::move(notebookLocalData)]() mutable {
-                            if (sendContext->canceler->isCanceled()) {
-                                return;
-                            }
-
-                            auto noteStoreFuture = notebook.linkedNotebookGuid()
-                                ? m_noteStoreProvider->linkedNotebookNoteStore(
-                                      *notebook.linkedNotebookGuid(), m_ctx,
-                                      m_retryPolicy)
-                                : m_noteStoreProvider->userOwnNoteStore(
-                                      m_ctx, m_retryPolicy);
-
-                            threading::thenOrFailed(
-                                std::move(noteStoreFuture), notebookPromise,
-                                [selfWeak, notebookPromise,
-                                 notebook = std::move(notebook),
-                                 sendContext = std::move(sendContext),
-                                 notebookLocalData =
-                                     std::move(notebookLocalData)](
-                                    const qevercloud::INoteStorePtr &
-                                        noteStore) mutable {
-                                    Q_ASSERT(noteStore);
-                                    const auto self = selfWeak.lock();
-                                    if (!self) {
-                                        return;
-                                    }
-
-                                    if (sendContext->canceler->isCanceled()) {
-                                        return;
-                                    }
-
-                                    auto createFuture =
-                                        noteStore->createNotebookAsync(
-                                            notebook);
-
-                                    threading::thenOrFailed(
-                                        std::move(createFuture),
-                                        notebookPromise,
-                                        [notebookPromise,
-                                         notebookLocalData =
-                                             std::move(notebookLocalData)](
-                                            qevercloud::Notebook n) mutable {
-                                            n.setLocalId(std::move(
-                                                notebookLocalData.localId));
-                                            n.setLocallyFavorited(
-                                                notebookLocalData
-                                                    .locallyFavorited);
-                                            n.setLocalData(std::move(
-                                                notebookLocalData.localData));
-                                            n.setLocallyModified(false);
-                                            notebookPromise->addResult(
-                                                std::move(n));
-                                            notebookPromise->finish();
-                                        });
-                                });
-                        }});
-            }
-            else {
-                threading::thenOrFailed(
-                    std::move(previousNotebookFuture), notebookPromise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [selfWeak, this, notebook = notebook, notebookPromise,
-                         sendContext = sendContext]() mutable {
-                            if (sendContext->canceler->isCanceled()) {
-                                return;
-                            }
-
-                            auto noteStoreFuture = notebook.linkedNotebookGuid()
-                                ? m_noteStoreProvider->linkedNotebookNoteStore(
-                                      *notebook.linkedNotebookGuid(), m_ctx,
-                                      m_retryPolicy)
-                                : m_noteStoreProvider->userOwnNoteStore(
-                                      m_ctx, m_retryPolicy);
-
-                            threading::thenOrFailed(
-                                std::move(noteStoreFuture), notebookPromise,
-                                [selfWeak, notebookPromise,
-                                 notebook = std::move(notebook),
-                                 sendContext = std::move(sendContext)](
-                                    const qevercloud::INoteStorePtr &
-                                        noteStore) mutable {
-                                    Q_ASSERT(noteStore);
-                                    const auto self = selfWeak.lock();
-                                    if (!self) {
-                                        return;
-                                    }
-
-                                    if (sendContext->canceler->isCanceled()) {
-                                        return;
-                                    }
-
-                                    auto updateFuture =
-                                        noteStore->updateNotebookAsync(
-                                            notebook);
-
-                                    threading::thenOrFailed(
-                                        std::move(updateFuture),
-                                        notebookPromise,
-                                        [notebookPromise,
-                                         notebook = std::move(notebook)](
-                                            const qint32
-                                                newUpdateSequenceNum) mutable {
-                                            notebook.setUpdateSequenceNum(
-                                                newUpdateSequenceNum);
-                                            notebook.setLocallyModified(false);
-                                            notebookPromise->addResult(
-                                                std::move(notebook));
-                                            notebookPromise->finish();
-                                        });
-                                });
-                        }});
-            }
+            sendNotebook(
+                sendContext, notebook, std::move(previousNotebookFuture),
+                notebookPromise);
 
             return future;
         }();
@@ -1314,6 +1085,85 @@ void Sender::sendNotebooks(
 
     threading::thenOrFailed(
         std::move(allNotebooksProcessingFuture), std::move(promise));
+}
+
+void Sender::sendNotebook(
+    SendContextPtr sendContext, qevercloud::Notebook notebook,
+    QFuture<void> previousNotebookFuture,
+    const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
+    const
+{
+    const auto selfWeak = weak_from_this();
+    threading::thenOrFailed(
+        std::move(previousNotebookFuture), notebookPromise,
+        threading::TrackedTask{
+            selfWeak,
+            [selfWeak, this, notebookPromise, notebook = std::move(notebook),
+             sendContext = std::move(sendContext)]() mutable {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                auto noteStoreFuture = notebook.linkedNotebookGuid()
+                    ? m_noteStoreProvider->linkedNotebookNoteStore(
+                          *notebook.linkedNotebookGuid(), m_ctx, m_retryPolicy)
+                    : m_noteStoreProvider->userOwnNoteStore(
+                          m_ctx, m_retryPolicy);
+
+                threading::thenOrFailed(
+                    std::move(noteStoreFuture), notebookPromise,
+                    [selfWeak, this, notebookPromise,
+                     notebook = std::move(notebook),
+                     sendContext = std::move(sendContext)](
+                        const qevercloud::INoteStorePtr & noteStore) mutable {
+                        Q_ASSERT(noteStore);
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            return;
+                        }
+
+                        if (sendContext->canceler->isCanceled()) {
+                            return;
+                        }
+
+                        sendNotebookImpl(
+                            std::move(notebook), noteStore, notebookPromise);
+                    });
+            }});
+}
+
+void Sender::sendNotebookImpl(
+    qevercloud::Notebook notebook, const qevercloud::INoteStorePtr & noteStore,
+    const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
+    const
+{
+    const bool newNotebook = !notebook.updateSequenceNum().has_value();
+    if (newNotebook) {
+        auto createNotebookFuture = noteStore->createNotebookAsync(notebook);
+        threading::thenOrFailed(
+            std::move(createNotebookFuture), notebookPromise,
+            [notebookPromise,
+             notebook = std::move(notebook)](qevercloud::Notebook n) mutable {
+                n.setLocalId(notebook.localId());
+                n.setLocallyFavorited(notebook.isLocallyFavorited());
+                n.setLocalData(std::move(notebook.mutableLocalData()));
+                n.setLocallyModified(false);
+                notebookPromise->addResult(std::move(n));
+                notebookPromise->finish();
+            });
+    }
+    else {
+        auto updateNotebookFuture = noteStore->updateNotebookAsync(notebook);
+        threading::thenOrFailed(
+            std::move(updateNotebookFuture), notebookPromise,
+            [notebookPromise, notebook = std::move(notebook)](
+                const qint32 newUpdateSequenceNum) mutable {
+                notebook.setUpdateSequenceNum(newUpdateSequenceNum);
+                notebook.setLocallyModified(false);
+                notebookPromise->addResult(std::move(notebook));
+                notebookPromise->finish();
+            });
+    }
 }
 
 void Sender::processNotebook(
@@ -1438,13 +1288,6 @@ void Sender::sendSavedSearches(
     QList<QFuture<void>> savedSearchProcessingFutures;
     savedSearchProcessingFutures.reserve(savedSearches.size());
 
-    struct SavedSearchLocalData
-    {
-        QString localId;
-        bool locallyFavorited = false;
-        QHash<QString, QVariant> localData;
-    };
-
     QFuture<void> previousSavedSearchFuture = threading::makeReadyFuture();
     for (int index = 0, size = savedSearches.size(); index < size; ++index) {
         const auto & savedSearch = savedSearches[index];
@@ -1461,134 +1304,9 @@ void Sender::sendSavedSearches(
             auto future = savedSearchPromise->future();
             savedSearchPromise->start();
 
-            const bool newSavedSearch =
-                !savedSearch.updateSequenceNum().has_value();
-
-            if (newSavedSearch) {
-                SavedSearchLocalData savedSearchLocalData;
-                savedSearchLocalData.localId = savedSearch.localId();
-                savedSearchLocalData.localData = savedSearch.localData();
-                savedSearchLocalData.locallyFavorited =
-                    savedSearch.isLocallyFavorited();
-
-                threading::thenOrFailed(
-                    std::move(previousSavedSearchFuture), savedSearchPromise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [selfWeak, this, savedSearchPromise,
-                         savedSearch = savedSearch, sendContext = sendContext,
-                         savedSearchLocalData =
-                             std::move(savedSearchLocalData)]() mutable {
-                            if (sendContext->canceler->isCanceled()) {
-                                return;
-                            }
-
-                            auto noteStoreFuture =
-                                m_noteStoreProvider->userOwnNoteStore(
-                                    m_ctx, m_retryPolicy);
-
-                            threading::thenOrFailed(
-                                std::move(noteStoreFuture), savedSearchPromise,
-                                [selfWeak, savedSearchPromise,
-                                 savedSearch = std::move(savedSearch),
-                                 sendContext = std::move(sendContext),
-                                 savedSearchLocalData =
-                                     std::move(savedSearchLocalData)](
-                                    const qevercloud::INoteStorePtr &
-                                        noteStore) mutable {
-                                    Q_ASSERT(noteStore);
-                                    const auto self = selfWeak.lock();
-                                    if (!self) {
-                                        return;
-                                    }
-
-                                    if (sendContext->canceler->isCanceled()) {
-                                        return;
-                                    }
-
-                                    auto createFuture =
-                                        noteStore->createSearchAsync(
-                                            savedSearch);
-
-                                    threading::thenOrFailed(
-                                        std::move(createFuture),
-                                        savedSearchPromise,
-                                        [savedSearchPromise,
-                                         savedSearchLocalData =
-                                             std::move(savedSearchLocalData)](
-                                            qevercloud::SavedSearch
-                                                search) mutable {
-                                            search.setLocalId(std::move(
-                                                savedSearchLocalData.localId));
-                                            search.setLocallyFavorited(
-                                                savedSearchLocalData
-                                                    .locallyFavorited);
-                                            search.setLocalData(
-                                                std::move(savedSearchLocalData
-                                                              .localData));
-                                            search.setLocallyModified(false);
-                                            savedSearchPromise->addResult(
-                                                std::move(search));
-                                            savedSearchPromise->finish();
-                                        });
-                                });
-                        }});
-            }
-            else {
-                threading::thenOrFailed(
-                    std::move(previousSavedSearchFuture), savedSearchPromise,
-                    threading::TrackedTask{
-                        selfWeak,
-                        [selfWeak, this, savedSearchPromise,
-                         savedSearch = savedSearch,
-                         sendContext = sendContext]() mutable {
-                            if (sendContext->canceler->isCanceled()) {
-                                return;
-                            }
-
-                            auto noteStoreFuture =
-                                m_noteStoreProvider->userOwnNoteStore(
-                                    m_ctx, m_retryPolicy);
-
-                            threading::thenOrFailed(
-                                std::move(noteStoreFuture), savedSearchPromise,
-                                [selfWeak, savedSearchPromise,
-                                 savedSearch = std::move(savedSearch),
-                                 sendContext = std::move(sendContext)](
-                                    const qevercloud::INoteStorePtr &
-                                        noteStore) mutable {
-                                    Q_ASSERT(noteStore);
-                                    const auto self = selfWeak.lock();
-                                    if (!self) {
-                                        return;
-                                    }
-
-                                    if (sendContext->canceler->isCanceled()) {
-                                        return;
-                                    }
-
-                                    auto updateFuture =
-                                        noteStore->updateSearchAsync(
-                                            savedSearch);
-
-                                    threading::thenOrFailed(
-                                        std::move(updateFuture),
-                                        savedSearchPromise,
-                                        [savedSearchPromise,
-                                         savedSearch = savedSearch](
-                                            const qint32
-                                                newUpdateSequenceNum) mutable {
-                                            savedSearch.setUpdateSequenceNum(
-                                                newUpdateSequenceNum);
-                                            savedSearch.setLocallyModified(
-                                                false);
-                                            savedSearchPromise->addResult(
-                                                std::move(savedSearch));
-                                            savedSearchPromise->finish();
-                                        });
-                                });
-                        }});
-            }
+            sendSavedSearch(
+                sendContext, savedSearch, std::move(previousSavedSearchFuture),
+                savedSearchPromise);
 
             return future;
         }();
@@ -1634,6 +1352,90 @@ void Sender::sendSavedSearches(
 
     threading::thenOrFailed(
         std::move(allSavedSearchesProcessingFuture), std::move(promise));
+}
+
+void Sender::sendSavedSearch(
+    SendContextPtr sendContext, qevercloud::SavedSearch savedSearch,
+    QFuture<void> previousSavedSearchFuture,
+    const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
+        savedSearchPromise) const
+{
+    const auto selfWeak = weak_from_this();
+    threading::thenOrFailed(
+        std::move(previousSavedSearchFuture), savedSearchPromise,
+        threading::TrackedTask{
+            selfWeak,
+            [selfWeak, this, savedSearchPromise,
+             savedSearch = std::move(savedSearch),
+             sendContext = std::move(sendContext)]() mutable {
+                if (sendContext->canceler->isCanceled()) {
+                    return;
+                }
+
+                auto noteStoreFuture =
+                    m_noteStoreProvider->userOwnNoteStore(m_ctx, m_retryPolicy);
+
+                threading::thenOrFailed(
+                    std::move(noteStoreFuture), savedSearchPromise,
+                    [selfWeak, this, savedSearchPromise,
+                     savedSearch = std::move(savedSearch),
+                     sendContext = std::move(sendContext)](
+                        const qevercloud::INoteStorePtr & noteStore) mutable {
+                        Q_ASSERT(noteStore);
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            return;
+                        }
+
+                        if (sendContext->canceler->isCanceled()) {
+                            return;
+                        }
+
+                        sendSavedSearchImpl(
+                            std::move(savedSearch), noteStore,
+                            savedSearchPromise);
+                    });
+            }});
+}
+
+void Sender::sendSavedSearchImpl(
+    qevercloud::SavedSearch savedSearch,
+    const qevercloud::INoteStorePtr & noteStore,
+    const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
+        savedSearchPromise) const
+{
+    const bool newSavedSearch = !savedSearch.updateSequenceNum().has_value();
+
+    if (newSavedSearch) {
+        auto createSavedSearchFuture =
+            noteStore->createSearchAsync(savedSearch);
+
+        threading::thenOrFailed(
+            std::move(createSavedSearchFuture), savedSearchPromise,
+            [savedSearchPromise, savedSearch = std::move(savedSearch)](
+                qevercloud::SavedSearch s) mutable {
+                s.setLocalId(savedSearch.localId());
+                s.setLocallyFavorited(savedSearch.isLocallyFavorited());
+                s.setLocalData(std::move(savedSearch.mutableLocalData()));
+                s.setLocallyModified(false);
+                savedSearchPromise->addResult(std::move(s));
+                savedSearchPromise->finish();
+            });
+    }
+    else {
+        auto updateSavedSearchFuture =
+            noteStore->updateSearchAsync(savedSearch);
+
+        threading::thenOrFailed(
+            std::move(updateSavedSearchFuture), savedSearchPromise,
+            [savedSearchPromise, savedSearch = std::move(savedSearch)](
+                const qint32 newUpdateSequenceNum) mutable {
+                savedSearch.setUpdateSequenceNum(newUpdateSequenceNum);
+                savedSearch.setLocallyModified(false);
+                savedSearchPromise->addResult(std::move(savedSearch));
+                savedSearchPromise->finish();
+            });
+    }
 }
 
 void Sender::processSavedSearch(

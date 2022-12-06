@@ -106,9 +106,14 @@ private:
         SendContextPtr sendContext, QList<qevercloud::Note> notes,
         std::shared_ptr<QPromise<void>> promise) const;
 
-    void createOrUpdateNote(
-        SendContextPtr sendContext, const qevercloud::Note & note,
+    void sendNote(
+        SendContextPtr sendContext, qevercloud::Note note,
         bool containsFailedToSendTags, QFuture<void> previousNoteFuture,
+        const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
+
+    void sendNoteImpl(
+        qevercloud::Note note, bool containsFailedToSendTags,
+        const qevercloud::INoteStorePtr & noteStore,
         const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
 
     void processNote(
@@ -126,6 +131,16 @@ private:
         SendContextPtr sendContext, QList<qevercloud::Tag> tags,
         std::shared_ptr<QPromise<void>> promise) const;
 
+    void sendTag(
+        SendContextPtr sendContext, qevercloud::Tag tag,
+        QFuture<void> previousTagFuture,
+        const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const;
+
+    void sendTagImpl(
+        SendContextPtr sendContext, qevercloud::Tag tag,
+        const qevercloud::INoteStorePtr & noteStore,
+        const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const;
+
     void processTag(
         const SendContextPtr & sendContext, qevercloud::Tag tag,
         const std::shared_ptr<QPromise<void>> & promise) const;
@@ -142,6 +157,18 @@ private:
         const QList<qevercloud::Notebook> & notebooks,
         std::shared_ptr<QPromise<void>> promise) const;
 
+    void sendNotebook(
+        SendContextPtr sendContext, qevercloud::Notebook notebook,
+        QFuture<void> previousNotebookFuture,
+        const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
+        const;
+
+    void sendNotebookImpl(
+        qevercloud::Notebook notebook,
+        const qevercloud::INoteStorePtr & noteStore,
+        const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
+        const;
+
     void processNotebook(
         const SendContextPtr & sendContext, qevercloud::Notebook notebook,
         const std::shared_ptr<QPromise<void>> & promise) const;
@@ -157,6 +184,18 @@ private:
         SendContextPtr sendContext,
         const QList<qevercloud::SavedSearch> & savedSearches,
         std::shared_ptr<QPromise<void>> promise) const;
+
+    void sendSavedSearch(
+        SendContextPtr sendContext, qevercloud::SavedSearch savedSearch,
+        QFuture<void> previousSavedSearchFuture,
+        const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
+            savedSearchPromise) const;
+
+    void sendSavedSearchImpl(
+        qevercloud::SavedSearch savedSearch,
+        const qevercloud::INoteStorePtr & noteStore,
+        const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
+            savedSearchPromise) const;
 
     void processSavedSearch(
         const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
