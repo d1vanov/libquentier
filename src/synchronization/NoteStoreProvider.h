@@ -26,6 +26,7 @@
 
 #include <qevercloud/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QHash>
 #include <QMutex>
@@ -67,6 +68,9 @@ private:
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByNotebookLocalId(const QString & notebookLocalId);
 
+    [[nodiscard]] qevercloud::INoteStorePtr cachedUserOwnNoteStore(
+        const qevercloud::IRequestContextPtr & ctx);
+
     void createNoteStore(
         const std::optional<qevercloud::LinkedNotebook> & linkedNotebook,
         qevercloud::IRequestContextPtr ctx,
@@ -78,6 +82,10 @@ private:
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const INoteStoreFactoryPtr m_noteStoreFactory;
     const Account m_account;
+
+    qevercloud::INoteStorePtr m_userOwnNoteStore;
+    qevercloud::Timestamp m_userOwnNoteStoreAuthTokenExpirationTime = 0;
+    QMutex m_userOwnNoteStoreMutex;
 
     QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
         m_linkedNotebooksByNotebookLocalId;

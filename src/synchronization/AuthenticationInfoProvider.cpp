@@ -17,6 +17,7 @@
  */
 
 #include "AuthenticationInfoProvider.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -131,17 +132,6 @@ const QString gLinkedNotebookAuthenticationTimestamp =
         .arg(
             appName, gAuthTokenKeychainKeyPart, host, userId,
             linkedNotebookGuid);
-}
-
-[[nodiscard]] bool isTimestampAboutToExpire(
-    const qevercloud::Timestamp timestamp)
-{
-    const qevercloud::Timestamp currentTimestamp =
-        QDateTime::currentMSecsSinceEpoch();
-
-    constexpr qint64 halfAnHourMsec = 1800000;
-
-    return (timestamp - currentTimestamp) < halfAnHourMsec;
 }
 
 } // namespace
@@ -321,7 +311,8 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         const QReadLocker locker{&m_authenticationInfosRWLock};
         if (const auto it = m_authenticationInfos.find(account.id());
             it != m_authenticationInfos.end() &&
-            !isTimestampAboutToExpire(it.value()->authTokenExpirationTime()))
+            !isAuthenticationTokenAboutToExpire(
+                it.value()->authTokenExpirationTime()))
         {
             return threading::makeReadyFuture<IAuthenticationInfoPtr>(
                 it.value());
@@ -334,7 +325,8 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         return future;
     }
 
-    if (isTimestampAboutToExpire(authenticationInfo->m_authTokenExpirationTime))
+    if (isAuthenticationTokenAboutToExpire(
+            authenticationInfo->m_authTokenExpirationTime))
     {
         QNDEBUG(
             "synchronization::AuthenticationInfoProvider",
@@ -469,7 +461,8 @@ QFuture<IAuthenticationInfoPtr>
         if (const auto it = m_linkedNotebookAuthenticationInfos.find(
                 *linkedNotebook.guid());
             it != m_linkedNotebookAuthenticationInfos.end() &&
-            !isTimestampAboutToExpire(it.value()->authTokenExpirationTime()))
+            !isAuthenticationTokenAboutToExpire(
+                it.value()->authTokenExpirationTime()))
         {
             const auto authenticationInfo = it.value();
 
@@ -535,7 +528,7 @@ QFuture<IAuthenticationInfoPtr>
             return std::nullopt;
         }
 
-        if (isTimestampAboutToExpire(expirationTimestamp)) {
+        if (isAuthenticationTokenAboutToExpire(expirationTimestamp)) {
             QNDEBUG(
                 "synchronization::AuthenticationInfoProvider",
                 "Authentication token for linked notebook with guid "
@@ -693,8 +686,7 @@ void AuthenticationInfoProvider::authenticateAccountWithoutCache(
 }
 
 void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
-    Account account,
-    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    Account account, qevercloud::LinkedNotebook linkedNotebook,
     const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise)
 {
     const auto & noteStoreUrl = linkedNotebook.noteStoreUrl();
@@ -965,8 +957,8 @@ std::shared_ptr<AuthenticationInfo>
 }
 
 QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
-    const qevercloud::UserID userId, QString authToken, QString shardId, // NOLINT
-    QList<QNetworkCookie> cookies) // NOLINT
+    const qevercloud::UserID userId, QString authToken, QString shardId,
+    QList<QNetworkCookie> cookies)
 {
     auto promise = std::make_shared<QPromise<Account>>();
     auto future = promise->future();

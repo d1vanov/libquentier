@@ -17,7 +17,9 @@
  */
 
 #include "NoteStoreProvider.h"
+
 #include "INoteStoreFactory.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -38,11 +40,11 @@ namespace quentier::synchronization {
 
 namespace {
 
-[[nodiscard]] bool isLinkedNotebookFutureReady(
+[[nodiscard]] bool isLinkedNotebookFutureValid(
     const QFuture<std::optional<qevercloud::LinkedNotebook>> & future)
 {
     if (!future.isFinished()) {
-        return false;
+        return true;
     }
 
     if (future.resultCount() != 1) {
@@ -50,10 +52,7 @@ namespace {
     }
 
     try {
-        auto linkedNotebook = future.result();
-        if (!linkedNotebook) {
-            return false;
-        }
+        Q_UNUSED(future.result());
     }
     catch (...) {
         return false;
@@ -115,7 +114,7 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStore(
             const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
             auto it = m_linkedNotebooksByNotebookLocalId.find(notebookLocalId);
             if (it != m_linkedNotebooksByNotebookLocalId.end() &&
-                isLinkedNotebookFutureReady(it.value()))
+                isLinkedNotebookFutureValid(it.value()))
             {
                 return it.value();
             }
@@ -250,7 +249,7 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 
                     auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
                     if (it != m_linkedNotebooksByGuid.end() &&
-                        isLinkedNotebookFutureReady(it.value()))
+                        isLinkedNotebookFutureValid(it.value()))
                     {
                         return it.value();
                     }
@@ -307,11 +306,51 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
     return future;
 }
 
+qevercloud::INoteStorePtr NoteStoreProvider::cachedUserOwnNoteStore(
+    const qevercloud::IRequestContextPtr & ctx)
+{
+    const QMutexLocker locker{&m_userOwnNoteStoreMutex};
+    if (!m_userOwnNoteStore) {
+        return nullptr;
+    }
+
+    if (isAuthenticationTokenAboutToExpire(
+            m_userOwnNoteStoreAuthTokenExpirationTime))
+    {
+        return nullptr;
+    }
+
+    if (!ctx) {
+        return m_userOwnNoteStore;
+    }
+
+    const auto noteStoreCtx = m_userOwnNoteStore->defaultRequestContext();
+
+    if (ctx->requestTimeout() == noteStoreCtx->requestTimeout() &&
+        ctx->increaseRequestTimeoutExponentially() ==
+            noteStoreCtx->increaseRequestTimeoutExponentially() &&
+        ctx->maxRequestTimeout() == noteStoreCtx->maxRequestTimeout() &&
+        ctx->maxRequestRetryCount() == noteStoreCtx->maxRequestRetryCount())
+    {
+        return m_userOwnNoteStore;
+    }
+
+    return nullptr;
+}
+
 void NoteStoreProvider::createNoteStore(
     const std::optional<qevercloud::LinkedNotebook> & linkedNotebook,
     qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy,
     const std::shared_ptr<QPromise<qevercloud::INoteStorePtr>> & promise)
 {
+    if (!linkedNotebook) {
+        if (auto userOwnNoteStore = cachedUserOwnNoteStore(ctx)) {
+            promise->addResult(std::move(userOwnNoteStore));
+            promise->finish();
+            return;
+        }
+    }
+
     auto authInfoFuture =
         (linkedNotebook
              ? m_authenticationInfoProvider->authenticateToLinkedNotebook(
@@ -349,6 +388,15 @@ void NoteStoreProvider::createNoteStore(
                 authInfo->noteStoreUrl(), linkedNotebookGuid, ctx, retryPolicy);
 
             Q_ASSERT(noteStore);
+
+            if (!linkedNotebookGuid) {
+                const QMutexLocker locker{&m_userOwnNoteStoreMutex};
+
+                m_userOwnNoteStore = noteStore;
+                m_userOwnNoteStoreAuthTokenExpirationTime =
+                    authInfo->authTokenExpirationTime();
+            }
+
             promise->addResult(std::move(noteStore));
             promise->finish();
         });

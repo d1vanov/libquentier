@@ -134,6 +134,8 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     authInfo->m_userId = m_account.id();
     authInfo->m_authToken = QStringLiteral("authToken");
     authInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
+    authInfo->m_authTokenExpirationTime =
+        QDateTime::currentMSecsSinceEpoch() + 999999999;
 
     EXPECT_CALL(
         *m_mockAuthenticationInfoProvider,
@@ -147,6 +149,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
 
     const auto defaultCtx = qevercloud::newRequestContext();
     const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
+
+    EXPECT_CALL(*noteStore, defaultRequestContext)
+        .WillRepeatedly(Return(defaultCtx));
 
     EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
         .WillOnce(
@@ -171,7 +176,16 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
-    const auto result = resultFuture.result();
+    auto result = resultFuture.result();
+    EXPECT_EQ(result, noteStore);
+
+    // The second call should use cached information
+    resultFuture = noteStoreProvider->noteStore(
+        notebookLocalId, defaultCtx, defaultRetryPolicy);
+    ASSERT_TRUE(resultFuture.isFinished());
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+
+    result = resultFuture.result();
     EXPECT_EQ(result, noteStore);
 }
 
@@ -537,6 +551,8 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
     authInfo->m_userId = m_account.id();
     authInfo->m_authToken = QStringLiteral("authToken");
     authInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
+    authInfo->m_authTokenExpirationTime =
+        QDateTime::currentMSecsSinceEpoch() + 999999999;
 
     EXPECT_CALL(
         *m_mockAuthenticationInfoProvider,
@@ -550,6 +566,9 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
 
     const auto defaultCtx = qevercloud::newRequestContext();
     const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
+
+    EXPECT_CALL(*noteStore, defaultRequestContext)
+        .WillRepeatedly(Return(defaultCtx));
 
     EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
         .WillOnce(
@@ -574,7 +593,16 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
-    const auto result = resultFuture.result();
+    auto result = resultFuture.result();
+    EXPECT_EQ(result, noteStore);
+
+    // The second call should use cached information
+    resultFuture = noteStoreProvider->userOwnNoteStore(
+        defaultCtx, defaultRetryPolicy);
+    ASSERT_TRUE(resultFuture.isFinished());
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+
+    result = resultFuture.result();
     EXPECT_EQ(result, noteStore);
 }
 

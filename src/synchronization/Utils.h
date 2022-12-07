@@ -22,6 +22,8 @@
 
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/types/TypeAliases.h>
+
 namespace quentier {
 
 class Account;
@@ -32,5 +34,8 @@ namespace quentier::synchronization {
 
 [[nodiscard]] SyncStateConstPtr readLastSyncState(
     const ISyncStateStoragePtr & syncStateStorage, const Account & account);
+
+[[nodiscard]] bool isAuthenticationTokenAboutToExpire(
+    qevercloud::Timestamp authenticationTokenExpirationTimestamp);
 
 } // namespace quentier::synchronization

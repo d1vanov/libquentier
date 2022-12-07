@@ -39,4 +39,16 @@ SyncStateConstPtr readLastSyncState(
         syncState->linkedNotebookLastSyncTimes());
 }
 
+[[nodiscard]] bool isAuthenticationTokenAboutToExpire(
+    const qevercloud::Timestamp authenticationTokenExpirationTimestamp)
+{
+    const qevercloud::Timestamp currentTimestamp =
+        QDateTime::currentMSecsSinceEpoch();
+
+    constexpr qint64 halfAnHourMsec = 1800000;
+
+    return (authenticationTokenExpirationTimestamp - currentTimestamp) <
+        halfAnHourMsec;
+}
+
 } // namespace quentier::synchronization
