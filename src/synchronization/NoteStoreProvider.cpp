@@ -61,6 +61,17 @@ namespace {
     return true;
 }
 
+[[nodiscard]] bool checkNoteStoreRequestContex(
+    const qevercloud::IRequestContext & noteStoreCtx,
+    const qevercloud::IRequestContext & ctx)
+{
+    return ctx.requestTimeout() == noteStoreCtx.requestTimeout() &&
+        ctx.increaseRequestTimeoutExponentially() ==
+        noteStoreCtx.increaseRequestTimeoutExponentially() &&
+        ctx.maxRequestTimeout() == noteStoreCtx.maxRequestTimeout() &&
+        ctx.maxRequestRetryCount() == noteStoreCtx.maxRequestRetryCount();
+}
+
 } // namespace
 
 NoteStoreProvider::NoteStoreProvider(
@@ -161,8 +172,21 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::linkedNotebookNoteStore(
     auto future = promise->future();
     promise->start();
 
-    auto linkedNotebookFuture =
-        m_localStorage->findLinkedNotebookByGuid(linkedNotebookGuid);
+    QFuture<std::optional<qevercloud::LinkedNotebook>> linkedNotebookFuture =
+        [&] {
+            const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
+            auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
+            if (it != m_linkedNotebooksByGuid.end() &&
+                isLinkedNotebookFutureValid(it.value()))
+            {
+                return it.value();
+            }
+
+            it = m_linkedNotebooksByGuid.insert(
+                linkedNotebookGuid,
+                m_localStorage->findLinkedNotebookByGuid(linkedNotebookGuid));
+            return it.value();
+        }();
 
     const auto selfWeak = weak_from_this();
 
@@ -309,30 +333,60 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 qevercloud::INoteStorePtr NoteStoreProvider::cachedUserOwnNoteStore(
     const qevercloud::IRequestContextPtr & ctx)
 {
-    const QMutexLocker locker{&m_userOwnNoteStoreMutex};
-    if (!m_userOwnNoteStore) {
+    const QMutexLocker locker{&m_userOwnNoteStoreDataMutex};
+    if (!m_userOwnNoteStoreData.m_noteStore) {
         return nullptr;
     }
 
     if (isAuthenticationTokenAboutToExpire(
-            m_userOwnNoteStoreAuthTokenExpirationTime))
+            m_userOwnNoteStoreData.m_authTokenExpirationTime))
     {
         return nullptr;
     }
 
     if (!ctx) {
-        return m_userOwnNoteStore;
+        return m_userOwnNoteStoreData.m_noteStore;
     }
 
-    const auto noteStoreCtx = m_userOwnNoteStore->defaultRequestContext();
+    const auto noteStoreCtx =
+        m_userOwnNoteStoreData.m_noteStore->defaultRequestContext();
 
-    if (ctx->requestTimeout() == noteStoreCtx->requestTimeout() &&
-        ctx->increaseRequestTimeoutExponentially() ==
-            noteStoreCtx->increaseRequestTimeoutExponentially() &&
-        ctx->maxRequestTimeout() == noteStoreCtx->maxRequestTimeout() &&
-        ctx->maxRequestRetryCount() == noteStoreCtx->maxRequestRetryCount())
-    {
-        return m_userOwnNoteStore;
+    Q_ASSERT(noteStoreCtx);
+
+    if (checkNoteStoreRequestContex(*noteStoreCtx, *ctx)) {
+        return m_userOwnNoteStoreData.m_noteStore;
+    }
+
+    return nullptr;
+}
+
+qevercloud::INoteStorePtr NoteStoreProvider::cachedLinkedNotebookNoteStore(
+    const qevercloud::LinkedNotebook & linkedNotebook,
+    const qevercloud::IRequestContextPtr & ctx)
+{
+    Q_ASSERT(linkedNotebook.guid());
+
+    const QMutexLocker locker{&m_linkedNotebooksNoteStoreDataMutex};
+
+    const auto it =
+        m_linkedNotebooksNoteStoreData.constFind(*linkedNotebook.guid());
+    if (it == m_linkedNotebooksNoteStoreData.constEnd()) {
+        return nullptr;
+    }
+
+    if (isAuthenticationTokenAboutToExpire(it->m_authTokenExpirationTime)) {
+        return nullptr;
+    }
+
+    if (!ctx) {
+        return it->m_noteStore;
+    }
+
+    const auto noteStoreCtx = it->m_noteStore->defaultRequestContext();
+    Q_ASSERT(noteStoreCtx);
+
+    if (checkNoteStoreRequestContex(*noteStoreCtx, *ctx)) {
+        return it->m_noteStore;
     }
 
     return nullptr;
@@ -349,6 +403,14 @@ void NoteStoreProvider::createNoteStore(
             promise->finish();
             return;
         }
+    }
+    else if (
+        auto linkedNotebookNoteStore =
+            cachedLinkedNotebookNoteStore(*linkedNotebook, ctx))
+    {
+        promise->addResult(std::move(linkedNotebookNoteStore));
+        promise->finish();
+        return;
     }
 
     auto authInfoFuture =
@@ -390,11 +452,19 @@ void NoteStoreProvider::createNoteStore(
             Q_ASSERT(noteStore);
 
             if (!linkedNotebookGuid) {
-                const QMutexLocker locker{&m_userOwnNoteStoreMutex};
+                const QMutexLocker locker{&m_userOwnNoteStoreDataMutex};
 
-                m_userOwnNoteStore = noteStore;
-                m_userOwnNoteStoreAuthTokenExpirationTime =
+                m_userOwnNoteStoreData.m_noteStore = noteStore;
+                m_userOwnNoteStoreData.m_authTokenExpirationTime =
                     authInfo->authTokenExpirationTime();
+            }
+            else {
+                const QMutexLocker locker{&m_linkedNotebooksNoteStoreDataMutex};
+
+                m_linkedNotebooksNoteStoreData.insert(
+                    *linkedNotebookGuid,
+                    NoteStoreData{
+                        noteStore, authInfo->authTokenExpirationTime()});
             }
 
             promise->addResult(std::move(noteStore));

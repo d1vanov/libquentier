@@ -71,6 +71,10 @@ private:
     [[nodiscard]] qevercloud::INoteStorePtr cachedUserOwnNoteStore(
         const qevercloud::IRequestContextPtr & ctx);
 
+    [[nodiscard]] qevercloud::INoteStorePtr cachedLinkedNotebookNoteStore(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        const qevercloud::IRequestContextPtr & ctx);
+
     void createNoteStore(
         const std::optional<qevercloud::LinkedNotebook> & linkedNotebook,
         qevercloud::IRequestContextPtr ctx,
@@ -83,9 +87,17 @@ private:
     const INoteStoreFactoryPtr m_noteStoreFactory;
     const Account m_account;
 
-    qevercloud::INoteStorePtr m_userOwnNoteStore;
-    qevercloud::Timestamp m_userOwnNoteStoreAuthTokenExpirationTime = 0;
-    QMutex m_userOwnNoteStoreMutex;
+    struct NoteStoreData
+    {
+        qevercloud::INoteStorePtr m_noteStore;
+        qevercloud::Timestamp m_authTokenExpirationTime = 0;
+    };
+
+    NoteStoreData m_userOwnNoteStoreData;
+    QMutex m_userOwnNoteStoreDataMutex;
+
+    QHash<qevercloud::Guid, NoteStoreData> m_linkedNotebooksNoteStoreData;
+    QMutex m_linkedNotebooksNoteStoreDataMutex;
 
     QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
         m_linkedNotebooksByNotebookLocalId;
