@@ -21,6 +21,7 @@ add_executable(${TESTS_NAME}
   ResourceFullDataDownloaderTest.cpp
   ResourcesProcessorTest.cpp
   SavedSearchesProcessorTest.cpp
+  SenderTest.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
   SimpleNoteSyncConflictResolverTest.cpp
   SimpleSavedSearchSyncConflictResolverTest.cpp
