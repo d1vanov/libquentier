@@ -98,12 +98,11 @@ enum class WithEvernoteFields
     const int index, const WithEvernoteFields withEvernoteFields, qint32 & usn)
 {
     qevercloud::SavedSearchBuilder builder;
-    builder
-        .setLocalId(UidGenerator::Generate())
+    builder.setLocalId(UidGenerator::Generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
-            ? QString::fromUtf8("Updated saved search #%1").arg(index + 1)
-            : QString::fromUtf8("New saved search #%1").arg(index + 1))
+                ? QString::fromUtf8("Updated saved search #%1").arg(index + 1)
+                : QString::fromUtf8("New saved search #%1").arg(index + 1))
         .setQuery(QStringLiteral("query"));
 
     if (withEvernoteFields == WithEvernoteFields::Yes) {
@@ -118,12 +117,11 @@ enum class WithEvernoteFields
     const int index, const WithEvernoteFields withEvernoteFields, qint32 & usn)
 {
     qevercloud::NotebookBuilder builder;
-    builder
-        .setLocalId(UidGenerator::Generate())
+    builder.setLocalId(UidGenerator::Generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
-            ? QString::fromUtf8("Updated notebook #%1").arg(index + 1)
-            : QString::fromUtf8("New notebook #%1").arg(index + 1));
+                ? QString::fromUtf8("Updated notebook #%1").arg(index + 1)
+                : QString::fromUtf8("New notebook #%1").arg(index + 1));
 
     if (withEvernoteFields == WithEvernoteFields::Yes) {
         builder.setUpdateSequenceNum(usn++);
@@ -135,53 +133,47 @@ enum class WithEvernoteFields
 
 [[nodiscard]] qevercloud::Note generateNote(
     const int index, const WithEvernoteFields withEvernoteFields,
-    const SenderTestData & testData, const SenderTestFlags flags,
-    qint32 & usn)
+    const QList<qevercloud::Notebook> & newNotebooks,
+    const QList<qevercloud::Notebook> & updatedNotebooks,
+    const QList<qevercloud::Tag> & newTags,
+    const QList<qevercloud::Tag> & updatedTags, qint32 & usn)
 {
     qevercloud::NoteBuilder builder;
     builder.setLocalId(UidGenerator::Generate())
         .setTitle(
             (withEvernoteFields == WithEvernoteFields::Yes
-             ? QString::fromUtf8("Updated note #%1").arg(index + 1)
-             : QString::fromUtf8("New note #%1").arg(index + 1)));
+                 ? QString::fromUtf8("Updated note #%1").arg(index + 1)
+                 : QString::fromUtf8("New note #%1").arg(index + 1)));
 
-    if (flags.testFlag(SenderTestFlag::WithNewUserOwnNotebooks)) {
-        Q_ASSERT(testData.m_newUserOwnNotebooks.size() > index);
-        builder
-            .setNotebookLocalId(
-                testData.m_newUserOwnNotebooks[index].localId())
-            .setNotebookGuid(testData.m_newUserOwnNotebooks[index].guid());
+    if (newNotebooks.size() > index) {
+        builder.setNotebookLocalId(newNotebooks[index].localId())
+            .setNotebookGuid(newNotebooks[index].guid());
     }
-    else if (
-        flags.testFlag(SenderTestFlag::WithUpdatedUserOwnNotebooks)) {
-        Q_ASSERT(testData.m_updatedUserOwnNotebooks.size() > index);
-        builder
-            .setNotebookLocalId(
-                testData.m_updatedUserOwnNotebooks[index].localId())
-            .setNotebookGuid(
-                testData.m_updatedUserOwnNotebooks[index].guid());
+    else if (updatedNotebooks.size() > index) {
+        builder.setNotebookLocalId(updatedNotebooks[index].localId())
+            .setNotebookGuid(updatedNotebooks[index].guid());
     }
     else {
         builder.setNotebookLocalId(UidGenerator::Generate());
         builder.setNotebookGuid(UidGenerator::Generate());
     }
 
-    if (flags.testFlag(SenderTestFlag::WithNewUserOwnTags)) {
+    if (!newTags.isEmpty()) {
         QStringList tagLocalIds = [&] {
             QStringList res;
-            res.reserve(testData.m_newUserOwnTags.size());
-            for (const auto & tag : qAsConst(testData.m_newUserOwnTags)) {
+            res.reserve(newTags.size());
+            for (const auto & tag: qAsConst(newTags)) {
                 res << tag.localId();
             }
             return res;
         }();
         builder.setTagLocalIds(std::move(tagLocalIds));
     }
-    else if (flags.testFlag(SenderTestFlag::WithUpdatedUserOwnTags)) {
+    else if (!updatedTags.isEmpty()) {
         QStringList tagLocalIds = [&] {
             QStringList res;
-            res.reserve(testData.m_updatedUserOwnTags.size());
-            for (const auto & tag : qAsConst(testData.m_updatedUserOwnTags)) {
+            res.reserve(updatedTags.size());
+            for (const auto & tag: qAsConst(updatedTags)) {
                 res << tag.localId();
             }
             return res;
@@ -190,8 +182,8 @@ enum class WithEvernoteFields
 
         QList<qevercloud::Guid> tagGuids = [&] {
             QList<qevercloud::Guid> res;
-            res.reserve(testData.m_updatedUserOwnTags.size());
-            for (const auto & tag : qAsConst(testData.m_updatedUserOwnTags)) {
+            res.reserve(updatedTags.size());
+            for (const auto & tag: qAsConst(updatedTags)) {
                 res << tag.guid().value();
             }
             return res;
@@ -212,12 +204,11 @@ enum class WithEvernoteFields
     const QList<qevercloud::Tag> & previousTags, qint32 & usn)
 {
     qevercloud::TagBuilder builder;
-    builder
-        .setLocalId(UidGenerator::Generate())
+    builder.setLocalId(UidGenerator::Generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
-            ? QString::fromUtf8("Updated tag #%1").arg(index + 1)
-            : QString::fromUtf8("New tag #%1").arg(index + 1));
+                ? QString::fromUtf8("Updated tag #%1").arg(index + 1)
+                : QString::fromUtf8("New tag #%1").arg(index + 1));
 
     if (!previousTags.isEmpty()) {
         builder.setParentTagLocalId(previousTags.constLast().localId());
@@ -233,6 +224,16 @@ enum class WithEvernoteFields
     }
 
     return builder.build();
+}
+
+[[nodiscard]] qevercloud::LinkedNotebook generateLinkedNotebook(
+    const int index, qint32 & usn)
+{
+    return qevercloud::LinkedNotebookBuilder{}
+        .setGuid(UidGenerator::Generate())
+        .setUpdateSequenceNum(usn++)
+        .setUsername(QString::fromUtf8("Linked notebook #%1").arg(index + 1))
+        .build();
 }
 
 [[nodiscard]] SenderTestData generateTestData(
@@ -273,24 +274,6 @@ enum class WithEvernoteFields
         }
     }
 
-    if (flags.testFlag(SenderTestFlag::WithNewUserOwnNotes)) {
-        result.m_newUserOwnNotes.reserve(itemCount);
-        for (int i = 0; i < itemCount; ++i) {
-            result.m_newUserOwnNotes
-                << generateNote(
-                    i, WithEvernoteFields::No, result, flags, usn);
-        }
-    }
-
-    if (flags.testFlag(SenderTestFlag::WithUpdatedUserOwnNotes)) {
-        result.m_updatedUserOwnNotes.reserve(itemCount);
-        for (int i = 0; i < itemCount; ++i) {
-            result.m_updatedUserOwnNotes
-                << generateNote(
-                    i, WithEvernoteFields::Yes, result, flags, usn);
-        }
-    }
-
     if (flags.testFlag(SenderTestFlag::WithNewUserOwnTags)) {
         result.m_newUserOwnTags.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
@@ -300,8 +283,7 @@ enum class WithEvernoteFields
         // Putting child tags first to ensure in test that parents would be sent
         // first
         std::reverse(
-            result.m_newUserOwnTags.begin(),
-            result.m_newUserOwnTags.end());
+            result.m_newUserOwnTags.begin(), result.m_newUserOwnTags.end());
     }
 
     if (flags.testFlag(SenderTestFlag::WithUpdatedUserOwnTags)) {
@@ -317,7 +299,106 @@ enum class WithEvernoteFields
             result.m_updatedUserOwnTags.end());
     }
 
-    // TODO: generate linked notebooks and their corresponding fields
+    if (flags.testFlag(SenderTestFlag::WithNewUserOwnNotes)) {
+        result.m_newUserOwnNotes.reserve(itemCount);
+        for (int i = 0; i < itemCount; ++i) {
+            result.m_newUserOwnNotes << generateNote(
+                i, WithEvernoteFields::No, result.m_newUserOwnNotebooks,
+                result.m_updatedUserOwnNotebooks, result.m_newUserOwnTags,
+                result.m_updatedUserOwnTags, usn);
+        }
+    }
+
+    if (flags.testFlag(SenderTestFlag::WithUpdatedUserOwnNotes)) {
+        result.m_updatedUserOwnNotes.reserve(itemCount);
+        for (int i = 0; i < itemCount; ++i) {
+            result.m_updatedUserOwnNotes << generateNote(
+                i, WithEvernoteFields::Yes, result.m_newUserOwnNotebooks,
+                result.m_updatedUserOwnNotebooks, result.m_newUserOwnTags,
+                result.m_updatedUserOwnTags, usn);
+        }
+    }
+
+    const bool hasLinkedNotebooksStuff =
+        flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooks) ||
+        flags.testFlag(SenderTestFlag::WithNewLinkedNotebooksNotes) ||
+        flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooksNotes) ||
+        flags.testFlag(SenderTestFlag::WithNewLinkedNotebooksTags) ||
+        flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooksTags);
+
+    if (hasLinkedNotebooksStuff) {
+        result.m_linkedNotebooks.reserve(itemCount);
+        for (int i = 0; i < itemCount; ++i) {
+            result.m_linkedNotebooks << generateLinkedNotebook(i, usn);
+        }
+
+        if (flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooks)) {
+            result.m_updatedLinkedNotebooks.reserve(itemCount);
+            for (int i = 0; i < itemCount; ++i) {
+                auto notebook =
+                    generateNotebook(i, WithEvernoteFields::Yes, usn);
+
+                notebook.setLinkedNotebookGuid(
+                    result.m_linkedNotebooks[i].guid());
+
+                result.m_updatedLinkedNotebooks << notebook;
+            }
+        }
+
+        if (flags.testFlag(SenderTestFlag::WithNewLinkedNotebooksTags)) {
+            result.m_newLinkedNotebooksTags.reserve(itemCount);
+            for (int i = 0; i < itemCount; ++i) {
+                auto tag = generateTag(
+                    i, WithEvernoteFields::No, result.m_newLinkedNotebooksTags,
+                    usn);
+                tag.setLinkedNotebookGuid(result.m_linkedNotebooks[i].guid());
+                result.m_newLinkedNotebooksTags << tag;
+            }
+            // Putting child tags first to ensure in test that parents would be
+            // sent first
+            std::reverse(
+                result.m_newLinkedNotebooksTags.begin(),
+                result.m_newLinkedNotebooksTags.end());
+        }
+
+        if (flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooksTags)) {
+            result.m_updatedLinkedNotebooksTags.reserve(itemCount);
+            for (int i = 0; i < itemCount; ++i) {
+                auto tag = generateTag(
+                    i, WithEvernoteFields::Yes,
+                    result.m_updatedLinkedNotebooksTags, usn);
+                tag.setLinkedNotebookGuid(result.m_linkedNotebooks[i].guid());
+                result.m_updatedLinkedNotebooksTags << tag;
+            }
+            // Putting child tags first to ensure in test that parents would be
+            // sent first
+            std::reverse(
+                result.m_updatedLinkedNotebooksTags.begin(),
+                result.m_updatedLinkedNotebooksTags.end());
+        }
+
+        if (flags.testFlag(SenderTestFlag::WithNewLinkedNotebooksNotes)) {
+            result.m_newLinkedNotebooksNotes.reserve(itemCount);
+            for (int i = 0; i < itemCount; ++i) {
+                result.m_newLinkedNotebooksNotes << generateNote(
+                    i, WithEvernoteFields::No, {},
+                    result.m_updatedLinkedNotebooks,
+                    result.m_newLinkedNotebooksTags,
+                    result.m_updatedLinkedNotebooksTags, usn);
+            }
+        }
+
+        if (flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooksNotes)) {
+            result.m_updatedLinkedNotebooksNotes.reserve(itemCount);
+            for (int i = 0; i < itemCount; ++i) {
+                result.m_updatedLinkedNotebooksNotes << generateNote(
+                    i, WithEvernoteFields::Yes, {},
+                    result.m_updatedLinkedNotebooks,
+                    result.m_newLinkedNotebooksTags,
+                    result.m_updatedLinkedNotebooksTags, usn);
+            }
+        }
+    }
 
     return result;
 }
