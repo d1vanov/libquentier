@@ -21,9 +21,11 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
+#include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <synchronization/tests/mocks/MockINoteStoreProvider.h>
+#include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <qevercloud/DurableService.h>
 #include <qevercloud/RequestContext.h>
@@ -40,13 +42,17 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
 namespace quentier::synchronization::tests {
 
+using testing::Return;
 using testing::StrictMock;
+
+using MockNoteStorePtr = std::shared_ptr<mocks::qevercloud::MockINoteStore>;
 
 enum class SenderTestFlag
 {
@@ -86,6 +92,9 @@ struct SenderTestData
     QList<qevercloud::Note> m_updatedLinkedNotebooksNotes;
     QList<qevercloud::Tag> m_newLinkedNotebooksTags;
     QList<qevercloud::Tag> m_updatedLinkedNotebooksTags;
+
+    mutable qint32 m_maxUserOwnUsn = 0;
+    mutable QHash<qevercloud::Guid, qint32> m_maxLinkedNotebookUsns;
 };
 
 enum class WithEvernoteFields
@@ -240,37 +249,37 @@ enum class WithEvernoteFields
     const SenderTestFlags flags, const int itemCount = 3)
 {
     SenderTestData result;
-    qint32 usn = 42;
+    result.m_maxUserOwnUsn = 42;
 
     if (flags.testFlag(SenderTestFlag::WithNewSavedSearches)) {
         result.m_newSavedSearches.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
-            result.m_newSavedSearches
-                << generateSavedSearch(i, WithEvernoteFields::No, usn);
+            result.m_newSavedSearches << generateSavedSearch(
+                i, WithEvernoteFields::No, result.m_maxUserOwnUsn);
         }
     }
 
     if (flags.testFlag(SenderTestFlag::WithUpdatedSavedSearches)) {
         result.m_updatedSavedSearches.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
-            result.m_updatedSavedSearches
-                << generateSavedSearch(i, WithEvernoteFields::Yes, usn);
+            result.m_updatedSavedSearches << generateSavedSearch(
+                i, WithEvernoteFields::Yes, result.m_maxUserOwnUsn);
         }
     }
 
     if (flags.testFlag(SenderTestFlag::WithNewUserOwnNotebooks)) {
         result.m_newUserOwnNotebooks.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
-            result.m_newUserOwnNotebooks
-                << generateNotebook(i, WithEvernoteFields::No, usn);
+            result.m_newUserOwnNotebooks << generateNotebook(
+                i, WithEvernoteFields::No, result.m_maxUserOwnUsn);
         }
     }
 
     if (flags.testFlag(SenderTestFlag::WithUpdatedUserOwnNotebooks)) {
         result.m_updatedUserOwnNotebooks.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
-            result.m_updatedUserOwnNotebooks
-                << generateNotebook(i, WithEvernoteFields::Yes, usn);
+            result.m_updatedUserOwnNotebooks << generateNotebook(
+                i, WithEvernoteFields::Yes, result.m_maxUserOwnUsn);
         }
     }
 
@@ -278,7 +287,8 @@ enum class WithEvernoteFields
         result.m_newUserOwnTags.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
             result.m_newUserOwnTags << generateTag(
-                i, WithEvernoteFields::No, result.m_newUserOwnTags, usn);
+                i, WithEvernoteFields::No, result.m_newUserOwnTags,
+                result.m_maxUserOwnUsn);
         }
         // Putting child tags first to ensure in test that parents would be sent
         // first
@@ -290,7 +300,8 @@ enum class WithEvernoteFields
         result.m_updatedUserOwnTags.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
             result.m_updatedUserOwnTags << generateTag(
-                i, WithEvernoteFields::Yes, result.m_updatedUserOwnTags, usn);
+                i, WithEvernoteFields::Yes, result.m_updatedUserOwnTags,
+                result.m_maxUserOwnUsn);
         }
         // Putting child tags first to ensure in test that parents would be sent
         // first
@@ -305,7 +316,7 @@ enum class WithEvernoteFields
             result.m_newUserOwnNotes << generateNote(
                 i, WithEvernoteFields::No, result.m_newUserOwnNotebooks,
                 result.m_updatedUserOwnNotebooks, result.m_newUserOwnTags,
-                result.m_updatedUserOwnTags, usn);
+                result.m_updatedUserOwnTags, result.m_maxUserOwnUsn);
         }
     }
 
@@ -315,7 +326,7 @@ enum class WithEvernoteFields
             result.m_updatedUserOwnNotes << generateNote(
                 i, WithEvernoteFields::Yes, result.m_newUserOwnNotebooks,
                 result.m_updatedUserOwnNotebooks, result.m_newUserOwnTags,
-                result.m_updatedUserOwnTags, usn);
+                result.m_updatedUserOwnTags, result.m_maxUserOwnUsn);
         }
     }
 
@@ -329,18 +340,23 @@ enum class WithEvernoteFields
     if (hasLinkedNotebooksStuff) {
         result.m_linkedNotebooks.reserve(itemCount);
         for (int i = 0; i < itemCount; ++i) {
-            result.m_linkedNotebooks << generateLinkedNotebook(i, usn);
+            result.m_linkedNotebooks
+                << generateLinkedNotebook(i, result.m_maxUserOwnUsn);
+            result.m_maxLinkedNotebookUsns
+                [result.m_linkedNotebooks.constLast().guid().value()] = 42;
         }
 
         if (flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooks)) {
             result.m_updatedLinkedNotebooks.reserve(itemCount);
             for (int i = 0; i < itemCount; ++i) {
-                auto notebook =
-                    generateNotebook(i, WithEvernoteFields::Yes, usn);
+                const auto & linkedNotebookGuid =
+                    result.m_linkedNotebooks[i].guid().value();
 
-                notebook.setLinkedNotebookGuid(
-                    result.m_linkedNotebooks[i].guid());
+                auto notebook = generateNotebook(
+                    i, WithEvernoteFields::Yes,
+                    result.m_maxLinkedNotebookUsns[linkedNotebookGuid]);
 
+                notebook.setLinkedNotebookGuid(linkedNotebookGuid);
                 result.m_updatedLinkedNotebooks << notebook;
             }
         }
@@ -348,10 +364,14 @@ enum class WithEvernoteFields
         if (flags.testFlag(SenderTestFlag::WithNewLinkedNotebooksTags)) {
             result.m_newLinkedNotebooksTags.reserve(itemCount);
             for (int i = 0; i < itemCount; ++i) {
+                const auto & linkedNotebookGuid =
+                    result.m_linkedNotebooks[i].guid().value();
+
                 auto tag = generateTag(
                     i, WithEvernoteFields::No, result.m_newLinkedNotebooksTags,
-                    usn);
-                tag.setLinkedNotebookGuid(result.m_linkedNotebooks[i].guid());
+                    result.m_maxLinkedNotebookUsns[linkedNotebookGuid]);
+
+                tag.setLinkedNotebookGuid(linkedNotebookGuid);
                 result.m_newLinkedNotebooksTags << tag;
             }
             // Putting child tags first to ensure in test that parents would be
@@ -364,10 +384,15 @@ enum class WithEvernoteFields
         if (flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooksTags)) {
             result.m_updatedLinkedNotebooksTags.reserve(itemCount);
             for (int i = 0; i < itemCount; ++i) {
+                const auto & linkedNotebookGuid =
+                    result.m_linkedNotebooks[i].guid().value();
+
                 auto tag = generateTag(
                     i, WithEvernoteFields::Yes,
-                    result.m_updatedLinkedNotebooksTags, usn);
-                tag.setLinkedNotebookGuid(result.m_linkedNotebooks[i].guid());
+                    result.m_updatedLinkedNotebooksTags,
+                    result.m_maxLinkedNotebookUsns[linkedNotebookGuid]);
+
+                tag.setLinkedNotebookGuid(linkedNotebookGuid);
                 result.m_updatedLinkedNotebooksTags << tag;
             }
             // Putting child tags first to ensure in test that parents would be
@@ -380,27 +405,166 @@ enum class WithEvernoteFields
         if (flags.testFlag(SenderTestFlag::WithNewLinkedNotebooksNotes)) {
             result.m_newLinkedNotebooksNotes.reserve(itemCount);
             for (int i = 0; i < itemCount; ++i) {
+                const auto & linkedNotebookGuid =
+                    result.m_linkedNotebooks[i].guid().value();
+
                 result.m_newLinkedNotebooksNotes << generateNote(
                     i, WithEvernoteFields::No, {},
                     result.m_updatedLinkedNotebooks,
                     result.m_newLinkedNotebooksTags,
-                    result.m_updatedLinkedNotebooksTags, usn);
+                    result.m_updatedLinkedNotebooksTags,
+                    result.m_maxLinkedNotebookUsns[linkedNotebookGuid]);
             }
         }
 
         if (flags.testFlag(SenderTestFlag::WithUpdatedLinkedNotebooksNotes)) {
             result.m_updatedLinkedNotebooksNotes.reserve(itemCount);
             for (int i = 0; i < itemCount; ++i) {
+                const auto & linkedNotebookGuid =
+                    result.m_linkedNotebooks[i].guid().value();
+
                 result.m_updatedLinkedNotebooksNotes << generateNote(
                     i, WithEvernoteFields::Yes, {},
                     result.m_updatedLinkedNotebooks,
                     result.m_newLinkedNotebooksTags,
-                    result.m_updatedLinkedNotebooksTags, usn);
+                    result.m_updatedLinkedNotebooksTags,
+                    result.m_maxLinkedNotebookUsns[linkedNotebookGuid]);
             }
         }
     }
 
     return result;
+}
+
+void setupUserOwnNoteStoreMock(
+    const SenderTestData & testData,
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore> & mockNoteStore)
+{
+    if (!testData.m_newSavedSearches.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, createSearchAsync)
+            .Times(testData.m_newSavedSearches.size())
+            .WillRepeatedly([&](const qevercloud::SavedSearch & savedSearch,
+                                const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_FALSE(ctx);
+                EXPECT_TRUE(
+                    testData.m_newSavedSearches.contains(savedSearch));
+                qevercloud::SavedSearch createdSavedSearch = savedSearch;
+                createdSavedSearch.setGuid(UidGenerator::Generate());
+                createdSavedSearch.setUpdateSequenceNum(
+                    testData.m_maxUserOwnUsn++);
+                return threading::makeReadyFuture<qevercloud::SavedSearch>(
+                    std::move(createdSavedSearch));
+            });
+    }
+
+    if (!testData.m_updatedSavedSearches.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, updateSearchAsync)
+            .Times(testData.m_updatedSavedSearches.size())
+            .WillRepeatedly(
+                [&](const qevercloud::SavedSearch & savedSearch,
+                    const qevercloud::IRequestContextPtr & ctx) {
+                    EXPECT_FALSE(ctx);
+                    EXPECT_TRUE(testData.m_updatedSavedSearches.contains(
+                        savedSearch));
+                    auto usn = testData.m_maxUserOwnUsn++;
+                    return threading::makeReadyFuture<qint32>(usn);
+                });
+    }
+
+    if (!testData.m_newUserOwnNotebooks.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, createNotebookAsync)
+            .Times(testData.m_newUserOwnNotebooks.size())
+            .WillRepeatedly(
+                [&](const qevercloud::Notebook & notebook,
+                    const qevercloud::IRequestContextPtr & ctx) {
+                    EXPECT_FALSE(ctx);
+                    EXPECT_TRUE(
+                        testData.m_newUserOwnNotebooks.contains(notebook));
+                    qevercloud::Notebook createdNotebook = notebook;
+                    createdNotebook.setGuid(UidGenerator::Generate());
+                    createdNotebook.setUpdateSequenceNum(
+                        testData.m_maxUserOwnUsn++);
+                    return threading::makeReadyFuture<qevercloud::Notebook>(
+                        std::move(createdNotebook));
+                });
+    }
+
+    if (!testData.m_updatedUserOwnNotebooks.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, updateNotebookAsync)
+            .Times(testData.m_updatedUserOwnNotebooks.size())
+            .WillRepeatedly(
+                [&](const qevercloud::Notebook & notebook,
+                    const qevercloud::IRequestContextPtr & ctx) {
+                    EXPECT_FALSE(ctx);
+                    EXPECT_TRUE(testData.m_updatedUserOwnNotebooks.contains(
+                        notebook));
+                    auto usn = testData.m_maxUserOwnUsn++;
+                    return threading::makeReadyFuture<qint32>(usn);
+                });
+    }
+
+    if (!testData.m_newUserOwnNotes.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, createNoteAsync)
+            .Times(testData.m_newUserOwnNotes.size())
+            .WillRepeatedly([&](const qevercloud::Note & note,
+                                const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_FALSE(ctx);
+                EXPECT_TRUE(testData.m_newUserOwnNotes.contains(note));
+                qevercloud::Note createdNote = note;
+                createdNote.setGuid(UidGenerator::Generate());
+                createdNote.setUpdateSequenceNum(testData.m_maxUserOwnUsn++);
+                return threading::makeReadyFuture<qevercloud::Note>(
+                    std::move(createdNote));
+            });
+    }
+
+    if (!testData.m_updatedUserOwnNotes.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, updateNoteAsync)
+            .Times(testData.m_updatedUserOwnNotes.size())
+            .WillRepeatedly([&](const qevercloud::Note & note,
+                                const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_FALSE(ctx);
+                EXPECT_TRUE(testData.m_updatedUserOwnNotes.contains(note));
+                auto usn = testData.m_maxUserOwnUsn++;
+                qevercloud::Note updatedNote = note;
+                updatedNote.setUpdateSequenceNum(usn);
+                return threading::makeReadyFuture<qevercloud::Note>(
+                    std::move(updatedNote));
+            });
+    }
+
+    if (!testData.m_newUserOwnTags.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, createTagAsync)
+            .Times(testData.m_newUserOwnTags.size())
+            .WillRepeatedly([&](const qevercloud::Tag & tag,
+                                const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_FALSE(ctx);
+                EXPECT_TRUE(testData.m_newUserOwnTags.contains(tag));
+                qevercloud::Tag createdTag = tag;
+                createdTag.setGuid(UidGenerator::Generate());
+                createdTag.setUpdateSequenceNum(testData.m_maxUserOwnUsn++);
+                return threading::makeReadyFuture<qevercloud::Tag>(
+                    std::move(createdTag));
+            });
+    }
+
+    if (!testData.m_updatedUserOwnTags.isEmpty()) {
+        EXPECT_CALL(*mockNoteStore, updateTagAsync)
+            .Times(testData.m_updatedUserOwnTags.size())
+            .WillRepeatedly([&](const qevercloud::Tag & tag,
+                                const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_FALSE(ctx);
+                EXPECT_TRUE(testData.m_updatedUserOwnTags.contains(tag));
+                auto usn = testData.m_maxUserOwnUsn++;
+                return threading::makeReadyFuture<qint32>(usn);
+            });
+    }
+}
+
+void setupLinkedNotebookNoteStoreMocks(
+    const SenderTestData & testData,
+    QHash<qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>> mockNoteStores)
+{
 }
 
 class SenderTest : public testing::Test
@@ -487,5 +651,63 @@ TEST_F(SenderTest, CtorNullRetryPolicy)
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr));
 }
+
+const std::array gSenderTestData{
+    generateTestData(SenderTestFlags{}),
+};
+
+/*
+class SenderDataTest :
+    public SenderTest,
+    public testing::WithParamInterface<SenderTestData>
+{};
+
+INSTANTIATE_TEST_SUITE_P(
+    SenderDataTestInstance, SenderDataTest, testing::ValuesIn(gSenderTestData));
+
+TEST_P(SenderDataTest, SenderDataTest)
+{
+    const auto sender = std::make_shared<Sender>(
+        m_account, m_mockLocalStorage, m_mockSyncStateStorage,
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy());
+
+    const auto & testData = GetParam();
+
+    if (!testData.m_newSavedSearches.isEmpty() ||
+        !testData.m_updatedSavedSearches.isEmpty() ||
+        !testData.m_newUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
+        !testData.m_newUserOwnNotes.isEmpty() ||
+        !testData.m_updatedUserOwnNotes.isEmpty() ||
+        !testData.m_newUserOwnTags.isEmpty() ||
+        !testData.m_updatedUserOwnTags.isEmpty())
+    {
+        const std::shared_ptr<mocks::qevercloud::MockINoteStore> mockUserOwnNoteStore =
+            std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+        setupUserOwnNoteStoreMock(testData, mockUserOwnNoteStore);
+
+        EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+            .WillRepeatedly(
+                Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore)));
+    }
+
+    const auto listTagsOptions = [] {
+        local_storage::ILocalStorage::ListTagsOptions options;
+        options.m_filters.m_locallyModifiedFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Include;
+        return options;
+    }();
+
+    EXPECT_CALL(*m_mockLocalStorage, listTags(listTagsOptions))
+        .WillOnce(Return(
+            QList<qevercloud::Tag>{} << testData.m_newUserOwnTags
+                                     << testData.m_updatedUserOwnTags
+                                     << testData.m_newLinkedNotebooksTags
+                                     << testData.m_updatedLinkedNotebooksTags));
+}
+*/
 
 } // namespace quentier::synchronization::tests
