@@ -66,13 +66,15 @@ public:
 private:
     struct SendContext
     {
-        SyncStateConstPtr lastSyncState;
+        SyncStatePtr lastSyncState;
         std::shared_ptr<QPromise<Result>> promise;
         utility::cancelers::ICancelerPtr canceler;
         ICallbackWeakPtr callbackWeak;
 
         // Linked notebook to which this DownloadContext belongs
         std::optional<qevercloud::LinkedNotebook> linkedNotebook;
+
+        bool shouldRepeatIncrementalSync = false;
 
         // Running result
         SendStatusPtr userOwnSendStatus;
@@ -212,6 +214,18 @@ private:
     static void sendUpdate(
         const SendContextPtr & sendContext, const SendStatusPtr & sendStatus,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid);
+
+    [[nodiscard]] std::optional<qint32> lastUpdateCount(
+        const SendContext & sendContext,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid = {}) const;
+
+    void updateLastUpdateCount(
+        qint32 updateCount, SendContext & sendContext,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid = {}) const;
+
+    void checkUpdateSequenceNumber(
+        qint32 updateSequenceNumber, SendContext & sendContext,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid = {}) const;
 
 private:
     const Account m_account;

@@ -25,7 +25,7 @@
 
 namespace quentier::synchronization {
 
-SyncStateConstPtr readLastSyncState(
+SyncStatePtr readLastSyncState(
     const ISyncStateStoragePtr & syncStateStorage, const Account & account)
 {
     Q_ASSERT(syncStateStorage);

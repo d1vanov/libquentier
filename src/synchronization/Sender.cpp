@@ -450,11 +450,13 @@ void Sender::processNote(
     const SendContextPtr & sendContext, qevercloud::Note note,
     const std::shared_ptr<QPromise<void>> & promise) const
 {
+    const auto selfWeak = weak_from_this();
+
     auto putNoteFuture = m_localStorage->putNote(note);
     auto putNoteThenFuture = threading::then(
         std::move(putNoteFuture),
         [sendContext, promise, notebookLocalId = note.notebookLocalId(),
-         localStorageWeak = std::weak_ptr{m_localStorage}]() mutable {
+         noteUsn = note.updateSequenceNum(), selfWeak, this]() mutable {
             if (sendContext->canceler->isCanceled()) {
                 return;
             }
@@ -469,6 +471,15 @@ void Sender::processNote(
                     sendContext->notebookLocalIdsToLinkedNotebookGuids
                         .constEnd())
                 {
+                    Q_ASSERT(noteUsn);
+                    if (noteUsn) {
+                        if (const auto self = selfWeak.lock()) {
+                            checkUpdateSequenceNumber(
+                                *noteUsn, *sendContext,
+                                linkedNotebookGuidIt.value());
+                        }
+                    }
+
                     auto status =
                         sendStatus(sendContext, linkedNotebookGuidIt.value());
 
@@ -484,17 +495,17 @@ void Sender::processNote(
 
             // We don't have cached info on linked notebook guid for this
             // notebook yet, need to find it out
-            const auto localStorage = localStorageWeak.lock();
-            if (!localStorage) {
+            const auto self = selfWeak.lock();
+            if (!self) {
                 return;
             }
 
             auto notebookFuture =
-                localStorage->findNotebookByLocalId(notebookLocalId);
+                m_localStorage->findNotebookByLocalId(notebookLocalId);
 
             auto notebookThenFuture = threading::then(
                 std::move(notebookFuture),
-                [sendContext, promise,
+                [sendContext, promise, noteUsn, selfWeak, this,
                  notebookLocalId = std::move(notebookLocalId)](
                     const std::optional<qevercloud::Notebook> & notebook) {
                     if (sendContext->canceler->isCanceled()) {
@@ -520,6 +531,15 @@ void Sender::processNote(
                             notebook->linkedNotebookGuid();
 
                         QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                        Q_ASSERT(noteUsn);
+                        if (noteUsn) {
+                            if (const auto self = selfWeak.lock()) {
+                                checkUpdateSequenceNumber(
+                                    *noteUsn, *sendContext, linkedNotebookGuid);
+                            }
+                        }
+
                         sendContext->notebookLocalIdsToLinkedNotebookGuids
                             [notebookLocalId] = linkedNotebookGuid;
 
@@ -549,7 +569,6 @@ void Sender::processNote(
                 });
         });
 
-    const auto selfWeak = weak_from_this();
     threading::onFailed(
         std::move(putNoteThenFuture),
         [selfWeak, this, sendContext, promise,
@@ -917,6 +936,16 @@ void Sender::processTag(
     const SendContextPtr & sendContext, qevercloud::Tag tag,
     const std::shared_ptr<QPromise<void>> & promise) const
 {
+    {
+        Q_ASSERT(tag.updateSequenceNum());
+        const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+        if (tag.updateSequenceNum()) {
+            checkUpdateSequenceNumber(
+                *tag.updateSequenceNum(), *sendContext,
+                tag.linkedNotebookGuid());
+        }
+    }
+
     auto putTagFuture = m_localStorage->putTag(tag);
     auto putTagThenFuture = threading::then(
         std::move(putTagFuture),
@@ -1170,6 +1199,16 @@ void Sender::processNotebook(
     const SendContextPtr & sendContext, qevercloud::Notebook notebook,
     const std::shared_ptr<QPromise<void>> & promise) const
 {
+    {
+        Q_ASSERT(notebook.updateSequenceNum());
+        const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+        if (notebook.updateSequenceNum()) {
+            checkUpdateSequenceNumber(
+                *notebook.updateSequenceNum(), *sendContext,
+                notebook.linkedNotebookGuid());
+        }
+    }
+
     auto putNotebookFuture = m_localStorage->putNotebook(notebook);
     auto putNotebookThenFuture = threading::then(
         std::move(putNotebookFuture),
@@ -1442,6 +1481,15 @@ void Sender::processSavedSearch(
     const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
     const std::shared_ptr<QPromise<void>> & promise) const
 {
+    {
+        Q_ASSERT(savedSearch.updateSequenceNum());
+        const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+        if (savedSearch.updateSequenceNum()) {
+            checkUpdateSequenceNumber(
+                *savedSearch.updateSequenceNum(), *sendContext);
+        }
+    }
+
     auto putSavedSearchFuture = m_localStorage->putSavedSearch(savedSearch);
     auto putSavedSearchThenFuture = threading::then(
         std::move(putSavedSearchFuture), [sendContext, promise] {
@@ -1524,6 +1572,62 @@ void Sender::sendUpdate(
             callback->onUserOwnSendStatusUpdate(std::move(sendStatusCopy));
         }
     }
+}
+
+std::optional<qint32> Sender::lastUpdateCount(
+    const SendContext & sendContext,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid) const
+{
+    if (linkedNotebookGuid) {
+        const auto & updateCounts =
+            sendContext.lastSyncState->linkedNotebookUpdateCounts();
+
+        const auto it = updateCounts.constFind(*linkedNotebookGuid);
+        if (it != updateCounts.constEnd()) {
+            QNWARNING(
+                "synchronization::Sender",
+                "Cannot determine whether account is in sync with Evernote: "
+                    << "no update count for linked notebook with guid "
+                    << *linkedNotebookGuid);
+            return std::nullopt;
+        }
+
+        return it.value();
+    }
+
+    return sendContext.lastSyncState->userDataUpdateCount();
+}
+
+void Sender::updateLastUpdateCount(
+    qint32 updateCount, SendContext & sendContext,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid) const
+{
+    auto & lastSyncState = sendContext.lastSyncState;
+    if (linkedNotebookGuid) {
+        lastSyncState->m_linkedNotebookUpdateCounts[*linkedNotebookGuid] =
+            updateCount;
+    }
+    else {
+        lastSyncState->m_userDataUpdateCount = updateCount;
+    }
+}
+
+void Sender::checkUpdateSequenceNumber(
+    const qint32 updateSequenceNumber, SendContext & sendContext,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid) const
+{
+    if (!sendContext.shouldRepeatIncrementalSync) {
+        const auto previousUpdateCount =
+            lastUpdateCount(sendContext, linkedNotebookGuid);
+
+        if (previousUpdateCount &&
+            (updateSequenceNumber != *previousUpdateCount + 1)) {
+            sendContext.shouldRepeatIncrementalSync = true;
+        }
+    }
+
+    updateLastUpdateCount(
+        updateSequenceNumber, sendContext, linkedNotebookGuid);
 }
 
 } // namespace quentier::synchronization

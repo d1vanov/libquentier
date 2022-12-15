@@ -32,7 +32,7 @@ class Account;
 
 namespace quentier::synchronization {
 
-[[nodiscard]] SyncStateConstPtr readLastSyncState(
+[[nodiscard]] SyncStatePtr readLastSyncState(
     const ISyncStateStoragePtr & syncStateStorage, const Account & account);
 
 [[nodiscard]] bool isAuthenticationTokenAboutToExpire(
