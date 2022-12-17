@@ -41,11 +41,11 @@ public:
         virtual ~ICallback() = default;
 
         virtual void onUserOwnSendStatusUpdate(
-            ISendStatusPtr sendStatus) const = 0;
+            ISendStatusPtr sendStatus) = 0;
 
         virtual void onLinkedNotebookSendStatusUpdate(
             const qevercloud::Guid & linkedNotebookGuid,
-            ISendStatusPtr sendStatus) const = 0;
+            ISendStatusPtr sendStatus) = 0;
     };
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
