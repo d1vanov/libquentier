@@ -71,9 +71,6 @@ private:
         utility::cancelers::ICancelerPtr canceler;
         ICallbackWeakPtr callbackWeak;
 
-        // Linked notebook to which this DownloadContext belongs
-        std::optional<qevercloud::LinkedNotebook> linkedNotebook;
-
         bool shouldRepeatIncrementalSync = false;
 
         // Running result

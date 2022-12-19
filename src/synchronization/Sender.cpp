@@ -99,6 +99,7 @@ QFuture<ISender::Result> Sender::send(
     sendContext->promise = promise;
     sendContext->canceler = std::move(canceler);
     sendContext->callbackWeak = std::move(callbackWeak);
+    sendContext->userOwnSendStatus = std::make_shared<SendStatus>();
 
     const auto selfWeak = weak_from_this();
 
@@ -530,7 +531,8 @@ void Sender::processNote(
                         const auto & linkedNotebookGuid =
                             notebook->linkedNotebookGuid();
 
-                        QMutexLocker locker{sendContext->sendStatusMutex.get()};
+                        const QMutexLocker locker{
+                            sendContext->sendStatusMutex.get()};
 
                         Q_ASSERT(noteUsn);
                         if (noteUsn) {
@@ -647,7 +649,7 @@ void Sender::processNoteFailure(
                 const auto & linkedNotebookGuid =
                     notebook->linkedNotebookGuid();
 
-                QMutexLocker locker{sendContext->sendStatusMutex.get()};
+                const QMutexLocker locker{sendContext->sendStatusMutex.get()};
                 sendContext
                     ->notebookLocalIdsToLinkedNotebookGuids[notebookLocalId] =
                     linkedNotebookGuid;
@@ -1552,9 +1554,18 @@ SendStatusPtr Sender::sendStatus(
     const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     Q_ASSERT(sendContext);
-    return linkedNotebookGuid
-        ? sendContext->linkedNotebookSendStatuses[*linkedNotebookGuid]
-        : sendContext->userOwnSendStatus;
+    if (!linkedNotebookGuid) {
+        return sendContext->userOwnSendStatus;
+    }
+
+    auto & sendStatus =
+        sendContext->linkedNotebookSendStatuses[*linkedNotebookGuid];
+
+    if (!sendStatus) {
+        sendStatus = std::make_shared<SendStatus>();
+    }
+
+    return sendStatus;
 }
 
 void Sender::sendUpdate(
