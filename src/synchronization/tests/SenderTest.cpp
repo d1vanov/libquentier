@@ -37,6 +37,7 @@
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/SavedSearchBuilder.h>
 #include <qevercloud/types/builders/TagBuilder.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QDateTime>
 #include <QFlags>
@@ -1127,6 +1128,134 @@ TEST_P(SenderDataTest, SenderDataTest)
 
     auto resultFuture = sender->send(canceler, callback);
     ASSERT_TRUE(resultFuture.isFinished());
+
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+    const auto result = resultFuture.result();
+
+    // === Checking the result
+
+    ASSERT_TRUE(result.userOwnResult);
+
+    // === Notes ===
+
+    EXPECT_EQ(
+        result.userOwnResult->totalAttemptedToSendNotes(),
+        testData.m_newUserOwnNotes.size() +
+            testData.m_updatedUserOwnNotes.size());
+
+    EXPECT_EQ(
+        result.userOwnResult->totalSuccessfullySentNotes(),
+        result.userOwnResult->totalAttemptedToSendNotes());
+
+    EXPECT_TRUE(result.userOwnResult->failedToSendNotes().isEmpty());
+
+    // === Notebooks ===
+
+    EXPECT_EQ(
+        result.userOwnResult->totalAttemptedToSendNotebooks(),
+        testData.m_newUserOwnNotebooks.size() +
+            testData.m_updatedUserOwnNotebooks.size());
+
+    EXPECT_EQ(
+        result.userOwnResult->totalSuccessfullySentNotebooks(),
+        result.userOwnResult->totalAttemptedToSendNotebooks());
+
+    EXPECT_TRUE(result.userOwnResult->failedToSendNotebooks().isEmpty());
+
+    // === Tags ===
+
+    EXPECT_EQ(
+        result.userOwnResult->totalAttemptedToSendTags(),
+        testData.m_newUserOwnTags.size() +
+            testData.m_updatedUserOwnTags.size());
+
+    EXPECT_EQ(
+        result.userOwnResult->totalSuccessfullySentTags(),
+        result.userOwnResult->totalAttemptedToSendTags());
+
+    EXPECT_TRUE(result.userOwnResult->failedToSendTags().isEmpty());
+
+    // === Saved searches ===
+
+    EXPECT_EQ(
+        result.userOwnResult->totalAttemptedToSendSavedSearches(),
+        testData.m_newSavedSearches.size() +
+            testData.m_updatedSavedSearches.size());
+
+    EXPECT_EQ(
+        result.userOwnResult->totalSuccessfullySentSavedSearches(),
+        result.userOwnResult->totalAttemptedToSendSavedSearches());
+
+    EXPECT_TRUE(result.userOwnResult->failedToSendSavedSearches().isEmpty());
+
+    // Stuff from linked notebooks
+
+    EXPECT_LE(
+        result.linkedNotebookResults.size(), testData.m_linkedNotebooks.size());
+
+    const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
+        quint64 count = 0;
+        for (const auto it:
+            qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+        {
+            count += it.value()->totalAttemptedToSendNotes();
+        }
+        return count;
+    }();
+    EXPECT_EQ(
+        totalLinkedNotebooksAttemptedToSendNotes,
+        testData.m_newLinkedNotebooksNotes.size() +
+            testData.m_updatedLinkedNotebooksNotes.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+    {
+        const qevercloud::Guid & linkedNotebookGuid = it.key();
+        const ISendStatusPtr & sendStatus = it.value();
+        EXPECT_TRUE(sendStatus);
+        if (Q_UNLIKELY(!sendStatus)) {
+            continue;
+        }
+
+        const auto lit = std::find_if(
+            testData.m_linkedNotebooks.constBegin(),
+            testData.m_linkedNotebooks.constEnd(),
+            [&](const qevercloud::LinkedNotebook & linkedNotebook) {
+                return linkedNotebook.guid() == linkedNotebookGuid;
+            });
+        EXPECT_NE(lit, testData.m_linkedNotebooks.constEnd());
+
+        const int tagCount = [&] {
+            int count = 0;
+            const auto countTags = [&](const QList<qevercloud::Tag> & tags)
+            {
+                for (const auto & tag: qAsConst(tags))
+                {
+                    if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
+                        ++count;
+                    }
+                }
+            };
+            countTags(testData.m_newLinkedNotebooksTags);
+            countTags(testData.m_updatedLinkedNotebooksTags);
+            return count;
+        }();
+        EXPECT_EQ(sendStatus->totalAttemptedToSendTags(), tagCount);
+
+        const int notebookCount = [&] {
+            int count = 0;
+            for (const auto & notebook:
+                 qAsConst(testData.m_updatedLinkedNotebooks)) {
+                if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
+                    ++count;
+                }
+            }
+            return count;
+        }();
+        EXPECT_EQ(sendStatus->totalAttemptedToSendNotebooks(), notebookCount);
+
+        EXPECT_EQ(sendStatus->totalAttemptedToSendSavedSearches(), 0);
+    }
 
     // TODO: analyze the actual result, check collected stuff from callback
     // TODO: check that stuff put to local storage matches the sent stuff
