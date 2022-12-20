@@ -60,6 +60,8 @@ using testing::StrictMock;
 
 using MockNoteStorePtr = std::shared_ptr<mocks::qevercloud::MockINoteStore>;
 
+namespace {
+
 enum class SenderTestFlag
 {
     WithNewSavedSearches = 1 << 0,
@@ -820,6 +822,70 @@ void setupLinkedNotebookNoteStoreMocks(
     }
 }
 
+void checkSendStatusUpdate(
+    const ISendStatusPtr & previous, const ISendStatusPtr & updated)
+{
+    if (!previous) {
+        return;
+    }
+
+    ASSERT_TRUE(updated);
+
+    EXPECT_GE(
+        updated->totalAttemptedToSendNotes(),
+        previous->totalAttemptedToSendNotes());
+
+    EXPECT_GE(
+        updated->totalAttemptedToSendNotebooks(),
+        previous->totalAttemptedToSendNotebooks());
+
+    EXPECT_GE(
+        updated->totalAttemptedToSendSavedSearches(),
+        previous->totalAttemptedToSendSavedSearches());
+
+    EXPECT_GE(
+        updated->totalAttemptedToSendTags(),
+        previous->totalAttemptedToSendTags());
+
+    EXPECT_GE(
+        updated->totalSuccessfullySentNotes(),
+        previous->totalSuccessfullySentNotes());
+
+    EXPECT_GE(
+        updated->failedToSendNotes().size(),
+        previous->failedToSendNotes().size());
+
+    EXPECT_GE(
+        updated->totalSuccessfullySentNotebooks(),
+        previous->totalSuccessfullySentNotebooks());
+
+    EXPECT_GE(
+        updated->failedToSendNotebooks().size(),
+        previous->failedToSendNotebooks().size());
+
+    EXPECT_GE(
+        updated->totalSuccessfullySentSavedSearches(),
+        previous->totalSuccessfullySentSavedSearches());
+
+    EXPECT_GE(
+        updated->failedToSendSavedSearches().size(),
+        previous->failedToSendSavedSearches().size());
+
+    EXPECT_GE(
+        updated->totalSuccessfullySentTags(),
+        previous->totalSuccessfullySentTags());
+
+    EXPECT_GE(
+        updated->failedToSendTags().size(),
+        previous->failedToSendTags().size());
+
+    if (previous->needToRepeatIncrementalSync()) {
+        EXPECT_TRUE(updated->needToRepeatIncrementalSync());
+    }
+}
+
+} // namespace
+
 class SenderTest : public testing::Test
 {
 protected:
@@ -1108,7 +1174,7 @@ TEST_P(SenderDataTest, SenderDataTest)
     {
         void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus) override
         {
-            // TODO: check for increasing stats?
+            checkSendStatusUpdate(m_userOwnSendStatus, sendStatus);
             m_userOwnSendStatus = sendStatus;
         }
 
@@ -1116,8 +1182,11 @@ TEST_P(SenderDataTest, SenderDataTest)
             const qevercloud::Guid & linkedNotebookGuid,
             ISendStatusPtr sendStatus) override
         {
-            // TODO: check for increasing stats?
-            m_linkedNotebookSendStatuses[linkedNotebookGuid] = sendStatus;
+            auto & linkedNotebookSendStatus =
+                m_linkedNotebookSendStatuses[linkedNotebookGuid];
+
+            checkSendStatusUpdate(linkedNotebookSendStatus, sendStatus);
+            linkedNotebookSendStatus = sendStatus;
         }
 
         ISendStatusPtr m_userOwnSendStatus;
@@ -1188,6 +1257,8 @@ TEST_P(SenderDataTest, SenderDataTest)
 
     EXPECT_TRUE(result.userOwnResult->failedToSendSavedSearches().isEmpty());
 
+    EXPECT_FALSE(result.userOwnResult->needToRepeatIncrementalSync());
+
     // Stuff from linked notebooks
 
     EXPECT_LE(
@@ -1196,8 +1267,7 @@ TEST_P(SenderDataTest, SenderDataTest)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-            qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
-        {
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
             count += it.value()->totalAttemptedToSendNotes();
         }
         return count;
@@ -1208,8 +1278,7 @@ TEST_P(SenderDataTest, SenderDataTest)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
-    {
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
         EXPECT_TRUE(sendStatus);
@@ -1227,10 +1296,8 @@ TEST_P(SenderDataTest, SenderDataTest)
 
         const int tagCount = [&] {
             int count = 0;
-            const auto countTags = [&](const QList<qevercloud::Tag> & tags)
-            {
-                for (const auto & tag: qAsConst(tags))
-                {
+            const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
+                for (const auto & tag: qAsConst(tags)) {
                     if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
                         ++count;
                     }
@@ -1255,10 +1322,65 @@ TEST_P(SenderDataTest, SenderDataTest)
         EXPECT_EQ(sendStatus->totalAttemptedToSendNotebooks(), notebookCount);
 
         EXPECT_EQ(sendStatus->totalAttemptedToSendSavedSearches(), 0);
+        EXPECT_FALSE(sendStatus->needToRepeatIncrementalSync());
     }
 
-    // TODO: analyze the actual result, check collected stuff from callback
-    // TODO: check that stuff put to local storage matches the sent stuff
+    // Checking sent data vs data sent to local storage
+
+    ASSERT_EQ(
+        dataPutToLocalStorage.m_savedSearches.size(),
+        sentData.m_sentSavedSearches.size());
+
+    ASSERT_EQ(dataPutToLocalStorage.m_tags.size(), sentData.m_sentTags.size());
+    ASSERT_EQ(
+        dataPutToLocalStorage.m_notebooks.size(),
+        sentData.m_sentNotebooks.size());
+
+    ASSERT_EQ(
+        dataPutToLocalStorage.m_notes.size(), sentData.m_sentNotes.size());
+
+    for (const auto & savedSearch:
+         qAsConst(dataPutToLocalStorage.m_savedSearches)) {
+        const auto it = std::find_if(
+            sentData.m_sentSavedSearches.constBegin(),
+            sentData.m_sentSavedSearches.constEnd(),
+            [&](const qevercloud::SavedSearch & s) {
+                return s.localId() == savedSearch.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentSavedSearches.constEnd());
+        EXPECT_EQ(*it, savedSearch);
+    }
+
+    for (const auto & notebook: qAsConst(dataPutToLocalStorage.m_notebooks)) {
+        const auto it = std::find_if(
+            sentData.m_sentNotebooks.constBegin(),
+            sentData.m_sentNotebooks.constEnd(),
+            [&](const qevercloud::Notebook & n) {
+                return n.localId() == notebook.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentNotebooks.constEnd());
+        EXPECT_EQ(*it, notebook);
+    }
+
+    for (const auto & note: qAsConst(dataPutToLocalStorage.m_notes)) {
+        const auto it = std::find_if(
+            sentData.m_sentNotes.constBegin(), sentData.m_sentNotes.constEnd(),
+            [&](const qevercloud::Note & n) {
+                return n.localId() == note.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentNotes.constEnd());
+        EXPECT_EQ(*it, note);
+    }
+
+    for (const auto & tag: qAsConst(dataPutToLocalStorage.m_tags)) {
+        const auto it = std::find_if(
+            sentData.m_sentTags.constBegin(), sentData.m_sentTags.constEnd(),
+            [&](const qevercloud::Tag & t) {
+                return t.localId() == tag.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentTags.constEnd());
+        EXPECT_EQ(*it, tag);
+    }
 }
 
 } // namespace quentier::synchronization::tests
