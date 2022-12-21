@@ -598,7 +598,12 @@ void setupUserOwnNoteStoreMock(
             .WillRepeatedly([&](const qevercloud::Tag & tag,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
-                EXPECT_TRUE(testData.m_newUserOwnTags.contains(tag));
+
+                qevercloud::Tag tagWithoutParentGuid = tag;
+                tagWithoutParentGuid.setParentGuid(std::nullopt);
+                EXPECT_TRUE(
+                    testData.m_newUserOwnTags.contains(tagWithoutParentGuid));
+
                 qevercloud::Tag createdTag = tag;
                 createdTag.setGuid(UidGenerator::Generate());
                 createdTag.setUpdateSequenceNum(testData.m_maxUserOwnUsn++);
@@ -615,7 +620,12 @@ void setupUserOwnNoteStoreMock(
             .WillRepeatedly([&](const qevercloud::Tag & tag,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
-                EXPECT_TRUE(testData.m_updatedUserOwnTags.contains(tag));
+
+                qevercloud::Tag tagWithoutParentGuid = tag;
+                tagWithoutParentGuid.setParentGuid(std::nullopt);
+                EXPECT_TRUE(testData.m_updatedUserOwnTags.contains(
+                    tagWithoutParentGuid));
+
                 auto usn = testData.m_maxUserOwnUsn++;
                 qevercloud::Tag updatedTag = tag;
                 updatedTag.setUpdateSequenceNum(usn);
@@ -973,6 +983,19 @@ TEST_F(SenderTest, CtorNullRetryPolicy)
 
 const std::array gSenderTestData{
     generateTestData(SenderTestFlags{}),
+    generateTestData(SenderTestFlags{} | SenderTestFlag::WithNewSavedSearches),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedSavedSearches),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewSavedSearches |
+        SenderTestFlag::WithUpdatedSavedSearches),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewUserOwnNotebooks),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedUserOwnNotebooks),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewUserOwnNotebooks |
+        SenderTestFlag::WithUpdatedUserOwnNotebooks),
 };
 
 class SenderDataTest :
