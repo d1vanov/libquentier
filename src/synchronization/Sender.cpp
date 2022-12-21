@@ -386,6 +386,15 @@ void Sender::sendNote(
                             return;
                         }
 
+                        {
+                            const QMutexLocker locker{
+                                sendContext->sendStatusMutex.get()};
+
+                            auto status = sendStatus(
+                                sendContext, noteStore->linkedNotebookGuid());
+                            ++status->m_totalAttemptedToSendNotes;
+                        }
+
                         sendNoteImpl(
                             std::move(note), containsFailedToSendTags,
                             noteStore, notePromise);
@@ -877,6 +886,15 @@ void Sender::sendTag(
                             return;
                         }
 
+                        {
+                            const QMutexLocker locker{
+                                sendContext->sendStatusMutex.get()};
+
+                            auto status = sendStatus(
+                                sendContext, tag.linkedNotebookGuid());
+                            ++status->m_totalAttemptedToSendTags;
+                        }
+
                         sendTagImpl(
                             std::move(sendContext), std::move(tag), noteStore,
                             tagPromise);
@@ -1157,6 +1175,15 @@ void Sender::sendNotebook(
                             return;
                         }
 
+                        {
+                            const QMutexLocker locker{
+                                sendContext->sendStatusMutex.get()};
+
+                            auto status = sendStatus(
+                                sendContext, notebook.linkedNotebookGuid());
+                            ++status->m_totalAttemptedToSendNotebooks;
+                        }
+
                         sendNotebookImpl(
                             std::move(notebook), noteStore, notebookPromise);
                     });
@@ -1430,6 +1457,14 @@ void Sender::sendSavedSearch(
 
                         if (sendContext->canceler->isCanceled()) {
                             return;
+                        }
+
+                        {
+                            const QMutexLocker locker{
+                                sendContext->sendStatusMutex.get()};
+
+                            ++sendContext->userOwnSendStatus
+                                  ->m_totalAttemptedToSendSavedSearches;
                         }
 
                         sendSavedSearchImpl(
