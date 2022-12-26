@@ -423,7 +423,7 @@ void Sender::sendNoteImpl(
             n.setLocallyFavorited(note.isLocallyFavorited());
             n.setLocalData(std::move(note.mutableLocalData()));
             n.setTagLocalIds(std::move(note.mutableTagLocalIds()));
-            n.setLocallyModified(!containsFailedToSendTags);
+            n.setLocallyModified(containsFailedToSendTags);
             if (n.resources()) {
                 Q_ASSERT(note.resources());
                 Q_ASSERT(note.resources()->size() == n.resources()->size());
