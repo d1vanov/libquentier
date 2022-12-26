@@ -56,6 +56,7 @@ namespace quentier::synchronization::tests {
 
 using testing::AnyNumber;
 using testing::Return;
+using testing::ReturnRef;
 using testing::StrictMock;
 
 using MockNoteStorePtr = std::shared_ptr<mocks::qevercloud::MockINoteStore>;
@@ -473,9 +474,9 @@ void findAndSetNoteTagGuids(
                 [&](const qevercloud::Tag & tag) {
                     return tag.localId() == tagLocalId;
                 });
-            it != tags.constEnd())
+            it != tags.constEnd() && it->guid())
         {
-            tagGuids << it->guid().value();
+            tagGuids << *it->guid();
         }
     }
 
@@ -584,15 +585,6 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_newUserOwnTags.isEmpty()) {
-        const auto setTagParentGuid = [&testData](qevercloud::Tag & tag) {
-            if (findAndSetParentTagGuid(tag, testData.m_newUserOwnTags)) {
-                return;
-            }
-
-            Q_UNUSED(
-                findAndSetParentTagGuid(tag, testData.m_updatedUserOwnTags))
-        };
-
         EXPECT_CALL(*mockNoteStore, createTagAsync)
             .Times(testData.m_newUserOwnTags.size())
             .WillRepeatedly([&](const qevercloud::Tag & tag,
@@ -607,7 +599,11 @@ void setupUserOwnNoteStoreMock(
                 qevercloud::Tag createdTag = tag;
                 createdTag.setGuid(UidGenerator::Generate());
                 createdTag.setUpdateSequenceNum(testData.m_maxUserOwnUsn++);
-                setTagParentGuid(createdTag);
+                if (!findAndSetParentTagGuid(
+                        createdTag, testData.m_newUserOwnTags)) {
+                    Q_UNUSED(findAndSetParentTagGuid(
+                        createdTag, testData.m_updatedUserOwnTags))
+                }
                 sentData.m_sentTags << createdTag;
                 return threading::makeReadyFuture<qevercloud::Tag>(
                     std::move(createdTag));
@@ -620,12 +616,7 @@ void setupUserOwnNoteStoreMock(
             .WillRepeatedly([&](const qevercloud::Tag & tag,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
-
-                qevercloud::Tag tagWithoutParentGuid = tag;
-                tagWithoutParentGuid.setParentGuid(std::nullopt);
-                EXPECT_TRUE(testData.m_updatedUserOwnTags.contains(
-                    tagWithoutParentGuid));
-
+                EXPECT_TRUE(testData.m_updatedUserOwnTags.contains(tag));
                 auto usn = testData.m_maxUserOwnUsn++;
                 qevercloud::Tag updatedTag = tag;
                 updatedTag.setUpdateSequenceNum(usn);
@@ -647,15 +638,11 @@ void setupUserOwnNoteStoreMock(
         note.setNotebookGuid(UidGenerator::Generate());
     };
 
-    const auto setNoteTagGuids = [&testData](qevercloud::Note & note) {
-        findAndSetNoteTagGuids(note, testData.m_newUserOwnTags);
-        findAndSetNoteTagGuids(note, testData.m_updatedUserOwnTags);
-    };
-
     if (!testData.m_newUserOwnNotes.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, createNoteAsync)
             .Times(testData.m_newUserOwnNotes.size())
-            .WillRepeatedly([&](const qevercloud::Note & note,
+            .WillRepeatedly([&, setNoteNotebookGuid](
+                                const qevercloud::Note & note,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
                 EXPECT_TRUE(testData.m_newUserOwnNotes.contains(note));
@@ -663,7 +650,9 @@ void setupUserOwnNoteStoreMock(
                 createdNote.setGuid(UidGenerator::Generate());
                 createdNote.setUpdateSequenceNum(testData.m_maxUserOwnUsn++);
                 setNoteNotebookGuid(createdNote);
-                setNoteTagGuids(createdNote);
+                findAndSetNoteTagGuids(createdNote, testData.m_newUserOwnTags);
+                findAndSetNoteTagGuids(
+                    createdNote, testData.m_updatedUserOwnTags);
                 sentData.m_sentNotes << createdNote;
                 return threading::makeReadyFuture<qevercloud::Note>(
                     std::move(createdNote));
@@ -673,7 +662,8 @@ void setupUserOwnNoteStoreMock(
     if (!testData.m_updatedUserOwnNotes.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, updateNoteAsync)
             .Times(testData.m_updatedUserOwnNotes.size())
-            .WillRepeatedly([&](const qevercloud::Note & note,
+            .WillRepeatedly([&, setNoteNotebookGuid](
+                                const qevercloud::Note & note,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
                 EXPECT_TRUE(testData.m_updatedUserOwnNotes.contains(note));
@@ -681,7 +671,9 @@ void setupUserOwnNoteStoreMock(
                 qevercloud::Note updatedNote = note;
                 updatedNote.setUpdateSequenceNum(usn);
                 setNoteNotebookGuid(updatedNote);
-                setNoteTagGuids(updatedNote);
+                findAndSetNoteTagGuids(updatedNote, testData.m_newUserOwnTags);
+                findAndSetNoteTagGuids(
+                    updatedNote, testData.m_updatedUserOwnTags);
                 sentData.m_sentNotes << updatedNote;
                 return threading::makeReadyFuture<qevercloud::Note>(
                     std::move(updatedNote));
@@ -748,17 +740,11 @@ void setupLinkedNotebookNoteStoreMocks(
                 auto usn =
                     testData.m_maxLinkedNotebookUsns[*linkedNotebook.guid()]++;
                 createdTag.setUpdateSequenceNum(usn);
-                const auto setTagParentGuid =
-                    [&testData](qevercloud::Tag & tag) {
-                        if (findAndSetParentTagGuid(
-                                tag, testData.m_newLinkedNotebooksTags)) {
-                            return;
-                        }
-
-                        Q_UNUSED(findAndSetParentTagGuid(
-                            tag, testData.m_updatedLinkedNotebooksTags))
-                    };
-                setTagParentGuid(createdTag);
+                if (!findAndSetParentTagGuid(
+                        createdTag, testData.m_newLinkedNotebooksTags)) {
+                    Q_UNUSED(findAndSetParentTagGuid(
+                        createdTag, testData.m_updatedLinkedNotebooksTags))
+                }
                 sentData.m_sentTags << createdTag;
                 return threading::makeReadyFuture<qevercloud::Tag>(
                     std::move(createdTag));
@@ -996,6 +982,27 @@ const std::array gSenderTestData{
     generateTestData(
         SenderTestFlags{} | SenderTestFlag::WithNewUserOwnNotebooks |
         SenderTestFlag::WithUpdatedUserOwnNotebooks),
+    generateTestData(SenderTestFlags{} | SenderTestFlag::WithNewUserOwnTags),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedUserOwnTags),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewUserOwnTags |
+        SenderTestFlag::WithUpdatedUserOwnTags),
+    generateTestData(SenderTestFlags{} | SenderTestFlag::WithNewUserOwnNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedUserOwnNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewUserOwnNotes |
+        SenderTestFlag::WithUpdatedUserOwnNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewSavedSearches |
+        SenderTestFlag::WithUpdatedSavedSearches |
+        SenderTestFlag::WithNewUserOwnNotebooks |
+        SenderTestFlag::WithUpdatedUserOwnNotebooks |
+        SenderTestFlag::WithNewUserOwnTags |
+        SenderTestFlag::WithUpdatedUserOwnTags |
+        SenderTestFlag::WithNewUserOwnNotes |
+        SenderTestFlag::WithUpdatedUserOwnNotes),
 };
 
 class SenderDataTest :
@@ -1015,6 +1022,8 @@ TEST_P(SenderDataTest, SenderDataTest)
 
     const auto & testData = GetParam();
     SentData sentData;
+
+    const std::optional<QString> nullLinkedNotebookGuid;
 
     struct DataPutToLocalStorage
     {
@@ -1052,10 +1061,58 @@ TEST_P(SenderDataTest, SenderDataTest)
 
         setupUserOwnNoteStoreMock(testData, mockUserOwnNoteStore, sentData);
 
-        EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
-            .WillRepeatedly(
-                Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore)));
+        if (!testData.m_newSavedSearches.isEmpty() ||
+            !testData.m_updatedSavedSearches.isEmpty() ||
+            !testData.m_newUserOwnNotebooks.isEmpty() ||
+            !testData.m_updatedUserOwnNotebooks.isEmpty() ||
+            !testData.m_newUserOwnTags.isEmpty() ||
+            !testData.m_updatedUserOwnTags.isEmpty())
+        {
+            EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+                .WillRepeatedly(Return(
+                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                        mockUserOwnNoteStore)));
+        }
+
+        if (!testData.m_newUserOwnNotes.isEmpty() ||
+            !testData.m_updatedUserOwnNotes.isEmpty())
+        {
+            EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+                .WillRepeatedly(Return(
+                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                        mockUserOwnNoteStore)));
+
+            EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
+                .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
+
+            EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
+                .WillRepeatedly([&](const QString & notebookLocalId) {
+                    for (const auto & notebook:
+                         qAsConst(testData.m_newUserOwnNotebooks)) {
+                        if (notebook.localId() == notebookLocalId) {
+                            return threading::makeReadyFuture<
+                                std::optional<qevercloud::Notebook>>(notebook);
+                        }
+                    }
+
+                    for (const auto & notebook:
+                         qAsConst(testData.m_updatedUserOwnNotebooks)) {
+                        if (notebook.localId() == notebookLocalId) {
+                            return threading::makeReadyFuture<
+                                std::optional<qevercloud::Notebook>>(notebook);
+                        }
+                    }
+
+                    return threading::makeReadyFuture<
+                        std::optional<qevercloud::Notebook>>(
+                        qevercloud::NotebookBuilder{}
+                            .setLocalId(notebookLocalId)
+                            .setGuid(UidGenerator::Generate())
+                            .setName(QStringLiteral("Notebook"))
+                            .setUpdateSequenceNum(1)
+                            .build());
+                });
+        }
     }
 
     QHash<qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>>
