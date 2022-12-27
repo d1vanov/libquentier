@@ -785,7 +785,8 @@ void setupLinkedNotebookNoteStoreMocks(
 
         EXPECT_CALL(*mockNoteStore, createNoteAsync)
             .Times(AnyNumber())
-            .WillRepeatedly([&](const qevercloud::Note & note,
+            .WillRepeatedly([&, setNoteNotebookGuid, setNoteTagGuids](
+                                const qevercloud::Note & note,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
                 qevercloud::Note createdNote = note;
@@ -802,7 +803,8 @@ void setupLinkedNotebookNoteStoreMocks(
 
         EXPECT_CALL(*mockNoteStore, updateNoteAsync)
             .Times(AnyNumber())
-            .WillRepeatedly([&](const qevercloud::Note & note,
+            .WillRepeatedly([&, setNoteNotebookGuid, setNoteTagGuids](
+                                const qevercloud::Note & note,
                                 const qevercloud::IRequestContextPtr & ctx) {
                 EXPECT_FALSE(ctx);
                 qevercloud::Note updatedNote = note;
@@ -1003,7 +1005,45 @@ const std::array gSenderTestData{
         SenderTestFlag::WithUpdatedUserOwnTags |
         SenderTestFlag::WithNewUserOwnNotes |
         SenderTestFlag::WithUpdatedUserOwnNotes),
-};
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedLinkedNotebooks),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewLinkedNotebooksTags),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedLinkedNotebooksTags),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewLinkedNotebooksTags |
+        SenderTestFlag::WithUpdatedLinkedNotebooksTags),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedLinkedNotebooks |
+        SenderTestFlag::WithNewLinkedNotebooksNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedLinkedNotebooks |
+        SenderTestFlag::WithUpdatedLinkedNotebooksNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedLinkedNotebooks |
+        SenderTestFlag::WithNewLinkedNotebooksNotes |
+        SenderTestFlag::WithUpdatedLinkedNotebooksNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithUpdatedLinkedNotebooks |
+        SenderTestFlag::WithNewLinkedNotebooksTags |
+        SenderTestFlag::WithUpdatedLinkedNotebooksTags |
+        SenderTestFlag::WithNewLinkedNotebooksNotes |
+        SenderTestFlag::WithUpdatedLinkedNotebooksNotes),
+    generateTestData(
+        SenderTestFlags{} | SenderTestFlag::WithNewSavedSearches |
+        SenderTestFlag::WithUpdatedSavedSearches |
+        SenderTestFlag::WithNewUserOwnNotebooks |
+        SenderTestFlag::WithUpdatedUserOwnNotebooks |
+        SenderTestFlag::WithNewUserOwnTags |
+        SenderTestFlag::WithUpdatedUserOwnTags |
+        SenderTestFlag::WithNewUserOwnNotes |
+        SenderTestFlag::WithUpdatedUserOwnNotes |
+        SenderTestFlag::WithUpdatedLinkedNotebooks |
+        SenderTestFlag::WithNewLinkedNotebooksTags |
+        SenderTestFlag::WithUpdatedLinkedNotebooksTags |
+        SenderTestFlag::WithNewLinkedNotebooksNotes |
+        SenderTestFlag::WithUpdatedLinkedNotebooksNotes)};
 
 class SenderDataTest :
     public SenderTest,
@@ -1046,6 +1086,13 @@ TEST_P(SenderDataTest, SenderDataTest)
             testData.m_maxUserOwnUsn, now, testData.m_maxLinkedNotebookUsns,
             linkedNotebookLastSyncTimes)));
 
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore>
+        mockUserOwnNoteStore =
+            std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
+        .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
+
     if (!testData.m_newSavedSearches.isEmpty() ||
         !testData.m_updatedSavedSearches.isEmpty() ||
         !testData.m_newUserOwnNotebooks.isEmpty() ||
@@ -1055,10 +1102,6 @@ TEST_P(SenderDataTest, SenderDataTest)
         !testData.m_newUserOwnTags.isEmpty() ||
         !testData.m_updatedUserOwnTags.isEmpty())
     {
-        const std::shared_ptr<mocks::qevercloud::MockINoteStore>
-            mockUserOwnNoteStore = std::make_shared<
-                StrictMock<mocks::qevercloud::MockINoteStore>>();
-
         setupUserOwnNoteStoreMock(testData, mockUserOwnNoteStore, sentData);
 
         if (!testData.m_newSavedSearches.isEmpty() ||
@@ -1081,37 +1124,6 @@ TEST_P(SenderDataTest, SenderDataTest)
                 .WillRepeatedly(Return(
                     threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                         mockUserOwnNoteStore)));
-
-            EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
-                .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
-
-            EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
-                .WillRepeatedly([&](const QString & notebookLocalId) {
-                    for (const auto & notebook:
-                         qAsConst(testData.m_newUserOwnNotebooks)) {
-                        if (notebook.localId() == notebookLocalId) {
-                            return threading::makeReadyFuture<
-                                std::optional<qevercloud::Notebook>>(notebook);
-                        }
-                    }
-
-                    for (const auto & notebook:
-                         qAsConst(testData.m_updatedUserOwnNotebooks)) {
-                        if (notebook.localId() == notebookLocalId) {
-                            return threading::makeReadyFuture<
-                                std::optional<qevercloud::Notebook>>(notebook);
-                        }
-                    }
-
-                    return threading::makeReadyFuture<
-                        std::optional<qevercloud::Notebook>>(
-                        qevercloud::NotebookBuilder{}
-                            .setLocalId(notebookLocalId)
-                            .setGuid(UidGenerator::Generate())
-                            .setName(QStringLiteral("Notebook"))
-                            .setUpdateSequenceNum(1)
-                            .build());
-                });
         }
     }
 
@@ -1123,20 +1135,135 @@ TEST_P(SenderDataTest, SenderDataTest)
 
     EXPECT_CALL(*m_mockNoteStoreProvider, linkedNotebookNoteStore)
         .WillRepeatedly(
-            [&](const qevercloud::Guid & linkedNotebookGuid,
+            [&](const qevercloud::Guid & guid,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
                 [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
                     retryPolicy) {
-                const auto it =
-                    linkedNotebookNoteStores.constFind(linkedNotebookGuid);
-                if (Q_UNLIKELY(it == linkedNotebookNoteStores.constEnd())) {
+                const auto nit = linkedNotebookNoteStores.constFind(guid);
+                if (Q_UNLIKELY(nit == linkedNotebookNoteStores.constEnd())) {
                     return threading::makeExceptionalFuture<
-                        qevercloud::INoteStorePtr>(RuntimeError{ErrorString{
-                        QStringLiteral("missing linked notebook note store")}});
+                        qevercloud::INoteStorePtr>(
+                        RuntimeError{ErrorString{QStringLiteral(
+                            "Linked notebook note store not found")}});
                 }
+
+                EXPECT_CALL(*nit.value(), linkedNotebookGuid)
+                    .WillRepeatedly(
+                        [guid =
+                             std::make_shared<std::optional<qevercloud::Guid>>(
+                                 guid)]()
+                            -> const std::optional<qevercloud::Guid> & {
+                            return *guid;
+                        });
+
                 return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    it.value());
+                    nit.value());
             });
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
+        .WillRepeatedly([&](const QString & notebookLocalId) {
+            const auto findNotebook =
+                [&notebookLocalId](
+                    const QList<qevercloud::Notebook> & notebooks)
+                -> std::optional<qevercloud::Notebook> {
+                const auto it = std::find_if(
+                    notebooks.constBegin(), notebooks.constEnd(),
+                    [&](const qevercloud::Notebook & notebook) {
+                        return notebook.localId() == notebookLocalId;
+                    });
+                if (it != notebooks.constEnd()) {
+                    return *it;
+                }
+
+                return std::nullopt;
+            };
+
+            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
+            }
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
+            }
+
+            if (notebook) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Notebook>>(std::move(notebook));
+            }
+
+            return threading::makeReadyFuture<
+                std::optional<qevercloud::Notebook>>(
+                qevercloud::NotebookBuilder{}
+                    .setLocalId(notebookLocalId)
+                    .setGuid(UidGenerator::Generate())
+                    .setName(QStringLiteral("Notebook"))
+                    .setUpdateSequenceNum(1)
+                    .build());
+        });
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly([&](const QString & notebookLocalId,
+                            [[maybe_unused]] const qevercloud::
+                                IRequestContextPtr & ctx,
+                            [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                                retryPolicy) {
+            const auto findNotebook =
+                [&](const QList<qevercloud::Notebook> & notebooks)
+                -> std::optional<qevercloud::Notebook> {
+                const auto it = std::find_if(
+                    notebooks.constBegin(), notebooks.constEnd(),
+                    [&](const qevercloud::Notebook & notebook) {
+                        return notebook.localId() == notebookLocalId;
+                    });
+                if (it != notebooks.constEnd()) {
+                    return *it;
+                }
+
+                return std::nullopt;
+            };
+
+            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
+            }
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
+            }
+
+            if (!notebook) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore);
+            }
+
+            if (!notebook->linkedNotebookGuid()) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore);
+            }
+
+            const auto it = linkedNotebookNoteStores.constFind(
+                *notebook->linkedNotebookGuid());
+            if (Q_UNLIKELY(it == linkedNotebookNoteStores.constEnd())) {
+                return threading::makeExceptionalFuture<
+                    qevercloud::INoteStorePtr>(
+                    RuntimeError{ErrorString{QStringLiteral(
+                        "Note store for linked notebook not found")}});
+            }
+
+            EXPECT_CALL(*it.value(), linkedNotebookGuid)
+                .WillRepeatedly(
+                    [guid = std::make_shared<std::optional<qevercloud::Guid>>(
+                         it.key())]()
+                        -> const std::optional<qevercloud::Guid> & {
+                        return *guid;
+                    });
+
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                it.value());
+        });
 
     const auto listSavedSearchesOptions = [] {
         local_storage::ILocalStorage::ListSavedSearchesOptions options;
