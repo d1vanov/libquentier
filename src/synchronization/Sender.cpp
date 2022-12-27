@@ -1629,7 +1629,7 @@ std::optional<qint32> Sender::lastUpdateCount(
             sendContext.lastSyncState->linkedNotebookUpdateCounts();
 
         const auto it = updateCounts.constFind(*linkedNotebookGuid);
-        if (it != updateCounts.constEnd()) {
+        if (it == updateCounts.constEnd()) {
             QNWARNING(
                 "synchronization::Sender",
                 "Cannot determine whether account is in sync with Evernote: "
