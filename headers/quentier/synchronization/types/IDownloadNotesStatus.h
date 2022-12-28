@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Errors.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
@@ -62,6 +63,9 @@ public:
         cancelledNoteGuidsAndUsns() const = 0;
 
     [[nodiscard]] virtual QList<qevercloud::Guid> expungedNoteGuids() const = 0;
+
+    [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
+        const = 0;
 };
 
 } // namespace quentier::synchronization

@@ -45,6 +45,9 @@ struct DownloadNotesStatus final : public IDownloadNotesStatus
 
     [[nodiscard]] QList<qevercloud::Guid> expungedNoteGuids() const override;
 
+    [[nodiscard]] StopSynchronizationError stopSynchronizationError()
+        const override;
+
     QTextStream & print(QTextStream & strm) const override;
 
     quint64 m_totalNewNotes = 0UL;
@@ -58,6 +61,9 @@ struct DownloadNotesStatus final : public IDownloadNotesStatus
     UpdateSequenceNumbersByGuid m_processedNoteGuidsAndUsns;
     UpdateSequenceNumbersByGuid m_cancelledNoteGuidsAndUsns;
     QList<qevercloud::Guid> m_expungedNoteGuids;
+
+    StopSynchronizationError m_stopSynchronizationError =
+        StopSynchronizationError{std::monostate{}};
 };
 
 [[nodiscard]] bool operator==(

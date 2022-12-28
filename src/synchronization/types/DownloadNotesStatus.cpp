@@ -72,6 +72,11 @@ QList<qevercloud::Guid> DownloadNotesStatus::expungedNoteGuids() const
     return m_expungedNoteGuids;
 }
 
+StopSynchronizationError DownloadNotesStatus::stopSynchronizationError() const
+{
+    return m_stopSynchronizationError;
+}
+
 QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
 {
     strm << "DownloadNotesStatus: totalNewNotes = " << m_totalNewNotes
@@ -168,22 +173,67 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
         }
     }
 
+    if (std::holds_alternative<RateLimitReachedError>(
+            m_stopSynchronizationError)) {
+        const auto & rateLimitReachedError =
+            std::get<RateLimitReachedError>(m_stopSynchronizationError);
+        strm << "stopSynchronizationError = RateLimitReachedError{";
+        if (rateLimitReachedError.rateLimitDurationSec) {
+            strm << "duration = "
+                 << *rateLimitReachedError.rateLimitDurationSec;
+        }
+        strm << "}";
+    }
+    else if (std::holds_alternative<AuthenticationExpiredError>(
+                 m_stopSynchronizationError))
+    {
+        strm << "stopSynchronizationError = AuthenticationExpiredError";
+    }
+
     return strm;
 }
 
 bool operator==(
     const DownloadNotesStatus & lhs, const DownloadNotesStatus & rhs) noexcept
 {
-    return lhs.m_totalNewNotes == rhs.m_totalNewNotes &&
-        lhs.m_totalUpdatedNotes == rhs.m_totalUpdatedNotes &&
-        lhs.m_totalExpungedNotes == rhs.m_totalExpungedNotes &&
-        lhs.m_notesWhichFailedToDownload == rhs.m_notesWhichFailedToDownload &&
-        lhs.m_notesWhichFailedToProcess == rhs.m_notesWhichFailedToProcess &&
-        lhs.m_noteGuidsWhichFailedToExpunge ==
-        rhs.m_noteGuidsWhichFailedToExpunge &&
-        lhs.m_processedNoteGuidsAndUsns == rhs.m_processedNoteGuidsAndUsns &&
-        lhs.m_cancelledNoteGuidsAndUsns == rhs.m_cancelledNoteGuidsAndUsns &&
-        lhs.m_expungedNoteGuids == rhs.m_expungedNoteGuids;
+    if (lhs.m_totalNewNotes != rhs.m_totalNewNotes ||
+        lhs.m_totalUpdatedNotes != rhs.m_totalUpdatedNotes ||
+        lhs.m_totalExpungedNotes != rhs.m_totalExpungedNotes ||
+        lhs.m_notesWhichFailedToDownload != rhs.m_notesWhichFailedToDownload ||
+        lhs.m_notesWhichFailedToProcess != rhs.m_notesWhichFailedToProcess ||
+        lhs.m_noteGuidsWhichFailedToExpunge !=
+            rhs.m_noteGuidsWhichFailedToExpunge ||
+        lhs.m_processedNoteGuidsAndUsns != rhs.m_processedNoteGuidsAndUsns ||
+        lhs.m_cancelledNoteGuidsAndUsns != rhs.m_cancelledNoteGuidsAndUsns ||
+        lhs.m_expungedNoteGuids != rhs.m_expungedNoteGuids)
+    {
+        return false;
+    }
+
+    if (std::holds_alternative<RateLimitReachedError>(
+            lhs.m_stopSynchronizationError))
+    {
+        if (!std::holds_alternative<RateLimitReachedError>(
+                rhs.m_stopSynchronizationError))
+        {
+            return false;
+        }
+
+        const auto & l =
+            std::get<RateLimitReachedError>(lhs.m_stopSynchronizationError);
+        const auto & r =
+            std::get<RateLimitReachedError>(rhs.m_stopSynchronizationError);
+        return l.rateLimitDurationSec == r.rateLimitDurationSec;
+    }
+
+    if (std::holds_alternative<AuthenticationExpiredError>(
+            lhs.m_stopSynchronizationError))
+    {
+        return std::holds_alternative<AuthenticationExpiredError>(
+            rhs.m_stopSynchronizationError);
+    }
+
+    return true;
 }
 
 bool operator!=(

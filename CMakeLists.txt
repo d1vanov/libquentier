@@ -134,6 +134,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISynchronizer.h
     headers/quentier/synchronization/SynchronizationManager.h
+    headers/quentier/synchronization/types/Errors.h
     headers/quentier/synchronization/types/Fwd.h
     headers/quentier/synchronization/types/IAuthenticationInfo.h
     headers/quentier/synchronization/types/IDownloadNotesStatus.h
