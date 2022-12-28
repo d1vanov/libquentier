@@ -56,6 +56,12 @@ IDownloadResourcesStatus::UpdateSequenceNumbersByGuid
     return m_cancelledResourceGuidsAndUsns;
 }
 
+StopSynchronizationError DownloadResourcesStatus::stopSynchronizationError()
+    const
+{
+    return m_stopSynchronizationError;
+}
+
 QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
 {
     strm << "DownloadResourcesStatus: "
@@ -117,6 +123,23 @@ QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
     strm << "cancelledResourceGuidsAndUsns = ";
     printResourceGuidsAndUsns(m_cancelledResourceGuidsAndUsns);
 
+    if (std::holds_alternative<RateLimitReachedError>(
+            m_stopSynchronizationError)) {
+        const auto & rateLimitReachedError =
+            std::get<RateLimitReachedError>(m_stopSynchronizationError);
+        strm << "stopSynchronizationError = RateLimitReachedError{";
+        if (rateLimitReachedError.rateLimitDurationSec) {
+            strm << "duration = "
+                 << *rateLimitReachedError.rateLimitDurationSec;
+        }
+        strm << "}";
+    }
+    else if (std::holds_alternative<AuthenticationExpiredError>(
+                 m_stopSynchronizationError))
+    {
+        strm << "stopSynchronizationError = AuthenticationExpiredError";
+    }
+
     return strm;
 }
 
@@ -124,18 +147,44 @@ bool operator==(
     const DownloadResourcesStatus & lhs,
     const DownloadResourcesStatus & rhs) noexcept
 {
-    // clang-format off
-    return lhs.m_totalNewResources == rhs.m_totalNewResources &&
-        lhs.m_totalUpdatedResources == rhs.m_totalUpdatedResources &&
-        lhs.m_resourcesWhichFailedToDownload ==
-            rhs.m_resourcesWhichFailedToDownload &&
-        lhs.m_resourcesWhichFailedToProcess ==
-            rhs.m_resourcesWhichFailedToProcess &&
-        lhs.m_processedResourceGuidsAndUsns ==
-            rhs.m_processedResourceGuidsAndUsns &&
-        lhs.m_cancelledResourceGuidsAndUsns ==
-            rhs.m_cancelledResourceGuidsAndUsns;
-    // clang-format on
+    if (lhs.m_totalNewResources != rhs.m_totalNewResources ||
+        lhs.m_totalUpdatedResources != rhs.m_totalUpdatedResources ||
+        lhs.m_resourcesWhichFailedToDownload !=
+            rhs.m_resourcesWhichFailedToDownload ||
+        lhs.m_resourcesWhichFailedToProcess !=
+            rhs.m_resourcesWhichFailedToProcess ||
+        lhs.m_processedResourceGuidsAndUsns !=
+            rhs.m_processedResourceGuidsAndUsns ||
+        lhs.m_cancelledResourceGuidsAndUsns !=
+            rhs.m_cancelledResourceGuidsAndUsns)
+    {
+        return false;
+    }
+
+    if (std::holds_alternative<RateLimitReachedError>(
+            lhs.m_stopSynchronizationError))
+    {
+        if (!std::holds_alternative<RateLimitReachedError>(
+                rhs.m_stopSynchronizationError))
+        {
+            return false;
+        }
+
+        const auto & l =
+            std::get<RateLimitReachedError>(lhs.m_stopSynchronizationError);
+        const auto & r =
+            std::get<RateLimitReachedError>(rhs.m_stopSynchronizationError);
+        return l.rateLimitDurationSec == r.rateLimitDurationSec;
+    }
+
+    if (std::holds_alternative<AuthenticationExpiredError>(
+            lhs.m_stopSynchronizationError))
+    {
+        return std::holds_alternative<AuthenticationExpiredError>(
+            rhs.m_stopSynchronizationError);
+    }
+
+    return true;
 }
 
 bool operator!=(

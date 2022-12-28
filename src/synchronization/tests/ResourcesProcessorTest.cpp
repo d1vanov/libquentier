@@ -148,6 +148,8 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
     EXPECT_TRUE(status->m_resourcesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status->m_processedResourceGuidsAndUsns.isEmpty());
     EXPECT_TRUE(status->m_cancelledResourceGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
 
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
@@ -301,6 +303,9 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
         ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
+
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
 
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
@@ -485,6 +490,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
         ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
+
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
 
     EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
@@ -681,6 +689,9 @@ TEST_F(
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
+
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
 
@@ -874,6 +885,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
+
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
 
@@ -1057,6 +1071,9 @@ TEST_F(
         ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
+
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
 
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
@@ -1280,6 +1297,9 @@ TEST_F(
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
+
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
@@ -1486,6 +1506,9 @@ TEST_F(
         ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
+
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
 
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
@@ -1702,6 +1725,9 @@ TEST_F(
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
+
     EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
 
@@ -1723,6 +1749,561 @@ TEST_F(
 
         ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+}
+
+TEST_F(
+    ResourcesProcessorTest,
+    CancelFurtherResourceDownloadingOnApiRateLimitExceeding)
+{
+    const auto noteGuid = UidGenerator::Generate();
+
+    const auto resources = QList<qevercloud::Resource>{}
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(1)
+               .build()
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(2)
+               .build()
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(3)
+               .build()
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(4)
+               .build();
+
+    QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+
+    const auto addDataToResource = [&](qevercloud::Resource resource,
+                                       const int index) {
+        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
+        const auto size = dataBody.size();
+        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
+
+        resource.setData(qevercloud::DataBuilder{}
+                             .setBody(std::move(dataBody))
+                             .setSize(size)
+                             .setBodyHash(std::move(hash))
+                             .build());
+        return resource;
+    };
+
+    QList<std::shared_ptr<QPromise<std::optional<qevercloud::Resource>>>>
+        findResourceByGuidPromises;
+
+    findResourceByGuidPromises.reserve(resources.size());
+
+    EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
+        .WillRepeatedly(
+            [&](const qevercloud::Guid & guid,
+                const local_storage::ILocalStorage::FetchResourceOptions
+                    fetchResourceOptions) {
+                using FetchResourceOptions =
+                    local_storage::ILocalStorage::FetchResourceOptions;
+
+                EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
+
+                EXPECT_FALSE(triedGuids.contains(guid));
+                triedGuids.insert(guid);
+
+                const auto it = std::find_if(
+                    resourcesPutIntoLocalStorage.constBegin(),
+                    resourcesPutIntoLocalStorage.constEnd(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() && (*resource.guid() == guid);
+                    });
+                EXPECT_EQ(it, resourcesPutIntoLocalStorage.constEnd());
+                if (it != resourcesPutIntoLocalStorage.constEnd()) {
+                    return threading::makeReadyFuture<
+                        std::optional<qevercloud::Resource>>(*it);
+                }
+
+                findResourceByGuidPromises << std::make_shared<
+                    QPromise<std::optional<qevercloud::Resource>>>();
+
+                findResourceByGuidPromises.back()->start();
+                return findResourceByGuidPromises.back()->future();
+            });
+
+    const qint32 rateLimitDurationSec = 100;
+    int downloadFullResourceDataCallCount = 0;
+    EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            Q_UNUSED(ctx)
+
+            ++downloadFullResourceDataCallCount;
+
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized resource"}});
+            }
+
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
+
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setRateLimitDuration(rateLimitDurationSec)
+                        .build());
+            }
+
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, putResource)
+        .WillRepeatedly([&](const qevercloud::Resource & resource) {
+            if (Q_UNLIKELY(!resource.guid())) {
+                return threading::makeExceptionalFuture<void>(RuntimeError{
+                    ErrorString{"Detected resource without guid"}});
+            }
+
+            EXPECT_TRUE(triedGuids.contains(*resource.guid()));
+
+            resourcesPutIntoLocalStorage << resource;
+            return threading::makeReadyFuture();
+        });
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
+
+    const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
+    ASSERT_FALSE(future.isFinished());
+    EXPECT_EQ(downloadFullResourceDataCallCount, 0);
+
+    ASSERT_EQ(findResourceByGuidPromises.size(), resources.size());
+    for (int i = 0; i < 2; ++i) {
+        findResourceByGuidPromises[i]->addResult(std::nullopt);
+        findResourceByGuidPromises[i]->finish();
+    }
+
+    QCoreApplication::processEvents();
+
+    ASSERT_FALSE(future.isFinished());
+    EXPECT_EQ(downloadFullResourceDataCallCount, 2);
+
+    for (int i = 2; i < resources.size(); ++i) {
+        findResourceByGuidPromises[i]->addResult(std::nullopt);
+        findResourceByGuidPromises[i]->finish();
+    }
+
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(downloadFullResourceDataCallCount, 2);
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(status->m_totalNewResources, 2UL);
+    EXPECT_EQ(status->m_totalUpdatedResources, 0UL);
+
+    EXPECT_TRUE(status->m_resourcesWhichFailedToProcess.isEmpty());
+
+    ASSERT_EQ(status->m_resourcesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status->m_resourcesWhichFailedToDownload[0].first, resources[1]);
+
+    bool caughtEdamSystemExceptionWithRateLimit = false;
+    try {
+        status->m_resourcesWhichFailedToDownload[0].second->raise();
+    }
+    catch (const qevercloud::EDAMSystemException & e) {
+        if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            caughtEdamSystemExceptionWithRateLimit = true;
+        }
+    }
+    catch (...) {
+    }
+
+    EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
+
+    ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), 1);
+
+    EXPECT_EQ(
+        status->m_processedResourceGuidsAndUsns.begin().key(),
+        resources[0].guid().value());
+
+    EXPECT_EQ(
+        status->m_processedResourceGuidsAndUsns.begin().value(),
+        resources[0].updateSequenceNum().value());
+
+    ASSERT_EQ(
+        status->m_cancelledResourceGuidsAndUsns.size(), resources.size() - 2);
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.guid() == resources[0].guid() ||
+            resource.guid() == resources[1].guid())
+        {
+            continue;
+        }
+
+        const auto it = status->m_cancelledResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, status->m_cancelledResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        status->m_stopSynchronizationError));
+
+    const auto & rateLimitReachedError =
+        std::get<RateLimitReachedError>(status->m_stopSynchronizationError);
+
+    EXPECT_EQ(rateLimitReachedError.rateLimitDurationSec, rateLimitDurationSec);
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToDownload[0].first, resources[1]);
+
+    caughtEdamSystemExceptionWithRateLimit = false;
+    try {
+        callback->m_resourcesWhichFailedToDownload[0].second->raise();
+    }
+    catch (const qevercloud::EDAMSystemException & e) {
+        if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            EXPECT_EQ(e.rateLimitDuration(), rateLimitDurationSec);
+            caughtEdamSystemExceptionWithRateLimit = true;
+        }
+    }
+    catch (...) {
+    }
+
+    EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
+
+    ASSERT_EQ(callback->m_processedResourceGuidsAndUsns.size(), 1);
+
+    EXPECT_EQ(
+        callback->m_processedResourceGuidsAndUsns.begin().key(),
+        resources[0].guid().value());
+
+    EXPECT_EQ(
+        callback->m_processedResourceGuidsAndUsns.begin().value(),
+        resources[0].updateSequenceNum().value());
+
+    ASSERT_EQ(callback->m_cancelledResources.size(), resources.size() - 2);
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.guid() == resources[0].guid() ||
+            resource.guid() == resources[1].guid())
+        {
+            continue;
+        }
+
+        const auto it = std::find_if(
+            callback->m_cancelledResources.begin(),
+            callback->m_cancelledResources.end(),
+            [guid = resource.guid().value()](
+                const qevercloud::Resource & resource) {
+                return resource.guid().value() == guid;
+            });
+
+        ASSERT_NE(it, callback->m_cancelledResources.end());
+        EXPECT_EQ(*it, resource);
+    }
+}
+
+TEST_F(
+    ResourcesProcessorTest,
+    CancelFurtherResourceDownloadingOnAuthenticationExpired)
+{
+    const auto noteGuid = UidGenerator::Generate();
+
+    const auto resources = QList<qevercloud::Resource>{}
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(1)
+               .build()
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(2)
+               .build()
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(3)
+               .build()
+        << qevercloud::ResourceBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNoteGuid(noteGuid)
+               .setUpdateSequenceNum(4)
+               .build();
+
+    QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+
+    const auto addDataToResource = [&](qevercloud::Resource resource,
+                                       const int index) {
+        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
+        const auto size = dataBody.size();
+        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
+
+        resource.setData(qevercloud::DataBuilder{}
+                             .setBody(std::move(dataBody))
+                             .setSize(size)
+                             .setBodyHash(std::move(hash))
+                             .build());
+        return resource;
+    };
+
+    QList<std::shared_ptr<QPromise<std::optional<qevercloud::Resource>>>>
+        findResourceByGuidPromises;
+
+    findResourceByGuidPromises.reserve(resources.size());
+
+    EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
+        .WillRepeatedly(
+            [&](const qevercloud::Guid & guid,
+                const local_storage::ILocalStorage::FetchResourceOptions
+                    fetchResourceOptions) {
+                using FetchResourceOptions =
+                    local_storage::ILocalStorage::FetchResourceOptions;
+
+                EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
+
+                EXPECT_FALSE(triedGuids.contains(guid));
+                triedGuids.insert(guid);
+
+                const auto it = std::find_if(
+                    resourcesPutIntoLocalStorage.constBegin(),
+                    resourcesPutIntoLocalStorage.constEnd(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() && (*resource.guid() == guid);
+                    });
+                EXPECT_EQ(it, resourcesPutIntoLocalStorage.constEnd());
+                if (it != resourcesPutIntoLocalStorage.constEnd()) {
+                    return threading::makeReadyFuture<
+                        std::optional<qevercloud::Resource>>(*it);
+                }
+
+                findResourceByGuidPromises << std::make_shared<
+                    QPromise<std::optional<qevercloud::Resource>>>();
+
+                findResourceByGuidPromises.back()->start();
+                return findResourceByGuidPromises.back()->future();
+            });
+
+    int downloadFullResourceDataCallCount = 0;
+    EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            Q_UNUSED(ctx)
+
+            ++downloadFullResourceDataCallCount;
+
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized resource"}});
+            }
+
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
+
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .build());
+            }
+
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, putResource)
+        .WillRepeatedly([&](const qevercloud::Resource & resource) {
+            if (Q_UNLIKELY(!resource.guid())) {
+                return threading::makeExceptionalFuture<void>(RuntimeError{
+                    ErrorString{"Detected resource without guid"}});
+            }
+
+            EXPECT_TRUE(triedGuids.contains(*resource.guid()));
+
+            resourcesPutIntoLocalStorage << resource;
+            return threading::makeReadyFuture();
+        });
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
+
+    const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
+    ASSERT_FALSE(future.isFinished());
+    EXPECT_EQ(downloadFullResourceDataCallCount, 0);
+
+    ASSERT_EQ(findResourceByGuidPromises.size(), resources.size());
+    for (int i = 0; i < 2; ++i) {
+        findResourceByGuidPromises[i]->addResult(std::nullopt);
+        findResourceByGuidPromises[i]->finish();
+    }
+
+    QCoreApplication::processEvents();
+
+    ASSERT_FALSE(future.isFinished());
+    EXPECT_EQ(downloadFullResourceDataCallCount, 2);
+
+    for (int i = 2; i < resources.size(); ++i) {
+        findResourceByGuidPromises[i]->addResult(std::nullopt);
+        findResourceByGuidPromises[i]->finish();
+    }
+
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(downloadFullResourceDataCallCount, 2);
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(status->m_totalNewResources, 2UL);
+    EXPECT_EQ(status->m_totalUpdatedResources, 0UL);
+
+    EXPECT_TRUE(status->m_resourcesWhichFailedToProcess.isEmpty());
+
+    ASSERT_EQ(status->m_resourcesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status->m_resourcesWhichFailedToDownload[0].first, resources[1]);
+
+    bool caughtEdamSystemExceptionWithAuthExpired = false;
+    try {
+        status->m_resourcesWhichFailedToDownload[0].second->raise();
+    }
+    catch (const qevercloud::EDAMSystemException & e) {
+        if (e.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
+            caughtEdamSystemExceptionWithAuthExpired = true;
+        }
+    }
+    catch (...) {
+    }
+
+    EXPECT_TRUE(caughtEdamSystemExceptionWithAuthExpired);
+
+    ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), 1);
+
+    EXPECT_EQ(
+        status->m_processedResourceGuidsAndUsns.begin().key(),
+        resources[0].guid().value());
+
+    EXPECT_EQ(
+        status->m_processedResourceGuidsAndUsns.begin().value(),
+        resources[0].updateSequenceNum().value());
+
+    ASSERT_EQ(
+        status->m_cancelledResourceGuidsAndUsns.size(), resources.size() - 2);
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.guid() == resources[0].guid() ||
+            resource.guid() == resources[1].guid())
+        {
+            continue;
+        }
+
+        const auto it = status->m_cancelledResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, status->m_cancelledResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    ASSERT_TRUE(std::holds_alternative<AuthenticationExpiredError>(
+        status->m_stopSynchronizationError));
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToDownload[0].first, resources[1]);
+
+    caughtEdamSystemExceptionWithAuthExpired = false;
+    try {
+        callback->m_resourcesWhichFailedToDownload[0].second->raise();
+    }
+    catch (const qevercloud::EDAMSystemException & e) {
+        if (e.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
+            caughtEdamSystemExceptionWithAuthExpired = true;
+        }
+    }
+    catch (...) {
+    }
+
+    EXPECT_TRUE(caughtEdamSystemExceptionWithAuthExpired);
+
+    ASSERT_EQ(callback->m_processedResourceGuidsAndUsns.size(), 1);
+
+    EXPECT_EQ(
+        callback->m_processedResourceGuidsAndUsns.begin().key(),
+        resources[0].guid().value());
+
+    EXPECT_EQ(
+        callback->m_processedResourceGuidsAndUsns.begin().value(),
+        resources[0].updateSequenceNum().value());
+
+    ASSERT_EQ(callback->m_cancelledResources.size(), resources.size() - 2);
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.guid() == resources[0].guid() ||
+            resource.guid() == resources[1].guid())
+        {
+            continue;
+        }
+
+        const auto it = std::find_if(
+            callback->m_cancelledResources.begin(),
+            callback->m_cancelledResources.end(),
+            [guid = resource.guid().value()](
+                const qevercloud::Resource & resource) {
+                return resource.guid().value() == guid;
+            });
+
+        ASSERT_NE(it, callback->m_cancelledResources.end());
+        EXPECT_EQ(*it, resource);
     }
 }
 

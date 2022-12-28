@@ -512,10 +512,19 @@ void ResourcesProcessor::downloadFullResourceData(
                 e.raise();
             }
             catch (const qevercloud::EDAMSystemException & se) {
-                if ((se.errorCode() ==
-                     qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) ||
-                    (se.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED))
+                if (se.errorCode() ==
+                    qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
                 {
+                    status->m_stopSynchronizationError =
+                        StopSynchronizationError{RateLimitReachedError{
+                            se.rateLimitDuration()}};
+                    shouldCancelProcessing = true;
+                }
+                else if (se.errorCode() ==
+                         qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                {
+                    status->m_stopSynchronizationError =
+                        StopSynchronizationError{AuthenticationExpiredError{}};
                     shouldCancelProcessing = true;
                 }
             }

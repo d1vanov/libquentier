@@ -39,6 +39,9 @@ struct DownloadResourcesStatus final : public IDownloadResourcesStatus
     [[nodiscard]] UpdateSequenceNumbersByGuid cancelledResourceGuidsAndUsns()
         const override;
 
+    [[nodiscard]] StopSynchronizationError stopSynchronizationError()
+        const override;
+
     QTextStream & print(QTextStream & strm) const override;
 
     quint64 m_totalNewResources = 0UL;
@@ -49,6 +52,9 @@ struct DownloadResourcesStatus final : public IDownloadResourcesStatus
 
     UpdateSequenceNumbersByGuid m_processedResourceGuidsAndUsns;
     UpdateSequenceNumbersByGuid m_cancelledResourceGuidsAndUsns;
+
+    StopSynchronizationError m_stopSynchronizationError =
+        StopSynchronizationError{std::monostate{}};
 };
 
 [[nodiscard]] bool operator==(

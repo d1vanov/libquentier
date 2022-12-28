@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Errors.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
@@ -57,6 +58,9 @@ public:
 
     [[nodiscard]] virtual UpdateSequenceNumbersByGuid
         cancelledResourceGuidsAndUsns() const = 0;
+
+    [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
+        const = 0;
 };
 
 } // namespace quentier::synchronization
