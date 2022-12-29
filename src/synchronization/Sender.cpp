@@ -25,7 +25,6 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
-#include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
@@ -51,10 +50,12 @@ Sender::Sender(
     INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy) :
     m_account{std::move(account)},
-    m_localStorage{std::move(localStorage)}, m_syncStateStorage{std::move(
-                                                 syncStateStorage)},
+    m_localStorage{std::move(localStorage)},
+    // clang-format off
+    m_syncStateStorage{std::move(syncStateStorage)},
     m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
     m_retryPolicy{std::move(retryPolicy)}
+// clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
