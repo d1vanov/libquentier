@@ -472,4 +472,30 @@ void NoteStoreProvider::createNoteStore(
         });
 }
 
+void NoteStoreProvider::clearCaches()
+{
+    QNDEBUG(
+        "synchronization::NoteStoreProvider", "NoteStoreProvider::clearCaches");
+
+    {
+        const QMutexLocker locker{&m_userOwnNoteStoreDataMutex};
+        m_userOwnNoteStoreData = {};
+    }
+
+    {
+        const QMutexLocker locker{&m_linkedNotebooksNoteStoreDataMutex};
+        m_linkedNotebooksNoteStoreData.clear();
+    }
+
+    {
+        const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
+        m_linkedNotebooksByNotebookLocalId.clear();
+    }
+
+    {
+        const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
+        m_linkedNotebooksByGuid.clear();
+    }
+}
+
 } // namespace quentier::synchronization

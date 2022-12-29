@@ -64,6 +64,8 @@ public:
         qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
+    void clearCaches() override;
+
 private:
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByNotebookLocalId(const QString & notebookLocalId);

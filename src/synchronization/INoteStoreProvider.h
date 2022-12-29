@@ -46,6 +46,8 @@ public:
             qevercloud::Guid linkedNotebookGuid,
             qevercloud::IRequestContextPtr ctx = {},
             qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
+
+    virtual void clearCaches() = 0;
 };
 
 } // namespace quentier::synchronization

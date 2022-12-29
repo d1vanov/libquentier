@@ -22,6 +22,8 @@
 
 #include <gmock/gmock.h>
 
+// clazy:excludeall=returning-void-expression
+
 namespace quentier::synchronization::tests::mocks {
 
 class MockINoteStoreProvider : public INoteStoreProvider
@@ -45,6 +47,8 @@ public:
          qevercloud::IRequestContextPtr ctx,
          qevercloud::IRetryPolicyPtr retryPolicy),
         (override));
+
+    MOCK_METHOD(void, clearCaches, (), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks
