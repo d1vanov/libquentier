@@ -37,14 +37,17 @@
 #include <qevercloud/RequestContext.h>
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QReadLocker>
 #include <QTimeZone>
 #include <QWriteLocker>
+#include <QtGlobal>
 
 #include <limits>
+#include <optional>
 
 namespace quentier::synchronization {
 
@@ -211,13 +214,6 @@ QFuture<IAuthenticationInfoPtr>
             [this, promise,
              selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
-
-                {
-                    const QWriteLocker locker{&m_authenticationInfosRWLock};
-                    m_authenticationInfos[authenticationInfo->userId()] =
-                        authenticationInfo;
-                }
-
                 auto accountFuture = findAccountForUserId(
                     authenticationInfo->userId(),
                     authenticationInfo->authToken(),
@@ -230,6 +226,15 @@ QFuture<IAuthenticationInfoPtr>
                         selfWeak,
                         [this, promise,
                          authenticationInfo](Account account) mutable {
+                            {
+                                const QWriteLocker locker{
+                                    &m_authenticationInfosRWLock};
+                                m_authenticationInfos[authenticationInfo
+                                                          ->userId()] =
+                                    AccountAuthenticationInfo{
+                                        account, authenticationInfo};
+                            }
+
                             auto storeAuthInfoFuture = storeAuthenticationInfo(
                                 authenticationInfo, std::move(account));
 
@@ -307,19 +312,21 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         return future;
     }
 
+    std::shared_ptr<AuthenticationInfo> authenticationInfo;
     {
         const QReadLocker locker{&m_authenticationInfosRWLock};
         if (const auto it = m_authenticationInfos.find(account.id());
             it != m_authenticationInfos.end() &&
             !isAuthenticationTokenAboutToExpire(
-                it.value()->authTokenExpirationTime()))
+                it.value().authenticationInfo->authTokenExpirationTime()))
         {
             return threading::makeReadyFuture<IAuthenticationInfoPtr>(
-                it.value());
+                it.value().authenticationInfo);
         }
+
+        authenticationInfo = readAuthenticationInfoPart(account);
     }
 
-    auto authenticationInfo = readAuthenticationInfoPart(account);
     if (!authenticationInfo) {
         authenticateAccountWithoutCache(std::move(account), promise);
         return future;
@@ -356,8 +363,8 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
 
     auto readAllThenFuture = threading::then(
         std::move(readAllFuture),
-        [promise, selfWeak, authenticationInfo = std::move(authenticationInfo)](
-            QList<QString> tokenAndShardId) mutable {
+        [promise, selfWeak, authenticationInfo = std::move(authenticationInfo),
+         account](QList<QString> tokenAndShardId) mutable {
             Q_ASSERT(tokenAndShardId.size() == 2);
             authenticationInfo->m_authToken = std::move(tokenAndShardId[0]);
             authenticationInfo->m_shardId = std::move(tokenAndShardId[1]);
@@ -365,7 +372,7 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
             if (const auto self = selfWeak.lock()) {
                 const QWriteLocker locker{&self->m_authenticationInfosRWLock};
                 self->m_authenticationInfos[authenticationInfo->userId()] =
-                    authenticationInfo;
+                    AccountAuthenticationInfo{account, authenticationInfo};
             }
 
             promise->addResult(std::move(authenticationInfo));
@@ -456,120 +463,39 @@ QFuture<IAuthenticationInfoPtr>
         return future;
     }
 
+    IAuthenticationInfoPtr authenticationInfo;
+    std::optional<LinkedNotebookTimestamps> linkedNotebookTimestamps;
+
     {
-        QReadLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
+        const QReadLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
         if (const auto it = m_linkedNotebookAuthenticationInfos.find(
                 *linkedNotebook.guid());
             it != m_linkedNotebookAuthenticationInfos.end() &&
             !isAuthenticationTokenAboutToExpire(
-                it.value()->authTokenExpirationTime()))
+                it.value().authenticationInfo->authTokenExpirationTime()))
         {
-            const auto authenticationInfo = it.value();
-
-            locker.unlock();
-            Q_ASSERT(authenticationInfo);
-
+            const auto accountAuthInfo = it.value();
             if (linkedNotebook.noteStoreUrl() ==
-                    authenticationInfo->noteStoreUrl() &&
-                authenticationInfo->userId() == account.id())
+                    accountAuthInfo.authenticationInfo->noteStoreUrl() &&
+                accountAuthInfo.authenticationInfo->userId() == account.id())
             {
-                promise->addResult(authenticationInfo);
-                promise->finish();
-                return future;
+                authenticationInfo = accountAuthInfo.authenticationInfo;
             }
         }
+
+        if (!authenticationInfo) {
+            linkedNotebookTimestamps =
+                readLinkedNotebookTimestamps(account, *linkedNotebook.guid());
+        }
     }
 
-    // Checking whether there is a stored expiration timestamp for this
-    // linked notebook's authentication info and if yes, whether the timestamp
-    // is too close to expiration.
-
-    ApplicationSettings settings{account, gSynchronizationPersistence};
-
-    // NOTE: having account id as a part of the group seems redundant
-    // as the settings are already being persisted for the given account
-    // but that's the legacy layout which is maintained for compatibility.
-    const QString keyGroup = QString::fromUtf8("Authentication/%1/%2")
-                                 .arg(m_host, QString::number(account.id()));
-
-    settings.beginGroup(keyGroup);
-    ApplicationSettings::GroupCloser groupCloser{settings};
-
-    const QString authenticationTimestampKey = QString::fromUtf8("%1_%2").arg(
-        gLinkedNotebookAuthenticationTimestamp, *linkedNotebook.guid());
-
-    const QString expirationTimestampKey = QString::fromUtf8("%1_%2").arg(
-        gLinkedNotebookExpirationTimestampKey, *linkedNotebook.guid());
-
-    if (!settings.contains(expirationTimestampKey) ||
-        !settings.contains(authenticationTimestampKey))
-    {
-        authenticateToLinkedNotebookWithoutCache(
-            std::move(account), std::move(linkedNotebook), promise);
+    if (authenticationInfo) {
+        promise->addResult(std::move(authenticationInfo));
+        promise->finish();
         return future;
     }
 
-    const std::optional<qevercloud::Timestamp> expirationTimestamp =
-        [&]() -> std::optional<qevercloud::Timestamp> {
-        const QVariant expirationTimestampValue =
-            settings.value(expirationTimestampKey);
-
-        bool conversionResult = false;
-        const qevercloud::Timestamp expirationTimestamp =
-            expirationTimestampValue.toLongLong(&conversionResult);
-
-        if (Q_UNLIKELY(!conversionResult)) {
-            QNWARNING(
-                "synchronization::AuthenticationInfoProvider",
-                "Stored authentication expiration timestamp for a linked "
-                    << "notebook is not a valid integer: "
-                    << expirationTimestampValue);
-
-            return std::nullopt;
-        }
-
-        if (isAuthenticationTokenAboutToExpire(expirationTimestamp)) {
-            QNDEBUG(
-                "synchronization::AuthenticationInfoProvider",
-                "Authentication token for linked notebook with guid "
-                    << *linkedNotebook.guid() << " is about to expire: "
-                    << "expiration timestamp = "
-                    << printableDateTimeFromTimestamp(expirationTimestamp));
-
-            return std::nullopt;
-        }
-
-        return expirationTimestamp;
-    }();
-
-    if (!expirationTimestamp) {
-        authenticateToLinkedNotebookWithoutCache(
-            std::move(account), std::move(linkedNotebook), promise);
-        return future;
-    }
-
-    const std::optional<qevercloud::Timestamp> authenticationTimestamp =
-        [&]() -> std::optional<qevercloud::Timestamp> {
-        const QVariant authenticationTimestampValue =
-            settings.value(authenticationTimestampKey);
-
-        bool conversionResult = false;
-        const qevercloud::Timestamp authenticationTimestamp =
-            authenticationTimestampValue.toLongLong(&conversionResult);
-
-        if (Q_UNLIKELY(!conversionResult)) {
-            QNWARNING(
-                "synchronization::AuthenticationInfoProvider",
-                "Stored authentication timestamp for a linked notebook is "
-                    << "not a valid integer: " << authenticationTimestampValue);
-
-            return std::nullopt;
-        }
-
-        return authenticationTimestamp;
-    }();
-
-    if (!authenticationTimestamp) {
+    if (!linkedNotebookTimestamps) {
         authenticateToLinkedNotebookWithoutCache(
             std::move(account), std::move(linkedNotebook), promise);
         return future;
@@ -586,9 +512,10 @@ QFuture<IAuthenticationInfoPtr>
 
     auto readAuthTokenThenFuture = threading::then(
         std::move(readAuthTokenFuture),
-        [promise, selfWeak, userId = account.id(),
-         expirationTimestamp = *expirationTimestamp,
-         authenticationTimestamp = *authenticationTimestamp,
+        [promise, selfWeak, account = account,
+         expirationTimestamp = linkedNotebookTimestamps->expirationTimestamp,
+         authenticationTimestamp =
+             linkedNotebookTimestamps->authenticationTimestamp,
          linkedNotebookGuid = *linkedNotebook.guid(),
          noteStoreUrl = linkedNotebook.noteStoreUrl(),
          webApiUrlPrefix = linkedNotebook.webApiUrlPrefix(),
@@ -597,7 +524,7 @@ QFuture<IAuthenticationInfoPtr>
             auto authenticationInfo = std::make_shared<AuthenticationInfo>();
             authenticationInfo->m_authToken = std::move(authToken);
             authenticationInfo->m_shardId = std::move(shardId);
-            authenticationInfo->m_userId = userId;
+            authenticationInfo->m_userId = account.id();
 
             authenticationInfo->m_authenticationTime = authenticationTimestamp;
             authenticationInfo->m_authTokenExpirationTime = expirationTimestamp;
@@ -611,7 +538,8 @@ QFuture<IAuthenticationInfoPtr>
             if (const auto self = selfWeak.lock()) {
                 const QWriteLocker locker{&self->m_authenticationInfosRWLock};
                 self->m_linkedNotebookAuthenticationInfos[linkedNotebookGuid] =
-                    authenticationInfo;
+                    AccountAuthenticationInfo{
+                        std::move(account), authenticationInfo};
             }
 
             promise->addResult(std::move(authenticationInfo));
@@ -635,6 +563,41 @@ QFuture<IAuthenticationInfoPtr>
         });
 
     return future;
+}
+
+void AuthenticationInfoProvider::clearCaches(
+    const ClearCacheOptions & clearCacheOptions)
+{
+    if (std::holds_alternative<ClearCacheOption::All>(clearCacheOptions)) {
+        clearAllUserCaches();
+        clearAllLinkedNotebookCaches();
+    }
+    else if (std::holds_alternative<ClearCacheOption::AllUsers>(
+                 clearCacheOptions)) {
+        clearAllUserCaches();
+    }
+    else if (std::holds_alternative<ClearCacheOption::AllLinkedNotebooks>(
+                 clearCacheOptions))
+    {
+        clearAllLinkedNotebookCaches();
+    }
+    else if (std::holds_alternative<ClearCacheOption::User>(clearCacheOptions))
+    {
+        const auto & user = std::get<ClearCacheOption::User>(clearCacheOptions);
+        clearUserCache(user.id);
+    }
+    else if (std::holds_alternative<ClearCacheOption::LinkedNotebook>(
+                 clearCacheOptions))
+    {
+        const auto & linkedNotebook =
+            std::get<ClearCacheOption::LinkedNotebook>(clearCacheOptions);
+        clearLinkedNotebookCache(linkedNotebook.guid);
+    }
+    else {
+        Q_ASSERT_X(
+            false, "AuthenticationInfoProvider",
+            "Unidentified ClearCacheOption");
+    }
 }
 
 void AuthenticationInfoProvider::authenticateAccountWithoutCache(
@@ -823,14 +786,14 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
 
                     m_linkedNotebookAuthenticationInfos[*linkedNotebook
                                                              .guid()] =
-                        authenticationInfo;
+                        AccountAuthenticationInfo{account, authenticationInfo};
                 }
 
                 qevercloud::Guid linkedNotebookGuid = *linkedNotebook.guid();
 
                 auto storeAuthInfoFuture =
                     storeLinkedNotebookAuthenticationInfo(
-                        authenticationInfo, std::move(linkedNotebook),
+                        authenticationInfo, linkedNotebookGuid,
                         std::move(account));
 
                 auto storeAuthInfoThenFuture = threading::then(
@@ -956,6 +919,100 @@ std::shared_ptr<AuthenticationInfo>
     return authenticationInfo;
 }
 
+std::optional<AuthenticationInfoProvider::LinkedNotebookTimestamps>
+    AuthenticationInfoProvider::readLinkedNotebookTimestamps(
+        const Account & account,
+        const qevercloud::Guid & linkedNotebookGuid) const
+{
+    ApplicationSettings settings{account, gSynchronizationPersistence};
+
+    // NOTE: having account id as a part of the group seems redundant
+    // as the settings are already being persisted for the given account
+    // but that's the legacy layout which is maintained for compatibility.
+    const QString keyGroup = QString::fromUtf8("Authentication/%1/%2")
+                                 .arg(m_host, QString::number(account.id()));
+
+    settings.beginGroup(keyGroup);
+    ApplicationSettings::GroupCloser groupCloser{settings};
+
+    const QString authenticationTimestampKey = QString::fromUtf8("%1_%2").arg(
+        gLinkedNotebookAuthenticationTimestamp, linkedNotebookGuid);
+
+    const QString expirationTimestampKey = QString::fromUtf8("%1_%2").arg(
+        gLinkedNotebookExpirationTimestampKey, linkedNotebookGuid);
+
+    if (!settings.contains(expirationTimestampKey) ||
+        !settings.contains(authenticationTimestampKey))
+    {
+        return std::nullopt;
+    }
+
+    const std::optional<qevercloud::Timestamp> expirationTimestamp =
+        [&]() -> std::optional<qevercloud::Timestamp> {
+        const QVariant expirationTimestampValue =
+            settings.value(expirationTimestampKey);
+
+        bool conversionResult = false;
+        const qevercloud::Timestamp expirationTimestamp =
+            expirationTimestampValue.toLongLong(&conversionResult);
+
+        if (Q_UNLIKELY(!conversionResult)) {
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "Stored authentication expiration timestamp for a linked "
+                    << "notebook is not a valid integer: "
+                    << expirationTimestampValue);
+
+            return std::nullopt;
+        }
+
+        if (isAuthenticationTokenAboutToExpire(expirationTimestamp)) {
+            QNDEBUG(
+                "synchronization::AuthenticationInfoProvider",
+                "Authentication token for linked notebook with guid "
+                    << linkedNotebookGuid << " is about to expire: "
+                    << "expiration timestamp = "
+                    << printableDateTimeFromTimestamp(expirationTimestamp));
+
+            return std::nullopt;
+        }
+
+        return expirationTimestamp;
+    }();
+
+    if (!expirationTimestamp) {
+        return std::nullopt;
+    }
+
+    const std::optional<qevercloud::Timestamp> authenticationTimestamp =
+        [&]() -> std::optional<qevercloud::Timestamp> {
+        const QVariant authenticationTimestampValue =
+            settings.value(authenticationTimestampKey);
+
+        bool conversionResult = false;
+        const qevercloud::Timestamp authenticationTimestamp =
+            authenticationTimestampValue.toLongLong(&conversionResult);
+
+        if (Q_UNLIKELY(!conversionResult)) {
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "Stored authentication timestamp for a linked notebook is "
+                    << "not a valid integer: " << authenticationTimestampValue);
+
+            return std::nullopt;
+        }
+
+        return authenticationTimestamp;
+    }();
+
+    if (!authenticationTimestamp) {
+        return std::nullopt;
+    }
+
+    return LinkedNotebookTimestamps{
+        *authenticationTimestamp, *expirationTimestamp};
+}
+
 QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
     const qevercloud::UserID userId, QString authToken, QString shardId,
     QList<QNetworkCookie> cookies)
@@ -1050,6 +1107,8 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
             weak_from_this(),
             [this, promise, authenticationInfo = std::move(authenticationInfo),
              account = std::move(account)] {
+                const QWriteLocker locker{&m_authenticationInfosRWLock};
+
                 ApplicationSettings settings{
                     account, gSynchronizationPersistence};
 
@@ -1104,6 +1163,8 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                     settings.remove(gUserStoreCookieKey);
                 }
 
+                settings.sync();
+
                 QNDEBUG(
                     "synchronization::AuthenticationInfoProvider",
                     "Successfully wrote the authentication info to the "
@@ -1126,7 +1187,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
 
 QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
     IAuthenticationInfoPtr authenticationInfo,
-    qevercloud::LinkedNotebook linkedNotebook, Account account)
+    qevercloud::Guid linkedNotebookGuid, Account account)
 {
     Q_ASSERT(authenticationInfo);
 
@@ -1138,19 +1199,10 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
     Q_ASSERT(authenticationInfo->userId() == account.id());
     const auto userIdStr = QString::number(authenticationInfo->userId());
 
-    if (Q_UNLIKELY(!linkedNotebook.guid())) {
-        promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
-            "Cannot store authentication info for linked notebook: "
-            "no guid")}});
-        promise->finish();
-        return future;
-    }
-
     auto writeAuthTokenFuture = m_keychainService->writePassword(
         linkedNotebookAuthTokenKeychainServiceName(),
         linkedNotebookAuthTokenKeychainKeyName(
-            m_host, userIdStr, *linkedNotebook.guid()),
+            m_host, userIdStr, linkedNotebookGuid),
         authenticationInfo->authToken());
 
     threading::thenOrFailed(
@@ -1159,7 +1211,10 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
             weak_from_this(),
             [this, promise, authenticationInfo = std::move(authenticationInfo),
              account = std::move(account),
-             linkedNotebook = std::move(linkedNotebook)] {
+             linkedNotebookGuid = std::move(linkedNotebookGuid)] {
+                const QWriteLocker locker{
+                    &m_linkedNotebookAuthenticationInfosRWLock};
+
                 ApplicationSettings settings{
                     account, gSynchronizationPersistence};
 
@@ -1174,7 +1229,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
                 const QString authenticationTimestampKey =
                     QString::fromUtf8("%1_%2").arg(
                         gLinkedNotebookAuthenticationTimestamp,
-                        *linkedNotebook.guid());
+                        linkedNotebookGuid);
 
                 settings.setValue(
                     authenticationTimestampKey,
@@ -1183,11 +1238,13 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
                 const QString expirationTimestampKey =
                     QString::fromUtf8("%1_%2").arg(
                         gLinkedNotebookExpirationTimestampKey,
-                        *linkedNotebook.guid());
+                        linkedNotebookGuid);
 
                 settings.setValue(
                     expirationTimestampKey,
                     authenticationInfo->authTokenExpirationTime());
+
+                settings.sync();
 
                 QNDEBUG(
                     "synchronization::AuthenticationInfoProvider",
@@ -1204,6 +1261,183 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
             }});
 
     return future;
+}
+
+void AuthenticationInfoProvider::clearAllUserCaches()
+{
+    QHash<qevercloud::UserID, AccountAuthenticationInfo> authenticationInfos;
+    {
+        const QWriteLocker locker{&m_authenticationInfosRWLock};
+        authenticationInfos.swap(m_authenticationInfos);
+    }
+
+    for (const auto it: qevercloud::toRange(qAsConst(authenticationInfos))) {
+        const auto & accountAuthenticationInfo = it.value();
+        clearUserCacheImpl(accountAuthenticationInfo);
+    }
+}
+
+void AuthenticationInfoProvider::clearAllLinkedNotebookCaches()
+{
+    QHash<qevercloud::Guid, AccountAuthenticationInfo>
+        linkedNotebookAuthenticationInfos;
+    {
+        const QWriteLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
+        linkedNotebookAuthenticationInfos.swap(
+            m_linkedNotebookAuthenticationInfos);
+    }
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookAuthenticationInfos)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        const auto & accountAuthenticationInfo = it.value();
+        clearLinkedNotebookCacheImpl(
+            linkedNotebookGuid, accountAuthenticationInfo);
+    }
+}
+
+void AuthenticationInfoProvider::clearUserCache(const qevercloud::UserID userId)
+{
+    std::optional<AccountAuthenticationInfo> accountAuthenticationInfo;
+    {
+        const QWriteLocker locker{&m_authenticationInfosRWLock};
+        const auto it = m_authenticationInfos.find(userId);
+        if (it != m_authenticationInfos.end()) {
+            accountAuthenticationInfo = it.value();
+            m_authenticationInfos.erase(it);
+        }
+    }
+
+    if (!accountAuthenticationInfo) {
+        return;
+    }
+
+    clearUserCacheImpl(*accountAuthenticationInfo);
+}
+
+void AuthenticationInfoProvider::clearLinkedNotebookCache(
+    const qevercloud::Guid & linkedNotebookGuid)
+{
+    std::optional<AccountAuthenticationInfo> accountAuthenticationInfo;
+    {
+        const QWriteLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
+        const auto it =
+            m_linkedNotebookAuthenticationInfos.find(linkedNotebookGuid);
+        if (it != m_linkedNotebookAuthenticationInfos.end()) {
+            accountAuthenticationInfo = it.value();
+            m_linkedNotebookAuthenticationInfos.erase(it);
+        }
+    }
+
+    if (!accountAuthenticationInfo) {
+        return;
+    }
+
+    clearLinkedNotebookCacheImpl(
+        linkedNotebookGuid, *accountAuthenticationInfo);
+}
+
+void AuthenticationInfoProvider::clearUserCacheImpl(
+    const AccountAuthenticationInfo & accountAuthenticationInfo)
+{
+    const auto selfWeak = weak_from_this();
+
+    const auto & authenticationInfo =
+        accountAuthenticationInfo.authenticationInfo;
+    Q_ASSERT(authenticationInfo);
+
+    const auto userIdStr = QString::number(authenticationInfo->userId());
+
+    auto deleteAuthTokenFuture = m_keychainService->deletePassword(
+        authTokenKeychainServiceName(),
+        authTokenKeychainKeyName(m_host, userIdStr));
+
+    threading::onFailed(
+        std::move(deleteAuthTokenFuture),
+        [userId = authenticationInfo->userId()](const QException & e) {
+            QNWARNING(
+                "AuthenticationInfoProvider",
+                "Failed to delete authentication token for user id " << userId
+                    << ": " << e.what());
+        });
+
+    auto deleteShardIdFuture = m_keychainService->deletePassword(
+        shardIdKeychainServiceName(),
+        shardIdKeychainKeyName(m_host, userIdStr));
+
+    threading::onFailed(
+        std::move(deleteShardIdFuture),
+        [userId = authenticationInfo->userId()](const QException & e) {
+            QNWARNING(
+                "AuthenticationInfoProvider",
+                "Failed to delete shard id for user id " << userId
+                    << ": " << e.what());
+        });
+
+    const Account & account = accountAuthenticationInfo.account;
+
+    ApplicationSettings settings{account, gSynchronizationPersistence};
+
+    settings.beginGroup(
+        QString::fromUtf8("Authentication/%1/%2/")
+            .arg(m_host, QString::number(authenticationInfo->userId())));
+
+    ApplicationSettings::GroupCloser groupCloser{settings};
+
+    settings.remove(gNoteStoreUrlKey);
+    settings.remove(gExpirationTimestampKey);
+    settings.remove(gAuthenticationTimestampKey);
+    settings.remove(gWebApiUrlPrefixKey);
+    settings.remove(gUserStoreCookieKey);
+    settings.sync();
+}
+
+void AuthenticationInfoProvider::clearLinkedNotebookCacheImpl(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const AccountAuthenticationInfo & accountAuthenticationInfo)
+{
+    const auto selfWeak = weak_from_this();
+
+    const auto & authenticationInfo =
+        accountAuthenticationInfo.authenticationInfo;
+    Q_ASSERT(authenticationInfo);
+
+    const auto userIdStr = QString::number(authenticationInfo->userId());
+
+    auto deleteAuthTokenFuture = m_keychainService->deletePassword(
+        linkedNotebookAuthTokenKeychainServiceName(),
+        linkedNotebookAuthTokenKeychainKeyName(
+            m_host, userIdStr, linkedNotebookGuid));
+
+    threading::onFailed(
+        std::move(deleteAuthTokenFuture),
+        [userId = authenticationInfo->userId(),
+         linkedNotebookGuid](const QException & e) {
+            QNWARNING(
+                "AuthenticationInfoProvider",
+                "Failed to delete linked notebook authentication token for "
+                    << "user id " << userId << " and linked notebook guid "
+                    << linkedNotebookGuid << ": " << e.what());
+        });
+
+    const Account & account = accountAuthenticationInfo.account;
+
+    ApplicationSettings settings{account, gSynchronizationPersistence};
+
+    settings.beginGroup(
+        QString::fromUtf8("Authentication/%1/%2/")
+            .arg(m_host, QString::number(authenticationInfo->userId())));
+
+    ApplicationSettings::GroupCloser groupCloser{settings};
+
+    settings.remove(QString::fromUtf8("%1_%2").arg(
+        gLinkedNotebookAuthenticationTimestamp, linkedNotebookGuid));
+
+    settings.remove(QString::fromUtf8("%1_%2").arg(
+        gLinkedNotebookExpirationTimestampKey, linkedNotebookGuid));
+
+    settings.sync();
 }
 
 } // namespace quentier::synchronization

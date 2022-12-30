@@ -39,6 +39,10 @@ public:
         QFuture<IAuthenticationInfoPtr>, authenticateToLinkedNotebook,
         (Account account, qevercloud::LinkedNotebook linkedNotebook, Mode mode),
         (override));
+
+    MOCK_METHOD(
+        void, clearCaches, (const ClearCacheOptions & clearCacheOptions),
+        (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

@@ -67,6 +67,10 @@ public:
         Account account, qevercloud::LinkedNotebook linkedNotebook,
         Mode mode = Mode::Cache) override;
 
+    void clearCaches(
+        const ClearCacheOptions & clearCacheOptions = ClearCacheOptions{
+            ClearCacheOption::All{}}) override;
+
 private:
     void authenticateAccountWithoutCache(
         Account account,
@@ -86,6 +90,17 @@ private:
     [[nodiscard]] std::shared_ptr<AuthenticationInfo>
         readAuthenticationInfoPart(const Account & account) const;
 
+    struct LinkedNotebookTimestamps
+    {
+        qevercloud::Timestamp authenticationTimestamp = 0;
+        qevercloud::Timestamp expirationTimestamp = 0;
+    };
+
+    [[nodiscard]] std::optional<LinkedNotebookTimestamps>
+        readLinkedNotebookTimestamps(
+            const Account & account,
+            const qevercloud::Guid & linkedNotebookGuid) const;
+
     [[nodiscard]] QFuture<Account> findAccountForUserId(
         qevercloud::UserID userId, QString authToken, QString shardId,
         QList<QNetworkCookie> networkCookies);
@@ -95,7 +110,25 @@ private:
 
     [[nodiscard]] QFuture<void> storeLinkedNotebookAuthenticationInfo(
         IAuthenticationInfoPtr authenticationInfo,
-        qevercloud::LinkedNotebook linkedNotebook, Account account);
+        qevercloud::Guid linkedNotebookGuid, Account account);
+
+    void clearAllUserCaches();
+    void clearAllLinkedNotebookCaches();
+    void clearUserCache(qevercloud::UserID userId);
+    void clearLinkedNotebookCache(const qevercloud::Guid & linkedNotebookGuid);
+
+    struct AccountAuthenticationInfo
+    {
+        Account account;
+        IAuthenticationInfoPtr authenticationInfo;
+    };
+
+    void clearUserCacheImpl(
+        const AccountAuthenticationInfo & authenticationInfo);
+
+    void clearLinkedNotebookCacheImpl(
+        const qevercloud::Guid & linkedNotebookGuid,
+        const AccountAuthenticationInfo & authenticationInfo);
 
 private:
     const IAuthenticatorPtr m_authenticator;
@@ -107,10 +140,10 @@ private:
     const QString m_host;
 
     QReadWriteLock m_authenticationInfosRWLock;
-    QHash<qevercloud::UserID, IAuthenticationInfoPtr> m_authenticationInfos;
+    QHash<qevercloud::UserID, AccountAuthenticationInfo> m_authenticationInfos;
 
     QReadWriteLock m_linkedNotebookAuthenticationInfosRWLock;
-    QHash<qevercloud::Guid, IAuthenticationInfoPtr>
+    QHash<qevercloud::Guid, AccountAuthenticationInfo>
         m_linkedNotebookAuthenticationInfos;
 };
 

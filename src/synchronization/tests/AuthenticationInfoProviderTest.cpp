@@ -27,6 +27,7 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/Unreachable.h>
 #include <quentier/utility/tests/mocks/MockIKeychainService.h>
 
 #include <qevercloud/DurableService.h>
@@ -41,6 +42,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <limits>
 
 // clazy:excludeall=non-pod-global-static
@@ -207,6 +209,27 @@ void setupLinkedNotebookAuthenticationInfoPartPersistence(
         QStringLiteral("LinkedNotebookAuthenticationTimestamp_") +
             linkedNotebookGuid,
         authenticationInfo->authenticationTime());
+}
+
+void checkNoAuthenticationInfoPartPersistence(
+    const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
+    const QString & host)
+{
+    ApplicationSettings appSettings{
+        account, QStringLiteral("SynchronizationPersistence")};
+
+    appSettings.beginGroup(
+        QStringLiteral("Authentication/") + host + QStringLiteral("/") +
+        QString::number(authenticationInfo->userId()));
+
+    const ApplicationSettings::GroupCloser groupCloser{appSettings};
+
+    EXPECT_FALSE(appSettings.contains(QStringLiteral("NoteStoreUrl")));
+    EXPECT_FALSE(appSettings.contains(QStringLiteral("ExpirationTimestamp")));
+    EXPECT_FALSE(appSettings.contains(QStringLiteral("WebApiUrlPrefix")));
+    EXPECT_FALSE(appSettings.contains(QStringLiteral("UserStoreCookie")));
+    EXPECT_FALSE(
+        appSettings.contains(QStringLiteral("AuthenticationTimestamp")));
 }
 
 } // namespace
@@ -1895,6 +1918,198 @@ TEST_F(
 
     checkLinkedNotebookAuthenticationInfoPartPersistence(
         m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
+}
+
+enum class ClearUserCacheOption
+{
+    User,
+    AllUser,
+    All
+};
+
+class AuthenticationInfoProviderUserCacheTest :
+    public AuthenticationInfoProviderTest,
+    public testing::WithParamInterface<ClearUserCacheOption>
+{};
+
+const std::array gClearUserCacheOptions{
+    ClearUserCacheOption::User,
+    ClearUserCacheOption::AllUser,
+    ClearUserCacheOption::All,
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    AuthenticationInfoProviderUserCacheTestInstance,
+    AuthenticationInfoProviderUserCacheTest,
+    testing::ValuesIn(gClearUserCacheOptions));
+
+TEST_P(
+    AuthenticationInfoProviderUserCacheTest,
+    AuthenticateAccountAfterCacheRemoval)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    const Account account{
+        QStringLiteral("Full Name"),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
+    setupAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
+    InSequence s;
+
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->shardId());
+        });
+
+    auto future = authenticationInfoProvider->authenticateAccount(
+        account, AuthenticationInfoProvider::Mode::Cache);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_NE(future.result().get(), m_authenticationInfo.get());
+    EXPECT_EQ(
+        dynamic_cast<const AuthenticationInfo &>(*future.result()),
+        *m_authenticationInfo);
+
+    checkAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
+    EXPECT_CALL(*m_mockKeychainService, deletePassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture();
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, deletePassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture();
+        });
+
+    const auto clearCacheOptions = [&]
+    {
+        switch (GetParam())
+        {
+        case ClearUserCacheOption::User:
+            return IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::User{
+                    account.id()}};
+        case ClearUserCacheOption::AllUser:
+            return IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::AllUsers{}};
+        case ClearUserCacheOption::All:
+            return IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::All{}};
+        }
+
+        UNREACHABLE;
+    }();
+
+    authenticationInfoProvider->clearCaches(clearCacheOptions);
+
+    checkNoAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
+    // The second attempt will now go to the keychain as the token and shard
+    // id for this account would are no longer cached inside
+    // AuthenticationInfoProvider
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateAccount(account))
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->authToken());
+
+            return threading::makeReadyFuture();
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->shardId());
+
+            return threading::makeReadyFuture();
+        });
+
+    future = authenticationInfoProvider->authenticateAccount(
+        account, AuthenticationInfoProvider::Mode::Cache);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
+
+    checkAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
 }
 
 } // namespace quentier::synchronization::tests

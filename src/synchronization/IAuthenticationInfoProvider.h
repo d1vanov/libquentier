@@ -25,6 +25,8 @@
 
 #include <QFuture>
 
+#include <variant>
+
 namespace quentier::synchronization {
 
 /**
@@ -105,6 +107,34 @@ public:
         authenticateToLinkedNotebook(
             Account account, qevercloud::LinkedNotebook linkedNotebook,
             Mode mode = Mode::Cache) = 0;
+
+    struct ClearCacheOption
+    {
+        struct All{};
+
+        struct User
+        {
+            qevercloud::UserID id;
+        };
+
+        struct AllUsers{};
+
+        struct LinkedNotebook
+        {
+            qevercloud::Guid guid;
+        };
+
+        struct AllLinkedNotebooks{};
+    };
+
+    using ClearCacheOptions = std::variant<
+        ClearCacheOption::All, ClearCacheOption::User,
+        ClearCacheOption::AllUsers, ClearCacheOption::LinkedNotebook,
+        ClearCacheOption::AllLinkedNotebooks>;
+
+    virtual void clearCaches(
+        const ClearCacheOptions & clearCacheOptions = ClearCacheOptions{
+            ClearCacheOption::All{}}) = 0;
 };
 
 } // namespace quentier::synchronization
