@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,6 +50,7 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::_;
 using testing::InSequence;
 using testing::Return;
 using testing::StrictMock;
@@ -150,6 +151,28 @@ void checkLinkedNotebookAuthenticationInfoPartPersistence(
                 linkedNotebookGuid)
             .toLongLong(),
         authenticationInfo->authenticationTime());
+}
+
+void checkNoLinkedNotebookAuthenticationInfoPartPersistence(
+    const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
+    const QString & host, const qevercloud::Guid & linkedNotebookGuid)
+{
+    ApplicationSettings appSettings{
+        account, QStringLiteral("SynchronizationPersistence")};
+
+    appSettings.beginGroup(
+        QStringLiteral("Authentication/") + host + QStringLiteral("/") +
+        QString::number(authenticationInfo->userId()));
+
+    ApplicationSettings::GroupCloser groupCloser{appSettings};
+
+    EXPECT_FALSE(appSettings.contains(
+        QStringLiteral("LinkedNotebookExpirationTimestamp_") +
+        linkedNotebookGuid));
+
+    EXPECT_FALSE(appSettings.contains(
+        QStringLiteral("LinkedNotebookAuthenticationTimestamp_") +
+        linkedNotebookGuid));
 }
 
 void setupAuthenticationInfoPartPersistence(
@@ -2036,10 +2059,8 @@ TEST_P(
             return threading::makeReadyFuture();
         });
 
-    const auto clearCacheOptions = [&]
-    {
-        switch (GetParam())
-        {
+    const auto clearCacheOptions = [&] {
+        switch (GetParam()) {
         case ClearUserCacheOption::User:
             return IAuthenticationInfoProvider::ClearCacheOptions{
                 IAuthenticationInfoProvider::ClearCacheOption::User{
@@ -2060,7 +2081,7 @@ TEST_P(
     checkNoAuthenticationInfoPartPersistence(
         m_authenticationInfo, account, m_host);
 
-    // The second attempt will now go to the keychain as the token and shard
+    // The second attempt will now call authenticator as the token and shard
     // id for this account would are no longer cached inside
     // AuthenticationInfoProvider
 
@@ -2110,6 +2131,218 @@ TEST_P(
 
     checkAuthenticationInfoPartPersistence(
         m_authenticationInfo, account, m_host);
+}
+
+enum class ClearLinkedNotebookCacheOption
+{
+    LinkedNotebook,
+    AllLinkedNotebooks,
+    All
+};
+
+class AuthenticationInfoProviderLinkedNotebookCacheTest :
+    public AuthenticationInfoProviderTest,
+    public testing::WithParamInterface<ClearLinkedNotebookCacheOption>
+{};
+
+const std::array gClearLinkedNotebookCacheOptions{
+    ClearLinkedNotebookCacheOption::LinkedNotebook,
+    ClearLinkedNotebookCacheOption::AllLinkedNotebooks,
+    ClearLinkedNotebookCacheOption::All,
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    AuthenticationInfoProviderLinkedNotebookCacheTestInstance,
+    AuthenticationInfoProviderLinkedNotebookCacheTest,
+    testing::ValuesIn(gClearLinkedNotebookCacheOptions));
+
+TEST_P(
+    AuthenticationInfoProviderLinkedNotebookCacheTest,
+    AuthenticateToLinkedNotebookAfterCacheRemoval)
+{
+    const auto authenticationInfoProvider =
+        std::make_shared<AuthenticationInfoProvider>(
+            m_mockAuthenticator, m_mockKeychainService, m_mockUserInfoProvider,
+            m_mockNoteStoreFactory, qevercloud::newRequestContext(),
+            qevercloud::nullRetryPolicy(), m_host);
+
+    const Account account{
+        QStringLiteral("Full Name"),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
+    const qevercloud::LinkedNotebook linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}
+            .setGuid(UidGenerator::Generate())
+            .setUsername(QStringLiteral("username"))
+            .setSharedNotebookGlobalId(UidGenerator::Generate())
+            .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
+            .setWebApiUrlPrefix(m_authenticationInfo->webApiUrlPrefix())
+            .setShardId(m_authenticationInfo->shardId())
+            .build();
+
+    setupLinkedNotebookAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
+
+    InSequence s;
+
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(
+                service,
+                appName + QStringLiteral("_linked_notebook_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_linked_notebook_auth_token_") +
+                    m_host + QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()) +
+                    QStringLiteral("_") + linkedNotebook.guid().value());
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
+        account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_NE(future.result().get(), m_authenticationInfo.get());
+
+    const auto * authenticationInfo =
+        dynamic_cast<const AuthenticationInfo *>(future.result().get());
+    ASSERT_TRUE(authenticationInfo);
+
+    m_authenticationInfo->m_userStoreCookies.clear();
+    EXPECT_EQ(*authenticationInfo, *m_authenticationInfo);
+
+    checkLinkedNotebookAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
+
+    EXPECT_CALL(*m_mockKeychainService, deletePassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(
+                service,
+                appName + QStringLiteral("_linked_notebook_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_linked_notebook_auth_token_") +
+                    m_host + QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()) +
+                    QStringLiteral("_") + linkedNotebook.guid().value());
+
+            return threading::makeReadyFuture();
+        });
+
+    const auto clearCacheOptions = [&] {
+        switch (GetParam()) {
+        case ClearLinkedNotebookCacheOption::LinkedNotebook:
+            return IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook{
+                    linkedNotebook.guid().value()}};
+        case ClearLinkedNotebookCacheOption::AllLinkedNotebooks:
+            return IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::
+                    AllLinkedNotebooks{}};
+        case ClearLinkedNotebookCacheOption::All:
+            return IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::All{}};
+        }
+
+        UNREACHABLE;
+    }();
+
+    authenticationInfoProvider->clearCaches(clearCacheOptions);
+
+    checkNoLinkedNotebookAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
+
+    // The second attempt will now call authenticator as the token and shard
+    // id for this linked notebook would are no longer cached inside
+    // AuthenticationInfoProvider
+
+    EXPECT_CALL(
+        *m_mockNoteStoreFactory,
+        noteStore(
+            linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(), _, _))
+        .WillOnce(
+            [noteStoreWeak =
+                 std::weak_ptr<mocks::qevercloud::MockINoteStore>{
+                     m_mockNoteStore}](
+                const QString & noteStoreUrl,
+                const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+                const qevercloud::IRequestContextPtr & ctx,
+                const qevercloud::IRetryPolicyPtr & retryPolicy) {
+                Q_UNUSED(noteStoreUrl)
+                Q_UNUSED(linkedNotebookGuid)
+                Q_UNUSED(ctx)
+                Q_UNUSED(retryPolicy)
+                return noteStoreWeak.lock();
+            });
+
+    EXPECT_CALL(
+        *m_mockNoteStore,
+        authenticateToSharedNotebookAsync(
+            linkedNotebook.sharedNotebookGlobalId().value(), _))
+        .WillOnce(
+            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+                qevercloud::AuthenticationResultBuilder{}
+                    .setAuthenticationToken(m_authenticationInfo->authToken())
+                    .setExpiration(
+                        m_authenticationInfo->authTokenExpirationTime())
+                    .setCurrentTime(m_authenticationInfo->authenticationTime())
+                    .setUrls(qevercloud::UserUrlsBuilder{}
+                                 .setNoteStoreUrl(
+                                     m_authenticationInfo->noteStoreUrl())
+                                 .setWebApiUrlPrefix(
+                                     m_authenticationInfo->webApiUrlPrefix())
+                                 .build())
+                    .build())));
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key, // NOLINT
+                      const QString & password) {
+            EXPECT_EQ(
+                service,
+                appName + QStringLiteral("_linked_notebook_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_linked_notebook_auth_token_") +
+                    m_host + QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()) +
+                    QStringLiteral("_") + linkedNotebook.guid().value());
+
+            EXPECT_EQ(password, m_authenticationInfo->authToken());
+
+            return threading::makeReadyFuture();
+        });
+
+    future = authenticationInfoProvider->authenticateToLinkedNotebook(
+        account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    EXPECT_NE(future.result().get(), m_authenticationInfo.get());
+
+    authenticationInfo =
+        dynamic_cast<const AuthenticationInfo *>(future.result().get());
+    ASSERT_TRUE(authenticationInfo);
+
+    m_authenticationInfo->m_userStoreCookies.clear();
+    EXPECT_EQ(*authenticationInfo, *m_authenticationInfo);
+
+    checkLinkedNotebookAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
 }
 
 } // namespace quentier::synchronization::tests
