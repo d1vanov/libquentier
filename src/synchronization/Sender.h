@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/threading/Fwd.h>
 #include <quentier/types/Account.h>
+#include <quentier/utility/cancelers/Fwd.h>
 
 #include <synchronization/Fwd.h>
 #include <synchronization/types/Fwd.h>
@@ -73,6 +74,10 @@ private:
 
         bool shouldRepeatIncrementalSync = false;
 
+        // Canceler which is canceled from inside Sender in case of error
+        // which should stop further attempts to send anything to Evernote
+        utility::cancelers::ManualCancelerPtr manualCanceler;
+
         // Running result
         SendStatusPtr userOwnSendStatus;
         QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookSendStatuses;
@@ -111,9 +116,10 @@ private:
         const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
 
     void sendNoteImpl(
-        qevercloud::Note note, bool containsFailedToSendTags,
+        SendContextPtr sendContext, qevercloud::Note note,
+        bool containsFailedToSendTags,
         const qevercloud::INoteStorePtr & noteStore,
-        const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
+        std::shared_ptr<QPromise<qevercloud::Note>> notePromise) const;
 
     void processNote(
         const SendContextPtr & sendContext, qevercloud::Note note,
@@ -138,7 +144,7 @@ private:
     void sendTagImpl(
         SendContextPtr sendContext, qevercloud::Tag tag,
         const qevercloud::INoteStorePtr & noteStore,
-        const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const;
+        std::shared_ptr<QPromise<qevercloud::Tag>> tagPromise) const;
 
     void processTag(
         const SendContextPtr & sendContext, qevercloud::Tag tag,
@@ -163,10 +169,9 @@ private:
         const;
 
     void sendNotebookImpl(
-        qevercloud::Notebook notebook,
+        SendContextPtr sendContext, qevercloud::Notebook notebook,
         const qevercloud::INoteStorePtr & noteStore,
-        const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
-        const;
+        std::shared_ptr<QPromise<qevercloud::Notebook>> notebookPromise) const;
 
     void processNotebook(
         const SendContextPtr & sendContext, qevercloud::Notebook notebook,
@@ -191,10 +196,10 @@ private:
             savedSearchPromise) const;
 
     void sendSavedSearchImpl(
-        qevercloud::SavedSearch savedSearch,
+        SendContextPtr sendContext, qevercloud::SavedSearch savedSearch,
         const qevercloud::INoteStorePtr & noteStore,
-        const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
-            savedSearchPromise) const;
+        std::shared_ptr<QPromise<qevercloud::SavedSearch>> savedSearchPromise)
+        const;
 
     void processSavedSearch(
         const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
@@ -206,7 +211,12 @@ private:
 
     [[nodiscard]] static SendStatusPtr sendStatus(
         const SendContextPtr & sendContext,
-        const std::optional<qevercloud::Guid> & linkedNotebooKGuid);
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid);
+
+    static void checkForStopSynchronizationException(
+        const SendContextPtr & sendContext,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+        const QException & e);
 
     static void sendUpdate(
         const SendContextPtr & sendContext, const SendStatusPtr & sendStatus,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,12 +28,15 @@
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
+#include <quentier/utility/cancelers/AnyOfCanceler.h>
 #include <quentier/utility/cancelers/ICanceler.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <synchronization/INoteStoreProvider.h>
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/RequestContextBuilder.h>
+#include <qevercloud/exceptions/EDAMSystemException.h>
 #include <qevercloud/services/INoteStore.h>
 
 #include <QMutex>
@@ -98,7 +101,13 @@ QFuture<ISender::Result> Sender::send(
     auto sendContext = std::make_shared<SendContext>();
     sendContext->lastSyncState = std::move(lastSyncState);
     sendContext->promise = promise;
-    sendContext->canceler = std::move(canceler);
+
+    sendContext->manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+    sendContext->canceler = std::make_shared<utility::cancelers::AnyOfCanceler>(
+        QList<utility::cancelers::ICancelerPtr>{}
+        << canceler << sendContext->manualCanceler);
+
     sendContext->callbackWeak = std::move(callbackWeak);
     sendContext->userOwnSendStatus = std::make_shared<SendStatus>();
 
@@ -361,7 +370,7 @@ void Sender::sendNote(
         std::move(previousNoteFuture), notePromise,
         threading::TrackedTask{
             selfWeak,
-            [selfWeak, this, notePromise, note = std::move(note),
+            [selfWeak, this, notePromise = notePromise, note = std::move(note),
              containsFailedToSendTags,
              sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
@@ -397,27 +406,31 @@ void Sender::sendNote(
                         }
 
                         sendNoteImpl(
-                            std::move(note), containsFailedToSendTags,
-                            noteStore, notePromise);
+                            std::move(sendContext), std::move(note),
+                            containsFailedToSendTags, noteStore,
+                            std::move(notePromise));
                     });
             }});
 }
 
 void Sender::sendNoteImpl(
-    qevercloud::Note note, const bool containsFailedToSendTags,
+    SendContextPtr sendContext, qevercloud::Note note,
+    const bool containsFailedToSendTags,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const
+    std::shared_ptr<QPromise<qevercloud::Note>> notePromise) const
 {
     Q_ASSERT(noteStore);
 
     const bool newNote = !note.updateSequenceNum().has_value();
+    std::optional<qevercloud::Guid> linkedNotebookGuid =
+        noteStore->linkedNotebookGuid();
 
     auto noteFuture =
         (newNote ? noteStore->createNoteAsync(note)
                  : noteStore->updateNoteAsync(note));
 
-    threading::thenOrFailed(
-        std::move(noteFuture), notePromise,
+    auto thenFuture = threading::then(
+        std::move(noteFuture),
         [notePromise, containsFailedToSendTags,
          note = std::move(note)](qevercloud::Note n) mutable {
             n.setLocalId(note.localId());
@@ -453,6 +466,18 @@ void Sender::sendNoteImpl(
                 }
             }
             notePromise->addResult(std::move(n));
+            notePromise->finish();
+        });
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [notePromise = std::move(notePromise),
+         sendContext = std::move(sendContext),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) {
+            Sender::checkForStopSynchronizationException(
+                sendContext, linkedNotebookGuid, e);
+            notePromise->setException(e);
             notePromise->finish();
         });
 }
@@ -873,7 +898,7 @@ void Sender::sendTag(
 
                 threading::thenOrFailed(
                     std::move(noteStoreFuture), tagPromise,
-                    [selfWeak, this, tagPromise,
+                    [selfWeak, this, tagPromise = tagPromise,
                      sendContext = std::move(sendContext),
                      tag = std::move(tag)](
                         const qevercloud::INoteStorePtr & noteStore) mutable {
@@ -898,7 +923,7 @@ void Sender::sendTag(
 
                         sendTagImpl(
                             std::move(sendContext), std::move(tag), noteStore,
-                            tagPromise);
+                            std::move(tagPromise));
                     });
             }});
 }
@@ -906,14 +931,18 @@ void Sender::sendTag(
 void Sender::sendTagImpl(
     SendContextPtr sendContext, qevercloud::Tag tag,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const
+    std::shared_ptr<QPromise<qevercloud::Tag>> tagPromise) const
 {
     const bool newTag = !tag.updateSequenceNum().has_value();
+    std::optional<qevercloud::Guid> linkedNotebookGuid =
+        tag.linkedNotebookGuid();
+
+    QFuture<void> thenFuture;
     if (newTag) {
         auto createTagFuture = noteStore->createTagAsync(tag);
-        threading::thenOrFailed(
-            std::move(createTagFuture), tagPromise,
-            [tagPromise, sendContext = std::move(sendContext),
+        thenFuture = threading::then(
+            std::move(createTagFuture),
+            [tagPromise, sendContext,
              tag = std::move(tag)](qevercloud::Tag t) mutable {
                 {
                     // This tag was sent to Evernote
@@ -941,8 +970,8 @@ void Sender::sendTagImpl(
     }
     else {
         auto updateTagFuture = noteStore->updateTagAsync(tag);
-        threading::thenOrFailed(
-            std::move(updateTagFuture), tagPromise,
+        thenFuture = threading::then(
+            std::move(updateTagFuture),
             [tagPromise,
              tag = std::move(tag)](const qint32 newUpdateSequenceNum) mutable {
                 tag.setUpdateSequenceNum(newUpdateSequenceNum);
@@ -951,6 +980,18 @@ void Sender::sendTagImpl(
                 tagPromise->finish();
             });
     }
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [tagPromise = std::move(tagPromise),
+         sendContext = std::move(sendContext),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) {
+            Sender::checkForStopSynchronizationException(
+                sendContext, linkedNotebookGuid, e);
+            tagPromise->setException(e);
+            tagPromise->finish();
+        });
 }
 
 void Sender::processTag(
@@ -1162,7 +1203,7 @@ void Sender::sendNotebook(
 
                 threading::thenOrFailed(
                     std::move(noteStoreFuture), notebookPromise,
-                    [selfWeak, this, notebookPromise,
+                    [selfWeak, this, notebookPromise = notebookPromise,
                      notebook = std::move(notebook),
                      sendContext = std::move(sendContext)](
                         const qevercloud::INoteStorePtr & noteStore) mutable {
@@ -1186,21 +1227,26 @@ void Sender::sendNotebook(
                         }
 
                         sendNotebookImpl(
-                            std::move(notebook), noteStore, notebookPromise);
+                            std::move(sendContext), std::move(notebook),
+                            noteStore, std::move(notebookPromise));
                     });
             }});
 }
 
 void Sender::sendNotebookImpl(
-    qevercloud::Notebook notebook, const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
-    const
+    SendContextPtr sendContext, qevercloud::Notebook notebook,
+    const qevercloud::INoteStorePtr & noteStore,
+    std::shared_ptr<QPromise<qevercloud::Notebook>> notebookPromise) const
 {
     const bool newNotebook = !notebook.updateSequenceNum().has_value();
+    std::optional<qevercloud::Guid> linkedNotebookGuid =
+        notebook.linkedNotebookGuid();
+
+    QFuture<void> thenFuture;
     if (newNotebook) {
         auto createNotebookFuture = noteStore->createNotebookAsync(notebook);
-        threading::thenOrFailed(
-            std::move(createNotebookFuture), notebookPromise,
+        thenFuture = threading::then(
+            std::move(createNotebookFuture),
             [notebookPromise,
              notebook = std::move(notebook)](qevercloud::Notebook n) mutable {
                 n.setLocalId(notebook.localId());
@@ -1213,8 +1259,8 @@ void Sender::sendNotebookImpl(
     }
     else {
         auto updateNotebookFuture = noteStore->updateNotebookAsync(notebook);
-        threading::thenOrFailed(
-            std::move(updateNotebookFuture), notebookPromise,
+        thenFuture = threading::then(
+            std::move(updateNotebookFuture),
             [notebookPromise, notebook = std::move(notebook)](
                 const qint32 newUpdateSequenceNum) mutable {
                 notebook.setUpdateSequenceNum(newUpdateSequenceNum);
@@ -1223,6 +1269,18 @@ void Sender::sendNotebookImpl(
                 notebookPromise->finish();
             });
     }
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [notebookPromise = std::move(notebookPromise),
+         sendContext = std::move(sendContext),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) {
+            Sender::checkForStopSynchronizationException(
+                sendContext, linkedNotebookGuid, e);
+            notebookPromise->setException(e);
+            notebookPromise->finish();
+        });
 }
 
 void Sender::processNotebook(
@@ -1434,7 +1492,7 @@ void Sender::sendSavedSearch(
         std::move(previousSavedSearchFuture), savedSearchPromise,
         threading::TrackedTask{
             selfWeak,
-            [selfWeak, this, savedSearchPromise,
+            [selfWeak, this, savedSearchPromise = savedSearchPromise,
              savedSearch = std::move(savedSearch),
              sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
@@ -1469,26 +1527,26 @@ void Sender::sendSavedSearch(
                         }
 
                         sendSavedSearchImpl(
-                            std::move(savedSearch), noteStore,
-                            savedSearchPromise);
+                            std::move(sendContext), std::move(savedSearch),
+                            noteStore, std::move(savedSearchPromise));
                     });
             }});
 }
 
 void Sender::sendSavedSearchImpl(
-    qevercloud::SavedSearch savedSearch,
+    SendContextPtr sendContext, qevercloud::SavedSearch savedSearch,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
-        savedSearchPromise) const
+    std::shared_ptr<QPromise<qevercloud::SavedSearch>> savedSearchPromise) const
 {
     const bool newSavedSearch = !savedSearch.updateSequenceNum().has_value();
+    QFuture<void> thenFuture;
 
     if (newSavedSearch) {
         auto createSavedSearchFuture =
             noteStore->createSearchAsync(savedSearch);
 
-        threading::thenOrFailed(
-            std::move(createSavedSearchFuture), savedSearchPromise,
+        thenFuture = threading::then(
+            std::move(createSavedSearchFuture),
             [savedSearchPromise, savedSearch = std::move(savedSearch)](
                 qevercloud::SavedSearch s) mutable {
                 s.setLocalId(savedSearch.localId());
@@ -1503,8 +1561,8 @@ void Sender::sendSavedSearchImpl(
         auto updateSavedSearchFuture =
             noteStore->updateSearchAsync(savedSearch);
 
-        threading::thenOrFailed(
-            std::move(updateSavedSearchFuture), savedSearchPromise,
+        thenFuture = threading::then(
+            std::move(updateSavedSearchFuture),
             [savedSearchPromise, savedSearch = std::move(savedSearch)](
                 const qint32 newUpdateSequenceNum) mutable {
                 savedSearch.setUpdateSequenceNum(newUpdateSequenceNum);
@@ -1513,6 +1571,16 @@ void Sender::sendSavedSearchImpl(
                 savedSearchPromise->finish();
             });
     }
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [savedSearchPromise = std::move(savedSearchPromise),
+         sendContext = std::move(sendContext)](const QException & e) {
+            Sender::checkForStopSynchronizationException(
+                sendContext, std::nullopt, e);
+            savedSearchPromise->setException(e);
+            savedSearchPromise->finish();
+        });
 }
 
 void Sender::processSavedSearch(
@@ -1602,6 +1670,42 @@ SendStatusPtr Sender::sendStatus(
     }
 
     return sendStatus;
+}
+
+void Sender::checkForStopSynchronizationException(
+    const SendContextPtr & sendContext,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+    const QException & e)
+{
+    try {
+        e.raise();
+    }
+    catch (const qevercloud::EDAMSystemException & es) {
+        if (es.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            {
+                const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                const auto status =
+                    Sender::sendStatus(sendContext, linkedNotebookGuid);
+                status->m_stopSynchronizationError = StopSynchronizationError{
+                    RateLimitReachedError{es.rateLimitDuration()}};
+            }
+            sendContext->manualCanceler->cancel();
+        }
+        else if (es.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
+            {
+                const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+
+                const auto status =
+                    Sender::sendStatus(sendContext, linkedNotebookGuid);
+                status->m_stopSynchronizationError =
+                    StopSynchronizationError{AuthenticationExpiredError{}};
+            }
+            sendContext->manualCanceler->cancel();
+        }
+    }
+    catch (...) {
+    }
 }
 
 void Sender::sendUpdate(
