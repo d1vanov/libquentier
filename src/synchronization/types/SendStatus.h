@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,13 +55,8 @@ struct SendStatus final : public ISendStatus
     [[nodiscard]] QList<TagWithException> failedToSendTags() const override;
 
     // General
-
-    /**
-     * If during the send step of synchronization it was found out that
-     * Evernote service's state of account has been updated since the last
-     * download step, returns true meaning that incremental download step
-     * should be repeated. Otherwise returns false.
-     */
+    [[nodiscard]] StopSynchronizationError stopSynchronizationError()
+        const override;
     [[nodiscard]] bool needToRepeatIncrementalSync() const noexcept override;
 
     QTextStream & print(QTextStream & strm) const override;
@@ -82,6 +77,8 @@ struct SendStatus final : public ISendStatus
 
     quint64 m_totalSuccessfullySentTags = 0UL;
     QList<TagWithException> m_failedToSendTags;
+
+    StopSynchronizationError m_stopSynchronizationError{std::monostate{}};
 
     bool m_needToRepeatIncrementalSync = false;
 };

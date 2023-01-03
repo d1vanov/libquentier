@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -117,6 +117,11 @@ QList<ISendStatus::TagWithException> SendStatus::failedToSendTags() const
     return m_failedToSendTags;
 }
 
+StopSynchronizationError SendStatus::stopSynchronizationError() const
+{
+    return m_stopSynchronizationError;
+}
+
 bool SendStatus::needToRepeatIncrementalSync() const noexcept
 {
     return m_needToRepeatIncrementalSync;
@@ -152,6 +157,23 @@ QTextStream & SendStatus::print(QTextStream & strm) const
          << ", failed to send tags: ";
     printItemWithExceptionList<qevercloud::Tag>(
         m_failedToSendTags, QStringLiteral("tag"), strm);
+
+    if (std::holds_alternative<RateLimitReachedError>(
+            m_stopSynchronizationError)) {
+        const auto & rateLimitReachedError =
+            std::get<RateLimitReachedError>(m_stopSynchronizationError);
+        strm << "stopSynchronizationError = RateLimitReachedError{";
+        if (rateLimitReachedError.rateLimitDurationSec) {
+            strm << "duration = "
+                 << *rateLimitReachedError.rateLimitDurationSec;
+        }
+        strm << "}";
+    }
+    else if (std::holds_alternative<AuthenticationExpiredError>(
+                 m_stopSynchronizationError))
+    {
+        strm << "stopSynchronizationError = AuthenticationExpiredError";
+    }
 
     strm << "need to repeat incremental sync: "
          << (m_needToRepeatIncrementalSync ? "true" : "false");

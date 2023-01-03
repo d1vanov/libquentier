@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Errors.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
@@ -35,6 +36,11 @@
 
 namespace quentier::synchronization {
 
+/**
+ * @brief The ISendStatus interface represents the information about the
+ * attempt to send information either from user's own account or from some
+ * linked notebook to Evernote.
+ */
 class QUENTIER_EXPORT ISendStatus : public Printable
 {
 public:
@@ -52,33 +58,91 @@ public:
 
 public:
     // Total
+
+    /**
+     * @return total number of notes attempted to be sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalAttemptedToSendNotes() const = 0;
+
+    /**
+     * @return total number of notebooks attempted to be sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalAttemptedToSendNotebooks() const = 0;
+
+    /**
+     * @return total number of saved searches attempted to be sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalAttemptedToSendSavedSearches() const = 0;
+
+    /**
+     * @return total number of tags attempted to be sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalAttemptedToSendTags() const = 0;
 
     // Notes
+
+    /**
+     * @return number of notes which were successfully sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalSuccessfullySentNotes() const = 0;
+
+    /**
+     * @return list with notes and exceptions representing failures to send
+     *         these notes to Evernote
+     */
     [[nodiscard]] virtual QList<NoteWithException> failedToSendNotes()
         const = 0;
 
     // Notebooks
+
+    /**
+     * @return number of notebooks which were successfully sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalSuccessfullySentNotebooks() const = 0;
+
+    /**
+     * @return list with notebooks and exceptions representing failures to send
+     *         these notebooks to Evernote
+     */
     [[nodiscard]] virtual QList<NotebookWithException> failedToSendNotebooks()
         const = 0;
 
     // Saved searches
+
+    /**
+     * @return number of saved searches which were successfully sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalSuccessfullySentSavedSearches()
         const = 0;
 
+    /**
+     * @return list with saved searches and exceptions representing failures to
+     *         send these saved searches to Evernote
+     */
     [[nodiscard]] virtual QList<SavedSearchWithException>
         failedToSendSavedSearches() const = 0;
 
     // Tags
+
+    /**
+     * @return number of tags which were successfully sent to Evernote
+     */
     [[nodiscard]] virtual quint64 totalSuccessfullySentTags() const = 0;
+
+    /**
+     * @return list with tags and exceptions representing failures to send these
+     *         tags to Evernote
+     */
     [[nodiscard]] virtual QList<TagWithException> failedToSendTags() const = 0;
 
     // General
+
+    /**
+     * @return error which might have occurred during sending the data to
+     *         Evernote which has prevented further attempts to send anything
+     *         to Evernote or std::monostate if no such error has occurred
+     */
+    [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError() const = 0;
 
     /**
      * If during the send step of synchronization it was found out that
