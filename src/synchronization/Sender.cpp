@@ -221,6 +221,8 @@ QFuture<void> Sender::processNotes(SendContextPtr sendContext) const
             }
 
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -323,6 +325,8 @@ void Sender::sendNotes(
             [sendContext, selfWeak, this,
              noteProcessingPromise](qevercloud::Note note) {
                 if (sendContext->canceler->isCanceled()) {
+                    noteProcessingPromise->setException(OperationCanceled{});
+                    noteProcessingPromise->finish();
                     return;
                 }
 
@@ -340,6 +344,8 @@ void Sender::sendNotes(
             [selfWeak, this, sendContext, note = std::move(note),
              noteProcessingPromise](const QException & e) mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    noteProcessingPromise->setException(OperationCanceled{});
+                    noteProcessingPromise->finish();
                     return;
                 }
 
@@ -374,6 +380,8 @@ void Sender::sendNote(
              containsFailedToSendTags,
              sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    notePromise->setException(OperationCanceled{});
+                    notePromise->finish();
                     return;
                 }
 
@@ -382,8 +390,8 @@ void Sender::sendNote(
 
                 threading::thenOrFailed(
                     std::move(noteStoreFuture), notePromise,
-                    [selfWeak, this, notePromise, note = std::move(note),
-                     containsFailedToSendTags,
+                    [selfWeak, this, notePromise = notePromise,
+                     note = std::move(note), containsFailedToSendTags,
                      sendContext = std::move(sendContext)](
                         const qevercloud::INoteStorePtr & noteStore) mutable {
                         Q_ASSERT(noteStore);
@@ -393,6 +401,8 @@ void Sender::sendNote(
                         }
 
                         if (sendContext->canceler->isCanceled()) {
+                            notePromise->setException(OperationCanceled{});
+                            notePromise->finish();
                             return;
                         }
 
@@ -494,6 +504,8 @@ void Sender::processNote(
         [sendContext, promise, notebookLocalId = note.notebookLocalId(),
          noteUsn = note.updateSequenceNum(), selfWeak, this]() mutable {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -545,6 +557,8 @@ void Sender::processNote(
                  notebookLocalId = std::move(notebookLocalId)](
                     const std::optional<qevercloud::Notebook> & notebook) {
                     if (sendContext->canceler->isCanceled()) {
+                        promise->setException(OperationCanceled{});
+                        promise->finish();
                         return;
                     }
 
@@ -594,6 +608,8 @@ void Sender::processNote(
                 std::move(notebookThenFuture),
                 [sendContext, promise, notebookLocalId](const QException & e) {
                     if (sendContext->canceler->isCanceled()) {
+                        promise->setException(OperationCanceled{});
+                        promise->finish();
                         return;
                     }
 
@@ -611,6 +627,8 @@ void Sender::processNote(
         [selfWeak, this, sendContext, promise,
          note = std::move(note)](const QException & e) mutable {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -663,6 +681,8 @@ void Sender::processNoteFailure(
          note = std::move(note)](
             const std::optional<qevercloud::Notebook> & notebook) mutable {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -703,6 +723,8 @@ void Sender::processNoteFailure(
         std::move(notebookThenFuture),
         [sendContext, promise, notebookLocalId](const QException & e) {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -745,6 +767,8 @@ QFuture<void> Sender::processTags(SendContextPtr sendContext) const
             }
 
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -842,6 +866,8 @@ void Sender::sendTags(
             [sendContext, selfWeak, this,
              tagProcessingPromise](qevercloud::Tag tag) {
                 if (sendContext->canceler->isCanceled()) {
+                    tagProcessingPromise->setException(OperationCanceled{});
+                    tagProcessingPromise->finish();
                     return;
                 }
 
@@ -858,6 +884,8 @@ void Sender::sendTags(
             [sendContext, tag = tag,
              tagProcessingPromise](const QException & e) mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    tagProcessingPromise->setException(OperationCanceled{});
+                    tagProcessingPromise->finish();
                     return;
                 }
 
@@ -886,6 +914,8 @@ void Sender::sendTag(
             [selfWeak, this, tagPromise, tag = std::move(tag),
              sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    tagPromise->setException(OperationCanceled{});
+                    tagPromise->finish();
                     return;
                 }
 
@@ -909,6 +939,8 @@ void Sender::sendTag(
                         }
 
                         if (sendContext->canceler->isCanceled()) {
+                            tagPromise->setException(OperationCanceled{});
+                            tagPromise->finish();
                             return;
                         }
 
@@ -1013,6 +1045,8 @@ void Sender::processTag(
         std::move(putTagFuture),
         [sendContext, promise, linkedNotebookGuid = tag.linkedNotebookGuid()] {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1031,6 +1065,8 @@ void Sender::processTag(
         [sendContext, promise,
          tag = std::move(tag)](const QException & e) mutable {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1090,6 +1126,8 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
             }
 
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1144,6 +1182,9 @@ void Sender::sendNotebooks(
             [sendContext, selfWeak, this,
              notebookProcessingPromise](qevercloud::Notebook notebook) {
                 if (sendContext->canceler->isCanceled()) {
+                    notebookProcessingPromise->setException(
+                        OperationCanceled{});
+                    notebookProcessingPromise->finish();
                     return;
                 }
 
@@ -1162,6 +1203,9 @@ void Sender::sendNotebooks(
             [sendContext, notebook = notebook,
              notebookProcessingPromise](const QException & e) mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    notebookProcessingPromise->setException(
+                        OperationCanceled{});
+                    notebookProcessingPromise->finish();
                     return;
                 }
 
@@ -1192,6 +1236,8 @@ void Sender::sendNotebook(
             [selfWeak, this, notebookPromise, notebook = std::move(notebook),
              sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    notebookPromise->setException(OperationCanceled{});
+                    notebookPromise->finish();
                     return;
                 }
 
@@ -1214,6 +1260,8 @@ void Sender::sendNotebook(
                         }
 
                         if (sendContext->canceler->isCanceled()) {
+                            notebookPromise->setException(OperationCanceled{});
+                            notebookPromise->finish();
                             return;
                         }
 
@@ -1303,6 +1351,8 @@ void Sender::processNotebook(
         [sendContext, promise, notebookLocalId = notebook.localId(),
          linkedNotebookGuid = notebook.linkedNotebookGuid()] {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1330,6 +1380,8 @@ void Sender::processNotebook(
         [sendContext, promise,
          notebook = std::move(notebook)](const QException & e) mutable {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1391,6 +1443,8 @@ QFuture<void> Sender::processSavedSearches(SendContextPtr sendContext) const
             }
 
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1447,6 +1501,9 @@ void Sender::sendSavedSearches(
             [sendContext, selfWeak, this,
              savedSearchProcessingPromise](qevercloud::SavedSearch search) {
                 if (sendContext->canceler->isCanceled()) {
+                    savedSearchProcessingPromise->setException(
+                        OperationCanceled{});
+                    savedSearchProcessingPromise->finish();
                     return;
                 }
 
@@ -1465,6 +1522,9 @@ void Sender::sendSavedSearches(
             [sendContext, savedSearch = savedSearch,
              savedSearchProcessingPromise](const QException & e) mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    savedSearchProcessingPromise->setException(
+                        OperationCanceled{});
+                    savedSearchProcessingPromise->finish();
                     return;
                 }
 
@@ -1496,6 +1556,8 @@ void Sender::sendSavedSearch(
              savedSearch = std::move(savedSearch),
              sendContext = std::move(sendContext)]() mutable {
                 if (sendContext->canceler->isCanceled()) {
+                    savedSearchPromise->setException(OperationCanceled{});
+                    savedSearchPromise->finish();
                     return;
                 }
 
@@ -1515,6 +1577,9 @@ void Sender::sendSavedSearch(
                         }
 
                         if (sendContext->canceler->isCanceled()) {
+                            savedSearchPromise->setException(
+                                OperationCanceled{});
+                            savedSearchPromise->finish();
                             return;
                         }
 
@@ -1600,6 +1665,8 @@ void Sender::processSavedSearch(
     auto putSavedSearchThenFuture = threading::then(
         std::move(putSavedSearchFuture), [sendContext, promise] {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
@@ -1624,6 +1691,8 @@ void Sender::processSavedSearch(
         [sendContext, promise,
          savedSearch = std::move(savedSearch)](const QException & e) mutable {
             if (sendContext->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
                 return;
             }
 
