@@ -116,6 +116,10 @@ QFuture<ISender::Result> Sender::send(
     QFuture<void> tagsFuture = processTags(sendContext);
 
     QFuture<void> notebooksFuture = [&] {
+        if (sendContext->manualCanceler->isCanceled()) {
+            return threading::makeReadyFuture();
+        }
+
         auto notebooksPromise = std::make_shared<QPromise<void>>();
         auto notebooksFuture = notebooksPromise->future();
         notebooksPromise->start();
@@ -133,12 +137,16 @@ QFuture<ISender::Result> Sender::send(
     }();
 
     QFuture<void> savedSearchesFuture = [&] {
+        if (sendContext->manualCanceler->isCanceled()) {
+            return threading::makeReadyFuture();
+        }
+
         auto savedSearchesPromise = std::make_shared<QPromise<void>>();
         auto savedSearchesFuture = savedSearchesPromise->future();
         savedSearchesPromise->start();
 
         threading::thenOrFailed(
-            std::move(tagsFuture), savedSearchesPromise,
+            std::move(notebooksFuture), savedSearchesPromise,
             threading::TrackedTask{
                 selfWeak, [this, sendContext, savedSearchesPromise]() mutable {
                     auto f = processSavedSearches(sendContext);
@@ -150,6 +158,10 @@ QFuture<ISender::Result> Sender::send(
     }();
 
     QFuture<void> notesFuture = [&] {
+        if (sendContext->manualCanceler->isCanceled()) {
+            return threading::makeReadyFuture();
+        }
+
         auto notesPromise = std::make_shared<QPromise<void>>();
         auto notesFuture = notesPromise->future();
         notesPromise->start();
@@ -343,12 +355,6 @@ void Sender::sendNotes(
             std::move(noteThenFuture),
             [selfWeak, this, sendContext, note = std::move(note),
              noteProcessingPromise](const QException & e) mutable {
-                if (sendContext->canceler->isCanceled()) {
-                    noteProcessingPromise->setException(OperationCanceled{});
-                    noteProcessingPromise->finish();
-                    return;
-                }
-
                 const auto self = selfWeak.lock();
                 if (!self) {
                     return;
@@ -680,12 +686,6 @@ void Sender::processNoteFailure(
         [sendContext, promise, notebookLocalId, exc = std::move(exc),
          note = std::move(note)](
             const std::optional<qevercloud::Notebook> & notebook) mutable {
-            if (sendContext->canceler->isCanceled()) {
-                promise->setException(OperationCanceled{});
-                promise->finish();
-                return;
-            }
-
             if (Q_UNLIKELY(!notebook)) {
                 // Impossible situation indicating of some serious
                 // internal error - we got this notebook local id from
@@ -722,12 +722,6 @@ void Sender::processNoteFailure(
     threading::onFailed(
         std::move(notebookThenFuture),
         [sendContext, promise, notebookLocalId](const QException & e) {
-            if (sendContext->canceler->isCanceled()) {
-                promise->setException(OperationCanceled{});
-                promise->finish();
-                return;
-            }
-
             QNWARNING(
                 "synchronization::Sender",
                 "Failed to find notebook by local id in the local "
@@ -883,12 +877,6 @@ void Sender::sendTags(
             std::move(tagThenFuture),
             [sendContext, tag = tag,
              tagProcessingPromise](const QException & e) mutable {
-                if (sendContext->canceler->isCanceled()) {
-                    tagProcessingPromise->setException(OperationCanceled{});
-                    tagProcessingPromise->finish();
-                    return;
-                }
-
                 Sender::processTagFailure(
                     sendContext, std::move(tag), e, tagProcessingPromise);
             });
@@ -1202,13 +1190,6 @@ void Sender::sendNotebooks(
             std::move(notebookThenFuture),
             [sendContext, notebook = notebook,
              notebookProcessingPromise](const QException & e) mutable {
-                if (sendContext->canceler->isCanceled()) {
-                    notebookProcessingPromise->setException(
-                        OperationCanceled{});
-                    notebookProcessingPromise->finish();
-                    return;
-                }
-
                 Sender::processNotebookFailure(
                     sendContext, std::move(notebook), e,
                     notebookProcessingPromise);
@@ -1521,13 +1502,6 @@ void Sender::sendSavedSearches(
             std::move(savedSearchThenFuture),
             [sendContext, savedSearch = savedSearch,
              savedSearchProcessingPromise](const QException & e) mutable {
-                if (sendContext->canceler->isCanceled()) {
-                    savedSearchProcessingPromise->setException(
-                        OperationCanceled{});
-                    savedSearchProcessingPromise->finish();
-                    return;
-                }
-
                 Sender::processSavedSearchFailure(
                     sendContext, std::move(savedSearch), e,
                     savedSearchProcessingPromise);
