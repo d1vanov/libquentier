@@ -19,6 +19,7 @@
 #include <synchronization/Sender.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/OperationCanceled.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
@@ -2888,7 +2889,6 @@ constexpr std::array gStopSynchronizationTestData{
     StopSynchronizationTestData{
         SenderTestFlag::WithUpdatedLinkedNotebooks,
         StopSynchronizationReason::AuthenticationExpired},
-    /*
     StopSynchronizationTestData{
         SenderTestFlag::WithNewLinkedNotebooksNotes,
         StopSynchronizationReason::RateLimitExceeded},
@@ -2913,7 +2913,6 @@ constexpr std::array gStopSynchronizationTestData{
     StopSynchronizationTestData{
         SenderTestFlag::WithUpdatedLinkedNotebooksTags,
         StopSynchronizationReason::AuthenticationExpired},
-    */
 };
 
 class SenderStopSynchronizationTest :
@@ -2952,7 +2951,36 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         ? NoteStoreBehaviour::WithRateLimitExceeding
         : NoteStoreBehaviour::WithAuthenticationExpiring;
 
-    const auto testData = generateTestData(SenderTestFlags{errorTestData.flag});
+    const auto senderTestFlags = [&] {
+        if (errorTestData.flag == SenderTestFlag::WithNewLinkedNotebooksNotes ||
+            errorTestData.flag ==
+                SenderTestFlag::WithUpdatedLinkedNotebooksNotes ||
+            errorTestData.flag == SenderTestFlag::WithNewLinkedNotebooksTags ||
+            errorTestData.flag ==
+                SenderTestFlag::WithUpdatedLinkedNotebooksTags)
+        {
+            return SenderTestFlags{} |
+                SenderTestFlag::WithUpdatedLinkedNotebooks | errorTestData.flag;
+        }
+
+        return SenderTestFlags{} | errorTestData.flag;
+    }();
+
+    const auto testData = [&] {
+        auto t = generateTestData(senderTestFlags);
+        if (errorTestData.flag == SenderTestFlag::WithNewLinkedNotebooksNotes ||
+            errorTestData.flag ==
+                SenderTestFlag::WithUpdatedLinkedNotebooksNotes ||
+            errorTestData.flag == SenderTestFlag::WithNewLinkedNotebooksTags ||
+            errorTestData.flag ==
+                SenderTestFlag::WithUpdatedLinkedNotebooksTags)
+        {
+            for (auto & notebook: t.m_updatedLinkedNotebooks) {
+                notebook.setLocallyModified(false);
+            }
+        }
+        return t;
+    }();
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
     QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
@@ -3180,11 +3208,12 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
     EXPECT_CALL(*m_mockLocalStorage, listTags(listTagsOptions))
         .Times(AtMost(1))
-        .WillRepeatedly(Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
-            QList<qevercloud::Tag>{}
-            << testData.m_newUserOwnTags << testData.m_updatedUserOwnTags
-            << testData.m_newLinkedNotebooksTags
-            << testData.m_updatedLinkedNotebooksTags)));
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
+                QList<qevercloud::Tag>{}
+                << testData.m_newUserOwnTags << testData.m_updatedUserOwnTags
+                << testData.m_newLinkedNotebooksTags
+                << testData.m_updatedLinkedNotebooksTags)));
 
     if (!testData.m_newUserOwnTags.isEmpty() ||
         !testData.m_updatedUserOwnTags.isEmpty() ||
@@ -3207,12 +3236,27 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
     EXPECT_CALL(*m_mockLocalStorage, listNotebooks(listNotebooksOptions))
         .Times(AtMost(1))
-        .WillRepeatedly(
-            Return(threading::makeReadyFuture<QList<qevercloud::Notebook>>(
-                QList<qevercloud::Notebook>{}
-                << testData.m_newUserOwnNotebooks
-                << testData.m_updatedUserOwnNotebooks
-                << testData.m_updatedLinkedNotebooks)));
+        .WillRepeatedly([&]([[maybe_unused]] const local_storage::
+                                ILocalStorage::ListNotebooksOptions & o) {
+            QList<qevercloud::Notebook> notebooks;
+            notebooks << testData.m_newUserOwnNotebooks
+                      << testData.m_updatedUserOwnNotebooks;
+
+            if (errorTestData.flag !=
+                    SenderTestFlag::WithNewLinkedNotebooksNotes &&
+                errorTestData.flag !=
+                    SenderTestFlag::WithUpdatedLinkedNotebooksNotes &&
+                errorTestData.flag !=
+                    SenderTestFlag::WithNewLinkedNotebooksTags &&
+                errorTestData.flag !=
+                    SenderTestFlag::WithUpdatedLinkedNotebooksTags)
+            {
+                notebooks << testData.m_updatedLinkedNotebooks;
+            }
+
+            return threading::makeReadyFuture<QList<qevercloud::Notebook>>(
+                std::move(notebooks));
+        });
 
     if (!testData.m_newUserOwnNotebooks.isEmpty() ||
         !testData.m_updatedUserOwnNotebooks.isEmpty() ||
@@ -3240,11 +3284,12 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     EXPECT_CALL(
         *m_mockLocalStorage, listNotes(fetchNoteOptions, listNotesOptions))
         .Times(AtMost(1))
-        .WillRepeatedly(Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
-            QList<qevercloud::Note>{}
-            << testData.m_newUserOwnNotes << testData.m_updatedUserOwnNotes
-            << testData.m_newLinkedNotebooksNotes
-            << testData.m_updatedLinkedNotebooksNotes)));
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
+                QList<qevercloud::Note>{}
+                << testData.m_newUserOwnNotes << testData.m_updatedUserOwnNotes
+                << testData.m_newLinkedNotebooksNotes
+                << testData.m_updatedLinkedNotebooksNotes)));
 
     if (!testData.m_newUserOwnNotes.isEmpty() ||
         !testData.m_updatedUserOwnNotes.isEmpty() ||
@@ -3289,15 +3334,384 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     auto resultFuture = sender->send(canceler, callback);
     ASSERT_TRUE(resultFuture.isFinished());
 
-    // TODO: continue from here
-    /*
-    try {
-        Q_UNUSED(resultFuture.result());
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+    const auto result = resultFuture.result();
+
+    // === Checking the result
+
+    ASSERT_TRUE(result.userOwnResult);
+
+    int rateLimitExceededCount = 0;
+    int authenticationExpiredCount = 0;
+
+    const auto processException = [&](const QException & exc) {
+        try {
+            exc.raise();
+        }
+        catch (const qevercloud::EDAMSystemException & e) {
+            switch (errorTestData.reason) {
+            case StopSynchronizationReason::RateLimitExceeded:
+                ++rateLimitExceededCount;
+                EXPECT_EQ(
+                    e.errorCode(),
+                    qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+                break;
+            case StopSynchronizationReason::AuthenticationExpired:
+                ++authenticationExpiredCount;
+                EXPECT_EQ(
+                    e.errorCode(), qevercloud::EDAMErrorCode::AUTH_EXPIRED);
+                break;
+            }
+        }
+        catch (const OperationCanceled &) {
+        }
+        catch (const RuntimeError &) {
+        }
+        catch (const QException & e) {
+            EXPECT_TRUE(false) << "Unidentified exception: " << e.what();
+        }
+        catch (...) {
+            EXPECT_TRUE(false) << "Unidentified exception";
+        }
+    };
+
+    // === Notes ===
+
+    EXPECT_LE(
+        result.userOwnResult->totalAttemptedToSendNotes(),
+        testData.m_newUserOwnNotes.size() +
+            testData.m_updatedUserOwnNotes.size());
+
+    if (!testData.m_newUserOwnNotes.isEmpty() ||
+        !testData.m_updatedUserOwnNotes.isEmpty())
+    {
+        EXPECT_FALSE(result.userOwnResult->failedToSendNotes().isEmpty());
+
+        const auto failedToSendNotes =
+            result.userOwnResult->failedToSendNotes();
+
+        for (const auto & noteWithException: qAsConst(failedToSendNotes)) {
+            ASSERT_TRUE(noteWithException.second);
+            processException(*noteWithException.second);
+        }
     }
-    catch (const QException & e) {
-        std::cerr << e.what() << std::endl;
+
+    EXPECT_GE(
+        result.userOwnResult->totalSuccessfullySentNotes() +
+            static_cast<quint64>(std::max<int>(
+                result.userOwnResult->failedToSendNotes().size(), 0)),
+        result.userOwnResult->totalAttemptedToSendNotes());
+
+    // === Notebooks ===
+
+    EXPECT_LE(
+        result.userOwnResult->totalAttemptedToSendNotebooks(),
+        testData.m_newUserOwnNotebooks.size() +
+            testData.m_updatedUserOwnNotebooks.size());
+
+    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedUserOwnNotebooks.isEmpty())
+    {
+        EXPECT_FALSE(result.userOwnResult->failedToSendNotebooks().isEmpty());
+
+        const auto failedToSendNotebooks =
+            result.userOwnResult->failedToSendNotebooks();
+
+        for (const auto & notebookWithException:
+             qAsConst(failedToSendNotebooks)) {
+            ASSERT_TRUE(notebookWithException.second);
+            processException(*notebookWithException.second);
+        }
     }
-    */
+
+    EXPECT_GE(
+        result.userOwnResult->totalSuccessfullySentNotebooks() +
+            static_cast<quint64>(std::max<int>(
+                result.userOwnResult->failedToSendNotebooks().size(), 0)),
+        result.userOwnResult->totalAttemptedToSendNotebooks());
+
+    // === Tags ===
+
+    EXPECT_LE(
+        result.userOwnResult->totalAttemptedToSendTags(),
+        testData.m_newUserOwnTags.size() +
+            testData.m_updatedUserOwnTags.size());
+
+    if (!testData.m_newUserOwnTags.isEmpty() ||
+        !testData.m_updatedUserOwnTags.isEmpty())
+    {
+        EXPECT_FALSE(result.userOwnResult->failedToSendTags().isEmpty());
+
+        const auto failedToSendTags = result.userOwnResult->failedToSendTags();
+        for (const auto & tagWithException: qAsConst(failedToSendTags)) {
+            ASSERT_TRUE(tagWithException.second);
+            processException(*tagWithException.second);
+        }
+    }
+
+    EXPECT_GE(
+        result.userOwnResult->totalSuccessfullySentTags() +
+            static_cast<quint64>(std::max<int>(
+                result.userOwnResult->failedToSendTags().size(), 0)),
+        result.userOwnResult->totalAttemptedToSendTags());
+
+    // === Saved searches ===
+
+    EXPECT_LE(
+        result.userOwnResult->totalAttemptedToSendSavedSearches(),
+        testData.m_newSavedSearches.size() +
+            testData.m_updatedSavedSearches.size());
+
+    if (!testData.m_newSavedSearches.isEmpty() ||
+        !testData.m_updatedSavedSearches.isEmpty())
+    {
+        EXPECT_FALSE(
+            result.userOwnResult->failedToSendSavedSearches().isEmpty());
+
+        const auto failedToSendSavedSearches =
+            result.userOwnResult->failedToSendSavedSearches();
+
+        for (const auto & savedSearchWithException:
+             qAsConst(failedToSendSavedSearches)) {
+            ASSERT_TRUE(savedSearchWithException.second);
+            processException(*savedSearchWithException.second);
+        }
+    }
+
+    EXPECT_GE(
+        result.userOwnResult->totalSuccessfullySentSavedSearches() +
+            static_cast<quint64>(std::max<int>(
+                result.userOwnResult->failedToSendSavedSearches().size(), 0)),
+        result.userOwnResult->totalAttemptedToSendSavedSearches());
+
+    EXPECT_FALSE(result.userOwnResult->needToRepeatIncrementalSync());
+
+    if (!testData.m_newSavedSearches.isEmpty() ||
+        !testData.m_updatedSavedSearches.isEmpty() ||
+        !testData.m_newUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
+        !testData.m_newUserOwnNotes.isEmpty() ||
+        !testData.m_updatedUserOwnNotes.isEmpty() ||
+        !testData.m_newUserOwnTags.isEmpty() ||
+        !testData.m_updatedUserOwnTags.isEmpty())
+    {
+        switch (errorTestData.reason) {
+        case StopSynchronizationReason::RateLimitExceeded:
+            EXPECT_TRUE(std::holds_alternative<RateLimitReachedError>(
+                result.userOwnResult->stopSynchronizationError()));
+            break;
+        case StopSynchronizationReason::AuthenticationExpired:
+            EXPECT_TRUE(std::holds_alternative<AuthenticationExpiredError>(
+                result.userOwnResult->stopSynchronizationError()));
+            break;
+        }
+    }
+
+    // Stuff from linked notebooks
+
+    EXPECT_LE(
+        result.linkedNotebookResults.size(), testData.m_linkedNotebooks.size());
+
+    const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
+        quint64 count = 0;
+        for (const auto it:
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+            count += it.value()->totalAttemptedToSendNotes();
+        }
+        return count;
+    }();
+    EXPECT_LE(
+        totalLinkedNotebooksAttemptedToSendNotes,
+        testData.m_newLinkedNotebooksNotes.size() +
+            testData.m_updatedLinkedNotebooksNotes.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+        const qevercloud::Guid & linkedNotebookGuid = it.key();
+        const ISendStatusPtr & sendStatus = it.value();
+        EXPECT_TRUE(sendStatus);
+        if (Q_UNLIKELY(!sendStatus)) {
+            continue;
+        }
+
+        if (!std::holds_alternative<std::monostate>(
+                sendStatus->stopSynchronizationError()))
+        {
+            switch (errorTestData.reason) {
+            case StopSynchronizationReason::RateLimitExceeded:
+                EXPECT_TRUE(std::holds_alternative<RateLimitReachedError>(
+                    sendStatus->stopSynchronizationError()));
+                break;
+            case StopSynchronizationReason::AuthenticationExpired:
+                EXPECT_TRUE(std::holds_alternative<AuthenticationExpiredError>(
+                    sendStatus->stopSynchronizationError()));
+                break;
+            }
+        }
+
+        const auto lit = std::find_if(
+            testData.m_linkedNotebooks.constBegin(),
+            testData.m_linkedNotebooks.constEnd(),
+            [&](const qevercloud::LinkedNotebook & linkedNotebook) {
+                return linkedNotebook.guid() == linkedNotebookGuid;
+            });
+        EXPECT_NE(lit, testData.m_linkedNotebooks.constEnd());
+
+        const int tagCount = [&] {
+            int count = 0;
+            const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
+                for (const auto & tag: qAsConst(tags)) {
+                    if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
+                        ++count;
+                    }
+                }
+            };
+            countTags(testData.m_newLinkedNotebooksTags);
+            countTags(testData.m_updatedLinkedNotebooksTags);
+            return count;
+        }();
+        EXPECT_LE(sendStatus->totalAttemptedToSendTags(), tagCount);
+
+        // One notebook might have been attempted to send and got error,
+        // others would not be attempted to send at all
+        EXPECT_LE(sendStatus->totalAttemptedToSendNotebooks(), 1);
+
+        EXPECT_EQ(sendStatus->totalAttemptedToSendSavedSearches(), 0);
+        EXPECT_FALSE(sendStatus->needToRepeatIncrementalSync());
+
+        const auto failedToSendNotes = sendStatus->failedToSendNotes();
+        for (const auto & noteWithException: qAsConst(failedToSendNotes)) {
+            ASSERT_TRUE(noteWithException.second);
+            processException(*noteWithException.second);
+        }
+
+        const auto failedToSendNotebooks = sendStatus->failedToSendNotebooks();
+        for (const auto & notebookWithException:
+             qAsConst(failedToSendNotebooks)) {
+            ASSERT_TRUE(notebookWithException.second);
+            processException(*notebookWithException.second);
+        }
+
+        const auto failedToSendTags = sendStatus->failedToSendTags();
+        for (const auto & tagWithException: qAsConst(failedToSendTags)) {
+            ASSERT_TRUE(tagWithException.second);
+            processException(*tagWithException.second);
+        }
+    }
+
+    switch (errorTestData.reason) {
+    case StopSynchronizationReason::RateLimitExceeded:
+        EXPECT_EQ(rateLimitExceededCount, 1);
+        EXPECT_EQ(authenticationExpiredCount, 0);
+        break;
+    case StopSynchronizationReason::AuthenticationExpired:
+        EXPECT_EQ(rateLimitExceededCount, 0);
+        EXPECT_EQ(authenticationExpiredCount, 1);
+        break;
+    }
+
+    // Checking sent data vs data sent to local storage
+
+    if (!testData.m_newSavedSearches.isEmpty() ||
+        !testData.m_updatedSavedSearches.isEmpty())
+    {
+        EXPECT_FALSE(sentData.m_failedToSendSavedSearches.isEmpty());
+    }
+
+    ASSERT_EQ(
+        dataPutToLocalStorage.m_savedSearches.size(),
+        sentData.m_sentSavedSearches.size());
+
+    if (!testData.m_newUserOwnTags.isEmpty() ||
+        !testData.m_updatedUserOwnTags.isEmpty() ||
+        !testData.m_newLinkedNotebooksTags.isEmpty() ||
+        !testData.m_updatedLinkedNotebooksTags.isEmpty())
+    {
+        EXPECT_FALSE(sentData.m_failedToSendTags.isEmpty());
+    }
+
+    ASSERT_EQ(dataPutToLocalStorage.m_tags.size(), sentData.m_sentTags.size());
+
+    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedLinkedNotebooks.isEmpty())
+    {
+        if (errorTestData.flag == SenderTestFlag::WithNewUserOwnNotebooks ||
+            errorTestData.flag == SenderTestFlag::WithUpdatedUserOwnNotebooks ||
+            errorTestData.flag == SenderTestFlag::WithUpdatedLinkedNotebooks)
+        {
+            EXPECT_FALSE(sentData.m_failedToSendNotebooks.isEmpty());
+        }
+    }
+
+    ASSERT_EQ(
+        dataPutToLocalStorage.m_notebooks.size(),
+        sentData.m_sentNotebooks.size());
+
+    if (!testData.m_newUserOwnNotes.isEmpty() ||
+        !testData.m_updatedUserOwnNotes.isEmpty() ||
+        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
+        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
+    {
+        EXPECT_FALSE(sentData.m_failedToSendNotes.isEmpty());
+    }
+
+    ASSERT_EQ(
+        dataPutToLocalStorage.m_notes.size(), sentData.m_sentNotes.size());
+
+    for (const auto & savedSearch:
+         qAsConst(dataPutToLocalStorage.m_savedSearches)) {
+        const auto it = std::find_if(
+            sentData.m_sentSavedSearches.constBegin(),
+            sentData.m_sentSavedSearches.constEnd(),
+            [&](const qevercloud::SavedSearch & s) {
+                return s.localId() == savedSearch.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentSavedSearches.constEnd());
+        EXPECT_EQ(*it, savedSearch);
+    }
+
+    for (const auto & notebook: qAsConst(dataPutToLocalStorage.m_notebooks)) {
+        const auto it = std::find_if(
+            sentData.m_sentNotebooks.constBegin(),
+            sentData.m_sentNotebooks.constEnd(),
+            [&](const qevercloud::Notebook & n) {
+                return n.localId() == notebook.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentNotebooks.constEnd());
+        EXPECT_EQ(*it, notebook);
+    }
+
+    for (const auto & note: qAsConst(dataPutToLocalStorage.m_notes)) {
+        const auto it = std::find_if(
+            sentData.m_sentNotes.constBegin(), sentData.m_sentNotes.constEnd(),
+            [&](const qevercloud::Note & n) {
+                return n.localId() == note.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentNotes.constEnd());
+
+        // If note contains tag local ids corresponding to tags which failed
+        // to be sent, its locally modified flag would stay enabled so that
+        // during the next sync sending the note would be attempted again
+        if (note.isLocallyModified()) {
+            qevercloud::Note noteCopy{note};
+            noteCopy.setLocallyModified(false);
+            EXPECT_EQ(*it, noteCopy);
+        }
+        else {
+            EXPECT_EQ(*it, note);
+        }
+    }
+
+    for (const auto & tag: qAsConst(dataPutToLocalStorage.m_tags)) {
+        const auto it = std::find_if(
+            sentData.m_sentTags.constBegin(), sentData.m_sentTags.constEnd(),
+            [&](const qevercloud::Tag & t) {
+                return t.localId() == tag.localId();
+            });
+        ASSERT_NE(it, sentData.m_sentTags.constEnd());
+        EXPECT_EQ(*it, tag);
+    }
 }
 
 } // namespace quentier::synchronization::tests
