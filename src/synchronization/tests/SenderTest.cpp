@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -85,6 +85,32 @@ enum class SenderTestFlag
 };
 
 Q_DECLARE_FLAGS(SenderTestFlags, SenderTestFlag);
+
+void checkSendStatusUpdate(
+    const ISendStatusPtr & previous, const ISendStatusPtr & updated);
+
+struct Callback : public ISender::ICallback
+{
+    void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus) override
+    {
+        checkSendStatusUpdate(m_userOwnSendStatus, sendStatus);
+        m_userOwnSendStatus = sendStatus;
+    }
+
+    void onLinkedNotebookSendStatusUpdate(
+        const qevercloud::Guid & linkedNotebookGuid,
+        ISendStatusPtr sendStatus) override
+    {
+        auto & linkedNotebookSendStatus =
+            m_linkedNotebookSendStatuses[linkedNotebookGuid];
+
+        checkSendStatusUpdate(linkedNotebookSendStatus, sendStatus);
+        linkedNotebookSendStatus = sendStatus;
+    }
+
+    ISendStatusPtr m_userOwnSendStatus;
+    QHash<qevercloud::Guid, ISendStatusPtr> m_linkedNotebookSendStatuses;
+};
 
 struct SenderTestData
 {
@@ -521,16 +547,98 @@ void findAndSetNoteTagGuids(
 
 struct SentData
 {
-    QList<qevercloud::SavedSearch> m_sentSavedSearches;
-    QList<qevercloud::Tag> m_sentTags;
-    QList<qevercloud::Notebook> m_sentNotebooks;
-    QList<qevercloud::Note> m_sentNotes;
+    QList<qevercloud::SavedSearch> sentSavedSearches;
+    QList<qevercloud::Tag> sentTags;
+    QList<qevercloud::Notebook> sentNotebooks;
+    QList<qevercloud::Note> sentNotes;
 
-    QList<qevercloud::SavedSearch> m_failedToSendSavedSearches;
-    QList<qevercloud::Tag> m_failedToSendTags;
-    QList<qevercloud::Notebook> m_failedToSendNotebooks;
-    QList<qevercloud::Note> m_failedToSendNotes;
+    QList<qevercloud::SavedSearch> failedToSendSavedSearches;
+    QList<qevercloud::Tag> failedToSendTags;
+    QList<qevercloud::Notebook> failedToSendNotebooks;
+    QList<qevercloud::Note> failedToSendNotes;
 };
+
+struct DataPutToLocalStorage
+{
+    QList<qevercloud::SavedSearch> savedSearches;
+    QList<qevercloud::Tag> tags;
+    QList<qevercloud::Notebook> notebooks;
+    QList<qevercloud::Note> notes;
+
+    QList<qevercloud::SavedSearch> failedToPutSavedSearches;
+    QList<qevercloud::Tag> failedToPutTags;
+    QList<qevercloud::Notebook> failedToPutNotebooks;
+    QList<qevercloud::Note> failedToPutNotes;
+};
+
+void checkDataPutToLocalStorage(
+    const SentData & sentData,
+    const DataPutToLocalStorage & dataPutToLocalStorage)
+{
+    ASSERT_EQ(
+        dataPutToLocalStorage.savedSearches.size(),
+        sentData.sentSavedSearches.size());
+
+    ASSERT_EQ(dataPutToLocalStorage.tags.size(), sentData.sentTags.size());
+    ASSERT_EQ(
+        dataPutToLocalStorage.notebooks.size(), sentData.sentNotebooks.size());
+
+    ASSERT_EQ(dataPutToLocalStorage.notes.size(), sentData.sentNotes.size());
+
+    for (const auto & savedSearch:
+         qAsConst(dataPutToLocalStorage.savedSearches)) {
+        const auto it = std::find_if(
+            sentData.sentSavedSearches.constBegin(),
+            sentData.sentSavedSearches.constEnd(),
+            [&](const qevercloud::SavedSearch & s) {
+                return s.localId() == savedSearch.localId();
+            });
+        ASSERT_NE(it, sentData.sentSavedSearches.constEnd());
+        EXPECT_EQ(*it, savedSearch);
+    }
+
+    for (const auto & notebook: qAsConst(dataPutToLocalStorage.notebooks)) {
+        const auto it = std::find_if(
+            sentData.sentNotebooks.constBegin(),
+            sentData.sentNotebooks.constEnd(),
+            [&](const qevercloud::Notebook & n) {
+                return n.localId() == notebook.localId();
+            });
+        ASSERT_NE(it, sentData.sentNotebooks.constEnd());
+        EXPECT_EQ(*it, notebook);
+    }
+
+    for (const auto & note: qAsConst(dataPutToLocalStorage.notes)) {
+        const auto it = std::find_if(
+            sentData.sentNotes.constBegin(), sentData.sentNotes.constEnd(),
+            [&](const qevercloud::Note & n) {
+                return n.localId() == note.localId();
+            });
+        ASSERT_NE(it, sentData.sentNotes.constEnd());
+
+        // If note contains tag local ids corresponding to tags which failed
+        // to be sent, its locally modified flag would stay enabled so that
+        // during the next sync sending the note would be attempted again
+        if (note.isLocallyModified()) {
+            qevercloud::Note noteCopy{note};
+            noteCopy.setLocallyModified(false);
+            EXPECT_EQ(*it, noteCopy);
+        }
+        else {
+            EXPECT_EQ(*it, note);
+        }
+    }
+
+    for (const auto & tag: qAsConst(dataPutToLocalStorage.tags)) {
+        const auto it = std::find_if(
+            sentData.sentTags.constBegin(), sentData.sentTags.constEnd(),
+            [&](const qevercloud::Tag & t) {
+                return t.localId() == tag.localId();
+            });
+        ASSERT_NE(it, sentData.sentTags.constEnd());
+        EXPECT_EQ(*it, tag);
+    }
+}
 
 enum class NoteStoreBehaviour
 {
@@ -567,28 +675,28 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentSavedSearches << createdSavedSearch;
+                    sentData.sentSavedSearches << createdSavedSearch;
                     return threading::makeReadyFuture<qevercloud::SavedSearch>(
                         std::move(createdSavedSearch));
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
-                        sentData.m_sentSavedSearches << createdSavedSearch;
+                        sentData.sentSavedSearches << createdSavedSearch;
                         return threading::makeReadyFuture<
                             qevercloud::SavedSearch>(
                             std::move(createdSavedSearch));
                     }
-                    sentData.m_failedToSendSavedSearches << createdSavedSearch;
+                    sentData.failedToSendSavedSearches << createdSavedSearch;
                     return threading::makeExceptionalFuture<
                         qevercloud::SavedSearch>(RuntimeError{
                         ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentSavedSearches << createdSavedSearch;
+                        sentData.sentSavedSearches << createdSavedSearch;
                         return threading::makeReadyFuture<
                             qevercloud::SavedSearch>(
                             std::move(createdSavedSearch));
                     }
-                    sentData.m_failedToSendSavedSearches << createdSavedSearch;
+                    sentData.failedToSendSavedSearches << createdSavedSearch;
                     return threading::makeExceptionalFuture<
                         qevercloud::SavedSearch>(
                         qevercloud::EDAMSystemExceptionBuilder{}
@@ -599,12 +707,12 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentSavedSearches << createdSavedSearch;
+                        sentData.sentSavedSearches << createdSavedSearch;
                         return threading::makeReadyFuture<
                             qevercloud::SavedSearch>(
                             std::move(createdSavedSearch));
                     }
-                    sentData.m_failedToSendSavedSearches << createdSavedSearch;
+                    sentData.failedToSendSavedSearches << createdSavedSearch;
                     return threading::makeExceptionalFuture<
                         qevercloud::SavedSearch>(
                         qevercloud::EDAMSystemExceptionBuilder{}
@@ -640,23 +748,23 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentSavedSearches << updatedSavedSearch;
+                    sentData.sentSavedSearches << updatedSavedSearch;
                     return threading::makeReadyFuture<qint32>(usn);
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
-                        sentData.m_sentSavedSearches << updatedSavedSearch;
+                        sentData.sentSavedSearches << updatedSavedSearch;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendSavedSearches << updatedSavedSearch;
+                    sentData.failedToSendSavedSearches << updatedSavedSearch;
                     return threading::makeExceptionalFuture<qint32>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentSavedSearches << updatedSavedSearch;
+                        sentData.sentSavedSearches << updatedSavedSearch;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendSavedSearches << updatedSavedSearch;
+                    sentData.failedToSendSavedSearches << updatedSavedSearch;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -666,10 +774,10 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentSavedSearches << updatedSavedSearch;
+                        sentData.sentSavedSearches << updatedSavedSearch;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendSavedSearches << updatedSavedSearch;
+                    sentData.failedToSendSavedSearches << updatedSavedSearch;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -704,26 +812,26 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotebooks << createdNotebook;
+                    sentData.sentNotebooks << createdNotebook;
                     return threading::makeReadyFuture<qevercloud::Notebook>(
                         std::move(createdNotebook));
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
-                        sentData.m_sentNotebooks << createdNotebook;
+                        sentData.sentNotebooks << createdNotebook;
                         return threading::makeReadyFuture<qevercloud::Notebook>(
                             std::move(createdNotebook));
                     }
-                    sentData.m_failedToSendNotebooks << createdNotebook;
+                    sentData.failedToSendNotebooks << createdNotebook;
                     return threading::makeExceptionalFuture<
                         qevercloud::Notebook>(RuntimeError{
                         ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotebooks << createdNotebook;
+                        sentData.sentNotebooks << createdNotebook;
                         return threading::makeReadyFuture<qevercloud::Notebook>(
                             std::move(createdNotebook));
                     }
-                    sentData.m_failedToSendNotebooks << createdNotebook;
+                    sentData.failedToSendNotebooks << createdNotebook;
                     return threading::makeExceptionalFuture<
                         qevercloud::Notebook>(
                         qevercloud::EDAMSystemExceptionBuilder{}
@@ -734,11 +842,11 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotebooks << createdNotebook;
+                        sentData.sentNotebooks << createdNotebook;
                         return threading::makeReadyFuture<qevercloud::Notebook>(
                             std::move(createdNotebook));
                     }
-                    sentData.m_failedToSendNotebooks << createdNotebook;
+                    sentData.failedToSendNotebooks << createdNotebook;
                     return threading::makeExceptionalFuture<
                         qevercloud::Notebook>(
                         qevercloud::EDAMSystemExceptionBuilder{}
@@ -775,23 +883,23 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotebooks << updatedNotebook;
+                    sentData.sentNotebooks << updatedNotebook;
                     return threading::makeReadyFuture<qint32>(usn);
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
-                        sentData.m_sentNotebooks << updatedNotebook;
+                        sentData.sentNotebooks << updatedNotebook;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendNotebooks << updatedNotebook;
+                    sentData.failedToSendNotebooks << updatedNotebook;
                     return threading::makeExceptionalFuture<qint32>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotebooks << updatedNotebook;
+                        sentData.sentNotebooks << updatedNotebook;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendNotebooks << updatedNotebook;
+                    sentData.failedToSendNotebooks << updatedNotebook;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -801,10 +909,10 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotebooks << updatedNotebook;
+                        sentData.sentNotebooks << updatedNotebook;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendNotebooks << updatedNotebook;
+                    sentData.failedToSendNotebooks << updatedNotebook;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -848,26 +956,26 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentTags << createdTag;
+                    sentData.sentTags << createdTag;
                     return threading::makeReadyFuture<qevercloud::Tag>(
                         std::move(createdTag));
                 case NoteStoreBehaviour::WithFailures:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentTags << createdTag;
+                        sentData.sentTags << createdTag;
                         return threading::makeReadyFuture<qevercloud::Tag>(
                             std::move(createdTag));
                     }
-                    sentData.m_failedToSendTags << createdTag;
+                    sentData.failedToSendTags << createdTag;
                     return threading::makeExceptionalFuture<qevercloud::Tag>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentTags << createdTag;
+                        sentData.sentTags << createdTag;
                         return threading::makeReadyFuture<qevercloud::Tag>(
                             std::move(createdTag));
                     }
-                    sentData.m_failedToSendTags << createdTag;
+                    sentData.failedToSendTags << createdTag;
                     return threading::makeExceptionalFuture<qevercloud::Tag>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -877,11 +985,11 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentTags << createdTag;
+                        sentData.sentTags << createdTag;
                         return threading::makeReadyFuture<qevercloud::Tag>(
                             std::move(createdTag));
                     }
-                    sentData.m_failedToSendTags << createdTag;
+                    sentData.failedToSendTags << createdTag;
                     return threading::makeExceptionalFuture<qevercloud::Tag>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -915,23 +1023,23 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentTags << updatedTag;
+                    sentData.sentTags << updatedTag;
                     return threading::makeReadyFuture<qint32>(usn);
                 case NoteStoreBehaviour::WithFailures:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentTags << updatedTag;
+                        sentData.sentTags << updatedTag;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendTags << updatedTag;
+                    sentData.failedToSendTags << updatedTag;
                     return threading::makeExceptionalFuture<qint32>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentTags << updatedTag;
+                        sentData.sentTags << updatedTag;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendTags << updatedTag;
+                    sentData.failedToSendTags << updatedTag;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -941,10 +1049,10 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentTags << updatedTag;
+                        sentData.sentTags << updatedTag;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendTags << updatedTag;
+                    sentData.failedToSendTags << updatedTag;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -995,21 +1103,21 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotes << createdNote;
+                    sentData.sentNotes << createdNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
                         std::move(createdNote));
                 case NoteStoreBehaviour::WithFailures:
-                    sentData.m_failedToSendNotes << createdNote;
+                    sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotes << createdNote;
+                        sentData.sentNotes << createdNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(createdNote));
                     }
-                    sentData.m_failedToSendNotes << createdNote;
+                    sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1019,11 +1127,11 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotes << createdNote;
+                        sentData.sentNotes << createdNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(createdNote));
                     }
-                    sentData.m_failedToSendNotes << createdNote;
+                    sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1061,26 +1169,26 @@ void setupUserOwnNoteStoreMock(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotes << updatedNote;
+                    sentData.sentNotes << updatedNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
                         std::move(updatedNote));
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
-                        sentData.m_sentNotes << updatedNote;
+                        sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(updatedNote));
                     }
-                    sentData.m_failedToSendNotes << updatedNote;
+                    sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotes << updatedNote;
+                        sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(updatedNote));
                     }
-                    sentData.m_failedToSendNotes << updatedNote;
+                    sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1090,11 +1198,11 @@ void setupUserOwnNoteStoreMock(
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
-                        sentData.m_sentNotes << updatedNote;
+                        sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(updatedNote));
                     }
-                    sentData.m_failedToSendNotes << updatedNote;
+                    sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1140,23 +1248,23 @@ void setupLinkedNotebookNoteStoreMocks(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotebooks << updatedNotebook;
+                    sentData.sentNotebooks << updatedNotebook;
                     return threading::makeReadyFuture<qint32>(usn);
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
-                        sentData.m_sentNotebooks << updatedNotebook;
+                        sentData.sentNotebooks << updatedNotebook;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
-                    sentData.m_failedToSendNotebooks << updatedNotebook;
+                    sentData.failedToSendNotebooks << updatedNotebook;
                     return threading::makeExceptionalFuture<qint32>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
-                    sentData.m_failedToSendNotebooks << updatedNotebook;
+                    sentData.failedToSendNotebooks << updatedNotebook;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1165,7 +1273,7 @@ void setupLinkedNotebookNoteStoreMocks(
                             .setRateLimitDuration(300)
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
-                    sentData.m_failedToSendNotebooks << updatedNotebook;
+                    sentData.failedToSendNotebooks << updatedNotebook;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1217,7 +1325,7 @@ void setupLinkedNotebookNoteStoreMocks(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentTags << createdTag;
+                    sentData.sentTags << createdTag;
                     return threading::makeReadyFuture<qevercloud::Tag>(
                         std::move(createdTag));
                 case NoteStoreBehaviour::WithFailures:
@@ -1225,17 +1333,17 @@ void setupLinkedNotebookNoteStoreMocks(
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
-                        sentData.m_sentTags << createdTag;
+                        sentData.sentTags << createdTag;
                         return threading::makeReadyFuture<qevercloud::Tag>(
                             std::move(createdTag));
                     }
-                    sentData.m_failedToSendTags << createdTag;
+                    sentData.failedToSendTags << createdTag;
                     return threading::makeExceptionalFuture<qevercloud::Tag>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
-                    sentData.m_failedToSendTags << createdTag;
+                    sentData.failedToSendTags << createdTag;
                     return threading::makeExceptionalFuture<qevercloud::Tag>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1244,7 +1352,7 @@ void setupLinkedNotebookNoteStoreMocks(
                             .setRateLimitDuration(300)
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
-                    sentData.m_failedToSendTags << createdTag;
+                    sentData.failedToSendTags << createdTag;
                     return threading::makeExceptionalFuture<qevercloud::Tag>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1270,24 +1378,24 @@ void setupLinkedNotebookNoteStoreMocks(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentTags << updatedTag;
+                    sentData.sentTags << updatedTag;
                     return threading::makeReadyFuture<qint32>(usn);
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
-                        sentData.m_sentTags << updatedTag;
+                        sentData.sentTags << updatedTag;
                         return threading::makeReadyFuture<qint32>(usn);
                     }
 
-                    sentData.m_failedToSendTags << updatedTag;
+                    sentData.failedToSendTags << updatedTag;
                     return threading::makeExceptionalFuture<qint32>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
-                    sentData.m_failedToSendTags << updatedTag;
+                    sentData.failedToSendTags << updatedTag;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1296,7 +1404,7 @@ void setupLinkedNotebookNoteStoreMocks(
                             .setRateLimitDuration(300)
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
-                    sentData.m_failedToSendTags << updatedTag;
+                    sentData.failedToSendTags << updatedTag;
                     return threading::makeExceptionalFuture<qint32>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1346,7 +1454,7 @@ void setupLinkedNotebookNoteStoreMocks(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotes << createdNote;
+                    sentData.sentNotes << createdNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
                         std::move(createdNote));
                 case NoteStoreBehaviour::WithFailures:
@@ -1354,18 +1462,18 @@ void setupLinkedNotebookNoteStoreMocks(
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
-                        sentData.m_sentNotes << createdNote;
+                        sentData.sentNotes << createdNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(createdNote));
                     }
 
-                    sentData.m_failedToSendNotes << createdNote;
+                    sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
-                    sentData.m_failedToSendNotes << createdNote;
+                    sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1374,7 +1482,7 @@ void setupLinkedNotebookNoteStoreMocks(
                             .setRateLimitDuration(300)
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
-                    sentData.m_failedToSendNotes << createdNote;
+                    sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1401,7 +1509,7 @@ void setupLinkedNotebookNoteStoreMocks(
 
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
-                    sentData.m_sentNotes << updatedNote;
+                    sentData.sentNotes << updatedNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
                         std::move(updatedNote));
                 case NoteStoreBehaviour::WithFailures:
@@ -1409,18 +1517,18 @@ void setupLinkedNotebookNoteStoreMocks(
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
-                        sentData.m_sentNotes << updatedNote;
+                        sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
                             std::move(updatedNote));
                     }
 
-                    sentData.m_failedToSendNotes << updatedNote;
+                    sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         RuntimeError{
                             ErrorString{QStringLiteral("some error")}});
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
-                    sentData.m_failedToSendNotes << updatedNote;
+                    sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1429,7 +1537,7 @@ void setupLinkedNotebookNoteStoreMocks(
                             .setRateLimitDuration(300)
                             .build());
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
-                    sentData.m_failedToSendNotes << updatedNote;
+                    sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
                         qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
@@ -1444,6 +1552,322 @@ void setupLinkedNotebookNoteStoreMocks(
 
         i->fetch_add(1, std::memory_order_acq_rel);
     }
+}
+
+void setupLocalStorageMock(
+    const SenderTestData & testData,
+    const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage> &
+        mockLocalStorage,
+    DataPutToLocalStorage & dataPutToLocalStorage,
+    const std::optional<SenderTestFlag> flag = std::nullopt)
+{
+    EXPECT_CALL(*mockLocalStorage, findNotebookByLocalId)
+        .WillRepeatedly([&](const QString & notebookLocalId) {
+            const auto findNotebook =
+                [&notebookLocalId](
+                    const QList<qevercloud::Notebook> & notebooks)
+                -> std::optional<qevercloud::Notebook> {
+                const auto it = std::find_if(
+                    notebooks.constBegin(), notebooks.constEnd(),
+                    [&](const qevercloud::Notebook & notebook) {
+                        return notebook.localId() == notebookLocalId;
+                    });
+                if (it != notebooks.constEnd()) {
+                    return *it;
+                }
+
+                return std::nullopt;
+            };
+
+            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
+            }
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
+            }
+
+            if (notebook) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Notebook>>(std::move(notebook));
+            }
+
+            return threading::makeReadyFuture<
+                std::optional<qevercloud::Notebook>>(
+                qevercloud::NotebookBuilder{}
+                    .setLocalId(notebookLocalId)
+                    .setGuid(UidGenerator::Generate())
+                    .setName(QStringLiteral("Notebook"))
+                    .setUpdateSequenceNum(1)
+                    .build());
+        });
+
+    const auto listSavedSearchesOptions = [] {
+        local_storage::ILocalStorage::ListSavedSearchesOptions options;
+        options.m_filters.m_locallyModifiedFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Include;
+        return options;
+    }();
+
+    EXPECT_CALL(*mockLocalStorage, listSavedSearches(listSavedSearchesOptions))
+        .Times(AtMost(1))
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<QList<qevercloud::SavedSearch>>(
+                QList<qevercloud::SavedSearch>{}
+                << testData.m_newSavedSearches
+                << testData.m_updatedSavedSearches)));
+
+    if (!testData.m_newSavedSearches.isEmpty() ||
+        !testData.m_updatedSavedSearches.isEmpty())
+    {
+        EXPECT_CALL(*mockLocalStorage, putSavedSearch)
+            .WillRepeatedly([&](const qevercloud::SavedSearch & savedSearch) {
+                dataPutToLocalStorage.savedSearches << savedSearch;
+                return threading::makeReadyFuture();
+            });
+    }
+
+    const auto listTagsOptions = [] {
+        local_storage::ILocalStorage::ListTagsOptions options;
+        options.m_filters.m_locallyModifiedFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Include;
+        return options;
+    }();
+
+    EXPECT_CALL(*mockLocalStorage, listTags(listTagsOptions))
+        .Times(AtMost(1))
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
+                QList<qevercloud::Tag>{}
+                << testData.m_newUserOwnTags << testData.m_updatedUserOwnTags
+                << testData.m_newLinkedNotebooksTags
+                << testData.m_updatedLinkedNotebooksTags)));
+
+    if (!testData.m_newUserOwnTags.isEmpty() ||
+        !testData.m_updatedUserOwnTags.isEmpty() ||
+        !testData.m_newLinkedNotebooksTags.isEmpty() ||
+        !testData.m_updatedLinkedNotebooksTags.isEmpty())
+    {
+        EXPECT_CALL(*mockLocalStorage, putTag)
+            .WillRepeatedly([&](const qevercloud::Tag & tag) {
+                dataPutToLocalStorage.tags << tag;
+                return threading::makeReadyFuture();
+            });
+    }
+
+    const auto listNotebooksOptions = [] {
+        local_storage::ILocalStorage::ListNotebooksOptions options;
+        options.m_filters.m_locallyModifiedFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Include;
+        return options;
+    }();
+
+    EXPECT_CALL(*mockLocalStorage, listNotebooks(listNotebooksOptions))
+        .Times(AtMost(1))
+        .WillRepeatedly([&, flag]([[maybe_unused]] const local_storage::
+                                      ILocalStorage::ListNotebooksOptions & o) {
+            QList<qevercloud::Notebook> notebooks;
+            notebooks << testData.m_newUserOwnNotebooks
+                      << testData.m_updatedUserOwnNotebooks;
+
+            if (!flag ||
+                (*flag != SenderTestFlag::WithNewLinkedNotebooksNotes &&
+                 *flag != SenderTestFlag::WithUpdatedLinkedNotebooksNotes &&
+                 *flag != SenderTestFlag::WithNewLinkedNotebooksTags &&
+                 flag != SenderTestFlag::WithUpdatedLinkedNotebooksTags))
+            {
+                notebooks << testData.m_updatedLinkedNotebooks;
+            }
+
+            return threading::makeReadyFuture<QList<qevercloud::Notebook>>(
+                std::move(notebooks));
+        });
+
+    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedLinkedNotebooks.isEmpty())
+    {
+        EXPECT_CALL(*mockLocalStorage, putNotebook)
+            .WillRepeatedly([&](const qevercloud::Notebook & notebook) {
+                dataPutToLocalStorage.notebooks << notebook;
+                return threading::makeReadyFuture();
+            });
+    }
+
+    const auto listNotesOptions = [] {
+        local_storage::ILocalStorage::ListNotesOptions options;
+        options.m_filters.m_locallyModifiedFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Include;
+        return options;
+    }();
+
+    const auto fetchNoteOptions =
+        local_storage::ILocalStorage::FetchNoteOptions{} |
+        local_storage::ILocalStorage::FetchNoteOption::WithResourceMetadata |
+        local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    EXPECT_CALL(
+        *mockLocalStorage, listNotes(fetchNoteOptions, listNotesOptions))
+        .Times(AtMost(1))
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
+                QList<qevercloud::Note>{}
+                << testData.m_newUserOwnNotes << testData.m_updatedUserOwnNotes
+                << testData.m_newLinkedNotebooksNotes
+                << testData.m_updatedLinkedNotebooksNotes)));
+
+    if (!testData.m_newUserOwnNotes.isEmpty() ||
+        !testData.m_updatedUserOwnNotes.isEmpty() ||
+        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
+        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
+    {
+        EXPECT_CALL(*mockLocalStorage, putNote)
+            .WillRepeatedly([&](const qevercloud::Note & note) {
+                dataPutToLocalStorage.notes << note;
+                return threading::makeReadyFuture();
+            });
+    }
+}
+
+void setupSyncStateStorageMock(
+    const SenderTestData & testData, const Account & account,
+    const std::shared_ptr<mocks::MockISyncStateStorage> & mockSyncStateStorage)
+{
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
+    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
+        linkedNotebookLastSyncTimes[linkedNotebook.guid().value()] = now;
+    }
+
+    EXPECT_CALL(*mockSyncStateStorage, getSyncState(account))
+        .WillOnce(Return(std::make_shared<SyncState>(
+            testData.m_maxUserOwnUsn, now, testData.m_maxLinkedNotebookUsns,
+            linkedNotebookLastSyncTimes)));
+}
+
+void setupNoteStoreProviderMock(
+    const SenderTestData & testData,
+    const std::shared_ptr<mocks::MockINoteStoreProvider> &
+        mockNoteStoreProvider,
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore> &
+        mockUserOwnNoteStore,
+    QHash<
+        qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>> &
+        mockLinkedNotebookNoteStores)
+{
+    if (!testData.m_newSavedSearches.isEmpty() ||
+        !testData.m_updatedSavedSearches.isEmpty() ||
+        !testData.m_newUserOwnNotebooks.isEmpty() ||
+        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
+        !testData.m_newUserOwnTags.isEmpty() ||
+        !testData.m_updatedUserOwnTags.isEmpty())
+    {
+        EXPECT_CALL(*mockNoteStoreProvider, userOwnNoteStore)
+            .WillRepeatedly(
+                Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore)));
+    }
+
+    if (!testData.m_newUserOwnNotes.isEmpty() ||
+        !testData.m_updatedUserOwnNotes.isEmpty())
+    {
+        EXPECT_CALL(*mockNoteStoreProvider, noteStore)
+            .WillRepeatedly(
+                Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore)));
+    }
+
+    EXPECT_CALL(*mockNoteStoreProvider, noteStore)
+        .WillRepeatedly([&](const QString & notebookLocalId,
+                            [[maybe_unused]] const qevercloud::
+                                IRequestContextPtr & ctx,
+                            [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                                retryPolicy) {
+            const auto findNotebook =
+                [&](const QList<qevercloud::Notebook> & notebooks)
+                -> std::optional<qevercloud::Notebook> {
+                const auto it = std::find_if(
+                    notebooks.constBegin(), notebooks.constEnd(),
+                    [&](const qevercloud::Notebook & notebook) {
+                        return notebook.localId() == notebookLocalId;
+                    });
+                if (it != notebooks.constEnd()) {
+                    return *it;
+                }
+
+                return std::nullopt;
+            };
+
+            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
+            }
+
+            if (!notebook) {
+                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
+            }
+
+            if (!notebook) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore);
+            }
+
+            if (!notebook->linkedNotebookGuid()) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    mockUserOwnNoteStore);
+            }
+
+            const auto it = mockLinkedNotebookNoteStores.constFind(
+                *notebook->linkedNotebookGuid());
+            if (Q_UNLIKELY(it == mockLinkedNotebookNoteStores.constEnd())) {
+                return threading::makeExceptionalFuture<
+                    qevercloud::INoteStorePtr>(
+                    RuntimeError{ErrorString{QStringLiteral(
+                        "Note store for linked notebook not found")}});
+            }
+
+            EXPECT_CALL(*it.value(), linkedNotebookGuid)
+                .WillRepeatedly(
+                    [guid = std::make_shared<std::optional<qevercloud::Guid>>(
+                         it.key())]()
+                        -> const std::optional<qevercloud::Guid> & {
+                        return *guid;
+                    });
+
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                it.value());
+        });
+
+    EXPECT_CALL(*mockNoteStoreProvider, linkedNotebookNoteStore)
+        .WillRepeatedly(
+            [&](const qevercloud::Guid & guid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
+                const auto nit = mockLinkedNotebookNoteStores.constFind(guid);
+                if (Q_UNLIKELY(nit == mockLinkedNotebookNoteStores.constEnd()))
+                {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::INoteStorePtr>(
+                        RuntimeError{ErrorString{QStringLiteral(
+                            "Linked notebook note store not found")}});
+                }
+
+                EXPECT_CALL(*nit.value(), linkedNotebookGuid)
+                    .WillRepeatedly(
+                        [guid =
+                             std::make_shared<std::optional<qevercloud::Guid>>(
+                                 guid)]()
+                            -> const std::optional<qevercloud::Guid> & {
+                            return *guid;
+                        });
+
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    nit.value());
+            });
 }
 
 void checkSendStatusUpdate(
@@ -1688,343 +2112,34 @@ TEST_P(SenderDataTest, SenderDataTest)
 
     const auto & testData = GetParam();
     SentData sentData;
-
-    const std::optional<QString> nullLinkedNotebookGuid;
-
-    struct DataPutToLocalStorage
-    {
-        QList<qevercloud::SavedSearch> m_savedSearches;
-        QList<qevercloud::Tag> m_tags;
-        QList<qevercloud::Notebook> m_notebooks;
-        QList<qevercloud::Note> m_notes;
-    };
-
     DataPutToLocalStorage dataPutToLocalStorage;
 
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-    QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
-    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
-        linkedNotebookLastSyncTimes[linkedNotebook.guid().value()] = now;
-    }
-
-    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
-        .WillOnce(Return(std::make_shared<SyncState>(
-            testData.m_maxUserOwnUsn, now, testData.m_maxLinkedNotebookUsns,
-            linkedNotebookLastSyncTimes)));
+    setupSyncStateStorageMock(testData, m_account, m_mockSyncStateStorage);
 
     const std::shared_ptr<mocks::qevercloud::MockINoteStore>
         mockUserOwnNoteStore =
             std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
+    const std::optional<QString> nullLinkedNotebookGuid;
     EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty() ||
-        !testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty())
-    {
-        setupUserOwnNoteStoreMock(testData, mockUserOwnNoteStore, sentData);
-
-        if (!testData.m_newSavedSearches.isEmpty() ||
-            !testData.m_updatedSavedSearches.isEmpty() ||
-            !testData.m_newUserOwnNotebooks.isEmpty() ||
-            !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-            !testData.m_newUserOwnTags.isEmpty() ||
-            !testData.m_updatedUserOwnTags.isEmpty())
-        {
-            EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
-                .WillRepeatedly(Return(
-                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                        mockUserOwnNoteStore)));
-        }
-
-        if (!testData.m_newUserOwnNotes.isEmpty() ||
-            !testData.m_updatedUserOwnNotes.isEmpty())
-        {
-            EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
-                .WillRepeatedly(Return(
-                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                        mockUserOwnNoteStore)));
-        }
-    }
 
     QHash<qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>>
         linkedNotebookNoteStores;
 
+    setupNoteStoreProviderMock(
+        testData, m_mockNoteStoreProvider, mockUserOwnNoteStore,
+        linkedNotebookNoteStores);
+
+    setupUserOwnNoteStoreMock(testData, mockUserOwnNoteStore, sentData);
+
     setupLinkedNotebookNoteStoreMocks(
         testData, linkedNotebookNoteStores, sentData);
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, linkedNotebookNoteStore)
-        .WillRepeatedly(
-            [&](const qevercloud::Guid & guid,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
-                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
-                    retryPolicy) {
-                const auto nit = linkedNotebookNoteStores.constFind(guid);
-                if (Q_UNLIKELY(nit == linkedNotebookNoteStores.constEnd())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::INoteStorePtr>(
-                        RuntimeError{ErrorString{QStringLiteral(
-                            "Linked notebook note store not found")}});
-                }
-
-                EXPECT_CALL(*nit.value(), linkedNotebookGuid)
-                    .WillRepeatedly(
-                        [guid =
-                             std::make_shared<std::optional<qevercloud::Guid>>(
-                                 guid)]()
-                            -> const std::optional<qevercloud::Guid> & {
-                            return *guid;
-                        });
-
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    nit.value());
-            });
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
-        .WillRepeatedly([&](const QString & notebookLocalId) {
-            const auto findNotebook =
-                [&notebookLocalId](
-                    const QList<qevercloud::Notebook> & notebooks)
-                -> std::optional<qevercloud::Notebook> {
-                const auto it = std::find_if(
-                    notebooks.constBegin(), notebooks.constEnd(),
-                    [&](const qevercloud::Notebook & notebook) {
-                        return notebook.localId() == notebookLocalId;
-                    });
-                if (it != notebooks.constEnd()) {
-                    return *it;
-                }
-
-                return std::nullopt;
-            };
-
-            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
-            }
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
-            }
-
-            if (notebook) {
-                return threading::makeReadyFuture<
-                    std::optional<qevercloud::Notebook>>(std::move(notebook));
-            }
-
-            return threading::makeReadyFuture<
-                std::optional<qevercloud::Notebook>>(
-                qevercloud::NotebookBuilder{}
-                    .setLocalId(notebookLocalId)
-                    .setGuid(UidGenerator::Generate())
-                    .setName(QStringLiteral("Notebook"))
-                    .setUpdateSequenceNum(1)
-                    .build());
-        });
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
-        .WillRepeatedly([&](const QString & notebookLocalId,
-                            [[maybe_unused]] const qevercloud::
-                                IRequestContextPtr & ctx,
-                            [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
-                                retryPolicy) {
-            const auto findNotebook =
-                [&](const QList<qevercloud::Notebook> & notebooks)
-                -> std::optional<qevercloud::Notebook> {
-                const auto it = std::find_if(
-                    notebooks.constBegin(), notebooks.constEnd(),
-                    [&](const qevercloud::Notebook & notebook) {
-                        return notebook.localId() == notebookLocalId;
-                    });
-                if (it != notebooks.constEnd()) {
-                    return *it;
-                }
-
-                return std::nullopt;
-            };
-
-            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
-            }
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
-            }
-
-            if (!notebook) {
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore);
-            }
-
-            if (!notebook->linkedNotebookGuid()) {
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore);
-            }
-
-            const auto it = linkedNotebookNoteStores.constFind(
-                *notebook->linkedNotebookGuid());
-            if (Q_UNLIKELY(it == linkedNotebookNoteStores.constEnd())) {
-                return threading::makeExceptionalFuture<
-                    qevercloud::INoteStorePtr>(
-                    RuntimeError{ErrorString{QStringLiteral(
-                        "Note store for linked notebook not found")}});
-            }
-
-            EXPECT_CALL(*it.value(), linkedNotebookGuid)
-                .WillRepeatedly(
-                    [guid = std::make_shared<std::optional<qevercloud::Guid>>(
-                         it.key())]()
-                        -> const std::optional<qevercloud::Guid> & {
-                        return *guid;
-                    });
-
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                it.value());
-        });
-
-    const auto listSavedSearchesOptions = [] {
-        local_storage::ILocalStorage::ListSavedSearchesOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, listSavedSearches(listSavedSearchesOptions))
-        .WillOnce(
-            Return(threading::makeReadyFuture<QList<qevercloud::SavedSearch>>(
-                QList<qevercloud::SavedSearch>{}
-                << testData.m_newSavedSearches
-                << testData.m_updatedSavedSearches)));
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putSavedSearch)
-            .WillRepeatedly([&](const qevercloud::SavedSearch & savedSearch) {
-                dataPutToLocalStorage.m_savedSearches << savedSearch;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listTagsOptions = [] {
-        local_storage::ILocalStorage::ListTagsOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(*m_mockLocalStorage, listTags(listTagsOptions))
-        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
-            QList<qevercloud::Tag>{}
-            << testData.m_newUserOwnTags << testData.m_updatedUserOwnTags
-            << testData.m_newLinkedNotebooksTags
-            << testData.m_updatedLinkedNotebooksTags)));
-
-    if (!testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty() ||
-        !testData.m_newLinkedNotebooksTags.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksTags.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putTag)
-            .WillRepeatedly([&](const qevercloud::Tag & tag) {
-                dataPutToLocalStorage.m_tags << tag;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listNotebooksOptions = [] {
-        local_storage::ILocalStorage::ListNotebooksOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(*m_mockLocalStorage, listNotebooks(listNotebooksOptions))
-        .WillOnce(
-            Return(threading::makeReadyFuture<QList<qevercloud::Notebook>>(
-                QList<qevercloud::Notebook>{}
-                << testData.m_newUserOwnNotebooks
-                << testData.m_updatedUserOwnNotebooks
-                << testData.m_updatedLinkedNotebooks)));
-
-    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedLinkedNotebooks.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putNotebook)
-            .WillRepeatedly([&](const qevercloud::Notebook & notebook) {
-                dataPutToLocalStorage.m_notebooks << notebook;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listNotesOptions = [] {
-        local_storage::ILocalStorage::ListNotesOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    const auto fetchNoteOptions =
-        local_storage::ILocalStorage::FetchNoteOptions{} |
-        local_storage::ILocalStorage::FetchNoteOption::WithResourceMetadata |
-        local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, listNotes(fetchNoteOptions, listNotesOptions))
-        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
-            QList<qevercloud::Note>{}
-            << testData.m_newUserOwnNotes << testData.m_updatedUserOwnNotes
-            << testData.m_newLinkedNotebooksNotes
-            << testData.m_updatedLinkedNotebooksNotes)));
-
-    if (!testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putNote)
-            .WillRepeatedly([&](const qevercloud::Note & note) {
-                dataPutToLocalStorage.m_notes << note;
-                return threading::makeReadyFuture();
-            });
-    }
+    setupLocalStorageMock(testData, m_mockLocalStorage, dataPutToLocalStorage);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
-
-    struct Callback : public ISender::ICallback
-    {
-        void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus) override
-        {
-            checkSendStatusUpdate(m_userOwnSendStatus, sendStatus);
-            m_userOwnSendStatus = sendStatus;
-        }
-
-        void onLinkedNotebookSendStatusUpdate(
-            const qevercloud::Guid & linkedNotebookGuid,
-            ISendStatusPtr sendStatus) override
-        {
-            auto & linkedNotebookSendStatus =
-                m_linkedNotebookSendStatuses[linkedNotebookGuid];
-
-            checkSendStatusUpdate(linkedNotebookSendStatus, sendStatus);
-            linkedNotebookSendStatus = sendStatus;
-        }
-
-        ISendStatusPtr m_userOwnSendStatus;
-        QHash<qevercloud::Guid, ISendStatusPtr> m_linkedNotebookSendStatuses;
-    };
 
     const auto callback = std::make_shared<Callback>();
 
@@ -2158,62 +2273,7 @@ TEST_P(SenderDataTest, SenderDataTest)
         EXPECT_FALSE(sendStatus->needToRepeatIncrementalSync());
     }
 
-    // Checking sent data vs data sent to local storage
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_savedSearches.size(),
-        sentData.m_sentSavedSearches.size());
-
-    ASSERT_EQ(dataPutToLocalStorage.m_tags.size(), sentData.m_sentTags.size());
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_notebooks.size(),
-        sentData.m_sentNotebooks.size());
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_notes.size(), sentData.m_sentNotes.size());
-
-    for (const auto & savedSearch:
-         qAsConst(dataPutToLocalStorage.m_savedSearches)) {
-        const auto it = std::find_if(
-            sentData.m_sentSavedSearches.constBegin(),
-            sentData.m_sentSavedSearches.constEnd(),
-            [&](const qevercloud::SavedSearch & s) {
-                return s.localId() == savedSearch.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentSavedSearches.constEnd());
-        EXPECT_EQ(*it, savedSearch);
-    }
-
-    for (const auto & notebook: qAsConst(dataPutToLocalStorage.m_notebooks)) {
-        const auto it = std::find_if(
-            sentData.m_sentNotebooks.constBegin(),
-            sentData.m_sentNotebooks.constEnd(),
-            [&](const qevercloud::Notebook & n) {
-                return n.localId() == notebook.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentNotebooks.constEnd());
-        EXPECT_EQ(*it, notebook);
-    }
-
-    for (const auto & note: qAsConst(dataPutToLocalStorage.m_notes)) {
-        const auto it = std::find_if(
-            sentData.m_sentNotes.constBegin(), sentData.m_sentNotes.constEnd(),
-            [&](const qevercloud::Note & n) {
-                return n.localId() == note.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentNotes.constEnd());
-        EXPECT_EQ(*it, note);
-    }
-
-    for (const auto & tag: qAsConst(dataPutToLocalStorage.m_tags)) {
-        const auto it = std::find_if(
-            sentData.m_sentTags.constBegin(), sentData.m_sentTags.constEnd(),
-            [&](const qevercloud::Tag & t) {
-                return t.localId() == tag.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentTags.constEnd());
-        EXPECT_EQ(*it, tag);
-    }
+    checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
 }
 
 TEST_P(SenderDataTest, TolerateSendingFailures)
@@ -2225,106 +2285,32 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
 
     const auto & testData = GetParam();
     SentData sentData;
-
-    const std::optional<QString> nullLinkedNotebookGuid;
-
-    struct DataPutToLocalStorage
-    {
-        QList<qevercloud::SavedSearch> m_savedSearches;
-        QList<qevercloud::Tag> m_tags;
-        QList<qevercloud::Notebook> m_notebooks;
-        QList<qevercloud::Note> m_notes;
-    };
-
     DataPutToLocalStorage dataPutToLocalStorage;
 
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-    QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
-    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
-        linkedNotebookLastSyncTimes[linkedNotebook.guid().value()] = now;
-    }
-
-    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
-        .WillOnce(Return(std::make_shared<SyncState>(
-            testData.m_maxUserOwnUsn, now, testData.m_maxLinkedNotebookUsns,
-            linkedNotebookLastSyncTimes)));
+    setupSyncStateStorageMock(testData, m_account, m_mockSyncStateStorage);
 
     const std::shared_ptr<mocks::qevercloud::MockINoteStore>
         mockUserOwnNoteStore =
             std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
+    const std::optional<QString> nullLinkedNotebookGuid;
     EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty() ||
-        !testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty())
-    {
-        setupUserOwnNoteStoreMock(
-            testData, mockUserOwnNoteStore, sentData,
-            NoteStoreBehaviour::WithFailures);
-
-        if (!testData.m_newSavedSearches.isEmpty() ||
-            !testData.m_updatedSavedSearches.isEmpty() ||
-            !testData.m_newUserOwnNotebooks.isEmpty() ||
-            !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-            !testData.m_newUserOwnTags.isEmpty() ||
-            !testData.m_updatedUserOwnTags.isEmpty())
-        {
-            EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
-                .WillRepeatedly(Return(
-                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                        mockUserOwnNoteStore)));
-        }
-
-        if (!testData.m_newUserOwnNotes.isEmpty() ||
-            !testData.m_updatedUserOwnNotes.isEmpty())
-        {
-            EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
-                .WillRepeatedly(Return(
-                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                        mockUserOwnNoteStore)));
-        }
-    }
 
     QHash<qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>>
         linkedNotebookNoteStores;
 
+    setupNoteStoreProviderMock(
+        testData, m_mockNoteStoreProvider, mockUserOwnNoteStore,
+        linkedNotebookNoteStores);
+
+    setupUserOwnNoteStoreMock(
+        testData, mockUserOwnNoteStore, sentData,
+        NoteStoreBehaviour::WithFailures);
+
     setupLinkedNotebookNoteStoreMocks(
         testData, linkedNotebookNoteStores, sentData,
         NoteStoreBehaviour::WithFailures);
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, linkedNotebookNoteStore)
-        .WillRepeatedly(
-            [&](const qevercloud::Guid & guid,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
-                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
-                    retryPolicy) {
-                const auto nit = linkedNotebookNoteStores.constFind(guid);
-                if (Q_UNLIKELY(nit == linkedNotebookNoteStores.constEnd())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::INoteStorePtr>(
-                        RuntimeError{ErrorString{QStringLiteral(
-                            "Linked notebook note store not found")}});
-                }
-
-                EXPECT_CALL(*nit.value(), linkedNotebookGuid)
-                    .WillRepeatedly(
-                        [guid =
-                             std::make_shared<std::optional<qevercloud::Guid>>(
-                                 guid)]()
-                            -> const std::optional<qevercloud::Guid> & {
-                            return *guid;
-                        });
-
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    nit.value());
-            });
 
     EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
         .WillRepeatedly([&](const QString & notebookLocalId) {
@@ -2369,202 +2355,10 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
                     .build());
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
-        .WillRepeatedly([&](const QString & notebookLocalId,
-                            [[maybe_unused]] const qevercloud::
-                                IRequestContextPtr & ctx,
-                            [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
-                                retryPolicy) {
-            const auto findNotebook =
-                [&](const QList<qevercloud::Notebook> & notebooks)
-                -> std::optional<qevercloud::Notebook> {
-                const auto it = std::find_if(
-                    notebooks.constBegin(), notebooks.constEnd(),
-                    [&](const qevercloud::Notebook & notebook) {
-                        return notebook.localId() == notebookLocalId;
-                    });
-                if (it != notebooks.constEnd()) {
-                    return *it;
-                }
-
-                return std::nullopt;
-            };
-
-            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
-            }
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
-            }
-
-            if (!notebook) {
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore);
-            }
-
-            if (!notebook->linkedNotebookGuid()) {
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore);
-            }
-
-            const auto it = linkedNotebookNoteStores.constFind(
-                *notebook->linkedNotebookGuid());
-            if (Q_UNLIKELY(it == linkedNotebookNoteStores.constEnd())) {
-                return threading::makeExceptionalFuture<
-                    qevercloud::INoteStorePtr>(
-                    RuntimeError{ErrorString{QStringLiteral(
-                        "Note store for linked notebook not found")}});
-            }
-
-            EXPECT_CALL(*it.value(), linkedNotebookGuid)
-                .WillRepeatedly(
-                    [guid = std::make_shared<std::optional<qevercloud::Guid>>(
-                         it.key())]()
-                        -> const std::optional<qevercloud::Guid> & {
-                        return *guid;
-                    });
-
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                it.value());
-        });
-
-    const auto listSavedSearchesOptions = [] {
-        local_storage::ILocalStorage::ListSavedSearchesOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, listSavedSearches(listSavedSearchesOptions))
-        .WillOnce(
-            Return(threading::makeReadyFuture<QList<qevercloud::SavedSearch>>(
-                QList<qevercloud::SavedSearch>{}
-                << testData.m_newSavedSearches
-                << testData.m_updatedSavedSearches)));
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putSavedSearch)
-            .WillRepeatedly([&](const qevercloud::SavedSearch & savedSearch) {
-                dataPutToLocalStorage.m_savedSearches << savedSearch;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listTagsOptions = [] {
-        local_storage::ILocalStorage::ListTagsOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(*m_mockLocalStorage, listTags(listTagsOptions))
-        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
-            QList<qevercloud::Tag>{}
-            << testData.m_newUserOwnTags << testData.m_updatedUserOwnTags
-            << testData.m_newLinkedNotebooksTags
-            << testData.m_updatedLinkedNotebooksTags)));
-
-    if (!testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty() ||
-        !testData.m_newLinkedNotebooksTags.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksTags.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putTag)
-            .WillRepeatedly([&](const qevercloud::Tag & tag) {
-                dataPutToLocalStorage.m_tags << tag;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listNotebooksOptions = [] {
-        local_storage::ILocalStorage::ListNotebooksOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(*m_mockLocalStorage, listNotebooks(listNotebooksOptions))
-        .WillOnce(
-            Return(threading::makeReadyFuture<QList<qevercloud::Notebook>>(
-                QList<qevercloud::Notebook>{}
-                << testData.m_newUserOwnNotebooks
-                << testData.m_updatedUserOwnNotebooks
-                << testData.m_updatedLinkedNotebooks)));
-
-    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedLinkedNotebooks.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putNotebook)
-            .WillRepeatedly([&](const qevercloud::Notebook & notebook) {
-                dataPutToLocalStorage.m_notebooks << notebook;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listNotesOptions = [] {
-        local_storage::ILocalStorage::ListNotesOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    const auto fetchNoteOptions =
-        local_storage::ILocalStorage::FetchNoteOptions{} |
-        local_storage::ILocalStorage::FetchNoteOption::WithResourceMetadata |
-        local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, listNotes(fetchNoteOptions, listNotesOptions))
-        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
-            QList<qevercloud::Note>{}
-            << testData.m_newUserOwnNotes << testData.m_updatedUserOwnNotes
-            << testData.m_newLinkedNotebooksNotes
-            << testData.m_updatedLinkedNotebooksNotes)));
-
-    if (!testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putNote)
-            .WillRepeatedly([&](const qevercloud::Note & note) {
-                dataPutToLocalStorage.m_notes << note;
-                return threading::makeReadyFuture();
-            });
-    }
+    setupLocalStorageMock(testData, m_mockLocalStorage, dataPutToLocalStorage);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
-
-    struct Callback : public ISender::ICallback
-    {
-        void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus) override
-        {
-            checkSendStatusUpdate(m_userOwnSendStatus, sendStatus);
-            m_userOwnSendStatus = sendStatus;
-        }
-
-        void onLinkedNotebookSendStatusUpdate(
-            const qevercloud::Guid & linkedNotebookGuid,
-            ISendStatusPtr sendStatus) override
-        {
-            auto & linkedNotebookSendStatus =
-                m_linkedNotebookSendStatuses[linkedNotebookGuid];
-
-            checkSendStatusUpdate(linkedNotebookSendStatus, sendStatus);
-            linkedNotebookSendStatus = sendStatus;
-        }
-
-        ISendStatusPtr m_userOwnSendStatus;
-        QHash<qevercloud::Guid, ISendStatusPtr> m_linkedNotebookSendStatuses;
-    };
 
     const auto callback = std::make_shared<Callback>();
 
@@ -2723,103 +2517,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
         EXPECT_FALSE(sendStatus->needToRepeatIncrementalSync());
     }
 
-    // Checking sent data vs data sent to local storage
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendSavedSearches.isEmpty());
-    }
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_savedSearches.size(),
-        sentData.m_sentSavedSearches.size());
-
-    if (!testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty() ||
-        !testData.m_newLinkedNotebooksTags.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksTags.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendTags.isEmpty());
-    }
-
-    ASSERT_EQ(dataPutToLocalStorage.m_tags.size(), sentData.m_sentTags.size());
-
-    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedLinkedNotebooks.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendNotebooks.isEmpty());
-    }
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_notebooks.size(),
-        sentData.m_sentNotebooks.size());
-
-    if (!testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendNotes.isEmpty());
-    }
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_notes.size(), sentData.m_sentNotes.size());
-
-    for (const auto & savedSearch:
-         qAsConst(dataPutToLocalStorage.m_savedSearches)) {
-        const auto it = std::find_if(
-            sentData.m_sentSavedSearches.constBegin(),
-            sentData.m_sentSavedSearches.constEnd(),
-            [&](const qevercloud::SavedSearch & s) {
-                return s.localId() == savedSearch.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentSavedSearches.constEnd());
-        EXPECT_EQ(*it, savedSearch);
-    }
-
-    for (const auto & notebook: qAsConst(dataPutToLocalStorage.m_notebooks)) {
-        const auto it = std::find_if(
-            sentData.m_sentNotebooks.constBegin(),
-            sentData.m_sentNotebooks.constEnd(),
-            [&](const qevercloud::Notebook & n) {
-                return n.localId() == notebook.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentNotebooks.constEnd());
-        EXPECT_EQ(*it, notebook);
-    }
-
-    for (const auto & note: qAsConst(dataPutToLocalStorage.m_notes)) {
-        const auto it = std::find_if(
-            sentData.m_sentNotes.constBegin(), sentData.m_sentNotes.constEnd(),
-            [&](const qevercloud::Note & n) {
-                return n.localId() == note.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentNotes.constEnd());
-
-        // If note contains tag local ids corresponding to tags which failed
-        // to be sent, its locally modified flag would stay enabled so that
-        // during the next sync sending the note would be attempted again
-        if (note.isLocallyModified()) {
-            qevercloud::Note noteCopy{note};
-            noteCopy.setLocallyModified(false);
-            EXPECT_EQ(*it, noteCopy);
-        }
-        else {
-            EXPECT_EQ(*it, note);
-        }
-    }
-
-    for (const auto & tag: qAsConst(dataPutToLocalStorage.m_tags)) {
-        const auto it = std::find_if(
-            sentData.m_sentTags.constBegin(), sentData.m_sentTags.constEnd(),
-            [&](const qevercloud::Tag & t) {
-                return t.localId() == tag.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentTags.constEnd());
-        EXPECT_EQ(*it, tag);
-    }
+    checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
 }
 
 enum class StopSynchronizationReason
@@ -2932,17 +2630,6 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         qevercloud::newRetryPolicy());
 
     SentData sentData;
-
-    const std::optional<QString> nullLinkedNotebookGuid;
-
-    struct DataPutToLocalStorage
-    {
-        QList<qevercloud::SavedSearch> m_savedSearches;
-        QList<qevercloud::Tag> m_tags;
-        QList<qevercloud::Notebook> m_notebooks;
-        QList<qevercloud::Note> m_notes;
-    };
-
     DataPutToLocalStorage dataPutToLocalStorage;
 
     const auto & errorTestData = GetParam();
@@ -2982,352 +2669,35 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         return t;
     }();
 
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-    QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
-    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
-        linkedNotebookLastSyncTimes[linkedNotebook.guid().value()] = now;
-    }
-
-    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
-        .WillOnce(Return(std::make_shared<SyncState>(
-            testData.m_maxUserOwnUsn, now, testData.m_maxLinkedNotebookUsns,
-            linkedNotebookLastSyncTimes)));
+    setupSyncStateStorageMock(testData, m_account, m_mockSyncStateStorage);
 
     const std::shared_ptr<mocks::qevercloud::MockINoteStore>
         mockUserOwnNoteStore =
             std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
+    const std::optional<QString> nullLinkedNotebookGuid;
     EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty() ||
-        !testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty())
-    {
-        setupUserOwnNoteStoreMock(
-            testData, mockUserOwnNoteStore, sentData, noteStoreBehaviour);
-
-        if (!testData.m_newSavedSearches.isEmpty() ||
-            !testData.m_updatedSavedSearches.isEmpty() ||
-            !testData.m_newUserOwnNotebooks.isEmpty() ||
-            !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-            !testData.m_newUserOwnTags.isEmpty() ||
-            !testData.m_updatedUserOwnTags.isEmpty())
-        {
-            EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
-                .WillRepeatedly(Return(
-                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                        mockUserOwnNoteStore)));
-        }
-
-        if (!testData.m_newUserOwnNotes.isEmpty() ||
-            !testData.m_updatedUserOwnNotes.isEmpty())
-        {
-            EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
-                .WillRepeatedly(Return(
-                    threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                        mockUserOwnNoteStore)));
-        }
-    }
 
     QHash<qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>>
         linkedNotebookNoteStores;
 
+    setupNoteStoreProviderMock(
+        testData, m_mockNoteStoreProvider, mockUserOwnNoteStore,
+        linkedNotebookNoteStores);
+
+    setupUserOwnNoteStoreMock(
+        testData, mockUserOwnNoteStore, sentData, noteStoreBehaviour);
+
     setupLinkedNotebookNoteStoreMocks(
         testData, linkedNotebookNoteStores, sentData, noteStoreBehaviour);
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, linkedNotebookNoteStore)
-        .WillRepeatedly(
-            [&](const qevercloud::Guid & guid,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
-                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
-                    retryPolicy) {
-                const auto nit = linkedNotebookNoteStores.constFind(guid);
-                if (Q_UNLIKELY(nit == linkedNotebookNoteStores.constEnd())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::INoteStorePtr>(
-                        RuntimeError{ErrorString{QStringLiteral(
-                            "Linked notebook note store not found")}});
-                }
-
-                EXPECT_CALL(*nit.value(), linkedNotebookGuid)
-                    .WillRepeatedly(
-                        [guid =
-                             std::make_shared<std::optional<qevercloud::Guid>>(
-                                 guid)]()
-                            -> const std::optional<qevercloud::Guid> & {
-                            return *guid;
-                        });
-
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    nit.value());
-            });
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
-        .WillRepeatedly([&](const QString & notebookLocalId) {
-            const auto findNotebook =
-                [&notebookLocalId](
-                    const QList<qevercloud::Notebook> & notebooks)
-                -> std::optional<qevercloud::Notebook> {
-                const auto it = std::find_if(
-                    notebooks.constBegin(), notebooks.constEnd(),
-                    [&](const qevercloud::Notebook & notebook) {
-                        return notebook.localId() == notebookLocalId;
-                    });
-                if (it != notebooks.constEnd()) {
-                    return *it;
-                }
-
-                return std::nullopt;
-            };
-
-            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
-            }
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
-            }
-
-            if (notebook) {
-                return threading::makeReadyFuture<
-                    std::optional<qevercloud::Notebook>>(std::move(notebook));
-            }
-
-            return threading::makeReadyFuture<
-                std::optional<qevercloud::Notebook>>(
-                qevercloud::NotebookBuilder{}
-                    .setLocalId(notebookLocalId)
-                    .setGuid(UidGenerator::Generate())
-                    .setName(QStringLiteral("Notebook"))
-                    .setUpdateSequenceNum(1)
-                    .build());
-        });
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
-        .WillRepeatedly([&](const QString & notebookLocalId,
-                            [[maybe_unused]] const qevercloud::
-                                IRequestContextPtr & ctx,
-                            [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
-                                retryPolicy) {
-            const auto findNotebook =
-                [&](const QList<qevercloud::Notebook> & notebooks)
-                -> std::optional<qevercloud::Notebook> {
-                const auto it = std::find_if(
-                    notebooks.constBegin(), notebooks.constEnd(),
-                    [&](const qevercloud::Notebook & notebook) {
-                        return notebook.localId() == notebookLocalId;
-                    });
-                if (it != notebooks.constEnd()) {
-                    return *it;
-                }
-
-                return std::nullopt;
-            };
-
-            auto notebook = findNotebook(testData.m_newUserOwnNotebooks);
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedUserOwnNotebooks);
-            }
-
-            if (!notebook) {
-                notebook = findNotebook(testData.m_updatedLinkedNotebooks);
-            }
-
-            if (!notebook) {
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore);
-            }
-
-            if (!notebook->linkedNotebookGuid()) {
-                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                    mockUserOwnNoteStore);
-            }
-
-            const auto it = linkedNotebookNoteStores.constFind(
-                *notebook->linkedNotebookGuid());
-            if (Q_UNLIKELY(it == linkedNotebookNoteStores.constEnd())) {
-                return threading::makeExceptionalFuture<
-                    qevercloud::INoteStorePtr>(
-                    RuntimeError{ErrorString{QStringLiteral(
-                        "Note store for linked notebook not found")}});
-            }
-
-            EXPECT_CALL(*it.value(), linkedNotebookGuid)
-                .WillRepeatedly(
-                    [guid = std::make_shared<std::optional<qevercloud::Guid>>(
-                         it.key())]()
-                        -> const std::optional<qevercloud::Guid> & {
-                        return *guid;
-                    });
-
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                it.value());
-        });
-
-    const auto listSavedSearchesOptions = [] {
-        local_storage::ILocalStorage::ListSavedSearchesOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, listSavedSearches(listSavedSearchesOptions))
-        .Times(AtMost(1))
-        .WillRepeatedly(
-            Return(threading::makeReadyFuture<QList<qevercloud::SavedSearch>>(
-                QList<qevercloud::SavedSearch>{}
-                << testData.m_newSavedSearches
-                << testData.m_updatedSavedSearches)));
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putSavedSearch)
-            .WillRepeatedly([&](const qevercloud::SavedSearch & savedSearch) {
-                dataPutToLocalStorage.m_savedSearches << savedSearch;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listTagsOptions = [] {
-        local_storage::ILocalStorage::ListTagsOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(*m_mockLocalStorage, listTags(listTagsOptions))
-        .Times(AtMost(1))
-        .WillRepeatedly(
-            Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
-                QList<qevercloud::Tag>{}
-                << testData.m_newUserOwnTags << testData.m_updatedUserOwnTags
-                << testData.m_newLinkedNotebooksTags
-                << testData.m_updatedLinkedNotebooksTags)));
-
-    if (!testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty() ||
-        !testData.m_newLinkedNotebooksTags.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksTags.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putTag)
-            .WillRepeatedly([&](const qevercloud::Tag & tag) {
-                dataPutToLocalStorage.m_tags << tag;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listNotebooksOptions = [] {
-        local_storage::ILocalStorage::ListNotebooksOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    EXPECT_CALL(*m_mockLocalStorage, listNotebooks(listNotebooksOptions))
-        .Times(AtMost(1))
-        .WillRepeatedly([&]([[maybe_unused]] const local_storage::
-                                ILocalStorage::ListNotebooksOptions & o) {
-            QList<qevercloud::Notebook> notebooks;
-            notebooks << testData.m_newUserOwnNotebooks
-                      << testData.m_updatedUserOwnNotebooks;
-
-            if (errorTestData.flag !=
-                    SenderTestFlag::WithNewLinkedNotebooksNotes &&
-                errorTestData.flag !=
-                    SenderTestFlag::WithUpdatedLinkedNotebooksNotes &&
-                errorTestData.flag !=
-                    SenderTestFlag::WithNewLinkedNotebooksTags &&
-                errorTestData.flag !=
-                    SenderTestFlag::WithUpdatedLinkedNotebooksTags)
-            {
-                notebooks << testData.m_updatedLinkedNotebooks;
-            }
-
-            return threading::makeReadyFuture<QList<qevercloud::Notebook>>(
-                std::move(notebooks));
-        });
-
-    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedLinkedNotebooks.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putNotebook)
-            .WillRepeatedly([&](const qevercloud::Notebook & notebook) {
-                dataPutToLocalStorage.m_notebooks << notebook;
-                return threading::makeReadyFuture();
-            });
-    }
-
-    const auto listNotesOptions = [] {
-        local_storage::ILocalStorage::ListNotesOptions options;
-        options.m_filters.m_locallyModifiedFilter =
-            local_storage::ILocalStorage::ListObjectsFilter::Include;
-        return options;
-    }();
-
-    const auto fetchNoteOptions =
-        local_storage::ILocalStorage::FetchNoteOptions{} |
-        local_storage::ILocalStorage::FetchNoteOption::WithResourceMetadata |
-        local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, listNotes(fetchNoteOptions, listNotesOptions))
-        .Times(AtMost(1))
-        .WillRepeatedly(
-            Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
-                QList<qevercloud::Note>{}
-                << testData.m_newUserOwnNotes << testData.m_updatedUserOwnNotes
-                << testData.m_newLinkedNotebooksNotes
-                << testData.m_updatedLinkedNotebooksNotes)));
-
-    if (!testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
-    {
-        EXPECT_CALL(*m_mockLocalStorage, putNote)
-            .WillRepeatedly([&](const qevercloud::Note & note) {
-                dataPutToLocalStorage.m_notes << note;
-                return threading::makeReadyFuture();
-            });
-    }
+    setupLocalStorageMock(
+        testData, m_mockLocalStorage, dataPutToLocalStorage,
+        errorTestData.flag);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
-
-    struct Callback : public ISender::ICallback
-    {
-        void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus) override
-        {
-            checkSendStatusUpdate(m_userOwnSendStatus, sendStatus);
-            m_userOwnSendStatus = sendStatus;
-        }
-
-        void onLinkedNotebookSendStatusUpdate(
-            const qevercloud::Guid & linkedNotebookGuid,
-            ISendStatusPtr sendStatus) override
-        {
-            auto & linkedNotebookSendStatus =
-                m_linkedNotebookSendStatuses[linkedNotebookGuid];
-
-            checkSendStatusUpdate(linkedNotebookSendStatus, sendStatus);
-            linkedNotebookSendStatus = sendStatus;
-        }
-
-        ISendStatusPtr m_userOwnSendStatus;
-        QHash<qevercloud::Guid, ISendStatusPtr> m_linkedNotebookSendStatuses;
-    };
 
     const auto callback = std::make_shared<Callback>();
 
@@ -3610,108 +2980,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         break;
     }
 
-    // Checking sent data vs data sent to local storage
-
-    if (!testData.m_newSavedSearches.isEmpty() ||
-        !testData.m_updatedSavedSearches.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendSavedSearches.isEmpty());
-    }
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_savedSearches.size(),
-        sentData.m_sentSavedSearches.size());
-
-    if (!testData.m_newUserOwnTags.isEmpty() ||
-        !testData.m_updatedUserOwnTags.isEmpty() ||
-        !testData.m_newLinkedNotebooksTags.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksTags.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendTags.isEmpty());
-    }
-
-    ASSERT_EQ(dataPutToLocalStorage.m_tags.size(), sentData.m_sentTags.size());
-
-    if (!testData.m_newUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedUserOwnNotebooks.isEmpty() ||
-        !testData.m_updatedLinkedNotebooks.isEmpty())
-    {
-        if (errorTestData.flag == SenderTestFlag::WithNewUserOwnNotebooks ||
-            errorTestData.flag == SenderTestFlag::WithUpdatedUserOwnNotebooks ||
-            errorTestData.flag == SenderTestFlag::WithUpdatedLinkedNotebooks)
-        {
-            EXPECT_FALSE(sentData.m_failedToSendNotebooks.isEmpty());
-        }
-    }
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_notebooks.size(),
-        sentData.m_sentNotebooks.size());
-
-    if (!testData.m_newUserOwnNotes.isEmpty() ||
-        !testData.m_updatedUserOwnNotes.isEmpty() ||
-        !testData.m_newLinkedNotebooksNotes.isEmpty() ||
-        !testData.m_updatedLinkedNotebooksNotes.isEmpty())
-    {
-        EXPECT_FALSE(sentData.m_failedToSendNotes.isEmpty());
-    }
-
-    ASSERT_EQ(
-        dataPutToLocalStorage.m_notes.size(), sentData.m_sentNotes.size());
-
-    for (const auto & savedSearch:
-         qAsConst(dataPutToLocalStorage.m_savedSearches)) {
-        const auto it = std::find_if(
-            sentData.m_sentSavedSearches.constBegin(),
-            sentData.m_sentSavedSearches.constEnd(),
-            [&](const qevercloud::SavedSearch & s) {
-                return s.localId() == savedSearch.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentSavedSearches.constEnd());
-        EXPECT_EQ(*it, savedSearch);
-    }
-
-    for (const auto & notebook: qAsConst(dataPutToLocalStorage.m_notebooks)) {
-        const auto it = std::find_if(
-            sentData.m_sentNotebooks.constBegin(),
-            sentData.m_sentNotebooks.constEnd(),
-            [&](const qevercloud::Notebook & n) {
-                return n.localId() == notebook.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentNotebooks.constEnd());
-        EXPECT_EQ(*it, notebook);
-    }
-
-    for (const auto & note: qAsConst(dataPutToLocalStorage.m_notes)) {
-        const auto it = std::find_if(
-            sentData.m_sentNotes.constBegin(), sentData.m_sentNotes.constEnd(),
-            [&](const qevercloud::Note & n) {
-                return n.localId() == note.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentNotes.constEnd());
-
-        // If note contains tag local ids corresponding to tags which failed
-        // to be sent, its locally modified flag would stay enabled so that
-        // during the next sync sending the note would be attempted again
-        if (note.isLocallyModified()) {
-            qevercloud::Note noteCopy{note};
-            noteCopy.setLocallyModified(false);
-            EXPECT_EQ(*it, noteCopy);
-        }
-        else {
-            EXPECT_EQ(*it, note);
-        }
-    }
-
-    for (const auto & tag: qAsConst(dataPutToLocalStorage.m_tags)) {
-        const auto it = std::find_if(
-            sentData.m_sentTags.constBegin(), sentData.m_sentTags.constEnd(),
-            [&](const qevercloud::Tag & t) {
-                return t.localId() == tag.localId();
-            });
-        ASSERT_NE(it, sentData.m_sentTags.constEnd());
-        EXPECT_EQ(*it, tag);
-    }
+    checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
 }
 
 } // namespace quentier::synchronization::tests
