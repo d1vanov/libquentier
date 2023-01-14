@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -79,9 +79,8 @@ Patch2To3::Patch2To3(
     m_account{std::move(account)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::patches::2_to_3::Patch2To3",
-            "Patch2To3 ctor: account is empty")}};
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("Patch2To3 ctor: account is empty")}};
     }
 }
 
@@ -184,9 +183,8 @@ bool Patch2To3::applySync(
 
     ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade2To3Persistence};
 
-    ErrorString errorPrefix{
-        QT_TR_NOOP("failed to upgrade local storage "
-                   "from version 2 to version 3")};
+    ErrorString errorPrefix{QStringLiteral(
+        "failed to upgrade local storage from version 2 to version 3")};
 
     errorDescription.clear();
 
@@ -208,8 +206,8 @@ bool Patch2To3::applySync(
 
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::patches::2_to_3",
-            QT_TR_NOOP("Cannot create ResourceDataBodyVersionIds table "
-                       "in the local storage database"),
+            QStringLiteral("Cannot create ResourceDataBodyVersionIds table "
+                           "in the local storage database"),
             false);
 
         res = query.exec(QStringLiteral(
@@ -219,7 +217,7 @@ bool Patch2To3::applySync(
 
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::tables_initializer",
-            QT_TR_NOOP(
+            QStringLiteral(
                 "Cannot create ResourceAlternateDataBodyVersionIds table "
                 "in the local storage database"),
             false);
@@ -227,7 +225,7 @@ bool Patch2To3::applySync(
         res = transaction.commit();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::tables_initializer",
-            QT_TR_NOOP(
+            QStringLiteral(
                 "Cannot create tables for resource data and alternate data "
                 "body version ids in the local storage database: failed to "
                 "commit transaction"),
@@ -339,7 +337,7 @@ bool Patch2To3::applySync(
                     !resourceLocalIdDir.mkpath(
                         resourceLocalIdDir.absolutePath()))
                 {
-                    errorDescription.setBase(QT_TR_NOOP(
+                    errorDescription.setBase(QStringLiteral(
                         "Failed to create dir for resource body files"));
                     errorDescription.details() =
                         resourceBodyFileInfo.absoluteFilePath();
@@ -356,7 +354,7 @@ bool Patch2To3::applySync(
                     resourceLocalIdDir.absoluteFilePath(versionId) +
                     QStringLiteral(".dat"));
                 if (!res) {
-                    errorDescription.setBase(QT_TR_NOOP(
+                    errorDescription.setBase(QStringLiteral(
                         "Failed to move resource body file"));
                     errorDescription.details() =
                         resourceBodyFileInfo.absoluteFilePath();
@@ -448,7 +446,7 @@ bool Patch2To3::applySync(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::patches::2_to_3",
-        QT_TR_NOOP(
+        QStringLiteral(
             "failed to execute SQL query increasing local storage version"),
         false);
 
@@ -554,7 +552,7 @@ std::optional<QHash<QString, Patch2To3::ResourceVersionIds>>
         bool res = query.exec(queryString);
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::patches::2_to_3",
-            QT_TR_NOOP(
+            QStringLiteral(
                 "Cannot select resource data body version ids from the local "
                 "storage database"),
             std::nullopt);
@@ -579,7 +577,7 @@ std::optional<QHash<QString, Patch2To3::ResourceVersionIds>>
         bool res = query.exec(queryString);
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::patches::2_to_3",
-            QT_TR_NOOP(
+            QStringLiteral(
                 "Cannot select resource alternate data body version ids from "
                 "the local storage database"),
             std::nullopt);
@@ -619,8 +617,9 @@ bool Patch2To3::putVersionIdsToDatabase(
             bool res = query.prepare(queryString);
             ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::2_to_3",
-                QT_TR_NOOP("Cannot put resource body version id to the local "
-                           "storage database: failed to prepare query"),
+                QStringLiteral(
+                    "Cannot put resource body version id to the local "
+                    "storage database: failed to prepare query"),
                 false);
 
             query.bindValue(
@@ -633,8 +632,9 @@ bool Patch2To3::putVersionIdsToDatabase(
             res = query.exec();
             ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::2_to_3",
-                QT_TR_NOOP("Cannot put resource body version id to the local "
-                           "storage database"),
+                QStringLiteral(
+                    "Cannot put resource body version id to the local "
+                    "storage database"),
                 false);
         }
 
@@ -648,7 +648,7 @@ bool Patch2To3::putVersionIdsToDatabase(
             bool res = query.prepare(queryString);
             ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::2_to_3",
-                QT_TR_NOOP(
+                QStringLiteral(
                     "Cannot put resource alternate body version id to "
                     "the local storage database: failed to prepare query"),
                 false);
@@ -663,8 +663,9 @@ bool Patch2To3::putVersionIdsToDatabase(
             res = query.exec();
             ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::2_to_3",
-                QT_TR_NOOP("Cannot put resource alternate body version id to "
-                           "the local storage database"),
+                QStringLiteral(
+                    "Cannot put resource alternate body version id to "
+                    "the local storage database"),
                 false);
         }
     }
@@ -672,8 +673,9 @@ bool Patch2To3::putVersionIdsToDatabase(
     const bool res = transaction.commit();
     ENSURE_DB_REQUEST_RETURN(
         res, database, "local_storage::sql::patches::2_to_3",
-        QT_TR_NOOP("Cannot put resource body version ids to "
-                   "the local storage database: failed to commit transaction"),
+        QStringLiteral(
+            "Cannot put resource body version ids to "
+            "the local storage database: failed to commit transaction"),
         false);
 
     return true;

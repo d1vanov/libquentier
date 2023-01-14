@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,17 +40,15 @@ bool checkLinkedNotebook(
     ErrorString & errorDescription) noexcept
 {
     if (!linkedNotebook.guid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Linked notebook's guid is not set"));
+        errorDescription.setBase(
+            QStringLiteral("Linked notebook's guid is not set"));
 
         return false;
     }
 
     if (!checkGuid(*linkedNotebook.guid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Linked notebook's guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Linked notebook's guid is invalid"));
 
         errorDescription.details() = *linkedNotebook.guid();
         return false;
@@ -58,9 +56,8 @@ bool checkLinkedNotebook(
 
     if (linkedNotebook.shareName()) {
         if (linkedNotebook.shareName()->isEmpty()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "Linked notebook's custom name is empty"));
+            errorDescription.setBase(
+                QStringLiteral("Linked notebook's custom name is empty"));
 
             return false;
         }
@@ -78,8 +75,7 @@ bool checkLinkedNotebook(
         }
 
         if (!nonSpaceCharFound) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "Linked notebook's custom name must contain non-whitespace "
                 "characters"));
 
@@ -94,16 +90,14 @@ bool checkNote(
     const qevercloud::Note & note, ErrorString & errorDescription) noexcept
 {
     if (note.localId().isEmpty() && !note.guid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Both note's local id and guid are empty"));
+        errorDescription.setBase(
+            QStringLiteral("Both note's local id and guid are empty"));
 
         return false;
     }
 
     if (note.guid() && !checkGuid(*note.guid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Note's guid is invalid"));
+        errorDescription.setBase(QStringLiteral("Note's guid is invalid"));
 
         errorDescription.details() = *note.guid();
         return false;
@@ -112,9 +106,8 @@ bool checkNote(
     if (note.updateSequenceNum() &&
         !checkUpdateSequenceNumber(*note.updateSequenceNum()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Note's update sequence number is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Note's update sequence number is invalid"));
 
         errorDescription.details() = QString::number(*note.updateSequenceNum());
 
@@ -131,9 +124,8 @@ bool checkNote(
         if ((contentSize < qevercloud::EDAM_NOTE_CONTENT_LEN_MIN) ||
             (contentSize > qevercloud::EDAM_NOTE_CONTENT_LEN_MAX))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "Note's content length is invalid"));
+            errorDescription.setBase(
+                QStringLiteral("Note's content length is invalid"));
 
             errorDescription.details() = QString::number(contentSize);
             return false;
@@ -144,9 +136,8 @@ bool checkNote(
         int contentHashSize = note.contentHash()->size();
 
         if (contentHashSize != qevercloud::EDAM_HASH_LEN) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "Note's content hash size is invalid"));
+            errorDescription.setBase(
+                QStringLiteral("Note's content hash size is invalid"));
 
             errorDescription.details() = QString::number(contentHashSize);
             return false;
@@ -154,8 +145,8 @@ bool checkNote(
     }
 
     if (note.notebookGuid() && !checkGuid(*note.notebookGuid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Note's notebook guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Note's notebook guid is invalid"));
 
         errorDescription.details() = *note.notebookGuid();
         return false;
@@ -165,8 +156,7 @@ bool checkNote(
         int numTagGuids = note.tagGuids()->size();
 
         if (numTagGuids > qevercloud::EDAM_NOTE_TAGS_MAX) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks", "Note has too many tags"));
+            errorDescription.setBase(QStringLiteral("Note has too many tags"));
 
             errorDescription.details() = QString::number(numTagGuids);
             return false;
@@ -177,8 +167,8 @@ bool checkNote(
         int numResources = note.resources()->size();
 
         if (numResources > qevercloud::EDAM_NOTE_RESOURCES_MAX) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks", "Note has too many resources"));
+            errorDescription.setBase(
+                QStringLiteral("Note has too many resources"));
 
             errorDescription.details() =
                 QString::number(qevercloud::EDAM_NOTE_RESOURCES_MAX);
@@ -190,9 +180,8 @@ bool checkNote(
     if (note.attributes()) {
         const auto & attributes = *note.attributes();
 
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Note attributes field has invalid size"));
+        ErrorString error{
+            QStringLiteral("Note attributes field has invalid size")};
 
 #define CHECK_NOTE_ATTRIBUTE(name)                                             \
     if (attributes.name()) {                                                   \
@@ -220,8 +209,7 @@ bool checkNote(
                 (contentClassSize >
                  qevercloud::EDAM_NOTE_CONTENT_CLASS_LEN_MAX))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Note attributes' content class has invalid size"));
 
                 errorDescription.details() = QString::number(contentClassSize);
@@ -240,8 +228,7 @@ bool checkNote(
                         (keySize >
                          qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX))
                     {
-                        errorDescription.setBase(QT_TRANSLATE_NOOP(
-                            "local_storage:sql:TypeChecks",
+                        errorDescription.setBase(QStringLiteral(
                             "Note's attributes application data "
                             "has invalid key (in keysOnly part)"));
 
@@ -262,8 +249,7 @@ bool checkNote(
                         (keySize >
                          qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX))
                     {
-                        errorDescription.setBase(QT_TRANSLATE_NOOP(
-                            "local_storage:sql:TypeChecks",
+                        errorDescription.setBase(QStringLiteral(
                             "Note's attributes application data "
                             "has invalid key (in fullMap part)"));
 
@@ -277,10 +263,9 @@ bool checkNote(
                         (valueSize >
                          qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX))
                     {
-                        errorDescription.setBase(QT_TRANSLATE_NOOP(
-                            "local_storage:sql:TypeChecks",
-                            "Note's attributes application data "
-                            "has invalid value size"));
+                        errorDescription.setBase(
+                            QStringLiteral("Note's attributes application data "
+                                           "has invalid value size"));
 
                         errorDescription.details() = it.value();
                         return false;
@@ -289,10 +274,9 @@ bool checkNote(
                     int sumSize = keySize + valueSize;
                     if (sumSize >
                         qevercloud::EDAM_APPLICATIONDATA_ENTRY_LEN_MAX) {
-                        errorDescription.setBase(QT_TRANSLATE_NOOP(
-                            "local_storage:sql:TypeChecks",
-                            "Note's attributes application data "
-                            "has invalid sum entry size"));
+                        errorDescription.setBase(
+                            QStringLiteral("Note's attributes application data "
+                                           "has invalid sum entry size"));
 
                         errorDescription.details() = QString::number(sumSize);
                         return false;
@@ -310,15 +294,13 @@ bool checkNotebook(
     ErrorString & errorDescription) noexcept
 {
     if (notebook.localId().isEmpty() && !notebook.guid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Both notebook's local id and guid are not set"));
+        errorDescription.setBase(
+            QStringLiteral("Both notebook's local id and guid are not set"));
         return false;
     }
 
     if (notebook.guid() && !checkGuid(*notebook.guid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Notebook's guid is invalid"));
+        errorDescription.setBase(QStringLiteral("Notebook's guid is invalid"));
 
         errorDescription.details() = *notebook.guid();
         return false;
@@ -338,9 +320,8 @@ bool checkNotebook(
     }();
 
     if (!linkedNotebookGuid.isEmpty() && !checkGuid(linkedNotebookGuid)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Notebook's linked notebook guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Notebook's linked notebook guid is invalid"));
 
         errorDescription.details() = linkedNotebookGuid;
         return false;
@@ -349,9 +330,8 @@ bool checkNotebook(
     if (notebook.updateSequenceNum() &&
         !checkUpdateSequenceNumber(*notebook.updateSequenceNum()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Notebook's update sequence number is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Notebook's update sequence number is invalid"));
 
         errorDescription.details() =
             QString::number(*notebook.updateSequenceNum());
@@ -369,8 +349,7 @@ bool checkNotebook(
         for (const auto & sharedNotebook:
              ::qAsConst(*notebook.sharedNotebooks())) {
             if (!sharedNotebook.id()) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Notebook has shared notebook without share id set"));
 
                 return false;
@@ -378,8 +357,7 @@ bool checkNotebook(
 
             if (sharedNotebook.notebookGuid() &&
                 !checkGuid(*sharedNotebook.notebookGuid())) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Notebook has shared notebook with invalid guid"));
 
                 errorDescription.details() = *sharedNotebook.notebookGuid();
@@ -398,8 +376,7 @@ bool checkNotebook(
                 (businessNotebookDescriptionSize >
                  qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MAX))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Description for business notebook has invalid size"));
 
                 errorDescription.details() =
@@ -418,16 +395,14 @@ bool checkResource(
     ErrorString & errorDescription) noexcept
 {
     if (resource.localId().isEmpty() && !resource.guid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Both resource's local id and guid are empty"));
+        errorDescription.setBase(
+            QStringLiteral("Both resource's local id and guid are empty"));
 
         return false;
     }
 
     if (resource.guid() && !checkGuid(*resource.guid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Resource's guid is invalid"));
+        errorDescription.setBase(QStringLiteral("Resource's guid is invalid"));
 
         errorDescription.details() = *resource.guid();
         return false;
@@ -436,9 +411,8 @@ bool checkResource(
     if (resource.updateSequenceNum() &&
         !checkUpdateSequenceNumber(*resource.updateSequenceNum()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Resource's update sequence number is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Resource's update sequence number is invalid"));
 
         errorDescription.details() =
             QString::number(*resource.updateSequenceNum());
@@ -447,8 +421,8 @@ bool checkResource(
     }
 
     if (resource.noteGuid() && !checkGuid(*resource.noteGuid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Resource's note guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Resource's note guid is invalid"));
 
         errorDescription.details() = *resource.noteGuid();
         return false;
@@ -459,9 +433,8 @@ bool checkResource(
             static_cast<qint32>(resource.data()->bodyHash()->size());
 
         if (hashSize != qevercloud::EDAM_HASH_LEN) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "Resource's data hash has invalid size"));
+            errorDescription.setBase(
+                QStringLiteral("Resource's data hash has invalid size"));
 
             errorDescription.details() =
                 QString::fromLocal8Bit(*resource.data()->bodyHash());
@@ -475,8 +448,7 @@ bool checkResource(
             static_cast<qint32>(resource.recognition()->bodyHash()->size());
 
         if (hashSize != qevercloud::EDAM_HASH_LEN) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "Resource's recognition data hash has invalid size"));
 
             errorDescription.details() =
@@ -491,8 +463,7 @@ bool checkResource(
             static_cast<qint32>(resource.alternateData()->bodyHash()->size());
 
         if (hashSize != qevercloud::EDAM_HASH_LEN) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "Resource's alternate data hash has invalid size"));
 
             errorDescription.details() =
@@ -507,9 +478,8 @@ bool checkResource(
         if ((mimeSize < qevercloud::EDAM_MIME_LEN_MIN) ||
             (mimeSize > qevercloud::EDAM_MIME_LEN_MAX))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "Resource's mime type has invalid length"));
+            errorDescription.setBase(
+                QStringLiteral("Resource's mime type has invalid length"));
 
             errorDescription.details() = *resource.mime();
             return false;
@@ -524,8 +494,7 @@ bool checkResource(
             if ((sourceURLSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                 (sourceURLSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Resource's sourceURL attribute has invalid length"));
 
                 errorDescription.details() =
@@ -542,8 +511,7 @@ bool checkResource(
             if ((cameraMakeSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                 (cameraMakeSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Resource's cameraMake attribute has invalid length"));
 
                 errorDescription.details() =
@@ -560,8 +528,7 @@ bool checkResource(
             if ((cameraModelSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                 (cameraModelSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "Resource's cameraModel attribute has invalid length"));
 
                 errorDescription.details() =
@@ -580,16 +547,15 @@ bool checkSavedSearch(
     ErrorString & errorDescription) noexcept
 {
     if (savedSearch.localId().isEmpty() && !savedSearch.guid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Both saved search's local id and guid are empty"));
+        errorDescription.setBase(
+            QStringLiteral("Both saved search's local id and guid are empty"));
 
         return false;
     }
 
     if (savedSearch.guid() && !checkGuid(*savedSearch.guid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Saved search's guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Saved search's guid is invalid"));
 
         errorDescription.details() = *savedSearch.guid();
         return false;
@@ -604,9 +570,8 @@ bool checkSavedSearch(
     if (savedSearch.updateSequenceNum() &&
         !checkUpdateSequenceNumber(*savedSearch.updateSequenceNum()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Saved search's update sequence number is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Saved search's update sequence number is invalid"));
 
         errorDescription.details() =
             QString::number(*savedSearch.updateSequenceNum());
@@ -621,8 +586,7 @@ bool checkSavedSearch(
         if ((querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
             (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "Saved search's query exceeds the allowed size"));
 
             errorDescription.details() = query;
@@ -633,9 +597,8 @@ bool checkSavedSearch(
     if (savedSearch.format() &&
         *savedSearch.format() != qevercloud::QueryFormat::USER)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Saved search has unsupported query format"));
+        errorDescription.setBase(
+            QStringLiteral("Saved search has unsupported query format"));
 
         errorDescription.details() = ToString(*savedSearch.format());
         return false;
@@ -648,16 +611,14 @@ bool checkTag(
     const qevercloud::Tag & tag, ErrorString & errorDescription) noexcept
 {
     if (tag.localId().isEmpty() && !tag.guid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Both tag's local id and guid are empty"));
+        errorDescription.setBase(
+            QStringLiteral("Both tag's local id and guid are empty"));
 
         return false;
     }
 
     if (tag.guid() && !checkGuid(*tag.guid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Tag's guid is invalid"));
+        errorDescription.setBase(QStringLiteral("Tag's guid is invalid"));
 
         errorDescription.details() = *tag.guid();
         return false;
@@ -666,9 +627,8 @@ bool checkTag(
     const QString linkedNotebookGuid =
         tag.linkedNotebookGuid().value_or(QString{});
     if (!linkedNotebookGuid.isEmpty() && !checkGuid(linkedNotebookGuid)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Tag's linked notebook guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Tag's linked notebook guid is invalid"));
 
         errorDescription.details() = linkedNotebookGuid;
         return false;
@@ -681,17 +641,16 @@ bool checkTag(
     if (tag.updateSequenceNum() &&
         !checkUpdateSequenceNumber(*tag.updateSequenceNum()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks",
-            "Tag's update sequence number is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Tag's update sequence number is invalid"));
 
         errorDescription.details() = QString::number(*tag.updateSequenceNum());
         return false;
     }
 
     if (tag.parentGuid() && !checkGuid(*tag.parentGuid())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "Tag's parent guid is invalid"));
+        errorDescription.setBase(
+            QStringLiteral("Tag's parent guid is invalid"));
 
         errorDescription.details() = *tag.parentGuid();
         return false;
@@ -704,8 +663,7 @@ bool checkUser(
     const qevercloud::User & user, ErrorString & errorDescription) noexcept
 {
     if (!user.id()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:sql:TypeChecks", "User id is not set"));
+        errorDescription.setBase(QStringLiteral("User id is not set"));
         return false;
     }
 
@@ -716,9 +674,8 @@ bool checkUser(
         if ((usernameSize > qevercloud::EDAM_USER_USERNAME_LEN_MAX) ||
             (usernameSize < qevercloud::EDAM_USER_USERNAME_LEN_MIN))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "User's name has invalid size"));
+            errorDescription.setBase(
+                QStringLiteral("User's name has invalid size"));
 
             errorDescription.details() = username;
             return false;
@@ -726,8 +683,7 @@ bool checkUser(
 
         QRegularExpression usernameRegExp(qevercloud::EDAM_USER_USERNAME_REGEX);
         if (!usernameRegExp.match(username).isValid()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "User's name can contain only \"a-z\" or \"0-9\""
                 "or \"-\" but should not start or end with \"-\""));
             return false;
@@ -744,9 +700,8 @@ bool checkUser(
         if ((nameSize > qevercloud::EDAM_USER_NAME_LEN_MAX) ||
             (nameSize < qevercloud::EDAM_USER_NAME_LEN_MIN))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "User's displayed name has invalid size"));
+            errorDescription.setBase(
+                QStringLiteral("User's displayed name has invalid size"));
 
             errorDescription.details() = name;
             return false;
@@ -754,8 +709,7 @@ bool checkUser(
 
         QRegularExpression nameRegExp(qevercloud::EDAM_USER_NAME_REGEX);
         if (!nameRegExp.match(name).isValid()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "User's displayed name doesn't match its regular expression. "
                 "Consider removing any special characters"));
             return false;
@@ -769,9 +723,8 @@ bool checkUser(
         if ((timezoneSize > qevercloud::EDAM_TIMEZONE_LEN_MAX) ||
             (timezoneSize < qevercloud::EDAM_TIMEZONE_LEN_MIN))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
-                "User's timezone has invalid size"));
+            errorDescription.setBase(
+                QStringLiteral("User's timezone has invalid size"));
 
             errorDescription.details() = timezone;
             return false;
@@ -779,8 +732,7 @@ bool checkUser(
 
         QRegularExpression timezoneRegExp(qevercloud::EDAM_TIMEZONE_REGEX);
         if (!timezoneRegExp.match(timezone).isValid()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage:sql:TypeChecks",
+            errorDescription.setBase(QStringLiteral(
                 "User's timezone doesn't match its regular expression. It must "
                 "be encoded as a standard zone ID such as "
                 "\"America/Los_Angeles\" or \"GMT+08:00\"."));
@@ -802,8 +754,7 @@ bool checkUser(
                  qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                 (defaultLocationNameSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "User's default location name has invalid size"));
 
                 errorDescription.details() = defaultLocationName;
@@ -821,8 +772,7 @@ bool checkUser(
                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                     (viewedPromotionSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN))
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP(
-                        "local_storage:sql:TypeChecks",
+                    errorDescription.setBase(QStringLiteral(
                         "User's viewed promotion has invalid size"));
 
                     errorDescription.details() = viewedPromotion;
@@ -841,8 +791,7 @@ bool checkUser(
                  qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                 (incomingEmailAddressSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
+                errorDescription.setBase(QStringLiteral(
                     "User's incoming email address has invalid size"));
 
                 errorDescription.details() = incomingEmailAddress;
@@ -859,8 +808,8 @@ bool checkUser(
             if (numRecentMailedAddresses >
                 qevercloud::EDAM_USER_RECENT_MAILED_ADDRESSES_MAX)
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "User", "User recent mailed addresses size is invalid"));
+                errorDescription.setBase(QStringLiteral(
+                    "User recent mailed addresses size is invalid"));
 
                 errorDescription.details() =
                     QString::number(numRecentMailedAddresses);
@@ -876,8 +825,7 @@ bool checkUser(
                     (recentMailedAddressSize <
                      qevercloud::EDAM_ATTRIBUTE_LEN_MIN))
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP(
-                        "local_storage:sql:TypeChecks",
+                    errorDescription.setBase(QStringLiteral(
                         "User's recent emailed address has invalid size"));
 
                     errorDescription.details() = recentMailedAddress;
@@ -893,9 +841,8 @@ bool checkUser(
             if ((commentsSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                 (commentsSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage:sql:TypeChecks",
-                    "User's comments have invalid size"));
+                errorDescription.setBase(
+                    QStringLiteral("User's comments have invalid size"));
 
                 errorDescription.details() = QString::number(commentsSize);
                 return false;

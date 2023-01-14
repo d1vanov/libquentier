@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -300,8 +300,7 @@ QList<qevercloud::SharedNotebook> listSharedNotebooks(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot list shared notebooks by notebook guid from the local "
             "storage database: failed to prepare query"),
         {});
@@ -312,8 +311,7 @@ QList<qevercloud::SharedNotebook> listSharedNotebooks(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot list shared notebooks by notebook guid from the local "
             "storage database"),
         {});
@@ -374,8 +372,7 @@ QList<qevercloud::Resource> listNoteResources(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't list resources by note local id: failed to prepare query"),
         {});
 
@@ -384,10 +381,7 @@ QList<qevercloud::Resource> listNoteResources(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't list resources by note local id"),
-        {});
+        QStringLiteral("Can't list resources by note local id"), {});
 
     QMap<int, qevercloud::Resource> resourcesByIndex;
     while (query.next()) {
@@ -396,9 +390,8 @@ QList<qevercloud::Resource> listNoteResources(
         ErrorString error;
         if (!fillResourceFromSqlRecord(
                 query.record(), resource, indexInNote, error)) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Can't list resources by note local id"));
+            errorDescription.setBase(
+                QStringLiteral("Can't list resources by note local id"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -408,9 +401,8 @@ QList<qevercloud::Resource> listNoteResources(
         error.clear();
         if (!findResourceAttributesApplicationDataByLocalId(
                 resource, database, error)) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Can't list resources by note local id"));
+            errorDescription.setBase(
+                QStringLiteral("Can't list resources by note local id"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -431,9 +423,8 @@ QList<qevercloud::Resource> listNoteResources(
         for (auto & resource: resources) {
             error.clear();
             if (!fillResourceData(resource, localStorageDir, database, error)) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
-                    "Can't list resources by note local id"));
+                errorDescription.setBase(
+                    QStringLiteral("Can't list resources by note local id"));
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
                 errorDescription.details() = error.details();

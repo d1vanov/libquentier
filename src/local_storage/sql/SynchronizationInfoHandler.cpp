@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SynchronizationInfoHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
+#include "SynchronizationInfoHandler.h"
 #include "Tasks.h"
 #include "utils/SqlUtils.h"
 
@@ -69,20 +69,17 @@ SynchronizationInfoHandler::SynchronizationInfoHandler(
     m_threadPool{std::move(threadPool)}, m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SynchronizationInfoHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SynchronizationInfoHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SynchronizationInfoHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SynchronizationInfoHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SynchronizationInfoHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SynchronizationInfoHandler ctor: writer thread is null")}};
     }
 }
@@ -243,9 +240,9 @@ std::optional<qint32> SynchronizationInfoHandler::updateSequenceNumberFromTable(
             << tableName << ", usn column name = " << usnColumnName
             << ", query condition = " << queryCondition);
 
-    const ErrorString errorPrefix{
-        QT_TR_NOOP("failed to get the update sequence number "
-                   "from one of local storage database tables")};
+    const ErrorString errorPrefix{QStringLiteral(
+        "failed to get the update sequence number from one of local storage "
+        "database tables")};
 
     QString queryString = QStringLiteral("SELECT MAX(") + usnColumnName +
         QStringLiteral(") FROM ") + tableName;
@@ -258,8 +255,7 @@ std::optional<qint32> SynchronizationInfoHandler::updateSequenceNumberFromTable(
     const bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SynchronizationInfoHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SynchronizationInfoHandler",
+        QStringLiteral(
             "Failed to get the update sequence number from one of local "
             "storage database tables"),
         std::nullopt);
@@ -294,12 +290,9 @@ TaskContext SynchronizationInfoHandler::makeTaskContext() const
 {
     return TaskContext{
         m_threadPool, m_writerThread, m_connectionPool,
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SynchronizationInfoHandler",
-            "SynchronizationInfoHandler is already destroyed")},
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SynchronizationInfoHandler",
-            "Request has been canceled")}};
+        ErrorString{
+            QStringLiteral("SynchronizationInfoHandler is already destroyed")},
+        ErrorString{QStringLiteral("Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "VersionHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
+#include "VersionHandler.h"
 
 #include "patches/Patch1To2.h"
 
@@ -50,27 +50,23 @@ VersionHandler::VersionHandler(
     m_threadPool{std::move(threadPool)}, m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::VersionHandler",
-            "VersionHandler ctor: account is empty")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("VersionHandler ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::VersionHandler",
-            "VersionHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("VersionHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::VersionHandler",
-            "VersionHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("VersionHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::VersionHandler",
-            "VersionHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("VersionHandler ctor: writer thread is null")}};
     }
 }
 
@@ -85,10 +81,8 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
         [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(
-                    RuntimeError(ErrorString{QT_TRANSLATE_NOOP(
-                        "local_storage::sql::VersionHandler",
-                        "VersionHandler is already destroyed")}));
+                promise->setException(RuntimeError(ErrorString{
+                    QStringLiteral("VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -128,10 +122,8 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
         [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(
-                    RuntimeError(ErrorString{QT_TRANSLATE_NOOP(
-                        "local_storage::sql::VersionHandler",
-                        "VersionHandler is already destroyed")}));
+                promise->setException(RuntimeError(ErrorString{
+                    QStringLiteral("VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -171,10 +163,8 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
         [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(
-                    RuntimeError(ErrorString{QT_TRANSLATE_NOOP(
-                        "local_storage::sql::VersionHandler",
-                        "VersionHandler is already destroyed")}));
+                promise->setException(RuntimeError(ErrorString{
+                    QStringLiteral("VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -218,10 +208,8 @@ QFuture<qint32> VersionHandler::version() const
         [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(
-                    RuntimeError(ErrorString{QT_TRANSLATE_NOOP(
-                        "local_storage::sql::VersionHandler",
-                        "VersionHandler is already destroyed")}));
+                promise->setException(RuntimeError(ErrorString{
+                    QStringLiteral("VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -263,10 +251,8 @@ qint32 VersionHandler::versionImpl(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::version_handler",
-        QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::version_handler",
-            "failed to execute SQL query checking whether "
-            "the database requires an upgrade"),
+        QStringLiteral("failed to execute SQL query checking whether "
+                       "the database requires an upgrade"),
         -1);
 
     if (!query.next()) {
@@ -281,8 +267,7 @@ qint32 VersionHandler::versionImpl(
     bool conversionResult = false;
     const int version = value.toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::version_handler",
+        errorDescription.setBase(QStringLiteral(
             "failed to decode the current local storage database "
             "version"));
         QNWARNING(

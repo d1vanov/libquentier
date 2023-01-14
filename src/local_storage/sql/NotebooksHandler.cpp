@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -68,32 +68,27 @@ NotebooksHandler::NotebooksHandler(
 // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "NotebooksHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NotebooksHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "NotebooksHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NotebooksHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "NotebooksHandler ctor: notifier is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NotebooksHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "NotebooksHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NotebooksHandler ctor: writer thread is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksHandler ctor: local storage dir is not readable")}};
     }
 
@@ -101,15 +96,13 @@ NotebooksHandler::NotebooksHandler(
             !m_localStorageDir.exists() &&
             !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
     {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
     }
 
     if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksHandler ctor: resource data files lock is null")}};
     }
 }
@@ -288,9 +281,7 @@ std::optional<quint32> NotebooksHandler::notebookCountImpl(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "Cannot count notebooks in the local storage database"),
+        QStringLiteral("Cannot count notebooks in the local storage database"),
         std::nullopt);
 
     if (!query.next()) {
@@ -303,8 +294,7 @@ std::optional<quint32> NotebooksHandler::notebookCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count notebooks in the local storage database: failed "
             "to convert notebook count to int"));
         QNWARNING("local_storage::sql::NotebooksHandler", errorDescription);
@@ -344,8 +334,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find notebook in the local storage database by local id: "
             "failed to prepare query"),
         std::nullopt);
@@ -355,8 +344,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find notebook in the local storage database by local id"),
         std::nullopt);
 
@@ -368,8 +356,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
     qevercloud::Notebook notebook;
     ErrorString error;
     if (!utils::fillNotebookFromSqlRecord(record, notebook, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find notebook by local id in the local storage "
             "database"));
         errorDescription.appendBase(error.base());
@@ -410,8 +397,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find notebook in the local storage database by guid: "
             "failed to prepare query"),
         std::nullopt);
@@ -421,8 +407,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find notebook in the local storage database by guid"),
         std::nullopt);
 
@@ -434,8 +419,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
     qevercloud::Notebook notebook;
     ErrorString error;
     if (!utils::fillNotebookFromSqlRecord(record, notebook, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find notebook by guid in the local storage "
             "database"));
         errorDescription.appendBase(error.base());
@@ -489,8 +473,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find notebook in the local storage database by guid: "
             "failed to prepare query"),
         std::nullopt);
@@ -505,8 +488,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find notebook in the local storage database by name"),
         std::nullopt);
 
@@ -518,8 +500,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
     qevercloud::Notebook notebook;
     ErrorString error;
     if (!utils::fillNotebookFromSqlRecord(record, notebook, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find notebook by name in the local storage "
             "database"));
         errorDescription.appendBase(error.base());
@@ -559,8 +540,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findDefaultNotebookImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find default notebook in the local storage database: "
             "failed to prepare query"),
         std::nullopt);
@@ -568,8 +548,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findDefaultNotebookImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot find default notebook in the local storage database"),
         std::nullopt);
 
@@ -581,8 +560,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findDefaultNotebookImpl(
     qevercloud::Notebook notebook;
     ErrorString error;
     if (!utils::fillNotebookFromSqlRecord(record, notebook, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find default notebook in the local storage "
             "database"));
         errorDescription.appendBase(error.base());
@@ -644,8 +622,7 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot expunge notebook by local id from the local storage "
             "database: failed to prepare query"),
         false);
@@ -655,8 +632,7 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot expunge notebook by local id from the local storage "
             "database"),
         false);
@@ -664,8 +640,7 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     res = transaction->commit();
     ENSURE_DB_REQUEST_RETURN(
         res, database, "local_storage::sql::NotesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotesHandler",
+        QStringLiteral(
             "Cannot expunge notebook by local id from the local storage "
             "database: failed to commit transaction"),
         false);
@@ -772,8 +747,7 @@ QStringList NotebooksHandler::listNoteLocalIdsByNotebookLocalId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot list note local ids by notebook local id from the local "
             "storage database: failed to prepare query"),
         {});
@@ -783,8 +757,7 @@ QStringList NotebooksHandler::listNoteLocalIdsByNotebookLocalId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+        QStringLiteral(
             "Cannot list note local ids by notebook local id from the local "
             "storage database"),
         {});
@@ -822,12 +795,8 @@ TaskContext NotebooksHandler::makeTaskContext() const
 {
     return TaskContext{
         m_threadPool, m_writerThread, m_connectionPool,
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "NotebooksHandler is already destroyed")},
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "Request has been canceled")}};
+        ErrorString{QStringLiteral("NotebooksHandler is already destroyed")},
+        ErrorString{QStringLiteral("Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

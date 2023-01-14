@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,9 +49,7 @@ bool backupLocalStorageDatabaseFiles(
 
     if (promise.isCanceled()) {
         errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::utils",
-                "Local storage backup has been canceled"));
+            QStringLiteral("Local storage backup has been canceled"));
         QNINFO("local_storage::sql::patches::utils", errorDescription);
         return false;
     }
@@ -59,9 +57,9 @@ bool backupLocalStorageDatabaseFiles(
     QDir backupDir{backupDirPath};
     if (!backupDir.exists()) {
         if (!backupDir.mkpath(backupDirPath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Cannot create a backup copy of the local storage: "
-                           "failed to create folder for backup files"));
+            errorDescription.setBase(QStringLiteral(
+                "Cannot create a backup copy of the local storage: "
+                "failed to create folder for backup files"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(backupDirPath);
@@ -87,8 +85,8 @@ bool backupLocalStorageDatabaseFiles(
         const QFileInfo shmDbBackupFileInfo{shmDbBackupFilePath};
         if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFilePath)) {
             errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: failed to remove "
-                           "pre-existing SQLite shm backup file"));
+                QStringLiteral("Can't backup local storage: failed to remove "
+                               "pre-existing SQLite shm backup file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(shmDbBackupFilePath);
@@ -99,9 +97,9 @@ bool backupLocalStorageDatabaseFiles(
 
         const QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
         if (!QFile::copy(shmDbFilePath, shmDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: "
-                           "failed to backup SQLite shm file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't backup local storage: failed to backup SQLite shm "
+                "file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(shmDbFilePath);
@@ -122,9 +120,9 @@ bool backupLocalStorageDatabaseFiles(
 
         const QFileInfo walDbBackupFileInfo{walDbBackupFilePath};
         if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: failed to remove "
-                           "pre-existing SQLite wal backup file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't backup local storage: failed to remove pre-existing "
+                "SQLite wal backup file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(walDbBackupFilePath);
@@ -135,9 +133,9 @@ bool backupLocalStorageDatabaseFiles(
 
         QString walDbFilePath = walDbFileInfo.absoluteFilePath();
         if (!QFile::copy(walDbFilePath, walDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: "
-                           "failed to backup SQLite wal file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't backup local storage: failed to backup SQLite wal "
+                "file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(walDbFilePath);
@@ -149,12 +147,9 @@ bool backupLocalStorageDatabaseFiles(
 
     // Check if the process needs to continue i.e. that it was not canceled
 
-    if (promise.isCanceled())
-    {
+    if (promise.isCanceled()) {
         errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::utils",
-                "Local storage backup has been canceled"));
+            QStringLiteral("Local storage backup has been canceled"));
         QNINFO("local_storage::sql::patches::utils", errorDescription);
         return false;
     }
@@ -172,8 +167,7 @@ bool backupLocalStorageDatabaseFiles(
     bool detectedError = false;
 
     QObject::connect(
-        pFileCopier.get(), &FileCopier::notifyError,
-        pFileCopier.get(),
+        pFileCopier.get(), &FileCopier::notifyError, pFileCopier.get(),
         [&detectedError, &errorDescription](ErrorString error) {
             errorDescription = std::move(error);
             detectedError = true;
@@ -216,10 +210,9 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
 
         QFileInfo shmDbFileInfo{shmDbFilePath};
         if (shmDbFileInfo.exists() && !removeFile(shmDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to remove "
-                           "the pre-existing SQLite shm file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't restore the local storage from backup: failed to remove "
+                "the pre-existing SQLite shm file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(shmDbFilePath);
@@ -229,10 +222,9 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
         }
 
         if (!QFile::copy(shmDbBackupFilePath, shmDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to restore "
-                           "the SQLite shm file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't restore the local storage from backup: failed to "
+                "restore the SQLite shm file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(shmDbFilePath);
@@ -255,10 +247,9 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
 
         const QFileInfo walDbFileInfo{walDbFilePath};
         if (walDbFileInfo.exists() && !removeFile(walDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to remove "
-                           "the pre-existing SQLite wal file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't restore the local storage from backup: failed to remove "
+                "the pre-existing SQLite wal file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(walDbFilePath);
@@ -268,10 +259,9 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
         }
 
         if (!QFile::copy(walDbBackupFilePath, walDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to restore "
-                           "the SQLite wal file"));
+            errorDescription.setBase(QStringLiteral(
+                "Can't restore the local storage from backup: failed to "
+                "restore the SQLite wal file"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(walDbFilePath);
@@ -295,8 +285,7 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
     bool detectedError = false;
 
     QObject::connect(
-        pFileCopier.get(), &FileCopier::notifyError,
-        pFileCopier.get(),
+        pFileCopier.get(), &FileCopier::notifyError, pFileCopier.get(),
         [&detectedError, &errorDescription](ErrorString error) {
             errorDescription = std::move(error);
             detectedError = true;
@@ -382,8 +371,8 @@ bool removeLocalStorageDatabaseFilesBackup(
     if (!removedShmDbBackup || !removedWalDbBackup || !removedDbBackup ||
         !removedBackupDir)
     {
-        errorDescription.setBase(
-            QT_TR_NOOP("Failed to remove some of SQLite database's backups"));
+        errorDescription.setBase(QStringLiteral(
+            "Failed to remove some of SQLite database's backups"));
         return false;
     }
 

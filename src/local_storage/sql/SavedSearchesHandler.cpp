@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -56,26 +56,22 @@ SavedSearchesHandler::SavedSearchesHandler(
 // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SavedSearchesHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
-            "SavedSearchesHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("SavedSearchesHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
-            "SavedSearchesHandler ctor: notifier is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("SavedSearchesHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SavedSearchesHandler ctor: writer thread is null")}};
     }
 }
@@ -217,8 +213,7 @@ std::optional<quint32> SavedSearchesHandler::savedSearchCountImpl(
     const bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        QStringLiteral(
             "Cannot count saved searches in the local storage database"),
         std::nullopt);
 
@@ -232,8 +227,7 @@ std::optional<quint32> SavedSearchesHandler::savedSearchCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count saved searches in the local storage database: "
             "failed to convert saved search count to int"));
         QNWARNING("local_storage::sql::SavedSearchesHandler", errorDescription);
@@ -261,8 +255,7 @@ std::optional<qevercloud::SavedSearch>
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        QStringLiteral(
             "Cannot find saved search in the local storage database: "
             "failed to prepare query"),
         std::nullopt);
@@ -272,8 +265,7 @@ std::optional<qevercloud::SavedSearch>
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        QStringLiteral(
             "Cannot find saved search in the local storage database"),
         std::nullopt);
 
@@ -285,8 +277,7 @@ std::optional<qevercloud::SavedSearch>
     qevercloud::SavedSearch savedSearch;
     ErrorString error;
     if (!utils::fillSavedSearchFromSqlRecord(record, savedSearch, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find saved search in the local storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -309,8 +300,7 @@ bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        QStringLiteral(
             "Cannot expunge saved search from the local storage database by "
             "local id: failed to prepare query"),
         false);
@@ -320,8 +310,7 @@ bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
+        QStringLiteral(
             "Cannot expunge saved search from the local storage database by "
             "local id"),
         false);
@@ -330,8 +319,7 @@ bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
         res = transaction->commit();
         ENSURE_DB_REQUEST_RETURN(
             res, database, "local_storage::sql::SavedSearchesHandler",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
+            QStringLiteral(
                 "Cannot expunge saved search from the local storage database "
                 "by local id: failed to commit transaction"),
             false);
@@ -392,12 +380,9 @@ TaskContext SavedSearchesHandler::makeTaskContext() const
 {
     return TaskContext{
         m_threadPool, m_writerThread, m_connectionPool,
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
-            "SavedSearchesHandler is already destroyed")},
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
-            "Request has been canceled")}};
+        ErrorString{
+            QStringLiteral("SavedSearchesHandler is already destroyed")},
+        ErrorString{QStringLiteral("Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

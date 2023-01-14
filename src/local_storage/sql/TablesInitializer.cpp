@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,16 +46,16 @@ void TablesInitializer::initializeTables(QSqlDatabase & databaseConnection)
     initializeExtraTriggers(databaseConnection);
 }
 
-void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnection)
+void TablesInitializer::initializeAuxiliaryTable(
+    QSqlDatabase & databaseConnection)
 {
     QSqlQuery query{databaseConnection};
-    bool res = query.exec(
-        QStringLiteral("SELECT name FROM sqlite_master WHERE name='Auxiliary'"));
+    bool res = query.exec(QStringLiteral(
+        "SELECT name FROM sqlite_master WHERE name='Auxiliary'"));
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot check the existence of Auxiliary table in the local storage"
             " database"));
 
@@ -71,23 +71,21 @@ void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnecti
 
     res = query.exec(
         QStringLiteral("CREATE TABLE Auxiliary("
-                        "  lock    CHAR(1) PRIMARY KEY  NOT NULL DEFAULT "
-                        "'X' CHECK (lock='X'), "
-                        "  version INTEGER              NOT NULL DEFAULT 2"
-                        ")"));
+                       "  lock    CHAR(1) PRIMARY KEY  NOT NULL DEFAULT "
+                       "'X' CHECK (lock='X'), "
+                       "  version INTEGER              NOT NULL DEFAULT 2"
+                       ")"));
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Auxiliary table in the local storage database"));
 
-    res = query.exec(
-        QStringLiteral("INSERT INTO Auxiliary (version) VALUES(2)"));
+    res =
+        query.exec(QStringLiteral("INSERT INTO Auxiliary (version) VALUES(2)"));
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot set version into Auxiliary table of the local storage "
             "database"));
 }
@@ -118,8 +116,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Users table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -160,8 +157,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create UserAttributes table in the local storage "
             "database"));
 
@@ -172,8 +168,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create UserAttributesViewedPromotions table in the local "
             "storage database"));
 
@@ -184,8 +179,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create UserAttributesRecentMailedAddresses table in "
             "the local storage database"));
 
@@ -215,8 +209,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Accounting table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -236,8 +229,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create AccountLimits table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -250,8 +242,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create BusinessUserInfo table in the local storage "
             "database"));
 
@@ -269,8 +260,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create trigger on user deletion in the local storage "
             "database"));
 }
@@ -298,8 +288,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create LinkedNotebooks table in the local storage "
             "database"));
 
@@ -342,8 +331,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Notebooks table in the local storage database"));
 
     res = query.exec(
@@ -353,8 +341,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NotebookFTS table in the local storage database"));
 
     res = query.exec(
@@ -367,8 +354,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NotebookFTS before delete trigger in the local "
             "storage database"));
 
@@ -382,8 +368,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NotebookFTS after insert trigger in the local "
             "storage database"));
 
@@ -416,8 +401,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NotebookRestrictions table in the local storage "
             "database"));
 
@@ -448,8 +432,7 @@ void TablesInitializer::initializeNotebookTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create SharedNotebooks table in the local storage "
             "database"));
 }
@@ -516,8 +499,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Notes table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -549,8 +531,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create SharedNotes table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -564,8 +545,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteRestrictions table in the local storage "
             "database"));
 
@@ -577,8 +557,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteRestrictionsByNoteLocalUid index in the local "
             "storage database"));
 
@@ -593,8 +572,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteLimits table in the local storage database"));
 
     // clang-format off
@@ -604,8 +582,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NotesNotebooks index in the local storage "
             "database"));
 
@@ -626,8 +603,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteFTS table in the local storage database"));
 
     res = query.exec(
@@ -640,8 +616,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteFTS before delete trigger in the local storage "
             "database"));
 
@@ -655,8 +630,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteFTS after insert trigger in the local storage "
             "database"));
 
@@ -675,8 +649,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create on notebook delete trigger in the local storage "
             "database"));
 }
@@ -710,8 +683,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Resources table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -719,8 +691,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourcesMimeIndex index in the local storage "
             "database"));
 
@@ -731,8 +702,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceDataBodyVersionIds table in the local "
             "storage database"));
 
@@ -743,8 +713,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceAlternateDataBodyVersionIds table in the "
             "local storage database"));
 
@@ -759,8 +728,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceRecognitionData table in the local storage "
             "database"));
 
@@ -771,8 +739,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceRecognitionDataIndex index in the local "
             "storage database"));
 
@@ -784,8 +751,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceRecognitionDataFTS table in the local "
             "storage database"));
 
@@ -800,8 +766,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceRecognitionDataFTS before delete trigger in "
             "the local storage database"));
 
@@ -816,8 +781,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceRecognitionDataFTS after insert trigger in "
             "the local storage database"));
 
@@ -828,8 +792,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceMimeFTS virtual table in the local storage "
             "database"));
 
@@ -843,8 +806,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceMimeFTS before delete trigger in the local "
             "storage database"));
 
@@ -859,8 +821,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceMimeFTS after insert trigger in the local "
             "storage database"));
 
@@ -869,8 +830,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceNote index in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -892,8 +852,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceAttributes table in the local storage "
             "database"));
 
@@ -907,8 +866,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceAttributesApplicationDataKeysOnly table in "
             "the local storage database"));
 
@@ -923,8 +881,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create ResourceAttributesApplicationDataFullMap table in "
             "the local storage database"));
 
@@ -942,8 +899,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteResources table in the local storage database"));
 
     res = query.exec(
@@ -952,8 +908,7 @@ void TablesInitializer::initializeResourceTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteResourcesNote index in the local storage "
             "database"));
 }
@@ -984,8 +939,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create Tags table in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -993,8 +947,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create TagNameUpperIndex index in the local storage "
             "database"));
 
@@ -1004,8 +957,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create TagFTS virtual table in the local storage "
             "database"));
 
@@ -1019,8 +971,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create TagFTS before delete trigger in the local storage "
             "database"));
 
@@ -1033,8 +984,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create TagFTS after insert trigger in the local storage "
             "database"));
 
@@ -1045,8 +995,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create TagSearchName index in the local storage database"));
 
     res = query.exec(QStringLiteral(
@@ -1061,8 +1010,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteTags table in the local storage database"));
 
     // clang-format off
@@ -1072,8 +1020,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create NoteTagsNote index in the local storage database"));
 }
 
@@ -1104,8 +1051,7 @@ void TablesInitializer::initializeSavedSearchTables(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create SavedSearches table in the local storage database"));
 }
 
@@ -1129,8 +1075,7 @@ void TablesInitializer::initializeExtraTriggers(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create on linked notebook delete trigger in the local "
             "storage database"));
 
@@ -1157,8 +1102,7 @@ void TablesInitializer::initializeExtraTriggers(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create on note delete trigger in the local storage "
             "database"));
 
@@ -1184,8 +1128,7 @@ void TablesInitializer::initializeExtraTriggers(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create on resource delete trigger in the local storage "
             "database"));
 
@@ -1199,8 +1142,7 @@ void TablesInitializer::initializeExtraTriggers(
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::TablesInitializer",
+        QStringLiteral(
             "Cannot create on tag delete trigger in the local storage "
             "database"));
 }

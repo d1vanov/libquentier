@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -64,32 +64,27 @@ ResourcesHandler::ResourcesHandler(
 // clang-format on
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
-            "ResourcesHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("ResourcesHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
-            "ResourcesHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("ResourcesHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
-            "ResourcesHandler ctor: notifier is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("ResourcesHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
-            "ResourcesHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("ResourcesHandler ctor: writer thread is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesHandler ctor: local storage dir is not readable")}};
     }
 
@@ -97,15 +92,13 @@ ResourcesHandler::ResourcesHandler(
             !m_localStorageDir.exists() &&
             !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
     {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
     }
 
     if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesHandler ctor: resource data files lock is null")}};
     }
 }
@@ -281,9 +274,7 @@ std::optional<quint32> ResourcesHandler::resourceCountImpl(
     const bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::ResourcesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
-            "Cannot count resources in the local storage database"));
+        QStringLiteral("Cannot count resources in the local storage database"));
 
     if (!query.next()) {
         QNDEBUG(
@@ -296,8 +287,7 @@ std::optional<quint32> ResourcesHandler::resourceCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count resources corresponding to note count options "
             "in the local storage database: failed to convert resource "
             "count to int"));
@@ -321,8 +311,7 @@ std::optional<quint32> ResourcesHandler::resourceCountPerNoteLocalIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::ResourcesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        QStringLiteral(
             "Cannot count resources per note local id in the local storage "
             "database: failed to prepare query"));
 
@@ -331,8 +320,7 @@ std::optional<quint32> ResourcesHandler::resourceCountPerNoteLocalIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::ResourcesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        QStringLiteral(
             "Cannot count resources per note local id in the local storage "
             "database"));
 
@@ -347,8 +335,7 @@ std::optional<quint32> ResourcesHandler::resourceCountPerNoteLocalIdImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count resources corresponding to note local id "
             "in the local storage database: failed to convert resource "
             "count to int"));
@@ -372,8 +359,7 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
         utils::noteLocalIdByResourceLocalId(localId, database, error);
 
     if (noteLocalId.isEmpty() && !error.isEmpty()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        errorDescription.setBase(QStringLiteral(
             "Cannot expunge resource from the local storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -389,8 +375,7 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::ResourcesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        QStringLiteral(
             "Cannot expunge resource from the local storage database: "
             "failed to prepare query"),
         false);
@@ -400,16 +385,14 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::ResourcesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        QStringLiteral(
             "Cannot expunge resource from the local storage database"),
         false);
 
     res = transaction->commit();
     ENSURE_DB_REQUEST_RETURN(
         res, database, "local_storage::sql::ResourcesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
+        QStringLiteral(
             "Cannot expunge resource from the local storage database, failed "
             "to commit transaction"),
         false);
@@ -450,12 +433,8 @@ TaskContext ResourcesHandler::makeTaskContext() const
 {
     return TaskContext{
         m_threadPool, m_writerThread, m_connectionPool,
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcessHandler",
-            "ResourcesHandler is already destroyed")},
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::ResourcesHandler",
-            "Request has been canceled")}};
+        ErrorString{QStringLiteral("ResourcesHandler is already destroyed")},
+        ErrorString{QStringLiteral("Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

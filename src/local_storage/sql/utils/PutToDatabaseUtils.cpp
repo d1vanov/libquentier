@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "PutToDatabaseUtils.h"
 #include "Common.h"
-#include "NotebookUtils.h"
 #include "NoteUtils.h"
+#include "NotebookUtils.h"
 #include "PartialUpdateNoteResources.h"
+#include "PutToDatabaseUtils.h"
 #include "RemoveFromDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "ResourceUtils.h"
@@ -82,15 +82,13 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
         putNoteOptions.testFlag(PutNoteOption::PutResourceMetadata))
     {
         const auto & resources = *note.resources();
-        for (const auto & resource: qAsConst(resources))
-        {
+        for (const auto & resource: qAsConst(resources)) {
             if (Q_UNLIKELY(resource.noteGuid())) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
-                    "note's guid is being cleared but one of "
-                    "note's resources has non-empty note guid"));
-                if (resource.attributes() &&
-                    resource.attributes()->fileName()) {
+                errorDescription.setBase(
+                    QStringLiteral("note's guid is being cleared but one of "
+                                   "note's resources has non-empty note guid"));
+                if (resource.attributes() && resource.attributes()->fileName())
+                {
                     errorDescription.details() =
                         *resource.attributes()->fileName();
                 }
@@ -100,12 +98,11 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
             }
 
             if (Q_UNLIKELY(resource.guid())) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
-                    "note's guid is being cleared but one of "
-                    "note's resources has non-empty guid"));
-                if (resource.attributes() &&
-                    resource.attributes()->fileName()) {
+                errorDescription.setBase(
+                    QStringLiteral("note's guid is being cleared but one of "
+                                   "note's resources has non-empty guid"));
+                if (resource.attributes() && resource.attributes()->fileName())
+                {
                     errorDescription.details() =
                         *resource.attributes()->fileName();
                 }
@@ -123,9 +120,7 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot clear guid from note: failed to prepare query"),
+        QStringLiteral("Cannot clear guid from note: failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":localUid"), note.localId());
@@ -133,10 +128,7 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot clear guid from note"),
-        false);
+        QStringLiteral("Cannot clear guid from note"), false);
 
     return true;
 }
@@ -145,15 +137,14 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString = QStringLiteral(
-        "DELETE From NoteTags WHERE localNote = :localNote");
+    static const QString queryString =
+        QStringLiteral("DELETE From NoteTags WHERE localNote = :localNote");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't clear note tags bindings in the local storage database: "
             "failed to prepare query"),
         false);
@@ -163,8 +154,7 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't clear note tags bindings in the local storage database"),
         false);
 
@@ -234,8 +224,7 @@ struct NoteTagIds
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove resource metadata by note local id: failed to "
             "prepare query"),
         false);
@@ -245,9 +234,7 @@ struct NoteTagIds
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove resource metadata by note local id"),
+        QStringLiteral("Cannot remove resource metadata by note local id"),
         false);
 
     return true;
@@ -317,9 +304,7 @@ void removeStaleNoteResourceDataFiles(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't bind tag ids to note: failed to prepare query"),
+        QStringLiteral("Can't bind tag ids to note: failed to prepare query"),
         false);
 
     int index = 0;
@@ -338,18 +323,14 @@ void removeStaleNoteResourceDataFiles(
             QStringLiteral(":tag"),
             (!tagGuid.isEmpty() ? tagGuid : *gNullValue));
 
-        query.bindValue(
-            QStringLiteral(":tagIndexInNote"), index);
+        query.bindValue(QStringLiteral(":tagIndexInNote"), index);
 
         ++index;
 
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Can't bind tag ids to note"),
-            false);
+            QStringLiteral("Can't bind tag ids to note"), false);
     }
 
     return true;
@@ -366,8 +347,7 @@ void removeStaleNoteResourceDataFiles(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't clear note resource bindings in the local storage database: "
             "failed to prepare query"),
         false);
@@ -377,8 +357,7 @@ void removeStaleNoteResourceDataFiles(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't clear note resources bindings in the local storage "
             "database"),
         false);
@@ -387,8 +366,8 @@ void removeStaleNoteResourceDataFiles(
 }
 
 [[nodiscard]] bool bindNoteWithItsResources(
-    const qevercloud::Note & note,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    const qevercloud::Note & note, QSqlDatabase & database,
+    ErrorString & errorDescription)
 {
     if (!note.resources() || note.resources()->isEmpty()) {
         return false;
@@ -403,8 +382,7 @@ void removeStaleNoteResourceDataFiles(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't bind resource ids to note: failed to prepare query"),
         false);
 
@@ -424,8 +402,7 @@ void removeStaleNoteResourceDataFiles(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Can't bind resource ids to note: failed to prepare query"),
             false);
     }
@@ -446,8 +423,7 @@ void removeStaleNoteResourceDataFiles(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't bind resource ids to note: failed to prepare query"),
         false);
 
@@ -466,8 +442,7 @@ void removeStaleNoteResourceDataFiles(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't bind resource ids to note: failed to prepare query"),
         false);
 
@@ -487,8 +462,7 @@ void bindNoteApplicationData(
         }
 
         query.bindValue(
-            QStringLiteral(":applicationDataKeysOnly"),
-            keysOnlyString);
+            QStringLiteral(":applicationDataKeysOnly"), keysOnlyString);
     }
     else {
         query.bindValue(
@@ -509,19 +483,15 @@ void bindNoteApplicationData(
         }
 
         query.bindValue(
-            QStringLiteral(":applicationDataKeysMap"),
-            fullMapKeysString);
+            QStringLiteral(":applicationDataKeysMap"), fullMapKeysString);
 
         query.bindValue(
-            QStringLiteral(":applicationDataValues"),
-            fullMapValuesString);
+            QStringLiteral(":applicationDataValues"), fullMapValuesString);
     }
     else {
-        query.bindValue(
-            QStringLiteral(":applicationDataKeysMap"), *gNullValue);
+        query.bindValue(QStringLiteral(":applicationDataKeysMap"), *gNullValue);
 
-        query.bindValue(
-            QStringLiteral(":applicationDataValues"), *gNullValue);
+        query.bindValue(QStringLiteral(":applicationDataValues"), *gNullValue);
     }
 }
 
@@ -546,12 +516,10 @@ void bindNoteClassifications(
         valuesStrm << "'" << it.value() << "'";
     }
 
-    query.bindValue(
-        QStringLiteral(":classificationKeys"), classificationKeys);
+    query.bindValue(QStringLiteral(":classificationKeys"), classificationKeys);
 
     query.bindValue(
-        QStringLiteral(":classificationValues"),
-        classificationValues);
+        QStringLiteral(":classificationValues"), classificationValues);
 }
 
 void bindNullNoteClassifications(QSqlQuery & query)
@@ -563,8 +531,7 @@ void bindNullNoteClassifications(QSqlQuery & query)
 void bindNoteAttributes(
     const qevercloud::NoteAttributes & attributes, QSqlQuery & query)
 {
-    const auto bindAttribute = [&](const QString & name, auto getter)
-    {
+    const auto bindAttribute = [&](const QString & name, auto getter) {
         const auto value = getter();
         query.bindValue(name, value ? *value : *gNullValue);
     };
@@ -573,37 +540,30 @@ void bindNoteAttributes(
         return attributes.subjectDate();
     });
 
-    bindAttribute(QStringLiteral(":latitude"), [&] {
-        return attributes.latitude();
-    });
+    bindAttribute(
+        QStringLiteral(":latitude"), [&] { return attributes.latitude(); });
 
-    bindAttribute(QStringLiteral(":longitude"), [&] {
-        return attributes.longitude();
-    });
+    bindAttribute(
+        QStringLiteral(":longitude"), [&] { return attributes.longitude(); });
 
-    bindAttribute(QStringLiteral(":altitude"), [&] {
-        return attributes.altitude();
-    });
+    bindAttribute(
+        QStringLiteral(":altitude"), [&] { return attributes.altitude(); });
 
-    bindAttribute(QStringLiteral(":author"), [&] {
-        return attributes.author();
-    });
+    bindAttribute(
+        QStringLiteral(":author"), [&] { return attributes.author(); });
 
-    bindAttribute(QStringLiteral(":source"), [&] {
-        return attributes.source();
-    });
+    bindAttribute(
+        QStringLiteral(":source"), [&] { return attributes.source(); });
 
-    bindAttribute(QStringLiteral(":sourceURL"), [&] {
-        return attributes.sourceURL();
-    });
+    bindAttribute(
+        QStringLiteral(":sourceURL"), [&] { return attributes.sourceURL(); });
 
     bindAttribute(QStringLiteral(":sourceApplication"), [&] {
         return attributes.sourceApplication();
     });
 
-    bindAttribute(QStringLiteral(":shareDate"), [&] {
-        return attributes.shareDate();
-    });
+    bindAttribute(
+        QStringLiteral(":shareDate"), [&] { return attributes.shareDate(); });
 
     bindAttribute(QStringLiteral(":reminderOrder"), [&] {
         return attributes.reminderOrder();
@@ -617,9 +577,8 @@ void bindNoteAttributes(
         return attributes.reminderTime();
     });
 
-    bindAttribute(QStringLiteral(":placeName"), [&] {
-        return attributes.placeName();
-    });
+    bindAttribute(
+        QStringLiteral(":placeName"), [&] { return attributes.placeName(); });
 
     bindAttribute(QStringLiteral(":contentClass"), [&] {
         return attributes.contentClass();
@@ -629,9 +588,8 @@ void bindNoteAttributes(
         return attributes.lastEditedBy();
     });
 
-    bindAttribute(QStringLiteral(":creatorId"), [&] {
-        return attributes.creatorId();
-    });
+    bindAttribute(
+        QStringLiteral(":creatorId"), [&] { return attributes.creatorId(); });
 
     bindAttribute(QStringLiteral(":lastEditorId"), [&] {
         return attributes.lastEditorId();
@@ -666,8 +624,7 @@ void bindNoteAttributes(
 
 void bindNullNoteAttributes(QSqlQuery & query)
 {
-    const auto bindNullAttribute = [&](const QString & name)
-    {
+    const auto bindNullAttribute = [&](const QString & name) {
         query.bindValue(name, *gNullValue);
     };
 
@@ -704,9 +661,8 @@ bool putUser(
 {
     QNDEBUG("local_storage::sql::utils", "putUser: " << user);
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put user into the local storage database")};
+    const ErrorString errorPrefix{
+        QStringLiteral("Can't put user into the local storage database")};
 
     ErrorString error;
     if (!checkUser(user, error)) {
@@ -775,8 +731,7 @@ bool putUser(
         const bool res = transaction->commit();
         ENSURE_DB_REQUEST_RETURN(
             res, database, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot put user into the local storage database, failed to "
                 "commit"),
             false);
@@ -806,8 +761,7 @@ bool putCommonUserData(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put common user data into the local storage database: "
             "failed to prepare query"),
         false);
@@ -874,8 +828,7 @@ bool putCommonUserData(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put common user data into the local storage database"),
         false);
 
@@ -937,8 +890,7 @@ bool putUserAttributes(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user attributes into the local storage database: "
             "failed to prepare query"),
         false);
@@ -1122,8 +1074,7 @@ bool putUserAttributes(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user attributes into the local storage database"),
         false);
 
@@ -1151,8 +1102,7 @@ bool putUserAttributesViewedPromotions(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user attributes' viewer promotions into the local "
             "storage database: failed to prepare query"),
         false);
@@ -1164,8 +1114,7 @@ bool putUserAttributesViewedPromotions(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot put user attributes' viewer promotions into the local "
                 "storage database"),
             false);
@@ -1197,8 +1146,7 @@ bool putUserAttributesRecentMailedAddresses(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user attributes' recent mailed addresses into "
             "the local storage database: failed to prepare query"),
         false);
@@ -1210,8 +1158,7 @@ bool putUserAttributesRecentMailedAddresses(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot put user attributes' recent mailed addresses into "
                 "the local storage database"),
             false);
@@ -1248,8 +1195,7 @@ bool putAccounting(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user's accounting data into the local storage "
             "database: failed to prepare query"),
         false);
@@ -1358,8 +1304,7 @@ bool putAccounting(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user's accounting data into the local storage "
             "database"),
         false);
@@ -1387,8 +1332,7 @@ bool putAccountLimits(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user's account limits into the local storage "
             "database: failed to prepare query"),
         false);
@@ -1457,8 +1401,7 @@ bool putAccountLimits(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put user's account limits into the local storage database"),
         false);
 
@@ -1478,8 +1421,7 @@ bool putBusinessUserInfo(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put business user info into the local storage database: "
             "failed to prepare query"),
         false);
@@ -1505,8 +1447,7 @@ bool putBusinessUserInfo(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put business user info into the local storage database"),
         false);
 
@@ -1519,9 +1460,8 @@ bool putNotebook(
 {
     QNDEBUG("local_storage::sql::utils", "putNotebook: " << notebook);
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put notebook into the local storage database")};
+    const ErrorString errorPrefix{
+        QStringLiteral("Can't put notebook into the local storage database")};
 
     ErrorString error;
     if (!checkNotebook(notebook, error)) {
@@ -1611,8 +1551,7 @@ bool putNotebook(
     const bool res = transaction.commit();
     ENSURE_DB_REQUEST_RETURN(
         res, database, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put notebook into the local storage database, failed to "
             "commit"),
         false);
@@ -1654,8 +1593,7 @@ bool putCommonNotebookData(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put common notebook data into the local storage database: "
             "failed to prepare query"),
         false);
@@ -1834,8 +1772,7 @@ bool putCommonNotebookData(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put common notebook data into the local storage database"),
         false);
 
@@ -1875,8 +1812,7 @@ bool putNotebookRestrictions(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put notebook restrictions into the local storage database: "
             "failed to prepare query"),
         false);
@@ -2022,8 +1958,7 @@ bool putNotebookRestrictions(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put notebook restrictions into the local storage database"),
         false);
 
@@ -2068,8 +2003,7 @@ bool putSharedNotebook(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put shared notebook into the local storage database: "
             "failed to prepare query"),
         false);
@@ -2168,8 +2102,7 @@ bool putSharedNotebook(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put shared notebook into the local storage database"),
         false);
 
@@ -2182,9 +2115,8 @@ bool putTag(
 {
     QNDEBUG("local_storage::sql::utils", "putTag: " << tag);
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put tag into the local storage database")};
+    const ErrorString errorPrefix{
+        QStringLiteral("Can't put tag into the local storage database")};
 
     ErrorString error;
     if (!checkTag(tag, error)) {
@@ -2232,10 +2164,8 @@ bool putTag(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot put tag into the local storage database: "
-            "failed to prepare query"),
+        QStringLiteral("Cannot put tag into the local storage database: "
+                       "failed to prepare query"),
         false);
 
     QString tagNameNormalized;
@@ -2290,16 +2220,13 @@ bool putTag(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot put tag into the local storage database"),
+        QStringLiteral("Cannot put tag into the local storage database"),
         false);
 
     res = transaction.commit();
     ENSURE_DB_REQUEST_RETURN(
         res, database, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put tag into the local storage database, failed to commit"),
         false);
 
@@ -2313,9 +2240,8 @@ bool putLinkedNotebook(
     QNDEBUG(
         "local_storage::sql::utils", "putLinkedNotebook: " << linkedNotebook);
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put linked notebook into the local storage database"));
+    const ErrorString errorPrefix{QStringLiteral(
+        "Can't put linked notebook into the local storage database")};
 
     ErrorString error;
     if (!checkLinkedNotebook(linkedNotebook, error)) {
@@ -2344,8 +2270,7 @@ bool putLinkedNotebook(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put linked notebook into the local storage database: "
             "failed to prepare query"),
         false);
@@ -2409,8 +2334,7 @@ bool putLinkedNotebook(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put linked notebook into the local storage database"),
         false);
 
@@ -2423,9 +2347,8 @@ bool putSavedSearch(
 {
     QNDEBUG("local_storage::sql::utils", "putSavedSearch: " << savedSearch);
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put saved search into the local storage database"));
+    const ErrorString errorPrefix{QStringLiteral(
+        "Can't put saved search into the local storage database")};
 
     ErrorString error;
     if (!checkSavedSearch(savedSearch, error)) {
@@ -2454,8 +2377,7 @@ bool putSavedSearch(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put saved search into the local storage database: "
             "failed to prepare query"),
         false);
@@ -2529,8 +2451,7 @@ bool putSavedSearch(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put saved search into the local storage database"),
         false);
 
@@ -2549,9 +2470,8 @@ bool putResource(
                         << putResourceBinaryDataOption
                         << ", transaction option: " << transactionOption);
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put resource into the local storage database")};
+    const ErrorString errorPrefix{
+        QStringLiteral("Can't put resource into the local storage database")};
 
     ErrorString error;
     if (!checkResource(resource, error)) {
@@ -2604,7 +2524,8 @@ bool putResource(
     if (resource.recognition() && resource.recognition()->body()) {
         if (!putResourceRecognitionData(
                 localId, resource.noteLocalId(),
-                *resource.recognition()->body(), database, errorDescription)) {
+                *resource.recognition()->body(), database, errorDescription))
+        {
             return false;
         }
     }
@@ -2758,8 +2679,7 @@ bool putResource(
 
             ENSURE_DB_REQUEST_RETURN(
                 res, database, "local_storage::sql::utils",
-                QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
+                QStringLiteral(
                     "Cannot put resource into the local storage database, "
                     "failed to commit"),
                 false);
@@ -2793,8 +2713,8 @@ bool putCommonResourceData(
     int indexInNote = -1;
     {
         ErrorString error;
-        const auto index = resourceIndexInNote(
-            resource.localId(), database, error);
+        const auto index =
+            resourceIndexInNote(resource.localId(), database, error);
         if (!index && !error.isEmpty()) {
             errorDescription = error;
             QNWARNING("local_storage::sql::utils", errorDescription);
@@ -2806,8 +2726,8 @@ bool putCommonResourceData(
         }
         else {
             error.clear();
-            indexInNote = noteResourceCount(
-                resource.noteLocalId(), database, error);
+            indexInNote =
+                noteResourceCount(resource.noteLocalId(), database, error);
             if (Q_UNLIKELY(indexInNote < 0)) {
                 errorDescription = error;
                 QNWARNING("local_storage::sql::utils", errorDescription);
@@ -2855,8 +2775,7 @@ bool putCommonResourceData(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource metadata into the local storage database: "
             "failed to prepare query"),
         false);
@@ -2944,8 +2863,7 @@ bool putCommonResourceData(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource metadata into the local storage database"),
         false);
 
@@ -2954,15 +2872,14 @@ bool putCommonResourceData(
 
 bool putResourceRecognitionData(
     const QString & resourceLocalId, const QString & noteLocalId, // NOLINT
-    const QByteArray & resourceRecognitionData,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    const QByteArray & resourceRecognitionData, QSqlDatabase & database,
+    ErrorString & errorDescription)
 {
     ResourceRecognitionIndices recoIndices;
     bool res = recoIndices.setData(resourceRecognitionData);
     if (!res || !recoIndices.isValid()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Failed to parse resource recognition data"));
+        errorDescription.setBase(
+            QStringLiteral("Failed to parse resource recognition data"));
         QNWARNING(
             "local_storage::sql::utils",
             errorDescription << ": " << resourceRecognitionData);
@@ -3001,27 +2918,21 @@ bool putResourceRecognitionData(
     res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource recognition data: failed to prepare "
             "query"),
         false);
 
-    query.bindValue(
-        QStringLiteral(":resourceLocalUid"), resourceLocalId);
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
 
     query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
 
-    query.bindValue(
-        QStringLiteral(":recognitionData"), recognitionData);
+    query.bindValue(QStringLiteral(":recognitionData"), recognitionData);
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot put resource recognition data"),
-        false);
+        QStringLiteral("Cannot put resource recognition data"), false);
 
     return true;
 }
@@ -3044,8 +2955,7 @@ bool putResourceAttributes(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource attributes into the local storage database: "
             "failed to prepare query"),
         false);
@@ -3097,8 +3007,7 @@ bool putResourceAttributes(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource attributes into the local storage database"),
         false);
 
@@ -3122,8 +3031,7 @@ bool putResourceAttributesAppDataKeysOnly(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource attributes' application data keys only "
             "into the local storage database: failed to prepare query"),
         false);
@@ -3135,8 +3043,7 @@ bool putResourceAttributesAppDataKeysOnly(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot put resource attributes' application data keys only "
                 "into the local storage database"),
             false);
@@ -3162,8 +3069,7 @@ bool putResourceAttributesAppDataFullMap(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource attributes' application data full map "
             "into the local storage database: failed to prepare query"),
         false);
@@ -3176,8 +3082,7 @@ bool putResourceAttributesAppDataFullMap(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot put resource attributes' application data full map "
                 "into the local storage database"),
             false);
@@ -3231,16 +3136,14 @@ bool putCommonNoteData(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't put common note data into the locla storage database: "
             "failed to prepare query"),
         false);
 
     StringUtils stringUtils;
 
-    const QString titleNormalized = [&]
-    {
+    const QString titleNormalized = [&] {
         if (!note.title()) {
             return QString{};
         }
@@ -3262,16 +3165,13 @@ bool putCommonNoteData(
     query.bindValue(
         QStringLiteral(":isDirty"), (note.isLocallyModified() ? 1 : 0));
 
-    query.bindValue(
-        QStringLiteral(":isLocal"), (note.isLocalOnly() ? 1 : 0));
+    query.bindValue(QStringLiteral(":isLocal"), (note.isLocalOnly() ? 1 : 0));
 
     query.bindValue(
-        QStringLiteral(":isFavorited"),
-        (note.isLocallyFavorited() ? 1 : 0));
+        QStringLiteral(":isFavorited"), (note.isLocallyFavorited() ? 1 : 0));
 
     query.bindValue(
-        QStringLiteral(":title"),
-        (note.title() ? *note.title() : *gNullValue));
+        QStringLiteral(":title"), (note.title() ? *note.title() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":titleNormalized"),
@@ -3291,22 +3191,22 @@ bool putCommonNoteData(
 
     query.bindValue(
         QStringLiteral(":contentContainsFinishedToDo"),
-        (note.content() ? static_cast<int>(noteContentContainsCheckedToDo(
-                    *note.content()))
-            : *gNullValue));
+        (note.content()
+             ? static_cast<int>(noteContentContainsCheckedToDo(*note.content()))
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":contentContainsUnfinishedToDo"),
-        (note.content() ? static_cast<int>(noteContentContainsUncheckedToDo(
-                    *note.content()))
-            : *gNullValue));
+        (note.content() ? static_cast<int>(
+                              noteContentContainsUncheckedToDo(*note.content()))
+                        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":contentContainsEncryption"),
         (note.content()
-         ? static_cast<int>(
-             noteContentContainsEncryptedFragments(*note.content()))
-         : *gNullValue));
+             ? static_cast<int>(
+                   noteContentContainsEncryptedFragments(*note.content()))
+             : *gNullValue));
 
     if (note.content()) {
         ErrorString error;
@@ -3315,8 +3215,7 @@ bool putCommonNoteData(
             noteContentToPlainTextAndListOfWords(*note.content(), &error);
 
         if (!error.isEmpty()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "can't get note's plain text and list of words"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -3337,8 +3236,8 @@ bool putCommonNoteData(
         query.bindValue(
             QStringLiteral(":contentPlainText"),
             (plainTextAndListOfWords.first.isEmpty()
-             ? *gNullValue
-             : plainTextAndListOfWords.first));
+                 ? *gNullValue
+                 : plainTextAndListOfWords.first));
 
         query.bindValue(
             QStringLiteral(":contentListOfWords"),
@@ -3392,8 +3291,7 @@ bool putCommonNoteData(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't put common note data into the local storage database"),
         false);
 
@@ -3417,16 +3315,14 @@ bool putNoteRestrictions(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't put note restrictions into the local storage database: "
             "failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
 
-    const auto bindRestriction = [&](const QString & column, auto getter)
-    {
+    const auto bindRestriction = [&](const QString & column, auto getter) {
         auto value = getter();
         query.bindValue(column, (value ? (*value ? 1 : 0) : *gNullValue));
     };
@@ -3439,13 +3335,11 @@ bool putNoteRestrictions(
         return restrictions.noUpdateContent();
     });
 
-    bindRestriction(QStringLiteral(":noEmailNote"), [&] {
-        return restrictions.noEmail();
-    });
+    bindRestriction(
+        QStringLiteral(":noEmailNote"), [&] { return restrictions.noEmail(); });
 
-    bindRestriction(QStringLiteral(":noShareNote"), [&] {
-        return restrictions.noShare();
-    });
+    bindRestriction(
+        QStringLiteral(":noShareNote"), [&] { return restrictions.noShare(); });
 
     bindRestriction(QStringLiteral(":noShareNotePublicly"), [&] {
         return restrictions.noSharePublicly();
@@ -3454,8 +3348,7 @@ bool putNoteRestrictions(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't put note restrictions into the local storage database"),
         false);
 
@@ -3463,9 +3356,8 @@ bool putNoteRestrictions(
 }
 
 bool putNoteLimits(
-    const QString & noteLocalId,
-    const qevercloud::NoteLimits & limits, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    const QString & noteLocalId, const qevercloud::NoteLimits & limits,
+    QSqlDatabase & database, ErrorString & errorDescription)
 {
     static const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteLimits "
@@ -3478,16 +3370,13 @@ bool putNoteLimits(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't put note limits into the local storage database: "
-            "failed to prepare query"),
+        QStringLiteral("Can't put note limits into the local storage database: "
+                       "failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
 
-    const auto bindLimit = [&](const QString & column, auto getter)
-    {
+    const auto bindLimit = [&](const QString & column, auto getter) {
         auto value = getter();
         query.bindValue(column, value ? *value : *gNullValue);
     };
@@ -3496,28 +3385,22 @@ bool putNoteLimits(
         return limits.noteResourceCountMax();
     });
 
-    bindLimit(QStringLiteral(":uploadLimit"), [&] {
-        return limits.uploadLimit();
-    });
+    bindLimit(
+        QStringLiteral(":uploadLimit"), [&] { return limits.uploadLimit(); });
 
     bindLimit(QStringLiteral(":resourceSizeMax"), [&] {
         return limits.resourceSizeMax();
     });
 
-    bindLimit(QStringLiteral(":noteSizeMax"), [&] {
-        return limits.noteSizeMax();
-    });
+    bindLimit(
+        QStringLiteral(":noteSizeMax"), [&] { return limits.noteSizeMax(); });
 
-    bindLimit(QStringLiteral(":uploaded"), [&] {
-        return limits.uploaded();
-    });
+    bindLimit(QStringLiteral(":uploaded"), [&] { return limits.uploaded(); });
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't put note limits into the local storage database"),
+        QStringLiteral("Can't put note limits into the local storage database"),
         false);
 
     return true;
@@ -3582,15 +3465,13 @@ bool putSharedNotes(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't put shared note into the local storage database: failed to "
             "prepare query"),
         false);
 
     int indexInNote = 0;
-    for (const auto & sharedNote: qAsConst(sharedNotes))
-    {
+    for (const auto & sharedNote: qAsConst(sharedNotes)) {
         query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
 
         query.bindValue(
@@ -3727,8 +3608,7 @@ bool putSharedNotes(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Can't put shared note into the local storage database"),
             false);
     }
@@ -3736,7 +3616,8 @@ bool putSharedNotes(
     return true;
 }
 
-bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
+bool putNote(
+    const QDir & localStorageDir, qevercloud::Note & note,
     QSqlDatabase & database, ErrorString & errorDescription,
     PutNoteOptions putNoteOptions, TransactionOption transactionOption)
 {
@@ -3761,17 +3642,15 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
         transaction.emplace(database, Transaction::Type::Exclusive);
     }
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't put note into the local storage database"));
+    const ErrorString errorPrefix{
+        QStringLiteral("Can't put note into the local storage database")};
 
     ErrorString error;
     QString notebookLocalId = utils::notebookLocalId(note, database, error);
     if (notebookLocalId.isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         if (error.isEmpty()) {
-            error.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            error.setBase(QStringLiteral(
                 "cannot find notebook local id corresponding to note"));
         }
         errorDescription.appendBase(error.base());
@@ -3783,8 +3662,7 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
         return false;
     }
 
-    const auto composeFullError = [&]
-    {
+    const auto composeFullError = [&] {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -3819,8 +3697,7 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
     QString previousNoteGuid;
     if (!note.guid()) {
         error.clear();
-        previousNoteGuid =
-            noteGuidByLocalId(note.localId(), database, error);
+        previousNoteGuid = noteGuidByLocalId(note.localId(), database, error);
         if (previousNoteGuid.isEmpty() && !error.isEmpty()) {
             composeFullError();
             return false;
@@ -3918,8 +3795,8 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
         putNoteOptions.testFlag(PutNoteOption::PutResourceBinaryData))
     {
         error.clear();
-        originalNoteResourceLocalIds = noteResourceLocalIds(
-            note.localId(), database, error);
+        originalNoteResourceLocalIds =
+            noteResourceLocalIds(note.localId(), database, error);
         if (originalNoteResourceLocalIds.isEmpty() && !error.isEmpty()) {
             composeFullError();
             return false;
@@ -3983,10 +3860,8 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
 
         ENSURE_DB_REQUEST_RETURN(
             res, database, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot put note into the local storage database, "
-                "failed to commit"),
+            QStringLiteral("Cannot put note into the local storage database, "
+                           "failed to commit"),
             false);
 
         const QString & noteLocalId = note.localId();

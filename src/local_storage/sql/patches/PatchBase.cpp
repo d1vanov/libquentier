@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,16 +45,12 @@ PatchBase::PatchBase(
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::PatchBase",
-                "PatchBase ctor: connection pool is null")}};
+            QStringLiteral("PatchBase ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
         throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::PatchBase",
-                "PatchBase ctor: writer thread is null")}};
+            QStringLiteral("PatchBase ctor: writer thread is null")}};
     }
 }
 
@@ -75,8 +71,7 @@ QFuture<void> PatchBase::backupLocalStorage()
         {
             auto self = self_weak.lock();
             if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::PatchBase",
+                ErrorString errorDescription{QStringLiteral(
                     "Cannot backup local storage: PatchBase object is "
                     "destroyed")};
                 QNWARNING("local_storage::sql::patches", errorDescription);
@@ -122,8 +117,7 @@ QFuture<void> PatchBase::restoreLocalStorageFromBackup()
         {
             auto self = self_weak.lock();
             if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::PatchBase",
+                ErrorString errorDescription{QStringLiteral(
                     "Cannot restore local storage from backup: PatchBase "
                     "object is destroyed")};
                 QNWARNING("local_storage::sql::patches", errorDescription);
@@ -167,8 +161,7 @@ QFuture<void> PatchBase::removeLocalStorageBackup()
         {
             auto self = self_weak.lock();
             if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::PatchBase",
+                ErrorString errorDescription{QStringLiteral(
                     "Cannot remove local storage backup: PatchBase object is "
                     "destroyed")};
                 QNWARNING("local_storage:sql:patches", errorDescription);
@@ -212,8 +205,7 @@ QFuture<void> PatchBase::apply()
         {
             auto self = self_weak.lock();
             if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::PatchBase",
+                ErrorString errorDescription{QStringLiteral(
                     "Cannot apply local storage patch: PatchBase object is "
                     "destroyed")};
                 QNWARNING("local_storage::sql::patches", errorDescription);

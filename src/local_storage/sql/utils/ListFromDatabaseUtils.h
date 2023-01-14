@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -269,8 +269,7 @@ template <class T, class TOrderBy>
 
     QList<T> objects;
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    const ErrorString errorPrefix{QStringLiteral(
         "can't list objects from the local storage database")};
 
     QSqlQuery query{database};
@@ -399,8 +398,7 @@ std::optional<QSet<qevercloud::Guid>> listGuids(
         return queryString;
     }();
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    const ErrorString errorPrefix{QStringLiteral(
         "can't list guids from the local storage database")};
 
     QSqlQuery query{database};

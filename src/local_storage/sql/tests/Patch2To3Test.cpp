@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -80,7 +80,7 @@ void changeDatabaseVersionTo2(QSqlDatabase & database)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::patches::2_to_3",
-        QT_TR_NOOP(
+        QStringLiteral(
             "failed to execute SQL query increasing local storage version"));
 }
 
@@ -96,17 +96,14 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tests::Patch2To3Test",
-        QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::tests::Patch2To3Test",
-            "Failed to drop ResourceDataBodyVersionIds table"));
+        QStringLiteral("Failed to drop ResourceDataBodyVersionIds table"));
 
     res = query.exec(QStringLiteral(
         "DROP TABLE IF EXISTS ResourceAlternateDataBodyVersionIds"));
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tests::Patch2To3Test",
-        QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::tests::Patch2To3Test",
+        QStringLiteral(
             "Failed to drop ResourceAlternateDataBodyVersionIds table"));
 }
 
@@ -207,9 +204,8 @@ public:
         }
 
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, testData.m_localStorageDirPath,
-            m_resourceDataFilesLock);
+            m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+            testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
         testData.m_notebook.setGuid(UidGenerator::Generate());
         testData.m_notebook.setName(QStringLiteral("name"));
@@ -240,9 +236,8 @@ public:
         testData.m_note.setUpdated(now);
 
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, testData.m_localStorageDirPath,
-            m_resourceDataFilesLock);
+            m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+            testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
         auto putNoteFuture = notesHandler->putNote(testData.m_note);
         putNoteFuture.waitForFinished();
@@ -363,22 +358,21 @@ public:
         }
 
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, testData.m_localStorageDirPath,
-            m_resourceDataFilesLock);
+            m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+            testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
-        auto putFirstResourceFuture = resourcesHandler->putResource(
-            testData.m_firstResource);
+        auto putFirstResourceFuture =
+            resourcesHandler->putResource(testData.m_firstResource);
 
         putFirstResourceFuture.waitForFinished();
 
-        auto putSecondResourceFuture = resourcesHandler->putResource(
-            testData.m_secondResource);
+        auto putSecondResourceFuture =
+            resourcesHandler->putResource(testData.m_secondResource);
 
         putSecondResourceFuture.waitForFinished();
 
-        auto putThirdResourceFuture = resourcesHandler->putResource(
-            testData.m_thirdResource);
+        auto putThirdResourceFuture =
+            resourcesHandler->putResource(testData.m_thirdResource);
 
         putThirdResourceFuture.waitForFinished();
 
@@ -628,8 +622,7 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     }
 
     const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, m_threadPool,
-        m_writerThread);
+        account, m_connectionPool, m_threadPool, m_writerThread);
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
@@ -642,9 +635,8 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     EXPECT_NO_THROW(applyFuture.waitForFinished());
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, testData.m_localStorageDirPath,
-        m_resourceDataFilesLock);
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
@@ -658,9 +650,8 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     EXPECT_EQ(findNotebookFuture.result(), testData.m_notebook);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, testData.m_localStorageDirPath,
-        m_resourceDataFilesLock);
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -693,9 +684,8 @@ TEST_P(Patch2To3DataTest, ApplyPatch)
     EXPECT_EQ(findNoteFuture.result(), testNoteCopy);
 
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, testData.m_localStorageDirPath,
-        m_resourceDataFilesLock);
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
     auto resourceCountFuture = resourcesHandler->resourceCount(
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});

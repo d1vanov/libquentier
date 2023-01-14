@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -199,8 +199,7 @@ void Transaction::init()
     const bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::transaction",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::Transaction",
+        QStringLiteral(
             "Failed to begin transaction"));
 }
 

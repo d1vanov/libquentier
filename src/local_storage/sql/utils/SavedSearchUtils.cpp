@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,8 +37,7 @@ QString savedSearchLocalIdByGuid(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find saved search's local id by guid in the local storage "
             "database: failed to prepare query"),
         {});
@@ -48,8 +47,7 @@ QString savedSearchLocalIdByGuid(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find saved search's local id by guid in the local storage "
             "database"),
         {});

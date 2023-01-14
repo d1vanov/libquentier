@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ResourceUtils.h"
 #include "Common.h"
 #include "FillFromSqlRecordUtils.h"
 #include "ResourceDataFilesUtils.h"
+#include "ResourceUtils.h"
 #include "SqlUtils.h"
 
 #include "../ErrorHandling.h"
@@ -48,8 +48,7 @@ QString noteLocalIdByResourceLocalId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot get note local id by resource local id: failed to prepare "
             "query"),
         {});
@@ -60,10 +59,7 @@ QString noteLocalIdByResourceLocalId(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot get note local id by resource local id"),
-        {});
+        QStringLiteral("Cannot get note local id by resource local id"), {});
 
     if (!query.next()) {
         QNDEBUG(
@@ -105,8 +101,7 @@ QString resourceLocalIdByGuid(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot get resource local id by resource guid: failed to prepare "
             "query"),
         {});
@@ -116,8 +111,7 @@ QString resourceLocalIdByGuid(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot get resource local id by resource guid: failed to prepare "
             "query"),
         {});
@@ -145,8 +139,7 @@ std::optional<int> resourceIndexInNote(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot get resource index in note by resource local id: failed to "
             "prepare query"),
         {});
@@ -156,8 +149,7 @@ std::optional<int> resourceIndexInNote(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot get resource index in note by resource local id: failed to "
             "prepare query"),
         {});
@@ -173,8 +165,7 @@ std::optional<int> resourceIndexInNote(
     bool conversionResult = false;
     int index = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Could not find resource index in note corresponding to resource "
             "local id: failed to convert index in note to int"));
         QNWARNING("local_storage::sql::utils", errorDescription);
@@ -214,18 +205,15 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find resource by local id in the local storage "
-            "database: failed to prepare query"));
+        QStringLiteral("Cannot find resource by local id in the local storage "
+                       "database: failed to prepare query"));
 
     query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
 
     res = query.exec();
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource by local id in the local storage database"));
 
     if (!query.next()) {
@@ -237,8 +225,7 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
     ErrorString error;
     indexInNote = -1;
     if (!fillResourceFromSqlRecord(record, resource, indexInNote, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find resource by local id in the local storage "
             "database"));
         errorDescription.appendBase(error.base());
@@ -296,18 +283,15 @@ std::optional<qevercloud::Resource> findResourceByGuid(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find resource by guid in the local storage "
-            "database: failed to prepare query"));
+        QStringLiteral("Cannot find resource by guid in the local storage "
+                       "database: failed to prepare query"));
 
     query.bindValue(QStringLiteral(":resourceGuid"), resourceGuid);
 
     res = query.exec();
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource by guid in the local storage database"));
 
     if (!query.next()) {
@@ -319,8 +303,7 @@ std::optional<qevercloud::Resource> findResourceByGuid(
     ErrorString error;
     indexInNote = -1;
     if (!fillResourceFromSqlRecord(record, resource, indexInNote, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find resource by guid in the local storage "
             "database"));
         errorDescription.appendBase(error.base());
@@ -473,8 +456,7 @@ bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource application data keys only part in the local "
             "storage database: failed to prepare query"),
         false);
@@ -484,8 +466,7 @@ bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource application data keys only part in the local "
             "storage database"),
         false);
@@ -518,8 +499,7 @@ bool findResourceAttributesApplicationDataFullMapByLocalId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource application data full map part in the local "
             "storage database: failed to prepare query"),
         false);
@@ -529,8 +509,7 @@ bool findResourceAttributesApplicationDataFullMapByLocalId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource application data full map part in the local "
             "storage database"),
         false);
@@ -592,7 +571,8 @@ bool findResourceAttributesApplicationDataByLocalId(
 
     qevercloud::ResourceAttributes attributes;
     if (!findResourceAttributesApplicationDataByLocalId(
-            resource.localId(), attributes, database, errorDescription)) {
+            resource.localId(), attributes, database, errorDescription))
+    {
         return false;
     }
 
@@ -611,8 +591,8 @@ QStringList findResourceLocalIdsByMimeTypes(
         return {};
     }
 
-    const ErrorString errorPrefix(
-        QT_TR_NOOP("can't get resource mime types for resource local ids"));
+    const ErrorString errorPrefix{QStringLiteral(
+        "can't get resource mime types for resource local ids")};
 
     QSqlQuery query{database};
     QString queryString;
@@ -624,8 +604,7 @@ QStringList findResourceLocalIdsByMimeTypes(
                            "WHERE mime MATCH :mimeTypes"));
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot get resource local ids by mime types: failed to "
                 "prepare query"),
             {});
@@ -691,10 +670,7 @@ QStringList findResourceLocalIdsByMimeTypes(
     }
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot get resource local ids by mime types"),
-        {});
+        QStringLiteral("Cannot get resource local ids by mime types"), {});
 
     QStringList resourceLocalIds;
     resourceLocalIds.reserve(std::max(0, query.size()));
@@ -703,8 +679,7 @@ QStringList findResourceLocalIdsByMimeTypes(
         QSqlRecord rec = query.record();
         const int index = rec.indexOf(QStringLiteral("resourceLocalUid"));
         if (Q_UNLIKELY(index < 0)) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "Cannot get resource local ids by mime types: resource local "
                 "id is not present in the result of SQL query"));
             return {};

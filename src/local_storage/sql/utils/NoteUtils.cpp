@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -56,9 +56,8 @@ namespace {
         notebookName, std::nullopt, database, errorDescription);
     if (notebookLocalId.isEmpty()) {
         if (errorDescription.isEmpty()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot find notebook with such name"));
+            errorDescription.setBase(
+                QStringLiteral("Cannot find notebook with such name"));
             errorDescription.setDetails(notebookName);
         }
         QNWARNING("local_storage::sql::utils", errorDescription);
@@ -102,9 +101,8 @@ namespace {
                 tagName, std::nullopt, database, errorDescription);
             if (tagLocalId.isEmpty()) {
                 if (errorDescription.isEmpty()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP(
-                        "local_storage::sql::utils",
-                        "Cannot find tag with such name"));
+                    errorDescription.setBase(
+                        QStringLiteral("Cannot find tag with such name"));
                     errorDescription.setDetails(tagName);
                 }
                 QNWARNING("local_storage::sql::utils", errorDescription);
@@ -375,7 +373,7 @@ void encryptionItemInNoteSearchQueryToSql(
 }
 
 void contentSearchTermToSqlQueryParts(
-    QString & frontSearchTermModifier, QString & searchTerm, // NOLINT
+    QString & frontSearchTermModifier, QString & searchTerm,    // NOLINT
     QString & backSearchTermModifier, QString & matchStatement) // NOLINT
 {
     static const QRegularExpression whitespaceRegex{QStringLiteral("\\p{Z}")};
@@ -417,10 +415,9 @@ void contentSearchTermToSqlQueryParts(
     ErrorString & errorDescription)
 {
     if (!noteSearchQuery.hasAnyContentSearchTerms()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "note search query has no advanced search "
-            "modifiers and no content search terms"));
+        errorDescription.setBase(
+            QStringLiteral("note search query has no advanced search "
+                           "modifiers and no content search terms"));
         errorDescription.details() = noteSearchQuery.queryString();
         QNWARNING("local_storage", errorDescription);
         return false;
@@ -589,9 +586,8 @@ void contentSearchTermToSqlQueryParts(
     QString queryString;
     QTextStream strm{&queryString};
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "can't convert note search query string into SQL query"});
+    const ErrorString errorPrefix{QStringLiteral(
+        "can't convert note search query string into SQL query")};
 
     // 1) Setting up initial templates
     QString sqlPrefix = QStringLiteral("SELECT DISTINCT localUid ");
@@ -934,7 +930,9 @@ void contentSearchTermToSqlQueryParts(
     sqlPrefix += QStringLiteral("WHERE ");
     queryString.prepend(sqlPrefix);
 
-    QNTRACE("local_storage::sql::utils", "Prepared SQL query for note search: " << queryString);
+    QNTRACE(
+        "local_storage::sql::utils",
+        "Prepared SQL query for note search: " << queryString);
     return queryString;
 }
 
@@ -944,15 +942,14 @@ QString noteGuidByLocalId(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString = QStringLiteral(
-        "SELECT guid FROM Notes WHERE localUid = :localUid");
+    static const QString queryString =
+        QStringLiteral("SELECT guid FROM Notes WHERE localUid = :localUid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot get note guid by note local id: failed to prepare query"),
         {});
 
@@ -961,10 +958,7 @@ QString noteGuidByLocalId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot get note guid by note local id"),
-        {});
+        QStringLiteral("Cannot get note guid by note local id"), {});
 
     if (query.next()) {
         return query.record().value(0).toString();
@@ -989,8 +983,7 @@ QString notebookLocalId(
             "SELECT localUid FROM Notebooks WHERE guid = :guid"));
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot determine notebook local id by notebook guid, failed "
                 "to prepare query"),
             QString{});
@@ -1000,15 +993,13 @@ QString notebookLocalId(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot determine notebook local id by notebook guid"),
             QString{});
 
         if (!query.next()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot find notebook local id for guid"));
+            errorDescription.setBase(
+                QStringLiteral("Cannot find notebook local id for guid"));
             errorDescription.details() = *notebookGuid;
             QNWARNING("local_storage::sql::utils", errorDescription);
             return QString{};
@@ -1023,8 +1014,7 @@ QString notebookLocalId(
         "SELECT notebookLocalUid FROM Notes WHERE localUid = :localUid"));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot determine notebook local id by note local id, failed "
             "to prepare query"),
         QString{});
@@ -1034,15 +1024,12 @@ QString notebookLocalId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot determine notebook local id by note local id"),
+        QStringLiteral("Cannot determine notebook local id by note local id"),
         QString{});
 
     if (!query.next()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find notebook local id for note local id"));
+        errorDescription.setBase(
+            QStringLiteral("Cannot find notebook local id for note local id"));
         errorDescription.details() = note.localId();
         QNWARNING("local_storage::sql::utils", errorDescription);
         return QString{};
@@ -1070,8 +1057,7 @@ QString notebookGuid(
         "SELECT guid FROM Notebooks WHERE localUid = :localUid"));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot determine notebook guid by local id, failed to prepare "
             "query"),
         QString{});
@@ -1081,15 +1067,12 @@ QString notebookGuid(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot determine notebook guid by local id"),
+        QStringLiteral("Cannot determine notebook guid by local id"),
         QString{});
 
     if (!query.next()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find notebook guid for local id"));
+        errorDescription.setBase(
+            QStringLiteral("Cannot find notebook guid for local id"));
         errorDescription.details() = localId;
         QNWARNING("local_storage::sql::utils", errorDescription);
         return QString{};
@@ -1109,8 +1092,7 @@ QString noteLocalIdByGuid(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find note local id by guid: failed to prepare query"),
         {});
 
@@ -1119,9 +1101,7 @@ QString noteLocalIdByGuid(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils", "Cannot find note local id by guid"),
-        {});
+        QStringLiteral("Cannot find note local id by guid"), {});
 
     if (!query.next()) {
         return {};
@@ -1143,9 +1123,8 @@ QStringList queryNoteLocalIds(
         transaction.emplace(database, Transaction::Type::Selection);
     }
 
-    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
-        "Can't find notes with the note search query")};
+    const ErrorString errorPrefix{
+        QStringLiteral("Can't find notes with the note search query")};
 
     ErrorString error;
     const QString queryString =
@@ -1163,9 +1142,7 @@ QStringList queryNoteLocalIds(
     const bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot list note local ids with note search query"),
+        QStringLiteral("Cannot list note local ids with note search query"),
         {});
 
     QSet<QString> foundLocalIds;
@@ -1204,8 +1181,7 @@ QStringList noteResourceLocalIds(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot list resource local ids by note local id: failed to "
             "prepare query"),
         {});
@@ -1215,10 +1191,7 @@ QStringList noteResourceLocalIds(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot list resource local ids by note local id"),
-        {});
+        QStringLiteral("Cannot list resource local ids by note local id"), {});
 
     QStringList result;
     result.reserve(std::max(0, query.size()));
@@ -1241,10 +1214,8 @@ int noteResourceCount(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot count resources by note local id: failed to "
-            "prepare query"),
+        QStringLiteral("Cannot count resources by note local id: failed to "
+                       "prepare query"),
         {});
 
     query.bindValue(QStringLiteral(":localNote"), noteLocalId);
@@ -1252,14 +1223,10 @@ int noteResourceCount(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot count resources by note local id"),
-        {});
+        QStringLiteral("Cannot count resources by note local id"), {});
 
     if (!query.next()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count resources by note local id: no result from query"));
         return -1;
     }
@@ -1267,8 +1234,7 @@ int noteResourceCount(
     bool conversionResult = false;
     int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count resources by note local id: no result from query: "
             "failed to convert count to int"));
         QNWARNING("local_storage::sql::utils", errorDescription);

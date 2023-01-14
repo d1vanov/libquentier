@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -60,8 +60,7 @@ template <class T>
         ILocalStorage::Affiliation::ParticularLinkedNotebooks)
     {
         if (options.m_linkedNotebookGuids.isEmpty()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotebooksHandler",
+            errorDescription.setBase(QStringLiteral(
                 "Detected attempt to list notebooks affiliated with "
                 "particular linked notebooks but the list of linked "
                 "notebook guids is empty"));

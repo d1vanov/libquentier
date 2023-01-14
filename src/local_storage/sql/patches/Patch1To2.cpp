@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,8 +40,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QTimer>
 
 #include <algorithm>
@@ -67,8 +67,7 @@ const QString gResourceLocalIdColumn = QStringLiteral("resourceLocalUid");
 const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
 
 template <typename T>
-bool extractEntry(
-    const QSqlRecord & rec, const QString & name, T & entry)
+bool extractEntry(const QSqlRecord & rec, const QString & name, T & entry)
 {
     const int index = rec.indexOf(name);
     if (index >= 0) {
@@ -96,10 +95,8 @@ Patch1To2::Patch1To2(
     m_account{std::move(account)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::Patch1To2",
-                "Patch1To2 ctor: account is empty")}};
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("Patch1To2 ctor: account is empty")}};
     }
 }
 
@@ -162,9 +159,7 @@ QString Patch1To2::patchLongDescription() const
 bool Patch1To2::backupLocalStorageSync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
-    QNDEBUG(
-        "local_storage::sql::patches",
-        "Patch1To2::backupLocalStorageSync");
+    QNDEBUG("local_storage::sql::patches", "Patch1To2::backupLocalStorageSync");
 
     return utils::backupLocalStorageDatabaseFiles(
         m_localStorageDir.absolutePath(), m_backupDir.absolutePath(), promise,
@@ -183,8 +178,7 @@ bool Patch1To2::restoreLocalStorageFromBackupSync(
         errorDescription);
 }
 
-bool Patch1To2::removeLocalStorageBackupSync(
-    ErrorString & errorDescription)
+bool Patch1To2::removeLocalStorageBackupSync(ErrorString & errorDescription)
 {
     QNINFO(
         "local_storage::sql::patches",
@@ -201,9 +195,8 @@ bool Patch1To2::applySync(
 
     ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade1To2Persistence};
 
-    ErrorString errorPrefix{
-        QT_TR_NOOP("failed to upgrade local storage "
-                   "from version 1 to version 2")};
+    ErrorString errorPrefix{QStringLiteral(
+        "failed to upgrade local storage from version 1 to version 2")};
 
     errorDescription.clear();
 
@@ -222,9 +215,7 @@ bool Patch1To2::applySync(
     if (!allResourceDataCopiedFromTablesToFiles) {
         // Part 1: extract the list of resource local uids from the local
         // storage database
-        resourceLocalIds =
-            listResourceLocalIds(
-                database, errorDescription);
+        resourceLocalIds = listResourceLocalIds(database, errorDescription);
 
         if (resourceLocalIds.isEmpty() && !errorDescription.isEmpty()) {
             return false;
@@ -237,9 +228,7 @@ bool Patch1To2::applySync(
 
         // Part 2: ensure the directories for resources data body and
         // recognition data body exist, create them if necessary
-        if (!ensureExistenceOfResouceDataDirs(
-                errorDescription))
-        {
+        if (!ensureExistenceOfResouceDataDirs(errorDescription)) {
             return false;
         }
 
@@ -267,17 +256,16 @@ bool Patch1To2::applySync(
 
             ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::1_to_2",
-                QT_TR_NOOP(
+                QStringLiteral(
                     "failed to execute SQL query fetching resource data bodies "
                     "from tables"),
                 false);
 
             if (Q_UNLIKELY(!query.next())) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to fetch resource "
-                               "information from the local "
-                               "storage database"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to fetch resource information from the local "
+                    "storage database"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
@@ -292,9 +280,8 @@ bool Patch1To2::applySync(
             if (!extractEntry(rec, QStringLiteral("noteLocalUid"), noteLocalId))
             {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to get note local id corresponding "
-                               "to a resource"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to get note local id corresponding to a resource"));
                 QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
@@ -302,9 +289,8 @@ bool Patch1To2::applySync(
             QByteArray dataBody;
             if (!extractEntry(rec, QStringLiteral("dataBody"), dataBody)) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to get data body corresponding "
-                               "to a resource"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to get data body corresponding to a resource"));
                 QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
@@ -322,10 +308,9 @@ bool Patch1To2::applySync(
                     noteResourceDataDir.absolutePath());
                 if (!res) {
                     errorDescription = errorPrefix;
-                    errorDescription.appendBase(
-                        QT_TR_NOOP("failed to create directory "
-                                   "for resource data bodies "
-                                   "for some note"));
+                    errorDescription.appendBase(QStringLiteral(
+                        "failed to create directory for resource data bodies "
+                        "for some note"));
 
                     errorDescription.details() =
                         QStringLiteral("note local id = ") + noteLocalId;
@@ -342,9 +327,8 @@ bool Patch1To2::applySync(
 
             if (!resourceDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to open resource "
-                               "data file for writing"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to open resource data file for writing"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local uid = ") + resourceLocalId;
@@ -357,9 +341,8 @@ bool Patch1To2::applySync(
             qint64 bytesWritten = resourceDataFile.write(dataBody);
             if (bytesWritten < 0) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to write resource "
-                               "data body to a file"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to write resource data body to a file"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local uid = ") + resourceLocalId;
@@ -370,9 +353,8 @@ bool Patch1To2::applySync(
 
             if (bytesWritten < dataSize) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to write whole "
-                               "resource data body to a file"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to write whole resource data body to a file"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
@@ -383,9 +365,8 @@ bool Patch1To2::applySync(
 
             if (!resourceDataFile.flush()) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to flush the resource "
-                               "data body to a file"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to flush the resource data body to a file"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local uid = ") + resourceLocalId;
@@ -408,9 +389,8 @@ bool Patch1To2::applySync(
                 QNDEBUG(
                     "local_storage::sql::patches",
                     "Processed resource data (no alternate data) for resource "
-                        << "local id "
-                        << resourceLocalId << "; updated progress to "
-                        << lastProgress);
+                        << "local id " << resourceLocalId
+                        << "; updated progress to " << lastProgress);
 
                 promise.setProgressValue(lastProgress);
                 continue;
@@ -428,9 +408,9 @@ bool Patch1To2::applySync(
 
                 if (!res) {
                     errorDescription = errorPrefix;
-                    errorDescription.appendBase(
-                        QT_TR_NOOP("failed to create directory for resource "
-                                   "alternate data bodies for some note"));
+                    errorDescription.appendBase(QStringLiteral(
+                        "failed to create directory for resource "
+                        "alternate data bodies for some note"));
 
                     errorDescription.details() =
                         QStringLiteral("note local uid = ") + noteLocalId;
@@ -443,14 +423,12 @@ bool Patch1To2::applySync(
             // 3.5 Write resource alternate data body to a file
             QFile resourceAlternateDataFile{
                 noteResourceAlternateDataDir.absolutePath() +
-                QStringLiteral("/") + resourceLocalId +
-                QStringLiteral(".dat")};
+                QStringLiteral("/") + resourceLocalId + QStringLiteral(".dat")};
 
             if (!resourceAlternateDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to open resource alternate data file "
-                               "for writing"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to open resource alternate data file for writing"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
@@ -464,9 +442,8 @@ bool Patch1To2::applySync(
             if (bytesWritten < 0) {
                 errorDescription = errorPrefix;
 
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to write resource alternate data body "
-                               "to a file"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to write resource alternate data body to a file"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
@@ -478,9 +455,9 @@ bool Patch1To2::applySync(
             if (bytesWritten < alternateDataSize) {
                 errorDescription = errorPrefix;
 
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to write whole resource alternate data "
-                               "body to a file"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to write whole resource alternate data body to a "
+                    "file"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
@@ -492,9 +469,9 @@ bool Patch1To2::applySync(
             if (!resourceAlternateDataFile.flush()) {
                 errorDescription = errorPrefix;
 
-                errorDescription.appendBase(
-                    QT_TR_NOOP("failed to flush the resource alternate data "
-                               "body to a file"));
+                errorDescription.appendBase(QStringLiteral(
+                    "failed to flush the resource alternate data "
+                    "body to a file"));
 
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
@@ -554,7 +531,7 @@ bool Patch1To2::applySync(
                                           "alternateDataBody=NULL"));
             ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::1_to_2",
-                QT_TR_NOOP(
+                QStringLiteral(
                     "failed to execute SQL query setting resource data bodies "
                     "in tables to null"),
                 false);
@@ -599,7 +576,7 @@ bool Patch1To2::applySync(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::patches::1_to_2",
-        QT_TR_NOOP(
+        QStringLiteral(
             "failed to execute SQL query increasing local storage version"),
         false);
 
@@ -619,10 +596,9 @@ QStringList Patch1To2::listResourceLocalIds(
         query.exec(QStringLiteral("SELECT resourceLocalUid FROM Resources"));
 
     if (Q_UNLIKELY(!res)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("failed to collect the local ids of resources which "
-                       "need to be transferred to another table as a part of "
-                       "database upgrade"));
+        errorDescription.setBase(QStringLiteral(
+            "failed to collect the local ids of resources which need to be "
+            "transferred to another table as a part of database upgrade"));
 
         errorDescription.details() = query.lastError().text();
         QNWARNING("tests:local_storage", errorDescription);
@@ -639,10 +615,10 @@ QStringList Patch1To2::listResourceLocalIds(
             rec.value(QStringLiteral("resourceLocalUid")).toString();
 
         if (Q_UNLIKELY(resourceLocalId.isEmpty())) {
-            errorDescription.setBase(
-                QT_TR_NOOP("failed to extract local id of a resource which "
-                           "needs a transfer of its binary data into another "
-                           "table as a part of database upgrade"));
+            errorDescription.setBase(QStringLiteral(
+                "failed to extract local id of a resource which needs a "
+                "transfer of its binary data into another table as a part of "
+                "database upgrade"));
             QNWARNING("tests:local_storage", errorDescription);
             return {};
         }
@@ -655,11 +631,9 @@ QStringList Patch1To2::listResourceLocalIds(
 
 void Patch1To2::filterResourceLocalIds(QStringList & resourceLocalIds) const
 {
-    QNDEBUG(
-        "local_storage:patches", "Patch1To2::filterResourceLocalIds");
+    QNDEBUG("local_storage:patches", "Patch1To2::filterResourceLocalIds");
 
-    ApplicationSettings databaseUpgradeInfo{
-        m_account, gUpgrade1To2Persistence};
+    ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade1To2Persistence};
 
     const int numEntries = databaseUpgradeInfo.beginReadArray(
         gUpgrade1To2LocalIdsForResourcesCopiedToFilesKey);
@@ -682,12 +656,10 @@ void Patch1To2::filterResourceLocalIds(QStringList & resourceLocalIds) const
     resourceLocalIds.erase(it, resourceLocalIds.end());
 }
 
-bool Patch1To2::ensureExistenceOfResouceDataDirs(
-    ErrorString & errorDescription)
+bool Patch1To2::ensureExistenceOfResouceDataDirs(ErrorString & errorDescription)
 {
     QNDEBUG(
-        "local_storage:patches",
-        "Patch1To2::ensureExistenceOfResouceDataDirs");
+        "local_storage:patches", "Patch1To2::ensureExistenceOfResouceDataDirs");
 
     const QString storagePath = accountPersistentStoragePath(m_account);
 
@@ -697,9 +669,8 @@ bool Patch1To2::ensureExistenceOfResouceDataDirs(
             resourcesDataBodyDir.mkpath(resourcesDataBodyDir.absolutePath());
 
         if (!res) {
-            errorDescription.setBase(
-                QT_TR_NOOP("failed to create directory for "
-                           "resource data body storage"));
+            errorDescription.setBase(QStringLiteral(
+                "failed to create directory for resource data body storage"));
 
             errorDescription.details() =
                 QDir::toNativeSeparators(resourcesDataBodyDir.absolutePath());
@@ -717,9 +688,9 @@ bool Patch1To2::ensureExistenceOfResouceDataDirs(
             resourcesAlternateDataBodyDir.absolutePath());
 
         if (!res) {
-            errorDescription.setBase(
-                QT_TR_NOOP("failed to create directory for "
-                           "resource alternate data body storage"));
+            errorDescription.setBase(QStringLiteral(
+                "failed to create directory for resource alternate data body "
+                "storage"));
 
             errorDescription.details() = QDir::toNativeSeparators(
                 resourcesAlternateDataBodyDir.absolutePath());
@@ -741,7 +712,7 @@ bool Patch1To2::compactDatabase(
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::patches::1_to_2",
-        QT_TR_NOOP(
+        QStringLiteral(
             "failed to execute SQL query compacting the local storage "
             "database"),
         false);

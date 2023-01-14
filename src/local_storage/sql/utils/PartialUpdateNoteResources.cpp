@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "PartialUpdateNoteResources.h"
 #include "Common.h"
 #include "ListFromDatabaseUtils.h"
+#include "PartialUpdateNoteResources.h"
 #include "PutToDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "SqlUtils.h"
@@ -50,17 +50,14 @@ void clearBinaryDataFromResource(qevercloud::Resource & resource)
 }
 
 [[nodiscard]] bool compareResourcesWithoutBinaryData(
-    const qevercloud::Resource & lhs,
-    const qevercloud::Resource & rhs)
+    const qevercloud::Resource & lhs, const qevercloud::Resource & rhs)
 {
-    static const auto hasDataBody = [](const qevercloud::Resource & resource)
-    {
+    static const auto hasDataBody = [](const qevercloud::Resource & resource) {
         return resource.data() && resource.data()->body();
     };
 
     static const auto hasAlternateDataBody =
-        [](const qevercloud::Resource & resource)
-        {
+        [](const qevercloud::Resource & resource) {
             return resource.alternateData() && resource.alternateData()->body();
         };
 
@@ -101,8 +98,7 @@ void clearBinaryDataFromResource(qevercloud::Resource & resource)
         return false;
     }
 
-    for (int i = 0; i < lhsSize; ++i)
-    {
+    for (int i = 0; i < lhsSize; ++i) {
         if (!compareResourcesWithoutBinaryData(lhs[i], rhs[i])) {
             return false;
         }
@@ -115,17 +111,14 @@ void classifyNoteResources(
     const QList<qevercloud::Resource> & previousNoteResources,
     const QList<qevercloud::Resource> & updatedNoteResources,
     QSet<QString> & localIdsOfRemovedResources,
-    QList<qevercloud::Resource> & addedResources, // NOLINT
+    QList<qevercloud::Resource> & addedResources,   // NOLINT
     QList<qevercloud::Resource> & updatedResources) // NOLINT
 {
-    for (const auto & previousNoteResource: qAsConst(previousNoteResources))
-    {
+    for (const auto & previousNoteResource: qAsConst(previousNoteResources)) {
         const auto updatedResourceIt = std::find_if(
-            updatedNoteResources.constBegin(),
-            updatedNoteResources.constEnd(),
-            [&previousNoteResource]
-            (const qevercloud::Resource & updatedNoteResource)
-            {
+            updatedNoteResources.constBegin(), updatedNoteResources.constEnd(),
+            [&previousNoteResource](
+                const qevercloud::Resource & updatedNoteResource) {
                 return previousNoteResource.localId() ==
                     updatedNoteResource.localId();
             });
@@ -137,19 +130,16 @@ void classifyNoteResources(
 
         const auto & updatedResource = *updatedResourceIt;
         if (!compareResourcesWithoutBinaryData(
-                previousNoteResource, updatedResource))
-        {
+                previousNoteResource, updatedResource)) {
             updatedResources << updatedResource;
         }
     }
 
-    for (const auto & updatedResource: qAsConst(updatedNoteResources))
-    {
+    for (const auto & updatedResource: qAsConst(updatedNoteResources)) {
         const auto previousResourceIt = std::find_if(
             previousNoteResources.constBegin(),
             previousNoteResources.constEnd(),
-            [&updatedResource](const qevercloud::Resource & resource)
-            {
+            [&updatedResource](const qevercloud::Resource & resource) {
                 return resource.localId() == updatedResource.localId();
             });
         if (previousResourceIt == previousNoteResources.constEnd()) {
@@ -170,23 +160,18 @@ void classifyNoteResources(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't update resources indexes in note: failed to prepare query"),
         false);
 
-    for (const auto & pair: resourceLocalIdsWithIndexesInNote)
-    {
+    for (const auto & pair: resourceLocalIdsWithIndexesInNote) {
         query.bindValue(QStringLiteral(":resourceLocalUid"), pair.first);
         query.bindValue(QStringLiteral(":indexInNote"), pair.second);
 
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Can't update resource indexes in note"),
-            false);
+            QStringLiteral("Can't update resource indexes in note"), false);
     }
 
     return true;
@@ -203,8 +188,8 @@ void classifyNoteResources(
 
     static const QChar apostrophe = QChar::fromLatin1('\'');
     static const QChar comma = QChar::fromLatin1(',');
-    for (auto it = localIds.constBegin(), end = localIds.constEnd();
-         it != end; ++it)
+    for (auto it = localIds.constBegin(), end = localIds.constEnd(); it != end;
+         ++it)
     {
         const QString & localId = *it;
 
@@ -224,8 +209,7 @@ void classifyNoteResources(
     bool res = query.exec(removeResourcesQueryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot bulk remove resources from the local storage database"),
         false);
 
@@ -240,8 +224,8 @@ void classifyNoteResources(
 bool partialUpdateNoteResources(
     const QString & noteLocalId, const QDir & localStorageDir,
     const QList<qevercloud::Resource> & updatedNoteResources,
-    const bool updateResourceBinaryData,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    const bool updateResourceBinaryData, QSqlDatabase & database,
+    ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage::sql::utils",
@@ -251,8 +235,7 @@ bool partialUpdateNoteResources(
             << (updateResourceBinaryData ? "true" : "false"));
 
     if (!checkDuplicatesByLocalId(updatedNoteResources)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "The list of note's resources contains resources with "
             "the same local id"));
         QNWARNING("local_storage::sql::utils", errorDescription);
@@ -264,8 +247,7 @@ bool partialUpdateNoteResources(
         noteLocalId, localStorageDir,
         utils::ListNoteResourcesOption::WithoutBinaryData, database, error);
     if (!error.isEmpty()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot perform partial update of note's resources"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -314,8 +296,7 @@ bool partialUpdateNoteResources(
         // resources have changed, need to detect and update them
         Q_ASSERT(previousNoteResources.size() == updatedNoteResources.size());
         QList<std::pair<QString, int>> localIdsAndIndexesInNoteToUpdate;
-        for (int i = 0; i < previousNoteResources.size(); ++i)
-        {
+        for (int i = 0; i < previousNoteResources.size(); ++i) {
             const auto & previousResource = qAsConst(previousNoteResources)[i];
             const auto & updatedResource = qAsConst(updatedNoteResources)[i];
             if (previousResource.localId() != updatedResource.localId()) {
@@ -330,8 +311,7 @@ bool partialUpdateNoteResources(
         if (!updateResourceIndexesInNote(
                 localIdsAndIndexesInNoteToUpdate, database, error))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "Cannot perform partial update of note's resources"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -343,12 +323,10 @@ bool partialUpdateNoteResources(
         return true;
     }
 
-    for (const auto & resource: qAsConst(addedResources))
-    {
+    for (const auto & resource: qAsConst(addedResources)) {
         ErrorString error;
         if (!checkResource(resource, error)) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "Cannot perform partial update of note's resources: detected "
                 "attempt to add invalid resource to the local storage"));
             errorDescription.appendBase(error.base());
@@ -361,12 +339,10 @@ bool partialUpdateNoteResources(
         }
     }
 
-    for (const auto & resource: qAsConst(updatedResources))
-    {
+    for (const auto & resource: qAsConst(updatedResources)) {
         ErrorString error;
         if (!checkResource(resource, error)) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "Cannot perform partial update of note's resources: detected "
                 "invalid resource on attempt to update resource in the local "
                 "storage"));
@@ -381,25 +357,19 @@ bool partialUpdateNoteResources(
     }
 
     auto remainingResources = previousNoteResources;
-    if (!localIdsOfResourcesToRemove.isEmpty())
-    {
+    if (!localIdsOfResourcesToRemove.isEmpty()) {
         remainingResources.erase(
             std::remove_if(
-                remainingResources.begin(),
-                remainingResources.end(),
-                [&](const qevercloud::Resource & resource)
-                {
+                remainingResources.begin(), remainingResources.end(),
+                [&](const qevercloud::Resource & resource) {
                     return localIdsOfResourcesToRemove.contains(
                         resource.localId());
                 }),
             remainingResources.end());
 
         ErrorString error;
-        if (!expungeResources(
-                localIdsOfResourcesToRemove, database, error))
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+        if (!expungeResources(localIdsOfResourcesToRemove, database, error)) {
+            errorDescription.setBase(QStringLiteral(
                 "Cannot perform partial update of note's resources: failed "
                 "to expunge resources no longer belonging the note from the "
                 "local storage"));
@@ -422,8 +392,7 @@ bool partialUpdateNoteResources(
             }
         }
 
-        if (firstChangedIndex >= 0)
-        {
+        if (firstChangedIndex >= 0) {
             QList<std::pair<QString, int>> localIdsAndIndexesInNoteToUpdate;
             for (int i = firstChangedIndex; i < remainingResources.size(); ++i)
             {
@@ -438,8 +407,7 @@ bool partialUpdateNoteResources(
             if (!updateResourceIndexesInNote(
                     localIdsAndIndexesInNoteToUpdate, database, error))
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
+                errorDescription.setBase(QStringLiteral(
                     "Cannot perform partial update of note's resources"));
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
@@ -454,18 +422,16 @@ bool partialUpdateNoteResources(
         }
     }
 
-    for (auto & resource: updatedResources)
-    {
+    for (auto & resource: updatedResources) {
         error.clear();
         if (!putResource(
                 localStorageDir, resource, database, error,
                 (updateResourceBinaryData
-                 ? PutResourceBinaryDataOption::WithBinaryData
-                 : PutResourceBinaryDataOption::WithoutBinaryData),
+                     ? PutResourceBinaryDataOption::WithBinaryData
+                     : PutResourceBinaryDataOption::WithoutBinaryData),
                 TransactionOption::DontUseSeparateTransaction))
         {
-            errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.appendBase(QStringLiteral(
                 "Can't update one of note's resources in the local storage"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -477,19 +443,17 @@ bool partialUpdateNoteResources(
         }
     }
 
-    for (auto & resource: addedResources)
-    {
+    for (auto & resource: addedResources) {
         ErrorString error;
         error.clear();
         if (!putResource(
                 localStorageDir, resource, database, error,
                 (updateResourceBinaryData
-                 ? PutResourceBinaryDataOption::WithBinaryData
-                 : PutResourceBinaryDataOption::WithoutBinaryData),
+                     ? PutResourceBinaryDataOption::WithBinaryData
+                     : PutResourceBinaryDataOption::WithoutBinaryData),
                 TransactionOption::DontUseSeparateTransaction))
         {
-            errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.appendBase(QStringLiteral(
                 "Can't add one of note's resources to the local storage"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());

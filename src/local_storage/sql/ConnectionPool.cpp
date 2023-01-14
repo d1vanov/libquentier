@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,23 +39,23 @@
 namespace quentier::local_storage::sql {
 
 ConnectionPool::ConnectionPool(
-    QString hostName, QString userName, QString password,
-    QString databaseName, QString sqlDriverName, QString connectionOptions) :
+    QString hostName, QString userName, QString password, QString databaseName,
+    QString sqlDriverName, QString connectionOptions) :
     m_hostName{std::move(hostName)},
-    m_userName{std::move(userName)},
-    m_password{std::move(password)},
-    m_databaseName{std::move(databaseName)},
-    m_sqlDriverName{std::move(sqlDriverName)},
-    m_connectionOptions{std::move(connectionOptions)},
-    m_pageSize{[]{ SysInfo sysInfo; return sysInfo.pageSize(); }()}
+    m_userName{std::move(userName)}, m_password{std::move(password)},
+    m_databaseName{std::move(databaseName)}, m_sqlDriverName{std::move(
+                                                 sqlDriverName)},
+    m_connectionOptions{std::move(connectionOptions)}, m_pageSize{[] {
+        SysInfo sysInfo;
+        return sysInfo.pageSize();
+    }()}
 {
     const bool isSqlDriverAvailable =
         QSqlDatabase::isDriverAvailable(m_sqlDriverName);
 
     if (Q_UNLIKELY(!isSqlDriverAvailable)) {
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::ConnectionPool",
-            "SQL database driver is not available"));
+        ErrorString error(
+            QStringLiteral("SQL database driver is not available"));
 
         error.details() += m_sqlDriverName;
         error.details() += QStringLiteral("; available SQL drivers: ");
@@ -99,8 +99,7 @@ QSqlDatabase ConnectionPool::database()
 
     // Try to find the existing connection again
     auto it = m_connections.find(pCurrentThread);
-    if (it != m_connections.end())
-    {
+    if (it != m_connections.end()) {
         return QSqlDatabase::database(it->m_connectionName, /* open = */ true);
     }
 
@@ -124,11 +123,8 @@ QSqlDatabase ConnectionPool::database()
         ConnectionData{QPointer{pCurrentThread}, connectionName};
 
     QObject::connect(
-        pCurrentThread,
-        &QThread::finished,
-        pCurrentThread,
-        [pCurrentThread, self_weak = weak_from_this()]
-        {
+        pCurrentThread, &QThread::finished, pCurrentThread,
+        [pCurrentThread, self_weak = weak_from_this()] {
             auto self = self_weak.lock();
             if (!self) {
                 return;
@@ -151,9 +147,7 @@ QSqlDatabase ConnectionPool::database()
     database.setConnectOptions(m_connectionOptions);
 
     if (Q_UNLIKELY(!database.open())) {
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::ConnectionPool",
-            "Failed to open the database"));
+        ErrorString error(QStringLiteral("Failed to open the database"));
 
         const auto lastError = database.lastError();
         error.details() += lastError.text();
@@ -166,8 +160,7 @@ QSqlDatabase ConnectionPool::database()
 
     QSqlQuery query{database};
     if (Q_UNLIKELY(!query.exec(QStringLiteral("PRAGMA foreign_keys = ON")))) {
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::ConnectionPool",
+        ErrorString error(QStringLiteral(
             "Failed to enable foreign keys for the local storage database "
             "connection"));
 
@@ -183,8 +176,7 @@ QSqlDatabase ConnectionPool::database()
     if (Q_UNLIKELY(!query.exec(
             QString::fromUtf8("PRAGMA page_size = %1").arg(m_pageSize))))
     {
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::ConnectionPool",
+        ErrorString error(QStringLiteral(
             "Failed to set page size for the local storage database "
             "connection"));
 

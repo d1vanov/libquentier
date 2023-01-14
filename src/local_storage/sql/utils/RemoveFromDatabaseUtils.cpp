@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,10 +39,8 @@ bool removeUserAttributesViewedPromotions(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove user' viewed promotions from "
-            "the local storage database: failed to prepare query"),
+        QStringLiteral("Cannot remove user' viewed promotions from "
+                       "the local storage database: failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":id"), userId);
@@ -50,10 +48,8 @@ bool removeUserAttributesViewedPromotions(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove user' viewed promotions from "
-            "the local storage database"),
+        QStringLiteral("Cannot remove user' viewed promotions from "
+                       "the local storage database"),
         false);
 
     return true;
@@ -70,10 +66,8 @@ bool removeUserAttributesRecentMailedAddresses(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove user' recent mailed addresses from "
-            "the local storage database: failed to prepare query"),
+        QStringLiteral("Cannot remove user' recent mailed addresses from "
+                       "the local storage database: failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":id"), userId);
@@ -81,10 +75,8 @@ bool removeUserAttributesRecentMailedAddresses(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove user' recent mailed addresses from "
-            "the local storage database"),
+        QStringLiteral("Cannot remove user' recent mailed addresses from "
+                       "the local storage database"),
         false);
 
     return true;
@@ -107,15 +99,14 @@ bool removeUserAttributes(
 
     // Clear entries from UserAttributes table
     {
-        static const QString queryString = QStringLiteral(
-            "DELETE FROM UserAttributes WHERE id=:id");
+        static const QString queryString =
+            QStringLiteral("DELETE FROM UserAttributes WHERE id=:id");
 
         QSqlQuery query{database};
         bool res = query.prepare(queryString);
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot remove user attributes from "
                 "the local storage database: failed to prepare query"),
             false);
@@ -125,8 +116,7 @@ bool removeUserAttributes(
         res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            QStringLiteral(
                 "Cannot remove user attributes from the local storage "
                 "database"),
             false);
@@ -139,17 +129,15 @@ bool removeAccounting(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString = QStringLiteral(
-        "DELETE FROM Accounting WHERE id=:id");
+    static const QString queryString =
+        QStringLiteral("DELETE FROM Accounting WHERE id=:id");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove user' accounting data from "
-            "the local storage database: failed to prepare query"),
+        QStringLiteral("Cannot remove user' accounting data from "
+                       "the local storage database: failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":id"), userId);
@@ -157,8 +145,7 @@ bool removeAccounting(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove user's accounting data from the local storage "
             "database"),
         false);
@@ -170,15 +157,14 @@ bool removeAccountLimits(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString = QStringLiteral(
-        "DELETE FROM AccountLimits WHERE id=:id");
+    static const QString queryString =
+        QStringLiteral("DELETE FROM AccountLimits WHERE id=:id");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove user' account limits from the local storage "
             "database: failed to prepare query"),
         false);
@@ -188,8 +174,7 @@ bool removeAccountLimits(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove user's account limits from the local storage "
             "database"),
         false);
@@ -201,15 +186,14 @@ bool removeBusinessUserInfo(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString = QStringLiteral(
-        "DELETE FROM BusinessUserInfo WHERE id=:id");
+    static const QString queryString =
+        QStringLiteral("DELETE FROM BusinessUserInfo WHERE id=:id");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove business user info from the local storage "
             "database: failed to prepare query"),
         false);
@@ -219,8 +203,7 @@ bool removeBusinessUserInfo(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove business user info from the local storage "
             "database"),
         false);
@@ -239,8 +222,7 @@ bool removeNotebookRestrictions(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove notebook restrictions from the local storage "
             "database: failed to prepare query"),
         false);
@@ -250,8 +232,7 @@ bool removeNotebookRestrictions(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove notebook restrictions from the local storage "
             "database"),
         false);
@@ -270,10 +251,8 @@ bool removeSharedNotebooks(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove shared notebooks from the local storage "
-            "database: failed to prepare query"),
+        QStringLiteral("Cannot remove shared notebooks from the local storage "
+                       "database: failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":guid"), notebookGuid);
@@ -281,8 +260,7 @@ bool removeSharedNotebooks(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot remove shared notebooks from the local storage database"),
         false);
 
@@ -301,8 +279,7 @@ bool removeResourceRecognitionData(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource recognition data by resource local id: "
             "failed to prepare query"),
         false);
@@ -312,8 +289,7 @@ bool removeResourceRecognitionData(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource recognition data by resource local id"),
         false);
 
@@ -332,8 +308,7 @@ bool removeResourceAttributes(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource attributes by resource local id: "
             "failed to prepare query"),
         false);
@@ -343,8 +318,7 @@ bool removeResourceAttributes(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource attributes by resource local id"),
         false);
 
@@ -363,8 +337,7 @@ bool removeResourceAttributesAppDataKeysOnly(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource attributes app data keys only by resource "
             "local id: failed to prepare query"),
         false);
@@ -374,8 +347,7 @@ bool removeResourceAttributesAppDataKeysOnly(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource attributes app data keys only by resource "
             "local id"),
         false);
@@ -395,8 +367,7 @@ bool removeResourceAttributesAppDataFullMap(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource attributes app data full map by resource "
             "local id: failed to prepare query"),
         false);
@@ -406,8 +377,7 @@ bool removeResourceAttributesAppDataFullMap(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot delete resource attributes app data full map by resource "
             "local id"),
         false);
@@ -426,8 +396,7 @@ bool removeNoteRestrictions(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't remove note restrictions from the local storage database: "
             "failed to prepare query"),
         false);
@@ -437,8 +406,7 @@ bool removeNoteRestrictions(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't remove note restrictions from the local storage database"),
         false);
 
@@ -456,8 +424,7 @@ bool removeNoteLimits(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't remove note limits from the local storage database: "
             "failed to prepare query"),
         false);
@@ -467,8 +434,7 @@ bool removeNoteLimits(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't remove note limits from the local storage database"),
         false);
 
@@ -487,8 +453,7 @@ bool removeSharedNotes(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't remove shared notes from the local storage database: "
             "failed to prepare query"),
         false);
@@ -498,8 +463,7 @@ bool removeSharedNotes(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't remove shared notes from the local storage database"),
         false);
 

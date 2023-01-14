@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -71,8 +71,7 @@ void removeStaleResourceBodyFiles(
         return;
     }
 
-    const QString dirPath = [&]
-    {
+    const QString dirPath = [&] {
         QString res;
         QTextStream strm{&res};
         strm << localStorageDir.absolutePath() << "/Resources/";
@@ -116,8 +115,7 @@ void removeStaleResourceBodyFiles(
     ErrorString & errorDescription)
 {
     if (Q_UNLIKELY(noteLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot read resource body from file: note local id is "
             "empty"));
         errorDescription.details() = QStringLiteral("resource local id = ");
@@ -127,8 +125,7 @@ void removeStaleResourceBodyFiles(
     }
 
     if (Q_UNLIKELY(resourceLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot read resource body from file: resource local id is "
             "empty"));
         errorDescription.details() = QStringLiteral("note local id = ");
@@ -138,8 +135,7 @@ void removeStaleResourceBodyFiles(
     }
 
     if (Q_UNLIKELY(versionId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot read resource body from file: version id is empty"));
         errorDescription.details() = QStringLiteral("note local id = ");
         errorDescription.details() += noteLocalId;
@@ -161,14 +157,13 @@ void removeStaleResourceBodyFiles(
             strm << "alternateData";
         }
         strm << "/" << noteLocalId << "/" << resourceLocalId << "/" << versionId
-            << ".dat";
+             << ".dat";
     }
 
     QFile resourceDataFile{resourceDataFilePath};
     if (!resourceDataFile.exists()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Resource body file does not exist"));
+        errorDescription.setBase(
+            QStringLiteral("Resource body file does not exist"));
         errorDescription.details() =
             QDir::toNativeSeparators(resourceDataFilePath);
         QNWARNING("local_storage::sql::utils", errorDescription);
@@ -176,9 +171,8 @@ void removeStaleResourceBodyFiles(
     }
 
     if (Q_UNLIKELY(!resourceDataFile.open(QIODevice::ReadOnly))) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Failed to open resource body file for reading"));
+        errorDescription.setBase(
+            QStringLiteral("Failed to open resource body file for reading"));
         errorDescription.details() =
             QDir::toNativeSeparators(resourceDataFilePath);
         errorDescription.details() += QStringLiteral(": ");
@@ -197,8 +191,7 @@ void removeStaleResourceBodyFiles(
     const QString & versionId, ErrorString & errorDescription)
 {
     if (Q_UNLIKELY(noteLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource body file: note local id is empty"));
         errorDescription.details() = QStringLiteral(", resource local id = ");
         errorDescription.details() += resourceLocalId;
@@ -209,8 +202,7 @@ void removeStaleResourceBodyFiles(
     }
 
     if (Q_UNLIKELY(resourceLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource body file: resource local id is empty"));
         errorDescription.details() = QStringLiteral(", note local id = ");
         errorDescription.details() += noteLocalId;
@@ -221,8 +213,7 @@ void removeStaleResourceBodyFiles(
     }
 
     if (Q_UNLIKELY(versionId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource body file: note local id is empty"));
         errorDescription.details() = QStringLiteral(", note local id = ");
         errorDescription.details() += noteLocalId;
@@ -232,8 +223,7 @@ void removeStaleResourceBodyFiles(
         return false;
     }
 
-    const QString filePath = [&]
-    {
+    const QString filePath = [&] {
         QString res;
         QTextStream strm{&res};
         strm << localStorageDir.absolutePath() << "/Resources/";
@@ -243,8 +233,8 @@ void removeStaleResourceBodyFiles(
         else {
             strm << "alternateData";
         }
-        strm << "/" << noteLocalId << "/" << resourceLocalId
-            << "/" << versionId << ".dat";
+        strm << "/" << noteLocalId << "/" << resourceLocalId << "/" << versionId
+             << ".dat";
         return res;
     }();
 
@@ -257,9 +247,8 @@ void removeStaleResourceBodyFiles(
     }
 
     if (!file.remove()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot remove resource body version file"));
+        errorDescription.setBase(
+            QStringLiteral("Cannot remove resource body version file"));
         errorDescription.details() = file.errorString();
         QNWARNING("local_storage::sql::utils", errorDescription);
         return false;
@@ -274,8 +263,7 @@ void removeStaleResourceBodyFiles(
     const QString & versionId, const QByteArray & body,
     ErrorString & errorDescription)
 {
-    const QString dirPath = [&]
-    {
+    const QString dirPath = [&] {
         QString res;
         QTextStream strm{&res};
         strm << localStorageDir.absolutePath();
@@ -293,8 +281,7 @@ void removeStaleResourceBodyFiles(
 
     QDir dir{dirPath};
     if (!dir.exists() && !dir.mkpath(dirPath)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot put resource body data to file: failed to create dir"));
         errorDescription.details() = dirPath;
         QNWARNING("local_storage::sql::utils", errorDescription);
@@ -305,8 +292,7 @@ void removeStaleResourceBodyFiles(
         dirPath + QStringLiteral("/") + versionId + QStringLiteral(".dat")};
 
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot put resource body to file: failed to open file for "
             "writing"));
         errorDescription.details() = file.fileName();
@@ -334,8 +320,7 @@ bool findResourceDataBodyVersionId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource data body version id: failed to prepare "
             "query"),
         false);
@@ -345,10 +330,7 @@ bool findResourceDataBodyVersionId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find resource data body version id"),
-        false);
+        QStringLiteral("Cannot find resource data body version id"), false);
 
     if (query.next()) {
         versionId = query.value(0).toString();
@@ -369,8 +351,7 @@ bool findResourceAlternateDataBodyVersionId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find resource alternate data body version id: failed to "
             "prepare query"),
         false);
@@ -380,9 +361,7 @@ bool findResourceAlternateDataBodyVersionId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find resource alternate data body version id"),
+        QStringLiteral("Cannot find resource alternate data body version id"),
         false);
 
     if (query.next()) {
@@ -404,8 +383,7 @@ bool putResourceDataBodyVersionId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource data body version id: failed to prepare "
             "query"),
         false);
@@ -416,10 +394,7 @@ bool putResourceDataBodyVersionId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot put resource data body version id"),
-        false);
+        QStringLiteral("Cannot put resource data body version id"), false);
 
     return true;
 }
@@ -436,8 +411,7 @@ bool putResourceAlternateDataBodyVersionId(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot put resource alternate data body version id: failed to "
             "prepare query"),
         false);
@@ -448,9 +422,7 @@ bool putResourceAlternateDataBodyVersionId(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot put resource alternate data body version id"),
+        QStringLiteral("Cannot put resource alternate data body version id"),
         false);
 
     return true;
@@ -484,8 +456,8 @@ bool writeResourceDataBodyToFile(
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "writeResourceDataBodyToFile: note local id = " << noteLocalId
-            << ", resource local id = " << resourceLocalId
+        "writeResourceDataBodyToFile: note local id = "
+            << noteLocalId << ", resource local id = " << resourceLocalId
             << ", version id = " << versionId);
 
     return writeResourceBodyToFile(
@@ -501,8 +473,8 @@ bool writeResourceAlternateDataBodyToFile(
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "writeResourceAlternateDataBodyToFile: note local id = " << noteLocalId
-            << ", resource local id = " << resourceLocalId
+        "writeResourceAlternateDataBodyToFile: note local id = "
+            << noteLocalId << ", resource local id = " << resourceLocalId
             << ", version id = " << versionId);
 
     return writeResourceBodyToFile(
@@ -520,8 +492,7 @@ bool removeResourceDataFilesForNote(
         "removeResourceDataFilesForNote: note local id = " << noteLocalId);
 
     if (Q_UNLIKELY(noteLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource data files for note: note local id is "
             "empty"));
         QNWARNING("local_storage::sql::utils", errorDescription);
@@ -532,8 +503,7 @@ bool removeResourceDataFilesForNote(
         QStringLiteral("/Resources/data/") + noteLocalId;
 
     if (!removeDir(dataPath)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource data files for note: failed to remove "
             "the folder containing note's resource data bodies"));
         errorDescription.details() = dataPath;
@@ -545,8 +515,7 @@ bool removeResourceDataFilesForNote(
         QStringLiteral("/Resources/alternateData/") + noteLocalId;
 
     if (!removeDir(alternateDataPath)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "failed to remove the folder containing note's resource "
             "alternate data bodies"));
         errorDescription.details() = alternateDataPath;
@@ -563,12 +532,11 @@ bool removeResourceDataFiles(
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "removeResourceDataFiles: note local id = " << noteLocalId
-            << ", resource local id = " << resourceLocalId);
+        "removeResourceDataFiles: note local id = "
+            << noteLocalId << ", resource local id = " << resourceLocalId);
 
     if (Q_UNLIKELY(noteLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource data files: note local id is empty"));
         errorDescription.details() = QStringLiteral("resource local id = ");
         errorDescription.details() += resourceLocalId;
@@ -577,8 +545,7 @@ bool removeResourceDataFiles(
     }
 
     if (Q_UNLIKELY(resourceLocalId.isEmpty())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot remove resource data files: resource local id is empty"));
         errorDescription.details() = QStringLiteral("note local id = ");
         errorDescription.details() += noteLocalId;
@@ -586,18 +553,16 @@ bool removeResourceDataFiles(
         return false;
     }
 
-    const QString dataPath = [&]
-    {
+    const QString dataPath = [&] {
         QString res;
         QTextStream strm{&res};
         strm << localStorageDir.absolutePath() << "/Resources/data/"
-            << noteLocalId << "/" << resourceLocalId;
+             << noteLocalId << "/" << resourceLocalId;
         return res;
     }();
 
     if (!removeDir(dataPath)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "failed to remove the folder containing resource data body "
             "versions"));
         errorDescription.details() = dataPath;
@@ -605,18 +570,16 @@ bool removeResourceDataFiles(
         return false;
     }
 
-    const QString alternateDataPath = [&]
-    {
+    const QString alternateDataPath = [&] {
         QString res;
         QTextStream strm{&res};
         strm << localStorageDir.absolutePath() << "/Resources/alternateData/"
-            << noteLocalId << "/" << resourceLocalId;
+             << noteLocalId << "/" << resourceLocalId;
         return res;
     }();
 
     if (!removeDir(alternateDataPath)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "failed to remove the folder containing resource alternate "
             "data body versions"));
         errorDescription.details() = dataPath;
@@ -635,8 +598,8 @@ bool removeResourceDataBodyFile(
     QNDEBUG(
         "local_storage::sql::utils",
         "removeResourceDataBodyFile: note local id = "
-            << noteLocalId << ", resource local id = "
-            << resourceLocalId << " version id = " << versionId);
+            << noteLocalId << ", resource local id = " << resourceLocalId
+            << " version id = " << versionId);
 
     return removeResourceBodyFile(
         localStorageDir, ResourceDataKind::Data, noteLocalId, resourceLocalId,
@@ -651,8 +614,8 @@ bool removeResourceAlternateDataBodyFile(
     QNDEBUG(
         "local_storage::sql::utils",
         "removeResourceAlternateDataBodyFile: note local id = "
-            << noteLocalId << ", resource local id = "
-            << resourceLocalId << " version id = " << versionId);
+            << noteLocalId << ", resource local id = " << resourceLocalId
+            << " version id = " << versionId);
 
     return removeResourceBodyFile(
         localStorageDir, ResourceDataKind::AlternateData, noteLocalId,
@@ -665,8 +628,8 @@ void removeStaleResourceDataBodyFiles(
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "removeStaleResourceDataBodyFiles: note local id = " << noteLocalId
-            << ", resource local id = " << resourceLocalId
+        "removeStaleResourceDataBodyFiles: note local id = "
+            << noteLocalId << ", resource local id = " << resourceLocalId
             << ", actual version id = " << actualVersionId);
 
     removeStaleResourceBodyFiles(

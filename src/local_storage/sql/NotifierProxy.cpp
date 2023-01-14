@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,9 +29,7 @@ NotifierProxy::NotifierProxy(threading::QThreadPtr writerThread) :
 {
     if (Q_UNLIKELY(!m_writerThread)) {
         throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotifierProxy",
-                "NotifierProxy: writer thread is null")}};
+            QStringLiteral("NotifierProxy: writer thread is null")}};
     }
 
     m_notifier = new Notifier(m_writerThread.get());

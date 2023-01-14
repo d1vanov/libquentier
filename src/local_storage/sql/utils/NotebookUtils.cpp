@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,8 +27,8 @@
 #include <qevercloud/utility/ToRange.h>
 
 #include <QSqlDatabase>
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -42,8 +42,7 @@ namespace quentier::local_storage::sql::utils {
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find notebook's local id by guid in the local storage "
             "database: failed to prepare query"),
         {});
@@ -53,8 +52,7 @@ namespace quentier::local_storage::sql::utils {
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find notebook's local id by guid in the local storage "
             "database"),
         {});
@@ -90,8 +88,7 @@ namespace quentier::local_storage::sql::utils {
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find notebook's local id by name and linked notebook guid "
             "in the local storage database: failed to prepare query"),
         {});
@@ -106,8 +103,7 @@ namespace quentier::local_storage::sql::utils {
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find notebook's local id by name and linked notebook guid "
             "in the local storage database"),
         {});
@@ -124,8 +120,7 @@ namespace quentier::local_storage::sql::utils {
     ErrorString & errorDescription)
 {
     auto localId = notebook.localId();
-    if (!localId.isEmpty())
-    {
+    if (!localId.isEmpty()) {
         return localId;
     }
 
@@ -140,8 +135,8 @@ namespace quentier::local_storage::sql::utils {
             errorDescription);
     }
 
-    errorDescription.setBase(QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils", "cannot infer notebook's local id"));
+    errorDescription.setBase(
+        QStringLiteral("cannot infer notebook's local id"));
     return {};
 }
 

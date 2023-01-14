@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,64 +35,56 @@ namespace {
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingUserFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "User field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingNotebookFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "Notebook field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingTagFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "Tag field missing in the record received from the local storage "
         "database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingLinkedNotebookFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "LinkedNotebook field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingResourceFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "Resource field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingSavedSearchFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "Saved search field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingNoteFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "Note field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QString,
     gMissingSharedNoteFieldErrorMessage,
-    (QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils",
+    (QString::fromUtf8(
         "Shared note field missing in the record received from the local "
         "storage database")));
 
@@ -1634,8 +1626,7 @@ bool fillSharedNotebookFromSqlRecord(
             bool conversionResult = false;
             const int index = value.toInt(&conversionResult);
             if (!conversionResult) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
+                errorDescription.setBase(QStringLiteral(
                     "cannot convert shared notebook's index in notebook to "
                     "int"));
                 QNERROR("local_storage::sql::utils", errorDescription);
@@ -1889,8 +1880,7 @@ bool fillResourceFromSqlRecord(
             bool conversionResult = false;
             const int index = value.toInt(&conversionResult);
             if (!conversionResult) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
+                errorDescription.setBase(QStringLiteral(
                     "cannot convert resource's index in note to int"));
                 QNERROR("local_storage::sql::utils", errorDescription);
                 return false;
@@ -2575,8 +2565,7 @@ bool fillSharedNoteFromSqlRecord(
             bool conversionResult = false;
             const int index = value.toInt(&conversionResult);
             if (!conversionResult) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils",
+                errorDescription.setBase(QStringLiteral(
                     "can't convert shared note's index in note to int"));
                 QNERROR("local_storage::sql::utils", errorDescription);
                 return false;
@@ -2650,8 +2639,7 @@ bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
 
         const int localIdIndex = rec.indexOf(QStringLiteral("localUid"));
         if (localIdIndex < 0) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "no localUid field in SQL record for notebook"));
             QNWARNING("local_storage::sql::utils", errorDescription);
             return false;
@@ -2659,8 +2647,7 @@ bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
 
         const QString localId = rec.value(localIdIndex).toString();
         if (localId.isEmpty()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
+            errorDescription.setBase(QStringLiteral(
                 "found empty localUid field in SQL record for Notebook"));
             QNWARNING("local_storage::sql::utils", errorDescription);
             return false;

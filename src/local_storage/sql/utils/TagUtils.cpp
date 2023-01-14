@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,8 +26,8 @@
 #include <qevercloud/types/Tag.h>
 
 #include <QSqlDatabase>
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -41,8 +41,7 @@ namespace quentier::local_storage::sql::utils {
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find tag's local id by guid in the local storage "
             "database: failed to prepare query"),
         {});
@@ -52,8 +51,7 @@ namespace quentier::local_storage::sql::utils {
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find tag's local id by guid in the local storage "
             "database"),
         {});
@@ -88,8 +86,7 @@ namespace quentier::local_storage::sql::utils {
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find tag's local id by name and linked notebook guid "
             "in the local storage database: failed to prepare query"),
         {});
@@ -104,8 +101,7 @@ namespace quentier::local_storage::sql::utils {
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot find tag's local id by name and linked notebook guid "
             "in the local storage database"),
         {});
@@ -127,18 +123,15 @@ namespace quentier::local_storage::sql::utils {
     }
 
     if (tag.guid()) {
-        return tagLocalIdByGuid(
-            *tag.guid(), database, errorDescription);
+        return tagLocalIdByGuid(*tag.guid(), database, errorDescription);
     }
 
     if (tag.name()) {
         return tagLocalIdByName(
-            *tag.name(), tag.linkedNotebookGuid(), database,
-            errorDescription);
+            *tag.name(), tag.linkedNotebookGuid(), database, errorDescription);
     }
 
-    errorDescription.setBase(QT_TRANSLATE_NOOP(
-        "local_storage::sql::utils", "cannot infer tag's local id"));
+    errorDescription.setBase(QStringLiteral("cannot infer tag's local id"));
     return {};
 }
 
@@ -150,15 +143,14 @@ namespace quentier::local_storage::sql::utils {
         return tag.guid();
     }
 
-    static const QString queryString = QStringLiteral(
-        "SELECT guid FROM Tags WHERE localUid = :localUid");
+    static const QString queryString =
+        QStringLiteral("SELECT guid FROM Tags WHERE localUid = :localUid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't find tag guid by local id in the local storage database: "
             "failed to prepare query"),
         std::nullopt);
@@ -168,8 +160,7 @@ namespace quentier::local_storage::sql::utils {
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Can't find tag guid by local id in the local storage database"),
         std::nullopt);
 
@@ -197,8 +188,8 @@ bool complementTagParentInfo(
         return true;
     }
 
-    const ErrorString errorPrefix(
-        QT_TR_NOOP("can't complement the parent info for a tag"));
+    const ErrorString errorPrefix{QStringLiteral(
+        "can't complement the parent info for a tag")};
 
     const QString existingColumn =
         (tag.parentGuid() ? QStringLiteral("guid")
@@ -219,18 +210,12 @@ bool complementTagParentInfo(
     bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot complement tag parent info"),
-        false);
+        QStringLiteral("Cannot complement tag parent info"), false);
 
     res = query.next();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot complement tag parent info: no data"),
-        false);
+        QStringLiteral("Cannot complement tag parent info: no data"), false);
 
     const QString otherUid = query.record().value(otherColumn).toString();
 

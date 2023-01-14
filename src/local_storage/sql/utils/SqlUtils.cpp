@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,8 +46,7 @@ bool rowExists(
             .arg(sqlEscape(tableName), sqlEscape(columnName)));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot check row existence: failed to prepare query"),
         false);
 
@@ -56,8 +55,7 @@ bool rowExists(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        QStringLiteral(
             "Cannot check row existence"),
         false);
 
@@ -68,8 +66,7 @@ bool rowExists(
     bool conversionResult = false;
     int count = query.value(0).toInt(&conversionResult);
     if (!conversionResult) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
+        errorDescription.setBase(QStringLiteral(
             "Cannot check row existence: failed to convert result to int"));
         QNWARNING("local_storage::sql::utils", errorDescription);
         return false;

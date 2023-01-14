@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,63 +50,53 @@ LocalStorage::LocalStorage(
     m_usersHandler{std::move(usersHandler)}, m_notifier{notifier}
 {
     if (Q_UNLIKELY(!m_linkedNotebooksHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "LocalStorage ctor: linked notebooks handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_notebooksHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: notebooks handler is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LocalStorage ctor: notebooks handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_notesHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: notes handler is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LocalStorage ctor: notes handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_resourcesHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: resources handler is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LocalStorage ctor: resources handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_savedSearchesHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "LocalStorage ctor: saved searhes handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_synchronizationInfoHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "LocalStorage ctor: synchronization info handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_tagsHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: tags handler is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LocalStorage ctor: tags handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_versionHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: version handler is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LocalStorage ctor: version handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_usersHandler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: users handler is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LocalStorage ctor: users handler is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::LocalStorage",
-            "LocalStorage ctor: notifier is null")}};
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("LocalStorage ctor: notifier is null")}};
     }
 }
 
@@ -466,8 +456,7 @@ QFuture<quint32> LocalStorage::resourceCountPerNoteLocalId(
         std::move(noteLocalId));
 }
 
-QFuture<void> LocalStorage::putResource(
-    qevercloud::Resource resource)
+QFuture<void> LocalStorage::putResource(qevercloud::Resource resource)
 {
     return m_resourcesHandler->putResource(std::move(resource));
 }

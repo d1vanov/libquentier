@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "UsersHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "Notifier.h"
 #include "Tasks.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
+#include "UsersHandler.h"
 
 #include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
@@ -58,27 +58,23 @@ UsersHandler::UsersHandler(
     m_writerThread{std::move(writerThread)}, m_notifier{notifier}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "UsersHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("UsersHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "UsersHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("UsersHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "UsersHandler ctor: notifier is null")}};
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("UsersHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "UsersHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("UsersHandler ctor: writer thread is null")}};
     }
 }
 
@@ -144,9 +140,7 @@ std::optional<quint32> UsersHandler::userCountImpl(
                                   "userDeletionTimestamp IS NULL"));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "Cannot count users in the local storage database"),
+        QStringLiteral("Cannot count users in the local storage database"),
         std::nullopt);
 
     if (!query.next()) {
@@ -159,8 +153,7 @@ std::optional<quint32> UsersHandler::userCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        errorDescription.setBase(QStringLiteral(
             "Cannot count users in the local storage database: failed to "
             "convert user count to int"));
         QNWARNING("local_storage:sql", errorDescription);
@@ -192,8 +185,7 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot find user in the local storage database: failed to prepare "
             "query"),
         std::nullopt);
@@ -204,9 +196,7 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "Cannot find user in the local storage database"),
+        QStringLiteral("Cannot find user in the local storage database"),
         std::nullopt);
 
     if (!query.next()) {
@@ -218,8 +208,7 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     user.setId(userId);
     ErrorString error;
     if (!utils::fillUserFromSqlRecord(record, user, error)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        errorDescription.setBase(QStringLiteral(
             "Failed to find user by id in the local storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -257,8 +246,7 @@ bool UsersHandler::findUserAttributesViewedPromotionsById(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot find user attributes' viewed promotions in the local "
             "storage database: failed to prepare query"),
         false);
@@ -268,8 +256,7 @@ bool UsersHandler::findUserAttributesViewedPromotionsById(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot find user attributes' viewed promotions in the local "
             "storage database"),
         false);
@@ -308,8 +295,7 @@ bool UsersHandler::findUserAttributesRecentMailedAddressesById(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot find user attributes' recent mailed addresses in the local "
             "storage database: failed to prepare query"),
         false);
@@ -319,8 +305,7 @@ bool UsersHandler::findUserAttributesRecentMailedAddressesById(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot find user attributes' recent mailed addresses in the local "
             "storage database"),
         false);
@@ -362,8 +347,7 @@ bool UsersHandler::expungeUserByIdImpl(
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot expunge user from the local storage database: failed to "
             "prepare query"),
         false);
@@ -373,8 +357,7 @@ bool UsersHandler::expungeUserByIdImpl(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+        QStringLiteral(
             "Cannot expunge user from the local storage database: failed to "
             "prepare query"),
         false);
@@ -386,12 +369,8 @@ TaskContext UsersHandler::makeTaskContext() const
 {
     return TaskContext{
         m_threadPool, m_writerThread, m_connectionPool,
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
-            "UsersHandler is already destroyed")},
-        ErrorString{QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "Request has been calceled")}};
+        ErrorString{QStringLiteral("UsersHandler is already destroyed")},
+        ErrorString{QStringLiteral("Request has been calceled")}};
 }
 
 } // namespace quentier::local_storage::sql
