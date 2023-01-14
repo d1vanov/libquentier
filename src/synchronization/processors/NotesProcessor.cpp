@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -59,26 +59,22 @@ NotesProcessor::NotesProcessor(
     m_retryPolicy{std::move(retryPolicy)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotesProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotesProcessor ctor: sync conflict resolver is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteFullDataDownloader)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotesProcessor ctor: note full data downloader is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStoreProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotesProcessor ctor: note store provider is null")}};
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -196,8 +196,7 @@ DurableResourcesProcessor::DurableResourcesProcessor(
     }()}
 {
     if (Q_UNLIKELY(!m_resourcesProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::DurableResourcesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "DurableResourcesProcessor ctor: resources processor is null")}};
     }
 }

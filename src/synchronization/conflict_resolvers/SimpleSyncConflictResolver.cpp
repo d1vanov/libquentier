@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,28 +37,24 @@ SimpleSyncConflictResolver::SimpleSyncConflictResolver(
     m_tagConflictResolver{std::move(tagConflictResolver)}
 {
     if (Q_UNLIKELY(!m_notebookConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleSyncConflictResolver",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SimpleSyncConflictResolver ctor: null notebook conflict "
             "resolver")}};
     }
 
     if (Q_UNLIKELY(!m_noteConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleSyncConflictResolver",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SimpleSyncConflictResolver ctor: null note conflict resolver")}};
     }
 
     if (Q_UNLIKELY(!m_savedSearchConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleSyncConflictResolver",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SimpleSyncConflictResolver ctor: null saved search conflict "
             "resolver")}};
     }
 
     if (Q_UNLIKELY(!m_tagConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleSyncConflictResolver",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SimpleSyncConflictResolver ctor: null tag conflict resolver")}};
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -95,14 +95,12 @@ TagsProcessor::TagsProcessor(
     m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::TagsProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "TagsProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::TagsProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "TagsProcessor ctor: sync conflict resolver is null")}};
     }
 }
@@ -238,8 +236,8 @@ QFuture<void> TagsProcessor::processTag(
 {
     if (Q_UNLIKELY(tagIndex < 0 || tagIndex >= tags.size())) {
         return threading::makeExceptionalFuture<void>(
-            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::TagsProcessor", "Wrong tag index")}});
+            RuntimeError{ErrorString{QStringLiteral(
+                "TagsProcessor: wrong tag index")}});
     }
 
     const auto & tag = tags[tagIndex];

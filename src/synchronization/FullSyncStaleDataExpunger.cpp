@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,21 +37,19 @@ FullSyncStaleDataExpunger::FullSyncStaleDataExpunger(
     m_canceler{std::move(canceler)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::FullSyncStaleDataExpunger",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "FullSyncStaleDataExpunger ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_canceler)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::FullSyncStaleDataExpunger",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "FullSyncStaleDataExpunger ctor: canceler is null")}};
     }
 }
 
 QFuture<void> FullSyncStaleDataExpunger::expungeStaleData(
-    PreservedGuids preservedGuids,                      // NOLINT
-    std::optional<qevercloud::Guid> linkedNotebookGuid) // NOLINT
+    PreservedGuids preservedGuids,
+    std::optional<qevercloud::Guid> linkedNotebookGuid)
 {
     const local_storage::ILocalStorage::ListGuidsFilters modifiedFilters{
         local_storage::ILocalStorage::ListObjectsFilter::Include, // modified
@@ -129,18 +127,18 @@ QFuture<void> FullSyncStaleDataExpunger::expungeStaleData(
                 guids.unmodifiedSavedSearchGuids = std::move(result[7]);
 
                 onGuidsListed(
-                    std::move(guids), std::move(preservedGuids),
-                    std::move(linkedNotebookGuid), std::move(promise));
+                    guids, preservedGuids, std::move(linkedNotebookGuid),
+                    promise);
             }});
 
     return future;
 }
 
 void FullSyncStaleDataExpunger::onGuidsListed(
-    FullSyncStaleDataExpunger::Guids guids,             // NOLINT
-    PreservedGuids preservedGuids,                      // NOLINT
-    std::optional<qevercloud::Guid> linkedNotebookGuid, // NOLINT
-    std::shared_ptr<QPromise<void>> promise)            // NOLINT
+    const FullSyncStaleDataExpunger::Guids & guids,
+    const PreservedGuids & preservedGuids,
+    std::optional<qevercloud::Guid> linkedNotebookGuid,
+    const std::shared_ptr<QPromise<void>> & promise)
 {
     QSet<qevercloud::Guid> notebookGuidsToExpunge;
     QSet<qevercloud::Guid> tagGuidsToExpunge;
@@ -152,28 +150,27 @@ void FullSyncStaleDataExpunger::onGuidsListed(
     QSet<qevercloud::Guid> noteGuidsToUpdate;
     QSet<qevercloud::Guid> savedSearchGuidsToUpdate;
 
-    const auto processGuids =
-        [](const QSet<qevercloud::Guid> & modifiedGuids,   // NOLINT
-           const QSet<qevercloud::Guid> & unmodifiedGuids, // NOLINT
-           const QSet<qevercloud::Guid> & preservedGuids,  // NOLINT
-           QSet<qevercloud::Guid> & guidsToExpunge,        // NOLINT
-           QSet<qevercloud::Guid> & guidsToUpdate) {
-            for (const auto & guid: qAsConst(modifiedGuids)) {
-                if (preservedGuids.contains(guid)) {
-                    continue;
-                }
-
-                guidsToUpdate.insert(guid);
+    const auto processGuids = [](const QSet<qevercloud::Guid> & modifiedGuids,
+                                 const QSet<qevercloud::Guid> & unmodifiedGuids,
+                                 const QSet<qevercloud::Guid> & preservedGuids,
+                                 QSet<qevercloud::Guid> & guidsToExpunge,
+                                 QSet<qevercloud::Guid> & guidsToUpdate) {
+        for (const auto & guid: qAsConst(modifiedGuids)) {
+            if (preservedGuids.contains(guid)) {
+                continue;
             }
 
-            for (const auto & guid: qAsConst(unmodifiedGuids)) {
-                if (preservedGuids.contains(guid)) {
-                    continue;
-                }
+            guidsToUpdate.insert(guid);
+        }
 
-                guidsToExpunge.insert(guid);
+        for (const auto & guid: qAsConst(unmodifiedGuids)) {
+            if (preservedGuids.contains(guid)) {
+                continue;
             }
-        };
+
+            guidsToExpunge.insert(guid);
+        }
+    };
 
     processGuids(
         guids.locallyModifiedNotebookGuids, guids.unmodifiedNotebookGuids,

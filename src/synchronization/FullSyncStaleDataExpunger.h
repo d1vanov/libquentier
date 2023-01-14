@@ -66,9 +66,9 @@ private:
     };
 
     void onGuidsListed(
-        Guids guids, PreservedGuids preservedGuids,
+        const Guids & guids, const PreservedGuids & preservedGuids,
         std::optional<qevercloud::Guid> linkedNotebookGuid,
-        std::shared_ptr<QPromise<void>> promise);
+        const std::shared_ptr<QPromise<void>> & promise);
 
     using GuidToLocalIdHash = QHash<qevercloud::Guid, QString>;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,23 +52,20 @@ QFuture<ISyncConflictResolver::NoteConflictResolution>
 
     if (Q_UNLIKELY(!theirs.guid())) {
         return threading::makeExceptionalFuture<Resolution>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SimpleNoteSyncConflictResolver",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Cannot resolve sync conflict: remote note has no guid")}});
     }
 
     if (Q_UNLIKELY(!theirs.updateSequenceNum())) {
         return threading::makeExceptionalFuture<Resolution>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SimpleNoteSyncConflictResolver",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Cannot resolve sync conflict: remote note has no update "
                 "sequence number")}});
     }
 
     if (Q_UNLIKELY(!mine.guid())) {
         return threading::makeExceptionalFuture<Resolution>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SimpleNoteSyncConflictResolver",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Cannot resolve sync conflict: local note has no guid")}});
     }
 

@@ -61,24 +61,22 @@ Sender::Sender(
 // clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Sender", "Sender ctor: account is empty")}};
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Sender ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Sender", "Sender ctor: local storage is null")}};
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Sender ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncStateStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Sender",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Sender ctor: sync state storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStoreProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Sender",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Sender ctor: note store provider is null")}};
     }
 }
@@ -292,8 +290,7 @@ void Sender::sendNotes(
                 status->m_failedToSendNotes << ISendStatus::NoteWithException{
                     note,
                     std::make_shared<RuntimeError>(
-                        ErrorString{QT_TRANSLATE_NOOP(
-                            "synchronization::Sender",
+                        ErrorString{QStringLiteral(
                             "Cannot send note which notebook could not be "
                             "sent")})};
 
@@ -817,8 +814,7 @@ void Sender::sendTags(
                 status->m_failedToSendTags << ISendStatus::TagWithException{
                     tag,
                     std::make_shared<RuntimeError>(
-                        ErrorString{QT_TRANSLATE_NOOP(
-                            "synchronization::Sender",
+                        ErrorString{QStringLiteral(
                             "Cannot send tag which parent also could not be "
                             "sent")})};
 

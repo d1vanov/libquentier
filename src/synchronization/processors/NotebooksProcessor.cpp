@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -94,14 +94,12 @@ NotebooksProcessor::NotebooksProcessor(
     m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotebooksProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotebooksProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksProcessor ctor: sync conflict resolver is null")}};
     }
 }

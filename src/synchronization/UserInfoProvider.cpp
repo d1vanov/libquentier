@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,8 +39,7 @@ UserInfoProvider::UserInfoProvider(qevercloud::IUserStorePtr userStore) :
     m_userStore{std::move(userStore)}
 {
     if (Q_UNLIKELY(!m_userStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::UserInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "UserInfoProvider ctor: user store is null")}};
     }
 }
@@ -50,8 +49,7 @@ QFuture<qevercloud::User> UserInfoProvider::userInfo(
 {
     if (Q_UNLIKELY(!ctx)) {
         return threading::makeExceptionalFuture<qevercloud::User>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::UserInfoProvider",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Request context is null")}});
     }
 

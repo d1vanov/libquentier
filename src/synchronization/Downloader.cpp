@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -690,98 +690,82 @@ Downloader::Downloader(
 // clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(m_account.type() != Account::Type::Evernote)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: account is not of Evernote type")}};
     }
 
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: authentication info provider is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncStateStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: sync state storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncChunksProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: sync chunks provider is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncChunksStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: sync chunks storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_linkedNotebooksProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: linked notebooks processor is null")}};
     }
 
     if (Q_UNLIKELY(!m_notebooksProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: notebooks processor is null")}};
     }
 
     if (Q_UNLIKELY(!m_notesProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: notes processor is null")}};
     }
 
     if (Q_UNLIKELY(!m_resourcesProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: resources processor is null")}};
     }
 
     if (Q_UNLIKELY(!m_savedSearchesProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: saved searches processor is null")}};
     }
 
     if (Q_UNLIKELY(!m_tagsProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: tags processor is null")}};
     }
 
     if (Q_UNLIKELY(!m_fullSyncStaleDataExpunger)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: full sync stale data expunger is null")}};
     }
 
     if (Q_UNLIKELY(!m_ctx)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: request context is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: note store is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::Downloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: local storage is null")}};
     }
 }

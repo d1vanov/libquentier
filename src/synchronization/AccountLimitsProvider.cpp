@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -98,20 +98,17 @@ AccountLimitsProvider::AccountLimitsProvider(
     m_userStore{std::move(userStore)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AccountLimitsProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountLimitsProvider ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(m_account.type() != Account::Type::Evernote)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AccountLimitsProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountLimitsProvider ctor: account is not an Evernote one")}};
     }
 
     if (Q_UNLIKELY(!m_userStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AccountLimitsProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountLimitsProvider ctor: user store is null")}};
     }
 }

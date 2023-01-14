@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -153,44 +153,37 @@ AuthenticationInfoProvider::AuthenticationInfoProvider(
 {
     // clang-format on
     if (Q_UNLIKELY(!m_authenticator)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: authenticator is null")}};
     }
 
     if (Q_UNLIKELY(!m_keychainService)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: keychain service is null")}};
     }
 
     if (Q_UNLIKELY(!m_userInfoProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: user info provider is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStoreFactory)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: note store factory is null")}};
     }
 
     if (Q_UNLIKELY(!m_ctx)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: request context is null")}};
     }
 
     if (Q_UNLIKELY(!m_retryPolicy)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: retry policy is null")}};
     }
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: host is empty")}};
     }
 }
@@ -297,8 +290,7 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
 {
     if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::AuthenticationInfoProvider",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Detected attempt to authenticate non-Evernote account")}});
     }
 
@@ -403,16 +395,14 @@ QFuture<IAuthenticationInfoPtr>
 {
     if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::AuthenticationInfoProvider",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Detected attempt to authenticate to linked notebook for "
                 "non-Evernote account")}});
     }
 
     if (Q_UNLIKELY(!linkedNotebook.guid())) {
         return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::AuthenticationInfoProvider",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Detected attempt to authenticate to linked notebook wihout "
                 "guid")}});
     }
@@ -654,8 +644,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
 {
     const auto & noteStoreUrl = linkedNotebook.noteStoreUrl();
     if (Q_UNLIKELY(!noteStoreUrl)) {
-        promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        promise->setException(RuntimeError{ErrorString{QStringLiteral(
             "Cannot authenticate to linked notebook: no note store url")}});
         promise->finish();
         return;
@@ -663,8 +652,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
 
     const auto & linkedNotebookGuid = linkedNotebook.guid();
     if (Q_UNLIKELY(!linkedNotebookGuid)) {
-        promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        promise->setException(RuntimeError{ErrorString{QStringLiteral(
             "Cannot authenticate to linked notebook: no guid")}});
         promise->finish();
         return;
@@ -674,8 +662,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
         linkedNotebook.sharedNotebookGlobalId();
 
     if (Q_UNLIKELY(!sharedNotebookGlobalId)) {
-        promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        promise->setException(RuntimeError{ErrorString{QStringLiteral(
             "Cannot authenticate to linked notebook: no shared notebook global "
             "id")}});
         promise->finish();
@@ -686,8 +673,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
         *noteStoreUrl, linkedNotebookGuid, m_ctx, m_retryPolicy);
 
     if (Q_UNLIKELY(!noteStore)) {
-        promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
+        promise->setException(RuntimeError{ErrorString{QStringLiteral(
             "Cannot authenticate to linked notebook: cannot create note "
             "store")}});
         promise->finish();
@@ -1048,8 +1034,7 @@ QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
                     "User for id " << userId
                                    << " has no name or username: " << user);
                 promise->setException(
-                    RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                        "synchronization::AuthenticationInfoProvider",
+                    RuntimeError{ErrorString{QStringLiteral(
                         "Authenticated user has no name or username")}});
                 promise->finish();
                 return;

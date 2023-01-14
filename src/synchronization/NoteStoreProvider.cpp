@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -86,26 +86,22 @@ NoteStoreProvider::NoteStoreProvider(
 // clang-format on
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NoteStoreProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NoteStoreProvider ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NoteStoreProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NoteStoreProvider ctor: authentication info provider is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStoreFactory)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NoteStoreProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NoteStoreProvider ctor: note store factory is null")}};
     }
 
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NoteStoreProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NoteStoreProvider ctor: account is empty")}};
     }
 }
@@ -205,8 +201,7 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::linkedNotebookNoteStore(
                             << "local storage: linked notebook guid = "
                             << linkedNotebookGuid);
                     promise->setException(
-                        RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                            "synchronization::NoteStoreProvider",
+                        RuntimeError{ErrorString{QStringLiteral(
                             "Could not find linked notebook by guid in the "
                             "local storage")}});
                     promise->finish();
@@ -251,8 +246,7 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
                     "Could not find notebook by local id in the local storage: "
                         << notebookLocalId);
                 promise->setException(
-                    RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                        "synchronization::NoteStoreProvider",
+                    RuntimeError{ErrorString{QStringLiteral(
                         "Could not find notebook by local id in the local "
                         "storage")}});
                 promise->finish();
@@ -304,8 +298,7 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
                                 << "local storage: linked notebook guid = "
                                 << linkedNotebookGuid);
                         promise->setException(
-                            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                                "synchronization::NoteStoreProvider",
+                            RuntimeError{ErrorString{QStringLiteral(
                                 "Could not find linked notebook by guid in the "
                                 "local storage")}});
                         promise->finish();

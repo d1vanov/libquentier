@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -315,14 +315,12 @@ SyncChunksStorage::SyncChunksStorage(
     const QFileInfo rootDirInfo{m_rootDir.absolutePath()};
 
     if (Q_UNLIKELY(!rootDirInfo.isReadable())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SyncChunksStorage",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SyncChunksStorage requires a readable root dir")}};
     }
 
     if (Q_UNLIKELY(!rootDirInfo.isWritable())) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SyncChunksStorage",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SyncChunksStorage requires a writable root dir")}};
     }
 
@@ -330,8 +328,7 @@ SyncChunksStorage::SyncChunksStorage(
         if (Q_UNLIKELY(!m_userOwnSyncChunksDir.mkpath(
                 m_userOwnSyncChunksDir.absolutePath())))
         {
-            throw RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksStorage",
+            throw RuntimeError{ErrorString{QStringLiteral(
                 "Cannot create dir for temporary storage of user own sync "
                 "chunks")}};
         }
@@ -341,15 +338,13 @@ SyncChunksStorage::SyncChunksStorage(
             m_userOwnSyncChunksDir.absolutePath()};
 
         if (Q_UNLIKELY(!userOwnSyncChunksDirInfo.isReadable())) {
-            throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksStorage",
+            throw InvalidArgument{ErrorString{QStringLiteral(
                 "Dir for temporary storage of user own sync chunks is not "
                 "readable")}};
         }
 
         if (Q_UNLIKELY(!userOwnSyncChunksDirInfo.isWritable())) {
-            throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksStorage",
+            throw InvalidArgument{ErrorString{QStringLiteral(
                 "Dir for temporary storage of user own sync chunks is not "
                 "writable")}};
         }
@@ -670,8 +665,7 @@ SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsDataAccessor(
     const threading::QThreadPoolPtr & threadPool)
 {
     if (Q_UNLIKELY(!threadPool)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SyncChunksStorage",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SyncChunksStorage::LowAndHighUsnsDataAccessor ctor: thread pool "
             "is null")}};
     }

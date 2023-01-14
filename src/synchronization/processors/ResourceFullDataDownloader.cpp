@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,14 +33,12 @@ ResourceFullDataDownloader::ResourceFullDataDownloader(
     m_maxInFlightDownloads{maxInFlightDownloads}
 {
     if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::ResourceFullDataDownloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourceFullDataDownloader ctor: note store is null")}};
     }
 
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::ResourceFullDataDownloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourceFullDataDownloader ctor: max in flight downloads must be "
             "positive")}};
     }

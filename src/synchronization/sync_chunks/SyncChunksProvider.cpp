@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -269,14 +269,12 @@ SyncChunksProvider::SyncChunksProvider(
     m_syncChunksStorage{std::move(syncChunksStorage)}
 {
     if (Q_UNLIKELY(!m_syncChunksDownloader)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SyncChunksProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SyncChunksProvider ctor: sync chunks downloader is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncChunksStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SyncChunksProvider",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SyncChunksProvider ctor: sync chunks storage is null")}};
     }
 }
@@ -328,8 +326,7 @@ QFuture<QList<qevercloud::SyncChunk>>
     const auto linkedNotebookGuid = linkedNotebook.guid(); // NOLINT
     if (!linkedNotebookGuid) {
         return threading::makeExceptionalFuture<QList<qevercloud::SyncChunk>>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksProvider",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Can't fetch linked notebook sync chunks: linked notebook "
                 "guid is empty")}});
     }

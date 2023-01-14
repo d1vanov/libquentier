@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -87,8 +87,7 @@ LinkedNotebooksProcessor::LinkedNotebooksProcessor(
     m_localStorage{std::move(localStorage)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::LinkedNotebooksProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "LinkedNotebooksProcessor ctor: local storage is null")}};
     }
 }

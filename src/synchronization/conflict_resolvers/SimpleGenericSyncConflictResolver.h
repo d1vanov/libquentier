@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -95,16 +95,14 @@ SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::
                                                        std::move(typeName)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        ErrorString error{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleGenericSyncConflictResolver",
+        ErrorString error{QStringLiteral(
             "SimpleGenericSyncConflictResolver ctor: local storage is null")};
         error.details() = m_typeName;
         throw InvalidArgument{std::move(error)};
     }
 
     if (Q_UNLIKELY(!m_findByNameMemFn)) {
-        ErrorString error{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleGenericSyncConflictResolver",
+        ErrorString error{QStringLiteral(
             "SimpleGenericSyncConflictResolver ctor: find by name mem fn is "
             "null")};
         error.details() = m_typeName;
@@ -112,8 +110,7 @@ SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::
     }
 
     if (Q_UNLIKELY(m_typeName.isEmpty())) {
-        ErrorString error{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleGenericSyncConflictResolver",
+        ErrorString error{QStringLiteral(
             "SimpleGenericSyncConflictResolver ctor: type name is null")};
         error.details() = QString::fromStdString(std::string{typeid(T).name()});
         throw InvalidArgument{std::move(error)};
@@ -131,8 +128,7 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
             << "\nMine: " << mine);
 
     if (Q_UNLIKELY(!theirs.guid())) {
-        ErrorString error{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleGenericSyncConflictResolver",
+        ErrorString error{QStringLiteral(
             "Cannot resolve sync conflict: remote item has no guid")};
         error.details() = m_typeName;
         return threading::makeExceptionalFuture<Resolution>(
@@ -140,8 +136,7 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
     }
 
     if (Q_UNLIKELY(!theirs.name())) {
-        ErrorString error{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleGenericSyncConflictResolver",
+        ErrorString error{QStringLiteral(
             "Cannot resolve sync conflict: remote item has no name")};
         error.details() = m_typeName;
         return threading::makeExceptionalFuture<Resolution>(
@@ -149,8 +144,7 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
     }
 
     if (Q_UNLIKELY(!mine.guid() && !mine.name())) {
-        ErrorString error{QT_TRANSLATE_NOOP(
-            "synchronization::SimpleNotebookSyncConflictResolver",
+        ErrorString error{QStringLiteral(
             "Cannot resolve notebook sync conflict: local notebook "
             "has neither name nor guid")};
         error.details() = m_typeName;
@@ -253,8 +247,7 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
             auto self = self_weak.lock();
             if (!self) {
                 promise->setException(
-                    RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                        "synchronization::SimpleGenericSyncConflictResolver",
+                    RuntimeError{ErrorString{QStringLiteral(
                         "Cannot resolve sync conflict: "
                         "SimpleGenericSyncConflictResolver instance is "
                         "dead")}});
@@ -368,8 +361,7 @@ QFuture<T> SimpleGenericSyncConflictResolver<
             const auto self = selfWeak.lock();
             if (!self) {
                 promise->setException(
-                    RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                        "synchronization::SimpleGenericSyncConflictResolver",
+                    RuntimeError{ErrorString{QStringLiteral(
                         "Cannot resolve sync conflict: "
                         "SimpleGenericSyncConflictResolver instance is "
                         "dead")}});

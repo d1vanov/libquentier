@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -248,8 +248,7 @@ DurableNotesProcessor::DurableNotesProcessor(
     }()}
 {
     if (Q_UNLIKELY(!m_notesProcessor)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::DurableNotesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "DurableNotesProcessor ctor: notes processor is null")}};
     }
 }

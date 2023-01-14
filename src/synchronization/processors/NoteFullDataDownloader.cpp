@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,8 +32,7 @@ NoteFullDataDownloader::NoteFullDataDownloader(quint32 maxInFlightDownloads) :
     m_maxInFlightDownloads{maxInFlightDownloads}
 {
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NoteFullDataDownloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "NoteFullDataDownloader ctor: max in flight downloads must be "
             "positive")}};
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,14 +55,12 @@ ResourcesProcessor::ResourcesProcessor(
     m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::ResourcesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_resourceFullDataDownloader)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::ResourcesProcessor",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesProcessor ctor: resource full data downloader is null")}};
     }
 }
@@ -414,8 +412,7 @@ void ResourcesProcessor::handleResourceConflict(
              callbackWeak, localResource = std::move(localResource),
              updatedResource](std::optional<qevercloud::Note> note) mutable {
                 if (Q_UNLIKELY(!note)) {
-                    ErrorString error{QT_TRANSLATE_NOOP(
-                        "synchronization::ResourcesProcessor",
+                    ErrorString error{QStringLiteral(
                         "Failed to resolve resources conflict: note "
                         "owning the conflicting resource was not found by "
                         "guid")};

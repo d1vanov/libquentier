@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -153,8 +153,7 @@ void downloadSyncChunksList(
     if (canceler->isCanceled()) {
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult),
-            std::make_shared<RuntimeError>(ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksDownloader",
+            std::make_shared<RuntimeError>(ErrorString{QStringLiteral(
                 "Sync chunks downloading was canceled")})});
         promise->finish();
         return;
@@ -205,8 +204,7 @@ void processSingleDownloadedSyncChunk(
     if (Q_UNLIKELY(!syncChunk.chunkHighUSN())) {
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult),
-            std::make_shared<RuntimeError>(ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksDownloader",
+            std::make_shared<RuntimeError>(ErrorString{QStringLiteral(
                 "Got sync chunk without chunkHighUSN")})});
 
         promise->finish();
@@ -253,8 +251,7 @@ SyncChunksDownloader::SyncChunksDownloader(
     m_noteStore{std::move(noteStore)}
 {
     if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::SyncChunksDownloader",
+        throw InvalidArgument{ErrorString{QStringLiteral(
             "SyncChunksDownloader ctor: note store is null")}};
     }
 }
@@ -295,8 +292,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
     if (Q_UNLIKELY(!linkedNotebook.guid())) {
         return threading::makeExceptionalFuture<
             ISyncChunksDownloader::SyncChunksResult>(
-            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksDownloader",
+            InvalidArgument{ErrorString{QStringLiteral(
                 "Cannot download linked notebook sync chunks: linked notebook "
                 "has no guid")}});
     }
