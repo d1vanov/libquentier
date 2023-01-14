@@ -146,6 +146,7 @@ enum class WithEvernoteFields
     const int index, const WithEvernoteFields withEvernoteFields, qint32 & usn)
 {
     qevercloud::SavedSearchBuilder builder;
+    builder.setLocallyModified(true);
     builder.setLocalId(UidGenerator::Generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
@@ -165,6 +166,7 @@ enum class WithEvernoteFields
     const int index, const WithEvernoteFields withEvernoteFields, qint32 & usn)
 {
     qevercloud::NotebookBuilder builder;
+    builder.setLocallyModified(true);
     builder.setLocalId(UidGenerator::Generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
@@ -187,6 +189,7 @@ enum class WithEvernoteFields
     const QList<qevercloud::Tag> & updatedTags, qint32 & usn)
 {
     qevercloud::NoteBuilder builder;
+    builder.setLocallyModified(true);
     builder.setLocalId(UidGenerator::Generate())
         .setTitle(
             (withEvernoteFields == WithEvernoteFields::Yes
@@ -259,6 +262,7 @@ enum class AddParentToTag
     AddParentToTag addParentToTag = AddParentToTag::Yes)
 {
     qevercloud::TagBuilder builder;
+    builder.setLocallyModified(true);
     builder.setLocalId(UidGenerator::Generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
@@ -589,7 +593,11 @@ void checkDataPutToLocalStorage(
                 return s.localId() == savedSearch.localId();
             });
         ASSERT_NE(it, sentData.sentSavedSearches.constEnd());
-        EXPECT_EQ(*it, savedSearch);
+        EXPECT_TRUE(it->isLocallyModified());
+        EXPECT_FALSE(savedSearch.isLocallyModified());
+        qevercloud::SavedSearch savedSearchCopy{savedSearch};
+        savedSearchCopy.setLocallyModified(true);
+        EXPECT_EQ(*it, savedSearchCopy);
     }
 
     for (const auto & notebook: qAsConst(dataPutToLocalStorage.notebooks)) {
@@ -600,7 +608,11 @@ void checkDataPutToLocalStorage(
                 return n.localId() == notebook.localId();
             });
         ASSERT_NE(it, sentData.sentNotebooks.constEnd());
-        EXPECT_EQ(*it, notebook);
+        EXPECT_TRUE(it->isLocallyModified());
+        EXPECT_FALSE(notebook.isLocallyModified());
+        qevercloud::Notebook notebookCopy{notebook};
+        notebookCopy.setLocallyModified(true);
+        EXPECT_EQ(*it, notebookCopy);
     }
 
     for (const auto & note: qAsConst(dataPutToLocalStorage.notes)) {
@@ -610,18 +622,14 @@ void checkDataPutToLocalStorage(
                 return n.localId() == note.localId();
             });
         ASSERT_NE(it, sentData.sentNotes.constEnd());
-
         // If note contains tag local ids corresponding to tags which failed
         // to be sent, its locally modified flag would stay enabled so that
         // during the next sync sending the note would be attempted again
-        if (note.isLocallyModified()) {
-            qevercloud::Note noteCopy{note};
-            noteCopy.setLocallyModified(false);
-            EXPECT_EQ(*it, noteCopy);
-        }
-        else {
-            EXPECT_EQ(*it, note);
-        }
+        qevercloud::Note noteCopyLhs{*it};
+        noteCopyLhs.setLocallyModified(false);
+        qevercloud::Note noteCopyRhs{note};
+        noteCopyRhs.setLocallyModified(false);
+        EXPECT_EQ(noteCopyLhs, noteCopyRhs);
     }
 
     for (const auto & tag: qAsConst(dataPutToLocalStorage.tags)) {
@@ -631,7 +639,11 @@ void checkDataPutToLocalStorage(
                 return t.localId() == tag.localId();
             });
         ASSERT_NE(it, sentData.sentTags.constEnd());
-        EXPECT_EQ(*it, tag);
+        EXPECT_TRUE(it->isLocallyModified());
+        EXPECT_FALSE(tag.isLocallyModified());
+        qevercloud::Tag tagCopy{tag};
+        tagCopy.setLocallyModified(true);
+        EXPECT_EQ(*it, tagCopy);
     }
 }
 
@@ -1629,6 +1641,8 @@ void setupLocalStorageMock(
             .WillRepeatedly(
                 [&, localStorageBehaviour, index = 0](
                     const qevercloud::SavedSearch & savedSearch) mutable {
+                    EXPECT_FALSE(savedSearch.isLocallyModified());
+
                     int cur_index = index;
                     ++index;
 
@@ -1713,6 +1727,8 @@ void setupLocalStorageMock(
         EXPECT_CALL(*mockLocalStorage, putNotebook)
             .WillRepeatedly([&, localStorageBehaviour, index = 0](
                                 const qevercloud::Notebook & notebook) mutable {
+                EXPECT_FALSE(notebook.isLocallyModified());
+
                 int cur_index = index;
                 ++index;
 
@@ -2229,6 +2245,7 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
     EXPECT_CALL(*m_mockLocalStorage, putTag)
         .WillOnce([&](const qevercloud::Tag & tag) {
             EXPECT_EQ(tag.localId(), childTag.localId());
+            EXPECT_FALSE(tag.isLocallyModified());
             return threading::makeReadyFuture();
         });
 
@@ -2425,6 +2442,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillOnce([&](const qevercloud::Note & n) {
             EXPECT_EQ(n.localId(), note.localId());
+            EXPECT_FALSE(n.isLocallyModified());
             return threading::makeReadyFuture();
         });
 
@@ -2447,6 +2465,243 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
     EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotebooks(), 0);
     ASSERT_EQ(result.userOwnResult->failedToSendNotebooks().size(), 1);
     EXPECT_EQ(result.userOwnResult->failedToSendNotebooks()[0].first, notebook);
+
+    EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 1);
+    EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotes(), 1);
+}
+
+TEST_F(
+    SenderTest,
+    WhenSendingNoteLeaveItLocallyModifiedIfCannotSendOneOfNotesNewTags)
+{
+    const auto sender = std::make_shared<Sender>(
+        m_account, m_mockLocalStorage, m_mockSyncStateStorage,
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy());
+
+    qint32 usn = 42;
+
+    const auto tag = generateTag(
+        1, WithEvernoteFields::No, QList<qevercloud::Tag>{}, usn,
+        AddParentToTag::No);
+
+    auto note = generateNote(1, WithEvernoteFields::No, {}, {}, {}, {}, usn);
+    note.setTagLocalIds(QStringList{} << tag.localId());
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
+        .WillOnce(Return(std::make_shared<SyncState>(
+            usn, now, QHash<qevercloud::Guid, qint32>{},
+            QHash<qevercloud::Guid, qevercloud::Timestamp>{})));
+
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore>
+        mockUserOwnNoteStore =
+            std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    const std::optional<QString> nullLinkedNotebookGuid;
+    EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
+        .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                mockUserOwnNoteStore)));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                mockUserOwnNoteStore)));
+
+    EXPECT_CALL(*mockUserOwnNoteStore, createTagAsync)
+        .WillOnce([&](const qevercloud::Tag & t,
+                      const qevercloud::IRequestContextPtr & ctx) mutable {
+            EXPECT_FALSE(ctx);
+            EXPECT_EQ(t, tag);
+            return threading::makeExceptionalFuture<qevercloud::Tag>(
+                RuntimeError{ErrorString{QStringLiteral("some error")}});
+        });
+
+    EXPECT_CALL(*mockUserOwnNoteStore, createNoteAsync)
+        .WillOnce([&](const qevercloud::Note & n,
+                      const qevercloud::IRequestContextPtr & ctx) mutable {
+            EXPECT_FALSE(ctx);
+            EXPECT_EQ(n, note);
+            qevercloud::Note newNote{n};
+            newNote.setUpdateSequenceNum(usn++);
+            newNote.setGuid(UidGenerator::Generate());
+            return threading::makeReadyFuture<qevercloud::Note>(
+                std::move(newNote));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::SavedSearch>>({})));
+
+    EXPECT_CALL(*m_mockLocalStorage, listTags)
+        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
+            QList<qevercloud::Tag>{} << tag)));
+
+    EXPECT_CALL(*m_mockLocalStorage, listNotebooks)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::Notebook>>({})));
+
+    EXPECT_CALL(*m_mockLocalStorage, listNotes)
+        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
+            QList<qevercloud::Note>{} << note)));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::NotebookBuilder{}
+                    .setLocalId(note.notebookLocalId())
+                    .setLinkedNotebookGuid(std::nullopt)
+                    .build())));
+
+    EXPECT_CALL(*m_mockLocalStorage, putNote)
+        .WillOnce([&](const qevercloud::Note & n) {
+            EXPECT_EQ(n.localId(), note.localId());
+            EXPECT_TRUE(n.isLocallyModified());
+            return threading::makeReadyFuture();
+        });
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    const auto callback = std::make_shared<Callback>();
+
+    auto resultFuture = sender->send(canceler, callback);
+    ASSERT_TRUE(resultFuture.isFinished());
+
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+    const auto result = resultFuture.result();
+
+    // === Checking the result
+
+    ASSERT_TRUE(result.userOwnResult);
+
+    EXPECT_EQ(result.userOwnResult->totalAttemptedToSendTags(), 1);
+    EXPECT_EQ(result.userOwnResult->totalSuccessfullySentTags(), 0);
+    ASSERT_EQ(result.userOwnResult->failedToSendTags().size(), 1);
+    EXPECT_EQ(result.userOwnResult->failedToSendTags()[0].first, tag);
+
+    EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 1);
+    EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotes(), 1);
+}
+
+TEST_F(
+    SenderTest,
+    WhenSendingNotesDontLeaveItLocallyModifiedIfCannotSendOneOfNotesNonNewTags)
+{
+    const auto sender = std::make_shared<Sender>(
+        m_account, m_mockLocalStorage, m_mockSyncStateStorage,
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy());
+
+    qint32 usn = 42;
+
+    const auto tag = generateTag(
+        1, WithEvernoteFields::Yes, QList<qevercloud::Tag>{}, usn,
+        AddParentToTag::No);
+
+    auto note = generateNote(1, WithEvernoteFields::No, {}, {}, {}, {}, usn);
+    note.setTagLocalIds(QStringList{} << tag.localId());
+    note.setTagGuids(QList<qevercloud::Guid>{} << tag.guid().value());
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
+        .WillOnce(Return(std::make_shared<SyncState>(
+            usn, now, QHash<qevercloud::Guid, qint32>{},
+            QHash<qevercloud::Guid, qevercloud::Timestamp>{})));
+
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore>
+        mockUserOwnNoteStore =
+            std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    const std::optional<QString> nullLinkedNotebookGuid;
+    EXPECT_CALL(*mockUserOwnNoteStore, linkedNotebookGuid)
+        .WillRepeatedly(ReturnRef(nullLinkedNotebookGuid));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                mockUserOwnNoteStore)));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                mockUserOwnNoteStore)));
+
+    EXPECT_CALL(*mockUserOwnNoteStore, updateTagAsync)
+        .WillOnce([&](const qevercloud::Tag & t,
+                      const qevercloud::IRequestContextPtr & ctx) mutable {
+            EXPECT_FALSE(ctx);
+            EXPECT_EQ(t, tag);
+            return threading::makeExceptionalFuture<qint32>(
+                RuntimeError{ErrorString{QStringLiteral("some error")}});
+        });
+
+    EXPECT_CALL(*mockUserOwnNoteStore, createNoteAsync)
+        .WillOnce([&](const qevercloud::Note & n,
+                      const qevercloud::IRequestContextPtr & ctx) mutable {
+            EXPECT_FALSE(ctx);
+            EXPECT_EQ(n, note);
+            qevercloud::Note newNote{n};
+            newNote.setUpdateSequenceNum(usn++);
+            newNote.setGuid(UidGenerator::Generate());
+            return threading::makeReadyFuture<qevercloud::Note>(
+                std::move(newNote));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::SavedSearch>>({})));
+
+    EXPECT_CALL(*m_mockLocalStorage, listTags)
+        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Tag>>(
+            QList<qevercloud::Tag>{} << tag)));
+
+    EXPECT_CALL(*m_mockLocalStorage, listNotebooks)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::Notebook>>({})));
+
+    EXPECT_CALL(*m_mockLocalStorage, listNotes)
+        .WillOnce(Return(threading::makeReadyFuture<QList<qevercloud::Note>>(
+            QList<qevercloud::Note>{} << note)));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId)
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::NotebookBuilder{}
+                    .setLocalId(note.notebookLocalId())
+                    .setLinkedNotebookGuid(std::nullopt)
+                    .build())));
+
+    EXPECT_CALL(*m_mockLocalStorage, putNote)
+        .WillOnce([&](const qevercloud::Note & n) {
+            EXPECT_EQ(n.localId(), note.localId());
+            EXPECT_FALSE(n.isLocallyModified());
+            return threading::makeReadyFuture();
+        });
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    const auto callback = std::make_shared<Callback>();
+
+    auto resultFuture = sender->send(canceler, callback);
+    ASSERT_TRUE(resultFuture.isFinished());
+
+    ASSERT_EQ(resultFuture.resultCount(), 1);
+    const auto result = resultFuture.result();
+
+    // === Checking the result
+
+    ASSERT_TRUE(result.userOwnResult);
+
+    EXPECT_EQ(result.userOwnResult->totalAttemptedToSendTags(), 1);
+    EXPECT_EQ(result.userOwnResult->totalSuccessfullySentTags(), 0);
+    ASSERT_EQ(result.userOwnResult->failedToSendTags().size(), 1);
+    EXPECT_EQ(result.userOwnResult->failedToSendTags()[0].first, tag);
 
     EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 1);
     EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotes(), 1);
