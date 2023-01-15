@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,7 @@
 #include <quentier/threading/Post.h>
 #include <quentier/threading/Qt5FutureHelpers.h>
 #include <quentier/threading/Qt5Promise.h>
+#include <quentier/threading/Runnable.h>
 #endif
 
 #include <memory>
@@ -89,12 +90,16 @@ namespace detail {
 
 template <class T, class Function>
 void processParentFuture(
-    QPromise<typename ResultTypeHelper<Function, T>::ResultType> && promise,
+    std::shared_ptr<
+        QPromise<typename ResultTypeHelper<Function, T>::ResultType>>
+        promise,
     QFuture<T> && future, Function && function)
 {
+    Q_ASSERT(promise);
+
     using ResultType = typename ResultTypeHelper<Function, T>::ResultType;
 
-    promise.start();
+    promise->start();
 
     // If future contains exception, just forward it to the promise and
     // don't call the function at all
@@ -102,8 +107,8 @@ void processParentFuture(
         future.waitForFinished();
     }
     catch (const QException & e) {
-        promise.setException(e);
-        promise.finish();
+        promise->setException(e);
+        promise->finish();
         return;
     }
     // NOTE: there cannot be other exception types in this context in Qt5
@@ -123,29 +128,29 @@ void processParentFuture(
         }
         else {
             if constexpr (std::is_void_v<T>) {
-                promise.addResult(function());
+                promise->addResult(function());
             }
             else {
-                promise.addResult(function(future.result()));
+                promise->addResult(function(future.result()));
             }
         }
     }
     catch (const QException & e) {
-        promise.setException(e);
+        promise->setException(e);
     }
     catch (const std::exception & e) {
         ErrorString error{QT_TRANSLATE_NOOP(
             "utility", "Unknown std::exception in then future handler")};
         error.details() = QString::fromStdString(std::string{e.what()});
-        promise.setException(RuntimeError{std::move(error)});
+        promise->setException(RuntimeError{std::move(error)});
     }
     catch (...) {
         ErrorString error{QT_TRANSLATE_NOOP(
             "utility", "Unknown exception in then future handler")};
-        promise.setException(RuntimeError{std::move(error)});
+        promise->setException(RuntimeError{std::move(error)});
     }
 
-    promise.finish();
+    promise->finish();
 }
 
 } // namespace detail
@@ -157,8 +162,8 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     using ResultType =
         typename detail::ResultTypeHelper<Function, T>::ResultType;
 
-    QPromise<ResultType> promise;
-    auto result = promise.future();
+    auto promise = std::make_shared<QPromise<ResultType>>();
+    auto result = promise->future();
 
     if (future.isFinished()) {
         detail::processParentFuture(
@@ -210,8 +215,8 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     using ResultType =
         typename detail::ResultTypeHelper<Function, T>::ResultType;
 
-    QPromise<ResultType> promise;
-    auto result = promise.future();
+    auto promise = std::make_shared<QPromise<ResultType>>();
+    auto result = promise->future();
 
     if (future.isFinished()) {
         auto * runnable = createFunctionRunnable(
@@ -261,8 +266,8 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     using ResultType =
         typename detail::ResultTypeHelper<Function, T>::ResultType;
 
-    QPromise<ResultType> promise;
-    auto result = promise.future();
+    auto promise = std::make_shared<QPromise<ResultType>>();
+    auto result = promise->future();
 
     if (future.isFinished()) {
         postToObject(
@@ -308,14 +313,17 @@ namespace detail {
 template <class T, class Function>
 std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, void>
     processPossibleFutureException(
-        QPromise<T> && promise, QFuture<T> && future, Function && handler)
+        std::shared_ptr<QPromise<T>> promise, QFuture<T> && future,
+        Function && handler)
 {
+    Q_ASSERT(promise);
+
     using ArgType = typename QtPrivate::ArgResolver<Function>::First;
     using ResultType =
         typename ResultTypeHelper<Function, std::decay_t<ArgType>>::ResultType;
     static_assert(std::is_convertible_v<ResultType, T>);
 
-    promise.start();
+    promise->start();
 
     try {
         try {
@@ -327,30 +335,30 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, void>
                     handler(e);
                 }
                 else {
-                    promise.addResult(handler(e));
+                    promise->addResult(handler(e));
                 }
             }
             catch (const QException & e) {
-                promise.setException(e);
+                promise->setException(e);
             }
             catch (const std::exception & e) {
                 ErrorString error{QT_TRANSLATE_NOOP(
                     "utility",
                     "Unknown std::exception in onFailed future handler")};
                 error.details() = QString::fromStdString(std::string{e.what()});
-                promise.setException(RuntimeError{std::move(error)});
+                promise->setException(RuntimeError{std::move(error)});
             }
             catch (...) {
                 ErrorString error{QT_TRANSLATE_NOOP(
                     "utility", "Unknown exception in onFailed future handler")};
-                promise.setException(RuntimeError{std::move(error)});
+                promise->setException(RuntimeError{std::move(error)});
             }
         }
     }
     // Exception doesn't match with handler's argument type, propagate
     // the exception to be handled later.
     catch (const QException & e) {
-        promise.setException(e);
+        promise->setException(e);
     }
     catch (const std::exception & e) {
         ErrorString error{QT_TRANSLATE_NOOP(
@@ -358,17 +366,17 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, void>
             "Unknown std::exception which did not match with onFailed "
             "future handler")};
         error.details() = QString::fromStdString(std::string{e.what()});
-        promise.setException(RuntimeError{std::move(error)});
+        promise->setException(RuntimeError{std::move(error)});
     }
     catch (...) {
         ErrorString error{QT_TRANSLATE_NOOP(
             "utility",
             "Unknown which did not match with onFailed "
             "future handler")};
-        promise.setException(RuntimeError{std::move(error)});
+        promise->setException(RuntimeError{std::move(error)});
     }
 
-    promise.finish();
+    promise->finish();
 }
 
 } // namespace detail
@@ -382,8 +390,8 @@ template <class T, class Function>
 std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
     onFailed(QFuture<T> && future, Function && handler)
 {
-    QPromise<T> promise;
-    auto result = promise.future();
+    auto promise = std::make_shared<QPromise<T>>();
+    auto result = promise->future();
 
     if (future.isFinished()) {
         detail::processPossibleFutureException(
@@ -413,8 +421,8 @@ template <class T, class Function>
 std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
     onFailed(QFuture<T> && future, QObject * context, Function && handler)
 {
-    QPromise<T> promise;
-    auto result = promise.future();
+    auto promise = std::make_shared<QPromise<T>>();
+    auto result = promise->future();
 
     if (future.isFinished()) {
         postToObject(
