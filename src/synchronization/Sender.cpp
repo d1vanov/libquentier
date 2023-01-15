@@ -25,6 +25,7 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
@@ -51,34 +52,39 @@ Sender::Sender(
     Account account, local_storage::ILocalStoragePtr localStorage,
     ISyncStateStoragePtr syncStateStorage,
     INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy) :
+    qevercloud::IRetryPolicyPtr retryPolicy,
+    threading::QThreadPoolPtr threadPool) :
     m_account{std::move(account)},
     m_localStorage{std::move(localStorage)},
     // clang-format off
     m_syncStateStorage{std::move(syncStateStorage)},
     m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
-    m_retryPolicy{std::move(retryPolicy)}
+    m_retryPolicy{std::move(retryPolicy)},
+    m_threadPool{
+        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 // clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "Sender ctor: account is empty")}};
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("Sender ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "Sender ctor: local storage is null")}};
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("Sender ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncStateStorage)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "Sender ctor: sync state storage is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Sender ctor: sync state storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStoreProvider)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "Sender ctor: note store provider is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Sender ctor: note store provider is null")}};
     }
+
+    Q_ASSERT(m_threadPool);
 }
 
 QFuture<ISender::Result> Sender::send(
@@ -230,6 +236,11 @@ QFuture<void> Sender::processNotes(SendContextPtr sendContext) const
                 return;
             }
 
+            if (sendContext->manualCanceler->isCanceled()) {
+                promise->finish();
+                return;
+            }
+
             if (sendContext->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
                 promise->finish();
@@ -289,10 +300,9 @@ void Sender::sendNotes(
 
                 status->m_failedToSendNotes << ISendStatus::NoteWithException{
                     note,
-                    std::make_shared<RuntimeError>(
-                        ErrorString{QStringLiteral(
-                            "Cannot send note which notebook could not be "
-                            "sent")})};
+                    std::make_shared<RuntimeError>(ErrorString{QStringLiteral(
+                        "Cannot send note which notebook could not be "
+                        "sent")})};
 
                 Sender::sendUpdate(sendContext, status, std::nullopt);
                 continue;
@@ -333,14 +343,16 @@ void Sender::sendNotes(
             std::move(noteFuture),
             [sendContext, selfWeak, this,
              noteProcessingPromise](qevercloud::Note note) {
-                if (sendContext->canceler->isCanceled()) {
-                    noteProcessingPromise->setException(OperationCanceled{});
-                    noteProcessingPromise->finish();
+                const auto self = selfWeak.lock();
+                if (!self) {
                     return;
                 }
 
-                const auto self = selfWeak.lock();
-                if (!self) {
+                if (sendContext->canceler->isCanceled()) {
+                    const auto e = std::make_shared<OperationCanceled>();
+                    processNoteFailure(
+                        sendContext, std::move(note), *e,
+                        noteProcessingPromise);
                     return;
                 }
 
@@ -503,7 +515,7 @@ void Sender::processNote(
 
     auto putNoteFuture = m_localStorage->putNote(note);
     auto putNoteThenFuture = threading::then(
-        std::move(putNoteFuture),
+        std::move(putNoteFuture), m_threadPool.get(),
         [sendContext, promise, notebookLocalId = note.notebookLocalId(),
          noteUsn = note.updateSequenceNum(), selfWeak, this]() mutable {
             if (sendContext->canceler->isCanceled()) {
@@ -660,7 +672,10 @@ void Sender::processNoteFailure(
         if (linkedNotebookGuidIt !=
             sendContext->notebookLocalIdsToLinkedNotebookGuids.constEnd())
         {
-            auto status = sendStatus(sendContext, linkedNotebookGuidIt.value());
+            const std::optional<qevercloud::Guid> linkedNotebookGuid = // NOLINT
+                linkedNotebookGuidIt.value();
+
+            auto status = sendStatus(sendContext, linkedNotebookGuid);
             status->m_failedToSendNotes << ISendStatus::NoteWithException{
                 std::move(note), std::move(exc)};
 
@@ -668,6 +683,10 @@ void Sender::processNoteFailure(
                 sendContext, status, linkedNotebookGuidIt.value());
 
             locker.unlock();
+
+            Sender::checkForStopSynchronizationException(
+                sendContext, linkedNotebookGuid, e);
+
             promise->finish();
             return;
         }
@@ -700,6 +719,9 @@ void Sender::processNoteFailure(
             {
                 const auto & linkedNotebookGuid =
                     notebook->linkedNotebookGuid();
+
+                Sender::checkForStopSynchronizationException(
+                    sendContext, linkedNotebookGuid, *exc);
 
                 const QMutexLocker locker{sendContext->sendStatusMutex.get()};
                 sendContext
@@ -754,6 +776,11 @@ QFuture<void> Sender::processTags(SendContextPtr sendContext) const
             QList<qevercloud::Tag> && tags) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
+                return;
+            }
+
+            if (sendContext->manualCanceler->isCanceled()) {
+                promise->finish();
                 return;
             }
 
@@ -813,10 +840,9 @@ void Sender::sendTags(
 
                 status->m_failedToSendTags << ISendStatus::TagWithException{
                     tag,
-                    std::make_shared<RuntimeError>(
-                        ErrorString{QStringLiteral(
-                            "Cannot send tag which parent also could not be "
-                            "sent")})};
+                    std::make_shared<RuntimeError>(ErrorString{QStringLiteral(
+                        "Cannot send tag which parent also could not be "
+                        "sent")})};
 
                 Sender::sendUpdate(
                     sendContext, status, tag.linkedNotebookGuid());
@@ -856,7 +882,20 @@ void Sender::sendTags(
             [sendContext, selfWeak, this,
              tagProcessingPromise](qevercloud::Tag tag) {
                 if (sendContext->canceler->isCanceled()) {
-                    tagProcessingPromise->setException(OperationCanceled{});
+                    {
+                        const auto linkedNotebookGuid =
+                            tag.linkedNotebookGuid();
+                        const QMutexLocker locker{
+                            sendContext->sendStatusMutex.get()};
+                        auto status =
+                            sendStatus(sendContext, linkedNotebookGuid);
+                        status->m_failedToSendTags
+                            << ISendStatus::TagWithException{
+                                   std::move(tag),
+                                   std::make_shared<OperationCanceled>()};
+                        Sender::sendUpdate(
+                            sendContext, status, linkedNotebookGuid);
+                    }
                     tagProcessingPromise->finish();
                     return;
                 }
@@ -1026,7 +1065,7 @@ void Sender::processTag(
 
     auto putTagFuture = m_localStorage->putTag(tag);
     auto putTagThenFuture = threading::then(
-        std::move(putTagFuture),
+        std::move(putTagFuture), m_threadPool.get(),
         [sendContext, promise, linkedNotebookGuid = tag.linkedNotebookGuid()] {
             if (sendContext->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
@@ -1062,6 +1101,9 @@ void Sender::processTagFailure(
     const SendContextPtr & sendContext, qevercloud::Tag tag,
     const QException & e, const std::shared_ptr<QPromise<void>> & promise)
 {
+    Sender::checkForStopSynchronizationException(
+        sendContext, tag.linkedNotebookGuid(), e);
+
     {
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
 
@@ -1106,6 +1148,11 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
             const QList<qevercloud::Notebook> & notebooks) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
+                return;
+            }
+
+            if (sendContext->manualCanceler->isCanceled()) {
+                promise->finish();
                 return;
             }
 
@@ -1166,8 +1213,21 @@ void Sender::sendNotebooks(
             [sendContext, selfWeak, this,
              notebookProcessingPromise](qevercloud::Notebook notebook) {
                 if (sendContext->canceler->isCanceled()) {
-                    notebookProcessingPromise->setException(
-                        OperationCanceled{});
+                    {
+                        const auto linkedNotebookGuid =
+                            notebook.linkedNotebookGuid();
+
+                        const QMutexLocker locker{
+                            sendContext->sendStatusMutex.get()};
+                        auto status =
+                            sendStatus(sendContext, linkedNotebookGuid);
+                        status->m_failedToSendNotebooks
+                            << ISendStatus::NotebookWithException{
+                                   std::move(notebook),
+                                   std::make_shared<OperationCanceled>()};
+                        Sender::sendUpdate(
+                            sendContext, status, linkedNotebookGuid);
+                    }
                     notebookProcessingPromise->finish();
                     return;
                 }
@@ -1324,7 +1384,7 @@ void Sender::processNotebook(
 
     auto putNotebookFuture = m_localStorage->putNotebook(notebook);
     auto putNotebookThenFuture = threading::then(
-        std::move(putNotebookFuture),
+        std::move(putNotebookFuture), m_threadPool.get(),
         [sendContext, promise, notebookLocalId = notebook.localId(),
          linkedNotebookGuid = notebook.linkedNotebookGuid()] {
             if (sendContext->canceler->isCanceled()) {
@@ -1371,6 +1431,9 @@ void Sender::processNotebookFailure(
     const SendContextPtr & sendContext, qevercloud::Notebook notebook,
     const QException & e, const std::shared_ptr<QPromise<void>> & promise)
 {
+    Sender::checkForStopSynchronizationException(
+        sendContext, notebook.linkedNotebookGuid(), e);
+
     {
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
 
@@ -1416,6 +1479,11 @@ QFuture<void> Sender::processSavedSearches(SendContextPtr sendContext) const
             const QList<qevercloud::SavedSearch> & savedSearches) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
+                return;
+            }
+
+            if (sendContext->manualCanceler->isCanceled()) {
+                promise->finish();
                 return;
             }
 
@@ -1478,8 +1546,18 @@ void Sender::sendSavedSearches(
             [sendContext, selfWeak, this,
              savedSearchProcessingPromise](qevercloud::SavedSearch search) {
                 if (sendContext->canceler->isCanceled()) {
-                    savedSearchProcessingPromise->setException(
-                        OperationCanceled{});
+                    {
+                        const QMutexLocker locker{
+                            sendContext->sendStatusMutex.get()};
+                        sendContext->userOwnSendStatus
+                                ->m_failedToSendSavedSearches
+                            << ISendStatus::SavedSearchWithException{
+                                   std::move(search),
+                                   std::make_shared<OperationCanceled>()};
+                        Sender::sendUpdate(
+                            sendContext, sendContext->userOwnSendStatus,
+                            std::nullopt);
+                    }
                     savedSearchProcessingPromise->finish();
                     return;
                 }
@@ -1633,7 +1711,8 @@ void Sender::processSavedSearch(
 
     auto putSavedSearchFuture = m_localStorage->putSavedSearch(savedSearch);
     auto putSavedSearchThenFuture = threading::then(
-        std::move(putSavedSearchFuture), [sendContext, promise] {
+        std::move(putSavedSearchFuture), m_threadPool.get(),
+        [sendContext, promise] {
             if (sendContext->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
                 promise->finish();
@@ -1675,6 +1754,8 @@ void Sender::processSavedSearchFailure(
     const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
     const QException & e, const std::shared_ptr<QPromise<void>> & promise)
 {
+    Sender::checkForStopSynchronizationException(sendContext, std::nullopt, e);
+
     {
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
 

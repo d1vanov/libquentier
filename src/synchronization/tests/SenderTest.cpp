@@ -24,6 +24,7 @@
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/synchronization/types/Errors.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/Unreachable.h>
@@ -43,6 +44,7 @@
 #include <qevercloud/types/builders/TagBuilder.h>
 #include <qevercloud/utility/ToRange.h>
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QFlags>
 #include <QHash>
@@ -2024,6 +2026,9 @@ protected:
     const std::shared_ptr<mocks::MockINoteStoreProvider>
         m_mockNoteStoreProvider =
             std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
+
+    const threading::QThreadPoolPtr m_threadPool =
+        threading::globalThreadPool();
 };
 
 TEST_F(SenderTest, Ctor)
@@ -2032,7 +2037,7 @@ TEST_F(SenderTest, Ctor)
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy()));
+            qevercloud::newRetryPolicy(), m_threadPool));
 }
 
 TEST_F(SenderTest, CtorEmptyAccount)
@@ -2041,7 +2046,7 @@ TEST_F(SenderTest, CtorEmptyAccount)
         const auto sender = std::make_shared<Sender>(
             Account{}, m_mockLocalStorage, m_mockSyncStateStorage,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy(), m_threadPool),
         InvalidArgument);
 }
 
@@ -2050,7 +2055,8 @@ TEST_F(SenderTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, nullptr, m_mockSyncStateStorage, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -2059,7 +2065,8 @@ TEST_F(SenderTest, CtorNullSyncStateStorage)
     EXPECT_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, nullptr, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -2068,7 +2075,8 @@ TEST_F(SenderTest, CtorNullNoteStoreProvider)
     EXPECT_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage, nullptr,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -2077,7 +2085,8 @@ TEST_F(SenderTest, CtorNullRequestContext)
     EXPECT_NO_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
-            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy()));
+            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy(),
+            m_threadPool));
 }
 
 TEST_F(SenderTest, CtorNullRetryPolicy)
@@ -2085,7 +2094,17 @@ TEST_F(SenderTest, CtorNullRetryPolicy)
     EXPECT_NO_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr));
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr,
+            m_threadPool));
+}
+
+TEST_F(SenderTest, CtorNullThreadPool)
+{
+    EXPECT_NO_THROW(
+        const auto sender = std::make_shared<Sender>(
+            m_account, m_mockLocalStorage, m_mockSyncStateStorage,
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), nullptr));
 }
 
 TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
@@ -2093,7 +2112,7 @@ TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     qint32 usn = 42;
     const auto parentTag = generateTag(
@@ -2154,7 +2173,9 @@ TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2175,7 +2196,7 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     qint32 usn = 42;
     const auto parentTag = generateTag(
@@ -2255,7 +2276,9 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2275,7 +2298,7 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     qint32 usn = 42;
     const auto notebook = generateNotebook(1, WithEvernoteFields::No, usn);
@@ -2340,7 +2363,9 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2362,7 +2387,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     qint32 usn = 42;
     const auto notebook = generateNotebook(1, WithEvernoteFields::Yes, usn);
@@ -2452,7 +2477,9 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2477,7 +2504,7 @@ TEST_F(
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     qint32 usn = 42;
 
@@ -2570,7 +2597,9 @@ TEST_F(
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2595,7 +2624,7 @@ TEST_F(
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     qint32 usn = 42;
 
@@ -2689,7 +2718,9 @@ TEST_F(
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2796,7 +2827,7 @@ TEST_P(SenderDataTest, SenderDataTest)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto & testData = GetParam();
     SentData sentData;
@@ -2832,7 +2863,9 @@ TEST_P(SenderDataTest, SenderDataTest)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2969,7 +3002,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto & testData = GetParam();
     SentData sentData;
@@ -3008,7 +3041,9 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -3170,7 +3205,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto & testData = GetParam();
     SentData sentData;
@@ -3211,7 +3246,9 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -3475,7 +3512,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy());
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     SentData sentData;
     DataPutToLocalStorage dataPutToLocalStorage;
@@ -3550,7 +3587,9 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    ASSERT_TRUE(resultFuture.isFinished());
+    while (!resultFuture.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
