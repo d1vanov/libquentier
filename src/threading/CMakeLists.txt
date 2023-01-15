@@ -6,6 +6,7 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  Factory.cpp
   main.cpp)
 
 target_link_libraries(${LIBRARY_NAME}

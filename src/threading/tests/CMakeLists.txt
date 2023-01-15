@@ -4,6 +4,7 @@ set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 
 add_executable(${TESTS_NAME}
   main.cpp
+  FactoryTest.cpp
   FutureWhenAllTest.cpp
   MapFutureProgressTest.cpp
   TrackedTaskTest.cpp)
