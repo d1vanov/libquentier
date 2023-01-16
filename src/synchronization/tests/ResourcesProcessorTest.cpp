@@ -22,6 +22,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
@@ -34,8 +35,14 @@
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QMutex>
+#include <QMutexLocker>
 
 #include <gtest/gtest.h>
+
+#include <algorithm>
+
+#include <quentier/logging/QuentierLogger.h>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -58,6 +65,9 @@ protected:
 
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
+
+    const threading::QThreadPoolPtr m_threadPool =
+        threading::globalThreadPool();
 };
 
 struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
@@ -66,6 +76,7 @@ struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
         const qevercloud::Guid & resourceGuid,
         qint32 resourceUpdateSequenceNum) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_processedResourceGuidsAndUsns[resourceGuid] =
             resourceUpdateSequenceNum;
     }
@@ -74,6 +85,7 @@ struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
         const qevercloud::Resource & resource,
         const QException & e) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_resourcesWhichFailedToDownload
             << std::make_pair(resource, std::shared_ptr<QException>(e.clone()));
     }
@@ -82,6 +94,7 @@ struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
         const qevercloud::Resource & resource,
         const QException & e) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_resourcesWhichFailedToProcess
             << std::make_pair(resource, std::shared_ptr<QException>(e.clone()));
     }
@@ -89,12 +102,14 @@ struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
     void onResourceProcessingCancelled(
         const qevercloud::Resource & resource) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_cancelledResources << resource;
     }
 
     using ResourceWithException =
         std::pair<qevercloud::Resource, std::shared_ptr<QException>>;
 
+    QMutex m_mutex;
     QHash<qevercloud::Guid, qint32> m_processedResourceGuidsAndUsns;
     QList<ResourceWithException> m_resourcesWhichFailedToDownload;
     QList<ResourceWithException> m_resourcesWhichFailedToProcess;
@@ -105,23 +120,31 @@ TEST_F(ResourcesProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            m_mockLocalStorage, m_mockResourceFullDataDownloader));
+            m_mockLocalStorage, m_mockResourceFullDataDownloader,
+            m_threadPool));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            nullptr, m_mockResourceFullDataDownloader),
+            nullptr, m_mockResourceFullDataDownloader, m_threadPool),
         InvalidArgument);
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullResourceFullDataDownloader)
 {
     EXPECT_THROW(
-        const auto resourcesProcessor =
-            std::make_shared<ResourcesProcessor>(m_mockLocalStorage, nullptr),
+        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+            m_mockLocalStorage, nullptr, m_threadPool),
         InvalidArgument);
+}
+
+TEST_F(ResourcesProcessorTest, CtorNullThreadPool)
+{
+    EXPECT_NO_THROW(
+        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+            m_mockLocalStorage, m_mockResourceFullDataDownloader, nullptr));
 }
 
 TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
@@ -130,15 +153,18 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
         << qevercloud::SyncChunkBuilder{}.build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -163,21 +189,25 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -269,20 +299,35 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(resourcesPutIntoLocalStorage.size(), resources.size());
     for (int i = 0, size = resources.size(); i < size; ++i) {
         const auto resourceWithData = addDataToResource(resources[i], i);
-        EXPECT_EQ(resourcesPutIntoLocalStorage[i], resourceWithData);
+        const auto it = std::find_if(
+            resourcesPutIntoLocalStorage.constBegin(),
+            resourcesPutIntoLocalStorage.constEnd(),
+            [localId = resourceWithData.localId()](
+                const qevercloud::Resource & resource) {
+                return resource.localId() == localId;
+            });
+        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, resourceWithData);
     }
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -294,13 +339,34 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     EXPECT_TRUE(status->m_resourcesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status->m_cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size());
+    ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size())
+        << "Status: " << status->toString().toStdString()
+        << ", all resource guids: "
+        << ([&]
+            {
+                QStringList lst;
+                for (const auto & r: qAsConst(resources)) {
+                    lst << r.guid().value_or(QStringLiteral("<none>"));
+                }
+                return lst.join(QStringLiteral(", ")).toStdString();
+            }());
 
     for (const auto & resource: qAsConst(resources)) {
         const auto it = status->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
-        ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end())
+            << "Status: " << status->toString().toStdString()
+            << ", resource guid: " << resource.guid().value().toStdString()
+            << ", all resource guids: "
+            << ([&]
+                {
+                    QStringList lst;
+                    for (const auto & r: qAsConst(resources)) {
+                        lst << r.guid().value_or(QStringLiteral("<none>"));
+                    }
+                    return lst.join(QStringLiteral(", ")).toStdString();
+                }());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 
@@ -329,21 +395,25 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -441,15 +511,18 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         auto r = resources;
@@ -525,21 +598,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -638,15 +715,18 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         auto r = resources;
@@ -722,21 +802,25 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -833,15 +917,18 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         auto r = resources;
@@ -920,21 +1007,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1037,19 +1128,35 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(resourcesPutIntoLocalStorage.size(), resources.size());
     for (int i = 0, size = resources.size(); i < size; ++i) {
         const auto resourceWithData = addDataToResource(resources[i], i);
-        EXPECT_EQ(resourcesPutIntoLocalStorage[i], resourceWithData);
+        const auto it = std::find_if(
+            resourcesPutIntoLocalStorage.constBegin(),
+            resourcesPutIntoLocalStorage.constEnd(),
+            [localId = resourceWithData.localId()](
+                const qevercloud::Resource & resource) {
+                return resource.localId() == localId;
+            });
+        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, resourceWithData);
     }
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -1099,21 +1206,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1261,20 +1372,35 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(resourcesPutIntoLocalStorage.size(), resources.size());
     for (int i = 0, size = resources.size(); i < size; ++i) {
         const auto resourceWithData = addDataToResource(resources[i], i);
-        EXPECT_EQ(resourcesPutIntoLocalStorage[i], resourceWithData);
+        const auto it = std::find_if(
+            resourcesPutIntoLocalStorage.constBegin(),
+            resourcesPutIntoLocalStorage.constEnd(),
+            [localId = resourceWithData.localId()](
+                const qevercloud::Resource & resource) {
+                return resource.localId() == localId;
+            });
+        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, resourceWithData);
     }
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -1324,21 +1450,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1453,15 +1583,18 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         QList<qevercloud::Resource> res{resources};
@@ -1476,7 +1609,19 @@ TEST_F(
         const auto resourceWithData =
             addDataToResource(expectedProcessedResources[i], i < 1 ? i : i + 1);
 
-        EXPECT_EQ(resourcesPutIntoLocalStorage[i], resourceWithData);
+        const auto it = std::find_if(
+            resourcesPutIntoLocalStorage.constBegin(),
+            resourcesPutIntoLocalStorage.constEnd(),
+            [localId = resourceWithData.localId()](
+                const qevercloud::Resource & resource) {
+                return resource.localId() == localId;
+            });
+        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, resourceWithData);
     }
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -1542,21 +1687,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1671,15 +1820,18 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         QList<qevercloud::Resource> res{resources};
@@ -1694,7 +1846,19 @@ TEST_F(
         const auto resourceWithData =
             addDataToResource(expectedProcessedResources[i], i < 1 ? i : i + 1);
 
-        EXPECT_EQ(resourcesPutIntoLocalStorage[i], resourceWithData);
+        const auto it = std::find_if(
+            resourcesPutIntoLocalStorage.constBegin(),
+            resourcesPutIntoLocalStorage.constEnd(),
+            [localId = resourceWithData.localId()](
+                const qevercloud::Resource & resource) {
+                return resource.localId() == localId;
+            });
+        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, resourceWithData);
     }
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -1760,21 +1924,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1888,14 +2056,13 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullResourceDataCallCount, 0);
 
     ASSERT_EQ(findResourceByGuidPromises.size(), resources.size());
@@ -1904,22 +2071,22 @@ TEST_F(
         findResourceByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
+    while (downloadFullResourceDataCallCount != 2) { // NOLINT
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_FALSE(future.isFinished());
-    EXPECT_EQ(downloadFullResourceDataCallCount, 2);
 
     for (int i = 2; i < resources.size(); ++i) {
         findResourceByGuidPromises[i]->addResult(std::nullopt);
         findResourceByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(downloadFullResourceDataCallCount, 2);
 
@@ -2042,21 +2209,25 @@ TEST_F(
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -2167,14 +2338,13 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullResourceDataCallCount, 0);
 
     ASSERT_EQ(findResourceByGuidPromises.size(), resources.size());
@@ -2183,22 +2353,22 @@ TEST_F(
         findResourceByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
+    while (downloadFullResourceDataCallCount != 2) { // NOLINT
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_FALSE(future.isFinished());
-    EXPECT_EQ(downloadFullResourceDataCallCount, 2);
 
     for (int i = 2; i < resources.size(); ++i) {
         findResourceByGuidPromises[i]->addResult(std::nullopt);
         findResourceByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(downloadFullResourceDataCallCount, 2);
 
