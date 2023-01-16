@@ -81,7 +81,7 @@ public:
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
-                std::move(linkedNotebook));
+                linkedNotebook);
         }
     }
 
