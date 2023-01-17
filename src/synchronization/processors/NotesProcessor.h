@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/threading/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -33,6 +34,8 @@
 #include <synchronization/Fwd.h>
 
 #include <qevercloud/Fwd.h>
+
+#include <memory>
 
 namespace quentier::synchronization {
 
@@ -47,7 +50,8 @@ public:
         INoteFullDataDownloaderPtr noteFullDataDownloader,
         INoteStoreProviderPtr noteStoreProvider,
         qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {});
+        qevercloud::IRetryPolicyPtr retryPolicy = {},
+        threading::QThreadPoolPtr threadPool = {});
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -68,13 +72,22 @@ private:
         Canceled
     };
 
+    struct Context
+    {
+        utility::cancelers::ManualCancelerPtr manualCanceler;
+        utility::cancelers::ICancelerPtr canceler;
+        ICallbackWeakPtr callbackWeak;
+
+        DownloadNotesStatusPtr status;
+        threading::QMutexPtr statusMutex;
+    };
+
+    using ContextPtr = std::shared_ptr<Context>;
+
     void onFoundDuplicate(
-        const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const DownloadNotesStatusPtr & status,
-        const utility::cancelers::ManualCancelerPtr & manualCanceler,
-        const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
-        ICallbackWeakPtr && callbackWeak, qevercloud::Note updatedNote,
-        qevercloud::Note localNote);
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+        qevercloud::Note updatedNote, qevercloud::Note localNote);
 
     enum class NoteKind
     {
@@ -83,15 +96,13 @@ private:
     };
 
     void downloadFullNoteData(
-        const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const DownloadNotesStatusPtr & status,
-        const utility::cancelers::ManualCancelerPtr & manualCanceler,
-        ICallbackWeakPtr && callbackWeak, const qevercloud::Note & note,
-        NoteKind noteKind);
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+        const qevercloud::Note & note, NoteKind noteKind);
 
     void putNoteToLocalStorage(
-        const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const DownloadNotesStatusPtr & status, ICallbackWeakPtr && callbackWeak,
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
         qevercloud::Note note, NoteKind putNoteKind);
 
 private:
@@ -101,6 +112,7 @@ private:
     const INoteStoreProviderPtr m_noteStoreProvider;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;
+    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization

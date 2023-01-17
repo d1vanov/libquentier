@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,7 @@
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
@@ -41,9 +42,12 @@
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
 #include <QCoreApplication>
+#include <QMutex>
+#include <QMutexLocker>
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <utility>
 
@@ -80,6 +84,9 @@ protected:
 
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
+
+    const threading::QThreadPoolPtr m_threadPool =
+        threading::globalThreadPool();
 };
 
 struct NotesProcessorCallback final : public INotesProcessor::ICallback
@@ -88,11 +95,13 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
         const qevercloud::Guid & noteGuid,
         qint32 noteUpdateSequenceNum) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_processedNoteGuidsAndUsns[noteGuid] = noteUpdateSequenceNum;
     }
 
     void onExpungedNote(const qevercloud::Guid & noteGuid) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_expungedNoteGuids.insert(noteGuid);
     }
 
@@ -100,6 +109,7 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
         const qevercloud::Guid & noteGuid,
         const QException & e) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_guidsWhichFailedToExpunge
             << std::make_pair(noteGuid, std::shared_ptr<QException>(e.clone()));
     }
@@ -107,6 +117,7 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
     void onNoteFailedToDownload(
         const qevercloud::Note & note, const QException & e) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_notesWhichFailedToDownload
             << std::make_pair(note, std::shared_ptr<QException>(e.clone()));
     }
@@ -114,6 +125,7 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
     void onNoteFailedToProcess(
         const qevercloud::Note & note, const QException & e) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_notesWhichFailedToProcess
             << std::make_pair(note, std::shared_ptr<QException>(e.clone()));
     }
@@ -121,6 +133,7 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
     void onNoteProcessingCancelled(
         const qevercloud::Note & note) noexcept override
     {
+        const QMutexLocker locker{&m_mutex};
         m_cancelledNotes << note;
     }
 
@@ -133,6 +146,7 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
     using NoteWithException =
         std::pair<qevercloud::Note, std::shared_ptr<QException>>;
 
+    QMutex m_mutex;
     QList<GuidWithException> m_guidsWhichFailedToExpunge;
     QList<NoteWithException> m_notesWhichFailedToDownload;
     QList<NoteWithException> m_notesWhichFailedToProcess;
@@ -145,7 +159,8 @@ TEST_F(NotesProcessorTest, Ctor)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()));
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool));
 }
 
 TEST_F(NotesProcessorTest, CtorNullLocalStorage)
@@ -154,7 +169,7 @@ TEST_F(NotesProcessorTest, CtorNullLocalStorage)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             nullptr, m_mockSyncConflictResolver, m_mockNoteFullDataDownloader,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy(), m_threadPool),
         InvalidArgument);
 }
 
@@ -164,7 +179,7 @@ TEST_F(NotesProcessorTest, CtorNullSyncConflictResolver)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, nullptr, m_mockNoteFullDataDownloader,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy(), m_threadPool),
         InvalidArgument);
 }
 
@@ -174,7 +189,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteFullDataDownloader)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver, nullptr,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy(), m_threadPool),
         InvalidArgument);
 }
 
@@ -184,7 +199,8 @@ TEST_F(NotesProcessorTest, CtorNullNoteStoreProvider)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, nullptr,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -194,7 +210,7 @@ TEST_F(NotesProcessorTest, CtorNullRequestContext)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider, nullptr,
-            qevercloud::newRetryPolicy()));
+            qevercloud::newRetryPolicy(), m_threadPool));
 }
 
 TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
@@ -203,7 +219,17 @@ TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), nullptr));
+            qevercloud::newRequestContext(), nullptr, m_threadPool));
+}
+
+TEST_F(NotesProcessorTest, CtorNullThreadPool)
+{
+    EXPECT_NO_THROW(
+        const auto notesProcessor = std::make_shared<NotesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            nullptr));
 }
 
 TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
@@ -270,24 +296,28 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -390,13 +420,27 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(notesPutIntoLocalStorage.size(), notes.size());
     for (int i = 0, size = notes.size(); i < size; ++i) {
+        const auto it = std::find_if(
+            notesPutIntoLocalStorage.constBegin(),
+            notesPutIntoLocalStorage.constEnd(),
+            [localId = notes[i].localId()](const qevercloud::Note & n) {
+                return n.localId() == localId;
+            });
+        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
         const auto noteWithContent = addContentToNote(notes[i], i);
-        EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+        EXPECT_EQ(*it, noteWithContent);
     }
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -453,24 +497,28 @@ TEST_P(
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -579,8 +627,11 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
         auto n = notes;
@@ -594,7 +645,20 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
+    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
+    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
+        const auto it = std::find_if(
+            notesPutIntoLocalStorage.constBegin(),
+            notesPutIntoLocalStorage.constEnd(),
+            [localId = expectedProcessedNote.localId()](
+                const qevercloud::Note & n) { return n.localId() == localId; });
+        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, expectedProcessedNote);
+    }
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -664,24 +728,28 @@ TEST_P(
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -790,8 +858,11 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
         auto n = notes;
@@ -805,7 +876,20 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
+    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
+    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
+        const auto it = std::find_if(
+            notesPutIntoLocalStorage.constBegin(),
+            notesPutIntoLocalStorage.constEnd(),
+            [localId = expectedProcessedNote.localId()](
+                const qevercloud::Note & n) { return n.localId() == localId; });
+        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, expectedProcessedNote);
+    }
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -878,24 +962,28 @@ TEST_P(
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -1003,8 +1091,11 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
         auto n = notes;
@@ -1018,7 +1109,20 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
+    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
+    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
+        const auto it = std::find_if(
+            notesPutIntoLocalStorage.constBegin(),
+            notesPutIntoLocalStorage.constEnd(),
+            [localId = expectedProcessedNote.localId()](
+                const qevercloud::Note & n) { return n.localId() == localId; });
+        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, expectedProcessedNote);
+    }
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1094,24 +1198,28 @@ TEST_P(
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -1234,8 +1342,11 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
         auto n = notes;
@@ -1249,7 +1360,20 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
+    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
+    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
+        const auto it = std::find_if(
+            notesPutIntoLocalStorage.constBegin(),
+            notesPutIntoLocalStorage.constEnd(),
+            [localId = expectedProcessedNote.localId()](
+                const qevercloud::Note & n) { return n.localId() == localId; });
+        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, expectedProcessedNote);
+    }
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1315,24 +1439,28 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -1472,24 +1600,22 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
         findNoteByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
+    while (downloadFullNoteDataCallCount != 2) { // NOLINT
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_FALSE(future.isFinished());
-    EXPECT_EQ(downloadFullNoteDataCallCount, 2);
 
     for (int i = 2; i < notes.size(); ++i) {
         findNoteByGuidPromises[i]->addResult(std::nullopt);
         findNoteByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
-
-    EXPECT_EQ(downloadFullNoteDataCallCount, 2);
+    ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1606,24 +1732,28 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -1760,22 +1890,22 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
         findNoteByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
+    while (downloadFullNoteDataCallCount != 2) { // NOLINT
+        QCoreApplication::processEvents();
+    }
 
     ASSERT_FALSE(future.isFinished());
-    EXPECT_EQ(downloadFullNoteDataCallCount, 2);
 
     for (int i = 2; i < notes.size(); ++i) {
         findNoteByGuidPromises[i]->addResult(std::nullopt);
         findNoteByGuidPromises[i]->finish();
     }
 
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(downloadFullNoteDataCallCount, 2);
 
@@ -1909,8 +2039,11 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
 
@@ -1973,8 +2106,11 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
 
@@ -2029,24 +2165,28 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -2084,8 +2224,11 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
 
@@ -2145,6 +2288,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     const auto notebookGuid = UidGenerator::Generate();
 
     auto note = qevercloud::NoteBuilder{}
+                    .setLocalId(UidGenerator::Generate())
                     .setGuid(UidGenerator::Generate())
                     .setNotebookGuid(notebookGuid)
                     .setUpdateSequenceNum(1)
@@ -2153,6 +2297,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto localConflict =
         qevercloud::NoteBuilder{}
+            .setLocalId(UidGenerator::Generate())
             .setGuid(note.guid())
             .setTitle(note.title())
             .setUpdateSequenceNum(note.updateSequenceNum().value() - 1)
@@ -2256,18 +2401,21 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     auto notes = QList<qevercloud::Note>{}
         << note
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
@@ -2325,8 +2473,11 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
@@ -2345,8 +2496,19 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
         for (int i = 0, size = notes.size(); i < size; ++i) {
+            const auto it = std::find_if(
+                notesPutIntoLocalStorage.constBegin(),
+                notesPutIntoLocalStorage.constEnd(),
+                [localId = notes[i].localId()](const qevercloud::Note & n) {
+                    return n.localId() == localId;
+                });
+            EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+            if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+                continue;
+            }
+
             const auto noteWithContent = addContentToNote(notes[i], i + 1);
-            EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+            EXPECT_EQ(*it, noteWithContent);
         }
     }
     else if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
@@ -2355,14 +2517,36 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         ASSERT_FALSE(notesPutIntoLocalStorage.isEmpty());
         EXPECT_EQ(notesPutIntoLocalStorage[0], notes[0]);
         for (int i = 1, size = notes.size(); i < size; ++i) {
+            const auto it = std::find_if(
+                notesPutIntoLocalStorage.constBegin(),
+                notesPutIntoLocalStorage.constEnd(),
+                [localId = notes[i].localId()](const qevercloud::Note & n) {
+                    return n.localId() == localId;
+                });
+            EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+            if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+                continue;
+            }
+
             const auto noteWithContent = addContentToNote(notes[i], i - 1);
-            EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+            EXPECT_EQ(*it, noteWithContent);
         }
     }
     else {
         for (int i = 0, size = notes.size(); i < size; ++i) {
+            const auto it = std::find_if(
+                notesPutIntoLocalStorage.constBegin(),
+                notesPutIntoLocalStorage.constEnd(),
+                [localId = notes[i].localId()](const qevercloud::Note & n) {
+                    return n.localId() == localId;
+                });
+            EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
+            if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
+                continue;
+            }
+
             const auto noteWithContent = addContentToNote(notes[i], i);
-            EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+            EXPECT_EQ(*it, noteWithContent);
         }
     }
 
