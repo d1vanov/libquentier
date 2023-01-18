@@ -23,6 +23,7 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -136,9 +137,12 @@ private:
 
 SavedSearchesProcessor::SavedSearchesProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver) :
+    ISyncConflictResolverPtr syncConflictResolver,
+    threading::QThreadPoolPtr threadPool) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)}
+    m_syncConflictResolver{std::move(syncConflictResolver)},
+    m_threadPool{
+        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -149,6 +153,8 @@ SavedSearchesProcessor::SavedSearchesProcessor(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "SavedSearchesProcessor ctor: sync conflict resolver is null")}};
     }
+
+    Q_ASSERT(m_threadPool);
 }
 
 QFuture<void> SavedSearchesProcessor::processSavedSearches(
@@ -230,7 +236,8 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
             m_localStorage->expungeSavedSearchByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeSavedSearchFuture), [savedSearchCounters] {
+            std::move(expungeSavedSearchFuture), m_threadPool.get(),
+            [savedSearchCounters] {
                 savedSearchCounters->onExpungedSavedSearch();
             });
 
@@ -274,7 +281,8 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
                     std::move(updatedSavedSearch));
 
                 auto thenFuture = threading::then(
-                    std::move(putSavedSearchFuture), [savedSearchCounters] {
+                    std::move(putSavedSearchFuture), m_threadPool.get(),
+                    [savedSearchCounters] {
                         savedSearchCounters->onAddedSavedSearch();
                     });
 
@@ -329,7 +337,8 @@ void SavedSearchesProcessor::onFoundDuplicate(
                         std::move(updatedSavedSearch));
 
                     auto thenFuture = threading::then(
-                        std::move(putSavedSearchFuture), [savedSearchCounters] {
+                        std::move(putSavedSearchFuture), m_threadPool.get(),
+                        [savedSearchCounters] {
                             savedSearchCounters->onUpdatedSavedSearch();
                         });
 
@@ -358,7 +367,7 @@ void SavedSearchesProcessor::onFoundDuplicate(
 
                     threading::thenOrFailed(
                         std::move(updateLocalSavedSearchFuture),
-                        savedSearchPromise,
+                        m_threadPool.get(), savedSearchPromise,
                         threading::TrackedTask{
                             selfWeak,
                             [this, selfWeak, savedSearchPromise,
@@ -371,6 +380,7 @@ void SavedSearchesProcessor::onFoundDuplicate(
 
                                 auto thenFuture = threading::then(
                                     std::move(putSavedSearchFuture),
+                                    m_threadPool.get(),
                                     [savedSearchPromise, savedSearchCounters] {
                                         savedSearchCounters
                                             ->onAddedSavedSearch();

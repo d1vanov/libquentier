@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,12 +22,16 @@
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/types/builders/SavedSearchBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <QCoreApplication>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QSet>
 
 #include <gmock/gmock.h>
@@ -56,6 +60,38 @@ public:
         (override));
 };
 
+void compareSavedSearchLists(
+    const QList<qevercloud::SavedSearch> & lhs,
+    const QList<qevercloud::SavedSearch> & rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+
+    QString s;
+    QTextStream strm{&s};
+    strm << "lhs: ";
+    for (const auto & l: qAsConst(lhs)) {
+        strm << l << "\n";
+    }
+    strm << "\nrhs: ";
+    for (const auto & r: qAsConst(rhs)) {
+        strm << r << "\n";
+    }
+
+    for (const auto & l: qAsConst(lhs)) {
+        const auto it = std::find_if(
+            rhs.constBegin(), rhs.constEnd(),
+            [localId = l.localId()](const qevercloud::SavedSearch & r) {
+                return r.localId() == localId;
+            });
+        EXPECT_NE(it, rhs.constEnd()) << "l: " << l.localId().toStdString() << ", all: " << s.toStdString();
+        if (Q_UNLIKELY(it == rhs.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, l);
+    }
+}
+
 } // namespace
 
 class SavedSearchesProcessorTest : public testing::Test
@@ -68,6 +104,9 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
+
+    const threading::QThreadPoolPtr m_threadPool =
+        threading::globalThreadPool();
 };
 
 TEST_F(SavedSearchesProcessorTest, Ctor)
@@ -75,7 +114,8 @@ TEST_F(SavedSearchesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver));
+                m_mockLocalStorage, m_mockSyncConflictResolver,
+                m_threadPool));
 }
 
 TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
@@ -83,7 +123,8 @@ TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                nullptr, m_mockSyncConflictResolver),
+                nullptr, m_mockSyncConflictResolver,
+                m_threadPool),
         InvalidArgument);
 }
 
@@ -92,8 +133,16 @@ TEST_F(SavedSearchesProcessorTest, CtorNullSyncConflictResolver)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, nullptr),
+                m_mockLocalStorage, nullptr, m_threadPool),
         InvalidArgument);
+}
+
+TEST_F(SavedSearchesProcessorTest, CtorNullThreadPool)
+{
+    EXPECT_NO_THROW(
+        const auto savedSearchesProcessor =
+            std::make_shared<SavedSearchesProcessor>(
+                m_mockLocalStorage, m_mockSyncConflictResolver, nullptr));
 }
 
 TEST_F(
@@ -104,7 +153,8 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_threadPool);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -119,32 +169,38 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
 {
     const auto savedSearches = QList<qevercloud::SavedSearch>{}
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #1"))
                .setUpdateSequenceNum(0)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::SavedSearch> savedSearchesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
     QSet<QString> triedNames;
 
     EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -165,6 +221,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
 
     EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName)
         .WillRepeatedly([&](const QString & name) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
@@ -190,6 +247,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
                     ErrorString{"Detected saved search without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*savedSearch.guid()));
 
             if (Q_UNLIKELY(!savedSearch.name())) {
@@ -221,6 +279,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -239,10 +298,13 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareSavedSearchLists(savedSearchesPutIntoLocalStorage, savedSearches);
 
     EXPECT_EQ(totalSavedSearches, savedSearches.size());
     EXPECT_EQ(totalSavedSearchesToExpunge, 0);
@@ -267,9 +329,11 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
         std::make_shared<SavedSearchesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedSavedSearchGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & savedSearchGuid) {
+            const QMutexLocker locker{&mutex};
             processedSavedSearchGuids << savedSearchGuid;
             return threading::makeReadyFuture();
         });
@@ -285,6 +349,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -303,8 +368,11 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
 
@@ -322,21 +390,25 @@ TEST_F(
 {
     const auto savedSearches = QList<qevercloud::SavedSearch>{}
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #1"))
                .setUpdateSequenceNum(0)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
@@ -361,9 +433,11 @@ TEST_F(
         std::make_shared<SavedSearchesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedSavedSearchGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & savedSearchGuid) {
+            const QMutexLocker locker{&mutex};
             processedSavedSearchGuids << savedSearchGuid;
             return threading::makeReadyFuture();
         });
@@ -379,6 +453,7 @@ TEST_F(
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -397,8 +472,11 @@ TEST_F(
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
 
@@ -435,6 +513,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 {
     auto savedSearch = qevercloud::SavedSearchBuilder{}
+                           .setLocalId(UidGenerator::Generate())
                            .setGuid(UidGenerator::Generate())
                            .setName(QStringLiteral("Saved search #1"))
                            .setUpdateSequenceNum(1)
@@ -442,18 +521,21 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto localConflict =
         qevercloud::SavedSearchBuilder{}
+            .setLocalId(UidGenerator::Generate())
             .setGuid(savedSearch.guid())
             .setName(savedSearch.name())
             .setUpdateSequenceNum(savedSearch.updateSequenceNum().value() - 1)
             .setLocallyFavorited(true)
             .build();
 
+    QMutex mutex;
     QList<qevercloud::SavedSearch> savedSearchesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
     QSet<QString> triedNames;
 
     EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -508,6 +590,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 
     EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName)
         .WillRepeatedly([&](const QString & name) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
@@ -534,6 +617,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
                     ErrorString{"Detected saved search without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 triedGuids.contains(*savedSearch.guid()) ||
                 (movedLocalConflict && movedLocalConflict == savedSearch));
@@ -562,16 +646,19 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     auto savedSearches = QList<qevercloud::SavedSearch>{}
         << savedSearch
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
@@ -597,6 +684,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -615,8 +703,11 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
@@ -631,7 +722,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
         savedSearches.push_front(*movedLocalConflict);
     }
 
-    EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
+    compareSavedSearchLists(savedSearchesPutIntoLocalStorage, savedSearches);
 
     EXPECT_EQ(totalSavedSearches, originalSavedSearchesSize);
     EXPECT_EQ(totalSavedSearchesToExpunge, 0);
@@ -664,20 +755,25 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
 {
     const auto savedSearch = qevercloud::SavedSearchBuilder{}
+                                 .setLocalId(UidGenerator::Generate())
                                  .setGuid(UidGenerator::Generate())
                                  .setName(QStringLiteral("Saved search #1"))
                                  .setUpdateSequenceNum(1)
                                  .build();
 
-    const auto localConflict =
-        qevercloud::SavedSearchBuilder{}.setName(savedSearch.name()).build();
+    const auto localConflict = qevercloud::SavedSearchBuilder{}
+                                   .setLocalId(UidGenerator::Generate())
+                                   .setName(savedSearch.name())
+                                   .build();
 
+    QMutex mutex;
     QList<qevercloud::SavedSearch> savedSearchesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
     QSet<QString> triedNames;
 
     EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -699,6 +795,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName)
         .WillRepeatedly([&, conflictName = savedSearch.name()](
                             const QString & name) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
@@ -759,6 +856,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
                     ErrorString{"Detected saved search without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 triedGuids.contains(*savedSearch.guid()) ||
                 (movedLocalConflict && movedLocalConflict == savedSearch));
@@ -780,16 +878,19 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     auto savedSearches = QList<qevercloud::SavedSearch>{}
         << savedSearch
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
@@ -815,6 +916,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -833,8 +935,11 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
@@ -849,7 +954,12 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
         savedSearches.push_front(*movedLocalConflict);
     }
 
-    EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
+    {
+        savedSearches[0].setLocalId(localConflict.localId());
+    }
+    compareSavedSearchLists(savedSearchesPutIntoLocalStorage, savedSearches);
 
     EXPECT_EQ(totalSavedSearches, originalSavedSearchesSize);
     EXPECT_EQ(totalSavedSearchesToExpunge, 0);

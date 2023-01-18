@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/threading/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -44,7 +45,8 @@ class SavedSearchesProcessor final :
 public:
     explicit SavedSearchesProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver);
+        ISyncConflictResolverPtr syncConflictResolver,
+        threading::QThreadPoolPtr threadPool = {});
 
     [[nodiscard]] QFuture<void> processSavedSearches(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -67,6 +69,7 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
+    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization
