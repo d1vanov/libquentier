@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,6 +36,7 @@
 
 #include <QFuture>
 #include <QStringList>
+#include <QThread>
 #include <QThreadPool>
 
 #include <memory>
@@ -160,8 +161,7 @@ QFuture<ResultType> makeWriteTask(
     promise->start();
 
     auto * writerThread = taskContext.m_writerThread.get();
-    threading::postToThread(
-        writerThread,
+    auto processTask =
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
          taskContext = std::move(taskContext), f = std::move(f)]() mutable {
             const auto holder = holder_weak.lock();
@@ -183,7 +183,14 @@ QFuture<ResultType> makeWriteTask(
             }
 
             promise->finish();
-        });
+        };
+
+    if (writerThread == QThread::currentThread()) {
+        processTask();
+    }
+    else {
+        threading::postToThread(writerThread, std::move(processTask));
+    }
 
     return future;
 }
