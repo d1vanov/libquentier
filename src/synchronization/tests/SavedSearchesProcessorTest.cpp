@@ -66,24 +66,13 @@ void compareSavedSearchLists(
 {
     ASSERT_EQ(lhs.size(), rhs.size());
 
-    QString s;
-    QTextStream strm{&s};
-    strm << "lhs: ";
-    for (const auto & l: qAsConst(lhs)) {
-        strm << l << "\n";
-    }
-    strm << "\nrhs: ";
-    for (const auto & r: qAsConst(rhs)) {
-        strm << r << "\n";
-    }
-
     for (const auto & l: qAsConst(lhs)) {
         const auto it = std::find_if(
             rhs.constBegin(), rhs.constEnd(),
             [localId = l.localId()](const qevercloud::SavedSearch & r) {
                 return r.localId() == localId;
             });
-        EXPECT_NE(it, rhs.constEnd()) << "l: " << l.localId().toStdString() << ", all: " << s.toStdString();
+        EXPECT_NE(it, rhs.constEnd());
         if (Q_UNLIKELY(it == rhs.constEnd())) {
             continue;
         }
