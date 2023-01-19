@@ -52,6 +52,49 @@ namespace quentier::synchronization::tests {
 using testing::Return;
 using testing::StrictMock;
 
+[[nodiscard]] qevercloud::Resource addDataToResource(
+    qevercloud::Resource resource, const int index)
+{
+    auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
+    const auto size = dataBody.size();
+    auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
+
+    resource.setData(qevercloud::DataBuilder{}
+                         .setBody(std::move(dataBody))
+                         .setSize(size)
+                         .setBodyHash(std::move(hash))
+                         .build());
+    return resource;
+}
+
+void compareResourceLists(
+    const QList<qevercloud::Resource> & lhs,
+    const QList<qevercloud::Resource> & rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+
+    for (int i = 0; i < rhs.size(); ++i) {
+        const auto & r = rhs[i];
+        const auto it = std::find_if(
+            lhs.constBegin(), lhs.constEnd(),
+            [localId = r.localId()](const qevercloud::Resource & res) {
+                return res.localId() == localId;
+            });
+        EXPECT_NE(it, lhs.constEnd());
+        if (Q_UNLIKELY(it == lhs.constEnd())) {
+            continue;
+        }
+
+        if (!r.data()) {
+            qevercloud::Resource resourceWithData = addDataToResource(r, i);
+            EXPECT_EQ(*it, resourceWithData);
+        }
+        else {
+            EXPECT_EQ(*it, r);
+        }
+    }
+}
+
 class ResourcesProcessorTest : public testing::Test
 {
 protected:
@@ -213,22 +256,9 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -240,6 +270,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -259,28 +290,27 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -289,6 +319,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -312,23 +343,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
     ASSERT_NO_THROW(future.waitForFinished());
 
-    ASSERT_EQ(resourcesPutIntoLocalStorage.size(), resources.size());
-    for (int i = 0, size = resources.size(); i < size; ++i) {
-        const auto resourceWithData = addDataToResource(resources[i], i);
-        const auto it = std::find_if(
-            resourcesPutIntoLocalStorage.constBegin(),
-            resourcesPutIntoLocalStorage.constEnd(),
-            [localId = resourceWithData.localId()](
-                const qevercloud::Resource & resource) {
-                return resource.localId() == localId;
-            });
-        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, resourceWithData);
-    }
+    compareResourceLists(resourcesPutIntoLocalStorage, resources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -339,34 +354,12 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     EXPECT_TRUE(status->m_resourcesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status->m_cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size())
-        << "Status: " << status->toString().toStdString()
-        << ", all resource guids: "
-        << ([&]
-            {
-                QStringList lst;
-                for (const auto & r: qAsConst(resources)) {
-                    lst << r.guid().value_or(QStringLiteral("<none>"));
-                }
-                return lst.join(QStringLiteral(", ")).toStdString();
-            }());
-
+    ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size());
     for (const auto & resource: qAsConst(resources)) {
         const auto it = status->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
-        ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end())
-            << "Status: " << status->toString().toStdString()
-            << ", resource guid: " << resource.guid().value().toStdString()
-            << ", all resource guids: "
-            << ([&]
-                {
-                    QStringList lst;
-                    for (const auto & r: qAsConst(resources)) {
-                        lst << r.guid().value_or(QStringLiteral("<none>"));
-                    }
-                    return lst.join(QStringLiteral(", ")).toStdString();
-                }());
+        ASSERT_NE(it, status->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 
@@ -419,22 +412,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -446,6 +426,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -466,9 +447,8 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
+                            [[maybe_unused]] const qevercloud::
+                                IRequestContextPtr & ctx) {
             const auto it = std::find_if(
                 resources.begin(), resources.end(),
                 [&](const qevercloud::Resource & resource) {
@@ -501,6 +481,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -536,7 +517,8 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
         return r;
     }();
 
-    EXPECT_EQ(resourcesPutIntoLocalStorage, expectedProcessedResources);
+    compareResourceLists(
+        resourcesPutIntoLocalStorage, expectedProcessedResources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -622,22 +604,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -649,6 +618,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -675,28 +645,27 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -705,6 +674,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -740,7 +710,8 @@ TEST_F(
         return r;
     }();
 
-    EXPECT_EQ(resourcesPutIntoLocalStorage, expectedProcessedResources);
+    compareResourceLists(
+        resourcesPutIntoLocalStorage, expectedProcessedResources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -826,22 +797,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -853,6 +811,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -872,28 +831,27 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -902,6 +860,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             if (resource.guid() == resources[1].guid()) {
@@ -942,7 +901,8 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
         return r;
     }();
 
-    EXPECT_EQ(resourcesPutIntoLocalStorage, expectedProcessedResources);
+    compareResourceLists(
+        resourcesPutIntoLocalStorage, expectedProcessedResources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1031,22 +991,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1058,6 +1005,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -1088,28 +1036,27 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1118,6 +1065,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -1141,23 +1089,7 @@ TEST_F(
 
     ASSERT_NO_THROW(future.waitForFinished());
 
-    ASSERT_EQ(resourcesPutIntoLocalStorage.size(), resources.size());
-    for (int i = 0, size = resources.size(); i < size; ++i) {
-        const auto resourceWithData = addDataToResource(resources[i], i);
-        const auto it = std::find_if(
-            resourcesPutIntoLocalStorage.constBegin(),
-            resourcesPutIntoLocalStorage.constEnd(),
-            [localId = resourceWithData.localId()](
-                const qevercloud::Resource & resource) {
-                return resource.localId() == localId;
-            });
-        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, resourceWithData);
-    }
+    compareResourceLists(resourcesPutIntoLocalStorage, resources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1230,22 +1162,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1257,6 +1176,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -1288,28 +1208,27 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1318,6 +1237,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -1385,23 +1305,7 @@ TEST_F(
 
     ASSERT_NO_THROW(future.waitForFinished());
 
-    ASSERT_EQ(resourcesPutIntoLocalStorage.size(), resources.size());
-    for (int i = 0, size = resources.size(); i < size; ++i) {
-        const auto resourceWithData = addDataToResource(resources[i], i);
-        const auto it = std::find_if(
-            resourcesPutIntoLocalStorage.constBegin(),
-            resourcesPutIntoLocalStorage.constEnd(),
-            [localId = resourceWithData.localId()](
-                const qevercloud::Resource & resource) {
-                return resource.localId() == localId;
-            });
-        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, resourceWithData);
-    }
+    compareResourceLists(resourcesPutIntoLocalStorage, resources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1474,22 +1378,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1501,6 +1392,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -1532,28 +1424,27 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1562,6 +1453,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -1599,30 +1491,14 @@ TEST_F(
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         QList<qevercloud::Resource> res{resources};
         res.removeAt(1);
+        for (int i = 0, size = res.size(); i < size; ++i) {
+            res[i] = addDataToResource(res[i], i < 1 ? i : i + 1);
+        }
         return res;
     }();
 
-    ASSERT_EQ(
-        resourcesPutIntoLocalStorage.size(), expectedProcessedResources.size());
-
-    for (int i = 0, size = expectedProcessedResources.size(); i < size; ++i) {
-        const auto resourceWithData =
-            addDataToResource(expectedProcessedResources[i], i < 1 ? i : i + 1);
-
-        const auto it = std::find_if(
-            resourcesPutIntoLocalStorage.constBegin(),
-            resourcesPutIntoLocalStorage.constEnd(),
-            [localId = resourceWithData.localId()](
-                const qevercloud::Resource & resource) {
-                return resource.localId() == localId;
-            });
-        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, resourceWithData);
-    }
+    compareResourceLists(
+        resourcesPutIntoLocalStorage, expectedProcessedResources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1711,22 +1587,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1738,6 +1601,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -1769,28 +1633,27 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            qevercloud::IRequestContextPtr ctx) { // NOLINT
-            Q_UNUSED(ctx)
-
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1799,6 +1662,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -1836,30 +1700,14 @@ TEST_F(
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         QList<qevercloud::Resource> res{resources};
         res.removeAt(1);
+        for (int i = 0, size = res.size(); i < size; ++i) {
+            res[i] = addDataToResource(res[i], i < 1 ? i : i + 1);
+        }
         return res;
     }();
 
-    ASSERT_EQ(
-        resourcesPutIntoLocalStorage.size(), expectedProcessedResources.size());
-
-    for (int i = 0, size = expectedProcessedResources.size(); i < size; ++i) {
-        const auto resourceWithData =
-            addDataToResource(expectedProcessedResources[i], i < 1 ? i : i + 1);
-
-        const auto it = std::find_if(
-            resourcesPutIntoLocalStorage.constBegin(),
-            resourcesPutIntoLocalStorage.constEnd(),
-            [localId = resourceWithData.localId()](
-                const qevercloud::Resource & resource) {
-                return resource.localId() == localId;
-            });
-        EXPECT_NE(it, resourcesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == resourcesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, resourceWithData);
-    }
+    compareResourceLists(
+        resourcesPutIntoLocalStorage, expectedProcessedResources);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1948,22 +1796,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     QList<std::shared_ptr<QPromise<std::optional<qevercloud::Resource>>>>
         findResourceByGuidPromises;
@@ -1980,6 +1815,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -2006,9 +1842,8 @@ TEST_F(
     int downloadFullResourceDataCallCount = 0;
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            const qevercloud::IRequestContextPtr & ctx) {
-            Q_UNUSED(ctx)
-
+                            [[maybe_unused]] const qevercloud::
+                                IRequestContextPtr & ctx) {
             ++downloadFullResourceDataCallCount;
 
             const auto it = std::find_if(
@@ -2046,6 +1881,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
@@ -2233,22 +2069,9 @@ TEST_F(
                .setUpdateSequenceNum(4)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addDataToResource = [&](qevercloud::Resource resource,
-                                       const int index) {
-        auto dataBody = QString::fromUtf8("Resource #%1").arg(index).toUtf8();
-        const auto size = dataBody.size();
-        auto hash = QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
-
-        resource.setData(qevercloud::DataBuilder{}
-                             .setBody(std::move(dataBody))
-                             .setSize(size)
-                             .setBodyHash(std::move(hash))
-                             .build());
-        return resource;
-    };
 
     QList<std::shared_ptr<QPromise<std::optional<qevercloud::Resource>>>>
         findResourceByGuidPromises;
@@ -2265,6 +2088,7 @@ TEST_F(
 
                 EXPECT_EQ(fetchResourceOptions, FetchResourceOptions{});
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_FALSE(triedGuids.contains(guid));
                 triedGuids.insert(guid);
 
@@ -2290,9 +2114,8 @@ TEST_F(
     int downloadFullResourceDataCallCount = 0;
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            const qevercloud::IRequestContextPtr & ctx) {
-            Q_UNUSED(ctx)
-
+                            [[maybe_unused]] const qevercloud::
+                                IRequestContextPtr & ctx) {
             ++downloadFullResourceDataCallCount;
 
             const auto it = std::find_if(
@@ -2328,6 +2151,7 @@ TEST_F(
                     ErrorString{"Detected resource without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*resource.guid()));
 
             resourcesPutIntoLocalStorage << resource;
