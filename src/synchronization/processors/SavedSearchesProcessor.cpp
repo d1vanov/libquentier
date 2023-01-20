@@ -29,7 +29,8 @@
 
 #include <qevercloud/types/SyncChunk.h>
 
-#include <atomic>
+#include <QMutex>
+#include <QMutexLocker>
 
 namespace quentier::synchronization {
 
@@ -97,19 +98,22 @@ public:
 
     void onAddedSavedSearch()
     {
-        m_addedSavedSearches.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_addedSavedSearches;
         notifyUpdate();
     }
 
     void onUpdatedSavedSearch()
     {
-        m_updatedSavedSearches.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_updatedSavedSearches;
         notifyUpdate();
     }
 
     void onExpungedSavedSearch()
     {
-        m_expungedSavedSearches.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_expungedSavedSearches;
         notifyUpdate();
     }
 
@@ -119,9 +123,8 @@ private:
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onSavedSearchesProcessingProgress(
                 m_totalSavedSearches, m_totalExpungedSavedSearches,
-                m_addedSavedSearches.load(std::memory_order_acquire),
-                m_updatedSavedSearches.load(std::memory_order_acquire),
-                m_expungedSavedSearches.load(std::memory_order_acquire));
+                m_addedSavedSearches, m_updatedSavedSearches,
+                m_expungedSavedSearches);
         }
     }
 
@@ -130,9 +133,10 @@ private:
     const qint32 m_totalExpungedSavedSearches;
     const ISavedSearchesProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    std::atomic<qint32> m_addedSavedSearches{0};
-    std::atomic<qint32> m_updatedSavedSearches{0};
-    std::atomic<qint32> m_expungedSavedSearches{0};
+    QMutex m_mutex;
+    qint32 m_addedSavedSearches{0};
+    qint32 m_updatedSavedSearches{0};
+    qint32 m_expungedSavedSearches{0};
 };
 
 SavedSearchesProcessor::SavedSearchesProcessor(
