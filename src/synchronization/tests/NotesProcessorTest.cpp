@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/processors/NotesProcessor.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 
@@ -59,6 +61,42 @@ namespace quentier::synchronization::tests {
 using testing::Return;
 using testing::ReturnRef;
 using testing::StrictMock;
+
+[[nodiscard]] qevercloud::Note addContentToNote(
+    qevercloud::Note note, const int index)
+{
+    note.setContent(
+        QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
+            .arg(index));
+    return note;
+}
+
+void compareNoteLists(
+    const QList<qevercloud::Note> & lhs, const QList<qevercloud::Note> & rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+
+    for (int i = 0; i < rhs.size(); ++i) {
+        const auto & r = rhs[i];
+        const auto it = std::find_if(
+            lhs.constBegin(), lhs.constEnd(),
+            [localId = r.localId()](const qevercloud::Note & res) {
+                return res.localId() == localId;
+            });
+        EXPECT_NE(it, lhs.constEnd());
+        if (Q_UNLIKELY(it == lhs.constEnd())) {
+            continue;
+        }
+
+        if (!r.content()) {
+            qevercloud::Note noteWithContent = addContentToNote(r, i);
+            EXPECT_EQ(*it, noteWithContent);
+        }
+        else {
+            EXPECT_EQ(*it, r);
+        }
+    }
+}
 
 class NotesProcessorTest : public testing::Test
 {
@@ -324,16 +362,9 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid,
@@ -348,6 +379,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -402,6 +434,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             notesPutIntoLocalStorage << note;
@@ -426,22 +459,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     ASSERT_NO_THROW(future.waitForFinished());
 
-    ASSERT_EQ(notesPutIntoLocalStorage.size(), notes.size());
-    for (int i = 0, size = notes.size(); i < size; ++i) {
-        const auto it = std::find_if(
-            notesPutIntoLocalStorage.constBegin(),
-            notesPutIntoLocalStorage.constEnd(),
-            [localId = notes[i].localId()](const qevercloud::Note & n) {
-                return n.localId() == localId;
-            });
-        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        const auto noteWithContent = addContentToNote(notes[i], i);
-        EXPECT_EQ(*it, noteWithContent);
-    }
+    compareNoteLists(notesPutIntoLocalStorage, notes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -525,16 +543,9 @@ TEST_P(
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid,
@@ -549,6 +560,7 @@ TEST_P(
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -609,6 +621,7 @@ TEST_P(
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             notesPutIntoLocalStorage << note;
@@ -645,20 +658,7 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
-        const auto it = std::find_if(
-            notesPutIntoLocalStorage.constBegin(),
-            notesPutIntoLocalStorage.constEnd(),
-            [localId = expectedProcessedNote.localId()](
-                const qevercloud::Note & n) { return n.localId() == localId; });
-        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, expectedProcessedNote);
-    }
+    compareNoteLists(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -756,16 +756,9 @@ TEST_P(
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid,
@@ -780,6 +773,7 @@ TEST_P(
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -840,6 +834,7 @@ TEST_P(
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             notesPutIntoLocalStorage << note;
@@ -876,20 +871,7 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
-        const auto it = std::find_if(
-            notesPutIntoLocalStorage.constBegin(),
-            notesPutIntoLocalStorage.constEnd(),
-            [localId = expectedProcessedNote.localId()](
-                const qevercloud::Note & n) { return n.localId() == localId; });
-        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, expectedProcessedNote);
-    }
+    compareNoteLists(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -990,16 +972,9 @@ TEST_P(
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid,
@@ -1014,6 +989,7 @@ TEST_P(
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -1068,6 +1044,7 @@ TEST_P(
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             if (note.guid() == notes[1].guid()) {
@@ -1109,20 +1086,7 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
-        const auto it = std::find_if(
-            notesPutIntoLocalStorage.constBegin(),
-            notesPutIntoLocalStorage.constEnd(),
-            [localId = expectedProcessedNote.localId()](
-                const qevercloud::Note & n) { return n.localId() == localId; });
-        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, expectedProcessedNote);
-    }
+    compareNoteLists(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1226,16 +1190,9 @@ TEST_P(
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid,
@@ -1250,6 +1207,7 @@ TEST_P(
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -1309,6 +1267,7 @@ TEST_P(
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             if (note.guid() == notes[1].guid()) {
@@ -1360,20 +1319,7 @@ TEST_P(
         return n;
     }();
 
-    EXPECT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (const auto & expectedProcessedNote: qAsConst(expectedProcessedNotes)) {
-        const auto it = std::find_if(
-            notesPutIntoLocalStorage.constBegin(),
-            notesPutIntoLocalStorage.constEnd(),
-            [localId = expectedProcessedNote.localId()](
-                const qevercloud::Note & n) { return n.localId() == localId; });
-        EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-        if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-            continue;
-        }
-
-        EXPECT_EQ(*it, expectedProcessedNote);
-    }
+    compareNoteLists(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1467,16 +1413,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     const std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt;
 
@@ -1501,6 +1440,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -1573,6 +1513,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             notesPutIntoLocalStorage << note;
@@ -1760,16 +1701,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
                .setTitle(QStringLiteral("Note #4"))
                .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     const std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt;
 
@@ -1794,6 +1728,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
                 fetchNoteOptions,
                 FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -1863,6 +1798,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
                     RuntimeError{ErrorString{"Detected note without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*note.guid()));
 
             notesPutIntoLocalStorage << note;
@@ -2027,9 +1963,11 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedNoteGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & noteGuid) {
+            const QMutexLocker locker{&mutex};
             processedNoteGuids << noteGuid;
             return threading::makeReadyFuture();
         });
@@ -2060,7 +1998,7 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     EXPECT_TRUE(status->m_notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status->m_noteGuidsWhichFailedToExpunge.isEmpty());
     EXPECT_TRUE(status->m_cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_EQ(status->m_expungedNoteGuids, expungedNoteGuids);
+    compareGuidLists(status->m_expungedNoteGuids, expungedNoteGuids);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(
         status->m_stopSynchronizationError));
 
@@ -2090,10 +2028,14 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedNoteGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & noteGuid) {
-            processedNoteGuids << noteGuid;
+            {
+                const QMutexLocker locker{&mutex};
+                processedNoteGuids << noteGuid;
+            }
             if (noteGuid == expungedNoteGuids[1]) {
                 return threading::makeExceptionalFuture<void>(
                     RuntimeError{ErrorString{"failed to expunge note"}});
@@ -2138,7 +2080,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
         return guids;
     }();
 
-    EXPECT_EQ(status->m_expungedNoteGuids, expectedExpungedNoteGuids);
+    compareGuidLists(status->m_expungedNoteGuids, expectedExpungedNoteGuids);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(
         status->m_stopSynchronizationError));
 
@@ -2212,10 +2154,14 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedNoteGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & noteGuid) {
-            processedNoteGuids << noteGuid;
+            {
+                const QMutexLocker locker{&mutex};
+                processedNoteGuids << noteGuid;
+            }
             return threading::makeReadyFuture();
         });
 
@@ -2245,7 +2191,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     EXPECT_TRUE(status->m_cancelledNoteGuidsAndUsns.isEmpty());
     EXPECT_TRUE(status->m_processedNoteGuidsAndUsns.isEmpty());
     EXPECT_TRUE(status->m_noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_EQ(status->m_expungedNoteGuids, expungedNoteGuids);
+    compareGuidLists(status->m_expungedNoteGuids, expungedNoteGuids);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(
         status->m_stopSynchronizationError));
 
@@ -2304,6 +2250,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
             .setLocallyFavorited(true)
             .build();
 
+    QMutex mutex;
     QList<qevercloud::Note> notesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
@@ -2318,6 +2265,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
                                 fetchNoteOptions) {
             Q_UNUSED(fetchNoteOptions)
 
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -2371,6 +2319,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly(
             [&, conflictGuid = note.guid()](const qevercloud::Note & note) {
+                const QMutexLocker locker{&mutex};
                 if (Q_UNLIKELY(!note.guid())) {
                     if (std::holds_alternative<
                             ISyncConflictResolver::ConflictResolution::MoveMine<
@@ -2426,14 +2375,6 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
-
-    const auto addContentToNote = [](qevercloud::Note note,
-                                     const int index) -> qevercloud::Note {
-        note.setContent(
-            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
-                .arg(index));
-        return note;
-    };
 
     EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
         .WillRepeatedly(
@@ -2495,59 +2436,39 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
-        for (int i = 0, size = notes.size(); i < size; ++i) {
-            const auto it = std::find_if(
-                notesPutIntoLocalStorage.constBegin(),
-                notesPutIntoLocalStorage.constEnd(),
-                [localId = notes[i].localId()](const qevercloud::Note & n) {
-                    return n.localId() == localId;
-                });
-            EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-            if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-                continue;
+        const QList<qevercloud::Note> expectedProcessedNotes = [&] {
+            QList<qevercloud::Note> res;
+            res.reserve(notes.size());
+            for (int i = 0, size = notes.size(); i < size; ++i) {
+                res << addContentToNote(notes[i], i + 1);
             }
+            return res;
+        }();
 
-            const auto noteWithContent = addContentToNote(notes[i], i + 1);
-            EXPECT_EQ(*it, noteWithContent);
-        }
+        compareNoteLists(notesPutIntoLocalStorage, expectedProcessedNotes);
     }
     else if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
                                         MoveMine<qevercloud::Note>>(resolution))
     {
         ASSERT_FALSE(notesPutIntoLocalStorage.isEmpty());
         EXPECT_EQ(notesPutIntoLocalStorage[0], notes[0]);
-        for (int i = 1, size = notes.size(); i < size; ++i) {
-            const auto it = std::find_if(
-                notesPutIntoLocalStorage.constBegin(),
-                notesPutIntoLocalStorage.constEnd(),
-                [localId = notes[i].localId()](const qevercloud::Note & n) {
-                    return n.localId() == localId;
-                });
-            EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-            if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-                continue;
-            }
 
-            const auto noteWithContent = addContentToNote(notes[i], i - 1);
-            EXPECT_EQ(*it, noteWithContent);
-        }
+        const QList<qevercloud::Note> expectedProcessedNotes = [&] {
+            QList<qevercloud::Note> res;
+            res.reserve(notes.size() - 1);
+            for (int i = 1, size = notes.size(); i < size; ++i) {
+                res << addContentToNote(notes[i], i - 1);
+            }
+            return res;
+        }();
+
+        QList<qevercloud::Note> tmp = notesPutIntoLocalStorage;
+        tmp.removeAt(0);
+
+        compareNoteLists(tmp, expectedProcessedNotes);
     }
     else {
-        for (int i = 0, size = notes.size(); i < size; ++i) {
-            const auto it = std::find_if(
-                notesPutIntoLocalStorage.constBegin(),
-                notesPutIntoLocalStorage.constEnd(),
-                [localId = notes[i].localId()](const qevercloud::Note & n) {
-                    return n.localId() == localId;
-                });
-            EXPECT_NE(it, notesPutIntoLocalStorage.constEnd());
-            if (Q_UNLIKELY(it == notesPutIntoLocalStorage.constEnd())) {
-                continue;
-            }
-
-            const auto noteWithContent = addContentToNote(notes[i], i);
-            EXPECT_EQ(*it, noteWithContent);
-        }
+        compareNoteLists(notesPutIntoLocalStorage, notes);
     }
 
     ASSERT_EQ(future.resultCount(), 1);

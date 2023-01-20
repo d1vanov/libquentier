@@ -246,7 +246,8 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
         auto expungeNoteByGuidFuture = m_localStorage->expungeNoteByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeNoteByGuidFuture), [guid, context, promise] {
+            std::move(expungeNoteByGuidFuture), m_threadPool.get(),
+            [guid, context, promise] {
                 if (const auto callback = context->callbackWeak.lock()) {
                     callback->onExpungedNote(guid);
                 }
