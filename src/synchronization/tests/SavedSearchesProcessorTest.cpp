@@ -103,8 +103,7 @@ TEST_F(SavedSearchesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver,
-                m_threadPool));
+                m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool));
 }
 
 TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
@@ -112,8 +111,7 @@ TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                nullptr, m_mockSyncConflictResolver,
-                m_threadPool),
+                nullptr, m_mockSyncConflictResolver, m_threadPool),
         InvalidArgument);
 }
 
@@ -142,8 +140,7 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_threadPool);
+            m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -268,7 +265,6 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
-            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -278,6 +274,10 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
                 totalSavedSearchesToExpunge == 0 ||
                 totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
             totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            EXPECT_GE(added, addedSavedSearches);
+            EXPECT_GE(updated, updatedSavedSearches);
+            EXPECT_GE(expunged, expungedSavedSearches);
 
             addedSavedSearches = added;
             updatedSavedSearches = updated;
@@ -338,7 +338,6 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
-            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -348,6 +347,10 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
                 totalSavedSearchesToExpunge == 0 ||
                 totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
             totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            EXPECT_GE(added, addedSavedSearches);
+            EXPECT_GE(updated, updatedSavedSearches);
+            EXPECT_GE(expunged, expungedSavedSearches);
 
             addedSavedSearches = added;
             updatedSavedSearches = updated;
@@ -442,7 +445,6 @@ TEST_F(
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
-            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -452,6 +454,10 @@ TEST_F(
                 totalSavedSearchesToExpunge == 0 ||
                 totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
             totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            EXPECT_GE(added, addedSavedSearches);
+            EXPECT_GE(updated, updatedSavedSearches);
+            EXPECT_GE(expunged, expungedSavedSearches);
 
             addedSavedSearches = added;
             updatedSavedSearches = updated;
@@ -673,7 +679,6 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
-            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -683,6 +688,10 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
                 totalSavedSearchesToExpunge == 0 ||
                 totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
             totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            EXPECT_GE(added, addedSavedSearches);
+            EXPECT_GE(updated, updatedSavedSearches);
+            EXPECT_GE(expunged, expungedSavedSearches);
 
             addedSavedSearches = added;
             updatedSavedSearches = updated;
@@ -905,7 +914,6 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
         .WillRepeatedly([&](qint32 ttlSavedSearches,
                             qint32 ttlSavedSearchesToExpunge, qint32 added,
                             qint32 updated, qint32 expunged) {
-            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(
                 totalSavedSearches == 0 ||
                 totalSavedSearches == ttlSavedSearches);
@@ -915,6 +923,10 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
                 totalSavedSearchesToExpunge == 0 ||
                 totalSavedSearchesToExpunge == ttlSavedSearchesToExpunge);
             totalSavedSearchesToExpunge = ttlSavedSearchesToExpunge;
+
+            EXPECT_GE(added, addedSavedSearches);
+            EXPECT_GE(updated, updatedSavedSearches);
+            EXPECT_GE(expunged, expungedSavedSearches);
 
             addedSavedSearches = added;
             updatedSavedSearches = updated;
