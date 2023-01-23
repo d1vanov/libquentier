@@ -26,13 +26,16 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
 #include <qevercloud/types/SyncChunk.h>
 
+#include <QMutex>
+#include <QMutexLocker>
+
 #include <algorithm>
-#include <atomic>
 
 namespace quentier::synchronization {
 
@@ -49,19 +52,22 @@ public:
 
     void onAddedNotebook()
     {
-        m_addedNotebooks.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_addedNotebooks;
         notifyUpdate();
     }
 
     void onUpdatedNotebook()
     {
-        m_updatedNotebooks.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_updatedNotebooks;
         notifyUpdate();
     }
 
     void onExpungedNotebook()
     {
-        m_expungedNotebooks.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_expungedNotebooks;
         notifyUpdate();
     }
 
@@ -71,9 +77,7 @@ private:
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onNotebooksProcessingProgress(
                 m_totalNotebooks, m_totalNotebooksToExpunge,
-                m_addedNotebooks.load(std::memory_order_acquire),
-                m_updatedNotebooks.load(std::memory_order_acquire),
-                m_expungedNotebooks.load(std::memory_order_acquire));
+                m_addedNotebooks, m_updatedNotebooks, m_expungedNotebooks);
         }
     }
 
@@ -82,16 +86,20 @@ private:
     const qint32 m_totalNotebooksToExpunge;
     const INotebooksProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    std::atomic<qint32> m_addedNotebooks{0};
-    std::atomic<qint32> m_updatedNotebooks{0};
-    std::atomic<qint32> m_expungedNotebooks{0};
+    QMutex m_mutex;
+    qint32 m_addedNotebooks{0};
+    qint32 m_updatedNotebooks{0};
+    qint32 m_expungedNotebooks{0};
 };
 
 NotebooksProcessor::NotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver) :
+    ISyncConflictResolverPtr syncConflictResolver,
+    threading::QThreadPoolPtr threadPool) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)}
+    m_syncConflictResolver{std::move(syncConflictResolver)},
+    m_threadPool{
+        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -102,6 +110,8 @@ NotebooksProcessor::NotebooksProcessor(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksProcessor ctor: sync conflict resolver is null")}};
     }
+
+    Q_ASSERT(m_threadPool);
 }
 
 QFuture<void> NotebooksProcessor::processNotebooks(
@@ -181,7 +191,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
             m_localStorage->expungeNotebookByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeNotebookFuture),
+            std::move(expungeNotebookFuture), m_threadPool.get(),
             [notebookCounters] { notebookCounters->onExpungedNotebook(); });
 
         threading::thenOrFailed(
@@ -223,7 +233,8 @@ void NotebooksProcessor::tryToFindDuplicateByName(
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
                 auto thenFuture = threading::then(
-                    std::move(putNotebookFuture), [notebookCounters] {
+                    std::move(putNotebookFuture), m_threadPool.get(),
+                    [notebookCounters] {
                         notebookCounters->onAddedNotebook();
                     });
 
@@ -279,7 +290,8 @@ void NotebooksProcessor::onFoundDuplicate(
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
                 auto thenFuture = threading::then(
-                    std::move(putNotebookFuture), [notebookCounters] {
+                    std::move(putNotebookFuture), m_threadPool.get(),
+                    [notebookCounters] {
                         notebookCounters->onUpdatedNotebook();
                     });
 
@@ -306,7 +318,8 @@ void NotebooksProcessor::onFoundDuplicate(
                     m_localStorage->putNotebook(mineResolution.mine);
 
                 threading::thenOrFailed(
-                    std::move(updateLocalNotebookFuture), notebookPromise,
+                    std::move(updateLocalNotebookFuture),
+                    m_threadPool.get(), notebookPromise,
                     threading::TrackedTask{
                         selfWeak,
                         [this, selfWeak, notebookPromise, notebookCounters,
@@ -318,6 +331,7 @@ void NotebooksProcessor::onFoundDuplicate(
 
                             auto thenFuture = threading::then(
                                 std::move(putNotebookFuture),
+                                m_threadPool.get(),
                                 [notebookPromise, notebookCounters]() mutable {
                                     notebookCounters->onAddedNotebook();
                                     notebookPromise->finish();
