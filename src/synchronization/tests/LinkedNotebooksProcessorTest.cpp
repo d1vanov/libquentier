@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,24 +16,29 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/processors/LinkedNotebooksProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <QCoreApplication>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QSet>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <array>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -54,6 +59,27 @@ public:
         (override));
 };
 
+void compareLinkedNotebookLists(
+    const QList<qevercloud::LinkedNotebook> & lhs,
+    const QList<qevercloud::LinkedNotebook> & rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+
+    for (const auto & l: qAsConst(lhs)) {
+        const auto it = std::find_if(
+            rhs.constBegin(), rhs.constEnd(),
+            [guid = l.guid().value()](const qevercloud::LinkedNotebook & r) {
+                return r.guid() == guid;
+            });
+        EXPECT_NE(it, rhs.constEnd());
+        if (Q_UNLIKELY(it == rhs.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, l);
+    }
+}
+
 } // namespace
 
 class LinkedNotebooksProcessorTest : public testing::Test
@@ -62,21 +88,33 @@ protected:
     const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
         m_mockLocalStorage = std::make_shared<
             StrictMock<local_storage::tests::mocks::MockILocalStorage>>();
+
+    const threading::QThreadPoolPtr m_threadPool =
+        threading::globalThreadPool();
 };
 
 TEST_F(LinkedNotebooksProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto linkedNotebooksProcessor =
-            std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage));
+            std::make_shared<LinkedNotebooksProcessor>(
+                m_mockLocalStorage, m_threadPool));
 }
 
 TEST_F(LinkedNotebooksProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto linkedNotebooksProcessor =
-            std::make_shared<LinkedNotebooksProcessor>(nullptr),
+            std::make_shared<LinkedNotebooksProcessor>(nullptr, m_threadPool),
         InvalidArgument);
+}
+
+TEST_F(LinkedNotebooksProcessorTest, CtorNullThreadPool)
+{
+    EXPECT_NO_THROW(
+        const auto linkedNotebooksProcessor =
+            std::make_shared<LinkedNotebooksProcessor>(
+                m_mockLocalStorage, nullptr));
 }
 
 TEST_F(
@@ -88,7 +126,7 @@ TEST_F(
 
     const auto linkedNotebooksProcessor =
         std::make_shared<LinkedNotebooksProcessor>(
-            m_mockLocalStorage);
+            m_mockLocalStorage, m_threadPool);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -123,6 +161,7 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
                .setUpdateSequenceNum(38)
                .build();
 
+    QMutex mutex;
     QList<qevercloud::LinkedNotebook> linkedNotebooksPutIntoLocalStorage;
 
     EXPECT_CALL(*m_mockLocalStorage, putLinkedNotebook)
@@ -131,6 +170,7 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
                 return threading::makeExceptionalFuture<void>(RuntimeError{
                     ErrorString{"Detected linked notebook without guid"}});
             }
+            const QMutexLocker locker{&mutex};
             linkedNotebooksPutIntoLocalStorage << linkedNotebook;
             return threading::makeReadyFuture();
         });
@@ -141,7 +181,8 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
                .build();
 
     const auto linkedNotebooksProcessor =
-        std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage);
+        std::make_shared<LinkedNotebooksProcessor>(
+            m_mockLocalStorage, m_threadPool);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -150,32 +191,34 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
     qint32 processedLinkedNotebooks = 0;
     qint32 expungedLinkedNotebooks = 0;
     EXPECT_CALL(*mockCallback, onLinkedNotebooksProcessingProgress)
-        .WillRepeatedly(
-            [&](qint32 ttlLinkedNotebooks, qint32 ttlLinkedNotebooksToExpunge,
-                qint32 processed, qint32 expunged)
-            {
-                EXPECT_TRUE(
-                    totalLinkedNotebooks == 0 ||
-                    totalLinkedNotebooks == ttlLinkedNotebooks);
-                totalLinkedNotebooks = ttlLinkedNotebooks;
+        .WillRepeatedly([&](qint32 ttlLinkedNotebooks,
+                            qint32 ttlLinkedNotebooksToExpunge,
+                            qint32 processed, qint32 expunged) {
+            EXPECT_TRUE(
+                totalLinkedNotebooks == 0 ||
+                totalLinkedNotebooks == ttlLinkedNotebooks);
+            totalLinkedNotebooks = ttlLinkedNotebooks;
 
-                EXPECT_TRUE(
-                    totalExpungedLinkedNotebooks == 0 ||
-                    totalExpungedLinkedNotebooks ==
-                        ttlLinkedNotebooksToExpunge);
-                totalExpungedLinkedNotebooks = ttlLinkedNotebooksToExpunge;
+            EXPECT_TRUE(
+                totalExpungedLinkedNotebooks == 0 ||
+                totalExpungedLinkedNotebooks == ttlLinkedNotebooksToExpunge);
+            totalExpungedLinkedNotebooks = ttlLinkedNotebooksToExpunge;
 
-                processedLinkedNotebooks = processed;
-                expungedLinkedNotebooks = expunged;
-            });
+            processedLinkedNotebooks = processed;
+            expungedLinkedNotebooks = expunged;
+        });
 
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    EXPECT_EQ(linkedNotebooksPutIntoLocalStorage, linkedNotebooks);
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareLinkedNotebookLists(
+        linkedNotebooksPutIntoLocalStorage, linkedNotebooks);
 
     EXPECT_EQ(totalLinkedNotebooks, linkedNotebooks.size());
     EXPECT_EQ(totalExpungedLinkedNotebooks, 0);
@@ -195,11 +238,14 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessExpungedLinkedNotebooks)
                .build();
 
     const auto linkedNotebooksProcessor =
-        std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage);
+        std::make_shared<LinkedNotebooksProcessor>(
+            m_mockLocalStorage, m_threadPool);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedLinkedNotebookGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeLinkedNotebookByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & linkedNotebookGuid) {
+            const QMutexLocker locker{&mutex};
             processedLinkedNotebookGuids << linkedNotebookGuid;
             return threading::makeReadyFuture();
         });
@@ -211,32 +257,33 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessExpungedLinkedNotebooks)
     qint32 processedLinkedNotebooks = 0;
     qint32 expungedLinkedNotebooks = 0;
     EXPECT_CALL(*mockCallback, onLinkedNotebooksProcessingProgress)
-        .WillRepeatedly(
-            [&](qint32 ttlLinkedNotebooks, qint32 ttlLinkedNotebooksToExpunge,
-                qint32 processed, qint32 expunged)
-            {
-                EXPECT_TRUE(
-                    totalLinkedNotebooks == 0 ||
-                    totalLinkedNotebooks == ttlLinkedNotebooks);
-                totalLinkedNotebooks = ttlLinkedNotebooks;
+        .WillRepeatedly([&](qint32 ttlLinkedNotebooks,
+                            qint32 ttlLinkedNotebooksToExpunge,
+                            qint32 processed, qint32 expunged) {
+            EXPECT_TRUE(
+                totalLinkedNotebooks == 0 ||
+                totalLinkedNotebooks == ttlLinkedNotebooks);
+            totalLinkedNotebooks = ttlLinkedNotebooks;
 
-                EXPECT_TRUE(
-                    totalExpungedLinkedNotebooks == 0 ||
-                    totalExpungedLinkedNotebooks ==
-                        ttlLinkedNotebooksToExpunge);
-                totalExpungedLinkedNotebooks = ttlLinkedNotebooksToExpunge;
+            EXPECT_TRUE(
+                totalExpungedLinkedNotebooks == 0 ||
+                totalExpungedLinkedNotebooks == ttlLinkedNotebooksToExpunge);
+            totalExpungedLinkedNotebooks = ttlLinkedNotebooksToExpunge;
 
-                processedLinkedNotebooks = processed;
-                expungedLinkedNotebooks = expunged;
-            });
+            processedLinkedNotebooks = processed;
+            expungedLinkedNotebooks = expunged;
+        });
 
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    EXPECT_EQ(processedLinkedNotebookGuids, expungedLinkedNotebookGuids);
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareGuidLists(processedLinkedNotebookGuids, expungedLinkedNotebookGuids);
 
     EXPECT_EQ(totalLinkedNotebooks, 0);
     EXPECT_EQ(totalExpungedLinkedNotebooks, expungedLinkedNotebookGuids.size());
@@ -287,11 +334,13 @@ TEST_F(
 
     const auto linkedNotebooksProcessor =
         std::make_shared<LinkedNotebooksProcessor>(
-            m_mockLocalStorage);
+            m_mockLocalStorage, m_threadPool);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedLinkedNotebookGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeLinkedNotebookByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & linkedNotebookGuid) {
+            const QMutexLocker locker{&mutex};
             processedLinkedNotebookGuids << linkedNotebookGuid;
             return threading::makeReadyFuture();
         });
@@ -303,32 +352,33 @@ TEST_F(
     qint32 processedLinkedNotebooks = 0;
     qint32 expungedLinkedNotebooks = 0;
     EXPECT_CALL(*mockCallback, onLinkedNotebooksProcessingProgress)
-        .WillRepeatedly(
-            [&](qint32 ttlLinkedNotebooks, qint32 ttlLinkedNotebooksToExpunge,
-                qint32 processed, qint32 expunged)
-            {
-                EXPECT_TRUE(
-                    totalLinkedNotebooks == 0 ||
-                    totalLinkedNotebooks == ttlLinkedNotebooks);
-                totalLinkedNotebooks = ttlLinkedNotebooks;
+        .WillRepeatedly([&](qint32 ttlLinkedNotebooks,
+                            qint32 ttlLinkedNotebooksToExpunge,
+                            qint32 processed, qint32 expunged) {
+            EXPECT_TRUE(
+                totalLinkedNotebooks == 0 ||
+                totalLinkedNotebooks == ttlLinkedNotebooks);
+            totalLinkedNotebooks = ttlLinkedNotebooks;
 
-                EXPECT_TRUE(
-                    totalExpungedLinkedNotebooks == 0 ||
-                    totalExpungedLinkedNotebooks ==
-                        ttlLinkedNotebooksToExpunge);
-                totalExpungedLinkedNotebooks = ttlLinkedNotebooksToExpunge;
+            EXPECT_TRUE(
+                totalExpungedLinkedNotebooks == 0 ||
+                totalExpungedLinkedNotebooks == ttlLinkedNotebooksToExpunge);
+            totalExpungedLinkedNotebooks = ttlLinkedNotebooksToExpunge;
 
-                processedLinkedNotebooks = processed;
-                expungedLinkedNotebooks = expunged;
-            });
+            processedLinkedNotebooks = processed;
+            expungedLinkedNotebooks = expunged;
+        });
 
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    EXPECT_EQ(processedLinkedNotebookGuids, expungedLinkedNotebookGuids);
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareGuidLists(processedLinkedNotebookGuids, expungedLinkedNotebookGuids);
 
     EXPECT_EQ(totalLinkedNotebooks, 0);
     EXPECT_EQ(totalExpungedLinkedNotebooks, expungedLinkedNotebookGuids.size());

@@ -24,13 +24,16 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
 #include <qevercloud/types/SyncChunk.h>
 
+#include <QMutex>
+#include <QMutexLocker>
+
 #include <algorithm>
-#include <atomic>
 
 namespace quentier::synchronization {
 
@@ -40,7 +43,7 @@ class LinkedNotebookCounters
 {
 public:
     LinkedNotebookCounters(
-        const qint32 totalLinkedNotebooks, // NOLINT
+        const qint32 totalLinkedNotebooks,          // NOLINT
         const qint32 totalLinkedNotebooksToExpunge, // NOLINT
         ILinkedNotebooksProcessor::ICallbackWeakPtr callbackWeak) :
         m_totalLinkedNotebooks{totalLinkedNotebooks},
@@ -50,13 +53,15 @@ public:
 
     void onProcessedLinkedNotebook()
     {
-        m_processedLinkedNotebooks.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_processedLinkedNotebooks;
         notifyUpdate();
     }
 
     void onExpungedLinkedNotebook()
     {
-        m_expungedLinkedNotebooks.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_expungedLinkedNotebooks;
         notifyUpdate();
     }
 
@@ -66,8 +71,7 @@ private:
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebooksProcessingProgress(
                 m_totalLinkedNotebooks, m_totalLinkedNotebooksToExpunge,
-                m_processedLinkedNotebooks.load(std::memory_order_acquire),
-                m_expungedLinkedNotebooks.load(std::memory_order_acquire));
+                m_processedLinkedNotebooks, m_expungedLinkedNotebooks);
         }
     }
 
@@ -76,20 +80,26 @@ private:
     const qint32 m_totalLinkedNotebooksToExpunge;
     const ILinkedNotebooksProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    std::atomic<qint32> m_processedLinkedNotebooks{0};
-    std::atomic<qint32> m_expungedLinkedNotebooks{0};
+    QMutex m_mutex;
+    qint32 m_processedLinkedNotebooks{0};
+    qint32 m_expungedLinkedNotebooks{0};
 };
 
 } // namespace
 
 LinkedNotebooksProcessor::LinkedNotebooksProcessor(
-    local_storage::ILocalStoragePtr localStorage) :
-    m_localStorage{std::move(localStorage)}
+    local_storage::ILocalStoragePtr localStorage,
+    threading::QThreadPoolPtr threadPool) :
+    m_localStorage{std::move(localStorage)},
+    m_threadPool{
+        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "LinkedNotebooksProcessor ctor: local storage is null")}};
     }
+
+    Q_ASSERT(m_threadPool);
 }
 
 QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
@@ -149,7 +159,8 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             m_localStorage->putLinkedNotebook(linkedNotebook);
 
         auto thenFuture = threading::then(
-            std::move(putLinkedNotebookFuture), [linkedNotebookCounters] {
+            std::move(putLinkedNotebookFuture), m_threadPool.get(),
+            [linkedNotebookCounters] {
                 linkedNotebookCounters->onProcessedLinkedNotebook();
             });
 
@@ -166,7 +177,8 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             m_localStorage->expungeLinkedNotebookByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeLinkedNotebookFuture), [linkedNotebookCounters] {
+            std::move(expungeLinkedNotebookFuture), m_threadPool.get(),
+            [linkedNotebookCounters] {
                 linkedNotebookCounters->onExpungedLinkedNotebook();
             });
 

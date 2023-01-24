@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,7 @@
 #include <synchronization/Fwd.h>
 
 #include <quentier/local_storage/Fwd.h>
+#include <quentier/threading/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -41,8 +42,9 @@ class LinkedNotebooksProcessor final :
     public std::enable_shared_from_this<LinkedNotebooksProcessor>
 {
 public:
-    explicit LinkedNotebooksProcessor(
-        local_storage::ILocalStoragePtr localStorage);
+    LinkedNotebooksProcessor(
+        local_storage::ILocalStoragePtr localStorage,
+        threading::QThreadPoolPtr threadPool);
 
     [[nodiscard]] QFuture<void> processLinkedNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -50,6 +52,7 @@ public:
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
+    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization
