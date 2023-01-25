@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/processors/SavedSearchesProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -366,7 +368,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
 
     ASSERT_NO_THROW(future.waitForFinished());
 
-    EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
+    compareGuidLists(processedSavedSearchGuids, expungedSavedSearchGuids);
 
     EXPECT_EQ(totalSavedSearches, 0);
     EXPECT_EQ(totalSavedSearchesToExpunge, expungedSavedSearchGuids.size());
@@ -473,7 +475,7 @@ TEST_F(
 
     ASSERT_NO_THROW(future.waitForFinished());
 
-    EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
+    compareGuidLists(processedSavedSearchGuids, expungedSavedSearchGuids);
 
     EXPECT_EQ(totalSavedSearches, 0);
     EXPECT_EQ(totalSavedSearchesToExpunge, expungedSavedSearchGuids.size());

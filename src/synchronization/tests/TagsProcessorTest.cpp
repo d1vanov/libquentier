@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,12 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/processors/TagsProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/UidGenerator.h>
@@ -29,6 +32,9 @@
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 #include <qevercloud/types/builders/TagBuilder.h>
 
+#include <QCoreApplication>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QSet>
 
 #include <gmock/gmock.h>
@@ -57,6 +63,26 @@ public:
         (override));
 };
 
+void compareTagLists(
+    const QList<qevercloud::Tag> & lhs, const QList<qevercloud::Tag> & rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+
+    for (const auto & l: qAsConst(lhs)) {
+        const auto it = std::find_if(
+            rhs.constBegin(), rhs.constEnd(),
+            [localId = l.localId()](const qevercloud::Tag & r) {
+                return r.localId() == localId;
+            });
+        EXPECT_NE(it, rhs.constEnd());
+        if (Q_UNLIKELY(it == rhs.constEnd())) {
+            continue;
+        }
+
+        EXPECT_EQ(*it, l);
+    }
+}
+
 } // namespace
 
 class TagsProcessorTest : public testing::Test
@@ -69,29 +95,39 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
+
+    const threading::QThreadPoolPtr m_threadPool =
+        threading::globalThreadPool();
 };
 
 TEST_F(TagsProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver));
+            m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool));
 }
 
 TEST_F(TagsProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            nullptr, m_mockSyncConflictResolver),
+            nullptr, m_mockSyncConflictResolver, m_threadPool),
         InvalidArgument);
 }
 
 TEST_F(TagsProcessorTest, CtorNullSyncConflictResolver)
 {
     EXPECT_THROW(
-        const auto tagsProcessor =
-            std::make_shared<TagsProcessor>(m_mockLocalStorage, nullptr),
+        const auto tagsProcessor = std::make_shared<TagsProcessor>(
+            m_mockLocalStorage, nullptr, m_threadPool),
         InvalidArgument);
+}
+
+TEST_F(TagsProcessorTest, CtorNullThreadPool)
+{
+    EXPECT_NO_THROW(
+        const auto tagsProcessor = std::make_shared<TagsProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver, nullptr));
 }
 
 TEST_F(TagsProcessorTest, ProcessSyncChunksWithoutTagsToProcess)
@@ -100,7 +136,7 @@ TEST_F(TagsProcessorTest, ProcessSyncChunksWithoutTagsToProcess)
         << qevercloud::SyncChunkBuilder{}.build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver);
+        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -115,12 +151,14 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
     // to ensure that TagsProcessor would properly sort them and put parent ones
     // into the local storage first
     const auto tag4 = qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
                           .setGuid(UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #4"))
                           .setUpdateSequenceNum(36)
                           .build();
 
     const auto tag1 = qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
                           .setGuid(UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #1"))
                           .setUpdateSequenceNum(32)
@@ -128,12 +166,14 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
                           .build();
 
     const auto tag3 = qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
                           .setGuid(UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #3"))
                           .setUpdateSequenceNum(35)
                           .build();
 
     const auto tag2 = qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
                           .setGuid(UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #2"))
                           .setUpdateSequenceNum(33)
@@ -143,6 +183,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
     const auto linkedNotebookGuid = UidGenerator::Generate();
 
     const auto tag6 = qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
                           .setGuid(UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #6"))
                           .setUpdateSequenceNum(37)
@@ -150,6 +191,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
                           .build();
 
     const auto tag5 = qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
                           .setGuid(UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #5"))
                           .setUpdateSequenceNum(38)
@@ -159,12 +201,14 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
     const auto tags = QList<qevercloud::Tag>{} << tag1 << tag2 << tag3 << tag4
                                                << tag5 << tag6;
 
+    QMutex mutex;
     QList<qevercloud::Tag> tagsPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
     QSet<QString> triedNames;
 
     EXPECT_CALL(*m_mockLocalStorage, findTagByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -186,6 +230,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
     EXPECT_CALL(*m_mockLocalStorage, findTagByName)
         .WillRepeatedly([&](const QString & name,
                             const std::optional<QString> & linkedNotebookGuid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
@@ -222,6 +267,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
                     RuntimeError{ErrorString{"Detected tag without guid"}});
             }
 
+            const QMutexLocker locker{&mutex};
             EXPECT_TRUE(triedGuids.contains(*tag.guid()));
 
             if (Q_UNLIKELY(!tag.name())) {
@@ -254,7 +300,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setTags(tags).build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver);
+        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -280,15 +326,14 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
         });
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
 
-    auto sortedTags = tags;
-    ErrorString error;
-    ASSERT_TRUE(sortTagsByParentChildRelations(sortedTags, error))
-        << error.nonLocalizedString().toStdString();
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
 
-    EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareTagLists(tagsPutIntoLocalStorage, tags);
 
     EXPECT_EQ(totalTags, tags.size());
     EXPECT_EQ(totalTagsToExpunge, 0);
@@ -309,11 +354,13 @@ TEST_F(TagsProcessorTest, ProcessExpungedTags)
                .build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver);
+        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedTagGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & tagGuid) {
+            const QMutexLocker locker{&mutex};
             processedTagGuids << tagGuid;
             return threading::makeReadyFuture();
         });
@@ -342,10 +389,14 @@ TEST_F(TagsProcessorTest, ProcessExpungedTags)
         });
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
 
-    EXPECT_EQ(processedTagGuids, expungedTagGuids);
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareGuidLists(processedTagGuids, expungedTagGuids);
 
     EXPECT_EQ(totalTags, 0);
     EXPECT_EQ(totalTagsToExpunge, expungedTagGuids.size());
@@ -358,21 +409,25 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
 {
     const auto tags = QList<qevercloud::Tag>{}
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #1"))
                .setUpdateSequenceNum(31)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #2"))
                .setUpdateSequenceNum(32)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #3"))
                .setUpdateSequenceNum(33)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #4"))
                .setUpdateSequenceNum(34)
@@ -396,9 +451,11 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver);
 
+    QMutex mutex;
     QList<qevercloud::Guid> processedTagGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeTagByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & tagGuid) {
+            const QMutexLocker locker{&mutex};
             processedTagGuids << tagGuid;
             return threading::makeReadyFuture();
         });
@@ -427,10 +484,14 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
         });
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
 
-    EXPECT_EQ(processedTagGuids, expungedTagGuids);
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    compareGuidLists(processedTagGuids, expungedTagGuids);
 
     EXPECT_EQ(totalTags, 0);
     EXPECT_EQ(totalTagsToExpunge, expungedTagGuids.size());
@@ -463,6 +524,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 {
     auto tag = qevercloud::TagBuilder{}
+                   .setLocalId(UidGenerator::Generate())
                    .setGuid(UidGenerator::Generate())
                    .setName(QStringLiteral("Tag #1"))
                    .setUpdateSequenceNum(1)
@@ -470,18 +532,21 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto localConflict =
         qevercloud::TagBuilder{}
+            .setLocalId(UidGenerator::Generate())
             .setGuid(tag.guid())
             .setName(tag.name())
             .setUpdateSequenceNum(tag.updateSequenceNum().value() - 1)
             .setLocallyFavorited(true)
             .build();
 
+    QMutex mutex;
     QList<qevercloud::Tag> tagsPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
     QSet<QString> triedNames;
 
     EXPECT_CALL(*m_mockLocalStorage, findTagByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -535,6 +600,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
     EXPECT_CALL(*m_mockLocalStorage, findTagByName)
         .WillRepeatedly([&](const QString & name,
                             const std::optional<QString> & linkedNotebookGuid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
@@ -563,6 +629,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
                             ISyncConflictResolver::ConflictResolution::MoveMine<
                                 qevercloud::Tag>>(resolution))
                     {
+                        const QMutexLocker locker{&mutex};
                         tagsPutIntoLocalStorage << tag;
                         return threading::makeReadyFuture();
                     }
@@ -571,6 +638,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
                         RuntimeError{ErrorString{"Detected tag without guid"}});
                 }
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_TRUE(
                     triedGuids.contains(*tag.guid()) ||
                     (movedLocalConflict && movedLocalConflict == tag));
@@ -599,16 +667,19 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
     auto tags = QList<qevercloud::Tag>{}
         << tag
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #4"))
                .setUpdateSequenceNum(54)
@@ -646,8 +717,12 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
         });
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
@@ -655,19 +730,14 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
         tags.removeAt(0);
     }
 
-    auto sortedTags = tags;
-    ErrorString error;
-    ASSERT_TRUE(sortTagsByParentChildRelations(sortedTags, error))
-        << error.nonLocalizedString().toStdString();
-
     if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
                                    MoveMine<qevercloud::Tag>>(resolution))
     {
         ASSERT_TRUE(movedLocalConflict);
-        sortedTags.insert(std::prev(sortedTags.end()), *movedLocalConflict);
+        tags.insert(std::prev(tags.end()), *movedLocalConflict);
     }
 
-    EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
+    compareTagLists(tagsPutIntoLocalStorage, tags);
 
     EXPECT_EQ(totalTags, originalTagsSize);
     EXPECT_EQ(totalTagsToExpunge, 0);
@@ -700,20 +770,25 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
 {
     const auto tag = qevercloud::TagBuilder{}
+                         .setLocalId(UidGenerator::Generate())
                          .setGuid(UidGenerator::Generate())
                          .setName(QStringLiteral("Tag #1"))
                          .setUpdateSequenceNum(1)
                          .build();
 
-    const auto localConflict =
-        qevercloud::TagBuilder{}.setName(tag.name()).build();
+    const auto localConflict = qevercloud::TagBuilder{}
+                                   .setLocalId(UidGenerator::Generate())
+                                   .setName(tag.name())
+                                   .build();
 
+    QMutex mutex;
     QList<qevercloud::Tag> tagsPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
     QSet<QString> triedNames;
 
     EXPECT_CALL(*m_mockLocalStorage, findTagByGuid)
         .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedGuids.contains(guid));
             triedGuids.insert(guid);
 
@@ -736,6 +811,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
         .WillRepeatedly([&, conflictName = tag.name()](
                             const QString & name,
                             const std::optional<QString> & linkedNotebookGuid) {
+            const QMutexLocker locker{&mutex};
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
@@ -796,6 +872,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
                             ISyncConflictResolver::ConflictResolution::MoveMine<
                                 qevercloud::Tag>>(resolution))
                     {
+                        const QMutexLocker locker{&mutex};
                         tagsPutIntoLocalStorage << tag;
                         return threading::makeReadyFuture();
                     }
@@ -804,6 +881,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
                         RuntimeError{ErrorString{"Detected tag without guid"}});
                 }
 
+                const QMutexLocker locker{&mutex};
                 EXPECT_TRUE(
                     triedGuids.contains(*tag.guid()) ||
                     (movedLocalConflict && movedLocalConflict == tag));
@@ -825,16 +903,19 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
     auto tags = QList<qevercloud::Tag>{}
         << tag
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::TagBuilder{}
+               .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Tag #4"))
                .setUpdateSequenceNum(54)
@@ -872,8 +953,12 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
         });
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
-    ASSERT_TRUE(future.isFinished());
-    EXPECT_NO_THROW(future.waitForFinished());
+
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
@@ -881,19 +966,19 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
         tags.removeAt(0);
     }
 
-    auto sortedTags = tags;
-    ErrorString error;
-    ASSERT_TRUE(sortTagsByParentChildRelations(sortedTags, error))
-        << error.nonLocalizedString().toStdString();
-
     if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
                                    MoveMine<qevercloud::Tag>>(resolution))
     {
         ASSERT_TRUE(movedLocalConflict);
-        sortedTags.insert(std::prev(sortedTags.end()), *movedLocalConflict);
+        tags.insert(std::prev(tags.end()), *movedLocalConflict);
     }
 
-    EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
+    {
+        tags[0].setLocalId(localConflict.localId());
+    }
+    compareTagLists(tagsPutIntoLocalStorage, tags);
 
     EXPECT_EQ(totalTags, originalTagsSize);
     EXPECT_EQ(totalTagsToExpunge, 0);

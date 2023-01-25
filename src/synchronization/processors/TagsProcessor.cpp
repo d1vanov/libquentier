@@ -26,14 +26,17 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
 
 #include <qevercloud/types/SyncChunk.h>
 
+#include <QMutex>
+#include <QMutexLocker>
+
 #include <algorithm>
-#include <atomic>
 
 namespace quentier::synchronization {
 
@@ -50,19 +53,22 @@ public:
 
     void onAddedTag()
     {
-        m_addedTags.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_addedTags;
         notifyUpdate();
     }
 
     void onUpdatedTag()
     {
-        m_updatedTags.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_updatedTags;
         notifyUpdate();
     }
 
     void onExpungedTag()
     {
-        m_expungedTags.fetch_add(1, std::memory_order_acq_rel);
+        const QMutexLocker locker{&m_mutex};
+        ++m_expungedTags;
         notifyUpdate();
     }
 
@@ -71,10 +77,8 @@ private:
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onTagsProcessingProgress(
-                m_totalTags, m_totalExpungedTags,
-                m_addedTags.load(std::memory_order_acquire),
-                m_updatedTags.load(std::memory_order_acquire),
-                m_expungedTags.load(std::memory_order_acquire));
+                m_totalTags, m_totalExpungedTags, m_addedTags, m_updatedTags,
+                m_expungedTags);
         }
     }
 
@@ -83,26 +87,32 @@ private:
     const qint32 m_totalExpungedTags;
     const ITagsProcessor::ICallbackWeakPtr m_callbackWeak;
 
-    std::atomic<qint32> m_addedTags{0};
-    std::atomic<qint32> m_updatedTags{0};
-    std::atomic<qint32> m_expungedTags{0};
+    QMutex m_mutex;
+    qint32 m_addedTags{0};
+    qint32 m_updatedTags{0};
+    qint32 m_expungedTags{0};
 };
 
 TagsProcessor::TagsProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver) :
+    ISyncConflictResolverPtr syncConflictResolver,
+    threading::QThreadPoolPtr threadPool) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)}
+    m_syncConflictResolver{std::move(syncConflictResolver)},
+    m_threadPool{
+        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "TagsProcessor ctor: local storage is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("TagsProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncConflictResolver)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "TagsProcessor ctor: sync conflict resolver is null")}};
     }
+
+    Q_ASSERT(m_threadPool);
 }
 
 QFuture<void> TagsProcessor::processTags(
@@ -218,10 +228,9 @@ QFuture<void> TagsProcessor::processExpungedTags(
 
         auto expungeTagFuture = m_localStorage->expungeTagByGuid(guid);
 
-        auto thenFuture =
-            threading::then(std::move(expungeTagFuture), [tagCounters] {
-                tagCounters->onExpungedTag();
-            });
+        auto thenFuture = threading::then(
+            std::move(expungeTagFuture), m_threadPool.get(),
+            [tagCounters] { tagCounters->onExpungedTag(); });
 
         threading::thenOrFailed(std::move(thenFuture), std::move(tagPromise));
     }
@@ -235,9 +244,8 @@ QFuture<void> TagsProcessor::processTag(
     CheckParentTag checkParentTag)
 {
     if (Q_UNLIKELY(tagIndex < 0 || tagIndex >= tags.size())) {
-        return threading::makeExceptionalFuture<void>(
-            RuntimeError{ErrorString{QStringLiteral(
-                "TagsProcessor: wrong tag index")}});
+        return threading::makeExceptionalFuture<void>(RuntimeError{
+            ErrorString{QStringLiteral("TagsProcessor: wrong tag index")}});
     }
 
     const auto & tag = tags[tagIndex];
@@ -390,10 +398,9 @@ void TagsProcessor::tryToFindDuplicateByName(
                 auto putTagFuture =
                     m_localStorage->putTag(std::move(updatedTag));
 
-                auto thenFuture =
-                    threading::then(std::move(putTagFuture), [tagCounters] {
-                        tagCounters->onAddedTag();
-                    });
+                auto thenFuture = threading::then(
+                    std::move(putTagFuture), m_threadPool.get(),
+                    [tagCounters] { tagCounters->onAddedTag(); });
 
                 threading::thenOrFailed(
                     std::move(thenFuture), std::move(tagPromise));
@@ -442,10 +449,9 @@ void TagsProcessor::onFoundDuplicate(
                 auto putTagFuture =
                     m_localStorage->putTag(std::move(updatedTag));
 
-                auto thenFuture =
-                    threading::then(std::move(putTagFuture), [tagCounters] {
-                        tagCounters->onUpdatedTag();
-                    });
+                auto thenFuture = threading::then(
+                    std::move(putTagFuture), m_threadPool.get(),
+                    [tagCounters] { tagCounters->onUpdatedTag(); });
 
                 threading::thenOrFailed(std::move(thenFuture), tagPromise);
                 return;
@@ -468,7 +474,8 @@ void TagsProcessor::onFoundDuplicate(
                     m_localStorage->putTag(mineResolution.mine);
 
                 threading::thenOrFailed(
-                    std::move(updateLocalTagFuture), tagPromise,
+                    std::move(updateLocalTagFuture), m_threadPool.get(),
+                    tagPromise,
                     threading::TrackedTask{
                         selfWeak,
                         [this, selfWeak, tagPromise, tagCounters,
@@ -477,7 +484,7 @@ void TagsProcessor::onFoundDuplicate(
                                 m_localStorage->putTag(std::move(updatedTag));
 
                             auto thenFuture = threading::then(
-                                std::move(putTagFuture),
+                                std::move(putTagFuture), m_threadPool.get(),
                                 [tagPromise, tagCounters] {
                                     tagCounters->onAddedTag();
                                     tagPromise->finish();

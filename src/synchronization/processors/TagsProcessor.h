@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/threading/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -42,9 +43,10 @@ class TagsProcessor final :
     public std::enable_shared_from_this<TagsProcessor>
 {
 public:
-    explicit TagsProcessor(
+    TagsProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver);
+        ISyncConflictResolverPtr syncConflictResolver,
+        threading::QThreadPoolPtr threadPool = {});
 
     [[nodiscard]] QFuture<void> processTags(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -90,6 +92,7 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
+    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization
