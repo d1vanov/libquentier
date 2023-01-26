@@ -224,9 +224,7 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
     CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
     // clang-format on
     QByteArray dataToWrite;
-    for (const auto it: // clazy:exclude=range-loop
-         qevercloud::toRange(qAsConst(m_userDictionary)))
-    {
+    for (const auto & it: qevercloud::toRange(qAsConst(m_userDictionary))) {
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
     RESTORE_WARNINGS
