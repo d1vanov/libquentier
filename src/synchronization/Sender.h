@@ -73,8 +73,6 @@ private:
         utility::cancelers::ICancelerPtr canceler;
         ICallbackWeakPtr callbackWeak;
 
-        bool shouldRepeatIncrementalSync = false;
-
         // Canceler which is canceled from inside Sender in case of error
         // which should stop further attempts to send anything to Evernote
         utility::cancelers::ManualCancelerPtr manualCanceler;
@@ -232,7 +230,7 @@ private:
         const std::optional<qevercloud::Guid> & linkedNotebookGuid = {}) const;
 
     void checkUpdateSequenceNumber(
-        qint32 updateSequenceNumber, SendContext & sendContext,
+        qint32 updateSequenceNumber, const SendContextPtr & sendContext,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid = {}) const;
 
 private:

@@ -538,7 +538,7 @@ void Sender::processNote(
                     if (noteUsn) {
                         if (const auto self = selfWeak.lock()) {
                             checkUpdateSequenceNumber(
-                                *noteUsn, *sendContext,
+                                *noteUsn, sendContext,
                                 linkedNotebookGuidIt.value());
                         }
                     }
@@ -602,7 +602,7 @@ void Sender::processNote(
                         if (noteUsn) {
                             if (const auto self = selfWeak.lock()) {
                                 checkUpdateSequenceNumber(
-                                    *noteUsn, *sendContext, linkedNotebookGuid);
+                                    *noteUsn, sendContext, linkedNotebookGuid);
                             }
                         }
 
@@ -1058,7 +1058,7 @@ void Sender::processTag(
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
         if (tag.updateSequenceNum()) {
             checkUpdateSequenceNumber(
-                *tag.updateSequenceNum(), *sendContext,
+                *tag.updateSequenceNum(), sendContext,
                 tag.linkedNotebookGuid());
         }
     }
@@ -1377,7 +1377,7 @@ void Sender::processNotebook(
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
         if (notebook.updateSequenceNum()) {
             checkUpdateSequenceNumber(
-                *notebook.updateSequenceNum(), *sendContext,
+                *notebook.updateSequenceNum(), sendContext,
                 notebook.linkedNotebookGuid());
         }
     }
@@ -1705,7 +1705,7 @@ void Sender::processSavedSearch(
         const QMutexLocker locker{sendContext->sendStatusMutex.get()};
         if (savedSearch.updateSequenceNum()) {
             checkUpdateSequenceNumber(
-                *savedSearch.updateSequenceNum(), *sendContext);
+                *savedSearch.updateSequenceNum(), sendContext);
         }
     }
 
@@ -1884,21 +1884,23 @@ void Sender::updateLastUpdateCount(
 }
 
 void Sender::checkUpdateSequenceNumber(
-    const qint32 updateSequenceNumber, SendContext & sendContext,
+    const qint32 updateSequenceNumber, const SendContextPtr & sendContext,
     const std::optional<qevercloud::Guid> & linkedNotebookGuid) const
 {
-    if (!sendContext.shouldRepeatIncrementalSync) {
+    const auto status = Sender::sendStatus(sendContext, linkedNotebookGuid);
+
+    if (!status->needToRepeatIncrementalSync()) {
         const auto previousUpdateCount =
-            lastUpdateCount(sendContext, linkedNotebookGuid);
+            lastUpdateCount(*sendContext, linkedNotebookGuid);
 
         if (previousUpdateCount &&
             (updateSequenceNumber != *previousUpdateCount + 1)) {
-            sendContext.shouldRepeatIncrementalSync = true;
+            status->m_needToRepeatIncrementalSync = true;
         }
     }
 
     updateLastUpdateCount(
-        updateSequenceNumber, sendContext, linkedNotebookGuid);
+        updateSequenceNumber, *sendContext, linkedNotebookGuid);
 }
 
 } // namespace quentier::synchronization
