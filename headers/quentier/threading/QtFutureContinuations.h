@@ -41,28 +41,28 @@ namespace quentier::threading {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 
 template <class T, class Function>
-QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename QrPrivate::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, Function && function)
 {
     return future.then(std::forward<decltype(function)>(function));
 }
 
 template <class T, class Function>
-QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename QrPrivate::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QtFuture::Launch policy, Function && function)
 {
     return future.then(policy, std::forward<decltype(function)>(function));
 }
 
 template <class T, class Function>
-QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename QrPrivate::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QThreadPool * pool, Function && function)
 {
     return future.then(pool, std::forward<decltype(function)>(function));
 }
 
 template <class T, class Function>
-QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename QrPrivate::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QObject * context, Function && function)
 {
     return future.then(context, std::forward<decltype(function)>(function));
