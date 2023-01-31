@@ -467,7 +467,7 @@ jobs:
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - uses: actions/checkout@v3
 
@@ -505,6 +505,24 @@ jobs:
           modules: 'qtwebengine'
           dir: '${{ runner.workspace }}/Qt5'
 
+      - name: Cache boost 1.81.0
+        id: cache_boost
+        uses: actions/cache@v3
+        with:
+          path: '${{ runner.workspace }}/boost'
+          key: ${{ runner.os }}-BoostCache
+
+      - name: Install boost 1.81.0
+        id: install_boost
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if [ ! -d "$RUNNER_WORKSPACE/boost" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/boost)" ]; then
+            curl -fsSL https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.bz2 -o "${{ runner.temp }}/boost.tar.bz2"
+            mkdir -p $RUNNER_WORKSPACE/boost
+            tar -xf "${{ runner.temp }}/boost.tar.bz2" -C $RUNNER_WORKSPACE/boost
+          fi
+
       - name: Install dependencies
         id: install_deps
         run: |
@@ -512,7 +530,6 @@ jobs:
           brew install hunspell
           brew install tidy-html5
           brew install openssl@1.1
-          brew install boost
 
       - name: Cache QtKeychain
         id: cache_qtkeychain
@@ -532,7 +549,11 @@ jobs:
             git checkout v0.13.2
             mkdir build
             cd build
-            cmake -G Ninja -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain -DBUILD_TRANSLATIONS=OFF -DBUILD_SHARED_LIBS=ON -DBUILD_WITH_QT6=OFF ..
+            cmake -G Ninja -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
+              -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain \
+              -DBUILD_TRANSLATIONS=OFF \
+              -DBUILD_SHARED_LIBS=ON \
+              -DBUILD_WITH_QT6=OFF ..
             cmake --build . --target all
             cmake --build . --target install
           fi
@@ -570,7 +591,7 @@ jobs:
               git checkout master
               mkdir build
               cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 ..
               cmake --build . --target all
               cmake --build . --target check
               cmake --build . --target install
@@ -595,7 +616,7 @@ jobs:
               git checkout development
               mkdir build
               cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 ..
               cmake --build . --target all
               cmake --build . --target check
               cmake --build . --target install
@@ -623,7 +644,9 @@ jobs:
           fi
           export QTKEYCHAIN_DIR=$RUNNER_WORKSPACE/qtkeychain
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-            -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+            -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
+            -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_81_0 \
+            -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DQt5Keychain_DIR=$QTKEYCHAIN_DIR/lib/cmake/Qt5Keychain \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
@@ -681,14 +704,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Cache boost 1.75.0
+      - name: Cache boost 1.77.0
         id: cache_boost
         uses: actions/cache@v3
         with:
           path: '${{ runner.workspace }}/boost'
           key: ${{ runner.os }}-BoostCache
 
-      - name: Install boost 1.75.0
+      - name: Install boost 1.77.0
         id: install_boost
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
