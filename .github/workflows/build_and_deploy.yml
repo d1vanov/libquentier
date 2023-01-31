@@ -505,6 +505,23 @@ jobs:
           modules: 'qtwebengine'
           dir: '${{ runner.workspace }}/Qt5'
 
+      - name: Cache boost 1.81.0
+        id: cache_boost
+        uses: actions/cache@v3
+        with:
+          path: '${{ runner.workspace }}/boost'
+          key: ${{ runner.os }}-BoostCache
+
+      - name: Install boost 1.81.0
+        id: install_boost
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if [ ! -d "$RUNNER_WORKSPACE/boost" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/boost)" ]; then
+            curl -fsSL https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.bz2 -o "${{ runner.temp }}/boost.tar.bz2"
+            tar -xf "${{ runner.temp }}/boost.tar.bz2" -C $RUNNER_WORKSPACE/boost
+          fi
+
       - name: Install dependencies
         id: install_deps
         run: |
@@ -512,7 +529,6 @@ jobs:
           brew install hunspell
           brew install tidy-html5
           brew install openssl@1.1
-          brew install boost
 
       - name: Cache QtKeychain
         id: cache_qtkeychain
@@ -532,7 +548,11 @@ jobs:
             git checkout v0.13.2
             mkdir build
             cd build
-            cmake -G Ninja -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain -DBUILD_TRANSLATIONS=OFF -DBUILD_SHARED_LIBS=ON -DBUILD_WITH_QT6=OFF ..
+            cmake -G Ninja -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
+              -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain \
+              -DBUILD_TRANSLATIONS=OFF \
+              -DBUILD_SHARED_LIBS=ON \
+              -DBUILD_WITH_QT6=OFF ..
             cmake --build . --target all
             cmake --build . --target install
           fi
@@ -570,7 +590,7 @@ jobs:
               git checkout master
               mkdir build
               cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 ..
               cmake --build . --target all
               cmake --build . --target check
               cmake --build . --target install
@@ -595,7 +615,7 @@ jobs:
               git checkout development
               mkdir build
               cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 ..
               cmake --build . --target all
               cmake --build . --target check
               cmake --build . --target install
@@ -623,7 +643,9 @@ jobs:
           fi
           export QTKEYCHAIN_DIR=$RUNNER_WORKSPACE/qtkeychain
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-            -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+            -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
+            -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_81_0 \
+            -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DQt5Keychain_DIR=$QTKEYCHAIN_DIR/lib/cmake/Qt5Keychain \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
@@ -681,23 +703,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Cache boost 1.75.0
+      - name: Cache boost 1.81.0
         id: cache_boost
         uses: actions/cache@v3
         with:
           path: '${{ runner.workspace }}/boost'
           key: ${{ runner.os }}-BoostCache
 
-      - name: Install boost 1.75.0
+      - name: Install boost 1.81.0
         id: install_boost
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if exist %RUNNER_WORKSPACE%\boost (set BOOST_CACHED=1) else (set BOOST_CACHED=0)
           if %BOOST_CACHED%==0 mkdir %RUNNER_WORKSPACE%\boost
-          if %BOOST_CACHED%==0 cmd.exe /c curl -fsSL https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.7z -o %RUNNER_WORKSPACE%\boost\boost_1_77_0.7z
+          if %BOOST_CACHED%==0 cmd.exe /c curl -fsSL https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.7z -o %RUNNER_WORKSPACE%\boost\boost_1_81_0.7z
           if %BOOST_CACHED%==0 cd %RUNNER_WORKSPACE%\boost
-          if %BOOST_CACHED%==0 7z x boost_1_77_0.7z
+          if %BOOST_CACHED%==0 7z x boost_1_81_0.7z
         shell: cmd
 
       - name: Cache Qt 5.15.2 x86
@@ -1262,7 +1284,7 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_77_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x86" ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_81_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x86" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
@@ -1310,7 +1332,7 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_77_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x64" ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_81_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x64" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
