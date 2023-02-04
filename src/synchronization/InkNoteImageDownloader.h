@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,6 @@ public:
         QString host, QString resourceGuid,
         QString noteGuid, QString authToken,
         QString shardId, int height, int width,
-        bool noteFromPublicLinkedNotebook,
         QString storageFolderPath, QObject * parent = nullptr);
 
     void run() override;
@@ -55,7 +54,6 @@ private:
     QString m_storageFolderPath;
     int m_height;
     int m_width;
-    bool m_noteFromPublicLinkedNotebook;
 };
 
 } // namespace quentier

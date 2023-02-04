@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,8 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#include <qevercloud/InkNoteImageDownloader.h>
+#include <qevercloud/IInkNoteImageDownloader.h>
+#include <qevercloud/RequestContextBuilder.h>
 
 #include <QDir>
 #include <QFile>
@@ -36,14 +37,14 @@ namespace quentier {
 InkNoteImageDownloader::InkNoteImageDownloader(
     QString host, QString resourceGuid, QString noteGuid, QString authToken,
     QString shardId, const int height, const int width,
-    const bool noteFromPublicLinkedNotebook, QString storageFolderPath,
+    QString storageFolderPath,
     QObject * parent) :
     QObject(parent),
     m_host(std::move(host)), m_resourceGuid(std::move(resourceGuid)),
     m_noteGuid(std::move(noteGuid)), m_authToken(std::move(authToken)),
     m_shardId(std::move(shardId)),
     m_storageFolderPath(std::move(storageFolderPath)), m_height(height),
-    m_width(width), m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
+    m_width(width)
 {}
 
 void InkNoteImageDownloader::run()
@@ -72,17 +73,16 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TR_NOOP("shard id is empty"));
     }
 
-    if (Q_UNLIKELY(!m_noteFromPublicLinkedNotebook && m_authToken.isEmpty())) {
-        SET_ERROR(QT_TR_NOOP("the authentication data is incomplete"));
-    }
+    auto ctx = qevercloud::RequestContextBuilder{}
+        .setAuthenticationToken(m_authToken)
+        .build();
 
-    qevercloud::InkNoteImageDownloader downloader(
-        m_host, m_shardId, m_authToken, m_width, m_height);
+    auto downloader = qevercloud::newInkNoteImageDownloader(
+        m_host, m_shardId, QSize{m_width, m_height}, ctx);
 
     QByteArray inkNoteImageData;
     try {
-        inkNoteImageData =
-            downloader.download(m_resourceGuid, m_noteFromPublicLinkedNotebook);
+        inkNoteImageData = downloader->download(m_resourceGuid);
     }
     catch (const qevercloud::EverCloudException & everCloudException) {
         ErrorString errorDescription(

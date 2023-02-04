@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2306,7 +2306,7 @@ QString RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(
     Q_UNUSED(element);
     // Do nothing in default instantiation, only tags and notebooks need to be
     // processed specifically
-    return QString();
+    return {};
 }
 
 template <>
@@ -2369,7 +2369,7 @@ RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding< // NOLINT
         QNDEBUG(
             "synchronization:remote_to_local",
             "Found no linked notebook guid for tag guid " << *tag.guid());
-        return QString();
+        return {};
     }
 
     tag.setLinkedNotebookGuid(it.value());
@@ -9810,7 +9810,7 @@ bool RemoteToLocalSynchronizationManager::
         return false;
     }
 
-    const QString notebookLocalId = note.notebookLocalId();
+    const QString & notebookLocalId = note.notebookLocalId();
     if (Q_UNLIKELY(notebookLocalId.isEmpty() && !note.notebookGuid())) {
         QNWARNING(
             "synchronization:remote_to_local",
@@ -9910,10 +9910,9 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(
     const QString storageFolderPath = inkNoteImagesStoragePath();
 
     auto * pDownloader = new InkNoteImageDownloader(
-        m_host, resourceGuid, noteGuid, authToken, shardId, resourceHeight,
-        resourceWidth,
-        /* from public linked notebook = */ isPublicNotebook, storageFolderPath,
-        this);
+        m_host, resourceGuid, noteGuid,
+        (isPublicNotebook ? QString{} : authToken), shardId, resourceHeight,
+        resourceWidth, storageFolderPath, this);
 
     QObject::connect(
         pDownloader, &InkNoteImageDownloader::finished, this,
@@ -10000,7 +9999,7 @@ bool RemoteToLocalSynchronizationManager::
         return false;
     }
 
-    const QString notebookLocalId = note.notebookLocalId();
+    const QString & notebookLocalId = note.notebookLocalId();
     if (Q_UNLIKELY(notebookLocalId.isEmpty() && !note.notebookGuid())) {
         QNWARNING(
             "synchronization:remote_to_local",
