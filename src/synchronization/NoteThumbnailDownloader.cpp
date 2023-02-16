@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,31 +19,26 @@
 #include "NoteThumbnailDownloader.h"
 #include <quentier/logging/QuentierLogger.h>
 
-#include <qevercloud/Thumbnail.h>
+#include <qevercloud/INoteThumbnailDownloader.h>
+#include <qevercloud/RequestContextBuilder.h>
 
 namespace quentier {
 
 NoteThumbnailDownloader::NoteThumbnailDownloader(
     QString host, QString noteGuid, QString authToken, QString shardId,
-    const bool noteFromPublicLinkedNotebook, QObject * parent) :
+    QObject * parent) :
     QObject(parent),
     m_host(std::move(host)), m_noteGuid(std::move(noteGuid)),
-    m_authToken(std::move(authToken)), m_shardId(std::move(shardId)),
-    m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
+    m_authToken(std::move(authToken)), m_shardId(std::move(shardId))
 {}
-
-NoteThumbnailDownloader::~NoteThumbnailDownloader()
-{
-    delete m_pThumbnail;
-}
 
 void NoteThumbnailDownloader::start()
 {
     QNDEBUG(
         "synchronization:thumbnail",
         "NoteThumbnailDownloader::start: host = "
-            << m_host << ", note guid = " << m_noteGuid << ", is public = "
-            << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
+            << m_host << ", note guid = " << m_noteGuid
+            << ", is public = " << (m_authToken.isEmpty() ? "true" : "false"));
 
 #define SET_ERROR(error)                                                       \
     ErrorString errorDescription(error);                                       \
@@ -63,33 +58,24 @@ void NoteThumbnailDownloader::start()
         SET_ERROR(QT_TR_NOOP("shard id is empty"));
     }
 
-    if (Q_UNLIKELY(!m_noteFromPublicLinkedNotebook && m_authToken.isEmpty())) {
-        SET_ERROR(QT_TR_NOOP("authentication data is incomplete"));
-    }
+    auto ctx = qevercloud::RequestContextBuilder{}
+                   .setAuthenticationToken(m_authToken)
+                   .build();
 
-    delete m_pThumbnail;
-    m_pThumbnail = nullptr;
+    m_downloader = qevercloud::newNoteThumbnailDownloader(
+        m_host, m_shardId, std::move(ctx));
 
-    m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
-    m_future = m_pThumbnail->downloadAsync(
-        m_noteGuid, m_noteFromPublicLinkedNotebook,
-        /* is resource guid = */ false);
+    m_future = m_downloader->downloadNoteThumbnailAsync(m_noteGuid);
 
     QObject::connect(
-        &m_futureWatcher,
-        &QFutureWatcher<QVariant>::finished,
-        this,
-        [this]
-        {
+        &m_futureWatcher, &QFutureWatcher<QByteArray>::finished, this, [this] {
             std::exception_ptr e;
-            QVariant value;
+            QByteArray value;
 
-            try
-            {
+            try {
                 value = m_future.result();
             }
-            catch (...)
-            {
+            catch (...) {
                 e = std::current_exception();
             }
 
@@ -100,25 +86,22 @@ void NoteThumbnailDownloader::start()
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    const QVariant & result, const std::exception_ptr & e)
+    const QByteArray & result, const std::exception_ptr & e)
 {
     QNDEBUG(
         "synchronization:thumbnail",
         "NoteThumbnailDownloader::onDownloadFinished");
 
-    delete m_pThumbnail;
-    m_pThumbnail = nullptr;
+    m_downloader.reset();
 
     if (e) {
         ErrorString errorDescription(
             QT_TR_NOOP("failed to download the note thumbnail"));
 
-        try
-        {
+        try {
             std::rethrow_exception(e);
         }
-        catch (const std::exception & exc)
-        {
+        catch (const std::exception & exc) {
             errorDescription.details() = QString::fromUtf8(exc.what());
         }
 
@@ -127,12 +110,11 @@ void NoteThumbnailDownloader::onDownloadFinished(
         return;
     }
 
-    const QByteArray thumbnailImageData = result.toByteArray();
-    if (Q_UNLIKELY(thumbnailImageData.isEmpty())) {
+    if (Q_UNLIKELY(result.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
     }
 
-    Q_EMIT finished(true, m_noteGuid, thumbnailImageData, ErrorString());
+    Q_EMIT finished(true, m_noteGuid, result, ErrorString());
 }
 
 } // namespace quentier

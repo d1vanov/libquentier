@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/QEverCloud.h>
+#include <qevercloud/Fwd.h>
 
 #include <QByteArray>
 #include <QFuture>
@@ -40,9 +40,7 @@ class Q_DECL_HIDDEN NoteThumbnailDownloader final : public QObject
 public:
     explicit NoteThumbnailDownloader(
         QString host, QString noteGuid, QString authToken, QString shardId,
-        bool noteFromPublicLinkedNotebook, QObject * parent = nullptr);
-
-    ~NoteThumbnailDownloader() override;
+        QObject * parent = nullptr);
 
     void start();
 
@@ -55,19 +53,18 @@ private:
     using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
     void onDownloadFinished(
-        const QVariant & result, const std::exception_ptr & e);
+        const QByteArray & result, const std::exception_ptr & e);
 
 private:
     QString m_host;
     QString m_noteGuid;
     QString m_authToken;
     QString m_shardId;
-    bool m_noteFromPublicLinkedNotebook;
 
-    QFuture<QVariant> m_future;
-    QFutureWatcher<QVariant> m_futureWatcher;
+    QFuture<QByteArray> m_future;
+    QFutureWatcher<QByteArray> m_futureWatcher;
 
-    qevercloud::Thumbnail * m_pThumbnail = nullptr;
+    qevercloud::INoteThumbnailDownloaderPtr m_downloader;
 };
 
 } // namespace quentier

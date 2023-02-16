@@ -10068,7 +10068,8 @@ bool RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(
         notebook, authToken, shardId, isPublicNotebook);
 
     auto * pDownloader = new NoteThumbnailDownloader(
-        m_host, noteGuid, authToken, shardId, isPublicNotebook, this);
+        m_host, noteGuid, (isPublicNotebook ? QString{} : authToken), shardId,
+        this);
 
     QObject::connect(
         pDownloader, &NoteThumbnailDownloader::finished, this,
