@@ -17,6 +17,7 @@ Checks: >
         -readability-function-size,
         -readability-redundant-access-specifiers,
         -readability-suspicious-call-argument,
+        -readability-identifier-length,
         bugprone-*,
         -bugprone-macro-parentheses,
         -bugprone-easily-swappable-parameters,
