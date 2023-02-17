@@ -24,5 +24,7 @@
 #include "MockISyncChunksProvider.h"
 #include "MockISyncChunksStorage.h"
 #include "MockIUserInfoProvider.h"
+#include "qevercloud/MockIInkNoteImageDownloader.h"
+#include "qevercloud/MockINoteThumbnailDownloader.h"
 #include "qevercloud/services/MockINoteStore.h"
 #include "qevercloud/services/MockIUserStore.h"

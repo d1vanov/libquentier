@@ -37,6 +37,8 @@ target_sources(${MOCKS_NAME}
     MockISyncChunksProvider.h
     MockISyncChunksStorage.h
     MockIUserInfoProvider.h
+    qevercloud/MockIInkNoteImageDownloader.h
+    qevercloud/MockINoteThumbnailDownloader.h
     qevercloud/services/MockINoteStore.h
     qevercloud/services/MockIUserStore.h
   PRIVATE
