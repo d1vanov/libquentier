@@ -20,11 +20,14 @@ target_sources(${LIBRARY_NAME}
   IDownloader.h
   IFullSyncStaleDataExpunger.cpp
   IFullSyncStaleDataExpunger.h
+  ILinkedNotebookFinder.h
   INoteStoreFactory.h
   INoteStoreProvider.h
   IProtocolVersionChecker.h
   ISender.h
   IUserInfoProvider.h
+  LinkedNotebookFinder.cpp
+  LinkedNotebookFinder.h
   NoteStoreFactory.cpp
   NoteStoreFactory.h
   NoteStoreProvider.cpp
