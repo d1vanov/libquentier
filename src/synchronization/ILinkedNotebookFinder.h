@@ -52,6 +52,18 @@ public:
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByNotebookLocalId(
             const QString & notebookLocalId) = 0;
+
+    /**
+     * @brief Find linked notebook by its guid
+     * @param guid The guid of the linked notebook to be found
+     * @return future with std::nullopt if the linked notebook with given guid
+     *         was not found or with linked notebook otherwise. Or future with
+     *         exception in case of some error while trying to find the linked
+     *         notebook.
+     */
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByGuid(
+            const qevercloud::Guid & guid) = 0;
 };
 
 } // namespace quentier::synchronization

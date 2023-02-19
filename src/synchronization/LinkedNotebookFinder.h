@@ -39,6 +39,10 @@ public: // ILinkedNotebookFinder
         findLinkedNotebookByNotebookLocalId(
             const QString & notebookLocalId) override;
 
+    [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByGuid(
+            const qevercloud::Guid & guid) override;
+
 private:
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByNotebookLocalIdImpl(

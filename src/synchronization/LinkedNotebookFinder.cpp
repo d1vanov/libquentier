@@ -86,6 +86,24 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 }
 
 QFuture<std::optional<qevercloud::LinkedNotebook>>
+    LinkedNotebookFinder::findLinkedNotebookByGuid(
+        const qevercloud::Guid & guid)
+{
+    const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
+    auto it = m_linkedNotebooksByGuid.find(guid);
+    if (it != m_linkedNotebooksByGuid.end() &&
+        isLinkedNotebookFutureValid(it.value()))
+    {
+        return it.value();
+    }
+
+    it = m_linkedNotebooksByGuid.insert(
+        guid,
+        m_localStorage->findLinkedNotebookByGuid(guid));
+    return it.value();
+}
+
+QFuture<std::optional<qevercloud::LinkedNotebook>>
     LinkedNotebookFinder::findLinkedNotebookByNotebookLocalIdImpl(
         const QString & notebookLocalId)
 {
