@@ -21,6 +21,8 @@
 #include <quentier/local_storage/Fwd.h>
 
 #include <QHash>
+#include <QList>
+#include <QMetaObject>
 #include <QMutex>
 
 #include <memory>
@@ -33,6 +35,15 @@ class LinkedNotebookFinder final :
 {
 public:
     explicit LinkedNotebookFinder(local_storage::ILocalStoragePtr localStorage);
+
+    // Method which sets up the connections with local storage. In the ideal
+    // world it would not be required as stuff like this belongs
+    // to the constructor but unfortunately weak_from_this() is not available
+    // in the constructor.
+    // Needs to be called exactly once after constructing the object.
+    void init();
+
+    ~LinkedNotebookFinder() override;
 
 public: // ILinkedNotebookFinder
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
@@ -48,6 +59,11 @@ private:
         findLinkedNotebookByNotebookLocalIdImpl(
             const QString & notebookLocalId);
 
+    void removeFutureByNotebookLocalId(const QString & notebookLocalId);
+
+    void removeFuturesByLinkedNotebookGuid(
+        const qevercloud::Guid & linkedNotebookGuid);
+
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
 
@@ -60,6 +76,8 @@ private:
         m_linkedNotebooksByGuid;
 
     QMutex m_linkedNotebooksByGuidMutex;
+
+    QList<QMetaObject::Connection> m_localStorageConnections;
 };
 
 } // namespace quentier::synchronization
