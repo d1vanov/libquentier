@@ -21,6 +21,7 @@ Checks: >
         bugprone-*,
         -bugprone-macro-parentheses,
         -bugprone-easily-swappable-parameters,
+        -bugprone-unchecked-optional-access,
         modernize-*,
         -modernize-use-trailing-return-type,
 WarningsAsErrors:    false
