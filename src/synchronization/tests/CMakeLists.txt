@@ -12,6 +12,7 @@ add_executable(${TESTS_NAME}
   DurableNotesProcessorTest.cpp
   DurableResourcesProcessorTest.cpp
   FullSyncStaleDataExpungerTest.cpp
+  LinkedNotebookFinderTest.cpp
   LinkedNotebooksProcessorTest.cpp
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
@@ -41,6 +42,7 @@ target_link_libraries(${TESTS_NAME}
     ${LIBRARY_NAME}
     ${LIBRARY_NAME}_testing_mocks
     ${LIBNAME}
+    ${LIBNAME}_local_storage_sql
     ${GMOCK_LIBRARIES}
     GTest::GTest
     Qt5::Core)
