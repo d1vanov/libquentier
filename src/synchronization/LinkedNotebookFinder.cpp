@@ -198,13 +198,11 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
             }
 
             if (Q_UNLIKELY(!notebook)) {
-                QNWARNING(
+                QNDEBUG(
                     "synchronization::LinkedNotebookFinder",
                     "Could not find notebook by local id in the local storage: "
                         << notebookLocalId);
-                promise->setException(RuntimeError{ErrorString{QStringLiteral(
-                    "Could not find notebook by local id in the local "
-                    "storage")}});
+                promise->addResult(std::nullopt);
                 promise->finish();
                 return;
             }
@@ -248,15 +246,12 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
                     }
 
                     if (Q_UNLIKELY(!linkedNotebook)) {
-                        QNWARNING(
+                        QNDEBUG(
                             "synchronization::LinkedNotebookFinder",
                             "Could not find linked notebook by guid in the "
                                 << "local storage: linked notebook guid = "
                                 << linkedNotebookGuid);
-                        promise->setException(
-                            RuntimeError{ErrorString{QStringLiteral(
-                                "Could not find linked notebook by guid in the "
-                                "local storage")}});
+                        promise->addResult(std::nullopt);
                         promise->finish();
                         return;
                     }
