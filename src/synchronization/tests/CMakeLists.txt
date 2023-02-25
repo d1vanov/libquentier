@@ -17,6 +17,7 @@ add_executable(${TESTS_NAME}
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
   NoteStoreProviderTest.cpp
+  NoteThumbnailDownloaderFactoryTest.cpp
   NotesProcessorTest.cpp
   ProtocolVersionCheckerTest.cpp
   ResourceFullDataDownloaderTest.cpp
