@@ -23,6 +23,7 @@ target_sources(${LIBRARY_NAME}
   ILinkedNotebookFinder.h
   INoteStoreFactory.h
   INoteStoreProvider.h
+  INoteThumbnailDownloaderFactory.h
   IProtocolVersionChecker.h
   ISender.h
   IUserInfoProvider.h
@@ -32,6 +33,8 @@ target_sources(${LIBRARY_NAME}
   NoteStoreFactory.h
   NoteStoreProvider.cpp
   NoteStoreProvider.h
+  NoteThumbnailDownloaderFactory.cpp
+  NoteThumbnailDownloaderFactory.h
   ProtocolVersionChecker.cpp
   ProtocolVersionChecker.h
   Sender.cpp
