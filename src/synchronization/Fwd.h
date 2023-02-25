@@ -42,6 +42,9 @@ class IFullSyncStaleDataExpunger;
 using IFullSyncStaleDataExpungerPtr =
     std::shared_ptr<IFullSyncStaleDataExpunger>;
 
+class ILinkedNotebookFinder;
+using ILinkedNotebookFinderPtr = std::shared_ptr<ILinkedNotebookFinder>;
+
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 

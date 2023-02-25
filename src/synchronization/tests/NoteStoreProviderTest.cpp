@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,12 +19,12 @@
 #include <synchronization/NoteStoreProvider.h>
 
 #include <quentier/exception/InvalidArgument.h>
-#include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/threading/Future.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
+#include <synchronization/tests/mocks/MockILinkedNotebookFinder.h>
 #include <synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 #include <synchronization/types/AuthenticationInfo.h>
@@ -57,9 +57,9 @@ protected:
         QStringLiteral("www.evernote.com"),
         QStringLiteral("shard id")};
 
-    const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
-        m_mockLocalStorage = std::make_shared<
-            StrictMock<local_storage::tests::mocks::MockILocalStorage>>();
+    const std::shared_ptr<mocks::MockILinkedNotebookFinder>
+        m_mockLinkedNotebookFinder =
+            std::make_shared<StrictMock<mocks::MockILinkedNotebookFinder>>();
 
     const std::shared_ptr<mocks::MockIAuthenticationInfoProvider>
         m_mockAuthenticationInfoProvider = std::make_shared<
@@ -73,11 +73,11 @@ TEST_F(NoteStoreProviderTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-            m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+            m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
             m_mockNoteStoreFactory, m_account));
 }
 
-TEST_F(NoteStoreProviderTest, CtorNullLocalStorage)
+TEST_F(NoteStoreProviderTest, CtorNullLinkedNotebookFinder)
 {
     EXPECT_THROW(
         const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
@@ -90,7 +90,8 @@ TEST_F(NoteStoreProviderTest, CtorNullAuthenticationInfoProvider)
 {
     EXPECT_THROW(
         const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-            m_mockLocalStorage, nullptr, m_mockNoteStoreFactory, m_account),
+            m_mockLinkedNotebookFinder, nullptr, m_mockNoteStoreFactory,
+            m_account),
         InvalidArgument);
 }
 
@@ -98,8 +99,8 @@ TEST_F(NoteStoreProviderTest, CtorNullNoteStoreFactory)
 {
     EXPECT_THROW(
         const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-            m_mockLocalStorage, m_mockAuthenticationInfoProvider, nullptr,
-            m_account),
+            m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
+            nullptr, m_account),
         InvalidArgument);
 }
 
@@ -107,7 +108,7 @@ TEST_F(NoteStoreProviderTest, CtorEmptyAccount)
 {
     EXPECT_THROW(
         const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-            m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+            m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
             m_mockNoteStoreFactory, Account{}),
         InvalidArgument);
 }
@@ -115,23 +116,17 @@ TEST_F(NoteStoreProviderTest, CtorEmptyAccount)
 TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const QString notebookLocalId = UidGenerator::Generate();
 
-    const qevercloud::Notebook notebook =
-        qevercloud::NotebookBuilder{}
-            .setLocalId(notebookLocalId)
-            .setGuid(UidGenerator::Generate())
-            .setUpdateSequenceNum(42)
-            .setName(QStringLiteral("Notebook #1"))
-            .build();
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                notebook)));
+    EXPECT_CALL(
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<
+                   std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
 
     const auto authInfo = std::make_shared<AuthenticationInfo>();
     authInfo->m_userId = m_account.id();
@@ -195,10 +190,12 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     // note store
     noteStoreProvider->clearCaches();
 
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                notebook)));
+    EXPECT_CALL(
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        .WillOnce(
+            Return(threading::makeReadyFuture<
+                   std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
 
     EXPECT_CALL(
         *m_mockAuthenticationInfoProvider,
@@ -234,47 +231,22 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     EXPECT_EQ(result, noteStore);
 }
 
-TEST_F(NoteStoreProviderTest, NoNoteStoreForUserOwnAccountIfCannotFindNotebook)
-{
-    const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
-        m_mockNoteStoreFactory, m_account);
-
-    const QString notebookLocalId = UidGenerator::Generate();
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                std::nullopt)));
-
-    const auto defaultCtx = qevercloud::newRequestContext();
-    const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
-
-    auto resultFuture = noteStoreProvider->noteStore(
-        notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
-    EXPECT_THROW(resultFuture.result(), RuntimeError);
-}
-
 TEST_F(
     NoteStoreProviderTest,
     NoNoteStoreForUserOwnAccountIfCannotGetAuthenticationInfo)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const QString notebookLocalId = UidGenerator::Generate();
 
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::NotebookBuilder{}
-                    .setLocalId(notebookLocalId)
-                    .setGuid(UidGenerator::Generate())
-                    .setUpdateSequenceNum(42)
-                    .setName(QStringLiteral("Notebook #1"))
-                    .build())));
+    EXPECT_CALL(
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        .WillOnce(
+            Return(threading::makeReadyFuture<
+                   std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
 
     EXPECT_CALL(
         *m_mockAuthenticationInfoProvider,
@@ -296,25 +268,11 @@ TEST_F(
 TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const QString notebookLocalId = UidGenerator::Generate();
     const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
-
-    const qevercloud::Notebook notebook =
-        qevercloud::NotebookBuilder{}
-            .setLocalId(notebookLocalId)
-            .setGuid(UidGenerator::Generate())
-            .setLinkedNotebookGuid(linkedNotebookGuid)
-            .setUpdateSequenceNum(42)
-            .setName(QStringLiteral("Notebook #1"))
-            .build();
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                notebook)));
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -323,8 +281,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
                                     .build();
 
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
-        .WillOnce(
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        .WillRepeatedly(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
 
@@ -389,13 +348,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
     // note store
     noteStoreProvider->clearCaches();
 
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                notebook)));
-
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
@@ -435,71 +390,23 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
 
 TEST_F(
     NoteStoreProviderTest,
-    NoNoteStoreForLinkedNotebookIfCannotFindLinkedNotebook)
-{
-    const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
-        m_mockNoteStoreFactory, m_account);
-
-    const QString notebookLocalId = UidGenerator::Generate();
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::NotebookBuilder{}
-                    .setLocalId(notebookLocalId)
-                    .setGuid(UidGenerator::Generate())
-                    .setLinkedNotebookGuid(linkedNotebookGuid)
-                    .setUpdateSequenceNum(42)
-                    .setName(QStringLiteral("Notebook #1"))
-                    .build())));
-
-    EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
-        .WillOnce(
-            Return(threading::makeReadyFuture<
-                   std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
-
-    const auto defaultCtx = qevercloud::newRequestContext();
-    const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
-
-    auto resultFuture = noteStoreProvider->noteStore(
-        notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
-    EXPECT_THROW(resultFuture.result(), RuntimeError);
-}
-
-TEST_F(
-    NoteStoreProviderTest,
     NoNoteStoreForLinkedNotebookIfCannotGetAuthenticationInfo)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const QString notebookLocalId = UidGenerator::Generate();
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
-
-    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
-        .WillOnce(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::NotebookBuilder{}
-                    .setLocalId(notebookLocalId)
-                    .setGuid(UidGenerator::Generate())
-                    .setLinkedNotebookGuid(linkedNotebookGuid)
-                    .setUpdateSequenceNum(42)
-                    .setName(QStringLiteral("Notebook #1"))
-                    .build())));
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(linkedNotebookGuid)
+                                    .setGuid(UidGenerator::Generate())
                                     .setUsername(QStringLiteral("username"))
                                     .setUpdateSequenceNum(43)
                                     .build();
 
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
@@ -525,7 +432,7 @@ TEST_F(
 TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
@@ -537,8 +444,9 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
                                     .build();
 
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
-        .WillOnce(
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByGuid(linkedNotebookGuid))
+        .WillRepeatedly(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
 
@@ -604,7 +512,8 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
     noteStoreProvider->clearCaches();
 
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByGuid(linkedNotebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
@@ -646,13 +555,14 @@ TEST_F(
     NoteStoreProviderTest, NoLinkedNotebookNoteStoreIfCannotFindLinkedNotebook)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
 
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByGuid(linkedNotebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
@@ -671,7 +581,7 @@ TEST_F(
     NoLinkedNotebookNoteStoreIfCannotGetAuthenticationInfo)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
@@ -683,7 +593,8 @@ TEST_F(
                                     .build();
 
     EXPECT_CALL(
-        *m_mockLocalStorage, findLinkedNotebookByGuid(linkedNotebookGuid))
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByGuid(linkedNotebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
@@ -709,7 +620,7 @@ TEST_F(
 TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     const auto authInfo = std::make_shared<AuthenticationInfo>();
@@ -811,7 +722,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
 TEST_F(NoteStoreProviderTest, NoUserOwnNoteStoreIfCannotGetAuthenticationInfo)
 {
     const auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        m_mockLocalStorage, m_mockAuthenticationInfoProvider,
+        m_mockLinkedNotebookFinder, m_mockAuthenticationInfoProvider,
         m_mockNoteStoreFactory, m_account);
 
     EXPECT_CALL(

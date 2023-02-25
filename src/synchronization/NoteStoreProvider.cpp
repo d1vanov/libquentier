@@ -30,6 +30,7 @@
 #include <quentier/threading/TrackedTask.h>
 
 #include <synchronization/IAuthenticationInfoProvider.h>
+#include <synchronization/ILinkedNotebookFinder.h>
 
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/types/Notebook.h>
@@ -39,27 +40,6 @@
 namespace quentier::synchronization {
 
 namespace {
-
-[[nodiscard]] bool isLinkedNotebookFutureValid(
-    const QFuture<std::optional<qevercloud::LinkedNotebook>> & future)
-{
-    if (!future.isFinished()) {
-        return true;
-    }
-
-    if (future.resultCount() != 1) {
-        return false;
-    }
-
-    try {
-        Q_UNUSED(future.result());
-    }
-    catch (...) {
-        return false;
-    }
-
-    return true;
-}
 
 [[nodiscard]] bool checkNoteStoreRequestContex(
     const qevercloud::IRequestContext & noteStoreCtx,
@@ -75,19 +55,19 @@ namespace {
 } // namespace
 
 NoteStoreProvider::NoteStoreProvider(
-    local_storage::ILocalStoragePtr localStorage,
+    ILinkedNotebookFinderPtr linkedNotebookFinder,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
     INoteStoreFactoryPtr noteStoreFactory, Account account) :
-    m_localStorage{std::move(localStorage)},
+    m_linkedNotebookFinder{std::move(linkedNotebookFinder)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_noteStoreFactory{std::move(noteStoreFactory)},
     // clang-format off
     m_account{std::move(account)}
 // clang-format on
 {
-    if (Q_UNLIKELY(!m_localStorage)) {
+    if (Q_UNLIKELY(!m_linkedNotebookFinder)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
-            "NoteStoreProvider ctor: local storage is null")}};
+            "NoteStoreProvider ctor: linked notebook finder is null")}};
     }
 
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
@@ -101,8 +81,8 @@ NoteStoreProvider::NoteStoreProvider(
     }
 
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "NoteStoreProvider ctor: account is empty")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NoteStoreProvider ctor: account is empty")}};
     }
 }
 
@@ -116,21 +96,9 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStore(
 
     const auto selfWeak = weak_from_this();
 
-    QFuture<std::optional<qevercloud::LinkedNotebook>> linkedNotebookFuture =
-        [&] {
-            const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
-            auto it = m_linkedNotebooksByNotebookLocalId.find(notebookLocalId);
-            if (it != m_linkedNotebooksByNotebookLocalId.end() &&
-                isLinkedNotebookFutureValid(it.value()))
-            {
-                return it.value();
-            }
-
-            it = m_linkedNotebooksByNotebookLocalId.insert(
-                notebookLocalId,
-                findLinkedNotebookByNotebookLocalId(notebookLocalId));
-            return it.value();
-        }();
+    auto linkedNotebookFuture =
+        m_linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
+            notebookLocalId);
 
     threading::thenOrFailed(
         std::move(linkedNotebookFuture), promise,
@@ -168,21 +136,8 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::linkedNotebookNoteStore(
     auto future = promise->future();
     promise->start();
 
-    QFuture<std::optional<qevercloud::LinkedNotebook>> linkedNotebookFuture =
-        [&] {
-            const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
-            auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
-            if (it != m_linkedNotebooksByGuid.end() &&
-                isLinkedNotebookFutureValid(it.value()))
-            {
-                return it.value();
-            }
-
-            it = m_linkedNotebooksByGuid.insert(
-                linkedNotebookGuid,
-                m_localStorage->findLinkedNotebookByGuid(linkedNotebookGuid));
-            return it.value();
-        }();
+    auto linkedNotebookFuture =
+        m_linkedNotebookFinder->findLinkedNotebookByGuid(linkedNotebookGuid);
 
     const auto selfWeak = weak_from_this();
 
@@ -212,113 +167,6 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::linkedNotebookNoteStore(
                     linkedNotebook, std::move(ctx), std::move(retryPolicy),
                     promise);
             }});
-
-    return future;
-}
-
-QFuture<std::optional<qevercloud::LinkedNotebook>>
-    NoteStoreProvider::findLinkedNotebookByNotebookLocalId(
-        const QString & notebookLocalId)
-{
-    auto promise =
-        std::make_shared<QPromise<std::optional<qevercloud::LinkedNotebook>>>();
-
-    auto future = promise->future();
-    promise->start();
-
-    auto notebookFuture =
-        m_localStorage->findNotebookByLocalId(notebookLocalId);
-
-    const auto selfWeak = weak_from_this();
-
-    threading::thenOrFailed(
-        std::move(notebookFuture), promise,
-        [selfWeak, this, promise, notebookLocalId](
-            const std::optional<qevercloud::Notebook> & notebook) {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
-
-            if (Q_UNLIKELY(!notebook)) {
-                QNWARNING(
-                    "synchronization::NoteStoreProvider",
-                    "Could not find notebook by local id in the local storage: "
-                        << notebookLocalId);
-                promise->setException(
-                    RuntimeError{ErrorString{QStringLiteral(
-                        "Could not find notebook by local id in the local "
-                        "storage")}});
-                promise->finish();
-                return;
-            }
-
-            if (!notebook->linkedNotebookGuid()) {
-                promise->addResult(std::nullopt);
-                promise->finish();
-                return;
-            }
-
-            auto linkedNotebookGuid = *notebook->linkedNotebookGuid();
-
-            QFuture<std::optional<qevercloud::LinkedNotebook>>
-                linkedNotebookFuture = [&] {
-                    const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
-
-                    auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
-                    if (it != m_linkedNotebooksByGuid.end() &&
-                        isLinkedNotebookFutureValid(it.value()))
-                    {
-                        return it.value();
-                    }
-
-                    it = m_linkedNotebooksByGuid.insert(
-                        linkedNotebookGuid,
-                        m_localStorage->findLinkedNotebookByGuid(
-                            linkedNotebookGuid));
-                    return it.value();
-                }();
-
-            const auto selfWeak = weak_from_this();
-
-            threading::thenOrFailed(
-                std::move(linkedNotebookFuture), promise,
-                [selfWeak, this, promise,
-                 linkedNotebookGuid = std::move(linkedNotebookGuid)](
-                    std::optional<qevercloud::LinkedNotebook> linkedNotebook) {
-                    const auto self = selfWeak.lock();
-                    if (!self) {
-                        return;
-                    }
-
-                    if (Q_UNLIKELY(!linkedNotebook)) {
-                        QNWARNING(
-                            "synchronization::NoteStoreProvider",
-                            "Could not find linked notebook by guid in the "
-                                << "local storage: linked notebook guid = "
-                                << linkedNotebookGuid);
-                        promise->setException(
-                            RuntimeError{ErrorString{QStringLiteral(
-                                "Could not find linked notebook by guid in the "
-                                "local storage")}});
-                        promise->finish();
-                        return;
-                    }
-
-                    {
-                        const QMutexLocker locker{
-                            &m_linkedNotebooksByGuidMutex};
-
-                        m_linkedNotebooksByGuid[linkedNotebookGuid] =
-                            threading::makeReadyFuture<
-                                std::optional<qevercloud::LinkedNotebook>>(
-                                linkedNotebook);
-                    }
-
-                    promise->addResult(std::move(linkedNotebook));
-                    promise->finish();
-                });
-        });
 
     return future;
 }
@@ -478,16 +326,6 @@ void NoteStoreProvider::clearCaches()
     {
         const QMutexLocker locker{&m_linkedNotebooksNoteStoreDataMutex};
         m_linkedNotebooksNoteStoreData.clear();
-    }
-
-    {
-        const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
-        m_linkedNotebooksByNotebookLocalId.clear();
-    }
-
-    {
-        const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
-        m_linkedNotebooksByGuid.clear();
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,6 @@
 #include "Fwd.h"
 #include "INoteStoreProvider.h"
 
-#include <quentier/local_storage/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <qevercloud/Fwd.h>
@@ -47,7 +46,7 @@ class NoteStoreProvider final :
 {
 public:
     NoteStoreProvider(
-        local_storage::ILocalStoragePtr localStorage,
+        ILinkedNotebookFinderPtr linkedNotebookFinder,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         INoteStoreFactoryPtr noteStoreFactory, Account account);
 
@@ -67,9 +66,6 @@ public:
     void clearCaches() override;
 
 private:
-    [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
-        findLinkedNotebookByNotebookLocalId(const QString & notebookLocalId);
-
     [[nodiscard]] qevercloud::INoteStorePtr cachedUserOwnNoteStore(
         const qevercloud::IRequestContextPtr & ctx);
 
@@ -84,7 +80,7 @@ private:
         const std::shared_ptr<QPromise<qevercloud::INoteStorePtr>> & promise);
 
 private:
-    const local_storage::ILocalStoragePtr m_localStorage;
+    const ILinkedNotebookFinderPtr m_linkedNotebookFinder;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const INoteStoreFactoryPtr m_noteStoreFactory;
     const Account m_account;
@@ -100,16 +96,6 @@ private:
 
     QHash<qevercloud::Guid, NoteStoreData> m_linkedNotebooksNoteStoreData;
     QMutex m_linkedNotebooksNoteStoreDataMutex;
-
-    QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
-        m_linkedNotebooksByNotebookLocalId;
-
-    QMutex m_linkedNotebooksByNotebookLocalIdMutex;
-
-    QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
-        m_linkedNotebooksByGuid;
-
-    QMutex m_linkedNotebooksByGuidMutex;
 };
 
 } // namespace quentier::synchronization
