@@ -24,6 +24,7 @@ target_sources(${MOCKS_NAME}
     MockINoteFullDataDownloader.h
     MockINoteStoreFactory.h
     MockINoteStoreProvider.h
+    MockINoteThumbnailDownloaderFactory.h
     MockINotesProcessor.h
     MockIProtocolVersionChecker.h
     MockIResourceFullDataDownloader.h

@@ -13,6 +13,7 @@
 #include "MockINoteFullDataDownloader.h"
 #include "MockINoteStoreFactory.h"
 #include "MockINoteStoreProvider.h"
+#include "MockINoteThumbnailDownloaderFactory.h"
 #include "MockINotesProcessor.h"
 #include "MockIProtocolVersionChecker.h"
 #include "MockISavedSearchesProcessor.h"
