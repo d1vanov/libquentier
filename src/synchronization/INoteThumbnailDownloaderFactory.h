@@ -28,7 +28,7 @@ namespace quentier::synchronization {
 class INoteThumbnailDownloaderFactory
 {
 public:
-    virtual ~INoteThumbnailDownloaderFactory() = 0;
+    virtual ~INoteThumbnailDownloaderFactory() = default;
 
     [[nodiscard]] virtual QFuture<qevercloud::INoteThumbnailDownloaderPtr>
         createNoteThumbnailDownloader(
