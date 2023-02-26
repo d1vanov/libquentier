@@ -25,15 +25,31 @@
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/ILinkedNotebookFinder.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QPromise>
-#else
-#include <quentier/threading/Qt5Promise.h>
-#endif
-
 #include <qevercloud/RequestContextBuilder.h>
 
 namespace quentier::synchronization {
+
+namespace {
+
+[[nodiscard]] qevercloud::IRequestContextPtr createRequestContextWithAuthToken(
+    const qevercloud::IRequestContextPtr & sourceCtx, QString authToken)
+{
+    qevercloud::RequestContextBuilder builder;
+    builder.setAuthenticationToken(std::move(authToken));
+
+    if (sourceCtx) {
+        builder.setRequestTimeout(sourceCtx->requestTimeout())
+            .setMaxRequestTimeout(sourceCtx->maxRequestTimeout())
+            .setIncreaseRequestTimeoutExponentially(
+                sourceCtx->increaseRequestTimeoutExponentially())
+            .setMaxRetryCount(sourceCtx->maxRequestRetryCount())
+            .setCookies(sourceCtx->cookies());
+    }
+
+    return builder.build();
+}
+
+} // namespace
 
 NoteThumbnailDownloaderFactory::NoteThumbnailDownloaderFactory(
     Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
@@ -73,50 +89,84 @@ QFuture<qevercloud::INoteThumbnailDownloaderPtr>
         m_linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
             notebookLocalId);
 
+    auto selfWeak = weak_from_this();
+
     threading::thenOrFailed(
         std::move(linkedNotebookFuture), promise,
-        [promise, account = m_account, ctx = std::move(ctx),
-         authenticationInfoProvider = m_authenticationInfoProvider](
+        [this, selfWeak = std::move(selfWeak), promise, ctx = std::move(ctx)](
             std::optional<qevercloud::LinkedNotebook> linkedNotebook) mutable {
-            if (!linkedNotebook) {
-                auto downloader = qevercloud::newNoteThumbnailDownloader(
-                    account.evernoteHost(), account.shardId(), std::move(ctx));
-                promise->addResult(std::move(downloader));
-                promise->finish();
+            const auto self = selfWeak.lock();
+            if (!self) {
                 return;
             }
 
-            auto authenticationInfoFuture =
-                authenticationInfoProvider->authenticateToLinkedNotebook(
-                    account, std::move(*linkedNotebook),
-                    IAuthenticationInfoProvider::Mode::Cache);
+            if (!linkedNotebook) {
+                createUserOwnNoteThumbnailDownloader(promise, std::move(ctx));
+                return;
+            }
 
-            threading::thenOrFailed(
-                std::move(authenticationInfoFuture), promise,
-                [promise, account = std::move(account), ctx = std::move(ctx)](
-                    const IAuthenticationInfoPtr & authenticationInfo) mutable {
-                    Q_ASSERT(authenticationInfo);
-                    ctx = qevercloud::RequestContextBuilder{}
-                              .setAuthenticationToken(
-                                  authenticationInfo->authToken())
-                              .setRequestTimeout(ctx->requestTimeout())
-                              .setMaxRequestTimeout(ctx->maxRequestTimeout())
-                              .setIncreaseRequestTimeoutExponentially(
-                                  ctx->increaseRequestTimeoutExponentially())
-                              .setMaxRetryCount(ctx->maxRequestRetryCount())
-                              .setCookies(ctx->cookies())
-                              .build();
-
-                    auto downloader = qevercloud::newNoteThumbnailDownloader(
-                        account.evernoteHost(), authenticationInfo->shardId(),
-                        std::move(ctx));
-
-                    promise->addResult(std::move(downloader));
-                    promise->finish();
-                });
+            createLinkedNotebookNoteThumbnailDownloader(
+                promise, std::move(*linkedNotebook), std::move(ctx));
         });
 
     return future;
+}
+
+void NoteThumbnailDownloaderFactory::createUserOwnNoteThumbnailDownloader(
+    const std::shared_ptr<QPromise<qevercloud::INoteThumbnailDownloaderPtr>> &
+        promise,
+    qevercloud::IRequestContextPtr ctx)
+{
+    auto authenticationInfoFuture =
+        m_authenticationInfoProvider->authenticateAccount(
+            m_account, IAuthenticationInfoProvider::Mode::Cache);
+
+    threading::thenOrFailed(
+        std::move(authenticationInfoFuture), promise,
+        [promise, account = m_account, ctx = std::move(ctx)](
+            const IAuthenticationInfoPtr & authenticationInfo) mutable {
+            Q_ASSERT(authenticationInfo);
+
+            ctx = createRequestContextWithAuthToken(
+                ctx, authenticationInfo->authToken());
+
+            auto downloader = qevercloud::newNoteThumbnailDownloader(
+                account.evernoteHost(), authenticationInfo->shardId(),
+                std::move(ctx));
+
+            promise->addResult(std::move(downloader));
+            promise->finish();
+        });
+}
+
+void NoteThumbnailDownloaderFactory::
+    createLinkedNotebookNoteThumbnailDownloader(
+        const std::shared_ptr<
+            QPromise<qevercloud::INoteThumbnailDownloaderPtr>> & promise,
+        qevercloud::LinkedNotebook linkedNotebook,
+        qevercloud::IRequestContextPtr ctx)
+{
+    auto authenticationInfoFuture =
+        m_authenticationInfoProvider->authenticateToLinkedNotebook(
+            m_account, std::move(linkedNotebook),
+            IAuthenticationInfoProvider::Mode::Cache);
+
+    threading::thenOrFailed(
+        std::move(authenticationInfoFuture), promise,
+        [promise, account = m_account, ctx = std::move(ctx)](
+            const IAuthenticationInfoPtr & authenticationInfo) mutable {
+            Q_ASSERT(authenticationInfo);
+
+            ctx = createRequestContextWithAuthToken(
+                ctx, authenticationInfo->authToken());
+
+            auto downloader = qevercloud::newNoteThumbnailDownloader(
+                account.evernoteHost(), authenticationInfo->shardId(),
+                std::move(ctx));
+
+            promise->addResult(std::move(downloader));
+            promise->finish();
+        });
 }
 
 } // namespace quentier::synchronization

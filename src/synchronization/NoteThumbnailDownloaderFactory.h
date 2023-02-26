@@ -25,10 +25,19 @@
 
 #include <synchronization/Fwd.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <memory>
+
 namespace quentier::synchronization {
 
 class NoteThumbnailDownloaderFactory final :
-    public INoteThumbnailDownloaderFactory
+    public INoteThumbnailDownloaderFactory,
+    public std::enable_shared_from_this<NoteThumbnailDownloaderFactory>
 {
 public:
     NoteThumbnailDownloaderFactory(
@@ -41,6 +50,18 @@ public: // INoteThumbnailDownloaderFactory
         createNoteThumbnailDownloader(
             QString notebookLocalId,
             qevercloud::IRequestContextPtr ctx = {}) override;
+
+private:
+    void createUserOwnNoteThumbnailDownloader(
+        const std::shared_ptr<
+            QPromise<qevercloud::INoteThumbnailDownloaderPtr>> & promise,
+        qevercloud::IRequestContextPtr ctx);
+
+    void createLinkedNotebookNoteThumbnailDownloader(
+        const std::shared_ptr<
+            QPromise<qevercloud::INoteThumbnailDownloaderPtr>> & promise,
+        qevercloud::LinkedNotebook linkedNotebook,
+        qevercloud::IRequestContextPtr ctx);
 
 private:
     const Account m_account;
