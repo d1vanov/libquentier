@@ -19,7 +19,9 @@
 #include <synchronization/NoteThumbnailDownloaderFactory.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockILinkedNotebookFinder.h>
@@ -92,6 +94,31 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, CtorNullLinkedNotebookFinder)
             std::make_shared<NoteThumbnailDownloaderFactory>(
                 Account{}, m_mockAuthenticationInfoProvider, nullptr),
         InvalidArgument);
+}
+
+TEST_F(
+    NoteThumbnailDownloaderFactoryTest,
+    NoNoteThumbnailDownloaderIfFindingLinkedNotebookFails)
+{
+    const auto noteThumbnailDownloaderFactory =
+        std::make_shared<NoteThumbnailDownloaderFactory>(
+            m_account, m_mockAuthenticationInfoProvider,
+            m_mockLinkedNotebookFinder);
+
+    const auto notebookLocalId = UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockLinkedNotebookFinder,
+        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        .WillOnce(Return(threading::makeExceptionalFuture<
+                         std::optional<qevercloud::LinkedNotebook>>(
+            RuntimeError{ErrorString{QStringLiteral("some error")}})));
+
+    auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
+        notebookLocalId);
+
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_THROW(future.result(), RuntimeError);
 }
 
 } // namespace quentier::synchronization::tests
