@@ -7,6 +7,7 @@
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
 #include "MockIFullSyncStaleDataExpunger.h"
+#include "MockIInkNoteImageDownloaderFactory.h"
 #include "MockILinkedNotebookFinder.h"
 #include "MockILinkedNotebooksProcessor.h"
 #include "MockINotebooksProcessor.h"

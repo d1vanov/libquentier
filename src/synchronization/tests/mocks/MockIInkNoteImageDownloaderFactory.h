@@ -18,20 +18,20 @@
 
 #pragma once
 
-#include <synchronization/INoteThumbnailDownloaderFactory.h>
+#include <synchronization/IInkNoteImageDownloaderFactory.h>
 
 #include <gmock/gmock.h>
 
 namespace quentier::synchronization::tests::mocks {
 
-class MockINoteThumbnailDownloaderFactory :
-    public INoteThumbnailDownloaderFactory
+class MockIInkNoteImageDownloaderFactory : public IInkNoteImageDownloaderFactory
 {
 public:
     MOCK_METHOD(
-        QFuture<qevercloud::INoteThumbnailDownloaderPtr>,
-        createNoteThumbnailDownloader,
-        (QString notebookLocalId, qevercloud::IRequestContextPtr ctx),
+        QFuture<qevercloud::IInkNoteImageDownloaderPtr>,
+        createInkNoteImageDownloader,
+        (QString notebookLocalId, QSize size,
+         qevercloud::IRequestContextPtr ctx),
         (override));
 };
 
