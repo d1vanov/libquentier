@@ -12,6 +12,7 @@ add_executable(${TESTS_NAME}
   DurableNotesProcessorTest.cpp
   DurableResourcesProcessorTest.cpp
   FullSyncStaleDataExpungerTest.cpp
+  InkNoteImageDownloaderFactoryTest.cpp
   LinkedNotebookFinderTest.cpp
   LinkedNotebooksProcessorTest.cpp
   NotebooksProcessorTest.cpp
