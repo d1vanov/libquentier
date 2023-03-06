@@ -78,11 +78,12 @@ void InkNoteImageDownloader::run()
         .build();
 
     auto downloader = qevercloud::newInkNoteImageDownloader(
-        m_host, m_shardId, QSize{m_width, m_height}, ctx);
+        m_host, m_shardId, ctx);
 
     QByteArray inkNoteImageData;
     try {
-        inkNoteImageData = downloader->download(m_resourceGuid);
+        inkNoteImageData =
+            downloader->download(m_resourceGuid, QSize{m_width, m_height});
     }
     catch (const qevercloud::EverCloudException & everCloudException) {
         ErrorString errorDescription(

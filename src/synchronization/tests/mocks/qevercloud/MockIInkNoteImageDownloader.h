@@ -29,12 +29,14 @@ class MockIInkNoteImageDownloader : public ::qevercloud::IInkNoteImageDownloader
 public:
     MOCK_METHOD(
         QByteArray, download,
-        (::qevercloud::Guid guid, ::qevercloud::IRequestContextPtr ctx),
+        (::qevercloud::Guid guid, QSize size,
+         ::qevercloud::IRequestContextPtr ctx),
         (override));
 
     MOCK_METHOD(
         QFuture<QByteArray>, downloadAsync,
-        (::qevercloud::Guid guid, ::qevercloud::IRequestContextPtr ctx),
+        (::qevercloud::Guid guid, QSize size,
+         ::qevercloud::IRequestContextPtr ctx),
         (override));
 };
 

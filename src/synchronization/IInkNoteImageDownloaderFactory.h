@@ -33,7 +33,7 @@ public:
 
     [[nodiscard]] virtual QFuture<qevercloud::IInkNoteImageDownloaderPtr>
         createInkNoteImageDownloader(
-            QString notebookLocalId, QSize size,
+            QString notebookLocalId,
             qevercloud::IRequestContextPtr ctx = {}) = 0;
 };
 

@@ -58,8 +58,6 @@ protected:
     const std::shared_ptr<mocks::MockIAuthenticationInfoProvider>
         m_mockAuthenticationInfoProvider = std::make_shared<
             StrictMock<mocks::MockIAuthenticationInfoProvider>>();
-
-    const QSize m_size = QSize{300, 300};
 };
 
 TEST_F(InkNoteImageDownloaderFactoryTest, Ctor)
@@ -118,7 +116,7 @@ TEST_F(
             RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
     auto future = inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-        notebookLocalId, m_size);
+        notebookLocalId);
 
     ASSERT_TRUE(future.isFinished());
     EXPECT_THROW(future.result(), RuntimeError);
@@ -151,7 +149,7 @@ TEST_F(
                 RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
     auto future = inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-        notebookLocalId, m_size);
+        notebookLocalId);
 
     ASSERT_TRUE(future.isFinished());
     EXPECT_THROW(future.result(), RuntimeError);
@@ -181,7 +179,7 @@ TEST_F(InkNoteImageDownloaderFactoryTest, UserOwnNoteThumbnailDownloader)
             std::make_shared<AuthenticationInfo>())));
 
     auto future = inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-        notebookLocalId, m_size);
+        notebookLocalId);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
@@ -225,7 +223,7 @@ TEST_F(
                 RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
     auto future = inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-        notebookLocalId, m_size);
+        notebookLocalId);
 
     ASSERT_TRUE(future.isFinished());
     EXPECT_THROW(future.result(), RuntimeError);
@@ -263,7 +261,7 @@ TEST_F(InkNoteImageDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
             std::make_shared<AuthenticationInfo>())));
 
     auto future = inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-        notebookLocalId, m_size);
+        notebookLocalId);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);

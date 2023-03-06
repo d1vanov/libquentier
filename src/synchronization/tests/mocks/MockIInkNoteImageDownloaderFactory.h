@@ -30,8 +30,7 @@ public:
     MOCK_METHOD(
         QFuture<qevercloud::IInkNoteImageDownloaderPtr>,
         createInkNoteImageDownloader,
-        (QString notebookLocalId, QSize size,
-         qevercloud::IRequestContextPtr ctx),
+        (QString notebookLocalId, qevercloud::IRequestContextPtr ctx),
         (override));
 };
 

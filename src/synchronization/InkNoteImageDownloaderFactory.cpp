@@ -78,8 +78,7 @@ InkNoteImageDownloaderFactory::InkNoteImageDownloaderFactory(
 
 QFuture<qevercloud::IInkNoteImageDownloaderPtr>
     InkNoteImageDownloaderFactory::createInkNoteImageDownloader(
-        QString notebookLocalId, const QSize size,
-        qevercloud::IRequestContextPtr ctx)
+        QString notebookLocalId, qevercloud::IRequestContextPtr ctx)
 {
     auto promise =
         std::make_shared<QPromise<qevercloud::IInkNoteImageDownloaderPtr>>();
@@ -94,8 +93,7 @@ QFuture<qevercloud::IInkNoteImageDownloaderPtr>
 
     threading::thenOrFailed(
         std::move(linkedNotebookFuture), promise,
-        [this, selfWeak = std::move(selfWeak), size, promise,
-         ctx = std::move(ctx)](
+        [this, selfWeak = std::move(selfWeak), promise, ctx = std::move(ctx)](
             std::optional<qevercloud::LinkedNotebook> linkedNotebook) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
@@ -103,13 +101,12 @@ QFuture<qevercloud::IInkNoteImageDownloaderPtr>
             }
 
             if (!linkedNotebook) {
-                createUserOwnInkNoteImageDownloader(
-                    promise, size, std::move(ctx));
+                createUserOwnInkNoteImageDownloader(promise, std::move(ctx));
                 return;
             }
 
             createLinkedNotebookInkNoteImageDownloader(
-                promise, std::move(*linkedNotebook), size, std::move(ctx));
+                promise, std::move(*linkedNotebook), std::move(ctx));
         });
 
     return future;
@@ -118,7 +115,7 @@ QFuture<qevercloud::IInkNoteImageDownloaderPtr>
 void InkNoteImageDownloaderFactory::createUserOwnInkNoteImageDownloader(
     const std::shared_ptr<QPromise<qevercloud::IInkNoteImageDownloaderPtr>> &
         promise,
-    const QSize size, qevercloud::IRequestContextPtr ctx)
+    qevercloud::IRequestContextPtr ctx)
 {
     auto authenticationInfoFuture =
         m_authenticationInfoProvider->authenticateAccount(
@@ -126,7 +123,7 @@ void InkNoteImageDownloaderFactory::createUserOwnInkNoteImageDownloader(
 
     threading::thenOrFailed(
         std::move(authenticationInfoFuture), promise,
-        [promise, account = m_account, size, ctx = std::move(ctx)](
+        [promise, account = m_account, ctx = std::move(ctx)](
             const IAuthenticationInfoPtr & authenticationInfo) mutable {
             Q_ASSERT(authenticationInfo);
 
@@ -135,19 +132,18 @@ void InkNoteImageDownloaderFactory::createUserOwnInkNoteImageDownloader(
 
             auto downloader = qevercloud::newInkNoteImageDownloader(
                 account.evernoteHost(), authenticationInfo->shardId(),
-                size, std::move(ctx));
+                std::move(ctx));
 
             promise->addResult(std::move(downloader));
             promise->finish();
         });
 }
 
-void InkNoteImageDownloaderFactory::
-    createLinkedNotebookInkNoteImageDownloader(
-        const std::shared_ptr<
-            QPromise<qevercloud::IInkNoteImageDownloaderPtr>> & promise,
-        qevercloud::LinkedNotebook linkedNotebook, const QSize size,
-        qevercloud::IRequestContextPtr ctx)
+void InkNoteImageDownloaderFactory::createLinkedNotebookInkNoteImageDownloader(
+    const std::shared_ptr<QPromise<qevercloud::IInkNoteImageDownloaderPtr>> &
+        promise,
+    qevercloud::LinkedNotebook linkedNotebook,
+    qevercloud::IRequestContextPtr ctx)
 {
     auto authenticationInfoFuture =
         m_authenticationInfoProvider->authenticateToLinkedNotebook(
@@ -156,7 +152,7 @@ void InkNoteImageDownloaderFactory::
 
     threading::thenOrFailed(
         std::move(authenticationInfoFuture), promise,
-        [promise, account = m_account, size, ctx = std::move(ctx)](
+        [promise, account = m_account, ctx = std::move(ctx)](
             const IAuthenticationInfoPtr & authenticationInfo) mutable {
             Q_ASSERT(authenticationInfo);
 
@@ -165,7 +161,7 @@ void InkNoteImageDownloaderFactory::
 
             auto downloader = qevercloud::newInkNoteImageDownloader(
                 account.evernoteHost(), authenticationInfo->shardId(),
-                size, std::move(ctx));
+                std::move(ctx));
 
             promise->addResult(std::move(downloader));
             promise->finish();

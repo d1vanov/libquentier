@@ -48,20 +48,20 @@ public:
 public: // IInkNoteImageDownloaderFactory
     [[nodiscard]] QFuture<qevercloud::IInkNoteImageDownloaderPtr>
         createInkNoteImageDownloader(
-            QString notebookLocalId, QSize size,
+            QString notebookLocalId,
             qevercloud::IRequestContextPtr ctx = {}) override;
 
 private:
     void createUserOwnInkNoteImageDownloader(
         const std::shared_ptr<
             QPromise<qevercloud::IInkNoteImageDownloaderPtr>> & promise,
-        QSize size, qevercloud::IRequestContextPtr ctx);
+        qevercloud::IRequestContextPtr ctx);
 
     void createLinkedNotebookInkNoteImageDownloader(
         const std::shared_ptr<
             QPromise<qevercloud::IInkNoteImageDownloaderPtr>> & promise,
         qevercloud::LinkedNotebook linkedNotebook,
-        QSize size, qevercloud::IRequestContextPtr ctx);
+        qevercloud::IRequestContextPtr ctx);
 
 private:
     const Account m_account;
