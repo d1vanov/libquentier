@@ -50,6 +50,9 @@ using ISynchronizerPtr = std::shared_ptr<ISynchronizer>;
 
 class ISyncEventsNotifier;
 
+class ISyncOptions;
+using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
+
 } // namespace synchronization
 
 } // namespace quentier

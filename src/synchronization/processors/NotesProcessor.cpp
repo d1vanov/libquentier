@@ -51,13 +51,19 @@ NotesProcessor::NotesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     ISyncConflictResolverPtr syncConflictResolver,
     INoteFullDataDownloaderPtr noteFullDataDownloader,
-    INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
+    INoteStoreProviderPtr noteStoreProvider,
+    IInkNoteImageDownloaderFactoryPtr inkNoteImageDownloaderFactory,
+    INoteThumbnailDownloaderFactoryPtr noteThumbnailDownloaderFactory,
+    ISyncOptionsPtr syncOptions, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy,
     threading::QThreadPoolPtr threadPool) :
     m_localStorage{std::move(localStorage)},
     m_syncConflictResolver{std::move(syncConflictResolver)},
     m_noteFullDataDownloader{std::move(noteFullDataDownloader)},
-    m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
+    m_noteStoreProvider{std::move(noteStoreProvider)},
+    m_inkNoteImageDownloaderFactory{std::move(inkNoteImageDownloaderFactory)},
+    m_noteThumbnailDownloaderFactory{std::move(noteThumbnailDownloaderFactory)},
+    m_syncOptions{std::move(syncOptions)}, m_ctx{std::move(ctx)},
     m_retryPolicy{std::move(retryPolicy)},
     m_threadPool{
         threadPool ? std::move(threadPool) : threading::globalThreadPool()}
@@ -80,6 +86,21 @@ NotesProcessor::NotesProcessor(
     if (Q_UNLIKELY(!m_noteStoreProvider)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "NotesProcessor ctor: note store provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_inkNoteImageDownloaderFactory)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "NotesProcessor ctor: ink note image downloader factory is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_noteThumbnailDownloaderFactory)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "NotesProcessor ctor: note thumbnail downloader factory is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncOptions)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NotesProcessor ctor: sync options are null")}};
     }
 
     Q_ASSERT(m_threadPool);

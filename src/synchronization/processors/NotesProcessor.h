@@ -49,7 +49,9 @@ public:
         ISyncConflictResolverPtr syncConflictResolver,
         INoteFullDataDownloaderPtr noteFullDataDownloader,
         INoteStoreProviderPtr noteStoreProvider,
-        qevercloud::IRequestContextPtr ctx = {},
+        IInkNoteImageDownloaderFactoryPtr inkNoteImageDownloaderFactory,
+        INoteThumbnailDownloaderFactoryPtr noteThumbnailDownloaderFactory,
+        ISyncOptionsPtr syncOptions, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {},
         threading::QThreadPoolPtr threadPool = {});
 
@@ -110,6 +112,9 @@ private:
     const ISyncConflictResolverPtr m_syncConflictResolver;
     const INoteFullDataDownloaderPtr m_noteFullDataDownloader;
     const INoteStoreProviderPtr m_noteStoreProvider;
+    const IInkNoteImageDownloaderFactoryPtr m_inkNoteImageDownloaderFactory;
+    const INoteThumbnailDownloaderFactoryPtr m_noteThumbnailDownloaderFactory;
+    const ISyncOptionsPtr m_syncOptions;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;
     const threading::QThreadPoolPtr m_threadPool;

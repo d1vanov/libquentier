@@ -20,6 +20,7 @@
 
 #include <synchronization/processors/NotesProcessor.h>
 #include <synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/SyncOptions.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -33,8 +34,10 @@
 // NOTE: strange but with these headers moved higher, above "quentier/" ones,
 // build fails. Probably something related to #pragma once not being perfectly
 // implemented in the compiler.
+#include <synchronization/tests/mocks/MockIInkNoteImageDownloaderFactory.h>
 #include <synchronization/tests/mocks/MockINoteFullDataDownloader.h>
 #include <synchronization/tests/mocks/MockINoteStoreProvider.h>
+#include <synchronization/tests/mocks/MockINoteThumbnailDownloaderFactory.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <qevercloud/DurableService.h>
@@ -120,6 +123,17 @@ protected:
         m_mockNoteStoreProvider =
             std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
 
+    const std::shared_ptr<mocks::MockIInkNoteImageDownloaderFactory>
+        m_mockInkNoteImageDownloaderFactory = std::make_shared<
+            StrictMock<mocks::MockIInkNoteImageDownloaderFactory>>();
+
+    const std::shared_ptr<mocks::MockINoteThumbnailDownloaderFactory>
+        m_mockNoteThumbnailDownloaderFactory = std::make_shared<
+            StrictMock<mocks::MockINoteThumbnailDownloaderFactory>>();
+
+    const std::shared_ptr<SyncOptions> m_syncOptions =
+        std::make_shared<SyncOptions>();
+
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -197,6 +211,8 @@ TEST_F(NotesProcessorTest, Ctor)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
             qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
             m_threadPool));
 }
@@ -206,8 +222,10 @@ TEST_F(NotesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             nullptr, m_mockSyncConflictResolver, m_mockNoteFullDataDownloader,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -216,8 +234,10 @@ TEST_F(NotesProcessorTest, CtorNullSyncConflictResolver)
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, nullptr, m_mockNoteFullDataDownloader,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -226,8 +246,10 @@ TEST_F(NotesProcessorTest, CtorNullNoteFullDataDownloader)
     EXPECT_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver, nullptr,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -237,6 +259,45 @@ TEST_F(NotesProcessorTest, CtorNullNoteStoreProvider)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, nullptr,
+            m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
+        InvalidArgument);
+}
+
+TEST_F(NotesProcessorTest, CtorNullInkNoteImageDownloaderFactory)
+{
+    EXPECT_THROW(
+        const auto notesProcessor = std::make_shared<NotesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider, nullptr,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
+        InvalidArgument);
+}
+
+TEST_F(NotesProcessorTest, CtorNullNoteThumbnailDownloaderFactory)
+{
+    EXPECT_THROW(
+        const auto notesProcessor = std::make_shared<NotesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockInkNoteImageDownloaderFactory, nullptr, m_syncOptions,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
+        InvalidArgument);
+}
+
+TEST_F(NotesProcessorTest, CtorNullSyncOptions)
+{
+    EXPECT_THROW(
+        const auto notesProcessor = std::make_shared<NotesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, nullptr,
             qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
             m_threadPool),
         InvalidArgument);
@@ -247,7 +308,9 @@ TEST_F(NotesProcessorTest, CtorNullRequestContext)
     EXPECT_NO_THROW(
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider, nullptr,
+            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions, nullptr,
             qevercloud::newRetryPolicy(), m_threadPool));
 }
 
@@ -257,6 +320,8 @@ TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
             qevercloud::newRequestContext(), nullptr, m_threadPool));
 }
 
@@ -266,6 +331,8 @@ TEST_F(NotesProcessorTest, CtorNullThreadPool)
         const auto notesProcessor = std::make_shared<NotesProcessor>(
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockInkNoteImageDownloaderFactory,
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
             qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
             nullptr));
 }
@@ -277,7 +344,9 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -446,7 +515,9 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -633,7 +704,9 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -846,7 +919,9 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1061,7 +1136,9 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1294,7 +1371,9 @@ TEST_P(
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1525,7 +1604,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1810,7 +1891,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
@@ -1961,7 +2044,9 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedNoteGuids;
@@ -2026,7 +2111,9 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedNoteGuids;
@@ -2152,7 +2239,9 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedNoteGuids;
@@ -2407,7 +2496,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
-        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider);
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 

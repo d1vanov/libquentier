@@ -42,6 +42,10 @@ class IFullSyncStaleDataExpunger;
 using IFullSyncStaleDataExpungerPtr =
     std::shared_ptr<IFullSyncStaleDataExpunger>;
 
+class IInkNoteImageDownloaderFactory;
+using IInkNoteImageDownloaderFactoryPtr =
+    std::shared_ptr<IInkNoteImageDownloaderFactory>;
+
 class ILinkedNotebookFinder;
 using ILinkedNotebookFinderPtr = std::shared_ptr<ILinkedNotebookFinder>;
 
@@ -53,6 +57,10 @@ using INoteStoreFactoryPtr = std::shared_ptr<INoteStoreFactory>;
 
 class INoteStoreProvider;
 using INoteStoreProviderPtr = std::shared_ptr<INoteStoreProvider>;
+
+class INoteThumbnailDownloaderFactory;
+using INoteThumbnailDownloaderFactoryPtr =
+    std::shared_ptr<INoteThumbnailDownloaderFactory>;
 
 class IProtocolVersionChecker;
 using IProtocolVersionCheckerPtr = std::shared_ptr<IProtocolVersionChecker>;
