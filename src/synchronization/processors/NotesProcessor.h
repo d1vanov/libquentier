@@ -102,6 +102,9 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
         const qevercloud::Note & note, NoteKind noteKind);
 
+    [[nodiscard]] QFuture<qevercloud::Note> downloadNoteThumbnail(
+        qevercloud::Note note);
+
     void putNoteToLocalStorage(
         const ContextPtr & context,
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,

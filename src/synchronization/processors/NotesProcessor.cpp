@@ -20,6 +20,7 @@
 #include "Utils.h"
 
 #include <synchronization/INoteStoreProvider.h>
+#include <synchronization/INoteThumbnailDownloaderFactory.h>
 #include <synchronization/processors/INoteFullDataDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/types/DownloadNotesStatus.h>
@@ -29,12 +30,14 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/synchronization/types/ISyncOptions.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/cancelers/AnyOfCanceler.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <qevercloud/INoteThumbnailDownloader.h>
 #include <qevercloud/services/INoteStore.h>
 #include <qevercloud/types/SyncChunk.h>
 
@@ -519,7 +522,49 @@ void NotesProcessor::downloadFullNoteData(
         std::move(downloadFullNoteDataFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, promise, context, noteKind](qevercloud::Note note) mutable {
+            [this, selfWeak, promise, context,
+             noteKind](qevercloud::Note note) mutable {
+                if (m_syncOptions->downloadNoteThumbnails() &&
+                    note.resources() && !note.resources()->isEmpty())
+                {
+                    Q_ASSERT(note.guid());
+
+                    // Will try to download thumbnail for this note and
+                    // then save the note with thumbnail to the local storage
+                    auto noteFuture = downloadNoteThumbnail(note);
+                    auto thenFuture = threading::then(
+                        std::move(noteFuture),
+                        threading::TrackedTask{
+                            selfWeak,
+                            [this, promise, context,
+                             noteKind](qevercloud::Note note) mutable {
+                                putNoteToLocalStorage(
+                                    context, promise, std::move(note),
+                                    noteKind);
+                            }});
+
+                    // Even if note thumbnail downloading fails, we tolerate
+                    // this error and just store this note without thumbnail
+                    threading::onFailed(
+                        std::move(thenFuture),
+                        [this, selfWeak, promise, context,
+                         note = std::move(note),
+                         noteKind](const QException & e) mutable {
+                            QNWARNING(
+                                "synchronization::NotesProcessor",
+                                "Failed to download thumbnail for note: "
+                                    << note.guid().value_or(
+                                           QStringLiteral("<empty>")));
+                            if (const auto self = selfWeak.lock()) {
+                                putNoteToLocalStorage(
+                                    context, promise, std::move(note),
+                                    noteKind);
+                            }
+                        });
+
+                    return;
+                }
+
                 putNoteToLocalStorage(
                     context, promise, std::move(note), noteKind);
             }});
@@ -567,6 +612,41 @@ void NotesProcessor::downloadFullNoteData(
 
             promise->finish();
         });
+}
+
+QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
+    qevercloud::Note note)
+{
+    auto promise = std::make_shared<QPromise<qevercloud::Note>>();
+    auto future = promise->future();
+    promise->start();
+
+    auto noteThumbnailDownloaderFuture =
+        m_noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
+            note.notebookLocalId(), m_ctx);
+
+    threading::thenOrFailed(
+        std::move(noteThumbnailDownloaderFuture), promise,
+        [note, promise,
+         ctx = m_ctx](const qevercloud::INoteThumbnailDownloaderPtr &
+                          noteThumbnailDownloader) mutable {
+            Q_ASSERT(noteThumbnailDownloader);
+
+            auto noteThumbnailFuture =
+                noteThumbnailDownloader->downloadNoteThumbnailAsync(
+                    *note.guid(), 300,
+                    qevercloud::INoteThumbnailDownloader::ImageType::PNG, ctx);
+
+            threading::thenOrFailed(
+                std::move(noteThumbnailFuture), promise,
+                [note = std::move(note), promise](QByteArray data) mutable {
+                    note.setThumbnailData(std::move(data));
+                    promise->addResult(std::move(note));
+                    promise->finish();
+                });
+        });
+
+    return future;
 }
 
 void NotesProcessor::putNoteToLocalStorage(
