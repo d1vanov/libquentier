@@ -199,22 +199,8 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
                 [this, selfWeak, updatedNote = note, notePromise, context](
                     const std::optional<qevercloud::Note> & note) mutable {
                     if (context->canceler->isCanceled()) {
-                        const auto & guid = *updatedNote.guid();
-                        if (const auto callback = context->callbackWeak.lock())
-                        {
-                            callback->onNoteProcessingCancelled(updatedNote);
-                        }
-
-                        {
-                            const QMutexLocker locker{
-                                context->statusMutex.get()};
-
-                            context->status->m_cancelledNoteGuidsAndUsns[guid] =
-                                updatedNote.updateSequenceNum().value();
-                        }
-
-                        notePromise->addResult(ProcessNoteStatus::Canceled);
-                        notePromise->finish();
+                        NotesProcessor::cancelNoteProcessing(
+                            context, notePromise, updatedNote);
                         return;
                     }
 
@@ -494,7 +480,7 @@ void NotesProcessor::onFoundDuplicate(
 void NotesProcessor::downloadFullNoteData(
     const ContextPtr & context,
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
-    const qevercloud::Note & note, NoteKind noteKind)
+    qevercloud::Note note, NoteKind noteKind)
 {
     Q_ASSERT(context);
     Q_ASSERT(note.guid());
@@ -504,114 +490,187 @@ void NotesProcessor::downloadFullNoteData(
 
     const auto selfWeak = weak_from_this();
 
-    auto downloadFullNoteDataFuture = threading::then(
+    auto thenFuture = threading::then(
         std::move(noteStoreFuture),
-        [promise, context, noteFullDataDownloader = m_noteFullDataDownloader,
-         noteGuid = *note.guid()](qevercloud::INoteStorePtr noteStore) {
-            Q_ASSERT(noteStore);
-            if (context->canceler->isCanceled()) {
-                return threading::makeExceptionalFuture<qevercloud::Note>(
-                    OperationCanceled{});
-            }
+        threading::TrackedTask{
+            selfWeak,
+            [this, context, promise, note, noteKind,
+             noteFullDataDownloader = m_noteFullDataDownloader](
+                qevercloud::INoteStorePtr noteStore) mutable {
+                downloadFullNoteDataImpl(
+                    context, promise, note, noteKind, std::move(noteStore));
+            }});
 
-            return noteFullDataDownloader->downloadFullNoteData(
-                noteGuid, std::move(noteStore));
+    threading::onFailed(
+        std::move(thenFuture),
+        [promise, context, note = std::move(note)](const QException & e) {
+            NotesProcessor::processNoteDownloadingError(
+                context, promise, note, e);
         });
+}
+
+void NotesProcessor::downloadFullNoteDataImpl(
+    const ContextPtr & context,
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+    const qevercloud::Note & note, NoteKind noteKind,
+    qevercloud::INoteStorePtr noteStore)
+{
+    Q_ASSERT(noteStore);
+    Q_ASSERT(note.guid());
+    Q_ASSERT(note.updateSequenceNum());
+
+    const auto & noteGuid = *note.guid();
+
+    if (context->canceler->isCanceled()) {
+        NotesProcessor::cancelNoteProcessing(context, promise, note);
+        return;
+    }
+
+    auto noteFuture = m_noteFullDataDownloader->downloadFullNoteData(
+        noteGuid, std::move(noteStore));
+
+    const auto selfWeak = weak_from_this();
 
     auto thenFuture = threading::then(
-        std::move(downloadFullNoteDataFuture),
+        std::move(noteFuture),
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, promise, context,
              noteKind](qevercloud::Note note) mutable {
-                if (m_syncOptions->downloadNoteThumbnails() &&
-                    note.resources() && !note.resources()->isEmpty())
-                {
-                    Q_ASSERT(note.guid());
-
-                    // Will try to download thumbnail for this note and
-                    // then save the note with thumbnail to the local storage
-                    auto noteFuture = downloadNoteThumbnail(note);
-                    auto thenFuture = threading::then(
-                        std::move(noteFuture),
-                        threading::TrackedTask{
-                            selfWeak,
-                            [this, promise, context,
-                             noteKind](qevercloud::Note note) mutable {
-                                putNoteToLocalStorage(
-                                    context, promise, std::move(note),
-                                    noteKind);
-                            }});
-
-                    // Even if note thumbnail downloading fails, we tolerate
-                    // this error and just store this note without thumbnail
-                    threading::onFailed(
-                        std::move(thenFuture),
-                        [this, selfWeak, promise, context,
-                         note = std::move(note),
-                         noteKind](const QException & e) mutable {
-                            QNWARNING(
-                                "synchronization::NotesProcessor",
-                                "Failed to download thumbnail for note: "
-                                    << note.guid().value_or(
-                                           QStringLiteral("<empty>")));
-                            if (const auto self = selfWeak.lock()) {
-                                putNoteToLocalStorage(
-                                    context, promise, std::move(note),
-                                    noteKind);
-                            }
-                        });
-
-                    return;
-                }
-
-                putNoteToLocalStorage(
+                processDownloadedFullNoteData(
                     context, promise, std::move(note), noteKind);
             }});
 
     threading::onFailed(
         std::move(thenFuture), [promise, context, note](const QException & e) {
-            if (const auto callback = context->callbackWeak.lock()) {
-                callback->onNoteFailedToDownload(note, e);
-            }
-
-            {
-                const QMutexLocker locker{context->statusMutex.get()};
-                context->status->m_notesWhichFailedToDownload
-                    << DownloadNotesStatus::NoteWithException{
-                           note, std::shared_ptr<QException>(e.clone())};
-            }
-
-            bool shouldCancelProcessing = false;
-            try {
-                e.raise();
-            }
-            catch (const qevercloud::EDAMSystemException & se) {
-                if (se.errorCode() ==
-                    qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
-                    context->status->m_stopSynchronizationError =
-                        StopSynchronizationError{
-                            RateLimitReachedError{se.rateLimitDuration()}};
-                    shouldCancelProcessing = true;
-                }
-                else if (
-                    se.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
-                    context->status->m_stopSynchronizationError =
-                        StopSynchronizationError{AuthenticationExpiredError{}};
-                    shouldCancelProcessing = true;
-                }
-            }
-            catch (...) {
-            }
-
-            if (shouldCancelProcessing) {
-                context->manualCanceler->cancel();
-            }
-
-            promise->addResult(ProcessNoteStatus::FailedToDownloadFullNoteData);
-
-            promise->finish();
+            NotesProcessor::processNoteDownloadingError(
+                context, promise, note, e);
         });
+}
+
+void NotesProcessor::processDownloadedFullNoteData(
+    const ContextPtr & context,
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+    qevercloud::Note note, NoteKind noteKind)
+{
+    QFuture<qevercloud::Note> noteFuture = [&] {
+        if (!m_syncOptions->downloadNoteThumbnails() || !note.resources() ||
+            note.resources()->isEmpty())
+        {
+            return threading::makeReadyFuture<qevercloud::Note>(
+                std::move(note));
+        }
+
+        auto notePromise = std::make_shared<QPromise<qevercloud::Note>>();
+        notePromise->start();
+        auto future = notePromise->future();
+
+        auto noteFuture = downloadNoteThumbnail(note);
+        auto thenFuture = threading::then(
+            std::move(noteFuture),
+            [notePromise](qevercloud::Note noteWithThumbnail) {
+                notePromise->addResult(std::move(noteWithThumbnail));
+                notePromise->finish();
+            });
+
+        // Even if note thumbnail downloading fails, we tolerate
+        // this error and just have this note without thumbnail
+        threading::onFailed(
+            std::move(thenFuture),
+            [notePromise,
+             note = std::move(note)](const QException & e) mutable {
+                QNWARNING(
+                    "synchronization::NotesProcessor",
+                    "Failed to download thumbnail for note with guid "
+                        << note.guid().value_or(QStringLiteral("<empty>"))
+                        << ": " << e.what());
+                notePromise->addResult(std::move(note));
+                notePromise->finish();
+            });
+
+        return future;
+    }();
+
+    const auto selfWeak = weak_from_this();
+    threading::thenOrFailed(
+        std::move(noteFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, context, promise, noteKind](qevercloud::Note note) mutable {
+                // TODO: if note is the ink one and need to download ink note
+                // image, first download it and then put the note into the local
+                // storage
+
+                putNoteToLocalStorage(
+                    context, promise, std::move(note), noteKind);
+            }});
+}
+
+void NotesProcessor::cancelNoteProcessing(
+    const ContextPtr & context,
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+    const qevercloud::Note & note)
+{
+    Q_ASSERT(note.guid());
+    Q_ASSERT(note.updateSequenceNum());
+
+    if (const auto callback = context->callbackWeak.lock()) {
+        callback->onNoteProcessingCancelled(note);
+    }
+
+    {
+        const QMutexLocker locker{context->statusMutex.get()};
+
+        context->status->m_cancelledNoteGuidsAndUsns[*note.guid()] =
+            *note.updateSequenceNum();
+    }
+
+    promise->addResult(ProcessNoteStatus::Canceled);
+    promise->finish();
+}
+
+void NotesProcessor::processNoteDownloadingError(
+    const ContextPtr & context,
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+    const qevercloud::Note & note, const QException & e)
+{
+    if (const auto callback = context->callbackWeak.lock()) {
+        callback->onNoteFailedToDownload(note, e);
+    }
+
+    {
+        const QMutexLocker locker{context->statusMutex.get()};
+        context->status->m_notesWhichFailedToDownload
+            << DownloadNotesStatus::NoteWithException{
+                   note, std::shared_ptr<QException>(e.clone())};
+    }
+
+    bool shouldCancelProcessing = false;
+    try {
+        e.raise();
+    }
+    catch (const qevercloud::EDAMSystemException & se) {
+        if (se.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            context->status->m_stopSynchronizationError =
+                StopSynchronizationError{
+                    RateLimitReachedError{se.rateLimitDuration()}};
+            shouldCancelProcessing = true;
+        }
+        else if (se.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
+            context->status->m_stopSynchronizationError =
+                StopSynchronizationError{AuthenticationExpiredError{}};
+            shouldCancelProcessing = true;
+        }
+    }
+    catch (...) {
+    }
+
+    if (shouldCancelProcessing) {
+        context->manualCanceler->cancel();
+    }
+
+    promise->addResult(ProcessNoteStatus::FailedToDownloadFullNoteData);
+    promise->finish();
 }
 
 QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(

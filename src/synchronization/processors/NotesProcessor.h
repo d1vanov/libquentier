@@ -100,7 +100,28 @@ private:
     void downloadFullNoteData(
         const ContextPtr & context,
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
-        const qevercloud::Note & note, NoteKind noteKind);
+        qevercloud::Note note, NoteKind noteKind);
+
+    void downloadFullNoteDataImpl(
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+        const qevercloud::Note & note, NoteKind noteKind,
+        qevercloud::INoteStorePtr noteStore);
+
+    void processDownloadedFullNoteData(
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+        qevercloud::Note note, NoteKind noteKind);
+
+    static void cancelNoteProcessing(
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+        const qevercloud::Note & note);
+
+    static void processNoteDownloadingError(
+        const ContextPtr & context,
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
+        const qevercloud::Note & note, const QException & e);
 
     [[nodiscard]] QFuture<qevercloud::Note> downloadNoteThumbnail(
         qevercloud::Note note);
