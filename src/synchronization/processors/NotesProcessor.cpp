@@ -19,6 +19,7 @@
 #include "NotesProcessor.h"
 #include "Utils.h"
 
+#include <synchronization/IInkNoteImageDownloaderFactory.h>
 #include <synchronization/INoteStoreProvider.h>
 #include <synchronization/INoteThumbnailDownloaderFactory.h>
 #include <synchronization/processors/INoteFullDataDownloader.h>
@@ -27,6 +28,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
@@ -34,13 +36,16 @@
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
+#include <quentier/types/NoteUtils.h>
 #include <quentier/utility/cancelers/AnyOfCanceler.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <qevercloud/IInkNoteImageDownloader.h>
 #include <qevercloud/INoteThumbnailDownloader.h>
 #include <qevercloud/services/INoteStore.h>
 #include <qevercloud/types/SyncChunk.h>
 
+#include <QFile>
 #include <QFutureWatcher>
 #include <QMutex>
 #include <QMutexLocker>
@@ -49,6 +54,30 @@
 #include <algorithm>
 
 namespace quentier::synchronization {
+
+namespace {
+
+[[nodiscard]] std::optional<qevercloud::Guid> inkNoteResourceGuid(
+    const qevercloud::Note & note)
+{
+    if (!note.resources()) {
+        return std::nullopt;
+    }
+
+    for (const auto & resource: qAsConst(*note.resources())) {
+        if (resource.guid() && resource.mime() && resource.width() &&
+            resource.height() &&
+            (*resource.mime() ==
+             QStringLiteral("application/vnd.evernote.ink")))
+        {
+            return *resource.guid();
+        }
+    }
+
+    return std::nullopt;
+}
+
+} // namespace
 
 NotesProcessor::NotesProcessor(
     local_storage::ILocalStoragePtr localStorage,
@@ -596,10 +625,55 @@ void NotesProcessor::processDownloadedFullNoteData(
         std::move(noteFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [this, context, promise, noteKind](qevercloud::Note note) mutable {
-                // TODO: if note is the ink one and need to download ink note
-                // image, first download it and then put the note into the local
-                // storage
+            [this, selfWeak, context, promise,
+             noteKind](qevercloud::Note note) mutable {
+                const std::optional<QDir> & inkNoteImagesStorageDir =
+                    m_syncOptions->inkNoteImagesStorageDir();
+                if (inkNoteImagesStorageDir) {
+                    auto inkResourceGuid = inkNoteResourceGuid(note);
+                    if (inkResourceGuid) {
+                        auto future = downloadInkNoteImage(
+                            context, note.notebookLocalId(), *inkResourceGuid,
+                            *inkNoteImagesStorageDir);
+
+                        auto thenFuture = threading::then(
+                            std::move(future),
+                            threading::TrackedTask{
+                                selfWeak,
+                                [this, context, promise, note,
+                                 noteKind]() mutable {
+                                    putNoteToLocalStorage(
+                                        context, promise, std::move(note),
+                                        noteKind);
+                                }});
+
+                        threading::onFailed(
+                            std::move(thenFuture),
+                            [this, selfWeak, context, promise, note,
+                             noteKind](const QException & e) mutable {
+                                const auto self = selfWeak.lock();
+                                if (!self) {
+                                    return;
+                                }
+
+                                QNWARNING(
+                                    "synchronization::NotesProcessor",
+                                    "Failed to download ink note image for note"
+                                        << " with guid "
+                                        << note.guid().value_or(
+                                               QStringLiteral("<empty>"))
+                                        << ": " << e.what());
+
+                                // Ignoring this error and saving the note to
+                                // the local storage anyway
+                                putNoteToLocalStorage(
+                                    context, promise, std::move(note),
+                                    noteKind);
+                            });
+
+                        return;
+                    }
+                }
 
                 putNoteToLocalStorage(
                     context, promise, std::move(note), noteKind);
@@ -671,6 +745,82 @@ void NotesProcessor::processNoteDownloadingError(
 
     promise->addResult(ProcessNoteStatus::FailedToDownloadFullNoteData);
     promise->finish();
+}
+
+QFuture<void> NotesProcessor::downloadInkNoteImage(
+    const ContextPtr & context, const QString & notebookLocalId,
+    const qevercloud::Guid & resourceGuid, const QDir & inkNoteImagesStorageDir)
+{
+    if (!inkNoteImagesStorageDir.exists()) {
+        if (!inkNoteImagesStorageDir.mkpath(
+                inkNoteImagesStorageDir.absolutePath())) {
+            return threading::makeExceptionalFuture<void>(
+                RuntimeError{ErrorString{
+                    QStringLiteral("Failed to create directory for ink note "
+                                   "images storage: ") +
+                    inkNoteImagesStorageDir.absolutePath()}});
+        }
+    }
+
+    auto promise = std::make_shared<QPromise<void>>();
+    auto future = promise->future();
+    promise->start();
+
+    auto downloaderFuture =
+        m_inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
+            notebookLocalId, m_ctx);
+
+    const auto selfWeak = weak_from_this();
+
+    threading::thenOrFailed(
+        std::move(downloaderFuture), promise,
+        [this, selfWeak, promise, context, resourceGuid,
+         inkNoteImagesStorageDir](
+            const qevercloud::IInkNoteImageDownloaderPtr & downloader) {
+            if (context->canceler->isCanceled()) {
+                promise->setException(OperationCanceled{});
+                promise->finish();
+                return;
+            }
+
+            const auto self = selfWeak.lock();
+            if (!self) {
+                return;
+            }
+
+            Q_ASSERT(downloader);
+            auto imageDataFuture =
+                downloader->downloadAsync(resourceGuid, QSize{300, 300}, m_ctx);
+
+            threading::thenOrFailed(
+                std::move(imageDataFuture), promise,
+                [selfWeak, promise, resourceGuid, context,
+                 inkNoteImagesStorageDir](const QByteArray & imageData) {
+                    if (context->canceler->isCanceled()) {
+                        promise->setException(OperationCanceled{});
+                        promise->finish();
+                    }
+
+                    QFile inkNoteImageFile{inkNoteImagesStorageDir.filePath(
+                        resourceGuid + QStringLiteral(".png"))};
+
+                    if (!inkNoteImageFile.open(QIODevice::WriteOnly)) {
+                        promise->setException(
+                            RuntimeError{ErrorString{QStringLiteral(
+                                "Failed to open file for writing "
+                                "to write downloaded ink note image")}});
+                        promise->finish();
+                        return;
+                    }
+
+                    inkNoteImageFile.write(imageData);
+                    inkNoteImageFile.close();
+
+                    promise->finish();
+                });
+        });
+
+    return future;
 }
 
 QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(

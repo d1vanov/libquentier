@@ -89,9 +89,8 @@ bool isInkNote(const qevercloud::Note & note)
             return false;
         }
 
-        if (
-            *resource.mime() !=
-            QStringLiteral("application/vnd.evernote.ink")) {
+        if (*resource.mime() != QStringLiteral("application/vnd.evernote.ink"))
+        {
             return false;
         }
     }
@@ -136,8 +135,8 @@ QString noteContentToPlainText(
     QString plainText;
     ErrorString error;
 
-    const bool res = ENMLConverter::noteContentToPlainText(
-        noteContent, plainText, error);
+    const bool res =
+        ENMLConverter::noteContentToPlainText(noteContent, plainText, error);
 
     if (!res) {
         QNWARNING("types:note_utils", error);
@@ -157,8 +156,8 @@ QStringList noteContentToListOfWords(
     QStringList result;
     ErrorString error;
 
-    const bool res = ENMLConverter::noteContentToListOfWords(
-        noteContent, result, error);
+    const bool res =
+        ENMLConverter::noteContentToListOfWords(noteContent, result, error);
 
     if (!res) {
         QNWARNING("types:note_utils", error);

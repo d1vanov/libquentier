@@ -37,6 +37,8 @@
 
 #include <memory>
 
+class QDir;
+
 namespace quentier::synchronization {
 
 class NotesProcessor final :
@@ -122,6 +124,11 @@ private:
         const ContextPtr & context,
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
         const qevercloud::Note & note, const QException & e);
+
+    [[nodiscard]] QFuture<void> downloadInkNoteImage(
+        const ContextPtr & context,
+        const QString & notebookLocalId, const qevercloud::Guid & resourceGuid,
+        const QDir & inkNoteImagesStorageDir);
 
     [[nodiscard]] QFuture<qevercloud::Note> downloadNoteThumbnail(
         qevercloud::Note note);
