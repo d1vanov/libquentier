@@ -38,17 +38,21 @@
 #include <synchronization/tests/mocks/MockINoteFullDataDownloader.h>
 #include <synchronization/tests/mocks/MockINoteStoreProvider.h>
 #include <synchronization/tests/mocks/MockINoteThumbnailDownloaderFactory.h>
+#include <synchronization/tests/mocks/qevercloud/MockIInkNoteImageDownloader.h>
+#include <synchronization/tests/mocks/qevercloud/MockINoteThumbnailDownloader.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <qevercloud/DurableService.h>
 #include <qevercloud/RequestContext.h>
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
+#include <qevercloud/types/builders/ResourceBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
 #include <QCoreApplication>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QTemporaryDir>
 
 #include <gtest/gtest.h>
 
@@ -61,6 +65,7 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::_;
 using testing::Return;
 using testing::ReturnRef;
 using testing::StrictMock;
@@ -123,9 +128,17 @@ protected:
         m_mockNoteStoreProvider =
             std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
 
+    const std::shared_ptr<mocks::qevercloud::MockIInkNoteImageDownloader>
+        m_mockInkNoteImageDownloader = std::make_shared<
+            StrictMock<mocks::qevercloud::MockIInkNoteImageDownloader>>();
+
     const std::shared_ptr<mocks::MockIInkNoteImageDownloaderFactory>
         m_mockInkNoteImageDownloaderFactory = std::make_shared<
             StrictMock<mocks::MockIInkNoteImageDownloaderFactory>>();
+
+    const std::shared_ptr<mocks::qevercloud::MockINoteThumnailDownloader>
+        m_mockNoteThumbnailDownloader = std::make_shared<
+            StrictMock<mocks::qevercloud::MockINoteThumnailDownloader>>();
 
     const std::shared_ptr<mocks::MockINoteThumbnailDownloaderFactory>
         m_mockNoteThumbnailDownloaderFactory = std::make_shared<
@@ -2624,6 +2637,202 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
             continue;
         }
 
+        const auto it =
+            callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, callback->m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
+}
+
+TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
+{
+    const std::optional<qevercloud::Guid> linkedNotebookGuid;
+    EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
+        .WillRepeatedly(ReturnRef(linkedNotebookGuid));
+
+    m_syncOptions->m_downloadNoteThumbnails = true;
+
+    const auto notebookGuid = UidGenerator::Generate();
+    const auto notebookLocalId = UidGenerator::Generate();
+
+    auto notes = QList<qevercloud::Note>{}
+        << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setNotebookLocalId(notebookLocalId)
+               .setUpdateSequenceNum(1)
+               .setTitle(QStringLiteral("Note #1"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setLocalId(UidGenerator::Generate())
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setNotebookLocalId(notebookLocalId)
+               .setUpdateSequenceNum(2)
+               .setTitle(QStringLiteral("Note #2"))
+               .setResources(
+                   QList<qevercloud::Resource>{}
+                   << qevercloud::ResourceBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setGuid(UidGenerator::Generate())
+                          .setUpdateSequenceNum(12)
+                          .build())
+               .build();
+
+    QMutex mutex;
+    QList<qevercloud::Note> notesPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid,
+                            const local_storage::ILocalStorage::FetchNoteOptions
+                                fetchNoteOptions) {
+            using FetchNoteOptions =
+                local_storage::ILocalStorage::FetchNoteOptions;
+            using FetchNoteOption =
+                local_storage::ILocalStorage::FetchNoteOption;
+
+            EXPECT_EQ(
+                fetchNoteOptions,
+                FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
+
+            const QMutexLocker locker{&mutex};
+            EXPECT_FALSE(triedGuids.contains(guid));
+            triedGuids.insert(guid);
+
+            const auto it = std::find_if(
+                notesPutIntoLocalStorage.constBegin(),
+                notesPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == guid);
+                });
+            if (it != notesPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Note>>(*it);
+            }
+
+            return threading::makeReadyFuture<std::optional<qevercloud::Note>>(
+                std::nullopt);
+        });
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
+
+    EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            Q_UNUSED(ctx)
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
+
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
+
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
+
+    EXPECT_CALL(
+        *m_mockNoteThumbnailDownloaderFactory,
+        createNoteThumbnailDownloader(notebookLocalId, _))
+        .WillOnce(Return(
+            threading::makeReadyFuture<qevercloud::INoteThumbnailDownloaderPtr>(
+                m_mockNoteThumbnailDownloader)));
+
+    const QByteArray sampleNoteThumbnailData =
+        QString::fromUtf8("data").toUtf8();
+    EXPECT_CALL(
+        *m_mockNoteThumbnailDownloader,
+        downloadNoteThumbnailAsync(
+            notes[1].guid().value(), _,
+            qevercloud::INoteThumbnailDownloader::ImageType::PNG, _))
+        .WillOnce(Return(
+            threading::makeReadyFuture<QByteArray>(sampleNoteThumbnailData)));
+
+    EXPECT_CALL(*m_mockLocalStorage, putNote)
+        .WillRepeatedly([&](const qevercloud::Note & note) {
+            if (Q_UNLIKELY(!note.guid())) {
+                return threading::makeExceptionalFuture<void>(
+                    RuntimeError{ErrorString{"Detected note without guid"}});
+            }
+
+            const QMutexLocker locker{&mutex};
+            EXPECT_TRUE(triedGuids.contains(*note.guid()));
+
+            notesPutIntoLocalStorage << note;
+            return threading::makeReadyFuture();
+        });
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
+
+    const auto notesProcessor = std::make_shared<NotesProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver,
+        m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
+        m_mockInkNoteImageDownloaderFactory,
+        m_mockNoteThumbnailDownloaderFactory, m_syncOptions);
+
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
+    while (!future.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_NO_THROW(future.waitForFinished());
+
+    notes[1].setThumbnailData(sampleNoteThumbnailData);
+    compareNoteLists(notesPutIntoLocalStorage, notes);
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+    EXPECT_EQ(status->m_totalNewNotes, static_cast<quint64>(notes.size()));
+    EXPECT_EQ(status->m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status->m_totalExpungedNotes, 0UL);
+    EXPECT_TRUE(status->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status->m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status->m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status->m_expungedNoteGuids.isEmpty());
+
+    ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
+
+    for (const auto & note: qAsConst(notes)) {
+        const auto it =
+            status->m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status->m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(
+        status->m_stopSynchronizationError));
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+    EXPECT_TRUE(callback->m_expungedNoteGuids.isEmpty());
+
+    ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
+
+    for (const auto & note: qAsConst(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
