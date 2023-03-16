@@ -57,7 +57,7 @@ namespace quentier::synchronization {
 
 namespace {
 
-[[nodiscard]] std::optional<qevercloud::Guid> inkNoteResourceGuid(
+[[nodiscard]] std::optional<qevercloud::Resource> inkNoteResource(
     const qevercloud::Note & note)
 {
     if (!note.resources()) {
@@ -70,7 +70,7 @@ namespace {
             (*resource.mime() ==
              QStringLiteral("application/vnd.evernote.ink")))
         {
-            return *resource.guid();
+            return resource;
         }
     }
 
@@ -630,11 +630,11 @@ void NotesProcessor::processDownloadedFullNoteData(
                 const std::optional<QDir> & inkNoteImagesStorageDir =
                     m_syncOptions->inkNoteImagesStorageDir();
                 if (inkNoteImagesStorageDir) {
-                    auto inkResourceGuid = inkNoteResourceGuid(note);
-                    if (inkResourceGuid) {
+                    auto inkResource = inkNoteResource(note);
+                    if (inkResource) {
                         auto future = downloadInkNoteImage(
-                            context, note.notebookLocalId(), *inkResourceGuid,
-                            *inkNoteImagesStorageDir);
+                            context, note.notebookLocalId(),
+                            std::move(*inkResource), *inkNoteImagesStorageDir);
 
                         auto thenFuture = threading::then(
                             std::move(future),
@@ -749,8 +749,12 @@ void NotesProcessor::processNoteDownloadingError(
 
 QFuture<void> NotesProcessor::downloadInkNoteImage(
     const ContextPtr & context, const QString & notebookLocalId,
-    const qevercloud::Guid & resourceGuid, const QDir & inkNoteImagesStorageDir)
+    qevercloud::Resource resource, const QDir & inkNoteImagesStorageDir)
 {
+    Q_ASSERT(resource.guid());
+    Q_ASSERT(resource.height());
+    Q_ASSERT(resource.width());
+
     if (!inkNoteImagesStorageDir.exists()) {
         if (!inkNoteImagesStorageDir.mkpath(
                 inkNoteImagesStorageDir.absolutePath())) {
@@ -774,8 +778,8 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
 
     threading::thenOrFailed(
         std::move(downloaderFuture), promise,
-        [this, selfWeak, promise, context, resourceGuid,
-         inkNoteImagesStorageDir](
+        [this, selfWeak, promise, context, inkNoteImagesStorageDir,
+         resource = std::move(resource)](
             const qevercloud::IInkNoteImageDownloaderPtr & downloader) {
             if (context->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
@@ -789,12 +793,13 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
             }
 
             Q_ASSERT(downloader);
-            auto imageDataFuture =
-                downloader->downloadAsync(resourceGuid, QSize{300, 300}, m_ctx);
+            auto imageDataFuture = downloader->downloadAsync(
+                *resource.guid(), QSize{*resource.width(), *resource.height()},
+                m_ctx);
 
             threading::thenOrFailed(
                 std::move(imageDataFuture), promise,
-                [selfWeak, promise, resourceGuid, context,
+                [selfWeak, promise, resourceGuid = *resource.guid(), context,
                  inkNoteImagesStorageDir](const QByteArray & imageData) {
                     if (context->canceler->isCanceled()) {
                         promise->setException(OperationCanceled{});
