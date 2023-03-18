@@ -400,6 +400,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/OperationCanceled.cpp
     src/exception/RuntimeError.cpp
     src/local_storage/ILocalStorage.cpp
+    src/local_storage/ILocalStorageNotifier.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
     src/local_storage/IPatch.cpp
     src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp

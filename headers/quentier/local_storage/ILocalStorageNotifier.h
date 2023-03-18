@@ -28,10 +28,10 @@ class QUENTIER_EXPORT ILocalStorageNotifier : public QObject
 {
     Q_OBJECT
 protected:
-    ILocalStorageNotifier(QObject * parent = nullptr) : QObject(parent) {}
+    explicit ILocalStorageNotifier(QObject * parent = nullptr);
 
 public:
-    ~ILocalStorageNotifier() override = default;
+    ~ILocalStorageNotifier() override;
 
 Q_SIGNALS:
     // Notifications about user related events
