@@ -45,6 +45,8 @@ target_sources(${LIBRARY_NAME}
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
+  SyncEventsNotifier.cpp
+  SyncEventsNotifier.h
   UserInfoProvider.cpp
   UserInfoProvider.h
   Utils.cpp

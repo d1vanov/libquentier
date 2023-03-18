@@ -132,6 +132,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/IUserStore.h
     headers/quentier/synchronization/ISyncChunksDataCounters.h
     headers/quentier/synchronization/ISyncConflictResolver.h
+    headers/quentier/synchronization/ISyncEventsNotifier.h
     headers/quentier/synchronization/ISynchronizer.h
     headers/quentier/synchronization/SynchronizationManager.h
     headers/quentier/synchronization/types/Errors.h
@@ -250,6 +251,7 @@ set(PRIVATE_HEADERS
     src/enml/DecryptedTextManager_p.h
     src/synchronization/ExceptionHandlingHelpers.h
     src/synchronization/InkNoteImageDownloader.h
+    src/synchronization/ISyncEventsNotifier.cpp
     src/synchronization/NoteStore.h
     src/synchronization/UserStore.h
     src/synchronization/NoteThumbnailDownloader.h
