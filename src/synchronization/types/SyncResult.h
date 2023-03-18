@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,6 +40,14 @@ struct SyncResult final: public ISyncResult
     [[nodiscard]] QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
         linkedNotebookDownloadResourcesStatuses() const override;
 
+    [[nodiscard]] ISendStatusPtr userAccountSendStatus() const override;
+
+    [[nodiscard]] QHash<qevercloud::Guid, ISendStatusPtr>
+        linkedNotebookSendStatuses() const override;
+
+    [[nodiscard]] StopSynchronizationError stopSynchronizationError()
+        const override;
+
     [[nodiscard]] ISyncStatsPtr syncStats() const noexcept override;
 
     QTextStream & print(QTextStream & strm) const override;
@@ -53,6 +61,12 @@ struct SyncResult final: public ISyncResult
     DownloadResourcesStatusPtr m_userAccountDownloadResourcesStatus;
     QHash<qevercloud::Guid, DownloadResourcesStatusPtr>
         m_linkedNotebookDownloadResourcesStatuses;
+
+    SendStatusPtr m_userAccountSendStatus;
+    QHash<qevercloud::Guid, SendStatusPtr> m_linkedNotebookSendStatuses;
+
+    StopSynchronizationError m_stopSynchronizationError =
+        StopSynchronizationError{std::monostate{}};
 
     ISyncStatsPtr m_syncStats;
 };

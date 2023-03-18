@@ -445,6 +445,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NoteSyncCache.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/SyncChunksDataCounters.cpp
+    src/synchronization/types/Errors.cpp
     src/synchronization/types/IDownloadNotesStatus.cpp
     src/synchronization/types/IDownloadResourcesStatus.cpp
     src/synchronization/types/ISyncOptions.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -131,7 +131,7 @@ public:
 
         /**
         * This method is called on each successful download of full note data
-        * from use 's own account.
+        * from user's own account.
         *
         * @param notesDownloaded       The number of notes downloaded by the
         *                              moment

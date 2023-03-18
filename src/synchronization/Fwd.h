@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,6 +26,9 @@ namespace quentier::synchronization {
 
 class IAccountLimitsProvider;
 using IAccountLimitsProviderPtr = std::shared_ptr<IAccountLimitsProvider>;
+
+class IAccountSynchronizer;
+using IAccountSynchronizerPtr = std::shared_ptr<IAccountSynchronizer>;
 
 class IAuthenticationInfoProvider;
 using IAuthenticationInfoProviderPtr =

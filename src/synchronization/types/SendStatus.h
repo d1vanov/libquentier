@@ -83,4 +83,10 @@ struct SendStatus final : public ISendStatus
     bool m_needToRepeatIncrementalSync = false;
 };
 
+[[nodiscard]] bool operator==(
+    const SendStatus & lhs, const SendStatus & rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const SendStatus & lhs, const SendStatus & rhs) noexcept;
+
 } // namespace quentier::synchronization

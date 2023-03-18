@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Errors.h>
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
@@ -44,6 +45,14 @@ public:
 
     [[nodiscard]] virtual QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
         linkedNotebookDownloadResourcesStatuses() const = 0;
+
+    [[nodiscard]] virtual ISendStatusPtr userAccountSendStatus() const = 0;
+
+    [[nodiscard]] virtual QHash<qevercloud::Guid, ISendStatusPtr>
+        linkedNotebookSendStatuses() const = 0;
+
+    [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
+        const = 0;
 
     [[nodiscard]] virtual ISyncStatsPtr syncStats() const = 0;
 };

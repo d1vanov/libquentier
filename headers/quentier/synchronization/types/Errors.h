@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,6 +44,14 @@ struct QUENTIER_EXPORT RateLimitReachedError
     std::optional<qint32> rateLimitDurationSec;
 };
 
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const RateLimitReachedError & lhs,
+    const RateLimitReachedError & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const RateLimitReachedError & lhs,
+    const RateLimitReachedError & rhs) noexcept;
+
 /**
  * Authentication expired error indicates that used authentication token has
  * expired so authentication should be repeated before the next attempt to run
@@ -52,6 +60,14 @@ struct QUENTIER_EXPORT RateLimitReachedError
 struct QUENTIER_EXPORT AuthenticationExpiredError
 {
 };
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const AuthenticationExpiredError & lhs,
+    const AuthenticationExpiredError & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const AuthenticationExpiredError & lhs,
+    const AuthenticationExpiredError & rhs) noexcept;
 
 /**
  * Possible errors which could lead to synchronization being stopped as

@@ -181,4 +181,35 @@ QTextStream & SendStatus::print(QTextStream & strm) const
     return strm;
 }
 
+bool operator==(const SendStatus & lhs, const SendStatus & rhs) noexcept
+{
+    return (lhs.m_totalAttemptedToSendNotes ==
+            rhs.m_totalAttemptedToSendNotes) &&
+        (lhs.m_totalAttemptedToSendNotebooks ==
+         rhs.m_totalAttemptedToSendNotebooks) &&
+        (lhs.m_totalAttemptedToSendSavedSearches ==
+         rhs.m_totalAttemptedToSendSavedSearches) &&
+        (lhs.m_totalAttemptedToSendTags == rhs.m_totalAttemptedToSendTags) &&
+        (lhs.m_totalSuccessfullySentNotes ==
+         rhs.m_totalSuccessfullySentNotes) &&
+        (lhs.m_failedToSendNotes == rhs.m_failedToSendNotes) &&
+        (lhs.m_totalSuccessfullySentNotebooks ==
+         rhs.m_totalSuccessfullySentNotebooks) &&
+        (lhs.m_failedToSendNotebooks == rhs.m_failedToSendNotebooks) &&
+        (lhs.m_totalSuccessfullySentSavedSearches ==
+         rhs.m_totalSuccessfullySentSavedSearches) &&
+        (lhs.m_failedToSendSavedSearches == rhs.m_failedToSendSavedSearches) &&
+        (lhs.m_totalSuccessfullySentTags == rhs.m_totalSuccessfullySentTags) &&
+        (lhs.m_failedToSendTags == rhs.m_failedToSendTags) &&
+        (lhs.m_stopSynchronizationError == rhs.m_stopSynchronizationError) &&
+        (lhs.m_needToRepeatIncrementalSync ==
+         rhs.m_needToRepeatIncrementalSync);
+}
+
+bool operator!=(
+    const SendStatus & lhs, const SendStatus & rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
 } // namespace quentier::synchronization
