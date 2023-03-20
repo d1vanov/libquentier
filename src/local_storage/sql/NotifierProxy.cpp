@@ -37,7 +37,10 @@ NotifierProxy::NotifierProxy(threading::QThreadPtr writerThread) :
 
 NotifierProxy::~NotifierProxy()
 {
-    m_notifier->deleteLater();
+    if (m_notifier) {
+        m_notifier->disconnect();
+        m_notifier->deleteLater();
+    }
 }
 
 ILocalStorageNotifier * NotifierProxy::notifier() const noexcept
@@ -53,9 +56,7 @@ void NotifierProxy::notifyUserPut(qevercloud::User user)
     }
 
     threading::postToObject(
-        m_notifier,
-        [notifier = m_notifier, user = std::move(user)] () mutable
-        {
+        m_notifier, [notifier = m_notifier, user = std::move(user)]() mutable {
             notifier->notifyUserPut(std::move(user));
         });
 }
@@ -68,9 +69,7 @@ void NotifierProxy::notifyUserExpunged(qevercloud::UserID userId)
     }
 
     threading::postToObject(
-        m_notifier,
-        [notifier = m_notifier, userId] () mutable
-        {
+        m_notifier, [notifier = m_notifier, userId]() mutable {
             notifier->notifyUserExpunged(userId);
         });
 }
@@ -84,8 +83,7 @@ void NotifierProxy::notifyNotebookPut(qevercloud::Notebook notebook)
 
     threading::postToObject(
         m_notifier,
-        [notifier = m_notifier, notebook = std::move(notebook)] () mutable
-        {
+        [notifier = m_notifier, notebook = std::move(notebook)]() mutable {
             notifier->notifyNotebookPut(std::move(notebook));
         });
 }
@@ -146,9 +144,7 @@ void NotifierProxy::notifyNotePut(qevercloud::Note note)
     }
 
     threading::postToObject(
-        m_notifier,
-        [notifier = m_notifier, note = std::move(note)] () mutable
-        {
+        m_notifier, [notifier = m_notifier, note = std::move(note)]() mutable {
             notifier->notifyNotePut(std::move(note));
         });
 }
@@ -163,8 +159,7 @@ void NotifierProxy::notifyNoteUpdated(
 
     threading::postToObject(
         m_notifier,
-        [notifier = m_notifier, note = std::move(note), options] () mutable
-        {
+        [notifier = m_notifier, note = std::move(note), options]() mutable {
             notifier->notifyNoteUpdated(std::move(note), options);
         });
 }
@@ -206,7 +201,7 @@ void NotifierProxy::notifyNoteTagListChanged(
         m_notifier,
         [notifier = m_notifier, noteLocalId = std::move(noteLocalId),
          previousNoteTagLocalIds = std::move(previousNoteTagLocalIds),
-         newNoteTagLocalIds = std::move(newNoteTagLocalIds)] () mutable {
+         newNoteTagLocalIds = std::move(newNoteTagLocalIds)]() mutable {
             notifier->notifyNoteTagListChanged(
                 std::move(noteLocalId), std::move(previousNoteTagLocalIds),
                 std::move(newNoteTagLocalIds));
@@ -236,9 +231,7 @@ void NotifierProxy::notifyTagPut(qevercloud::Tag tag)
     }
 
     threading::postToObject(
-        m_notifier,
-        [notifier = m_notifier, tag = std::move(tag)] () mutable
-        {
+        m_notifier, [notifier = m_notifier, tag = std::move(tag)]() mutable {
             notifier->notifyTagPut(std::move(tag));
         });
 }
@@ -271,8 +264,7 @@ void NotifierProxy::notifyResourcePut(qevercloud::Resource resource)
 
     threading::postToObject(
         m_notifier,
-        [notifier = m_notifier, resource = std::move(resource)] () mutable
-        {
+        [notifier = m_notifier, resource = std::move(resource)]() mutable {
             notifier->notifyResourcePut(std::move(resource));
         });
 }
@@ -301,8 +293,8 @@ void NotifierProxy::notifySavedSearchPut(qevercloud::SavedSearch savedSearch)
 
     threading::postToObject(
         m_notifier,
-        [notifier = m_notifier, savedSearch = std::move(savedSearch)] () mutable
-        {
+        [notifier = m_notifier,
+         savedSearch = std::move(savedSearch)]() mutable {
             notifier->notifySavedSearchPut(std::move(savedSearch));
         });
 }

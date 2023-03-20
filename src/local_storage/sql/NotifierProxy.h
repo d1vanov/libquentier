@@ -31,9 +31,9 @@ namespace quentier::local_storage::sql {
  * created and managed object of Notifier class.
  *
  * The purpose behind the proxy object is to ensure methods of Notifier
- * are always called from the writer thread. It also allows to manage the lifetime
- * of Notifier class more properly: Notifier is guaranteed to be alive at least
- * for as long as NotifierProxy.
+ * are always called from the writer thread. It also allows to manage the
+ * lifetime of Notifier object more properly: Notifier is guaranteed to be alive
+ * at least for as long as NotifierProxy.
  */
 class NotifierProxy
 {
@@ -81,7 +81,7 @@ public:
 
 private:
     const threading::QThreadPtr m_writerThread;
-    Notifier * m_notifier;
+    Notifier * m_notifier = nullptr;
 };
 
 } // namespace quentier::local_storage::sql

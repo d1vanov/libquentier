@@ -132,6 +132,8 @@ using ITagsProcessorPtr = std::shared_ptr<ITagsProcessor>;
 struct SendStatus;
 using SendStatusPtr = std::shared_ptr<SendStatus>;
 
+class SyncEventsNotifier;
+
 } // namespace quentier::synchronization
 
 namespace quentier {
