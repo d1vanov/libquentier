@@ -34,6 +34,9 @@ class IAuthenticationInfoProvider;
 using IAuthenticationInfoProviderPtr =
     std::shared_ptr<IAuthenticationInfoProvider>;
 
+class IDownloader;
+using IDownloaderPtr = std::shared_ptr<IDownloader>;
+
 class IDurableNotesProcessor;
 using IDurableNotesProcessorPtr = std::shared_ptr<IDurableNotesProcessor>;
 
@@ -70,6 +73,9 @@ using IProtocolVersionCheckerPtr = std::shared_ptr<IProtocolVersionChecker>;
 
 class IResourceFullDataDownloader;
 using IResourceFullDataDownloaderPtr = std::shared_ptr<IResourceFullDataDownloader>;
+
+class ISender;
+using ISenderPtr = std::shared_ptr<ISender>;
 
 class IUserInfoProvider;
 using IUserInfoProviderPtr = std::shared_ptr<IUserInfoProvider>;

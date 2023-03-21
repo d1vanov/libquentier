@@ -8,6 +8,8 @@ target_sources(${LIBRARY_NAME}
   PRIVATE
   AccountLimitsProvider.cpp
   AccountLimitsProvider.h
+  AccountSynchronizer.cpp
+  AccountSynchronizer.h
   AuthenticationInfoProvider.cpp
   AuthenticationInfoProvider.h
   Downloader.cpp
@@ -16,6 +18,7 @@ target_sources(${LIBRARY_NAME}
   FullSyncStaleDataExpunger.cpp
   FullSyncStaleDataExpunger.h
   IAccountLimitsProvider.h
+  IAccountSynchronizer.h
   IAuthenticationInfoProvider.h
   IDownloader.h
   IFullSyncStaleDataExpunger.cpp
