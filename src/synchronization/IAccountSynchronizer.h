@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/utility/cancelers/Fwd.h>
+
 #include <synchronization/IDownloader.h>
 #include <synchronization/ISender.h>
 
@@ -38,7 +40,8 @@ public:
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
     [[nodiscard]] virtual QFuture<ISyncResultPtr> synchronize(
-        ICallbackWeakPtr callbackWeak) = 0;
+        ICallbackWeakPtr callbackWeak,
+        utility::cancelers::ICancelerPtr canceler) = 0;
 };
 
 } // namespace quentier::synchronization

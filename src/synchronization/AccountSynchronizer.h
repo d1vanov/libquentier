@@ -18,23 +18,56 @@
 
 #pragma once
 
+#include <quentier/threading/Fwd.h>
+
 #include <synchronization/Fwd.h>
 #include <synchronization/IAccountSynchronizer.h>
+#include <synchronization/types/Fwd.h>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <memory>
 
 namespace quentier::synchronization {
 
-class AccountSynchronizer final : public IAccountSynchronizer
+class AccountSynchronizer final :
+    public IAccountSynchronizer,
+    public std::enable_shared_from_this<AccountSynchronizer>
 {
 public:
-    AccountSynchronizer(IDownloaderPtr downloader, ISenderPtr sender);
+    AccountSynchronizer(
+        IDownloaderPtr downloader, ISenderPtr sender,
+        IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        threading::QThreadPoolPtr threadPool);
 
 public: // IAccountSynchronizer
     [[nodiscard]] QFuture<ISyncResultPtr> synchronize(
-        ICallbackWeakPtr callbackWeak) override;
+        ICallbackWeakPtr callbackWeak,
+        utility::cancelers::ICancelerPtr canceler) override;
+
+private:
+    struct Context
+    {
+        std::shared_ptr<QPromise<ISyncResultPtr>> promise;
+        ICallbackWeakPtr callbackWeak;
+        utility::cancelers::ICancelerPtr canceler;
+        SyncResultConstPtr previousSyncResult;
+        bool sendNeeded = true;
+    };
+
+    using ContextPtr = std::shared_ptr<Context>;
+
+    void synchronizeImpl(ContextPtr context);
 
 private:
     const IDownloaderPtr m_downloader;
     const ISenderPtr m_sender;
+    const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
+    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization
