@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/threading/Fwd.h>
+#include <quentier/types/Account.h>
 
 #include <synchronization/Fwd.h>
 #include <synchronization/IAccountSynchronizer.h>
@@ -40,7 +41,7 @@ class AccountSynchronizer final :
 {
 public:
     AccountSynchronizer(
-        IDownloaderPtr downloader, ISenderPtr sender,
+        Account account, IDownloaderPtr downloader, ISenderPtr sender,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         threading::QThreadPoolPtr threadPool);
 
@@ -55,15 +56,23 @@ private:
         std::shared_ptr<QPromise<ISyncResultPtr>> promise;
         ICallbackWeakPtr callbackWeak;
         utility::cancelers::ICancelerPtr canceler;
-        SyncResultConstPtr previousSyncResult;
+        SyncResultPtr previousSyncResult;
         bool sendNeeded = true;
     };
 
     using ContextPtr = std::shared_ptr<Context>;
 
     void synchronizeImpl(ContextPtr context);
+    void onDownloadFinished(
+        ContextPtr context, const IDownloader::Result & downloadResult);
+
+    void appendToPreviousSyncResult(
+        Context & context, const IDownloader::Result & downloadResult) const;
+
+    void clearAuthenticationCachesAndRestartSync(ContextPtr context);
 
 private:
+    const Account m_account;
     const IDownloaderPtr m_downloader;
     const ISenderPtr m_sender;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
