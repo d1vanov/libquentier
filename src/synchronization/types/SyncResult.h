@@ -20,6 +20,7 @@
 
 #include <quentier/synchronization/types/ISyncResult.h>
 
+#include <synchronization/Fwd.h>
 #include <synchronization/types/Fwd.h>
 
 namespace quentier::synchronization {
@@ -27,6 +28,12 @@ namespace quentier::synchronization {
 struct SyncResult final: public ISyncResult
 {
     [[nodiscard]] ISyncStatePtr syncState() const noexcept override;
+
+    [[nodiscard]] ISyncChunksDataCountersPtr
+        userAccountSyncChunksDataCounters() const noexcept override;
+
+    [[nodiscard]] QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+        linkedNotebookSyncChunksDataCounters() const override;
 
     [[nodiscard]] IDownloadNotesStatusPtr
         userAccountDownloadNotesStatus() const noexcept override;
@@ -53,6 +60,10 @@ struct SyncResult final: public ISyncResult
     QTextStream & print(QTextStream & strm) const override;
 
     SyncStatePtr m_syncState;
+
+    SyncChunksDataCountersPtr m_userAccountSyncChunksDataCounters;
+    QHash<qevercloud::Guid, SyncChunksDataCountersPtr>
+        m_linkedNotebookSyncChunksDataCounters;
 
     DownloadNotesStatusPtr m_userAccountDownloadNotesStatus;
     QHash<qevercloud::Guid, DownloadNotesStatusPtr>

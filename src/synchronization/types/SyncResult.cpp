@@ -18,6 +18,7 @@
 
 #include "SyncResult.h"
 
+#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
@@ -31,6 +32,25 @@ namespace quentier::synchronization {
 ISyncStatePtr SyncResult::syncState() const noexcept
 {
     return m_syncState;
+}
+
+ISyncChunksDataCountersPtr SyncResult::userAccountSyncChunksDataCounters()
+    const noexcept
+{
+    return m_userAccountSyncChunksDataCounters;
+}
+
+QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+    SyncResult::linkedNotebookSyncChunksDataCounters() const
+{
+    QHash<qevercloud::Guid, ISyncChunksDataCountersPtr> result;
+    result.reserve(m_linkedNotebookSyncChunksDataCounters.size());
+    for (const auto it:
+         qevercloud::toRange(qAsConst(m_linkedNotebookSyncChunksDataCounters)))
+    {
+        result[it.key()] = it.value();
+    }
+    return result;
 }
 
 IDownloadNotesStatusPtr SyncResult::userAccountDownloadNotesStatus()
@@ -77,14 +97,13 @@ ISendStatusPtr SyncResult::userAccountSendStatus() const
     return m_userAccountSendStatus;
 }
 
-QHash<qevercloud::Guid, ISendStatusPtr>
-    SyncResult::linkedNotebookSendStatuses() const
+QHash<qevercloud::Guid, ISendStatusPtr> SyncResult::linkedNotebookSendStatuses()
+    const
 {
     QHash<qevercloud::Guid, ISendStatusPtr> result;
     result.reserve(m_linkedNotebookSendStatuses.size());
-    for (const auto it: qevercloud::toRange(
-             qAsConst(m_linkedNotebookSendStatuses)))
-    {
+    for (const auto it:
+         qevercloud::toRange(qAsConst(m_linkedNotebookSendStatuses))) {
         result[it.key()] = it.value();
     }
     return result;
@@ -107,6 +126,29 @@ QTextStream & SyncResult::print(QTextStream & strm) const
     if (m_syncState) {
         strm << "sync state = ";
         m_syncState->print(strm);
+    }
+
+    if (m_userAccountSyncChunksDataCounters) {
+        strm << "userAccountSyncChunksDataCounters = ";
+        m_userAccountSyncChunksDataCounters->print(strm);
+    }
+
+    strm << ", linkedNotebookSyncChunksDataCounters = ";
+    if (m_linkedNotebookSyncChunksDataCounters.isEmpty()) {
+        strm << "<empty>";
+    }
+    else {
+        for (const auto it:
+             qevercloud::toRange(m_linkedNotebookSyncChunksDataCounters)) {
+            if (Q_UNLIKELY(!it.value())) {
+                continue;
+            }
+
+            strm << "{" << it.key() << ": ";
+            it.value()->print(strm);
+            strm << "};";
+        }
+        strm << " ";
     }
 
     if (m_userAccountDownloadNotesStatus) {
@@ -166,9 +208,7 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         strm << "<empty>";
     }
     else {
-        for (const auto it:
-             qevercloud::toRange(m_linkedNotebookSendStatuses))
-        {
+        for (const auto it: qevercloud::toRange(m_linkedNotebookSendStatuses)) {
             if (Q_UNLIKELY(!it.value())) {
                 continue;
             }
@@ -224,7 +264,7 @@ bool operator==(const SyncResult & lhs, const SyncResult & rhs) noexcept
         }
 
         for (auto lit = l.constBegin(), rit = r.constBegin(),
-             lend = l.constEnd(), rend = r.constEnd();
+                  lend = l.constEnd(), rend = r.constEnd();
              lit != lend && rit != rend; ++lit, ++rit)
         {
             if (lit.key() != rit.key()) {
@@ -245,37 +285,41 @@ bool operator==(const SyncResult & lhs, const SyncResult & rhs) noexcept
 
     if (!comparePointerData(
             lhs.m_userAccountDownloadNotesStatus,
-            rhs.m_userAccountDownloadNotesStatus)) {
+            rhs.m_userAccountDownloadNotesStatus))
+    {
         return false;
     }
 
     if (!compareHashData(
             lhs.m_linkedNotebookDownloadNotesStatuses,
-            rhs.m_linkedNotebookDownloadNotesStatuses)) {
+            rhs.m_linkedNotebookDownloadNotesStatuses))
+    {
         return false;
     }
 
     if (!comparePointerData(
             lhs.m_userAccountDownloadResourcesStatus,
-            rhs.m_userAccountDownloadResourcesStatus)) {
+            rhs.m_userAccountDownloadResourcesStatus))
+    {
         return false;
     }
 
     if (!compareHashData(
             lhs.m_linkedNotebookDownloadResourcesStatuses,
-            rhs.m_linkedNotebookDownloadResourcesStatuses)) {
+            rhs.m_linkedNotebookDownloadResourcesStatuses))
+    {
         return false;
     }
 
     if (!comparePointerData(
-            lhs.m_userAccountSendStatus,
-            rhs.m_userAccountSendStatus)) {
+            lhs.m_userAccountSendStatus, rhs.m_userAccountSendStatus))
+    {
         return false;
     }
 
     if (!compareHashData(
-            lhs.m_linkedNotebookSendStatuses,
-            rhs.m_linkedNotebookSendStatuses)) {
+            lhs.m_linkedNotebookSendStatuses, rhs.m_linkedNotebookSendStatuses))
+    {
         return false;
     }
 

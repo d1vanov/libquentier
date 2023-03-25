@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/types/Errors.h>
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
@@ -33,6 +34,12 @@ class QUENTIER_EXPORT ISyncResult : public Printable
 {
 public:
     [[nodiscard]] virtual ISyncStatePtr syncState() const = 0;
+
+    [[nodiscard]] virtual ISyncChunksDataCountersPtr
+        userAccountSyncChunksDataCounters() const = 0;
+
+    [[nodiscard]] virtual QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+        linkedNotebookSyncChunksDataCounters() const = 0;
 
     [[nodiscard]] virtual IDownloadNotesStatusPtr
         userAccountDownloadNotesStatus() const = 0;
