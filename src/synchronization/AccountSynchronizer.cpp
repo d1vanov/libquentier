@@ -29,15 +29,117 @@
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IDownloader.h>
 #include <synchronization/ISender.h>
+#include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SyncResult.h>
 
 #include <qevercloud/exceptions/EDAMSystemExceptionAuthExpired.h>
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
 #include <qevercloud/utility/ToRange.h>
 
+#include <algorithm>
 #include <exception>
 
 namespace quentier::synchronization {
+
+namespace {
+
+template <class T>
+struct GuidExtractor
+{
+    [[nodiscard]] static std::optional<qevercloud::Guid> guid(const T & item)
+    {
+        return item.guid();
+    }
+};
+
+template <>
+struct GuidExtractor<qevercloud::Guid>
+{
+    [[nodiscard]] static std::optional<qevercloud::Guid> guid(
+        const qevercloud::Guid & guid)
+    {
+        return guid;
+    }
+};
+
+template <class T1, class T2>
+void mergeItemsWithExceptions(
+    const QList<std::pair<T1, std::shared_ptr<QException>>> & from,
+    QList<std::pair<T2, std::shared_ptr<QException>>> & to)
+{
+    for (const auto & itemWithException: from) {
+        const auto it = std::find_if(to.begin(), to.end(), [&](const auto & n) {
+            return GuidExtractor<T2>::guid(n.first) ==
+                GuidExtractor<T1>::guid(itemWithException.first);
+        });
+        if (it == to.end()) {
+            to << itemWithException;
+        }
+        else {
+            *it = itemWithException;
+        }
+    }
+}
+
+void merge(const IDownloadNotesStatus & from, DownloadNotesStatus & to)
+{
+    to.m_totalNewNotes += from.totalNewNotes();
+    to.m_totalUpdatedNotes += from.totalUpdatedNotes();
+    to.m_totalExpungedNotes += from.totalExpungedNotes();
+
+    mergeItemsWithExceptions(
+        from.notesWhichFailedToDownload(), to.m_notesWhichFailedToDownload);
+
+    mergeItemsWithExceptions(
+        from.notesWhichFailedToProcess(), to.m_notesWhichFailedToProcess);
+
+    mergeItemsWithExceptions(
+        from.noteGuidsWhichFailedToExpunge(),
+        to.m_noteGuidsWhichFailedToExpunge);
+
+    for (const auto it: qevercloud::toRange(from.processedNoteGuidsAndUsns())) {
+        to.m_processedNoteGuidsAndUsns[it.key()] = it.value();
+    }
+
+    for (const auto it: qevercloud::toRange(from.cancelledNoteGuidsAndUsns())) {
+        to.m_cancelledNoteGuidsAndUsns[it.key()] = it.value();
+    }
+
+    to.m_expungedNoteGuids << from.expungedNoteGuids();
+    to.m_expungedNoteGuids.removeDuplicates();
+
+    to.m_stopSynchronizationError = from.stopSynchronizationError();
+}
+
+void merge(const IDownloadResourcesStatus & from, DownloadResourcesStatus & to)
+{
+    to.m_totalNewResources += from.totalNewResources();
+    to.m_totalUpdatedResources += from.totalUpdatedResources();
+
+    mergeItemsWithExceptions(
+        from.resourcesWhichFailedToDownload(),
+        to.m_resourcesWhichFailedToDownload);
+
+    mergeItemsWithExceptions(
+        from.resourcesWhichFailedToProcess(),
+        to.m_resourcesWhichFailedToProcess);
+
+    for (const auto it:
+         qevercloud::toRange(from.processedResourceGuidsAndUsns())) {
+        to.m_processedResourceGuidsAndUsns[it.key()] = it.value();
+    }
+
+    for (const auto it:
+         qevercloud::toRange(from.cancelledResourceGuidsAndUsns())) {
+        to.m_cancelledResourceGuidsAndUsns[it.key()] = it.value();
+    }
+
+    to.m_stopSynchronizationError = from.stopSynchronizationError();
+}
+
+} // namespace
 
 AccountSynchronizer::AccountSynchronizer(
     Account account, IDownloaderPtr downloader, ISenderPtr sender,
@@ -241,9 +343,84 @@ void AccountSynchronizer::onDownloadFinished(
 void AccountSynchronizer::appendToPreviousSyncResult(
     Context & context, const IDownloader::Result & downloadResult) const
 {
-    // TODO: implement
-    Q_UNUSED(context)
-    Q_UNUSED(downloadResult)
+    if (!context.previousSyncResult) {
+        context.previousSyncResult = std::make_shared<SyncResult>();
+    }
+
+    if (downloadResult.userOwnResult.syncChunksDataCounters) {
+        context.previousSyncResult->m_userAccountSyncChunksDataCounters =
+            downloadResult.userOwnResult.syncChunksDataCounters;
+    }
+
+    if (!context.previousSyncResult->m_userAccountDownloadNotesStatus) {
+        context.previousSyncResult->m_userAccountDownloadNotesStatus =
+            downloadResult.userOwnResult.downloadNotesStatus;
+    }
+    else if (downloadResult.userOwnResult.downloadNotesStatus) {
+        merge(
+            *downloadResult.userOwnResult.downloadNotesStatus,
+            *context.previousSyncResult->m_userAccountDownloadNotesStatus);
+    }
+
+    if (!context.previousSyncResult->m_userAccountDownloadResourcesStatus) {
+        context.previousSyncResult->m_userAccountDownloadResourcesStatus =
+            downloadResult.userOwnResult.downloadResourcesStatus;
+    }
+    else if (downloadResult.userOwnResult.downloadResourcesStatus) {
+        merge(
+            *downloadResult.userOwnResult.downloadResourcesStatus,
+            *context.previousSyncResult->m_userAccountDownloadResourcesStatus);
+    }
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(downloadResult.linkedNotebookResults)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        const auto & result = it.value();
+
+        if (result.syncChunksDataCounters) {
+            context.previousSyncResult
+                ->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
+                result.syncChunksDataCounters;
+        }
+
+        if (result.downloadNotesStatus) {
+            const auto nit = context.previousSyncResult
+                                 ->m_linkedNotebookDownloadNotesStatuses.find(
+                                     linkedNotebookGuid);
+            if (nit !=
+                context.previousSyncResult
+                    ->m_linkedNotebookDownloadNotesStatuses.end())
+            {
+                Q_ASSERT(nit.value());
+                merge(*result.downloadNotesStatus, *nit.value());
+            }
+            else {
+                context.previousSyncResult
+                    ->m_linkedNotebookDownloadNotesStatuses
+                        [linkedNotebookGuid] = result.downloadNotesStatus;
+            }
+        }
+
+        if (result.downloadResourcesStatus) {
+            const auto rit =
+                context.previousSyncResult
+                    ->m_linkedNotebookDownloadResourcesStatuses.find(
+                        linkedNotebookGuid);
+            if (rit !=
+                context.previousSyncResult
+                    ->m_linkedNotebookDownloadResourcesStatuses.end())
+            {
+                Q_ASSERT(rit.value());
+                merge(*result.downloadResourcesStatus, *rit.value());
+            }
+            else {
+                context.previousSyncResult
+                    ->m_linkedNotebookDownloadResourcesStatuses
+                        [linkedNotebookGuid] = result.downloadResourcesStatus;
+            }
+        }
+    }
 }
 
 void AccountSynchronizer::clearAuthenticationCachesAndRestartSync(
