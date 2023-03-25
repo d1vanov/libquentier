@@ -30,6 +30,8 @@
 #include <quentier/utility/Unreachable.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <synchronization/SyncChunksDataCounters.h>
+
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockIDownloader.h>
 #include <synchronization/tests/mocks/MockIDurableNotesProcessor.h>

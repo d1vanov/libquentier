@@ -19,8 +19,10 @@
 #pragma once
 
 #include <quentier/synchronization/Fwd.h>
-#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
+
+#include <synchronization/Fwd.h>
+#include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/LinkedNotebook.h>
 
@@ -188,9 +190,9 @@ public:
 
     struct LocalResult
     {
-        ISyncChunksDataCountersPtr syncChunksDataCounters;
-        IDownloadNotesStatusPtr downloadNotesStatus;
-        IDownloadResourcesStatusPtr downloadResourcesStatus;
+        SyncChunksDataCountersPtr syncChunksDataCounters;
+        DownloadNotesStatusPtr downloadNotesStatus;
+        DownloadResourcesStatusPtr downloadResourcesStatus;
     };
 
     struct Result

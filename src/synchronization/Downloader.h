@@ -23,6 +23,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <synchronization/Fwd.h>
