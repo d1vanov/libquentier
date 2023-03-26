@@ -23,6 +23,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/IDownloadResourcesStatus.h>
+#include <quentier/synchronization/types/ISendStatus.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -210,7 +211,7 @@ void AccountSynchronizer::synchronizeImpl(ContextPtr context)
         std::move(downloadFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, context = context](
+            [this, context = context](
                 const IDownloader::Result & downloadResult) mutable {
                 onDownloadFinished(std::move(context), downloadResult);
             }});
@@ -233,67 +234,85 @@ void AccountSynchronizer::synchronizeImpl(ContextPtr context)
                 return;
             }
 
-            try {
-                e.raise();
-            }
-            catch (const qevercloud::EDAMSystemExceptionAuthExpired & ea) {
-                QNINFO(
-                    "synchronization::AccountSynchronizer",
-                    "Detected authentication expiration during sync, "
-                    "trying to "
-                    "re-authenticate and restart sync");
-                clearAuthenticationCachesAndRestartSync(std::move(context));
-            }
-            catch (const qevercloud::EDAMSystemExceptionRateLimitReached & er) {
-                QNINFO(
-                    "synchronization::AccountSynchronizer",
-                    "Detected API rate limit exceeding, rate limit "
-                    "duration = "
-                        << (er.rateLimitDuration()
-                                ? QString::number(*er.rateLimitDuration())
-                                : QStringLiteral("<none>")));
-                // Rate limit reaching means it's pointless to try to
-                // continue the sync right now
-                auto syncResult = context->previousSyncResult
-                    ? context->previousSyncResult
-                    : std::make_shared<SyncResult>();
-                syncResult->m_stopSynchronizationError =
-                    StopSynchronizationError{
-                        RateLimitReachedError{er.rateLimitDuration()}};
-                context->promise->addResult(std::move(syncResult));
-                context->promise->finish();
-            }
-            catch (const QException & eq) {
-                QNWARNING(
-                    "synchronization::AccountSynchronizer",
-                    "Caught exception on download attempt: " << e.what());
-                context->promise->setException(e);
-                context->promise->finish();
-            }
-            catch (const std::exception & es) {
-                QNWARNING(
-                    "synchronization::AccountSynchronizer",
-                    "Caught unknown std::exception on download "
-                    "attempt: "
-                        << e.what());
-                context->promise->setException(RuntimeError{
-                    ErrorString{QString::fromStdString(e.what())}});
-                context->promise->finish();
-            }
-            catch (...) {
-                QNWARNING(
-                    "synchronization::AccountSynchronizer",
-                    "Caught unknown on download attempt");
-                context->promise->setException(
-                    RuntimeError{ErrorString{QStringLiteral("Unknown error")}});
-                context->promise->finish();
-            }
+            onDownloadFailed(std::move(context), e);
         });
 }
 
 void AccountSynchronizer::onDownloadFinished(
     ContextPtr context, const IDownloader::Result & downloadResult)
 {
+    Q_ASSERT(context);
+
+    if (processDownloadStopSynchronizationError(context, downloadResult)) {
+        return;
+    }
+
+    appendToPreviousSyncResult(*context, downloadResult);
+    send(std::move(context));
+}
+
+void AccountSynchronizer::onDownloadFailed(
+    ContextPtr context, const QException & e)
+{
+    Q_ASSERT(context);
+
+    try {
+        e.raise();
+    }
+    catch (const qevercloud::EDAMSystemExceptionAuthExpired & ea) {
+        QNINFO(
+            "synchronization::AccountSynchronizer",
+            "Detected authentication expiration during sync, "
+            "trying to re-authenticate and restart sync");
+        clearAuthenticationCachesAndRestartSync(std::move(context));
+    }
+    catch (const qevercloud::EDAMSystemExceptionRateLimitReached & er) {
+        QNINFO(
+            "synchronization::AccountSynchronizer",
+            "Detected API rate limit exceeding, rate limit duration = "
+                << (er.rateLimitDuration()
+                        ? QString::number(*er.rateLimitDuration())
+                        : QStringLiteral("<none>")));
+        // Rate limit reaching means it's pointless to try to
+        // continue the sync right now
+        auto syncResult = context->previousSyncResult
+            ? context->previousSyncResult
+            : std::make_shared<SyncResult>();
+        syncResult->m_stopSynchronizationError = StopSynchronizationError{
+            RateLimitReachedError{er.rateLimitDuration()}};
+        context->promise->addResult(std::move(syncResult));
+        context->promise->finish();
+    }
+    catch (const QException & eq) {
+        QNWARNING(
+            "synchronization::AccountSynchronizer",
+            "Caught exception on download attempt: " << e.what());
+        context->promise->setException(e);
+        context->promise->finish();
+    }
+    catch (const std::exception & es) {
+        QNWARNING(
+            "synchronization::AccountSynchronizer",
+            "Caught unknown std::exception on download attempt: " << e.what());
+        context->promise->setException(
+            RuntimeError{ErrorString{QString::fromStdString(e.what())}});
+        context->promise->finish();
+    }
+    catch (...) {
+        QNWARNING(
+            "synchronization::AccountSynchronizer",
+            "Caught unknown on download attempt");
+        context->promise->setException(
+            RuntimeError{ErrorString{QStringLiteral("Unknown error")}});
+        context->promise->finish();
+    }
+}
+
+bool AccountSynchronizer::processDownloadStopSynchronizationError(
+    const ContextPtr & context, const IDownloader::Result & downloadResult)
+{
+    Q_ASSERT(context);
+
     if ((downloadResult.userOwnResult.downloadNotesStatus &&
          std::holds_alternative<AuthenticationExpiredError>(
              downloadResult.userOwnResult.downloadNotesStatus
@@ -309,8 +328,8 @@ void AccountSynchronizer::onDownloadFinished(
                     m_account.id()}});
 
         appendToPreviousSyncResult(*context, downloadResult);
-        synchronizeImpl(std::move(context));
-        return;
+        synchronizeImpl(context);
+        return true;
     }
 
     for (const auto it:
@@ -332,12 +351,68 @@ void AccountSynchronizer::onDownloadFinished(
                         LinkedNotebook{linkedNotebookGuid}});
 
             appendToPreviousSyncResult(*context, downloadResult);
-            synchronizeImpl(std::move(context));
-            return;
+            synchronizeImpl(context);
+            return true;
         }
     }
 
-    // TODO: continue from here
+    auto rateLimitReachedError =
+        [&downloadResult]() -> std::optional<RateLimitReachedError> {
+        if (downloadResult.userOwnResult.downloadNotesStatus &&
+            std::holds_alternative<RateLimitReachedError>(
+                downloadResult.userOwnResult.downloadNotesStatus
+                    ->stopSynchronizationError()))
+        {
+            return std::get<RateLimitReachedError>(
+                downloadResult.userOwnResult.downloadNotesStatus
+                    ->stopSynchronizationError());
+        }
+
+        if (downloadResult.userOwnResult.downloadResourcesStatus &&
+            std::holds_alternative<RateLimitReachedError>(
+                downloadResult.userOwnResult.downloadNotesStatus
+                    ->stopSynchronizationError()))
+        {
+            return std::get<RateLimitReachedError>(
+                downloadResult.userOwnResult.downloadResourcesStatus
+                    ->stopSynchronizationError());
+        }
+
+        for (const auto it:
+             qevercloud::toRange(downloadResult.linkedNotebookResults)) {
+            const auto & result = it.value();
+
+            if (result.downloadNotesStatus &&
+                std::holds_alternative<RateLimitReachedError>(
+                    result.downloadNotesStatus->stopSynchronizationError()))
+            {
+                return std::get<RateLimitReachedError>(
+                    result.downloadNotesStatus->stopSynchronizationError());
+            }
+
+            if (result.downloadResourcesStatus &&
+                std::holds_alternative<RateLimitReachedError>(
+                    result.downloadResourcesStatus->stopSynchronizationError()))
+            {
+                return std::get<RateLimitReachedError>(
+                    result.downloadResourcesStatus->stopSynchronizationError());
+            }
+        }
+
+        return std::nullopt;
+    }();
+
+    if (rateLimitReachedError) {
+        auto syncResult = context->previousSyncResult
+            ? context->previousSyncResult
+            : std::make_shared<SyncResult>();
+        syncResult->m_stopSynchronizationError = *rateLimitReachedError;
+        context->promise->addResult(std::move(syncResult));
+        context->promise->finish();
+        return true;
+    }
+
+    return false;
 }
 
 void AccountSynchronizer::appendToPreviousSyncResult(
@@ -423,9 +498,95 @@ void AccountSynchronizer::appendToPreviousSyncResult(
     }
 }
 
+void AccountSynchronizer::send(ContextPtr context)
+{
+    Q_ASSERT(context);
+
+    const auto selfWeak = weak_from_this();
+
+    auto sendFuture = m_sender->send(context->canceler, context->callbackWeak);
+
+    auto sendThenFuture = threading::then(
+        std::move(sendFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this,
+             context = context](const ISender::Result & sendResult) mutable {
+                onSendFinished(std::move(context), sendResult);
+            }});
+
+    threading::onFailed(
+        std::move(sendThenFuture),
+        [context = std::move(context)](const QException & e) mutable {
+            // If sending fails, it fails for some really good reason so there's
+            // not much that can be done, will just forward this error to the
+            // overall result
+            context->promise->setException(e);
+            context->promise->finish();
+        });
+}
+
+void AccountSynchronizer::onSendFinished(
+    ContextPtr context, const ISender::Result & sendResult) // NOLINT
+{
+    Q_ASSERT(context);
+
+    if (processSendStopSynchronizationError(context, sendResult)) {
+        return;
+    }
+
+    // TODO: implement further
+}
+
+bool AccountSynchronizer::processSendStopSynchronizationError(
+    const ContextPtr & context, const ISender::Result & sendResult)
+{
+    Q_ASSERT(context);
+
+    if (sendResult.userOwnResult &&
+        std::holds_alternative<AuthenticationExpiredError>(
+            sendResult.userOwnResult->stopSynchronizationError()))
+    {
+        m_authenticationInfoProvider->clearCaches(
+            IAuthenticationInfoProvider::ClearCacheOptions{
+                IAuthenticationInfoProvider::ClearCacheOption::User{
+                    m_account.id()}});
+
+        // TODO: append to previous sync result
+        synchronizeImpl(context);
+        return true;
+    }
+
+    for (const auto it: // NOLINT
+         qevercloud::toRange(qAsConst(sendResult.linkedNotebookResults)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        const auto & result = it.value();
+
+        Q_ASSERT(result);
+        if (std::holds_alternative<AuthenticationExpiredError>(
+                result->stopSynchronizationError()))
+        {
+            m_authenticationInfoProvider->clearCaches(
+                IAuthenticationInfoProvider::ClearCacheOptions{
+                    IAuthenticationInfoProvider::ClearCacheOption::
+                        LinkedNotebook{linkedNotebookGuid}});
+
+            // TODO: append to previous sync result
+            synchronizeImpl(context);
+            return true;
+        }
+    }
+
+    // TODO: implement further
+    return false;
+}
+
 void AccountSynchronizer::clearAuthenticationCachesAndRestartSync(
     ContextPtr context)
 {
+    Q_ASSERT(context);
+
     m_authenticationInfoProvider->clearCaches(
         IAuthenticationInfoProvider::ClearCacheOptions{
             IAuthenticationInfoProvider::ClearCacheOption::All{}});

@@ -63,11 +63,23 @@ private:
     using ContextPtr = std::shared_ptr<Context>;
 
     void synchronizeImpl(ContextPtr context);
+
     void onDownloadFinished(
         ContextPtr context, const IDownloader::Result & downloadResult);
 
+    void onDownloadFailed(ContextPtr context, const QException & e);
+
+    [[nodiscard]] bool processDownloadStopSynchronizationError(
+        const ContextPtr & context, const IDownloader::Result & downloadResult);
+
     void appendToPreviousSyncResult(
         Context & context, const IDownloader::Result & downloadResult) const;
+
+    void send(ContextPtr context);
+    void onSendFinished(ContextPtr context, const ISender::Result & sendResult);
+
+    [[nodiscard]] bool processSendStopSynchronizationError(
+        const ContextPtr & context, const ISender::Result & sendResult);
 
     void clearAuthenticationCachesAndRestartSync(ContextPtr context);
 
