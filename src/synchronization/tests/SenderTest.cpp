@@ -94,7 +94,7 @@ void checkSendStatusUpdate(
 
 struct Callback : public ISender::ICallback
 {
-    void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus) override
+    void onUserOwnSendStatusUpdate(SendStatusPtr sendStatus) override
     {
         checkSendStatusUpdate(m_userOwnSendStatus, sendStatus);
         m_userOwnSendStatus = sendStatus;
@@ -102,7 +102,7 @@ struct Callback : public ISender::ICallback
 
     void onLinkedNotebookSendStatusUpdate(
         const qevercloud::Guid & linkedNotebookGuid,
-        ISendStatusPtr sendStatus) override
+        SendStatusPtr sendStatus) override
     {
         auto & linkedNotebookSendStatus =
             m_linkedNotebookSendStatuses[linkedNotebookGuid];

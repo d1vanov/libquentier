@@ -18,8 +18,9 @@
 
 #pragma once
 
-#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
+
+#include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/LinkedNotebook.h>
 
@@ -41,11 +42,11 @@ public:
         virtual ~ICallback() = default;
 
         virtual void onUserOwnSendStatusUpdate(
-            ISendStatusPtr sendStatus) = 0;
+            SendStatusPtr sendStatus) = 0;
 
         virtual void onLinkedNotebookSendStatusUpdate(
             const qevercloud::Guid & linkedNotebookGuid,
-            ISendStatusPtr sendStatus) = 0;
+            SendStatusPtr sendStatus) = 0;
     };
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
@@ -53,10 +54,10 @@ public:
     struct Result
     {
         // Send status for user own account
-        ISendStatusPtr userOwnResult;
+        SendStatusPtr userOwnResult;
 
         // Send statuses for modified data in linked notebooks
-        QHash<qevercloud::Guid, ISendStatusPtr> linkedNotebookResults;
+        QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookResults;
     };
 
     [[nodiscard]] virtual QFuture<Result> send(
