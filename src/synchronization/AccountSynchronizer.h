@@ -75,6 +75,9 @@ private:
     void appendToPreviousSyncResult(
         Context & context, const IDownloader::Result & downloadResult) const;
 
+    void appendToPreviousSyncResult(
+        Context & context, const ISender::Result & sendResult) const;
+
     void send(ContextPtr context);
     void onSendFinished(ContextPtr context, const ISender::Result & sendResult);
 

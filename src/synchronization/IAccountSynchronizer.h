@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
 #include <synchronization/IDownloader.h>
