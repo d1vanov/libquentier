@@ -51,10 +51,13 @@ public: // IAccountSynchronizer
         utility::cancelers::ICancelerPtr canceler) override;
 
 private:
+    class CallbackWrapper;
+    using CallbackWrapperPtr = std::shared_ptr<CallbackWrapper>;
+
     struct Context
     {
         std::shared_ptr<QPromise<ISyncResultPtr>> promise;
-        ICallbackWeakPtr callbackWeak;
+        CallbackWrapperPtr callbackWrapper;
         utility::cancelers::ICancelerPtr canceler;
         SyncResultPtr previousSyncResult;
         bool sendNeeded = true;

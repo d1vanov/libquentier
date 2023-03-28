@@ -40,6 +40,9 @@
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
 #include <qevercloud/utility/ToRange.h>
 
+#include <QMutex>
+#include <QMutexLocker>
+
 #include <algorithm>
 #include <exception>
 
@@ -174,6 +177,169 @@ void merge(const ISendStatus & from, SendStatus & to)
 
 } // namespace
 
+class AccountSynchronizer::CallbackWrapper :
+    public IAccountSynchronizer::ICallback
+{
+public:
+    explicit CallbackWrapper(
+        IAccountSynchronizer::ICallbackWeakPtr callbackWeak) :
+        m_callbackWeak{std::move(callbackWeak)}
+    {}
+
+    [[nodiscard]] ISyncChunksDataCountersPtr userOwnSyncChunksDataCounters()
+        const
+    {
+        const QMutexLocker locker{&m_mutex};
+        return m_userOwnSyncChunksDataCounters;
+    }
+
+    [[nodiscard]] QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+        linkedNotebookSyncChunksDataCounters() const
+    {
+        const QMutexLocker locker{&m_mutex};
+        return m_linkedNotebookSyncChunksDataCounters;
+    }
+
+public: // IDownloader::ICallback
+    void onSyncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onSyncChunksDownloadProgress(
+                highestDownloadedUsn, highestServerUsn, lastPreviousUsn);
+        }
+    }
+
+    void onSyncChunksDownloaded() override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onSyncChunksDownloaded();
+        }
+    }
+
+    void onSyncChunksDataProcessingProgress(
+        ISyncChunksDataCountersPtr counters) override
+    {
+        Q_ASSERT(counters);
+
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onSyncChunksDataProcessingProgress(counters);
+        }
+
+        const QMutexLocker locker{&m_mutex};
+        m_userOwnSyncChunksDataCounters = std::move(counters);
+    }
+
+    void onStartLinkedNotebooksDataDownloading(
+        const QList<qevercloud::LinkedNotebook> & linkedNotebooks) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
+        }
+    }
+
+    void onLinkedNotebookSyncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn,
+        const qevercloud::LinkedNotebook & linkedNotebook) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookSyncChunksDownloadProgress(
+                highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
+                linkedNotebook);
+        }
+    }
+
+    void onLinkedNotebookSyncChunksDownloaded(
+        const qevercloud::LinkedNotebook & linkedNotebook) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookSyncChunksDownloaded(linkedNotebook);
+        }
+    }
+
+    void onLinkedNotebookSyncChunksDataProcessingProgress(
+        ISyncChunksDataCountersPtr counters,
+        const qevercloud::LinkedNotebook & linkedNotebook) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookSyncChunksDataProcessingProgress(
+                counters, linkedNotebook);
+        }
+
+        Q_ASSERT(linkedNotebook.guid());
+
+        const QMutexLocker locker{&m_mutex};
+        m_linkedNotebookSyncChunksDataCounters[*linkedNotebook.guid()] =
+            std::move(counters);
+    }
+
+    void onNotesDownloadProgress(
+        quint32 notesDownloaded, quint32 totalNotesToDownload) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onNotesDownloadProgress(
+                notesDownloaded, totalNotesToDownload);
+        }
+    }
+
+    void onLinkedNotebookNotesDownloadProgress(
+        quint32 notesDownloaded, quint32 totalNotesToDownload,
+        const qevercloud::LinkedNotebook & linkedNotebook) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookNotesDownloadProgress(
+                notesDownloaded, totalNotesToDownload, linkedNotebook);
+        }
+    }
+
+    void onResourcesDownloadProgress(
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onResourcesDownloadProgress(
+                resourcesDownloaded, totalResourcesToDownload);
+        }
+    }
+
+    void onLinkedNotebookResourcesDownloadProgress(
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload,
+        const qevercloud::LinkedNotebook & linkedNotebook) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookResourcesDownloadProgress(
+                resourcesDownloaded, totalResourcesToDownload, linkedNotebook);
+        }
+    }
+
+public: // ISender::ICallback
+    void onUserOwnSendStatusUpdate(SendStatusPtr sendStatus) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onUserOwnSendStatusUpdate(std::move(sendStatus));
+        }
+    }
+
+    void onLinkedNotebookSendStatusUpdate(
+        const qevercloud::Guid & linkedNotebookGuid,
+        SendStatusPtr sendStatus) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onLinkedNotebookSendStatusUpdate(
+                linkedNotebookGuid, std::move(sendStatus));
+        }
+    }
+
+private:
+    const IAccountSynchronizer::ICallbackWeakPtr m_callbackWeak;
+
+    mutable QMutex m_mutex;
+    ISyncChunksDataCountersPtr m_userOwnSyncChunksDataCounters;
+    QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+        m_linkedNotebookSyncChunksDataCounters;
+};
+
 AccountSynchronizer::AccountSynchronizer(
     Account account, IDownloaderPtr downloader, ISenderPtr sender,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
@@ -228,7 +394,8 @@ QFuture<ISyncResultPtr> AccountSynchronizer::synchronize(
 
     auto context = std::make_shared<Context>();
     context->promise = std::move(promise);
-    context->callbackWeak = std::move(callbackWeak);
+    context->callbackWrapper =
+        std::make_shared<CallbackWrapper>(std::move(callbackWeak));
     context->canceler = std::move(canceler);
 
     synchronizeImpl(std::move(context));
@@ -242,10 +409,10 @@ void AccountSynchronizer::synchronizeImpl(ContextPtr context)
     const auto selfWeak = weak_from_this();
 
     auto downloadFuture =
-        m_downloader->download(context->canceler, context->callbackWeak);
+        m_downloader->download(context->canceler, context->callbackWrapper);
 
     auto downloadThenFuture = threading::then(
-        std::move(downloadFuture),
+        std::move(downloadFuture), m_threadPool.get(),
         threading::TrackedTask{
             selfWeak,
             [this, context = context](
@@ -320,6 +487,32 @@ void AccountSynchronizer::onDownloadFailed(
         auto syncResult = context->previousSyncResult
             ? context->previousSyncResult
             : std::make_shared<SyncResult>();
+
+        // Sync chunks counters for downloaded sync chunks should be available
+        // in counters cached within callbackWrapper
+        if (const auto counters =
+                context->callbackWrapper->userOwnSyncChunksDataCounters())
+        {
+            // FIXME: should probably consider changing IDownloader::ICallback
+            // to use private types to avoid casting here
+            syncResult->m_userAccountSyncChunksDataCounters =
+                std::dynamic_pointer_cast<SyncChunksDataCounters>(counters);
+        }
+
+        for (const auto it:
+             qevercloud::toRange(context->callbackWrapper
+                                     ->linkedNotebookSyncChunksDataCounters()))
+        {
+            const auto & linkedNotebookGuid = it.key();
+            auto counters =
+                std::dynamic_pointer_cast<SyncChunksDataCounters>(it.value());
+            Q_ASSERT(counters);
+
+            syncResult
+                ->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
+                std::move(counters);
+        }
+
         syncResult->m_stopSynchronizationError = StopSynchronizationError{
             RateLimitReachedError{er.rateLimitDuration()}};
         context->promise->addResult(std::move(syncResult));
@@ -673,10 +866,11 @@ void AccountSynchronizer::send(ContextPtr context)
 
     const auto selfWeak = weak_from_this();
 
-    auto sendFuture = m_sender->send(context->canceler, context->callbackWeak);
+    auto sendFuture =
+        m_sender->send(context->canceler, context->callbackWrapper);
 
     auto sendThenFuture = threading::then(
-        std::move(sendFuture),
+        std::move(sendFuture), m_threadPool.get(),
         threading::TrackedTask{
             selfWeak,
             [this,
