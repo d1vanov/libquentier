@@ -48,7 +48,7 @@ public:
 
     MOCK_METHOD(
         void, onSyncChunksDataProcessingProgress,
-        (ISyncChunksDataCountersPtr counters), (override));
+        (SyncChunksDataCountersPtr counters), (override));
 
     MOCK_METHOD(
         void, onStartLinkedNotebooksDataDownloading,
@@ -67,7 +67,7 @@ public:
 
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDataProcessingProgress,
-        (ISyncChunksDataCountersPtr counters,
+        (SyncChunksDataCountersPtr counters,
          const qevercloud::LinkedNotebook & linkedNotebook), (override));
 
     MOCK_METHOD(

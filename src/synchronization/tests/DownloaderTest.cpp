@@ -1418,9 +1418,9 @@ TEST_P(DownloaderSyncChunksTest, Download)
         }
     }
 
-    ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
+    SyncChunksDataCountersPtr lastSyncChunksDataCounters;
     EXPECT_CALL(*mockDownloaderCallback, onSyncChunksDataProcessingProgress)
-        .WillRepeatedly([&](const ISyncChunksDataCountersPtr & counters) {
+        .WillRepeatedly([&](const SyncChunksDataCountersPtr & counters) {
             ASSERT_TRUE(counters);
             if (!lastSyncChunksDataCounters) {
                 lastSyncChunksDataCounters = counters;
@@ -1763,13 +1763,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     });
         }
 
-        ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
+        SyncChunksDataCountersPtr lastSyncChunksDataCounters;
         EXPECT_CALL(
             *mockDownloaderCallback,
             onLinkedNotebookSyncChunksDataProcessingProgress(
                 Ne(nullptr), linkedNotebook))
             .WillRepeatedly(
-                [&](const ISyncChunksDataCountersPtr & counters,
+                [&](const SyncChunksDataCountersPtr & counters,
                     [[maybe_unused]] const qevercloud::LinkedNotebook & ln) {
                     ASSERT_TRUE(counters);
                     if (!lastSyncChunksDataCounters) {

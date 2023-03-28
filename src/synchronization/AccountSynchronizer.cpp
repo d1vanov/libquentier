@@ -186,14 +186,14 @@ public:
         m_callbackWeak{std::move(callbackWeak)}
     {}
 
-    [[nodiscard]] ISyncChunksDataCountersPtr userOwnSyncChunksDataCounters()
+    [[nodiscard]] SyncChunksDataCountersPtr userOwnSyncChunksDataCounters()
         const
     {
         const QMutexLocker locker{&m_mutex};
         return m_userOwnSyncChunksDataCounters;
     }
 
-    [[nodiscard]] QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+    [[nodiscard]] QHash<qevercloud::Guid, SyncChunksDataCountersPtr>
         linkedNotebookSyncChunksDataCounters() const
     {
         const QMutexLocker locker{&m_mutex};
@@ -219,7 +219,7 @@ public: // IDownloader::ICallback
     }
 
     void onSyncChunksDataProcessingProgress(
-        ISyncChunksDataCountersPtr counters) override
+        SyncChunksDataCountersPtr counters) override
     {
         Q_ASSERT(counters);
 
@@ -260,7 +260,7 @@ public: // IDownloader::ICallback
     }
 
     void onLinkedNotebookSyncChunksDataProcessingProgress(
-        ISyncChunksDataCountersPtr counters,
+        SyncChunksDataCountersPtr counters,
         const qevercloud::LinkedNotebook & linkedNotebook) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
@@ -335,8 +335,8 @@ private:
     const IAccountSynchronizer::ICallbackWeakPtr m_callbackWeak;
 
     mutable QMutex m_mutex;
-    ISyncChunksDataCountersPtr m_userOwnSyncChunksDataCounters;
-    QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
+    SyncChunksDataCountersPtr m_userOwnSyncChunksDataCounters;
+    QHash<qevercloud::Guid, SyncChunksDataCountersPtr>
         m_linkedNotebookSyncChunksDataCounters;
 };
 
@@ -490,13 +490,11 @@ void AccountSynchronizer::onDownloadFailed(
 
         // Sync chunks counters for downloaded sync chunks should be available
         // in counters cached within callbackWrapper
-        if (const auto counters =
+        if (auto counters =
                 context->callbackWrapper->userOwnSyncChunksDataCounters())
         {
-            // FIXME: should probably consider changing IDownloader::ICallback
-            // to use private types to avoid casting here
             syncResult->m_userAccountSyncChunksDataCounters =
-                std::dynamic_pointer_cast<SyncChunksDataCounters>(counters);
+                std::move(counters);
         }
 
         for (const auto it:
@@ -504,8 +502,7 @@ void AccountSynchronizer::onDownloadFailed(
                                      ->linkedNotebookSyncChunksDataCounters()))
         {
             const auto & linkedNotebookGuid = it.key();
-            auto counters =
-                std::dynamic_pointer_cast<SyncChunksDataCounters>(it.value());
+            auto counters = it.value();
             Q_ASSERT(counters);
 
             syncResult

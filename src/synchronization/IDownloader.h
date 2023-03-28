@@ -74,7 +74,7 @@ public:
         * contents processing and denotes the progress on that step.
         */
         virtual void onSyncChunksDataProcessingProgress(
-            ISyncChunksDataCountersPtr counters) = 0;
+            SyncChunksDataCountersPtr counters) = 0;
 
         /**
          * This method is called before the downloading of data corresponding
@@ -128,7 +128,7 @@ public:
         *                                   is being reported
         */
         virtual void onLinkedNotebookSyncChunksDataProcessingProgress(
-            ISyncChunksDataCountersPtr counters,
+            SyncChunksDataCountersPtr counters,
             const qevercloud::LinkedNotebook & linkedNotebook) = 0;
 
         /**
