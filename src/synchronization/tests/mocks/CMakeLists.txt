@@ -31,7 +31,7 @@ target_sources(${MOCKS_NAME}
     MockIResourceFullDataDownloader.h
     MockIResourcesProcessor.h
     MockISavedSearchesProcessor.h
-    MockITagsProcessor.h
+    MockISender.h
     MockISimpleNotebookSyncConflictResolver.h
     MockISimpleNoteSyncConflictResolver.h
     MockISimpleSavedSearchSyncConflictResolver.h
@@ -39,6 +39,7 @@ target_sources(${MOCKS_NAME}
     MockISyncChunksDownloader.h
     MockISyncChunksProvider.h
     MockISyncChunksStorage.h
+    MockITagsProcessor.h
     MockIUserInfoProvider.h
     qevercloud/MockIInkNoteImageDownloader.h
     qevercloud/MockINoteThumbnailDownloader.h
