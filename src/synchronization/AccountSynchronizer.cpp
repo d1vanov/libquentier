@@ -24,6 +24,7 @@
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/IDownloadResourcesStatus.h>
 #include <quentier/synchronization/types/ISendStatus.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -350,14 +351,15 @@ AccountSynchronizer::AccountSynchronizer(
     m_sender{std::move(sender)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     // clang-format on
-    m_threadPool{std::move(threadPool)}
+    m_threadPool{
+        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("AccountSynchronizer ctor: account is empty")}};
     }
 
-    if (Q_UNLIKELY(m_downloader)) {
+    if (Q_UNLIKELY(!m_downloader)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("AccountSynchronizer ctor: downloader is null")}};
     }
@@ -372,10 +374,7 @@ AccountSynchronizer::AccountSynchronizer(
             "AccountSynchronizer ctor: authentication info provider is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("AccountSynchronizer ctor: thread pool is null")}};
-    }
+    Q_ASSERT(m_threadPool);
 }
 
 QFuture<ISyncResultPtr> AccountSynchronizer::synchronize(
