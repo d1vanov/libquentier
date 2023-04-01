@@ -34,4 +34,17 @@ public:
         (override));
 };
 
+class MockISenderICallback : public ISender::ICallback
+{
+    MOCK_METHOD(
+        void, onUserOwnSendStatusUpdate, (SendStatusPtr sendStatus),
+        (override));
+
+    MOCK_METHOD(
+        void, onLinkedNotebookSendStatusUpdate,
+        (const qevercloud::Guid & linkedNotebookGuid,
+         SendStatusPtr sendStatus),
+        (override));
+};
+
 } // namespace quentier::synchronization::tests::mocks
