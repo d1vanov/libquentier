@@ -74,7 +74,7 @@ jobs:
           chmod +x /tmp/clang-format
           sudo mv /tmp/clang-format /usr/bin/clang-format
         shell: bash
-        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.15.4' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
+        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
 
       - name: Install gcc
         id: install_gcc
@@ -188,7 +188,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: '${{ runner.workspace }}/qevercloud_master_qt_old'
-          key: ${{ runner.os }}-qevercloud-master_qt-old-1
+          key: ${{ runner.os }}-qevercloud-master_qt-old-2
         if: ${{ matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
 
       - name: Cache QEverCloud development for Qt 5.12.8
@@ -196,7 +196,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: '${{ runner.workspace }}/qevercloud_development_qt_old'
-          key: ${{ runner.os }}-qevercloud-development_qt-old-1
+          key: ${{ runner.os }}-qevercloud-development_qt-old-2
         if: ${{ matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
 
       - name: Build QEverCloud master for Qt 5.12.8
@@ -421,7 +421,7 @@ jobs:
             echo $dirty
             exit 1
           fi
-        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.15.4' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
+        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
 
       - name: Build
         id: build
@@ -455,7 +455,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/build/installdir
           7z a libquentier_linux.zip *
-        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.15.4' }}
+        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.12.8' }}
 
       - name: Upload libquentier artifact
         id: upload_artifact
@@ -463,7 +463,7 @@ jobs:
         with:
           name: libquentier_linux
           path: '${{ github.workspace }}/build/installdir/libquentier_linux.zip'
-        if: ${{ matrix.qt_version == '5.15.4' && matrix.compiler_cpp == 'g++' }}
+        if: ${{ matrix.qt_version == '5.12.8' && matrix.compiler_cpp == 'g++' }}
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
