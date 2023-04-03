@@ -188,7 +188,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: '${{ runner.workspace }}/qevercloud_master_qt_old'
-          key: ${{ runner.os }}-qevercloud-master_qt-old-2
+          key: ${{ runner.os }}-qevercloud-master_qt-old-3
         if: ${{ matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
 
       - name: Cache QEverCloud development for Qt 5.12.8
@@ -196,43 +196,57 @@ jobs:
         uses: actions/cache@v3
         with:
           path: '${{ runner.workspace }}/qevercloud_development_qt_old'
-          key: ${{ runner.os }}-qevercloud-development_qt-old-2
+          key: ${{ runner.os }}-qevercloud-development_qt-old-3
         if: ${{ matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
 
-      - name: Build QEverCloud master for Qt 5.12.8
-        id: build_qevercloud_master_qt_old
+      - name: Download or build QEverCloud master for Qt 5.12.8
+        id: download_or_build_qevercloud_master_qt_old
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/qevercloud_master_qt_old" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_master_qt_old)" ]; then
-            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_qt_old_src
-            cd qevercloud_master_qt_old_src
-            git checkout master
-            mkdir build
-            cd build
-            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master_qt_old ..
-            cmake --build . --target all
-            cmake --build . --target check
-            cmake --build . --target install
+            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
+            if [ -f QEverCloud_linux_x86_64.zip ]; then
+              echo "Downloaded prebuilt QEverCloud from continuous-master release"
+              7z -o$RUNNER_WORKSPACE/qevercloud_master_qt_old x QEverCloud_linux_x86_64.zip
+            else
+              echo "Could not download prebuilt QEverCloud from continuous-master release, will build from source"
+              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_qt_old_src
+              cd qevercloud_master_qt_old_src
+              git checkout master
+              mkdir build
+              cd build
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master_qt_old ..
+              cmake --build . --target all
+              cmake --build . --target check
+              cmake --build . --target install
+            fi
           fi
         if: ${{ matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
         shell: bash
 
-      - name: Build QEverCloud development for Qt 5.12.8
-        id: build_qevercloud_development_qt_old
+      - name: Download or build QEverCloud development for Qt 5.12.8
+        id: download_or_build_qevercloud_development_qt_old
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/qevercloud_development_qt_old" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_development_qt_old)" ]; then
-            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_qt_old_src
-            cd qevercloud_development_qt_old_src
-            git checkout development
-            mkdir build
-            cd build
-            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development_qt_old ..
-            cmake --build . --target all
-            cmake --build . --target check
-            cmake --build . --target install
+            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
+            if [ -f QEverCloud_linux_x86_64.zip ]; then
+              echo "Downloaded prebuilt QEverCloud from continuous-development release"
+              7z -o$RUNNER_WORKSPACE/qevercloud_development_qt_old x QEverCloud_linux_x86_64.zip
+            else
+              echo "Could not download prebuilt QEverCloud from continuous-development release, will build from source"
+              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_qt_old_src
+              cd qevercloud_development_qt_old_src
+              git checkout development
+              mkdir build
+              cd build
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development_qt_old ..
+              cmake --build . --target all
+              cmake --build . --target check
+              cmake --build . --target install
+            fi
           fi
         if: ${{ matrix.qt_version == '5.12.8' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
         shell: bash
@@ -253,54 +267,40 @@ jobs:
           key: ${{ runner.os }}-qevercloud-development_qt-modern-2
         if: ${{ matrix.qt_version == '5.15.4' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
 
-      - name: Download or build QEverCloud master for Qt 5.15.4
-        id: download_or_build_qevercloud_master_qt_modern
+      - name: Build QEverCloud master for Qt 5.15.4
+        id: build_qevercloud_master_qt_modern
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/qevercloud_master_qt_modern" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_master_qt_modern)" ]; then
-            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
-            if [ -f QEverCloud_linux_x86_64.zip ]; then
-              echo "Downloaded prebuilt QEverCloud from continuous-master release"
-              7z -o$RUNNER_WORKSPACE/qevercloud_master_qt_modern x QEverCloud_linux_x86_64.zip
-            else
-              echo "Could not download prebuilt QEverCloud from continuous-master release, will build from source"
-              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_qt_modern_src
-              cd qevercloud_master_qt_modern_src
-              git checkout master
-              mkdir build
-              cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt515 ..
-              cmake --build . --target all
-              cmake --build . --target check
-              cmake --build . --target install
-            fi
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_qt_modern_src
+            cd qevercloud_master_qt_modern_src
+            git checkout master
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt515 ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
           fi
         if: ${{ matrix.qt_version == '5.15.4' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
         shell: bash
 
-      - name: Download or build QEverCloud development for Qt 5.15.4
-        id: download_or_build_qevercloud_development_qt_modern
+      - name: Build QEverCloud development for Qt 5.15.4
+        id: build_qevercloud_development_qt_modern
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/qevercloud_development_qt_modern" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_development_qt_modern)" ]; then
-            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
-            if [ -f QEverCloud_linux_x86_64.zip ]; then
-              echo "Downloaded prebuilt QEverCloud from continuous-development release"
-              7z -o$RUNNER_WORKSPACE/qevercloud_development_qt_modern x QEverCloud_linux_x86_64.zip
-            else
-              echo "Could not download prebuilt QEverCloud from continuous-development release, will build from source"
-              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_qt_modern_src
-              cd qevercloud_development_qt_modern_src
-              git checkout development
-              mkdir build
-              cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt515 ..
-              cmake --build . --target all
-              cmake --build . --target check
-              cmake --build . --target install
-            fi
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_qt_modern_src
+            cd qevercloud_development_qt_modern_src
+            git checkout development
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt515 ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
           fi
         if: ${{ matrix.qt_version == '5.15.4' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
         shell: bash
