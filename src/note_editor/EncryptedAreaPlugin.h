@@ -32,19 +32,17 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
 
-class Q_DECL_HIDDEN EncryptedAreaPlugin final: public QWidget
+class Q_DECL_HIDDEN EncryptedAreaPlugin final : public QWidget
 {
     Q_OBJECT
 public:
     explicit EncryptedAreaPlugin(
-        NoteEditorPrivate & noteEditor,
-        QWidget * parent = nullptr);
+        NoteEditorPrivate & noteEditor, QWidget * parent = nullptr);
 
     virtual ~EncryptedAreaPlugin();
 
     bool initialize(
-        const QStringList & parameterNames,
-        const QStringList & parameterValues,
+        const QStringList & parameterNames, const QStringList & parameterValues,
         const NoteEditorPluginFactory & pluginFactory,
         ErrorString & errorDescription);
 
@@ -55,13 +53,13 @@ private Q_SLOTS:
     void decrypt();
 
 private:
-    Ui::EncryptedAreaPlugin *       m_pUi;
-    NoteEditorPrivate &             m_noteEditor;
-    QString                         m_hint;
-    QString                         m_cipher;
-    QString                         m_encryptedText;
-    QString                         m_keyLength;
-    QString                         m_id;
+    Ui::EncryptedAreaPlugin * m_pUi;
+    NoteEditorPrivate & m_noteEditor;
+    QString m_hint;
+    QString m_cipher;
+    QString m_encryptedText;
+    QString m_keyLength;
+    QString m_id;
 };
 
 } // namespace quentier
