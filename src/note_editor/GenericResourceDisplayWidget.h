@@ -35,7 +35,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class Q_DECL_HIDDEN GenericResourceDisplayWidget final: public QWidget
+class Q_DECL_HIDDEN GenericResourceDisplayWidget final : public QWidget
 {
     Q_OBJECT
 public:
@@ -63,9 +63,9 @@ private:
     Q_DISABLE_COPY(GenericResourceDisplayWidget)
 
 private:
-    Ui::GenericResourceDisplayWidget *  m_pUi;
-    QString             m_resourceLocalUid;
-    QByteArray          m_resourceHash;
+    Ui::GenericResourceDisplayWidget * m_pUi;
+    QString m_resourceLocalUid;
+    QByteArray m_resourceHash;
 };
 
 } // namespace quentier

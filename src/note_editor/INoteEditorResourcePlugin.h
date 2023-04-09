@@ -34,7 +34,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
  * built in the note. For example, such plugin could represent the embedded pdf
  * viewer, embedded video viewer etc.
  */
-class Q_DECL_HIDDEN INoteEditorResourcePlugin: public QWidget
+class Q_DECL_HIDDEN INoteEditorResourcePlugin : public QWidget
 {
     Q_OBJECT
 protected:
@@ -101,7 +101,10 @@ public:
      * @brief description - the optional method
      * @return plugin's description
      */
-    virtual QString description() const { return QString(); }
+    virtual QString description() const
+    {
+        return QString();
+    }
 };
 
 } // namespace quentier
