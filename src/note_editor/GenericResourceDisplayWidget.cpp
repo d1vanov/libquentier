@@ -41,10 +41,8 @@
 namespace quentier {
 
 GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
-    QWidget(parent),
-    m_pUi(new Ui::GenericResourceDisplayWidget),
-    m_resourceLocalUid(),
-    m_resourceHash()
+    QWidget(parent), m_pUi(new Ui::GenericResourceDisplayWidget),
+    m_resourceLocalUid(), m_resourceHash()
 {
     m_pUi->setupUi(this);
 }
@@ -58,8 +56,10 @@ void GenericResourceDisplayWidget::initialize(
     const QIcon & icon, const QString & name, const QString & size,
     const Resource & resource)
 {
-    QNDEBUG("note_editor", "GenericResourceDisplayWidget::initialize: name = "
-        << name << ", size = " << size);
+    QNDEBUG(
+        "note_editor",
+        "GenericResourceDisplayWidget::initialize: name = "
+            << name << ", size = " << size);
 
     m_resourceLocalUid = resource.localUid();
 
@@ -68,16 +68,14 @@ void GenericResourceDisplayWidget::initialize(
     }
     else if (resource.hasDataBody()) {
         m_resourceHash = QCryptographicHash::hash(
-            resource.dataBody(),
-            QCryptographicHash::Md5);
+            resource.dataBody(), QCryptographicHash::Md5);
     }
     else if (resource.hasAlternateDataHash()) {
         m_resourceHash = resource.alternateDataHash();
     }
     else if (resource.hasAlternateDataBody()) {
         m_resourceHash = QCryptographicHash::hash(
-            resource.alternateDataBody(),
-            QCryptographicHash::Md5);
+            resource.alternateDataBody(), QCryptographicHash::Md5);
     }
 
     updateResourceName(name);
@@ -86,11 +84,11 @@ void GenericResourceDisplayWidget::initialize(
     updateResourceSize(size);
     m_pUi->resourceSizeLabel->setTextFormat(Qt::RichText);
 
-    m_pUi->resourceIconLabel->setPixmap(icon.pixmap(QSize(16,16)));
+    m_pUi->resourceIconLabel->setPixmap(icon.pixmap(QSize(16, 16)));
 
     if (!QIcon::hasThemeIcon(QStringLiteral("document-open"))) {
-        m_pUi->openResourceButton->setIcon(
-            QIcon(QStringLiteral(":/generic_resource_icons/png/open_with.png")));
+        m_pUi->openResourceButton->setIcon(QIcon(
+            QStringLiteral(":/generic_resource_icons/png/open_with.png")));
     }
 
     if (!QIcon::hasThemeIcon(QStringLiteral("document-save-as"))) {
@@ -99,15 +97,12 @@ void GenericResourceDisplayWidget::initialize(
     }
 
     QObject::connect(
-        m_pUi->openResourceButton,
-        &QPushButton::released,
-        this,
-        &GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed);
+        m_pUi->openResourceButton, &QPushButton::released, this,
+        &GenericResourceDisplayWidget::
+            onOpenResourceInExternalAppButtonPressed);
 
     QObject::connect(
-        m_pUi->saveResourceButton,
-        &QPushButton::released,
-        this,
+        m_pUi->saveResourceButton, &QPushButton::released, this,
         &GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed);
 }
 
@@ -120,22 +115,25 @@ void GenericResourceDisplayWidget::updateResourceName(
     const QString & resourceName)
 {
     m_pUi->resourceDisplayNameLabel->setText(
-        QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
+        QStringLiteral(
+            "<html><head/><body><p><span style=\" font-size:8pt;\">") +
         resourceName + QStringLiteral("</span></p></body></head></html>"));
 }
 
 void GenericResourceDisplayWidget::updateResourceSize(const QString & size)
 {
     m_pUi->resourceSizeLabel->setText(
-        QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
-        size +
-        QStringLiteral("</span></p></body></head></html>"));
+        QStringLiteral(
+            "<html><head/><body><p><span style=\" font-size:8pt;\">") +
+        size + QStringLiteral("</span></p></body></head></html>"));
 }
 
 void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 {
-    QNDEBUG("note_editor", "GenericResourceDisplayWidget::"
-        << "onOpenResourceInExternalAppButtonPressed");
+    QNDEBUG(
+        "note_editor",
+        "GenericResourceDisplayWidget::"
+            << "onOpenResourceInExternalAppButtonPressed");
 
     if (m_resourceHash.isEmpty()) {
         QNDEBUG("note_editor", "Can't open resource: resource hash is empty");
@@ -147,8 +145,10 @@ void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 
 void GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed()
 {
-    QNDEBUG("note_editor", "GenericResourceDisplayWidget::"
-        << "onSaveResourceDataToFileButtonPressed");
+    QNDEBUG(
+        "note_editor",
+        "GenericResourceDisplayWidget::"
+            << "onSaveResourceDataToFileButtonPressed");
 
     if (m_resourceHash.isEmpty()) {
         QNDEBUG("note_editor", "Can't save resource: resource hash is empty");
