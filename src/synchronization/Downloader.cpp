@@ -658,7 +658,6 @@ Downloader::Downloader(
     Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
     ISyncStateStoragePtr syncStateStorage,
     ISyncChunksProviderPtr syncChunksProvider,
-    ISyncChunksStoragePtr syncChunksStorage,
     ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
     INotebooksProcessorPtr notebooksProcessor,
     IDurableNotesProcessorPtr notesProcessor,
@@ -673,7 +672,6 @@ Downloader::Downloader(
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_syncStateStorage{std::move(syncStateStorage)},
     m_syncChunksProvider{std::move(syncChunksProvider)},
-    m_syncChunksStorage{std::move(syncChunksStorage)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
     // clang-format does some weird crap here, working around
@@ -712,11 +710,6 @@ Downloader::Downloader(
     if (Q_UNLIKELY(!m_syncChunksProvider)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "Downloader ctor: sync chunks provider is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_syncChunksStorage)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "Downloader ctor: sync chunks storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_linkedNotebooksProcessor)) {
@@ -836,7 +829,7 @@ QFuture<IDownloader::Result> Downloader::download(
 
 QFuture<IDownloader::Result> Downloader::launchDownload(
     const IAuthenticationInfo & authenticationInfo,
-    SyncStateConstPtr lastSyncState, utility::cancelers::ICancelerPtr canceler,
+    SyncStatePtr lastSyncState, utility::cancelers::ICancelerPtr canceler,
     ICallbackWeakPtr callbackWeak)
 {
     Q_ASSERT(lastSyncState);
@@ -1034,6 +1027,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
                 auto & currentResult = linkedNotebookResults[i].userOwnResult;
 
                 results[linkedNotebookGuids[i]] = LocalResult{
+                    std::move(currentResult.m_syncState),
                     std::move(currentResult.syncChunksDataCounters),
                     std::move(currentResult.downloadNotesStatus),
                     std::move(currentResult.downloadResourcesStatus)};
@@ -1041,6 +1035,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
             downloadContext->promise->addResult(Result{
                 LocalResult{
+                    std::move(downloadContext->lastSyncState),
                     std::move(downloadContext->syncChunksDataCounters),
                     std::move(downloadContext->downloadNotesStatus),
                     std::move(downloadContext->downloadResourcesStatus)},
@@ -1141,7 +1136,6 @@ void Downloader::processSyncChunks(
 
     if (downloadContext->syncChunks.isEmpty()) {
         if (downloadContext->linkedNotebook) {
-            Q_ASSERT(downloadContext->linkedNotebook);
             QNINFO(
                 "synchronization::Downloader",
                 "No new data found in Evernote for linked notebook of "
@@ -1281,6 +1275,123 @@ void Downloader::processSyncChunks(
             }});
 }
 
+void Downloader::updateSyncState(
+    const DownloadContext & downloadContext)
+{
+    if (!std::holds_alternative<std::monostate>(
+            downloadContext.downloadNotesStatus->m_stopSynchronizationError) ||
+        !std::holds_alternative<std::monostate>(
+            downloadContext.downloadResourcesStatus
+                ->m_stopSynchronizationError))
+    {
+        // If downloading was not completed successfully, will not update the
+        // sync state
+        return;
+    }
+
+    // FIXME: figure out what to do with items which were not processed
+    // successfully. Probably we should ignore some of them and put higher
+    // update counts to the sync state - i.e. for notes which failed to
+    // download. Their metadata would be saved and their downloading would be
+    // retried anyway. However, need to be careful and not bump the update
+    // counts above that of notes which processing was cancelled.
+
+    // First will process update counts of all items from sync chunks except
+    // notes and resources - these would be processed separately later.
+    const auto determineNonNoteNonResourceSyncChunkHighUsn =
+        [](const qevercloud::SyncChunk & syncChunk)
+        {
+            std::optional<qint32> highUsn;
+
+            const auto processItems = [&highUsn](const auto & items)
+            {
+                for (const auto & item: qAsConst(items)) {
+                    const auto usn = item.updateSequenceNum();
+                    if (usn && (!highUsn || (*highUsn < *usn))) {
+                        highUsn = *usn;
+                    }
+                }
+            };
+
+            const auto & notebooks = syncChunk.notebooks();
+            if (notebooks && !notebooks->isEmpty()) {
+                processItems(*notebooks);
+            }
+
+            const auto & tags = syncChunk.tags();
+            if (tags && !tags->isEmpty()) {
+                processItems(*tags);
+            }
+
+            const auto & searches = syncChunk.searches();
+            if (searches && !searches->isEmpty()) {
+                processItems(*searches);
+            }
+
+            const auto & linkedNotebooks = syncChunk.linkedNotebooks();
+            if (linkedNotebooks && !linkedNotebooks->isEmpty()) {
+                processItems(*linkedNotebooks);
+            }
+
+            return highUsn;
+        };
+
+    for (const auto & syncChunk: qAsConst(downloadContext.syncChunks)) {
+        const auto chunkHighUsn =
+            determineNonNoteNonResourceSyncChunkHighUsn(syncChunk);
+
+        if (Q_UNLIKELY(!chunkHighUsn)) {
+            QNWARNING(
+                "synchronization::Downloader",
+                "Skipping sync chunk without chunk high usn: " << syncChunk);
+            continue;
+        }
+
+        if (downloadContext.linkedNotebook)
+        {
+            Q_ASSERT(downloadContext.linkedNotebook->guid());
+            const auto & linkedNotebookGuid =
+                *downloadContext.linkedNotebook->guid();
+
+            auto & updateCounts =
+                downloadContext.lastSyncState->m_linkedNotebookUpdateCounts;
+
+            auto & lastSyncTimes =
+                downloadContext.lastSyncState->m_linkedNotebookLastSyncTimes;
+
+            const auto it = updateCounts.find(
+                *downloadContext.linkedNotebook->guid());
+
+            qint32 lastUpdateCount =
+                (it == updateCounts.constEnd()
+                 ? 0
+                 : it.value());
+            if (lastUpdateCount < *chunkHighUsn) {
+                if (it != updateCounts.constEnd()) {
+                    it.value() = *chunkHighUsn;
+                }
+                else {
+                    updateCounts[linkedNotebookGuid] = *chunkHighUsn;
+                }
+
+                lastSyncTimes[linkedNotebookGuid] = syncChunk.currentTime();
+            }
+
+            continue;
+        }
+
+        if (downloadContext.lastSyncState->m_userDataUpdateCount
+            < *chunkHighUsn)
+        {
+            downloadContext.lastSyncState->m_userDataUpdateCount =
+                *chunkHighUsn;
+
+            downloadContext.lastSyncState->m_userDataLastSyncTime =
+                syncChunk.currentTime();
+        }
+    }
+}
+
 void Downloader::downloadNotes(
     DownloadContextPtr downloadContext, const SyncMode syncMode)
 {
@@ -1365,6 +1476,7 @@ void Downloader::finalize(DownloadContextPtr & downloadContext)
 
     downloadContext->promise->addResult(Result{
         LocalResult{
+            std::move(downloadContext->lastSyncState),
             std::move(downloadContext->syncChunksDataCounters),
             std::move(downloadContext->downloadNotesStatus),
             std::move(

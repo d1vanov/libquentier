@@ -190,6 +190,7 @@ public:
 
     struct LocalResult
     {
+        SyncStatePtr m_syncState;
         SyncChunksDataCountersPtr syncChunksDataCounters;
         DownloadNotesStatusPtr downloadNotesStatus;
         DownloadResourcesStatusPtr downloadResourcesStatus;

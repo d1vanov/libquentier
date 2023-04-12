@@ -60,7 +60,6 @@ public:
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
-        ISyncChunksStoragePtr syncChunksStorage,
         ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
         INotebooksProcessorPtr notebooksProcessor,
         IDurableNotesProcessorPtr notesProcessor,
@@ -81,7 +80,7 @@ public:
 private:
     [[nodiscard]] QFuture<Result> launchDownload(
         const IAuthenticationInfo & authenticationInfo,
-        SyncStateConstPtr lastSyncState,
+        SyncStatePtr lastSyncState,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak);
 
@@ -99,7 +98,7 @@ private:
 
     struct DownloadContext
     {
-        SyncStateConstPtr lastSyncState;
+        SyncStatePtr lastSyncState;
         QList<qevercloud::SyncChunk> syncChunks;
         std::shared_ptr<QPromise<Result>> promise;
         qevercloud::IRequestContextPtr ctx;
@@ -142,12 +141,14 @@ private:
         DownloadContextPtr downloadContext, SyncMode syncMode,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
+    void updateSyncState(const DownloadContext & downloadContext);
+
     void downloadNotes(DownloadContextPtr downloadContext, SyncMode syncMode);
 
     void downloadResources(
         DownloadContextPtr downloadContext, SyncMode syncMode);
 
-    static void finalize(DownloadContextPtr & downloadContext);
+    void finalize(DownloadContextPtr & downloadContext);
     void cancel(QPromise<Result> & promise);
 
 private:
@@ -155,7 +156,6 @@ private:
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
-    const ISyncChunksStoragePtr m_syncChunksStorage;
     const ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
     const INotebooksProcessorPtr m_notebooksProcessor;
     const IDurableNotesProcessorPtr m_notesProcessor;
