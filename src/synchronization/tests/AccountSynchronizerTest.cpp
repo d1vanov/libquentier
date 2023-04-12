@@ -20,6 +20,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
@@ -291,6 +292,9 @@ protected:
         m_mockAuthenticationInfoProvider = std::make_shared<
             StrictMock<mocks::MockIAuthenticationInfoProvider>>();
 
+    const std::shared_ptr<mocks::MockISyncStateStorage> m_mockSyncStateStorage =
+        std::make_shared<StrictMock<mocks::MockISyncStateStorage>>();
+
     const threading::QThreadPoolPtr m_threadPool =
         threading::globalThreadPool();
 };
@@ -300,7 +304,8 @@ TEST_F(AccountSynchronizerTest, Ctor)
     EXPECT_NO_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_threadPool));
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+            m_threadPool));
 }
 
 TEST_F(AccountSynchronizerTest, CtorEmptyAccount)
@@ -308,7 +313,8 @@ TEST_F(AccountSynchronizerTest, CtorEmptyAccount)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             Account{}, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_threadPool),
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -317,7 +323,7 @@ TEST_F(AccountSynchronizerTest, CtorNullDownloader)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, nullptr, m_mockSender, m_mockAuthenticationInfoProvider,
-            m_threadPool),
+            m_mockSyncStateStorage, m_threadPool),
         InvalidArgument);
 }
 
@@ -326,7 +332,8 @@ TEST_F(AccountSynchronizerTest, CtorNullSender)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, nullptr,
-            m_mockAuthenticationInfoProvider, m_threadPool),
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -334,7 +341,17 @@ TEST_F(AccountSynchronizerTest, CtorNullAuthenticationInfoProvider)
 {
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
-            m_account, m_mockDownloader, m_mockSender, nullptr, m_threadPool),
+            m_account, m_mockDownloader, m_mockSender, nullptr,
+            m_mockSyncStateStorage, m_threadPool),
+        InvalidArgument);
+}
+
+TEST_F(AccountSynchronizerTest, CtorNullSyncStateStorage)
+{
+    EXPECT_THROW(
+        const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+            m_account, m_mockDownloader, m_mockSender,
+            m_mockAuthenticationInfoProvider, nullptr, m_threadPool),
         InvalidArgument);
 }
 
@@ -343,14 +360,14 @@ TEST_F(AccountSynchronizerTest, CtorNullThreadPool)
     EXPECT_NO_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, nullptr));
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, nullptr));
 }
 
 TEST_F(AccountSynchronizerTest, DownloadAndSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
     IDownloader::Result downloadResult;
     downloadResult.userOwnResult.syncChunksDataCounters =

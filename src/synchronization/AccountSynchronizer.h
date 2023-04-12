@@ -43,6 +43,7 @@ public:
     AccountSynchronizer(
         Account account, IDownloaderPtr downloader, ISenderPtr sender,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        ISyncStateStoragePtr syncStateStorage,
         threading::QThreadPoolPtr threadPool = nullptr);
 
 public: // IAccountSynchronizer
@@ -72,6 +73,9 @@ private:
 
     void onDownloadFailed(ContextPtr context, const QException & e);
 
+    void updateStoredSyncState(
+        const Context & context, const IDownloader::Result & downloadResult);
+
     [[nodiscard]] bool processDownloadStopSynchronizationError(
         const ContextPtr & context, const IDownloader::Result & downloadResult);
 
@@ -94,6 +98,7 @@ private:
     const IDownloaderPtr m_downloader;
     const ISenderPtr m_sender;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
+    const ISyncStateStoragePtr m_syncStateStorage;
     const threading::QThreadPoolPtr m_threadPool;
 };
 

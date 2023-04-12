@@ -21,6 +21,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/IDownloadResourcesStatus.h>
 #include <quentier/synchronization/types/ISendStatus.h>
@@ -344,12 +345,14 @@ private:
 AccountSynchronizer::AccountSynchronizer(
     Account account, IDownloaderPtr downloader, ISenderPtr sender,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
+    ISyncStateStoragePtr syncStateStorage,
     threading::QThreadPoolPtr threadPool) :
     m_account{std::move(account)},
     m_downloader{std::move(downloader)},
     // clang-format off
     m_sender{std::move(sender)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
+    m_syncStateStorage{std::move(syncStateStorage)},
     // clang-format on
     m_threadPool{
         threadPool ? std::move(threadPool) : threading::globalThreadPool()}
@@ -372,6 +375,11 @@ AccountSynchronizer::AccountSynchronizer(
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountSynchronizer ctor: authentication info provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncStateStorage)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "AccountSynchronizer ctor: sync state storage is null")}};
     }
 
     Q_ASSERT(m_threadPool);
@@ -428,10 +436,9 @@ void AccountSynchronizer::synchronizeImpl(ContextPtr context)
             // reports separate errors per each note/resource and does
             // so via the sync result, not via the exception inside
             // QFuture.
-            // TODO: should think of re-arranging error reporting from
-            // sync chunks downloading as well, otherwise right now it's
-            // not possible to figure out what part of sync chunks was
-            // downloaded before the error.
+            // It is possible to recover the information about what part of sync
+            // chunks was downloaded before the error through sync chunks data
+            // counters stored in context->callbackWrapper.
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -456,6 +463,8 @@ void AccountSynchronizer::onDownloadFinished(
     }
 
     appendToPreviousSyncResult(*context, downloadResult);
+    updateStoredSyncState(*context, downloadResult);
+
     send(std::move(context));
 }
 
@@ -537,6 +546,14 @@ void AccountSynchronizer::onDownloadFailed(
             RuntimeError{ErrorString{QStringLiteral("Unknown error")}});
         context->promise->finish();
     }
+}
+
+void AccountSynchronizer::updateStoredSyncState(
+    const Context & context, const IDownloader::Result & downloadResult)
+{
+    // TODO: implement
+    Q_UNUSED(context)
+    Q_UNUSED(downloadResult)
 }
 
 bool AccountSynchronizer::processDownloadStopSynchronizationError(

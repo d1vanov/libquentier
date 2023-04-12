@@ -22,11 +22,6 @@
 
 namespace quentier {
 
-/**
- * @brief The ISyncChunksDataCounters interface provides integer counters
- * representing the current progress on processing the data from downloaded
- * sync chunks
- */
 struct SyncChunksDataCounters final : public ISyncChunksDataCounters
 {
     // ISyncChunksDataCounters
