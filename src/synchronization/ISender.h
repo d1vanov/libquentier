@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
 #include <synchronization/types/Fwd.h>
@@ -58,6 +59,9 @@ public:
 
         // Send statuses for modified data in linked notebooks
         QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookResults;
+
+        // Updated sync state after the sync
+        ISyncStatePtr syncState;
     };
 
     [[nodiscard]] virtual QFuture<Result> send(

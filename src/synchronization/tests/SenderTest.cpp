@@ -2322,6 +2322,11 @@ TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
     EXPECT_EQ(result.userOwnResult->failedToSendTags()[0].first, parentTag);
     EXPECT_EQ(result.userOwnResult->failedToSendTags()[1].first, childTag);
     EXPECT_FALSE(result.userOwnResult->needToRepeatIncrementalSync());
+
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(result.syncState->userDataUpdateCount(), usn);
+    EXPECT_TRUE(result.syncState->linkedNotebookUpdateCounts().isEmpty());
+    EXPECT_TRUE(result.syncState->linkedNotebookLastSyncTimes().isEmpty());
 }
 
 TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
@@ -2424,6 +2429,11 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
     EXPECT_EQ(result.userOwnResult->totalSuccessfullySentTags(), 1);
     ASSERT_EQ(result.userOwnResult->failedToSendTags().size(), 1);
     EXPECT_EQ(result.userOwnResult->failedToSendTags()[0].first, parentTag);
+
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(result.syncState->userDataUpdateCount(), usn - 1);
+    EXPECT_TRUE(result.syncState->linkedNotebookUpdateCounts().isEmpty());
+    EXPECT_TRUE(result.syncState->linkedNotebookLastSyncTimes().isEmpty());
 }
 
 TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
@@ -2514,6 +2524,11 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
 
     EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 0);
     EXPECT_FALSE(result.userOwnResult->needToRepeatIncrementalSync());
+
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(result.syncState->userDataUpdateCount(), usn);
+    EXPECT_TRUE(result.syncState->linkedNotebookUpdateCounts().isEmpty());
+    EXPECT_TRUE(result.syncState->linkedNotebookLastSyncTimes().isEmpty());
 }
 
 TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
@@ -2629,6 +2644,11 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
 
     EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 1);
     EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotes(), 1);
+
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(result.syncState->userDataUpdateCount(), usn - 1);
+    EXPECT_TRUE(result.syncState->linkedNotebookUpdateCounts().isEmpty());
+    EXPECT_TRUE(result.syncState->linkedNotebookLastSyncTimes().isEmpty());
 }
 
 TEST_F(
@@ -2749,6 +2769,11 @@ TEST_F(
 
     EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 1);
     EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotes(), 1);
+
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(result.syncState->userDataUpdateCount(), usn - 1);
+    EXPECT_TRUE(result.syncState->linkedNotebookUpdateCounts().isEmpty());
+    EXPECT_TRUE(result.syncState->linkedNotebookLastSyncTimes().isEmpty());
 }
 
 TEST_F(
@@ -2870,6 +2895,11 @@ TEST_F(
 
     EXPECT_EQ(result.userOwnResult->totalAttemptedToSendNotes(), 1);
     EXPECT_EQ(result.userOwnResult->totalSuccessfullySentNotes(), 1);
+
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(result.syncState->userDataUpdateCount(), usn - 1);
+    EXPECT_TRUE(result.syncState->linkedNotebookUpdateCounts().isEmpty());
+    EXPECT_TRUE(result.syncState->linkedNotebookLastSyncTimes().isEmpty());
 }
 
 const std::array gSenderTestFlags{
@@ -3133,6 +3163,24 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     }
 
     checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
+
+    // Sync state
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(
+        result.syncState->userDataUpdateCount(), testData.m_maxUserOwnUsn - 1);
+
+    const auto linkedNotebookUpdateCounts =
+        result.syncState->linkedNotebookUpdateCounts();
+    ASSERT_EQ(
+        linkedNotebookUpdateCounts.size(),
+        testData.m_maxLinkedNotebookUsns.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+        const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
+        ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
+        EXPECT_EQ(it.value(), uit.value() - 2);
+    }
 }
 
 const std::array gSenderTestData{
@@ -3392,6 +3440,24 @@ TEST_P(SenderDataTest, SenderDataTest)
     }
 
     checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
+
+    // Sync state
+    ASSERT_TRUE(result.syncState);
+    EXPECT_EQ(
+        result.syncState->userDataUpdateCount(), testData.m_maxUserOwnUsn - 1);
+
+    const auto linkedNotebookUpdateCounts =
+        result.syncState->linkedNotebookUpdateCounts();
+    ASSERT_EQ(
+        linkedNotebookUpdateCounts.size(),
+        testData.m_maxLinkedNotebookUsns.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+        const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
+        ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
+        EXPECT_EQ(it.value(), uit.value() - 1);
+    }
 }
 
 TEST_P(SenderDataTest, TolerateSendingFailures)
@@ -3592,6 +3658,21 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     }
 
     checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
+
+    // Sync state
+    ASSERT_TRUE(result.syncState);
+
+    const auto linkedNotebookUpdateCounts =
+        result.syncState->linkedNotebookUpdateCounts();
+    ASSERT_EQ(
+        linkedNotebookUpdateCounts.size(),
+        testData.m_maxLinkedNotebookUsns.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+        const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
+        ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
+    }
 }
 
 TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
@@ -3794,6 +3875,21 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     }
 
     checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
+
+    // Sync state
+    ASSERT_TRUE(result.syncState);
+
+    const auto linkedNotebookUpdateCounts =
+        result.syncState->linkedNotebookUpdateCounts();
+    ASSERT_EQ(
+        linkedNotebookUpdateCounts.size(),
+        testData.m_maxLinkedNotebookUsns.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+        const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
+        ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
+    }
 }
 
 enum class StopSynchronizationReason
@@ -4259,6 +4355,21 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     }
 
     checkDataPutToLocalStorage(sentData, dataPutToLocalStorage);
+
+    // Sync state
+    ASSERT_TRUE(result.syncState);
+
+    const auto linkedNotebookUpdateCounts =
+        result.syncState->linkedNotebookUpdateCounts();
+    ASSERT_EQ(
+        linkedNotebookUpdateCounts.size(),
+        testData.m_maxLinkedNotebookUsns.size());
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+        const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
+        ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
+    }
 }
 
 } // namespace quentier::synchronization::tests

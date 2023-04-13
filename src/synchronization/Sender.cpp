@@ -195,6 +195,15 @@ QFuture<ISender::Result> Sender::send(
                 result.linkedNotebookResults[it.key()] = it.value();
             }
 
+            const auto now = QDateTime::currentMSecsSinceEpoch();
+            sendContext->lastSyncState->m_userDataLastSyncTime = now;
+            for (const auto it: qevercloud::toRange(
+                     sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
+            {
+                it.value() = now;
+            }
+            result.syncState = sendContext->lastSyncState;
+
             promise->addResult(std::move(result));
             promise->finish();
         });
