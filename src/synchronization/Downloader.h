@@ -141,7 +141,7 @@ private:
         DownloadContextPtr downloadContext, SyncMode syncMode,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
-    void updateSyncState(const DownloadContext & downloadContext);
+    static void updateSyncState(const DownloadContext & downloadContext);
 
     void downloadNotes(DownloadContextPtr downloadContext, SyncMode syncMode);
 

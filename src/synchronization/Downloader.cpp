@@ -884,7 +884,12 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "synchronization::Downloader",
                         "Evernote has no updates for user own data");
 
-                    self->listLinkedNotebooksAndLaunchDataDownload(
+                    // NOTE: will nevertheless try to download both notes and
+                    // resources with empty sync chunks list so that any notes
+                    // or resources which haven't been downloaded/processed
+                    // during the last previous sync would be attempted to be
+                    // processed now
+                    self->downloadNotes(
                         std::move(downloadContext), SyncMode::Incremental);
                 }
                 else {
@@ -1033,6 +1038,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
                     std::move(currentResult.downloadResourcesStatus)};
             }
 
+            Downloader::updateSyncState(*downloadContext);
             downloadContext->promise->addResult(Result{
                 LocalResult{
                     std::move(downloadContext->lastSyncState),
@@ -1141,17 +1147,19 @@ void Downloader::processSyncChunks(
                 "No new data found in Evernote for linked notebook of "
                     << downloadContext->linkedNotebook->username().value_or(
                            QStringLiteral("<unknown>")));
-            finalize(downloadContext);
         }
         else {
             QNINFO(
                 "synchronization::Downloader",
                 "No new data found in Evernote for user's own account");
-            listLinkedNotebooksAndLaunchDataDownload(
-                std::move(downloadContext), syncMode);
         }
 
-        return;
+        // NOTE: will nevertheless try to download both notes and
+        // resources with empty sync chunks list so that any notes
+        // or resources which haven't been downloaded/processed
+        // during the last previous sync would be attempted to be
+        // processed now
+        downloadNotes(std::move(downloadContext), syncMode);
     }
 
     const auto selfWeak = weak_from_this();
@@ -1278,73 +1286,29 @@ void Downloader::processSyncChunks(
 void Downloader::updateSyncState(
     const DownloadContext & downloadContext)
 {
-    if (!std::holds_alternative<std::monostate>(
-            downloadContext.downloadNotesStatus->m_stopSynchronizationError) ||
-        !std::holds_alternative<std::monostate>(
-            downloadContext.downloadResourcesStatus
-                ->m_stopSynchronizationError))
-    {
-        // If downloading was not completed successfully, will not update the
-        // sync state
-        return;
-    }
-
-    // FIXME: figure out what to do with items which were not processed
-    // successfully. Probably we should ignore some of them and put higher
-    // update counts to the sync state - i.e. for notes which failed to
-    // download. Their metadata would be saved and their downloading would be
-    // retried anyway. However, need to be careful and not bump the update
-    // counts above that of notes which processing was cancelled.
-
-    // First will process update counts of all items from sync chunks except
-    // notes and resources - these would be processed separately later.
-    const auto determineNonNoteNonResourceSyncChunkHighUsn =
-        [](const qevercloud::SyncChunk & syncChunk)
-        {
-            std::optional<qint32> highUsn;
-
-            const auto processItems = [&highUsn](const auto & items)
-            {
-                for (const auto & item: qAsConst(items)) {
-                    const auto usn = item.updateSequenceNum();
-                    if (usn && (!highUsn || (*highUsn < *usn))) {
-                        highUsn = *usn;
-                    }
-                }
-            };
-
-            const auto & notebooks = syncChunk.notebooks();
-            if (notebooks && !notebooks->isEmpty()) {
-                processItems(*notebooks);
-            }
-
-            const auto & tags = syncChunk.tags();
-            if (tags && !tags->isEmpty()) {
-                processItems(*tags);
-            }
-
-            const auto & searches = syncChunk.searches();
-            if (searches && !searches->isEmpty()) {
-                processItems(*searches);
-            }
-
-            const auto & linkedNotebooks = syncChunk.linkedNotebooks();
-            if (linkedNotebooks && !linkedNotebooks->isEmpty()) {
-                processItems(*linkedNotebooks);
-            }
-
-            return highUsn;
-        };
+    // NOTE: this method is called before the finalization of downloading
+    // process at which point it is known that
+    // 1. All sync chunks were downloaded
+    // 2. All notebooks, tags, saved searches and linked notebooks from them
+    //    were processed successfully
+    // 3. All notes were *attempted* to be downloaded and processed
+    // 4. All resources (if any) were *attempted* to be downloaded and processed
+    //
+    // Processing of any note or resource might have failed. Furthermore,
+    // processing of any note or resource might have been cancelled due to an
+    // error. Nevertheless, the sync state is updated because during the next
+    // sync all notes and resource which were not downloaded or processed
+    // successfully (or which processing has been cancelled) would be attempted
+    // to be processed again without regard to the sync state.
 
     for (const auto & syncChunk: qAsConst(downloadContext.syncChunks)) {
-        const auto chunkHighUsn =
-            determineNonNoteNonResourceSyncChunkHighUsn(syncChunk);
-
+        const auto chunkHighUsn = syncChunk.chunkHighUSN();
         if (Q_UNLIKELY(!chunkHighUsn)) {
             QNWARNING(
                 "synchronization::Downloader",
-                "Skipping sync chunk without chunk high usn: " << syncChunk);
-            continue;
+                "Detected sync chunk without chunk high usn: " << syncChunk
+                    << "\nSomething is wrong, will not update the sync state");
+            return;
         }
 
         if (downloadContext.linkedNotebook)
@@ -1474,6 +1438,7 @@ void Downloader::finalize(DownloadContextPtr & downloadContext)
 {
     Q_ASSERT(downloadContext);
 
+    Downloader::updateSyncState(*downloadContext);
     downloadContext->promise->addResult(Result{
         LocalResult{
             std::move(downloadContext->lastSyncState),
