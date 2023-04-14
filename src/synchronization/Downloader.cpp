@@ -45,6 +45,9 @@
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>
 
+#include <QMutex>
+#include <QMutexLocker>
+
 #include <atomic>
 #include <limits>
 
@@ -851,6 +854,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 
     auto downloadContext = std::make_shared<DownloadContext>();
     downloadContext->lastSyncState = std::move(lastSyncState);
+    downloadContext->lastSyncStateMutex = std::make_shared<QMutex>();
     downloadContext->promise = promise;
     downloadContext->ctx = std::move(ctx);
     downloadContext->canceler = std::move(canceler);
@@ -1032,7 +1036,6 @@ void Downloader::launchLinkedNotebooksDataDownload(
                 auto & currentResult = linkedNotebookResults[i].userOwnResult;
 
                 results[linkedNotebookGuids[i]] = LocalResult{
-                    std::move(currentResult.m_syncState),
                     std::move(currentResult.syncChunksDataCounters),
                     std::move(currentResult.downloadNotesStatus),
                     std::move(currentResult.downloadResourcesStatus)};
@@ -1041,11 +1044,11 @@ void Downloader::launchLinkedNotebooksDataDownload(
             Downloader::updateSyncState(*downloadContext);
             downloadContext->promise->addResult(Result{
                 LocalResult{
-                    std::move(downloadContext->lastSyncState),
                     std::move(downloadContext->syncChunksDataCounters),
                     std::move(downloadContext->downloadNotesStatus),
                     std::move(downloadContext->downloadResourcesStatus)},
-                std::move(results)});
+                std::move(results),
+                std::move(downloadContext->lastSyncState)});
 
             downloadContext->promise->finish();
         });
@@ -1068,6 +1071,9 @@ QFuture<IDownloader::Result> Downloader::startLinkedNotebookDataDownload(
     linkedNotebookDownloadContext->lastSyncState =
         downloadContext->lastSyncState;
 
+    linkedNotebookDownloadContext->lastSyncStateMutex =
+        downloadContext->lastSyncStateMutex;
+
     linkedNotebookDownloadContext->ctx = downloadContext->ctx;
     linkedNotebookDownloadContext->canceler = downloadContext->canceler;
     linkedNotebookDownloadContext->callbackWeak = downloadContext->callbackWeak;
@@ -1080,6 +1086,8 @@ QFuture<IDownloader::Result> Downloader::startLinkedNotebookDataDownload(
         if (syncMode == SyncMode::Full) {
             return 0;
         }
+
+        const QMutexLocker locked{downloadContext->lastSyncStateMutex.get()};
 
         const auto & linkedNotebookUpdateCounts =
             downloadContext->lastSyncState->m_linkedNotebookUpdateCounts;
@@ -1160,12 +1168,16 @@ void Downloader::processSyncChunks(
         // during the last previous sync would be attempted to be
         // processed now
         downloadNotes(std::move(downloadContext), syncMode);
+        return;
     }
 
     const auto selfWeak = weak_from_this();
 
     if (checkForFirstSync == CheckForFirstSync::Yes) {
         const bool isFirstSync = [&] {
+            const QMutexLocker locker{
+                downloadContext->lastSyncStateMutex.get()};
+
             if (downloadContext->linkedNotebook) {
                 Q_ASSERT(downloadContext->linkedNotebook->guid());
                 const auto & linkedNotebookUpdateCounts =
@@ -1301,6 +1313,7 @@ void Downloader::updateSyncState(
     // successfully (or which processing has been cancelled) would be attempted
     // to be processed again without regard to the sync state.
 
+    const QMutexLocker locker{downloadContext.lastSyncStateMutex.get()};
     for (const auto & syncChunk: qAsConst(downloadContext.syncChunks)) {
         const auto chunkHighUsn = syncChunk.chunkHighUSN();
         if (Q_UNLIKELY(!chunkHighUsn)) {
@@ -1441,12 +1454,12 @@ void Downloader::finalize(DownloadContextPtr & downloadContext)
     Downloader::updateSyncState(*downloadContext);
     downloadContext->promise->addResult(Result{
         LocalResult{
-            std::move(downloadContext->lastSyncState),
             std::move(downloadContext->syncChunksDataCounters),
             std::move(downloadContext->downloadNotesStatus),
             std::move(
                 downloadContext->downloadResourcesStatus)}, // userOwnResult
         {}, // linkedNotebookResults
+        std::move(downloadContext->lastSyncState), // syncState
     });
     downloadContext->promise->finish();
 }

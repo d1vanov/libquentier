@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
 #include <synchronization/Fwd.h>
@@ -190,7 +191,6 @@ public:
 
     struct LocalResult
     {
-        SyncStatePtr m_syncState;
         SyncChunksDataCountersPtr syncChunksDataCounters;
         DownloadNotesStatusPtr downloadNotesStatus;
         DownloadResourcesStatusPtr downloadResourcesStatus;
@@ -203,6 +203,9 @@ public:
 
         // Results for linked notebooks
         QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
+
+        // Updated sync state after the downloading step of the sync
+        ISyncStatePtr syncState;
     };
 
     [[nodiscard]] virtual QFuture<Result> download(

@@ -60,7 +60,7 @@ public:
         // Send statuses for modified data in linked notebooks
         QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookResults;
 
-        // Updated sync state after the sync
+        // Updated sync state after the sending step of the sync
         ISyncStatePtr syncState;
     };
 

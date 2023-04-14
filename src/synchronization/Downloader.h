@@ -24,6 +24,7 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/types/Fwd.h>
+#include <quentier/threading/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <synchronization/Fwd.h>
@@ -99,6 +100,8 @@ private:
     struct DownloadContext
     {
         SyncStatePtr lastSyncState;
+        threading::QMutexPtr lastSyncStateMutex;
+
         QList<qevercloud::SyncChunk> syncChunks;
         std::shared_ptr<QPromise<Result>> promise;
         qevercloud::IRequestContextPtr ctx;
