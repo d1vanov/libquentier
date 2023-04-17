@@ -61,7 +61,7 @@ public:
         QHash<qevercloud::Guid, SendStatusPtr> linkedNotebookResults;
 
         // Updated sync state after the sending step of the sync
-        ISyncStatePtr syncState;
+        SyncStatePtr syncState;
     };
 
     [[nodiscard]] virtual QFuture<Result> send(

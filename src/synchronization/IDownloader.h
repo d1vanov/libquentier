@@ -205,7 +205,7 @@ public:
         QHash<qevercloud::Guid, LocalResult> linkedNotebookResults;
 
         // Updated sync state after the downloading step of the sync
-        ISyncStatePtr syncState;
+        SyncStatePtr syncState;
     };
 
     [[nodiscard]] virtual QFuture<Result> download(

@@ -21,6 +21,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
+#include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
@@ -33,6 +34,7 @@
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
+#include <synchronization/types/SyncState.h>
 
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
@@ -40,7 +42,16 @@
 #include <qevercloud/types/builders/SavedSearchBuilder.h>
 #include <qevercloud/types/builders/TagBuilder.h>
 
+#include <QDateTime>
+
+// clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
+
 namespace quentier::synchronization::tests {
+
+using testing::InSequence;
+using testing::Return;
+using testing::StrictMock;
 
 namespace {
 
@@ -268,9 +279,6 @@ namespace {
 
 } // namespace
 
-using testing::Return;
-using testing::StrictMock;
-
 class AccountSynchronizerTest : public testing::Test
 {
 protected:
@@ -377,6 +385,14 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
     downloadResult.userOwnResult.downloadResourcesStatus =
         generateSampleDownloadResourcesStatus(1);
 
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    auto downloadSyncState = std::make_shared<SyncState>();
+    downloadSyncState->m_userDataUpdateCount = 42;
+    downloadSyncState->m_userDataLastSyncTime = now;
+
+    downloadResult.syncState = downloadSyncState;
+
     constexpr quint64 count = 3;
     for (quint64 i = 0; i < count; ++i) {
         auto & result =
@@ -398,11 +414,51 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
             generateSampleSendStatus(i + 1);
     }
 
+    auto sendSyncState = std::make_shared<SyncState>();
+    sendSyncState->m_userDataUpdateCount = 43;
+    sendSyncState->m_userDataLastSyncTime = now + 1;
+
+    sendResult.syncState = sendSyncState;
+
+    InSequence s;
+
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
 
+    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
+        .WillOnce(
+            [&, this](const Account & account, const ISyncStatePtr & state) {
+                EXPECT_EQ(account, m_account);
+                EXPECT_TRUE(state);
+                if (state) {
+                    EXPECT_EQ(
+                        state->userDataUpdateCount(),
+                        downloadSyncState->userDataUpdateCount());
+
+                    EXPECT_EQ(
+                        state->userDataLastSyncTime(),
+                        downloadSyncState->userDataLastSyncTime());
+                }
+            });
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
+
+    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
+        .WillOnce(
+            [&, this](const Account & account, const ISyncStatePtr & state) {
+                EXPECT_EQ(account, m_account);
+                EXPECT_TRUE(state);
+                if (state) {
+                    EXPECT_EQ(
+                        state->userDataUpdateCount(),
+                        sendSyncState->userDataUpdateCount());
+
+                    EXPECT_EQ(
+                        state->userDataLastSyncTime(),
+                        sendSyncState->userDataLastSyncTime());
+                }
+            });
 
     // FIXME: need a mock of the callback here
     auto callback = std::shared_ptr<IAccountSynchronizer::ICallback>();
@@ -411,7 +467,23 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
     auto syncResult = accountSynchronizer->synchronize(callback, canceler);
     syncResult.waitForFinished();
 
-    // TODO: check that the result is as expected
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    ASSERT_TRUE(result);
+
+    const auto resultSyncState = result->syncState();
+    ASSERT_TRUE(resultSyncState);
+
+    EXPECT_EQ(
+        resultSyncState->userDataUpdateCount(),
+        sendSyncState->userDataUpdateCount());
+
+    EXPECT_EQ(
+        resultSyncState->userDataLastSyncTime(),
+        sendSyncState->userDataLastSyncTime());
+
+    // TODO: check the content of other fields of the result
 }
 
 } // namespace quentier::synchronization::tests

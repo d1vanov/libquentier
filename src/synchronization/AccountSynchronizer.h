@@ -73,8 +73,7 @@ private:
 
     void onDownloadFailed(ContextPtr context, const QException & e);
 
-    void updateStoredSyncState(
-        const Context & context, const IDownloader::Result & downloadResult);
+    void updateStoredSyncState(const IDownloader::Result & downloadResult);
 
     [[nodiscard]] bool processDownloadStopSynchronizationError(
         const ContextPtr & context, const IDownloader::Result & downloadResult);
@@ -87,6 +86,8 @@ private:
 
     void send(ContextPtr context);
     void onSendFinished(ContextPtr context, const ISender::Result & sendResult);
+
+    void updateStoredSyncState(const ISender::Result & sendResult);
 
     [[nodiscard]] bool processSendStopSynchronizationError(
         const ContextPtr & context, const ISender::Result & sendResult);

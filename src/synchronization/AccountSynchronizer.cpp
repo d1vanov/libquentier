@@ -37,6 +37,7 @@
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
 #include <synchronization/types/SyncResult.h>
+#include <synchronization/types/SyncState.h>
 
 #include <qevercloud/exceptions/EDAMSystemExceptionAuthExpired.h>
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
@@ -463,7 +464,7 @@ void AccountSynchronizer::onDownloadFinished(
     }
 
     appendToPreviousSyncResult(*context, downloadResult);
-    updateStoredSyncState(*context, downloadResult);
+    updateStoredSyncState(downloadResult);
 
     send(std::move(context));
 }
@@ -549,11 +550,22 @@ void AccountSynchronizer::onDownloadFailed(
 }
 
 void AccountSynchronizer::updateStoredSyncState(
-    const Context & context, const IDownloader::Result & downloadResult)
+    const IDownloader::Result & downloadResult)
 {
-    // TODO: implement
-    Q_UNUSED(context)
-    Q_UNUSED(downloadResult)
+    if (!downloadResult.syncState) {
+        QNDEBUG(
+            "synchronization::AccountSynchronizer",
+            "AccountSynchronizer::updateStoredSyncState (after download): "
+                << "no sync state to store");
+        return;
+    }
+
+    QNDEBUG(
+        "synchronization::AccountSynchronizer",
+        "AccountSynchronizer::updateStoredSyncState (after download): "
+            << *downloadResult.syncState);
+
+    m_syncStateStorage->setSyncState(m_account, downloadResult.syncState);
 }
 
 bool AccountSynchronizer::processDownloadStopSynchronizationError(
@@ -833,6 +845,10 @@ void AccountSynchronizer::appendToPreviousSyncResult(
         context.previousSyncResult = std::make_shared<SyncResult>();
     }
 
+    if (sendResult.syncState) {
+        context.previousSyncResult->m_syncState = sendResult.syncState;
+    }
+
     if (sendResult.userOwnResult) {
         if (!context.previousSyncResult->m_userAccountSendStatus) {
             context.previousSyncResult->m_userAccountSendStatus =
@@ -912,6 +928,7 @@ void AccountSynchronizer::onSendFinished(
     }
 
     appendToPreviousSyncResult(*context, sendResult);
+    updateStoredSyncState(sendResult);
 
     Q_ASSERT(context->previousSyncResult);
 
@@ -962,6 +979,25 @@ void AccountSynchronizer::onSendFinished(
 
     context->promise->addResult(std::move(context->previousSyncResult));
     context->promise->finish();
+}
+
+void AccountSynchronizer::updateStoredSyncState(
+    const ISender::Result & sendResult)
+{
+    if (!sendResult.syncState) {
+        QNDEBUG(
+            "synchronization::AccountSynchronizer",
+            "AccountSynchronizer::updateStoredSyncState (after send): "
+                << "no sync state to store");
+        return;
+    }
+
+    QNDEBUG(
+        "synchronization::AccountSynchronizer",
+        "AccountSynchronizer::updateStoredSyncState (after send): "
+            << *sendResult.syncState);
+
+    m_syncStateStorage->setSyncState(m_account, sendResult.syncState);
 }
 
 bool AccountSynchronizer::processSendStopSynchronizationError(
