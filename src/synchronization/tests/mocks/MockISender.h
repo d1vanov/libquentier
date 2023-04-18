@@ -36,6 +36,7 @@ public:
 
 class MockISenderICallback : public ISender::ICallback
 {
+public:
     MOCK_METHOD(
         void, onUserOwnSendStatusUpdate, (SendStatusPtr sendStatus),
         (override));
