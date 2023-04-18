@@ -28,6 +28,7 @@
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/tests/mocks/MockIAccountSynchronizer.h>
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockIDownloader.h>
 #include <synchronization/tests/mocks/MockISender.h>
@@ -104,13 +105,14 @@ namespace {
                        .setGuid(UidGenerator::Generate())
                        .setTitle(
                            QString::fromUtf8("Note failed to download #%1")
-                               .arg(startValue++))
-                       .setUpdateSequenceNum(startValue++)
+                               .arg(startValue + 1))
+                       .setUpdateSequenceNum(startValue + 2)
                        .setNotebookGuid(UidGenerator::Generate())
                        .setNotebookLocalId(UidGenerator::Generate())
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
+        startValue += 2;
     }
 
     for (int i = 0; i < count; ++i) {
@@ -120,13 +122,14 @@ namespace {
                        .setLocalId(UidGenerator::Generate())
                        .setGuid(UidGenerator::Generate())
                        .setTitle(QString::fromUtf8("Note failed to process #%1")
-                                     .arg(startValue++))
-                       .setUpdateSequenceNum(startValue++)
+                                     .arg(startValue + 1))
+                       .setUpdateSequenceNum(startValue + 2)
                        .setNotebookGuid(UidGenerator::Generate())
                        .setNotebookLocalId(UidGenerator::Generate())
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
+        startValue += 2;
     }
 
     for (int i = 0; i < count; ++i) {
@@ -221,13 +224,14 @@ namespace {
                 .setLocalId(UidGenerator::Generate())
                 .setGuid(UidGenerator::Generate())
                 .setTitle(QString::fromUtf8("Note failed to send #%1")
-                              .arg(startValue++))
-                .setUpdateSequenceNum(startValue++)
+                              .arg(startValue + 1))
+                .setUpdateSequenceNum(startValue + 2)
                 .setNotebookGuid(UidGenerator::Generate())
                 .setNotebookLocalId(UidGenerator::Generate())
                 .build(),
             std::make_shared<RuntimeError>(
                 ErrorString{QStringLiteral("some error")})};
+        startValue += 2;
     }
 
     status->m_totalSuccessfullySentNotebooks = startValue++;
@@ -237,11 +241,12 @@ namespace {
                 .setLocalId(UidGenerator::Generate())
                 .setGuid(UidGenerator::Generate())
                 .setName(QString::fromUtf8("Notebook failed to send #%1")
-                             .arg(startValue++))
-                .setUpdateSequenceNum(startValue++)
+                             .arg(startValue + 1))
+                .setUpdateSequenceNum(startValue + 2)
                 .build(),
             std::make_shared<RuntimeError>(
                 ErrorString{QStringLiteral("some error")})};
+        startValue += 2;
     }
 
     status->m_totalSuccessfullySentSavedSearches = startValue++;
@@ -253,11 +258,12 @@ namespace {
                        .setGuid(UidGenerator::Generate())
                        .setName(
                            QString::fromUtf8("SavedSearch failed to send #%1")
-                               .arg(startValue++))
-                       .setUpdateSequenceNum(startValue++)
+                               .arg(startValue + 1))
+                       .setUpdateSequenceNum(startValue + 2)
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
+        startValue += 2;
     }
 
     status->m_totalSuccessfullySentTags = startValue++;
@@ -267,11 +273,12 @@ namespace {
                 .setLocalId(UidGenerator::Generate())
                 .setGuid(UidGenerator::Generate())
                 .setName(QString::fromUtf8("Tag failed to send #%1")
-                             .arg(startValue++))
-                .setUpdateSequenceNum(startValue++)
+                             .arg(startValue + 1))
+                .setUpdateSequenceNum(startValue + 2)
                 .build(),
             std::make_shared<RuntimeError>(
                 ErrorString{QStringLiteral("some error")})};
+        startValue += 2;
     }
 
     return status;
@@ -377,6 +384,13 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
+    const int linkedNotebookCount = 3;
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+
     IDownloader::Result downloadResult;
     downloadResult.userOwnResult.syncChunksDataCounters =
         generateSampleSyncChunksDataCounters(1);
@@ -385,38 +399,65 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
     downloadResult.userOwnResult.downloadResourcesStatus =
         generateSampleDownloadResourcesStatus(1);
 
+    qint32 counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        auto & result =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+
+        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
+            3 + static_cast<quint64>(counter) * 2);
+
+        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
+            5 + static_cast<quint64>(counter) * 3);
+
+        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
+            8 + static_cast<quint64>(counter) * 4);
+
+        ++counter;
+    }
+
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
     auto downloadSyncState = std::make_shared<SyncState>();
     downloadSyncState->m_userDataUpdateCount = 42;
     downloadSyncState->m_userDataLastSyncTime = now;
 
-    downloadResult.syncState = downloadSyncState;
+    counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
+            84 + counter * 2;
 
-    constexpr quint64 count = 3;
-    for (quint64 i = 0; i < count; ++i) {
-        auto & result =
-            downloadResult.linkedNotebookResults[UidGenerator::Generate()];
+        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
+            now + counter;
 
-        result.syncChunksDataCounters =
-            generateSampleSyncChunksDataCounters(i + 1);
-
-        result.downloadNotesStatus = generateSampleDownloadNotesStatus(i + 1);
-
-        result.downloadResourcesStatus =
-            generateSampleDownloadResourcesStatus(i + 1);
+        ++counter;
     }
+
+    downloadResult.syncState = downloadSyncState;
 
     ISender::Result sendResult;
     sendResult.userOwnResult = generateSampleSendStatus(1);
-    for (quint64 i = 0; i < count; ++i) {
-        sendResult.linkedNotebookResults[UidGenerator::Generate()] =
-            generateSampleSendStatus(i + 1);
+
+    counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        sendResult.linkedNotebookResults[linkedNotebookGuid] =
+            generateSampleSendStatus(static_cast<quint64>(counter) * 5);
     }
 
     auto sendSyncState = std::make_shared<SyncState>();
     sendSyncState->m_userDataUpdateCount = 43;
     sendSyncState->m_userDataLastSyncTime = now + 1;
+
+    counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
+            120 + counter * 3;
+
+        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
+            now + counter * 2;
+
+        ++counter;
+    }
 
     sendResult.syncState = sendSyncState;
 
@@ -460,18 +501,24 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
                 }
             });
 
-    // FIXME: need a mock of the callback here
-    auto callback = std::shared_ptr<IAccountSynchronizer::ICallback>();
-    auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
-    auto syncResult = accountSynchronizer->synchronize(callback, canceler);
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
     syncResult.waitForFinished();
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
 
+    // Checking the result
+
     ASSERT_TRUE(result);
 
+    // Checking sync state
     const auto resultSyncState = result->syncState();
     ASSERT_TRUE(resultSyncState);
 
@@ -483,7 +530,146 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
         resultSyncState->userDataLastSyncTime(),
         sendSyncState->userDataLastSyncTime());
 
-    // TODO: check the content of other fields of the result
+    const auto resultLinkedNotebookLastSyncTimes =
+        resultSyncState->linkedNotebookLastSyncTimes();
+
+    ASSERT_EQ(
+        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it =
+            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
+        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
+
+        const auto rit = sendSyncState->m_linkedNotebookLastSyncTimes.constFind(
+            linkedNotebookGuid);
+        ASSERT_NE(rit, sendSyncState->m_linkedNotebookLastSyncTimes.constEnd());
+
+        EXPECT_EQ(it.value(), rit.value());
+    }
+
+    const auto resultLinkedNotebookUpdateCounts =
+        resultSyncState->linkedNotebookUpdateCounts();
+
+    ASSERT_EQ(
+        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it =
+            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
+        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
+
+        const auto rit = sendSyncState->m_linkedNotebookUpdateCounts.constFind(
+            linkedNotebookGuid);
+        ASSERT_NE(rit, sendSyncState->m_linkedNotebookUpdateCounts.constEnd());
+
+        EXPECT_EQ(it.value(), rit.value());
+    }
+
+    // Checking sync chunks data counters
+    const auto resultSyncChunksDataCounters =
+        result->userAccountSyncChunksDataCounters();
+    ASSERT_TRUE(resultSyncChunksDataCounters);
+
+    EXPECT_EQ(
+        resultSyncChunksDataCounters,
+        downloadResult.userOwnResult.syncChunksDataCounters);
+
+    const auto resultLinkedNotebookSyncChunksDataCounters =
+        result->linkedNotebookSyncChunksDataCounters();
+
+    ASSERT_EQ(
+        resultLinkedNotebookSyncChunksDataCounters.size(),
+        downloadResult.linkedNotebookResults.size());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it = resultLinkedNotebookSyncChunksDataCounters.constFind(
+            linkedNotebookGuid);
+        ASSERT_NE(it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
+
+        const auto rit =
+            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
+        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
+
+        EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
+    }
+
+    // Checking download notes status
+    const auto resultDownloadNotesStatus =
+        result->userAccountDownloadNotesStatus();
+    ASSERT_TRUE(resultDownloadNotesStatus);
+
+    EXPECT_EQ(
+        resultDownloadNotesStatus,
+        downloadResult.userOwnResult.downloadNotesStatus);
+
+    const auto resultLinkedNotebookDownloadNotesStatuses =
+        result->linkedNotebookDownloadNotesStatuses();
+    ASSERT_EQ(
+        resultLinkedNotebookDownloadNotesStatuses.size(),
+        linkedNotebookGuids.size());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
+            linkedNotebookGuid);
+        ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
+
+        const auto rit =
+            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
+        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
+
+        EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
+    }
+
+    // Checking download resources status
+    const auto resultDownloadResourcesStatus =
+        result->userAccountDownloadResourcesStatus();
+    ASSERT_TRUE(resultDownloadResourcesStatus);
+
+    EXPECT_EQ(
+        resultDownloadResourcesStatus,
+        downloadResult.userOwnResult.downloadResourcesStatus);
+
+    const auto resultLinkedNotebookDownloadResourcesStatuses =
+        result->linkedNotebookDownloadResourcesStatuses();
+    ASSERT_EQ(
+        resultLinkedNotebookDownloadResourcesStatuses.size(),
+        linkedNotebookGuids.size());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it = resultLinkedNotebookDownloadResourcesStatuses.constFind(
+            linkedNotebookGuid);
+        ASSERT_NE(it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
+
+        const auto rit =
+            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
+        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
+
+        EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
+    }
+
+    // Checking send status
+    const auto resultSendStatus = result->userAccountSendStatus();
+    ASSERT_TRUE(resultSendStatus);
+
+    EXPECT_EQ(resultSendStatus, sendResult.userOwnResult);
+
+    const auto resultLinkedNotebookSendStatuses =
+        result->linkedNotebookSendStatuses();
+    ASSERT_EQ(
+        resultLinkedNotebookSendStatuses.size(), linkedNotebookGuids.size());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it =
+            resultLinkedNotebookSendStatuses.constFind(linkedNotebookGuid);
+        ASSERT_NE(it, resultLinkedNotebookSendStatuses.constEnd());
+
+        const auto rit =
+            sendResult.linkedNotebookResults.constFind(linkedNotebookGuid);
+        ASSERT_NE(rit, sendResult.linkedNotebookResults.constEnd());
+
+        EXPECT_EQ(it.value(), rit.value());
+    }
 }
 
 } // namespace quentier::synchronization::tests
