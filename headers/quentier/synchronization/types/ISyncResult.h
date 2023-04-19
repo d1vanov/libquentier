@@ -60,8 +60,6 @@ public:
 
     [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
         const = 0;
-
-    [[nodiscard]] virtual ISyncStatsPtr syncStats() const = 0;
 };
 
 } // namespace quentier::synchronization

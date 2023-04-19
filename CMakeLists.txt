@@ -144,8 +144,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncResult.h
-    headers/quentier/synchronization/types/ISyncState.h
-    headers/quentier/synchronization/types/ISyncStats.h)
+    headers/quentier/synchronization/types/ISyncState.h)
 
 set(THREADING_HEADERS
     headers/quentier/threading/Future.h

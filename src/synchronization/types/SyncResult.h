@@ -55,8 +55,6 @@ struct SyncResult final: public ISyncResult
     [[nodiscard]] StopSynchronizationError stopSynchronizationError()
         const override;
 
-    [[nodiscard]] ISyncStatsPtr syncStats() const noexcept override;
-
     QTextStream & print(QTextStream & strm) const override;
 
     SyncStatePtr m_syncState;
@@ -78,8 +76,6 @@ struct SyncResult final: public ISyncResult
 
     StopSynchronizationError m_stopSynchronizationError =
         StopSynchronizationError{std::monostate{}};
-
-    ISyncStatsPtr m_syncStats;
 };
 
 [[nodiscard]] bool operator==(

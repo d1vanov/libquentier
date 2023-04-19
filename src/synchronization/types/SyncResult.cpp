@@ -23,7 +23,6 @@
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
 #include <synchronization/types/SyncState.h>
-#include <synchronization/types/SyncStats.h>
 
 #include <qevercloud/utility/ToRange.h>
 
@@ -112,11 +111,6 @@ QHash<qevercloud::Guid, ISendStatusPtr> SyncResult::linkedNotebookSendStatuses()
 StopSynchronizationError SyncResult::stopSynchronizationError() const
 {
     return m_stopSynchronizationError;
-}
-
-ISyncStatsPtr SyncResult::syncStats() const noexcept
-{
-    return m_syncStats;
 }
 
 QTextStream & SyncResult::print(QTextStream & strm) const
@@ -237,10 +231,6 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         strm << "stopSynchronizationError = AuthenticationExpiredError";
     }
 
-    if (m_syncStats) {
-        strm << "syncStats = ";
-        m_syncStats->print(strm);
-    }
     return strm;
 }
 
