@@ -178,6 +178,22 @@ void merge(const ISendStatus & from, SendStatus & to)
     to.m_needToRepeatIncrementalSync = from.needToRepeatIncrementalSync();
 }
 
+void merge(const ISyncState & from, SyncState & to)
+{
+    to.m_userDataUpdateCount = from.userDataUpdateCount();
+    to.m_userDataLastSyncTime = from.userDataLastSyncTime();
+
+    for (const auto it: qevercloud::toRange(from.linkedNotebookUpdateCounts()))
+    {
+        to.m_linkedNotebookUpdateCounts[it.key()] = it.value();
+    }
+
+    for (const auto it: qevercloud::toRange(from.linkedNotebookLastSyncTimes()))
+    {
+        to.m_linkedNotebookLastSyncTimes[it.key()] = it.value();
+    }
+}
+
 } // namespace
 
 class AccountSynchronizer::CallbackWrapper :
@@ -410,7 +426,8 @@ QFuture<ISyncResultPtr> AccountSynchronizer::synchronize(
     return future;
 }
 
-void AccountSynchronizer::synchronizeImpl(ContextPtr context)
+void AccountSynchronizer::synchronizeImpl(
+    ContextPtr context, const SendAfterDownload sendAfterDownload)
 {
     Q_ASSERT(context);
 
@@ -423,9 +440,10 @@ void AccountSynchronizer::synchronizeImpl(ContextPtr context)
         std::move(downloadFuture), m_threadPool.get(),
         threading::TrackedTask{
             selfWeak,
-            [this, context = context](
+            [this, sendAfterDownload, context = context](
                 const IDownloader::Result & downloadResult) mutable {
-                onDownloadFinished(std::move(context), downloadResult);
+                onDownloadFinished(
+                    std::move(context), downloadResult, sendAfterDownload);
             }});
 
     threading::onFailed(
@@ -450,7 +468,8 @@ void AccountSynchronizer::synchronizeImpl(ContextPtr context)
 }
 
 void AccountSynchronizer::onDownloadFinished(
-    ContextPtr context, const IDownloader::Result & downloadResult)
+    ContextPtr context, const IDownloader::Result & downloadResult,
+    const SendAfterDownload sendAfterDownload)
 {
     QNINFO(
         "synchronization::AccountSynchronizer",
@@ -466,7 +485,12 @@ void AccountSynchronizer::onDownloadFinished(
     appendToPreviousSyncResult(*context, downloadResult);
     updateStoredSyncState(downloadResult);
 
-    send(std::move(context));
+    if (sendAfterDownload == SendAfterDownload::Yes) {
+        send(std::move(context));
+        return;
+    }
+
+    finalize(*context);
 }
 
 void AccountSynchronizer::onDownloadFailed(
@@ -500,8 +524,7 @@ void AccountSynchronizer::onDownloadFailed(
         // Sync chunks counters for downloaded sync chunks should be available
         // in counters cached within callbackWrapper
         if (auto counters =
-                context->callbackWrapper->userOwnSyncChunksDataCounters())
-        {
+                context->callbackWrapper->userOwnSyncChunksDataCounters()) {
             syncResult->m_userAccountSyncChunksDataCounters =
                 std::move(counters);
         }
@@ -836,6 +859,15 @@ void AccountSynchronizer::appendToPreviousSyncResult(
             }
         }
     }
+
+    if (!context.previousSyncResult->m_syncState) {
+        context.previousSyncResult->m_syncState = downloadResult.syncState;
+    }
+    else if (downloadResult.syncState) {
+        merge(
+            *downloadResult.syncState,
+            *context.previousSyncResult->m_syncState);
+    }
 }
 
 void AccountSynchronizer::appendToPreviousSyncResult(
@@ -847,6 +879,13 @@ void AccountSynchronizer::appendToPreviousSyncResult(
 
     if (sendResult.syncState) {
         context.previousSyncResult->m_syncState = sendResult.syncState;
+    }
+
+    if (!context.previousSyncResult->m_syncState) {
+        context.previousSyncResult->m_syncState = sendResult.syncState;
+    }
+    else if (sendResult.syncState) {
+        merge(*sendResult.syncState, *context.previousSyncResult->m_syncState);
     }
 
     if (sendResult.userOwnResult) {
@@ -968,17 +1007,11 @@ void AccountSynchronizer::onSendFinished(
     }();
 
     if (needToRepeatIncrementalSync) {
-        synchronizeImpl(std::move(context));
+        synchronizeImpl(std::move(context), SendAfterDownload::No);
         return;
     }
 
-    QNINFO(
-        "synchronization::AccountSynchronizer",
-        "Synchronization finished for account " << m_account.name() << " ("
-                                                << m_account.id() << ")");
-
-    context->promise->addResult(std::move(context->previousSyncResult));
-    context->promise->finish();
+    finalize(*context);
 }
 
 void AccountSynchronizer::updateStoredSyncState(
@@ -1089,6 +1122,19 @@ void AccountSynchronizer::clearAuthenticationCachesAndRestartSync(
             IAuthenticationInfoProvider::ClearCacheOption::All{}});
 
     synchronizeImpl(std::move(context));
+}
+
+void AccountSynchronizer::finalize(Context & context)
+{
+    Q_ASSERT(context.previousSyncResult);
+
+    QNINFO(
+        "synchronization::AccountSynchronizer",
+        "Synchronization finished for account " << m_account.name() << " ("
+                                                << m_account.id() << ")");
+
+    context.promise->addResult(std::move(context.previousSyncResult));
+    context.promise->finish();
 }
 
 } // namespace quentier::synchronization

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ int main(int argc, char * argv[])
     quentier::initializeLibquentier();
 
     QUENTIER_INITIALIZE_LOGGING();
-    QUENTIER_SET_MIN_LOG_LEVEL(Info);
+    QUENTIER_SET_MIN_LOG_LEVEL(Warning);
     QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
     QTimer::singleShot(0, [&]() // clazy:exclude=connect-3arg-lambda

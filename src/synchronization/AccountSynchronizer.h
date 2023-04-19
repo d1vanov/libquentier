@@ -66,10 +66,19 @@ private:
 
     using ContextPtr = std::shared_ptr<Context>;
 
-    void synchronizeImpl(ContextPtr context);
+    enum class SendAfterDownload
+    {
+        Yes,
+        No
+    };
+
+    void synchronizeImpl(
+        ContextPtr context,
+        SendAfterDownload sendAfterDownload = SendAfterDownload::Yes);
 
     void onDownloadFinished(
-        ContextPtr context, const IDownloader::Result & downloadResult);
+        ContextPtr context, const IDownloader::Result & downloadResult,
+        SendAfterDownload sendAfterDownload);
 
     void onDownloadFailed(ContextPtr context, const QException & e);
 
@@ -93,6 +102,8 @@ private:
         const ContextPtr & context, const ISender::Result & sendResult);
 
     void clearAuthenticationCachesAndRestartSync(ContextPtr context);
+
+    void finalize(Context & context);
 
 private:
     const Account m_account;

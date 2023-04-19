@@ -134,9 +134,7 @@ target_sources(${LIBRARY_NAME}
   types/SyncResult.cpp
   types/SyncResult.h
   types/SyncState.cpp
-  types/SyncState.h
-  types/SyncStats.cpp
-  types/SyncStats.h)
+  types/SyncState.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
