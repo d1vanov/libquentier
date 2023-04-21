@@ -286,10 +286,312 @@ namespace {
     return status;
 }
 
+[[nodiscard]] QList<qevercloud::Guid> generateLinkedNotebookGuids(
+    const int linkedNotebookCount = 3)
+{
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+    return linkedNotebookGuids;
+}
+
+[[nodiscard]] IDownloader::Result generateSampleDownloaderResult(
+    const QList<qevercloud::Guid> & linkedNotebookGuids)
+{
+    IDownloader::Result downloadResult;
+    downloadResult.userOwnResult.syncChunksDataCounters =
+        generateSampleSyncChunksDataCounters(1);
+    downloadResult.userOwnResult.downloadNotesStatus =
+        generateSampleDownloadNotesStatus(1);
+    downloadResult.userOwnResult.downloadResourcesStatus =
+        generateSampleDownloadResourcesStatus(1);
+
+    qint32 counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        auto & result =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+
+        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
+            3 + static_cast<quint64>(counter) * 2);
+
+        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
+            5 + static_cast<quint64>(counter) * 3);
+
+        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
+            8 + static_cast<quint64>(counter) * 4);
+
+        ++counter;
+    }
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    auto downloadSyncState = std::make_shared<SyncState>();
+    downloadSyncState->m_userDataUpdateCount = 42;
+    downloadSyncState->m_userDataLastSyncTime = now;
+
+    counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
+            84 + counter * 2;
+
+        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
+            now + counter;
+
+        ++counter;
+    }
+
+    downloadResult.syncState = downloadSyncState;
+    return downloadResult;
+}
+
+[[nodiscard]] ISender::Result generateSampleSendResult(
+    const QList<qevercloud::Guid> & linkedNotebookGuids)
+{
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    ISender::Result sendResult;
+    sendResult.userOwnResult = generateSampleSendStatus(1);
+
+    int counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        sendResult.linkedNotebookResults[linkedNotebookGuid] =
+            generateSampleSendStatus(static_cast<quint64>(counter) * 5);
+    }
+
+    auto sendSyncState = std::make_shared<SyncState>();
+    sendSyncState->m_userDataUpdateCount = 43;
+    sendSyncState->m_userDataLastSyncTime = now + 1;
+
+    counter = 1;
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
+            120 + counter * 3;
+
+        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
+            now + counter * 2L;
+
+        ++counter;
+    }
+
+    sendResult.syncState = sendSyncState;
+    return sendResult;
+}
+
 } // namespace
 
 class AccountSynchronizerTest : public testing::Test
 {
+protected:
+    void expectSetSyncState(ISyncStatePtr expectedSyncState)
+    {
+        ASSERT_TRUE(expectedSyncState);
+        EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
+            .WillOnce(
+                [this, expectedSyncState = std::move(expectedSyncState)](
+                    const Account & account, const ISyncStatePtr & state) {
+                    EXPECT_EQ(account, m_account);
+                    EXPECT_TRUE(state);
+                    if (state) {
+                        EXPECT_EQ(
+                            state->userDataUpdateCount(),
+                            expectedSyncState->userDataUpdateCount());
+
+                        EXPECT_EQ(
+                            state->userDataLastSyncTime(),
+                            expectedSyncState->userDataLastSyncTime());
+
+                        EXPECT_EQ(
+                            state->linkedNotebookUpdateCounts(),
+                            expectedSyncState->linkedNotebookUpdateCounts());
+
+                        EXPECT_EQ(
+                            state->linkedNotebookLastSyncTimes(),
+                            expectedSyncState->linkedNotebookLastSyncTimes());
+                    }
+                });
+    }
+
+    void checkResultSyncState(
+        const ISyncResult & result, const ISyncState & expectedSyncState,
+        const QList<qevercloud::Guid> & linkedNotebookGuids)
+    {
+        const auto resultSyncState = result.syncState();
+        ASSERT_TRUE(resultSyncState);
+
+        EXPECT_EQ(
+            resultSyncState->userDataUpdateCount(),
+            expectedSyncState.userDataUpdateCount());
+
+        EXPECT_EQ(
+            resultSyncState->userDataLastSyncTime(),
+            expectedSyncState.userDataLastSyncTime());
+
+        const auto resultLinkedNotebookLastSyncTimes =
+            resultSyncState->linkedNotebookLastSyncTimes();
+
+        ASSERT_EQ(
+            resultLinkedNotebookLastSyncTimes.size(),
+            linkedNotebookGuids.size());
+
+        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+            const auto it =
+                resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
+            ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
+
+            const auto & linkedNotebookLastSyncTimes =
+                expectedSyncState.linkedNotebookLastSyncTimes();
+
+            const auto rit =
+                linkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
+            ASSERT_NE(rit, linkedNotebookLastSyncTimes.constEnd());
+
+            EXPECT_EQ(it.value(), rit.value());
+        }
+
+        const auto resultLinkedNotebookUpdateCounts =
+            resultSyncState->linkedNotebookUpdateCounts();
+
+        ASSERT_EQ(
+            resultLinkedNotebookUpdateCounts.size(),
+            linkedNotebookGuids.size());
+
+        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+            const auto it =
+                resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
+            ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
+
+            const auto & linkedNotebookUpdateCounts =
+                expectedSyncState.linkedNotebookUpdateCounts();
+
+            const auto rit =
+                linkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
+            ASSERT_NE(rit, linkedNotebookUpdateCounts.constEnd());
+
+            EXPECT_EQ(it.value(), rit.value());
+        }
+    }
+
+    void checkResultDownloadPart(
+        const ISyncResult & result, const IDownloader::Result & downloadResult,
+        const QList<qevercloud::Guid> & linkedNotebookGuids)
+    {
+        // Checking sync chunks data counters
+        const auto resultSyncChunksDataCounters =
+            result.userAccountSyncChunksDataCounters();
+        ASSERT_TRUE(resultSyncChunksDataCounters);
+
+        EXPECT_EQ(
+            resultSyncChunksDataCounters,
+            downloadResult.userOwnResult.syncChunksDataCounters);
+
+        const auto resultLinkedNotebookSyncChunksDataCounters =
+            result.linkedNotebookSyncChunksDataCounters();
+
+        ASSERT_EQ(
+            resultLinkedNotebookSyncChunksDataCounters.size(),
+            downloadResult.linkedNotebookResults.size());
+
+        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+            const auto it =
+                resultLinkedNotebookSyncChunksDataCounters.constFind(
+                    linkedNotebookGuid);
+            ASSERT_NE(
+                it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
+
+            const auto rit = downloadResult.linkedNotebookResults.constFind(
+                linkedNotebookGuid);
+            ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
+
+            EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
+        }
+
+        // Checking download notes status
+        const auto resultDownloadNotesStatus =
+            result.userAccountDownloadNotesStatus();
+        ASSERT_TRUE(resultDownloadNotesStatus);
+
+        EXPECT_EQ(
+            resultDownloadNotesStatus,
+            downloadResult.userOwnResult.downloadNotesStatus);
+
+        const auto resultLinkedNotebookDownloadNotesStatuses =
+            result.linkedNotebookDownloadNotesStatuses();
+        ASSERT_EQ(
+            resultLinkedNotebookDownloadNotesStatuses.size(),
+            linkedNotebookGuids.size());
+
+        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+            const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
+                linkedNotebookGuid);
+            ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
+
+            const auto rit = downloadResult.linkedNotebookResults.constFind(
+                linkedNotebookGuid);
+            ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
+
+            EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
+        }
+
+        // Checking download resources status
+        const auto resultDownloadResourcesStatus =
+            result.userAccountDownloadResourcesStatus();
+        ASSERT_TRUE(resultDownloadResourcesStatus);
+
+        EXPECT_EQ(
+            resultDownloadResourcesStatus,
+            downloadResult.userOwnResult.downloadResourcesStatus);
+
+        const auto resultLinkedNotebookDownloadResourcesStatuses =
+            result.linkedNotebookDownloadResourcesStatuses();
+        ASSERT_EQ(
+            resultLinkedNotebookDownloadResourcesStatuses.size(),
+            linkedNotebookGuids.size());
+
+        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+            const auto it =
+                resultLinkedNotebookDownloadResourcesStatuses.constFind(
+                    linkedNotebookGuid);
+            ASSERT_NE(
+                it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
+
+            const auto rit = downloadResult.linkedNotebookResults.constFind(
+                linkedNotebookGuid);
+            ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
+
+            EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
+        }
+    }
+
+    void checkResultSendPart(
+        const ISyncResult & result, const ISender::Result & sendResult,
+        const QList<qevercloud::Guid> & linkedNotebookGuids)
+    {
+        const auto resultSendStatus = result.userAccountSendStatus();
+        ASSERT_TRUE(resultSendStatus);
+
+        EXPECT_EQ(resultSendStatus, sendResult.userOwnResult);
+
+        const auto resultLinkedNotebookSendStatuses =
+            result.linkedNotebookSendStatuses();
+        ASSERT_EQ(
+            resultLinkedNotebookSendStatuses.size(),
+            linkedNotebookGuids.size());
+
+        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+            const auto it =
+                resultLinkedNotebookSendStatuses.constFind(linkedNotebookGuid);
+            ASSERT_NE(it, resultLinkedNotebookSendStatuses.constEnd());
+
+            const auto rit =
+                sendResult.linkedNotebookResults.constFind(linkedNotebookGuid);
+            ASSERT_NE(rit, sendResult.linkedNotebookResults.constEnd());
+
+            EXPECT_EQ(it.value(), rit.value());
+        }
+    }
+
 protected:
     const Account m_account = Account{
         QStringLiteral("Full Name"),
@@ -427,85 +729,17 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
-    const int linkedNotebookCount = 3;
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(linkedNotebookCount);
-    for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
-    }
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
-    IDownloader::Result downloadResult;
-    downloadResult.userOwnResult.syncChunksDataCounters =
-        generateSampleSyncChunksDataCounters(1);
-    downloadResult.userOwnResult.downloadNotesStatus =
-        generateSampleDownloadNotesStatus(1);
-    downloadResult.userOwnResult.downloadResourcesStatus =
-        generateSampleDownloadResourcesStatus(1);
-
-    qint32 counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        auto & result =
-            downloadResult.linkedNotebookResults[linkedNotebookGuid];
-
-        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
-            3 + static_cast<quint64>(counter) * 2);
-
-        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
-            5 + static_cast<quint64>(counter) * 3);
-
-        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
-            8 + static_cast<quint64>(counter) * 4);
-
-        ++counter;
-    }
-
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-
-    auto downloadSyncState = std::make_shared<SyncState>();
-    downloadSyncState->m_userDataUpdateCount = 42;
-    downloadSyncState->m_userDataLastSyncTime = now;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            84 + counter * 2;
-
-        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter;
-
-        ++counter;
-    }
-
-    downloadResult.syncState = downloadSyncState;
+    const auto downloadResult =
+        generateSampleDownloaderResult(linkedNotebookGuids);
 
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadResult.syncState);
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
@@ -526,144 +760,14 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
     auto result = syncResult.result();
 
     // Checking the result
-
     ASSERT_TRUE(result);
 
-    // Checking sync state
-    const auto resultSyncState = result->syncState();
-    ASSERT_TRUE(resultSyncState);
+    ASSERT_TRUE(downloadResult.syncState);
+    checkResultSyncState(
+        *result, *downloadResult.syncState, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataUpdateCount(),
-        downloadSyncState->userDataUpdateCount());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataLastSyncTime(),
-        downloadSyncState->userDataLastSyncTime());
-
-    const auto resultLinkedNotebookLastSyncTimes =
-        resultSyncState->linkedNotebookLastSyncTimes();
-
-    ASSERT_EQ(
-        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
-
-        const auto rit =
-            downloadSyncState->m_linkedNotebookLastSyncTimes.constFind(
-                linkedNotebookGuid);
-        ASSERT_NE(
-            rit, downloadSyncState->m_linkedNotebookLastSyncTimes.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    const auto resultLinkedNotebookUpdateCounts =
-        resultSyncState->linkedNotebookUpdateCounts();
-
-    ASSERT_EQ(
-        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
-
-        const auto rit =
-            downloadSyncState->m_linkedNotebookUpdateCounts.constFind(
-                linkedNotebookGuid);
-        ASSERT_NE(
-            rit, downloadSyncState->m_linkedNotebookUpdateCounts.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    // Checking sync chunks data counters
-    const auto resultSyncChunksDataCounters =
-        result->userAccountSyncChunksDataCounters();
-    ASSERT_TRUE(resultSyncChunksDataCounters);
-
-    EXPECT_EQ(
-        resultSyncChunksDataCounters,
-        downloadResult.userOwnResult.syncChunksDataCounters);
-
-    const auto resultLinkedNotebookSyncChunksDataCounters =
-        result->linkedNotebookSyncChunksDataCounters();
-
-    ASSERT_EQ(
-        resultLinkedNotebookSyncChunksDataCounters.size(),
-        downloadResult.linkedNotebookResults.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookSyncChunksDataCounters.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
-    }
-
-    // Checking download notes status
-    const auto resultDownloadNotesStatus =
-        result->userAccountDownloadNotesStatus();
-    ASSERT_TRUE(resultDownloadNotesStatus);
-
-    EXPECT_EQ(
-        resultDownloadNotesStatus,
-        downloadResult.userOwnResult.downloadNotesStatus);
-
-    const auto resultLinkedNotebookDownloadNotesStatuses =
-        result->linkedNotebookDownloadNotesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadNotesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
-    }
-
-    // Checking download resources status
-    const auto resultDownloadResourcesStatus =
-        result->userAccountDownloadResourcesStatus();
-    ASSERT_TRUE(resultDownloadResourcesStatus);
-
-    EXPECT_EQ(
-        resultDownloadResourcesStatus,
-        downloadResult.userOwnResult.downloadResourcesStatus);
-
-    const auto resultLinkedNotebookDownloadResourcesStatuses =
-        result->linkedNotebookDownloadResourcesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadResourcesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadResourcesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
-    }
-
-    // Checking send status
     EXPECT_FALSE(result->userAccountSendStatus());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
 }
@@ -674,40 +778,8 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
-    const int linkedNotebookCount = 3;
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(linkedNotebookCount);
-    for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
-    }
-
-    ISender::Result sendResult;
-    sendResult.userOwnResult = generateSampleSendStatus(1);
-
-    int counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendResult.linkedNotebookResults[linkedNotebookGuid] =
-            generateSampleSendStatus(static_cast<quint64>(counter) * 5);
-    }
-
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-
-    auto sendSyncState = std::make_shared<SyncState>();
-    sendSyncState->m_userDataUpdateCount = 43;
-    sendSyncState->m_userDataLastSyncTime = now + 1;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            120 + counter * 3;
-
-        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter * 2L;
-
-        ++counter;
-    }
-
-    sendResult.syncState = sendSyncState;
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
 
     InSequence s;
 
@@ -717,29 +789,7 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        sendSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        sendSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        sendSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        sendSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(sendResult.syncState);
 
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
@@ -760,61 +810,17 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
 
     ASSERT_TRUE(result);
 
-    // Checking sync state
-    const auto resultSyncState = result->syncState();
-    ASSERT_TRUE(resultSyncState);
+    ASSERT_TRUE(sendResult.syncState);
+    checkResultSyncState(*result, *sendResult.syncState, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataUpdateCount(),
-        sendSyncState->userDataUpdateCount());
-
-    EXPECT_EQ(
-        resultSyncState->userDataLastSyncTime(),
-        sendSyncState->userDataLastSyncTime());
-
-    const auto resultLinkedNotebookLastSyncTimes =
-        resultSyncState->linkedNotebookLastSyncTimes();
-
-    ASSERT_EQ(
-        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookLastSyncTimes.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookLastSyncTimes.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    const auto resultLinkedNotebookUpdateCounts =
-        resultSyncState->linkedNotebookUpdateCounts();
-
-    ASSERT_EQ(
-        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookUpdateCounts.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookUpdateCounts.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    // Checking download result
     EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
     EXPECT_FALSE(result->userAccountDownloadNotesStatus());
     EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
     EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
 TEST_F(AccountSynchronizerTest, DownloadAndSend)
@@ -823,138 +829,24 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
-    const int linkedNotebookCount = 3;
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(linkedNotebookCount);
-    for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
-    }
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
-    IDownloader::Result downloadResult;
-    downloadResult.userOwnResult.syncChunksDataCounters =
-        generateSampleSyncChunksDataCounters(1);
-    downloadResult.userOwnResult.downloadNotesStatus =
-        generateSampleDownloadNotesStatus(1);
-    downloadResult.userOwnResult.downloadResourcesStatus =
-        generateSampleDownloadResourcesStatus(1);
+    const auto downloadResult =
+        generateSampleDownloaderResult(linkedNotebookGuids);
 
-    qint32 counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        auto & result =
-            downloadResult.linkedNotebookResults[linkedNotebookGuid];
-
-        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
-            3 + static_cast<quint64>(counter) * 2);
-
-        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
-            5 + static_cast<quint64>(counter) * 3);
-
-        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
-            8 + static_cast<quint64>(counter) * 4);
-
-        ++counter;
-    }
-
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-
-    auto downloadSyncState = std::make_shared<SyncState>();
-    downloadSyncState->m_userDataUpdateCount = 42;
-    downloadSyncState->m_userDataLastSyncTime = now;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            84 + counter * 2;
-
-        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter;
-
-        ++counter;
-    }
-
-    downloadResult.syncState = downloadSyncState;
-
-    ISender::Result sendResult;
-    sendResult.userOwnResult = generateSampleSendStatus(1);
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendResult.linkedNotebookResults[linkedNotebookGuid] =
-            generateSampleSendStatus(static_cast<quint64>(counter) * 5);
-    }
-
-    auto sendSyncState = std::make_shared<SyncState>();
-    sendSyncState->m_userDataUpdateCount = 43;
-    sendSyncState->m_userDataLastSyncTime = now + 1;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            120 + counter * 3;
-
-        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter * 2L;
-
-        ++counter;
-    }
-
-    sendResult.syncState = sendSyncState;
+    const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
 
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadResult.syncState);
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        sendSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        sendSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        sendSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        sendSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(sendResult.syncState);
 
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
@@ -975,158 +867,12 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
 
     ASSERT_TRUE(result);
 
-    // Checking sync state
-    const auto resultSyncState = result->syncState();
-    ASSERT_TRUE(resultSyncState);
+    ASSERT_TRUE(sendResult.syncState);
+    checkResultSyncState(*result, *sendResult.syncState, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataUpdateCount(),
-        sendSyncState->userDataUpdateCount());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataLastSyncTime(),
-        sendSyncState->userDataLastSyncTime());
-
-    const auto resultLinkedNotebookLastSyncTimes =
-        resultSyncState->linkedNotebookLastSyncTimes();
-
-    ASSERT_EQ(
-        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookLastSyncTimes.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookLastSyncTimes.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    const auto resultLinkedNotebookUpdateCounts =
-        resultSyncState->linkedNotebookUpdateCounts();
-
-    ASSERT_EQ(
-        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookUpdateCounts.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookUpdateCounts.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    // Checking sync chunks data counters
-    const auto resultSyncChunksDataCounters =
-        result->userAccountSyncChunksDataCounters();
-    ASSERT_TRUE(resultSyncChunksDataCounters);
-
-    EXPECT_EQ(
-        resultSyncChunksDataCounters,
-        downloadResult.userOwnResult.syncChunksDataCounters);
-
-    const auto resultLinkedNotebookSyncChunksDataCounters =
-        result->linkedNotebookSyncChunksDataCounters();
-
-    ASSERT_EQ(
-        resultLinkedNotebookSyncChunksDataCounters.size(),
-        downloadResult.linkedNotebookResults.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookSyncChunksDataCounters.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
-    }
-
-    // Checking download notes status
-    const auto resultDownloadNotesStatus =
-        result->userAccountDownloadNotesStatus();
-    ASSERT_TRUE(resultDownloadNotesStatus);
-
-    EXPECT_EQ(
-        resultDownloadNotesStatus,
-        downloadResult.userOwnResult.downloadNotesStatus);
-
-    const auto resultLinkedNotebookDownloadNotesStatuses =
-        result->linkedNotebookDownloadNotesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadNotesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
-    }
-
-    // Checking download resources status
-    const auto resultDownloadResourcesStatus =
-        result->userAccountDownloadResourcesStatus();
-    ASSERT_TRUE(resultDownloadResourcesStatus);
-
-    EXPECT_EQ(
-        resultDownloadResourcesStatus,
-        downloadResult.userOwnResult.downloadResourcesStatus);
-
-    const auto resultLinkedNotebookDownloadResourcesStatuses =
-        result->linkedNotebookDownloadResourcesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadResourcesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadResourcesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
-    }
-
-    // Checking send status
-    const auto resultSendStatus = result->userAccountSendStatus();
-    ASSERT_TRUE(resultSendStatus);
-
-    EXPECT_EQ(resultSendStatus, sendResult.userOwnResult);
-
-    const auto resultLinkedNotebookSendStatuses =
-        result->linkedNotebookSendStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookSendStatuses.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookSendStatuses.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSendStatuses.constEnd());
-
-        const auto rit =
-            sendResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, sendResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
 TEST_F(
@@ -1137,139 +883,25 @@ TEST_F(
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
-    const int linkedNotebookCount = 3;
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(linkedNotebookCount);
-    for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
-    }
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
-    IDownloader::Result downloadResult;
-    downloadResult.userOwnResult.syncChunksDataCounters =
-        generateSampleSyncChunksDataCounters(1);
-    downloadResult.userOwnResult.downloadNotesStatus =
-        generateSampleDownloadNotesStatus(1);
-    downloadResult.userOwnResult.downloadResourcesStatus =
-        generateSampleDownloadResourcesStatus(1);
+    const auto downloadResult =
+        generateSampleDownloaderResult(linkedNotebookGuids);
 
-    qint32 counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        auto & result =
-            downloadResult.linkedNotebookResults[linkedNotebookGuid];
-
-        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
-            3 + static_cast<quint64>(counter) * 2);
-
-        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
-            5 + static_cast<quint64>(counter) * 3);
-
-        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
-            8 + static_cast<quint64>(counter) * 4);
-
-        ++counter;
-    }
-
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-
-    auto downloadSyncState = std::make_shared<SyncState>();
-    downloadSyncState->m_userDataUpdateCount = 42;
-    downloadSyncState->m_userDataLastSyncTime = now;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            84 + counter * 2;
-
-        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter;
-
-        ++counter;
-    }
-
-    downloadResult.syncState = downloadSyncState;
-
-    ISender::Result sendResult;
-    sendResult.userOwnResult = generateSampleSendStatus(1);
+    auto sendResult = generateSampleSendResult(linkedNotebookGuids);
     sendResult.userOwnResult->m_needToRepeatIncrementalSync = true;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendResult.linkedNotebookResults[linkedNotebookGuid] =
-            generateSampleSendStatus(static_cast<quint64>(counter) * 5);
-    }
-
-    auto sendSyncState = std::make_shared<SyncState>();
-    sendSyncState->m_userDataUpdateCount = 43;
-    sendSyncState->m_userDataLastSyncTime = now + 1;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            120 + counter * 3;
-
-        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter * 2L;
-
-        ++counter;
-    }
-
-    sendResult.syncState = sendSyncState;
 
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadResult.syncState);
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        sendSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        sendSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        sendSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        sendSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(sendResult.syncState);
 
     auto downloadSecondResult = downloadResult;
     downloadSecondResult.userOwnResult.syncChunksDataCounters =
@@ -1279,39 +911,19 @@ TEST_F(
     downloadSecondResult.userOwnResult.downloadResourcesStatus =
         generateSampleDownloadResourcesStatus(10);
 
+    ASSERT_TRUE(downloadResult.syncState);
     auto downloadSecondSyncState =
-        std::make_shared<SyncState>(*downloadSyncState);
+        std::make_shared<SyncState>(*downloadResult.syncState);
     downloadSecondSyncState->m_userDataUpdateCount = 43;
-    downloadSecondSyncState->m_userDataLastSyncTime = now + 10;
+    downloadSecondSyncState->m_userDataLastSyncTime =
+        downloadResult.syncState->m_userDataLastSyncTime + 10;
 
     downloadSecondResult.syncState = downloadSecondSyncState;
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSecondSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSecondSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSecondSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSecondSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadSecondSyncState);
 
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
@@ -1332,166 +944,16 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    // Checking sync state
-    const auto resultSyncState = result->syncState();
-    ASSERT_TRUE(resultSyncState);
+    checkResultSyncState(
+        *result, *downloadSecondSyncState, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataUpdateCount(),
-        downloadSecondSyncState->userDataUpdateCount());
+    auto mergedDownloadResult = downloadResult;
+    mergedDownloadResult.userOwnResult.syncChunksDataCounters =
+        downloadSecondResult.userOwnResult.syncChunksDataCounters;
 
-    EXPECT_EQ(
-        resultSyncState->userDataLastSyncTime(),
-        downloadSecondSyncState->userDataLastSyncTime());
+    checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
 
-    const auto resultLinkedNotebookLastSyncTimes =
-        resultSyncState->linkedNotebookLastSyncTimes();
-
-    ASSERT_EQ(
-        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookLastSyncTimes.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookLastSyncTimes.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    const auto resultLinkedNotebookUpdateCounts =
-        resultSyncState->linkedNotebookUpdateCounts();
-
-    ASSERT_EQ(
-        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookUpdateCounts.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookUpdateCounts.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    // Checking sync chunks data counters
-    const auto resultSyncChunksDataCounters =
-        result->userAccountSyncChunksDataCounters();
-    ASSERT_TRUE(resultSyncChunksDataCounters);
-
-    EXPECT_EQ(
-        resultSyncChunksDataCounters,
-        downloadSecondResult.userOwnResult.syncChunksDataCounters);
-
-    const auto resultLinkedNotebookSyncChunksDataCounters =
-        result->linkedNotebookSyncChunksDataCounters();
-
-    ASSERT_EQ(
-        resultLinkedNotebookSyncChunksDataCounters.size(),
-        downloadSecondResult.linkedNotebookResults.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookSyncChunksDataCounters.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
-
-        const auto rit = downloadSecondResult.linkedNotebookResults.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, downloadSecondResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
-    }
-
-    // Checking download notes status
-    const auto resultDownloadNotesStatus =
-        result->userAccountDownloadNotesStatus();
-    ASSERT_TRUE(resultDownloadNotesStatus);
-
-    // The download notes status would be merged from the second download into
-    // the first; as pointers are checked here instead of actual contents
-    // of statuses, we check that the pointer from the first download is left
-    // in the result.
-    EXPECT_EQ(
-        resultDownloadNotesStatus,
-        downloadResult.userOwnResult.downloadNotesStatus);
-
-    const auto resultLinkedNotebookDownloadNotesStatuses =
-        result->linkedNotebookDownloadNotesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadNotesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
-    }
-
-    // Checking download resources status
-    const auto resultDownloadResourcesStatus =
-        result->userAccountDownloadResourcesStatus();
-    ASSERT_TRUE(resultDownloadResourcesStatus);
-
-    // The download resources status would be merged from the second download
-    // into the first; as pointers are checked here instead of actual contents
-    // of statuses, we check that the pointer from the first download is left
-    // in the result.
-    EXPECT_EQ(
-        resultDownloadResourcesStatus,
-        downloadResult.userOwnResult.downloadResourcesStatus);
-
-    const auto resultLinkedNotebookDownloadResourcesStatuses =
-        result->linkedNotebookDownloadResourcesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadResourcesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadResourcesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
-    }
-
-    // Checking send status
-    const auto resultSendStatus = result->userAccountSendStatus();
-    ASSERT_TRUE(resultSendStatus);
-
-    EXPECT_EQ(resultSendStatus, sendResult.userOwnResult);
-
-    const auto resultLinkedNotebookSendStatuses =
-        result->linkedNotebookSendStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookSendStatuses.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookSendStatuses.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSendStatuses.constEnd());
-
-        const auto rit =
-            sendResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, sendResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
 TEST_F(
@@ -1502,142 +964,28 @@ TEST_F(
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
-    const int linkedNotebookCount = 3;
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(linkedNotebookCount);
-    for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
-    }
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
-    IDownloader::Result downloadResult;
-    downloadResult.userOwnResult.syncChunksDataCounters =
-        generateSampleSyncChunksDataCounters(1);
-    downloadResult.userOwnResult.downloadNotesStatus =
-        generateSampleDownloadNotesStatus(1);
-    downloadResult.userOwnResult.downloadResourcesStatus =
-        generateSampleDownloadResourcesStatus(1);
+    const auto downloadResult =
+        generateSampleDownloaderResult(linkedNotebookGuids);
 
-    qint32 counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        auto & result =
-            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+    auto sendResult = generateSampleSendResult(linkedNotebookGuids);
+    ASSERT_FALSE(sendResult.linkedNotebookResults.isEmpty());
 
-        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
-            3 + static_cast<quint64>(counter) * 2);
-
-        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
-            5 + static_cast<quint64>(counter) * 3);
-
-        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
-            8 + static_cast<quint64>(counter) * 4);
-
-        ++counter;
-    }
-
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-
-    auto downloadSyncState = std::make_shared<SyncState>();
-    downloadSyncState->m_userDataUpdateCount = 42;
-    downloadSyncState->m_userDataLastSyncTime = now;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            84 + counter * 2;
-
-        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter;
-
-        ++counter;
-    }
-
-    downloadResult.syncState = downloadSyncState;
-
-    ISender::Result sendResult;
-    sendResult.userOwnResult = generateSampleSendStatus(1);
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        auto & result = sendResult.linkedNotebookResults[linkedNotebookGuid];
-        result = generateSampleSendStatus(static_cast<quint64>(counter) * 5);
-
-        if (&linkedNotebookGuid == &(*linkedNotebookGuids.constBegin())) {
-            result->m_needToRepeatIncrementalSync = true;
-        }
-    }
-
-    auto sendSyncState = std::make_shared<SyncState>();
-    sendSyncState->m_userDataUpdateCount = 43;
-    sendSyncState->m_userDataLastSyncTime = now + 1;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            120 + counter * 3;
-
-        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter * 2L;
-
-        ++counter;
-    }
-
-    sendResult.syncState = sendSyncState;
+    const auto frontLinkedNotebookIt = sendResult.linkedNotebookResults.begin();
+    (*frontLinkedNotebookIt)->m_needToRepeatIncrementalSync = true;
 
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadResult.syncState);
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        sendSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        sendSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        sendSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        sendSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(sendResult.syncState);
 
     auto downloadSecondResult = downloadResult;
     {
@@ -1656,11 +1004,12 @@ TEST_F(
     }
 
     auto downloadSecondSyncState =
-        std::make_shared<SyncState>(*downloadSyncState);
+        std::make_shared<SyncState>(*downloadResult.syncState);
     {
         const auto & guid = linkedNotebookGuids.constFirst();
         downloadSecondSyncState->m_linkedNotebookUpdateCounts[guid] = 43;
-        downloadSecondSyncState->m_linkedNotebookLastSyncTimes[guid] = now + 10;
+        downloadSecondSyncState->m_linkedNotebookLastSyncTimes[guid] =
+            downloadResult.syncState->m_linkedNotebookLastSyncTimes[guid] + 10;
     }
 
     downloadSecondResult.syncState = downloadSecondSyncState;
@@ -1668,29 +1017,7 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSecondSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSecondSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSecondSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSecondSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadSecondSyncState);
 
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
@@ -1711,166 +1038,38 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    // Checking sync state
-    const auto resultSyncState = result->syncState();
-    ASSERT_TRUE(resultSyncState);
+    const auto mergedSyncState =
+        std::make_shared<SyncState>(*downloadSecondSyncState);
+    mergedSyncState->m_linkedNotebookUpdateCounts =
+        sendResult.syncState->m_linkedNotebookUpdateCounts;
+    mergedSyncState->m_linkedNotebookLastSyncTimes =
+        sendResult.syncState->m_linkedNotebookLastSyncTimes;
 
-    EXPECT_EQ(
-        resultSyncState->userDataUpdateCount(),
-        downloadSecondSyncState->userDataUpdateCount());
+    checkResultSyncState(*result, *mergedSyncState, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataLastSyncTime(),
-        downloadSecondSyncState->userDataLastSyncTime());
+    auto mergedDownloadResult = downloadSecondResult;
 
-    const auto resultLinkedNotebookLastSyncTimes =
-        resultSyncState->linkedNotebookLastSyncTimes();
+    mergedDownloadResult.userOwnResult.downloadNotesStatus =
+        downloadResult.userOwnResult.downloadNotesStatus;
 
-    ASSERT_EQ(
-        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
+    mergedDownloadResult.userOwnResult.downloadResourcesStatus =
+        downloadResult.userOwnResult.downloadResourcesStatus;
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
+    mergedDownloadResult.linkedNotebookResults =
+        downloadResult.linkedNotebookResults;
 
-        const auto rit = sendSyncState->m_linkedNotebookLastSyncTimes.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookLastSyncTimes.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
+    for (const auto it:
+         qevercloud::toRange(mergedDownloadResult.linkedNotebookResults))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        it.value().syncChunksDataCounters =
+            downloadSecondResult.linkedNotebookResults[linkedNotebookGuid]
+                .syncChunksDataCounters;
     }
 
-    const auto resultLinkedNotebookUpdateCounts =
-        resultSyncState->linkedNotebookUpdateCounts();
+    checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
 
-    ASSERT_EQ(
-        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
-
-        const auto rit = sendSyncState->m_linkedNotebookUpdateCounts.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, sendSyncState->m_linkedNotebookUpdateCounts.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    // Checking sync chunks data counters
-    const auto resultSyncChunksDataCounters =
-        result->userAccountSyncChunksDataCounters();
-    ASSERT_TRUE(resultSyncChunksDataCounters);
-
-    EXPECT_EQ(
-        resultSyncChunksDataCounters,
-        downloadSecondResult.userOwnResult.syncChunksDataCounters);
-
-    const auto resultLinkedNotebookSyncChunksDataCounters =
-        result->linkedNotebookSyncChunksDataCounters();
-
-    ASSERT_EQ(
-        resultLinkedNotebookSyncChunksDataCounters.size(),
-        downloadSecondResult.linkedNotebookResults.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookSyncChunksDataCounters.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
-
-        const auto rit = downloadSecondResult.linkedNotebookResults.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(rit, downloadSecondResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
-    }
-
-    // Checking download notes status
-    const auto resultDownloadNotesStatus =
-        result->userAccountDownloadNotesStatus();
-    ASSERT_TRUE(resultDownloadNotesStatus);
-
-    // The download notes status would be merged from the second download into
-    // the first; as pointers are checked here instead of actual contents
-    // of statuses, we check that the pointer from the first download is left
-    // in the result.
-    EXPECT_EQ(
-        resultDownloadNotesStatus,
-        downloadResult.userOwnResult.downloadNotesStatus);
-
-    const auto resultLinkedNotebookDownloadNotesStatuses =
-        result->linkedNotebookDownloadNotesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadNotesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
-    }
-
-    // Checking download resources status
-    const auto resultDownloadResourcesStatus =
-        result->userAccountDownloadResourcesStatus();
-    ASSERT_TRUE(resultDownloadResourcesStatus);
-
-    // The download resources status would be merged from the second download
-    // into the first; as pointers are checked here instead of actual contents
-    // of statuses, we check that the pointer from the first download is left
-    // in the result.
-    EXPECT_EQ(
-        resultDownloadResourcesStatus,
-        downloadResult.userOwnResult.downloadResourcesStatus);
-
-    const auto resultLinkedNotebookDownloadResourcesStatuses =
-        result->linkedNotebookDownloadResourcesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadResourcesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadResourcesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
-    }
-
-    // Checking send status
-    const auto resultSendStatus = result->userAccountSendStatus();
-    ASSERT_TRUE(resultSendStatus);
-
-    EXPECT_EQ(resultSendStatus, sendResult.userOwnResult);
-
-    const auto resultLinkedNotebookSendStatuses =
-        result->linkedNotebookSendStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookSendStatuses.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookSendStatuses.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSendStatuses.constEnd());
-
-        const auto rit =
-            sendResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, sendResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
 TEST_F(
@@ -1881,40 +1080,12 @@ TEST_F(
         m_account, m_mockDownloader, m_mockSender,
         m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
 
-    const int linkedNotebookCount = 3;
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(linkedNotebookCount);
-    for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
-    }
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
-    const auto now = QDateTime::currentMSecsSinceEpoch();
+    const auto downloadResult =
+        generateSampleDownloaderResult(linkedNotebookGuids);
 
-    ISender::Result sendResult;
-    sendResult.userOwnResult = generateSampleSendStatus(1);
-
-    int counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendResult.linkedNotebookResults[linkedNotebookGuid] =
-            generateSampleSendStatus(static_cast<quint64>(counter) * 5);
-    }
-
-    auto sendSyncState = std::make_shared<SyncState>();
-    sendSyncState->m_userDataUpdateCount = 43;
-    sendSyncState->m_userDataLastSyncTime = now + 1;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            120 + counter * 3;
-
-        sendSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter * 2L;
-
-        ++counter;
-    }
-
-    sendResult.syncState = sendSyncState;
+    const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
 
     InSequence s;
 
@@ -1930,74 +1101,10 @@ TEST_F(
                     options));
             });
 
-    IDownloader::Result downloadResult;
-    downloadResult.userOwnResult.syncChunksDataCounters =
-        generateSampleSyncChunksDataCounters(1);
-    downloadResult.userOwnResult.downloadNotesStatus =
-        generateSampleDownloadNotesStatus(1);
-    downloadResult.userOwnResult.downloadResourcesStatus =
-        generateSampleDownloadResourcesStatus(1);
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        auto & result =
-            downloadResult.linkedNotebookResults[linkedNotebookGuid];
-
-        result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
-            3 + static_cast<quint64>(counter) * 2);
-
-        result.downloadNotesStatus = generateSampleDownloadNotesStatus(
-            5 + static_cast<quint64>(counter) * 3);
-
-        result.downloadResourcesStatus = generateSampleDownloadResourcesStatus(
-            8 + static_cast<quint64>(counter) * 4);
-
-        ++counter;
-    }
-
-    auto downloadSyncState = std::make_shared<SyncState>();
-    downloadSyncState->m_userDataUpdateCount = 42;
-    downloadSyncState->m_userDataLastSyncTime = now;
-
-    counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
-            84 + counter * 2;
-
-        downloadSyncState->m_linkedNotebookLastSyncTimes[linkedNotebookGuid] =
-            now + counter;
-
-        ++counter;
-    }
-
-    downloadResult.syncState = downloadSyncState;
-
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
 
-    EXPECT_CALL(*m_mockSyncStateStorage, setSyncState)
-        .WillOnce(
-            [&, this](const Account & account, const ISyncStatePtr & state) {
-                EXPECT_EQ(account, m_account);
-                EXPECT_TRUE(state);
-                if (state) {
-                    EXPECT_EQ(
-                        state->userDataUpdateCount(),
-                        downloadSyncState->userDataUpdateCount());
-
-                    EXPECT_EQ(
-                        state->userDataLastSyncTime(),
-                        downloadSyncState->userDataLastSyncTime());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookUpdateCounts(),
-                        downloadSyncState->linkedNotebookUpdateCounts());
-
-                    EXPECT_EQ(
-                        state->linkedNotebookLastSyncTimes(),
-                        downloadSyncState->linkedNotebookLastSyncTimes());
-                }
-            });
+    expectSetSyncState(downloadResult.syncState);
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
@@ -2021,141 +1128,12 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    // Checking sync state
-    const auto resultSyncState = result->syncState();
-    ASSERT_TRUE(resultSyncState);
+    ASSERT_TRUE(downloadResult.syncState);
+    checkResultSyncState(
+        *result, *downloadResult.syncState, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataUpdateCount(),
-        downloadSyncState->userDataUpdateCount());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
 
-    EXPECT_EQ(
-        resultSyncState->userDataLastSyncTime(),
-        downloadSyncState->userDataLastSyncTime());
-
-    const auto resultLinkedNotebookLastSyncTimes =
-        resultSyncState->linkedNotebookLastSyncTimes();
-
-    ASSERT_EQ(
-        resultLinkedNotebookLastSyncTimes.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
-
-        const auto rit =
-            downloadSyncState->m_linkedNotebookLastSyncTimes.constFind(
-                linkedNotebookGuid);
-        ASSERT_NE(
-            rit, downloadSyncState->m_linkedNotebookLastSyncTimes.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    const auto resultLinkedNotebookUpdateCounts =
-        resultSyncState->linkedNotebookUpdateCounts();
-
-    ASSERT_EQ(
-        resultLinkedNotebookUpdateCounts.size(), linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it =
-            resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
-
-        const auto rit =
-            downloadSyncState->m_linkedNotebookUpdateCounts.constFind(
-                linkedNotebookGuid);
-        ASSERT_NE(
-            rit, downloadSyncState->m_linkedNotebookUpdateCounts.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value());
-    }
-
-    // Checking sync chunks data counters
-    const auto resultSyncChunksDataCounters =
-        result->userAccountSyncChunksDataCounters();
-    ASSERT_TRUE(resultSyncChunksDataCounters);
-
-    EXPECT_EQ(
-        resultSyncChunksDataCounters,
-        downloadResult.userOwnResult.syncChunksDataCounters);
-
-    const auto resultLinkedNotebookSyncChunksDataCounters =
-        result->linkedNotebookSyncChunksDataCounters();
-
-    ASSERT_EQ(
-        resultLinkedNotebookSyncChunksDataCounters.size(),
-        downloadResult.linkedNotebookResults.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookSyncChunksDataCounters.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookSyncChunksDataCounters.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().syncChunksDataCounters);
-    }
-
-    // Checking download notes status
-    const auto resultDownloadNotesStatus =
-        result->userAccountDownloadNotesStatus();
-    ASSERT_TRUE(resultDownloadNotesStatus);
-
-    EXPECT_EQ(
-        resultDownloadNotesStatus,
-        downloadResult.userOwnResult.downloadNotesStatus);
-
-    const auto resultLinkedNotebookDownloadNotesStatuses =
-        result->linkedNotebookDownloadNotesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadNotesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadNotesStatus);
-    }
-
-    // Checking download resources status
-    const auto resultDownloadResourcesStatus =
-        result->userAccountDownloadResourcesStatus();
-    ASSERT_TRUE(resultDownloadResourcesStatus);
-
-    EXPECT_EQ(
-        resultDownloadResourcesStatus,
-        downloadResult.userOwnResult.downloadResourcesStatus);
-
-    const auto resultLinkedNotebookDownloadResourcesStatuses =
-        result->linkedNotebookDownloadResourcesStatuses();
-    ASSERT_EQ(
-        resultLinkedNotebookDownloadResourcesStatuses.size(),
-        linkedNotebookGuids.size());
-
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
-        const auto it = resultLinkedNotebookDownloadResourcesStatuses.constFind(
-            linkedNotebookGuid);
-        ASSERT_NE(it, resultLinkedNotebookDownloadResourcesStatuses.constEnd());
-
-        const auto rit =
-            downloadResult.linkedNotebookResults.constFind(linkedNotebookGuid);
-        ASSERT_NE(rit, downloadResult.linkedNotebookResults.constEnd());
-
-        EXPECT_EQ(it.value(), rit.value().downloadResourcesStatus);
-    }
-
-    // Checking send status
     EXPECT_FALSE(result->userAccountSendStatus());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
 }
