@@ -21,6 +21,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
+#include <quentier/synchronization/types/Errors.h>
 #include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
@@ -1085,8 +1086,6 @@ TEST_F(
     const auto downloadResult =
         generateSampleDownloaderResult(linkedNotebookGuids);
 
-    const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
-
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
@@ -1136,6 +1135,551 @@ TEST_F(
 
     EXPECT_FALSE(result->userAccountSendStatus());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    HandleAuthenticationErrorDuringUserOwnNotesDownloading)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    downloadResult.userOwnResult.downloadNotesStatus
+        ->m_stopSynchronizationError =
+        StopSynchronizationError{AuthenticationExpiredError{}};
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    EXPECT_CALL(*m_mockAuthenticationInfoProvider, clearCaches)
+        .WillOnce([this](const IAuthenticationInfoProvider::ClearCacheOptions &
+                             options) {
+            EXPECT_TRUE(std::holds_alternative<
+                        IAuthenticationInfoProvider::ClearCacheOption::User>(
+                options));
+            const auto & option =
+                std::get<IAuthenticationInfoProvider::ClearCacheOption::User>(
+                    options);
+            EXPECT_EQ(option.id, m_account.id());
+        });
+
+    auto downloadSecondResult = downloadResult;
+    ASSERT_TRUE(downloadResult.userOwnResult.downloadNotesStatus);
+    downloadSecondResult.userOwnResult.downloadNotesStatus =
+        std::make_shared<DownloadNotesStatus>(
+            *downloadResult.userOwnResult.downloadNotesStatus);
+    downloadSecondResult.userOwnResult.downloadNotesStatus
+        ->m_stopSynchronizationError =
+        StopSynchronizationError{std::monostate{}};
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
+
+    expectSetSyncState(downloadSecondResult.syncState);
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(downloadSecondResult.syncState);
+    checkResultSyncState(
+        *result, *downloadSecondResult.syncState, linkedNotebookGuids);
+
+    auto mergedDownloadResult = downloadSecondResult;
+    mergedDownloadResult.userOwnResult.downloadNotesStatus =
+        downloadResult.userOwnResult.downloadNotesStatus;
+
+    checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    HandleAuthenticationErrorDuringUserOwnResourcesDownloading)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    downloadResult.userOwnResult.downloadResourcesStatus
+        ->m_stopSynchronizationError =
+        StopSynchronizationError{AuthenticationExpiredError{}};
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    EXPECT_CALL(*m_mockAuthenticationInfoProvider, clearCaches)
+        .WillOnce([this](const IAuthenticationInfoProvider::ClearCacheOptions &
+                             options) {
+            EXPECT_TRUE(std::holds_alternative<
+                        IAuthenticationInfoProvider::ClearCacheOption::User>(
+                options));
+            const auto & option =
+                std::get<IAuthenticationInfoProvider::ClearCacheOption::User>(
+                    options);
+            EXPECT_EQ(option.id, m_account.id());
+        });
+
+    auto downloadSecondResult = downloadResult;
+    ASSERT_TRUE(downloadResult.userOwnResult.downloadResourcesStatus);
+    downloadSecondResult.userOwnResult.downloadResourcesStatus =
+        std::make_shared<DownloadResourcesStatus>(
+            *downloadResult.userOwnResult.downloadResourcesStatus);
+    downloadSecondResult.userOwnResult.downloadResourcesStatus
+        ->m_stopSynchronizationError =
+        StopSynchronizationError{std::monostate{}};
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
+
+    expectSetSyncState(downloadSecondResult.syncState);
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(downloadSecondResult.syncState);
+    checkResultSyncState(
+        *result, *downloadSecondResult.syncState, linkedNotebookGuids);
+
+    auto mergedDownloadResult = downloadSecondResult;
+    mergedDownloadResult.userOwnResult.downloadResourcesStatus =
+        downloadResult.userOwnResult.downloadResourcesStatus;
+
+    checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    HandleAuthenticationErrorDuringLinkedNotebookNotesDownloading)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    {
+        auto & linkedNotebookResult =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+
+        ASSERT_TRUE(linkedNotebookResult.downloadNotesStatus);
+        linkedNotebookResult.downloadNotesStatus->m_stopSynchronizationError =
+            StopSynchronizationError{AuthenticationExpiredError{}};
+    }
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    EXPECT_CALL(*m_mockAuthenticationInfoProvider, clearCaches)
+        .WillOnce([&](const IAuthenticationInfoProvider::ClearCacheOptions &
+                          options) {
+            EXPECT_TRUE(
+                std::holds_alternative<IAuthenticationInfoProvider::
+                                           ClearCacheOption::LinkedNotebook>(
+                    options));
+            const auto & option = std::get<
+                IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook>(
+                options);
+            EXPECT_EQ(option.guid, linkedNotebookGuid);
+        });
+
+    auto downloadSecondResult = downloadResult;
+    {
+        auto & linkedNotebookResult =
+            downloadSecondResult.linkedNotebookResults[linkedNotebookGuid];
+        linkedNotebookResult.downloadNotesStatus =
+            std::make_shared<DownloadNotesStatus>(
+                *linkedNotebookResult.downloadNotesStatus);
+        linkedNotebookResult.downloadNotesStatus->m_stopSynchronizationError =
+            StopSynchronizationError{std::monostate{}};
+    }
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
+
+    expectSetSyncState(downloadSecondResult.syncState);
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(downloadSecondResult.syncState);
+    checkResultSyncState(
+        *result, *downloadSecondResult.syncState, linkedNotebookGuids);
+
+    auto mergedDownloadResult = downloadSecondResult;
+    {
+        auto & linkedNotebookResult =
+            mergedDownloadResult.linkedNotebookResults[linkedNotebookGuid];
+        linkedNotebookResult.downloadNotesStatus =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid]
+                .downloadNotesStatus;
+    }
+
+    checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    HandleAuthenticationErrorDuringLinkedNotebookResourcesDownloading)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    {
+        auto & linkedNotebookResult =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+
+        ASSERT_TRUE(linkedNotebookResult.downloadResourcesStatus);
+        linkedNotebookResult.downloadResourcesStatus
+            ->m_stopSynchronizationError =
+            StopSynchronizationError{AuthenticationExpiredError{}};
+    }
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    EXPECT_CALL(*m_mockAuthenticationInfoProvider, clearCaches)
+        .WillOnce([&](const IAuthenticationInfoProvider::ClearCacheOptions &
+                          options) {
+            EXPECT_TRUE(
+                std::holds_alternative<IAuthenticationInfoProvider::
+                                           ClearCacheOption::LinkedNotebook>(
+                    options));
+            const auto & option = std::get<
+                IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook>(
+                options);
+            EXPECT_EQ(option.guid, linkedNotebookGuid);
+        });
+
+    auto downloadSecondResult = downloadResult;
+    {
+        auto & linkedNotebookResult =
+            downloadSecondResult.linkedNotebookResults[linkedNotebookGuid];
+        ASSERT_TRUE(linkedNotebookResult.downloadResourcesStatus);
+        linkedNotebookResult.downloadResourcesStatus =
+            std::make_shared<DownloadResourcesStatus>(
+                *linkedNotebookResult.downloadResourcesStatus);
+        linkedNotebookResult.downloadResourcesStatus
+            ->m_stopSynchronizationError =
+            StopSynchronizationError{std::monostate{}};
+    }
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
+
+    expectSetSyncState(downloadSecondResult.syncState);
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(downloadSecondResult.syncState);
+    checkResultSyncState(
+        *result, *downloadSecondResult.syncState, linkedNotebookGuids);
+
+    auto mergedDownloadResult = downloadSecondResult;
+    {
+        auto & linkedNotebookResult =
+            mergedDownloadResult.linkedNotebookResults[linkedNotebookGuid];
+        linkedNotebookResult.downloadResourcesStatus =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid]
+                .downloadResourcesStatus;
+    }
+
+    checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+}
+
+TEST_F(
+    AccountSynchronizerTest, HandleAuthenticationErrorDuringUserOwnDataSending)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+
+    auto sendResult = generateSampleSendResult(linkedNotebookGuids);
+    sendResult.userOwnResult->m_stopSynchronizationError =
+        StopSynchronizationError{AuthenticationExpiredError{}};
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(sendResult)));
+
+    EXPECT_CALL(*m_mockAuthenticationInfoProvider, clearCaches)
+        .WillOnce([this](const IAuthenticationInfoProvider::ClearCacheOptions &
+                             options) {
+            EXPECT_TRUE(std::holds_alternative<
+                        IAuthenticationInfoProvider::ClearCacheOption::User>(
+                options));
+            const auto & option =
+                std::get<IAuthenticationInfoProvider::ClearCacheOption::User>(
+                    options);
+            EXPECT_EQ(option.id, m_account.id());
+        });
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    auto sendSecondResult = sendResult;
+    sendSecondResult.userOwnResult =
+        std::make_shared<SendStatus>(*sendResult.userOwnResult);
+    sendSecondResult.userOwnResult->m_stopSynchronizationError =
+        StopSynchronizationError{std::monostate{}};
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(sendSecondResult)));
+
+    expectSetSyncState(sendSecondResult.syncState);
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(sendSecondResult.syncState);
+    checkResultSyncState(
+        *result, *sendSecondResult.syncState, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+
+    auto mergedSecondResult = sendSecondResult;
+    mergedSecondResult.userOwnResult = sendResult.userOwnResult;
+    checkResultSendPart(*result, mergedSecondResult, linkedNotebookGuids);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    HandleAuthenticationErrorDuringLinkedNotebookDataSending)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    auto sendResult = generateSampleSendResult(linkedNotebookGuids);
+    {
+        auto & linkedNotebookResult =
+            sendResult.linkedNotebookResults[linkedNotebookGuid];
+
+        ASSERT_TRUE(linkedNotebookResult);
+        linkedNotebookResult->m_stopSynchronizationError =
+            StopSynchronizationError{AuthenticationExpiredError{}};
+    }
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(sendResult)));
+
+    EXPECT_CALL(*m_mockAuthenticationInfoProvider, clearCaches)
+        .WillOnce([&](const IAuthenticationInfoProvider::ClearCacheOptions &
+                          options) {
+            EXPECT_TRUE(
+                std::holds_alternative<IAuthenticationInfoProvider::
+                                           ClearCacheOption::LinkedNotebook>(
+                    options));
+            const auto & option = std::get<
+                IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook>(
+                options);
+            EXPECT_EQ(option.guid, linkedNotebookGuid);
+        });
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    auto sendSecondResult = sendResult;
+    {
+        auto & linkedNotebookResult =
+            sendSecondResult.linkedNotebookResults[linkedNotebookGuid];
+        ASSERT_TRUE(linkedNotebookResult);
+        linkedNotebookResult =
+            std::make_shared<SendStatus>(*linkedNotebookResult);
+        linkedNotebookResult->m_stopSynchronizationError =
+            StopSynchronizationError{std::monostate{}};
+    }
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(sendSecondResult)));
+
+    expectSetSyncState(sendSecondResult.syncState);
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(sendSecondResult.syncState);
+    checkResultSyncState(
+        *result, *sendSecondResult.syncState, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+
+    auto mergedSecondResult = sendSecondResult;
+    {
+        auto & linkedNotebookResult =
+            mergedSecondResult.linkedNotebookResults[linkedNotebookGuid];
+        linkedNotebookResult =
+            sendResult.linkedNotebookResults[linkedNotebookGuid];
+    }
+    checkResultSendPart(*result, mergedSecondResult, linkedNotebookGuids);
 }
 
 } // namespace quentier::synchronization::tests
