@@ -682,7 +682,7 @@ bool AccountSynchronizer::processDownloadStopSynchronizationError(
 
         if (downloadResult.userOwnResult.downloadResourcesStatus &&
             std::holds_alternative<RateLimitReachedError>(
-                downloadResult.userOwnResult.downloadNotesStatus
+                downloadResult.userOwnResult.downloadResourcesStatus
                     ->stopSynchronizationError()))
         {
             if (QuentierIsLogLevelActive(LogLevel::Info)) {
