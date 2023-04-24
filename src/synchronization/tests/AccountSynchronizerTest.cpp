@@ -39,6 +39,7 @@
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/exceptions/EDAMSystemExceptionAuthExpired.h>
+#include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/ResourceBuilder.h>
@@ -1680,6 +1681,423 @@ TEST_F(
             sendResult.linkedNotebookResults[linkedNotebookGuid];
     }
     checkResultSendPart(*result, mergedSecondResult, linkedNotebookGuids);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenDownloadingSyncChunks)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const qint32 rateLimitDuration = 1000;
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeExceptionalFuture<IDownloader::Result>(
+            [rateLimitDuration] {
+                qevercloud::EDAMSystemExceptionRateLimitReached e;
+                e.setRateLimitDuration(rateLimitDuration);
+                return e;
+            }())));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenDownloadingUserOwnNotes)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    const qint32 rateLimitDuration = 1000;
+
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    downloadResult.userOwnResult.downloadNotesStatus
+        ->m_stopSynchronizationError = RateLimitReachedError{rateLimitDuration};
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenDownloadingUserOwnResources)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    const qint32 rateLimitDuration = 1000;
+
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    downloadResult.userOwnResult.downloadResourcesStatus
+        ->m_stopSynchronizationError = RateLimitReachedError{rateLimitDuration};
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenDownloadingLinkedNotebookNotes)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const qint32 rateLimitDuration = 1000;
+
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    {
+        auto & linkedNotebookResult =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+
+        ASSERT_TRUE(linkedNotebookResult.downloadNotesStatus);
+        linkedNotebookResult.downloadNotesStatus->m_stopSynchronizationError =
+            StopSynchronizationError{RateLimitReachedError{rateLimitDuration}};
+    }
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenDownloadingLinkedNotebookResources)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const qint32 rateLimitDuration = 1000;
+
+    auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
+    {
+        auto & linkedNotebookResult =
+            downloadResult.linkedNotebookResults[linkedNotebookGuid];
+
+        ASSERT_TRUE(linkedNotebookResult.downloadResourcesStatus);
+        linkedNotebookResult.downloadResourcesStatus
+            ->m_stopSynchronizationError =
+            StopSynchronizationError{RateLimitReachedError{rateLimitDuration}};
+    }
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(downloadResult)));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenSendingUserOwnData)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    const qint32 rateLimitDuration = 1000;
+
+    auto sendResult = generateSampleSendResult(linkedNotebookGuids);
+    sendResult.userOwnResult->m_stopSynchronizationError =
+        StopSynchronizationError{RateLimitReachedError{rateLimitDuration}};
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(sendResult)));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(
+    AccountSynchronizerTest,
+    PropagateRateLimitExceededErrorWhenSendingLinkedNotebookData)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const qint32 rateLimitDuration = 1000;
+    auto sendResult = generateSampleSendResult(linkedNotebookGuids);
+    {
+        auto & linkedNotebookResult =
+            sendResult.linkedNotebookResults[linkedNotebookGuid];
+
+        ASSERT_TRUE(linkedNotebookResult);
+        linkedNotebookResult->m_stopSynchronizationError =
+            StopSynchronizationError{RateLimitReachedError{rateLimitDuration}};
+    }
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(sendResult)));
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
+        result->stopSynchronizationError()));
+
+    const auto error =
+        std::get<RateLimitReachedError>(result->stopSynchronizationError());
+    EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
 }
 
 } // namespace quentier::synchronization::tests
