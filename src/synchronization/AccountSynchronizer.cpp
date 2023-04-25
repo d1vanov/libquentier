@@ -766,9 +766,9 @@ bool AccountSynchronizer::processDownloadStopSynchronizationError(
     }();
 
     if (rateLimitReachedError) {
-        auto syncResult = context->previousSyncResult
-            ? context->previousSyncResult
-            : std::make_shared<SyncResult>();
+        appendToPreviousSyncResult(*context, downloadResult);
+        auto & syncResult = context->previousSyncResult;
+        Q_ASSERT(syncResult);
         syncResult->m_stopSynchronizationError = *rateLimitReachedError;
         context->promise->addResult(std::move(syncResult));
         context->promise->finish();
@@ -1100,9 +1100,9 @@ bool AccountSynchronizer::processSendStopSynchronizationError(
     }();
 
     if (rateLimitReachedError) {
-        auto syncResult = context->previousSyncResult
-            ? context->previousSyncResult
-            : std::make_shared<SyncResult>();
+        appendToPreviousSyncResult(*context, sendResult);
+        auto & syncResult = context->previousSyncResult;
+        Q_ASSERT(syncResult);
         syncResult->m_stopSynchronizationError = *rateLimitReachedError;
         context->promise->addResult(std::move(syncResult));
         context->promise->finish();

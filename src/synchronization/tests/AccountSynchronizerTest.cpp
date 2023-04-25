@@ -1778,13 +1778,9 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
-    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
-    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
+
     EXPECT_FALSE(result->userAccountSendStatus());
-    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
 
     ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
@@ -1834,13 +1830,9 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
-    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
-    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
+
     EXPECT_FALSE(result->userAccountSendStatus());
-    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
 
     ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
@@ -1897,13 +1889,9 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
-    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
-    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
+
     EXPECT_FALSE(result->userAccountSendStatus());
-    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
 
     ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
@@ -1961,13 +1949,9 @@ TEST_F(
 
     ASSERT_TRUE(result);
 
-    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
-    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
-    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
+
     EXPECT_FALSE(result->userAccountSendStatus());
-    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
 
     ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
@@ -2021,11 +2005,11 @@ TEST_F(
     EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
     EXPECT_FALSE(result->userAccountDownloadNotesStatus());
     EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
-    EXPECT_FALSE(result->userAccountSendStatus());
     EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 
     ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
         result->stopSynchronizationError()));
@@ -2086,11 +2070,11 @@ TEST_F(
     EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
     EXPECT_FALSE(result->userAccountDownloadNotesStatus());
     EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
-    EXPECT_FALSE(result->userAccountSendStatus());
     EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
-    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 
     ASSERT_TRUE(std::holds_alternative<RateLimitReachedError>(
         result->stopSynchronizationError()));
