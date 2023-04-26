@@ -40,6 +40,7 @@
 
 #include <qevercloud/exceptions/EDAMSystemExceptionAuthExpired.h>
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
+#include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/ResourceBuilder.h>
@@ -48,6 +49,12 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -2082,6 +2089,283 @@ TEST_F(
     const auto error =
         std::get<RateLimitReachedError>(result->stopSynchronizationError());
     EXPECT_EQ(error.rateLimitDurationSec, rateLimitDuration);
+}
+
+TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto downloadResult =
+        generateSampleDownloaderResult(linkedNotebookGuids);
+
+    InSequence s;
+
+    std::shared_ptr<IDownloader::ICallback> downloaderCallback;
+    auto downloaderPromise = std::make_shared<QPromise<IDownloader::Result>>();
+    downloaderPromise->start();
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce([&]([[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                          canceler,
+                      const IDownloader::ICallbackWeakPtr & callbackWeak) {
+            downloaderCallback = callbackWeak.lock();
+            return downloaderPromise->future();
+        });
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    ASSERT_FALSE(syncResult.isFinished());
+
+    ASSERT_TRUE(downloaderCallback);
+
+    // Checking propagation of callback calls from downloader's callback to
+    // AccountSynchronizer's callback
+    {
+        const qint32 highestDownloadedUsn = 42;
+        const qint32 highestServerUsn = 43;
+        const qint32 lastPreviousUsn = 41;
+        EXPECT_CALL(
+            *mockCallback,
+            onSyncChunksDownloadProgress(
+                highestDownloadedUsn, highestServerUsn, lastPreviousUsn));
+
+        downloaderCallback->onSyncChunksDownloadProgress(
+            highestDownloadedUsn, highestServerUsn, lastPreviousUsn);
+    }
+
+    EXPECT_CALL(*mockCallback, onSyncChunksDownloaded);
+    downloaderCallback->onSyncChunksDownloaded();
+
+    EXPECT_CALL(
+        *mockCallback,
+        onSyncChunksDataProcessingProgress(
+            downloadResult.userOwnResult.syncChunksDataCounters));
+
+    downloaderCallback->onSyncChunksDataProcessingProgress(
+        downloadResult.userOwnResult.syncChunksDataCounters);
+
+    {
+        const QList<qevercloud::LinkedNotebook> linkedNotebooks = [&] {
+            QList<qevercloud::LinkedNotebook> result;
+            result.reserve(linkedNotebookGuids.size());
+            int i = 0;
+            for (const auto & guid: qAsConst(linkedNotebookGuids)) {
+                result
+                    << qevercloud::LinkedNotebookBuilder{}
+                           .setGuid(guid)
+                           .setUsername(
+                               QString::fromUtf8("Linked notebook #%1").arg(i))
+                           .build();
+                ++i;
+            }
+            return result;
+        }();
+
+        EXPECT_CALL(
+            *mockCallback,
+            onStartLinkedNotebooksDataDownloading(linkedNotebooks));
+
+        downloaderCallback->onStartLinkedNotebooksDataDownloading(
+            linkedNotebooks);
+    }
+
+    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}
+            .setGuid(linkedNotebookGuid)
+            .setUsername(QStringLiteral("Linked notebook"))
+            .build();
+
+    {
+        const qint32 highestDownloadedUsn = 42;
+        const qint32 highestServerUsn = 43;
+        const qint32 lastPreviousUsn = 41;
+
+        EXPECT_CALL(
+            *mockCallback,
+            onLinkedNotebookSyncChunksDownloadProgress(
+                highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
+                linkedNotebook));
+
+        downloaderCallback->onLinkedNotebookSyncChunksDownloadProgress(
+            highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
+            linkedNotebook);
+    }
+
+    EXPECT_CALL(
+        *mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+
+    downloaderCallback->onLinkedNotebookSyncChunksDownloaded(linkedNotebook);
+
+    EXPECT_CALL(
+        *mockCallback,
+        onLinkedNotebookSyncChunksDataProcessingProgress(
+            downloadResult.userOwnResult.syncChunksDataCounters,
+            linkedNotebook));
+
+    downloaderCallback->onLinkedNotebookSyncChunksDataProcessingProgress(
+        downloadResult.userOwnResult.syncChunksDataCounters, linkedNotebook);
+
+    {
+        const qint32 notesDownloaded = 10;
+        const qint32 totalNotesToDownload = 100;
+        EXPECT_CALL(
+            *mockCallback,
+            onNotesDownloadProgress(notesDownloaded, totalNotesToDownload));
+
+        downloaderCallback->onNotesDownloadProgress(
+            notesDownloaded, totalNotesToDownload);
+    }
+
+    {
+        const qint32 notesDownloaded = 10;
+        const qint32 totalNotesToDownload = 100;
+        EXPECT_CALL(
+            *mockCallback,
+            onLinkedNotebookNotesDownloadProgress(
+                notesDownloaded, totalNotesToDownload, linkedNotebook));
+
+        downloaderCallback->onLinkedNotebookNotesDownloadProgress(
+            notesDownloaded, totalNotesToDownload, linkedNotebook);
+    }
+
+    {
+        const qint32 resourcesDownloaded = 10;
+        const qint32 totalResourcesToDownload = 100;
+        EXPECT_CALL(
+            *mockCallback,
+            onResourcesDownloadProgress(
+                resourcesDownloaded, totalResourcesToDownload));
+
+        downloaderCallback->onResourcesDownloadProgress(
+            resourcesDownloaded, totalResourcesToDownload);
+    }
+
+    {
+        const qint32 resourcesDownloaded = 10;
+        const qint32 totalResourcesToDownload = 100;
+        EXPECT_CALL(
+            *mockCallback,
+            onLinkedNotebookResourcesDownloadProgress(
+                resourcesDownloaded, totalResourcesToDownload, linkedNotebook));
+
+        downloaderCallback->onLinkedNotebookResourcesDownloadProgress(
+            resourcesDownloaded, totalResourcesToDownload, linkedNotebook);
+    }
+
+    expectSetSyncState(downloadResult.syncState);
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    downloaderPromise->addResult(downloadResult);
+    downloaderPromise->finish();
+
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(downloadResult.syncState);
+    checkResultSyncState(
+        *result, *downloadResult.syncState, linkedNotebookGuids);
+
+    checkResultDownloadPart(*result, downloadResult, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(result->linkedNotebookSendStatuses().isEmpty());
+}
+
+TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
+{
+    const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+        m_account, m_mockDownloader, m_mockSender,
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+
+    const auto linkedNotebookGuids = generateLinkedNotebookGuids();
+    ASSERT_FALSE(linkedNotebookGuids.isEmpty());
+
+    const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
+
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockDownloader, download)
+        .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce([&]([[maybe_unused]] const utility::cancelers::ICancelerPtr &
+                          canceler,
+                      const ISender::ICallbackWeakPtr & callbackWeak) {
+            auto callback = callbackWeak.lock();
+            EXPECT_TRUE(callback);
+            if (callback) {
+                EXPECT_CALL(
+                    *mockCallback,
+                    onUserOwnSendStatusUpdate(sendResult.userOwnResult));
+
+                callback->onUserOwnSendStatusUpdate(sendResult.userOwnResult);
+
+                const auto & linkedNotebookGuid =
+                    linkedNotebookGuids.constFirst();
+
+                EXPECT_CALL(
+                    *mockCallback,
+                    onLinkedNotebookSendStatusUpdate(
+                        linkedNotebookGuid, sendResult.userOwnResult));
+
+                callback->onLinkedNotebookSendStatusUpdate(
+                    linkedNotebookGuid, sendResult.userOwnResult);
+            }
+            return threading::makeReadyFuture(sendResult);
+        });
+
+    expectSetSyncState(sendResult.syncState);
+
+    const auto canceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
+    while (!syncResult.isFinished()) {
+        QCoreApplication::processEvents();
+    }
+
+    ASSERT_EQ(syncResult.resultCount(), 1);
+    auto result = syncResult.result();
+
+    // Checking the result
+
+    ASSERT_TRUE(result);
+
+    ASSERT_TRUE(sendResult.syncState);
+    checkResultSyncState(*result, *sendResult.syncState, linkedNotebookGuids);
+
+    EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
+    EXPECT_FALSE(result->userAccountDownloadNotesStatus());
+    EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
+    EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
+
+    checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
 } // namespace quentier::synchronization::tests
