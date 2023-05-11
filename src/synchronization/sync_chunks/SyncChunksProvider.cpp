@@ -217,7 +217,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     if (!chunksLowUsn || !chunksHighUsn ||
         (afterUsn != 0 && *chunksLowUsn != afterUsn + 1))
     {
-        if (Q_UNLIKELY(!chunksLowUsn || !chunksHighUsn)) {
+        if (Q_UNLIKELY(!(chunksLowUsn && chunksHighUsn))) {
             QNWARNING(
                 "synchronization::SyncChunksProvider",
                 "Failed to determine overall low or high USN for a set "
@@ -280,7 +280,8 @@ SyncChunksProvider::SyncChunksProvider(
 }
 
 QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
-    qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+    qint32 afterUsn, SynchronizationMode syncMode,
+    qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
     return fetchSyncChunksImpl(
@@ -288,7 +289,7 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
         [this] {
             return m_syncChunksStorage->fetchUserOwnSyncChunksLowAndHighUsns();
         },
-        [this, actualAfterUsn = afterUsn](
+        [this, syncMode, actualAfterUsn = afterUsn](
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) {
@@ -298,7 +299,8 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
             auto callback = std::make_shared<SyncChunksDownloaderCallback>(
                 std::move(callbackWeak), actualAfterUsn);
             auto downloadFuture = m_syncChunksDownloader->downloadSyncChunks(
-                afterUsn, std::move(ctx), std::move(canceler), callback);
+                afterUsn, syncMode, std::move(ctx), std::move(canceler),
+                callback);
             auto resultFuture = threading::then(
                 std::move(downloadFuture),
                 [callback = std::move(callback)](
@@ -319,6 +321,7 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
 QFuture<QList<qevercloud::SyncChunk>>
     SyncChunksProvider::fetchLinkedNotebookSyncChunks(
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
+        SynchronizationMode syncMode,
         qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
@@ -338,7 +341,7 @@ QFuture<QList<qevercloud::SyncChunk>>
                 ->fetchLinkedNotebookSyncChunksLowAndHighUsns(
                     linkedNotebookGuid);
         },
-        [this, linkedNotebook = std::move(linkedNotebook),
+        [this, syncMode, linkedNotebook = std::move(linkedNotebook),
          actualAfterUsn = afterUsn](
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
@@ -350,8 +353,8 @@ QFuture<QList<qevercloud::SyncChunk>>
                 std::move(callbackWeak), actualAfterUsn);
             auto downloadFuture =
                 m_syncChunksDownloader->downloadLinkedNotebookSyncChunks(
-                    std::move(linkedNotebook), afterUsn, std::move(ctx),
-                    std::move(canceler), callback);
+                    std::move(linkedNotebook), afterUsn, syncMode,
+                    std::move(ctx), std::move(canceler), callback);
             auto resultFuture = threading::then(
                 std::move(downloadFuture),
                 [callback = std::move(callback)](

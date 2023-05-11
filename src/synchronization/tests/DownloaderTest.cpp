@@ -1319,6 +1319,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
         EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
             .WillOnce([&](const qint32 afterUsn,
+                          [[maybe_unused]] const SynchronizationMode syncMode,
                           const qevercloud::IRequestContextPtr & ctx,
                           const utility::cancelers::ICancelerPtr & canceler,
                           const ISyncChunksProvider::ICallbackWeakPtr &
@@ -1642,6 +1643,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
         EXPECT_CALL(*m_mockSyncChunksProvider, fetchLinkedNotebookSyncChunks)
             .WillOnce([&](const qevercloud::LinkedNotebook & ln,
                           [[maybe_unused]] qint32 afterUsn,
+                          [[maybe_unused]] const SynchronizationMode syncMode,
                           const qevercloud::IRequestContextPtr & ctx,
                           const utility::cancelers::ICancelerPtr & canceler,
                           const ISyncChunksProvider::ICallbackWeakPtr &

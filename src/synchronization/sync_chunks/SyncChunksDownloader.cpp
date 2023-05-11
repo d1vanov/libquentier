@@ -245,9 +245,7 @@ void processSingleDownloadedSyncChunk(
 } // namespace
 
 SyncChunksDownloader::SyncChunksDownloader(
-    const SynchronizationMode synchronizationMode,
     qevercloud::INoteStorePtr noteStore) :
-    m_synchronizationMode{synchronizationMode},
     m_noteStore{std::move(noteStore)}
 {
     if (Q_UNLIKELY(!m_noteStore)) {
@@ -258,7 +256,8 @@ SyncChunksDownloader::SyncChunksDownloader(
 
 QFuture<ISyncChunksDownloader::SyncChunksResult>
     SyncChunksDownloader::downloadSyncChunks(
-        qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        qint32 afterUsn, SynchronizationMode syncMode,
+        qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
 {
@@ -269,7 +268,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
     promise->start();
 
     downloadSyncChunksList(
-        afterUsn, afterUsn, m_synchronizationMode, m_noteStore, std::move(ctx),
+        afterUsn, afterUsn, syncMode, m_noteStore, std::move(ctx),
         std::move(canceler), std::move(callbackWeak), std::nullopt,
         [](const qint32 afterUsn, const SynchronizationMode synchronizationMode,
            qevercloud::INoteStore & noteStore,
@@ -285,7 +284,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 QFuture<ISyncChunksDownloader::SyncChunksResult>
     SyncChunksDownloader::downloadLinkedNotebookSyncChunks(
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-        qevercloud::IRequestContextPtr ctx,
+        SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
 {
@@ -304,7 +303,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
     promise->start();
 
     downloadSyncChunksList(
-        afterUsn, afterUsn, m_synchronizationMode, m_noteStore, std::move(ctx),
+        afterUsn, afterUsn, syncMode, m_noteStore, std::move(ctx),
         std::move(canceler), std::move(callbackWeak), linkedNotebook,
         [linkedNotebook](
             const qint32 afterUsn,

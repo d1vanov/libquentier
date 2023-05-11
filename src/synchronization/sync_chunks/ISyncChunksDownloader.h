@@ -20,6 +20,8 @@
 
 #include <quentier/utility/cancelers/Fwd.h>
 
+#include <synchronization/SynchronizationMode.h>
+
 #include <qevercloud/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/SyncChunk.h>
@@ -62,14 +64,15 @@ public:
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
     [[nodiscard]] virtual QFuture<SyncChunksResult> downloadSyncChunks(
-        qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        qint32 afterUsn, SynchronizationMode syncMode,
+        qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak) = 0;
 
     [[nodiscard]] virtual QFuture<SyncChunksResult>
         downloadLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-            qevercloud::IRequestContextPtr ctx,
+            SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) = 0;
 };

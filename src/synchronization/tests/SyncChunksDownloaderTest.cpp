@@ -181,14 +181,13 @@ protected:
 
 TEST_F(SyncChunksDownloaderTest, Ctor)
 {
-    EXPECT_NO_THROW(SyncChunksDownloader downloader(
-        SynchronizationMode::Full, m_mockNoteStore));
+    EXPECT_NO_THROW(SyncChunksDownloader downloader{m_mockNoteStore});
 }
 
 TEST_F(SyncChunksDownloaderTest, CtorNullNoteStore)
 {
     EXPECT_THROW(
-        SyncChunksDownloader downloader(SynchronizationMode::Full, nullptr),
+        SyncChunksDownloader downloader{nullptr},
         InvalidArgument);
 }
 
@@ -245,7 +244,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
 {
     const auto & testData = GetParam();
 
-    SyncChunksDownloader downloader{testData.m_syncMode, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -290,7 +289,8 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
     }
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        afterUsnInitial, testData.m_syncMode, ctx, m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
@@ -358,7 +358,7 @@ TEST_P(
 {
     const auto & testData = GetParam();
 
-    SyncChunksDownloader downloader{testData.m_syncMode, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -412,7 +412,8 @@ TEST_P(
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        linkedNotebook, afterUsnInitial, testData.m_syncMode, ctx,
+        m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
@@ -438,7 +439,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialUserOwnSyncChunksIfEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -496,7 +497,8 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        afterUsnInitial, SynchronizationMode::Full, ctx, m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -523,7 +525,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialUserOwnSyncChunksIfNonEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -580,7 +582,8 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        afterUsnInitial, SynchronizationMode::Full,  ctx, m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -606,7 +609,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialUserOwnSyncChunksIfDownloadingIsCanceled)
 {
-    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -669,7 +672,8 @@ TEST_F(
     }
 
     auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        afterUsnInitial, SynchronizationMode::Full, ctx, m_manualCanceler,
+        m_mockCallback);
 
     ASSERT_FALSE(syncChunksFuture.isFinished());
 
@@ -695,7 +699,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialLinkedNotebookSyncChunksIfEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -760,7 +764,8 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        linkedNotebook, afterUsnInitial, SynchronizationMode::Full, ctx,
+        m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -791,7 +796,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialLinkedNotebookSyncChunksIfNonEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -855,7 +860,8 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        linkedNotebook, afterUsnInitial, SynchronizationMode::Full, ctx,
+        m_manualCanceler, m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -885,7 +891,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialLinkedNotebookSyncChunksIfDownloadingIsCanceled)
 {
-    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -955,7 +961,8 @@ TEST_F(
     }
 
     auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler, m_mockCallback);
+        linkedNotebook, afterUsnInitial, SynchronizationMode::Full, ctx,
+        m_manualCanceler, m_mockCallback);
 
     ASSERT_FALSE(syncChunksFuture.isFinished());
 

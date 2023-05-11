@@ -29,14 +29,15 @@ class MockISyncChunksProvider : public ISyncChunksProvider
 public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::SyncChunk>>, fetchSyncChunks,
-        (qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        (qint32 afterUsn, SynchronizationMode syncMode,
+         qevercloud::IRequestContextPtr ctx,
          utility::cancelers::ICancelerPtr canceler,
          ICallbackWeakPtr callbackWeak), (override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::SyncChunk>>, fetchLinkedNotebookSyncChunks,
         (qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-         qevercloud::IRequestContextPtr ctx,
+         SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
          utility::cancelers::ICancelerPtr canceler,
          ICallbackWeakPtr callbackWeak), (override));
 };

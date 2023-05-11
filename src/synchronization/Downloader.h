@@ -28,6 +28,7 @@
 #include <quentier/types/Account.h>
 
 #include <synchronization/Fwd.h>
+#include <synchronization/SynchronizationMode.h>
 #include <synchronization/types/Fwd.h>
 #include <synchronization/types/SyncState.h>
 
@@ -79,15 +80,8 @@ public:
 private:
     [[nodiscard]] QFuture<Result> launchDownload(
         const IAuthenticationInfo & authenticationInfo,
-        SyncStatePtr lastSyncState,
-        utility::cancelers::ICancelerPtr canceler,
+        SyncStatePtr lastSyncState, utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak);
-
-    enum class SyncMode
-    {
-        Full,
-        Incremental
-    };
 
     enum class CheckForFirstSync
     {
@@ -125,29 +119,31 @@ private:
     class TagsProcessorCallback;
 
     void launchUserOwnDataDownload(
-        DownloadContextPtr downloadContext, SyncMode syncMode);
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void listLinkedNotebooksAndLaunchDataDownload(
-        DownloadContextPtr downloadContext, SyncMode syncMode);
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void launchLinkedNotebooksDataDownload(
-        DownloadContextPtr downloadContext, SyncMode syncMode,
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode,
         QList<qevercloud::LinkedNotebook> linkedNotebooks);
 
     [[nodiscard]] QFuture<Result> startLinkedNotebookDataDownload(
-        const DownloadContextPtr & downloadContext, SyncMode syncMode,
+        const DownloadContextPtr & downloadContext,
+        SynchronizationMode syncMode,
         qevercloud::LinkedNotebook linkedNotebook);
 
     void processSyncChunks(
-        DownloadContextPtr downloadContext, SyncMode syncMode,
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
     static void updateSyncState(const DownloadContext & downloadContext);
 
-    void downloadNotes(DownloadContextPtr downloadContext, SyncMode syncMode);
+    void downloadNotes(
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void downloadResources(
-        DownloadContextPtr downloadContext, SyncMode syncMode);
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void finalize(DownloadContextPtr & downloadContext);
     void cancel(QPromise<Result> & promise);

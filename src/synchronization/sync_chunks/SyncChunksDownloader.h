@@ -20,8 +20,6 @@
 
 #include "ISyncChunksDownloader.h"
 
-#include <synchronization/SynchronizationMode.h>
-
 #include <qevercloud/services/Fwd.h>
 
 namespace quentier::synchronization {
@@ -30,22 +28,22 @@ class SyncChunksDownloader final : public ISyncChunksDownloader
 {
 public:
     explicit SyncChunksDownloader(
-        SynchronizationMode synchronizationMode,
         qevercloud::INoteStorePtr noteStore);
 
     [[nodiscard]] QFuture<SyncChunksResult> downloadSyncChunks(
-        qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        qint32 afterUsn, SynchronizationMode syncMode,
+        qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak) override;
 
     [[nodiscard]] QFuture<SyncChunksResult> downloadLinkedNotebookSyncChunks(
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
+        SynchronizationMode syncMode,
         qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak) override;
 
 private:
-    const SynchronizationMode m_synchronizationMode;
     const qevercloud::INoteStorePtr m_noteStore;
 };
 
