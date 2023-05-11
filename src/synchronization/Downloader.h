@@ -38,7 +38,6 @@
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/User.h>
 
-#include <QDir>
 #include <QMutex>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -69,8 +68,7 @@ public:
         ITagsProcessorPtr tagsProcessor,
         IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
         qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
-        local_storage::ILocalStoragePtr localStorage,
-        const QDir & syncPersistentStorageDir);
+        local_storage::ILocalStoragePtr localStorage);
 
     ~Downloader() override;
 
@@ -169,7 +167,6 @@ private:
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::INoteStorePtr m_noteStore;
     const local_storage::ILocalStoragePtr m_localStorage;
-    const QDir m_syncPersistentStorageDir;
 
     std::shared_ptr<QMutex> m_mutex;
 

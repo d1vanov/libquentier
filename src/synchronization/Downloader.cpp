@@ -669,8 +669,7 @@ Downloader::Downloader(
     ITagsProcessorPtr tagsProcessor,
     IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
     qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
-    local_storage::ILocalStoragePtr localStorage,
-    const QDir & syncPersistentStorageDir) :
+    local_storage::ILocalStoragePtr localStorage) :
     m_account{std::move(account)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_syncStateStorage{std::move(syncStateStorage)},
@@ -686,7 +685,6 @@ Downloader::Downloader(
     m_fullSyncStaleDataExpunger{std::move(fullSyncStaleDataExpunger)},
     m_ctx{std::move(ctx)}, m_noteStore{std::move(noteStore)},
     m_localStorage{std::move(localStorage)},
-    m_syncPersistentStorageDir{syncPersistentStorageDir},
     m_mutex{std::make_shared<QMutex>()}
 // clang-format on
 {
