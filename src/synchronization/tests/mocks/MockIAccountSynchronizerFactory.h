@@ -32,7 +32,6 @@ public:
     MOCK_METHOD(
         IAccountSynchronizerPtr, createAccountSynchronizer,
         (Account account,
-         IAuthenticationInfoProviderPtr authenticationInfoProvider,
          ISyncConflictResolverPtr syncConflictResolver,
          local_storage::ILocalStoragePtr localStorage, ISyncOptionsPtr options),
         (override));

@@ -33,7 +33,6 @@ public:
 
     [[nodiscard]] virtual IAccountSynchronizerPtr createAccountSynchronizer(
         Account account,
-        IAuthenticationInfoProviderPtr authenticationInfoProvider,
         ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,
         ISyncOptionsPtr options) = 0;
