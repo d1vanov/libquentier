@@ -18,6 +18,7 @@
 
 #include <synchronization/sync_chunks/SyncChunksDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
+#include <synchronization/tests/mocks/MockINoteStoreProvider.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -26,6 +27,7 @@
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <qevercloud/DurableService.h>
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
@@ -147,6 +149,7 @@ const auto sampleIncrementalSyncSyncChunkFilter =
 
 } // namespace
 
+using testing::_;
 using testing::InSequence;
 using testing::Return;
 using testing::StrictMock;
@@ -169,26 +172,37 @@ struct MockICallback : public ISyncChunksDownloader::ICallback
 class SyncChunksDownloaderTest : public ::testing::Test
 {
 protected:
-    std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
+    const std::shared_ptr<mocks::MockINoteStoreProvider>
+        m_mockNoteStoreProvider =
+            std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
+
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
-    utility::cancelers::ManualCancelerPtr m_manualCanceler =
+    const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
-    std::shared_ptr<MockICallback> m_mockCallback =
+    const std::shared_ptr<MockICallback> m_mockCallback =
         std::make_shared<StrictMock<MockICallback>>();
 };
 
 TEST_F(SyncChunksDownloaderTest, Ctor)
 {
-    EXPECT_NO_THROW(SyncChunksDownloader downloader{m_mockNoteStore});
+    EXPECT_NO_THROW(SyncChunksDownloader downloader(
+        m_mockNoteStoreProvider, qevercloud::newRetryPolicy()));
 }
 
-TEST_F(SyncChunksDownloaderTest, CtorNullNoteStore)
+TEST_F(SyncChunksDownloaderTest, CtorNullNoteStoreProvider)
 {
     EXPECT_THROW(
-        SyncChunksDownloader downloader{nullptr},
+        SyncChunksDownloader downloader(nullptr, qevercloud::newRetryPolicy()),
         InvalidArgument);
+}
+
+TEST_F(SyncChunksDownloaderTest, CtorNullRetryPolicy)
+{
+    EXPECT_NO_THROW(
+        SyncChunksDownloader downloader(m_mockNoteStoreProvider, nullptr));
 }
 
 struct UserOwnSyncChunksTestData
@@ -244,7 +258,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
 {
     const auto & testData = GetParam();
 
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -254,6 +268,12 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     std::optional<qint32> previousChunkHighUsn;
     for (const auto & syncChunk: qAsConst(testData.m_syncChunks)) {
@@ -358,7 +378,7 @@ TEST_P(
 {
     const auto & testData = GetParam();
 
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -372,6 +392,14 @@ TEST_P(
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
+
+    EXPECT_CALL(
+        *m_mockNoteStoreProvider,
+        linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     std::optional<qint32> previousChunkHighUsn;
     for (const auto & syncChunk: qAsConst(testData.m_syncChunks)) {
@@ -439,7 +467,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialUserOwnSyncChunksIfEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -452,6 +480,12 @@ TEST_F(
     e.setRateLimitDuration(30000);
 
     InSequence s;
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -525,7 +559,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialUserOwnSyncChunksIfNonEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -537,6 +571,12 @@ TEST_F(
     const RuntimeError e{ErrorString{QStringLiteral("Error")}};
 
     InSequence s;
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -582,7 +622,7 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadSyncChunks(
-        afterUsnInitial, SynchronizationMode::Full,  ctx, m_manualCanceler,
+        afterUsnInitial, SynchronizationMode::Full, ctx, m_manualCanceler,
         m_mockCallback);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
@@ -609,7 +649,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialUserOwnSyncChunksIfDownloadingIsCanceled)
 {
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -619,6 +659,12 @@ TEST_F(
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -699,7 +745,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialLinkedNotebookSyncChunksIfEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -716,6 +762,14 @@ TEST_F(
     e.setRateLimitDuration(30000);
 
     InSequence s;
+
+    EXPECT_CALL(
+        *m_mockNoteStoreProvider,
+        linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -796,7 +850,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialLinkedNotebookSyncChunksIfNonEverCloudExceptionOccursInTheProcess)
 {
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -812,6 +866,14 @@ TEST_F(
     const RuntimeError e{ErrorString{QStringLiteral("Error")}};
 
     InSequence s;
+
+    EXPECT_CALL(
+        *m_mockNoteStoreProvider,
+        linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -891,7 +953,7 @@ TEST_F(
     SyncChunksDownloaderTest,
     ReturnPartialLinkedNotebookSyncChunksIfDownloadingIsCanceled)
 {
-    SyncChunksDownloader downloader{m_mockNoteStore};
+    SyncChunksDownloader downloader{m_mockNoteStoreProvider};
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -905,6 +967,14 @@ TEST_F(
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
+
+    EXPECT_CALL(
+        *m_mockNoteStoreProvider,
+        linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
+        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                noteStoreWeak.lock());
+        });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2

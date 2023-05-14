@@ -25,6 +25,8 @@
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/utility/cancelers/ICanceler.h>
 
+#include <synchronization/INoteStoreProvider.h>
+
 #include <qevercloud/services/INoteStore.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -153,8 +155,8 @@ void downloadSyncChunksList(
     if (canceler->isCanceled()) {
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult),
-            std::make_shared<RuntimeError>(ErrorString{QStringLiteral(
-                "Sync chunks downloading was canceled")})});
+            std::make_shared<RuntimeError>(ErrorString{
+                QStringLiteral("Sync chunks downloading was canceled")})});
         promise->finish();
         return;
     }
@@ -204,8 +206,8 @@ void processSingleDownloadedSyncChunk(
     if (Q_UNLIKELY(!syncChunk.chunkHighUSN())) {
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult),
-            std::make_shared<RuntimeError>(ErrorString{QStringLiteral(
-                "Got sync chunk without chunkHighUSN")})});
+            std::make_shared<RuntimeError>(ErrorString{
+                QStringLiteral("Got sync chunk without chunkHighUSN")})});
 
         promise->finish();
         return;
@@ -245,12 +247,14 @@ void processSingleDownloadedSyncChunk(
 } // namespace
 
 SyncChunksDownloader::SyncChunksDownloader(
-    qevercloud::INoteStorePtr noteStore) :
-    m_noteStore{std::move(noteStore)}
+    INoteStoreProviderPtr noteStoreProvider,
+    qevercloud::IRetryPolicyPtr retryPolicy) :
+    m_noteStoreProvider{std::move(noteStoreProvider)},
+    m_retryPolicy{std::move(retryPolicy)}
 {
-    if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "SyncChunksDownloader ctor: note store is null")}};
+    if (Q_UNLIKELY(!m_noteStoreProvider)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("SyncChunksDownloader ctor: note store is null")}};
     }
 }
 
@@ -267,16 +271,30 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
     auto future = promise->future();
     promise->start();
 
-    downloadSyncChunksList(
-        afterUsn, afterUsn, syncMode, m_noteStore, std::move(ctx),
-        std::move(canceler), std::move(callbackWeak), std::nullopt,
-        [](const qint32 afterUsn, const SynchronizationMode synchronizationMode,
-           qevercloud::INoteStore & noteStore,
-           qevercloud::IRequestContextPtr ctx) {
-            return downloadSingleUserOwnSyncChunk(
-                afterUsn, synchronizationMode, noteStore, std::move(ctx));
-        },
-        promise);
+    auto noteStoreFuture =
+        m_noteStoreProvider->userOwnNoteStore(ctx, m_retryPolicy);
+
+    threading::thenOrFailed(
+        std::move(noteStoreFuture), promise,
+        [promise, afterUsn, syncMode, canceler = std::move(canceler),
+         ctx = std::move(ctx), callbackWeak = std::move(callbackWeak)](
+            qevercloud::INoteStorePtr noteStore) mutable {
+            Q_ASSERT(noteStore);
+
+            downloadSyncChunksList(
+                afterUsn, afterUsn, syncMode, std::move(noteStore),
+                std::move(ctx), std::move(canceler), std::move(callbackWeak),
+                std::nullopt,
+                [](const qint32 afterUsn,
+                   const SynchronizationMode synchronizationMode,
+                   qevercloud::INoteStore & noteStore,
+                   qevercloud::IRequestContextPtr ctx) {
+                    return downloadSingleUserOwnSyncChunk(
+                        afterUsn, synchronizationMode, noteStore,
+                        std::move(ctx));
+                },
+                promise);
+        });
 
     return future;
 }
@@ -302,19 +320,32 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
     auto future = promise->future();
     promise->start();
 
-    downloadSyncChunksList(
-        afterUsn, afterUsn, syncMode, m_noteStore, std::move(ctx),
-        std::move(canceler), std::move(callbackWeak), linkedNotebook,
-        [linkedNotebook](
-            const qint32 afterUsn,
-            const SynchronizationMode synchronizationMode,
-            qevercloud::INoteStore & noteStore,
-            qevercloud::IRequestContextPtr ctx) {
-            return downloadSingleLinkedNotebookSyncChunk(
-                linkedNotebook, afterUsn, synchronizationMode, noteStore,
-                std::move(ctx));
-        },
-        promise);
+    auto noteStoreFuture = m_noteStoreProvider->linkedNotebookNoteStore(
+        *linkedNotebook.guid(), ctx, m_retryPolicy);
+
+    threading::thenOrFailed(
+        std::move(noteStoreFuture), promise,
+        [promise, afterUsn, syncMode, canceler = std::move(canceler),
+         ctx = std::move(ctx), callbackWeak = std::move(callbackWeak),
+         linkedNotebook = std::move(linkedNotebook)](
+            qevercloud::INoteStorePtr noteStore) mutable {
+            Q_ASSERT(noteStore);
+
+            downloadSyncChunksList(
+                afterUsn, afterUsn, syncMode, std::move(noteStore),
+                std::move(ctx), std::move(canceler), std::move(callbackWeak),
+                linkedNotebook,
+                [linkedNotebook](
+                    const qint32 afterUsn,
+                    const SynchronizationMode synchronizationMode,
+                    qevercloud::INoteStore & noteStore,
+                    qevercloud::IRequestContextPtr ctx) {
+                    return downloadSingleLinkedNotebookSyncChunk(
+                        linkedNotebook, afterUsn, synchronizationMode,
+                        noteStore, std::move(ctx));
+                },
+                promise);
+        });
 
     return future;
 }
