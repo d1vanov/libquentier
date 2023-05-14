@@ -10,6 +10,8 @@ target_sources(${LIBRARY_NAME}
   AccountLimitsProvider.h
   AccountSynchronizer.cpp
   AccountSynchronizer.h
+  AccountSynchronizerFactory.cpp
+  AccountSynchronizerFactory.h
   AuthenticationInfoProvider.cpp
   AuthenticationInfoProvider.h
   Downloader.cpp
