@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,10 @@
 #include <QDir>
 #include <QFuture>
 #include <QList>
+#include <QMutex>
+#include <QReadWriteLock>
 
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -33,7 +36,7 @@ namespace quentier::synchronization {
 
 /**
  * @brief The SyncChunksStorage class is the implementation of
- * ISyncChunksStorage interface. It is not thread-safe!
+ * ISyncChunksStorage interface.
  */
 class SyncChunksStorage final : public ISyncChunksStorage
 {
@@ -73,6 +76,14 @@ public:
     void flush() override;
 
 private:
+    void clearUserOwnSyncChunksImpl();
+
+    void clearLinkedNotebookSyncChunksImpl(
+        const qevercloud::Guid & linkedNotebookGuid);
+
+private:
+    using RWLockPtr = std::shared_ptr<QReadWriteLock>;
+
     class LowAndHighUsnsDataAccessor
     {
     public:
@@ -89,7 +100,8 @@ private:
     public:
         explicit LowAndHighUsnsDataAccessor(
             const QDir & rootDir, const QDir & userOwnSyncChunksDir,
-            const threading::QThreadPoolPtr & threadPool);
+            const threading::QThreadPoolPtr & threadPool,
+            RWLockPtr dataLock);
 
         [[nodiscard]] LowAndHighUsnsData & data();
 
@@ -101,6 +113,7 @@ private:
     private:
         std::optional<QFuture<LowAndHighUsnsData>> m_lowAndHighUsnsDataFuture;
 
+        QMutex m_mutex;
         LowAndHighUsnsData m_lowAndHighUsnsData;
     };
 
@@ -123,6 +136,8 @@ private:
         QList<qevercloud::SyncChunk> & result) const;
 
 private:
+    const RWLockPtr m_dataLock;
+
     QDir m_rootDir;
     QDir m_userOwnSyncChunksDir;
 
@@ -131,7 +146,7 @@ private:
     QHash<qevercloud::Guid, QList<SyncChunkInfo>>
         m_linkedNotebookSyncChunksPendingPersistence;
 
-    mutable LowAndHighUsnsDataAccessor m_lowAndHighUsnsDataAccessor;
+    std::unique_ptr<LowAndHighUsnsDataAccessor> m_lowAndHighUsnsDataAccessor;
 };
 
 } // namespace quentier::synchronization
