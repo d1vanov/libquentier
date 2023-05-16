@@ -55,6 +55,9 @@ using IInkNoteImageDownloaderFactoryPtr =
 class ILinkedNotebookFinder;
 using ILinkedNotebookFinderPtr = std::shared_ptr<ILinkedNotebookFinder>;
 
+class INotebookFinder;
+using INotebookFinderPtr = std::shared_ptr<INotebookFinder>;
+
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 

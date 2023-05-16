@@ -33,6 +33,8 @@
 
 #include <synchronization/Fwd.h>
 
+#include <qevercloud/Fwd.h>
+
 #include <QMutex>
 
 #include <memory>
@@ -47,6 +49,10 @@ public:
     ResourcesProcessor(
         local_storage::ILocalStoragePtr localStorage,
         IResourceFullDataDownloaderPtr resourceFullDataDownloader,
+        INoteStoreProviderPtr noteStoreProvider,
+        INotebookFinderPtr notebookFinder,
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {},
         threading::QThreadPoolPtr threadPool = {});
 
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
@@ -79,8 +85,8 @@ private:
     using ContextPtr = std::shared_ptr<Context>;
 
     void onFoundDuplicate(
-        const ContextPtr & context,
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & promise,
+        ContextPtr context,
+        std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
@@ -103,9 +109,21 @@ private:
     };
 
     void downloadFullResourceData(
-        const ContextPtr & context,
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & promise,
-        const qevercloud::Resource & resource, ResourceKind resourceKind);
+        ContextPtr context,
+        std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
+        qevercloud::Resource resource, ResourceKind resourceKind);
+
+    void downloadFullResourceData(
+        ContextPtr context,
+        std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
+        qevercloud::Resource resource, ResourceKind resourceKind,
+        const qevercloud::Notebook & notebook);
+
+    void downloadFullResourceData(
+        ContextPtr context,
+        std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
+        qevercloud::Resource resource, ResourceKind resourceKind,
+        const qevercloud::INoteStorePtr & noteStore);
 
     void putResourceToLocalStorage(
         const ContextPtr & context,
@@ -115,6 +133,10 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const IResourceFullDataDownloaderPtr m_resourceFullDataDownloader;
+    const INoteStoreProviderPtr m_noteStoreProvider;
+    const INotebookFinderPtr m_notebookFinder;
+    const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::IRetryPolicyPtr m_retryPolicy;
     const threading::QThreadPoolPtr m_threadPool;
 };
 

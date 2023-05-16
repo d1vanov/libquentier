@@ -17,7 +17,10 @@
  */
 
 #include <synchronization/processors/ResourcesProcessor.h>
+#include <synchronization/tests/mocks/MockINoteStoreProvider.h>
+#include <synchronization/tests/mocks/MockINotebookFinder.h>
 #include <synchronization/tests/mocks/MockIResourceFullDataDownloader.h>
+#include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -27,6 +30,8 @@
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <qevercloud/DurableService.h>
+#include <qevercloud/RequestContext.h>
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/DataBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
@@ -106,11 +111,21 @@ protected:
         m_mockResourceFullDataDownloader = std::make_shared<
             StrictMock<mocks::MockIResourceFullDataDownloader>>();
 
+    const std::shared_ptr<mocks::MockINoteStoreProvider>
+        m_mockNoteStoreProvider =
+            std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
+
+    const std::shared_ptr<mocks::MockINotebookFinder> m_mockNotebookFinder =
+        std::make_shared<StrictMock<mocks::MockINotebookFinder>>();
+
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     const threading::QThreadPoolPtr m_threadPool =
         threading::globalThreadPool();
+
+    const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
+        std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 };
 
 struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
@@ -164,6 +179,8 @@ TEST_F(ResourcesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
+            m_mockNoteStoreProvider, m_mockNotebookFinder,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
             m_threadPool));
 }
 
@@ -171,7 +188,9 @@ TEST_F(ResourcesProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            nullptr, m_mockResourceFullDataDownloader, m_threadPool),
+            nullptr, m_mockResourceFullDataDownloader, m_mockNoteStoreProvider,
+            m_mockNotebookFinder, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), m_threadPool),
         InvalidArgument);
 }
 
@@ -179,15 +198,58 @@ TEST_F(ResourcesProcessorTest, CtorNullResourceFullDataDownloader)
 {
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            m_mockLocalStorage, nullptr, m_threadPool),
+            m_mockLocalStorage, nullptr, m_mockNoteStoreProvider,
+            m_mockNotebookFinder, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), m_threadPool),
         InvalidArgument);
+}
+
+TEST_F(ResourcesProcessorTest, CtorNullNoteStoreProvider)
+{
+    EXPECT_THROW(
+        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+            m_mockLocalStorage, m_mockResourceFullDataDownloader, nullptr,
+            m_mockNotebookFinder, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), m_threadPool),
+        InvalidArgument);
+}
+
+TEST_F(ResourcesProcessorTest, CtorNullNotebookFinder)
+{
+    EXPECT_THROW(
+        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+            m_mockLocalStorage, m_mockResourceFullDataDownloader,
+            m_mockNoteStoreProvider, nullptr, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), m_threadPool),
+        InvalidArgument);
+}
+
+TEST_F(ResourcesProcessorTest, CtorNullRequestContext)
+{
+    EXPECT_NO_THROW(
+        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+            m_mockLocalStorage, m_mockResourceFullDataDownloader,
+            m_mockNoteStoreProvider, m_mockNotebookFinder, nullptr,
+            qevercloud::newRetryPolicy(), m_threadPool));
+}
+
+TEST_F(ResourcesProcessorTest, CtorNullRetryPolicy)
+{
+    EXPECT_NO_THROW(
+        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+            m_mockLocalStorage, m_mockResourceFullDataDownloader,
+            m_mockNoteStoreProvider, m_mockNotebookFinder,
+            qevercloud::newRequestContext(), nullptr, m_threadPool));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullThreadPool)
 {
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            m_mockLocalStorage, m_mockResourceFullDataDownloader, nullptr));
+            m_mockLocalStorage, m_mockResourceFullDataDownloader,
+            m_mockNoteStoreProvider, m_mockNotebookFinder,
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            nullptr));
 }
 
 TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
@@ -196,7 +258,10 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
         << qevercloud::SyncChunkBuilder{}.build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -229,29 +294,34 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
 TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -259,6 +329,16 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -292,6 +372,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -330,7 +411,10 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -385,29 +469,34 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -415,6 +504,16 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -446,33 +545,34 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            [[maybe_unused]] const qevercloud::
-                                IRequestContextPtr & ctx) {
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            if (it->updateSequenceNum().value() == 2) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{
+                if (it->updateSequenceNum().value() == 2) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{
                         ErrorString{"Failed to download full resource data"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -492,7 +592,10 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -577,29 +680,34 @@ TEST_F(
     ResourcesProcessorTest, TolerateFailuresToFindResourceByGuidInLocalStorage)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -607,6 +715,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -647,6 +765,7 @@ TEST_F(
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -685,7 +804,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -770,29 +892,34 @@ TEST_F(
 TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -800,6 +927,16 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -833,6 +970,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -876,7 +1014,10 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -964,29 +1105,34 @@ TEST_F(
     HandleExistingResourceWhichShouldBeOverriddenByDownloadedVersion)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -994,6 +1140,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1038,6 +1194,7 @@ TEST_F(
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -1076,7 +1233,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1135,29 +1295,34 @@ TEST_F(
     HandleExistingResourceWhichShouldBeMovedToLocalConflictingNote)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -1165,6 +1330,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1210,6 +1385,7 @@ TEST_F(
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -1292,7 +1468,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1351,29 +1530,34 @@ TEST_F(
     TolerateFailuresToFindNoteOwningConflictResourceByGuidInLocalStorage)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -1381,6 +1565,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1426,6 +1620,7 @@ TEST_F(
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -1475,7 +1670,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1560,29 +1758,34 @@ TEST_F(
     TolerateMissingNoteOwningConflictResourceInLocalStorage)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -1590,6 +1793,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockLocalStorage, findResourceByGuid)
         .WillRepeatedly(
@@ -1635,6 +1848,7 @@ TEST_F(
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly(
             [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
                 const auto it = std::find_if(
                     resources.begin(), resources.end(),
@@ -1684,7 +1898,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1769,29 +1986,34 @@ TEST_F(
     CancelFurtherResourceDownloadingOnApiRateLimitExceeding)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -1799,6 +2021,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     QList<std::shared_ptr<QPromise<std::optional<qevercloud::Resource>>>>
         findResourceByGuidPromises;
@@ -1841,38 +2073,40 @@ TEST_F(
     const qint32 rateLimitDurationSec = 100;
     int downloadFullResourceDataCallCount = 0;
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
-                            [[maybe_unused]] const qevercloud::
-                                IRequestContextPtr & ctx) {
-            ++downloadFullResourceDataCallCount;
+        .WillRepeatedly(
+            [&](qevercloud::Guid resourceGuid,
+                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                ++downloadFullResourceDataCallCount;
 
-            const auto it = std::find_if(
-                resources.begin(), resources.end(),
-                [&](const qevercloud::Resource & resource) {
-                    return resource.guid() &&
-                        (*resource.guid() == resourceGuid);
-                });
-            if (Q_UNLIKELY(it == resources.end())) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    RuntimeError{ErrorString{
+                const auto it = std::find_if(
+                    resources.begin(), resources.end(),
+                    [&](const qevercloud::Resource & resource) {
+                        return resource.guid() &&
+                            (*resource.guid() == resourceGuid);
+                    });
+                if (Q_UNLIKELY(it == resources.end())) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-            }
+                }
 
-            const int index =
-                static_cast<int>(std::distance(resources.begin(), it));
+                const int index =
+                    static_cast<int>(std::distance(resources.begin(), it));
 
-            if (it->updateSequenceNum().value() == 2) {
-                return threading::makeExceptionalFuture<qevercloud::Resource>(
-                    qevercloud::EDAMSystemExceptionBuilder{}
-                        .setErrorCode(
-                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                        .setRateLimitDuration(rateLimitDurationSec)
-                        .build());
-            }
+                if (it->updateSequenceNum().value() == 2) {
+                    return threading::makeExceptionalFuture<
+                        qevercloud::Resource>(
+                        qevercloud::EDAMSystemExceptionBuilder{}
+                            .setErrorCode(
+                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                            .setRateLimitDuration(rateLimitDurationSec)
+                            .build());
+                }
 
-            return threading::makeReadyFuture<qevercloud::Resource>(
-                addDataToResource(*it, index));
-        });
+                return threading::makeReadyFuture<qevercloud::Resource>(
+                    addDataToResource(*it, index));
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1892,7 +2126,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -2042,29 +2279,34 @@ TEST_F(
     CancelFurtherResourceDownloadingOnAuthenticationExpired)
 {
     const auto noteGuid = UidGenerator::Generate();
+    const auto noteLocalId = UidGenerator::Generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
                .setLocalId(UidGenerator::Generate())
                .setGuid(UidGenerator::Generate())
+               .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
                .build();
@@ -2072,6 +2314,16 @@ TEST_F(
     QMutex mutex;
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
+
+    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
+        .WillRepeatedly(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                qevercloud::Notebook{})));
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                m_mockNoteStore)));
 
     QList<std::shared_ptr<QPromise<std::optional<qevercloud::Resource>>>>
         findResourceByGuidPromises;
@@ -2114,6 +2366,8 @@ TEST_F(
     int downloadFullResourceDataCallCount = 0;
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
         .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
                             [[maybe_unused]] const qevercloud::
                                 IRequestContextPtr & ctx) {
             ++downloadFullResourceDataCallCount;
@@ -2162,7 +2416,10 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-        m_mockLocalStorage, m_mockResourceFullDataDownloader, m_threadPool);
+        m_mockLocalStorage, m_mockResourceFullDataDownloader,
+        m_mockNoteStoreProvider, m_mockNotebookFinder,
+        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+        m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 

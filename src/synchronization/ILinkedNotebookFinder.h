@@ -40,7 +40,7 @@ public:
     /**
      * @brief Find linked notebook by local id of the notebook corresponding
      * to the linked notebook
-     * @param notebookLocalId The local if of the notebook which might
+     * @param notebookLocalId The local id of the notebook which might
      *                        correspond to a linked notebook
      * @return future with std::nullopt if the notebook with given local id
      *         was not found or does not correspond to a linked notebook or

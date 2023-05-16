@@ -18,9 +18,10 @@
 
 #include "ResourcesProcessor.h"
 
-#include "IResourceFullDataDownloader.h"
-
+#include <synchronization/INoteStoreProvider.h>
+#include <synchronization/INotebookFinder.h>
 #include <synchronization/conflict_resolvers/Utils.h>
+#include <synchronization/processors/IResourceFullDataDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 
@@ -52,9 +53,14 @@ namespace quentier::synchronization {
 ResourcesProcessor::ResourcesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     IResourceFullDataDownloaderPtr resourceFullDataDownloader,
+    INoteStoreProviderPtr noteStoreProvider, INotebookFinderPtr notebookFinder,
+    qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy,
     threading::QThreadPoolPtr threadPool) :
     m_localStorage{std::move(localStorage)},
     m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)},
+    m_noteStoreProvider{std::move(noteStoreProvider)},
+    m_notebookFinder{std::move(notebookFinder)}, m_ctx{std::move(ctx)},
+    m_retryPolicy{std::move(retryPolicy)},
     m_threadPool{
         threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
@@ -66,6 +72,16 @@ ResourcesProcessor::ResourcesProcessor(
     if (Q_UNLIKELY(!m_resourceFullDataDownloader)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesProcessor ctor: resource full data downloader is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_noteStoreProvider)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "ResourcesProcessor ctor: note store provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_notebookFinder)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "ResourcesProcessor ctor: notebook finder is null")}};
     }
 
     Q_ASSERT(m_threadPool);
@@ -148,9 +164,10 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
             std::move(findResourceByGuidFuture),
             threading::TrackedTask{
                 selfWeak,
-                [this, updatedResource = resource, resourcePromise, selfWeak,
-                 context](const std::optional<qevercloud::Resource> &
-                              resource) mutable {
+                [this, updatedResource = resource,
+                 resourcePromise = resourcePromise, selfWeak,
+                 context = context](const std::optional<qevercloud::Resource> &
+                                        resource) mutable {
                     if (context->canceler->isCanceled()) {
                         const auto & guid = *updatedResource.guid();
 
@@ -183,7 +200,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
                         }
 
                         onFoundDuplicate(
-                            context, resourcePromise,
+                            std::move(context), std::move(resourcePromise),
                             std::move(updatedResource), *resource);
                         return;
                     }
@@ -196,8 +213,8 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
                     // No duplicate by guid was found, will download full
                     // resource data and then put it into the local storage
                     downloadFullResourceData(
-                        context, resourcePromise, updatedResource,
-                        ResourceKind::NewResource);
+                        std::move(context), std::move(resourcePromise),
+                        std::move(updatedResource), ResourceKind::NewResource);
                 }});
 
         threading::onFailed(
@@ -248,8 +265,8 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
 }
 
 void ResourcesProcessor::onFoundDuplicate(
-    const ContextPtr & context,
-    const std::shared_ptr<QPromise<ProcessResourceStatus>> & promise,
+    ContextPtr context,
+    std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
     Q_ASSERT(context);
@@ -292,7 +309,8 @@ void ResourcesProcessor::onFoundDuplicate(
     }
 
     downloadFullResourceData(
-        context, promise, updatedResource, ResourceKind::UpdatedResource);
+        std::move(context), std::move(promise), std::move(updatedResource),
+        ResourceKind::UpdatedResource);
 }
 
 void ResourcesProcessor::onFoundNoteOwningConflictingResource(
@@ -361,7 +379,8 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         std::move(putLocalNoteFuture), m_threadPool.get(),
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, context, promise, updatedResource]() mutable {
+            [this, selfWeak, context = context, promise = promise,
+             updatedResource = updatedResource]() mutable {
                 if (context->canceler->isCanceled()) {
                     const auto & guid = *updatedResource.guid();
                     if (const auto callback = context->callbackWeak.lock()) {
@@ -375,15 +394,14 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
                             updatedResource.updateSequenceNum().value();
                     }
 
-
                     promise->addResult(ProcessResourceStatus::Canceled);
                     promise->finish();
                     return;
                 }
 
                 downloadFullResourceData(
-                    context, promise, updatedResource,
-                    ResourceKind::UpdatedResource);
+                    std::move(context), std::move(promise),
+                    std::move(updatedResource), ResourceKind::UpdatedResource);
             }});
 
     threading::onFailed(
@@ -496,16 +514,122 @@ void ResourcesProcessor::handleResourceConflict(
 }
 
 void ResourcesProcessor::downloadFullResourceData(
-    const ContextPtr & context,
-    const std::shared_ptr<QPromise<ProcessResourceStatus>> & promise,
-    const qevercloud::Resource & resource, ResourceKind resourceKind)
+    ContextPtr context,
+    std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
+    qevercloud::Resource resource, ResourceKind resourceKind)
 {
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
 
+    auto notebookFuture =
+        m_notebookFinder->findNotebookByNoteLocalId(resource.noteLocalId());
+
+    const auto selfWeak = weak_from_this();
+
+    auto notebookThenFuture = threading::then(
+        std::move(notebookFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this, context = context, promise = promise, resource = resource,
+             resourceKind](
+                const std::optional<qevercloud::Notebook> & notebook) mutable {
+                if (Q_UNLIKELY(!notebook)) {
+                    if (const auto callback = context->callbackWeak.lock()) {
+                        callback->onResourceFailedToDownload(
+                            resource,
+                            RuntimeError{ErrorString{QStringLiteral(
+                                "ResourcesProcessor: could not find notebook "
+                                "for resource's note")}});
+                    }
+
+                    promise->addResult(ProcessResourceStatus::
+                                           FailedToDownloadFullResourceData);
+
+                    promise->finish();
+                    return;
+                }
+
+                downloadFullResourceData(
+                    std::move(context), std::move(promise), std::move(resource),
+                    resourceKind, *notebook);
+            }});
+
+    threading::onFailed(
+        std::move(notebookThenFuture),
+        [context = std::move(context), promise = std::move(promise),
+         resource = std::move(resource)](const QException & e) {
+            if (const auto callback = context->callbackWeak.lock()) {
+                callback->onResourceFailedToDownload(resource, e);
+            }
+
+            promise->addResult(
+                ProcessResourceStatus::FailedToDownloadFullResourceData);
+
+            promise->finish();
+            return;
+        });
+}
+
+void ResourcesProcessor::downloadFullResourceData(
+    ContextPtr context,
+    std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
+    qevercloud::Resource resource, ResourceKind resourceKind,
+    const qevercloud::Notebook & notebook)
+{
+    Q_ASSERT(context);
+    Q_ASSERT(resource.guid());
+
+    auto noteStoreFuture =
+        (notebook.linkedNotebookGuid()
+             ? m_noteStoreProvider->linkedNotebookNoteStore(
+                   *notebook.linkedNotebookGuid(), m_ctx, m_retryPolicy)
+             : m_noteStoreProvider->userOwnNoteStore(m_ctx, m_retryPolicy));
+
+    const auto selfWeak = weak_from_this();
+
+    auto noteStoreThenFuture = threading::then(
+        std::move(noteStoreFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this, context = context, promise = promise, resource = resource,
+             resourceKind](
+                const qevercloud::INoteStorePtr & noteStore) mutable {
+                Q_ASSERT(noteStore);
+
+                downloadFullResourceData(
+                    std::move(context), std::move(promise), std::move(resource),
+                    resourceKind, noteStore);
+            }});
+
+    threading::onFailed(
+        std::move(noteStoreThenFuture),
+        [context = std::move(context), promise = std::move(promise),
+         resource = std::move(resource)](const QException & e) {
+            if (const auto callback = context->callbackWeak.lock()) {
+                callback->onResourceFailedToDownload(resource, e);
+            }
+
+            promise->addResult(
+                ProcessResourceStatus::FailedToDownloadFullResourceData);
+
+            promise->finish();
+            return;
+        });
+}
+
+void ResourcesProcessor::downloadFullResourceData(
+    ContextPtr context,
+    std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
+    qevercloud::Resource resource, ResourceKind resourceKind,
+    const qevercloud::INoteStorePtr & noteStore)
+{
+    Q_ASSERT(context);
+    Q_ASSERT(resource.guid());
+    Q_ASSERT(noteStore);
+
     auto downloadFullResourceDataFuture =
         m_resourceFullDataDownloader->downloadFullResourceData(
-            *resource.guid());
+            *resource.guid(), noteStore);
 
     const auto selfWeak = weak_from_this();
 
@@ -521,7 +645,8 @@ void ResourcesProcessor::downloadFullResourceData(
 
     threading::onFailed(
         std::move(thenFuture),
-        [context, promise, resource](const QException & e) {
+        [context = std::move(context), promise = std::move(promise),
+         resource = std::move(resource)](const QException & e) mutable {
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onResourceFailedToDownload(resource, e);
             }

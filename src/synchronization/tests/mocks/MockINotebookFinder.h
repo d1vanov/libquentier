@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,22 +18,18 @@
 
 #pragma once
 
-#include <qevercloud/Fwd.h>
-#include <qevercloud/types/Resource.h>
+#include <synchronization/INotebookFinder.h>
 
-#include <QFuture>
+#include <gmock/gmock.h>
 
-namespace quentier::synchronization {
+namespace quentier::synchronization::tests::mocks {
 
-class IResourceFullDataDownloader
+class MockINotebookFinder : public INotebookFinder
 {
 public:
-    virtual ~IResourceFullDataDownloader() = default;
-
-    [[nodiscard]] virtual QFuture<qevercloud::Resource>
-        downloadFullResourceData(
-            qevercloud::Guid resourceGuid, qevercloud::INoteStorePtr noteStore,
-            qevercloud::IRequestContextPtr ctx = {}) = 0;
+    MOCK_METHOD(
+        QFuture<std::optional<qevercloud::Notebook>>, findNotebookByNoteLocalId,
+        (const QString & noteLocalId), (override));
 };
 
-} // namespace quentier::synchronization
+} // namespace quentier::synchronization::tests::mocks

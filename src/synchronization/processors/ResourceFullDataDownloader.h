@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,16 +37,17 @@ class ResourceFullDataDownloader final :
     public std::enable_shared_from_this<ResourceFullDataDownloader>
 {
 public:
-    explicit ResourceFullDataDownloader(
-        qevercloud::INoteStorePtr noteStore, quint32 maxInFlightDownloads);
+    explicit ResourceFullDataDownloader(quint32 maxInFlightDownloads);
 
     [[nodiscard]] QFuture<qevercloud::Resource> downloadFullResourceData(
-        qevercloud::Guid resourceGuid,
+        qevercloud::Guid resourceGuid, qevercloud::INoteStorePtr noteStore,
         qevercloud::IRequestContextPtr ctx = {}) override;
 
 private:
     void downloadFullResourceDataImpl(
-        qevercloud::Guid resourceGuid, qevercloud::IRequestContextPtr ctx,
+        qevercloud::Guid resourceGuid,
+        const qevercloud::INoteStorePtr & noteStore,
+        qevercloud::IRequestContextPtr ctx,
         const std::shared_ptr<QPromise<qevercloud::Resource>> & promise);
 
     void onResourceFullDataDownloadFinished();
@@ -55,11 +56,11 @@ private:
     {
         qevercloud::Guid m_resourceGuid;
         qevercloud::IRequestContextPtr m_ctx;
+        qevercloud::INoteStorePtr m_noteStore;
         std::shared_ptr<QPromise<qevercloud::Resource>> m_promise;
     };
 
 private:
-    const qevercloud::INoteStorePtr m_noteStore;
     const quint32 m_maxInFlightDownloads;
 
     std::atomic<quint32> m_inFlightDownloads{0U};

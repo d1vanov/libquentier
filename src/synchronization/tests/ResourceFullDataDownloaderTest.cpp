@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -62,31 +62,21 @@ TEST_F(ResourceFullDataDownloaderTest, Ctor)
     EXPECT_NO_THROW(
         const auto resourceFullDataDownloader =
             std::make_shared<ResourceFullDataDownloader>(
-                m_mockNoteStore, m_maxInFlightDownloads));
-}
-
-TEST_F(ResourceFullDataDownloaderTest, CtorNullNoteStore)
-{
-    EXPECT_THROW(
-        const auto resourceFullDataDownloader =
-            std::make_shared<ResourceFullDataDownloader>(
-                nullptr, m_maxInFlightDownloads),
-        InvalidArgument);
+                m_maxInFlightDownloads));
 }
 
 TEST_F(ResourceFullDataDownloaderTest, CtorZeroMaxInFlightDownloads)
 {
     EXPECT_THROW(
         const auto resourceFullDataDownloader =
-            std::make_shared<ResourceFullDataDownloader>(m_mockNoteStore, 0U),
+            std::make_shared<ResourceFullDataDownloader>(0U),
         InvalidArgument);
 }
 
 TEST_F(ResourceFullDataDownloaderTest, DownloadSingleResource)
 {
     const auto resourceFullDataDownloader =
-        std::make_shared<ResourceFullDataDownloader>(
-            m_mockNoteStore, m_maxInFlightDownloads);
+        std::make_shared<ResourceFullDataDownloader>(m_maxInFlightDownloads);
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -112,7 +102,7 @@ TEST_F(ResourceFullDataDownloaderTest, DownloadSingleResource)
         .WillOnce(Return(threading::makeReadyFuture(resource)));
 
     auto future = resourceFullDataDownloader->downloadFullResourceData(
-        resource.guid().value(), ctx);
+        resource.guid().value(), m_mockNoteStore, ctx);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
@@ -126,8 +116,7 @@ TEST_F(
     const quint32 resourceCount = 5;
 
     const auto resourceFullDataDownloader =
-        std::make_shared<ResourceFullDataDownloader>(
-            m_mockNoteStore, resourceCount);
+        std::make_shared<ResourceFullDataDownloader>(resourceCount);
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -178,7 +167,7 @@ TEST_F(
 
     for (const auto & resource: qAsConst(resources)) {
         futures << resourceFullDataDownloader->downloadFullResourceData(
-            resource.guid().value(), ctx);
+            resource.guid().value(), m_mockNoteStore, ctx);
         EXPECT_FALSE(futures.back().isFinished());
     }
 
@@ -206,8 +195,7 @@ TEST_F(
     const quint32 resourceCount = 10;
 
     const auto resourceFullDataDownloader =
-        std::make_shared<ResourceFullDataDownloader>(
-            m_mockNoteStore, resourceCount / 2);
+        std::make_shared<ResourceFullDataDownloader>(resourceCount / 2);
 
     const QString authToken = QStringLiteral("token");
     const auto ctx = qevercloud::newRequestContext(authToken);
@@ -258,7 +246,7 @@ TEST_F(
 
     for (const auto & resource: qAsConst(resources)) {
         futures << resourceFullDataDownloader->downloadFullResourceData(
-            resource.guid().value(), ctx);
+            resource.guid().value(), m_mockNoteStore, ctx);
         EXPECT_FALSE(futures.back().isFinished());
     }
 

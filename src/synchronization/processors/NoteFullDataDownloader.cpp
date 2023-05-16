@@ -19,6 +19,7 @@
 #include "NoteFullDataDownloader.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 
 #include <qevercloud/services/INoteStore.h>
@@ -42,6 +43,12 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
     qevercloud::Guid noteGuid, qevercloud::INoteStorePtr noteStore,
     qevercloud::IRequestContextPtr ctx)
 {
+    if (Q_UNLIKELY(!noteStore)) {
+        return threading::makeExceptionalFuture<qevercloud::Note>(
+            InvalidArgument{ErrorString{QStringLiteral(
+                "NoteFullDataDownloader: note store is null")}});
+    }
+
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
 
@@ -68,6 +75,8 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
     qevercloud::IRequestContextPtr ctx,
     const std::shared_ptr<QPromise<qevercloud::Note>> & promise)
 {
+    Q_ASSERT(noteStore);
+
     Q_ASSERT(promise);
     promise->start();
 

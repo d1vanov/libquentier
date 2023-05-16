@@ -19,6 +19,7 @@
 #include "ResourceFullDataDownloader.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 
 #include <qevercloud/services/INoteStore.h>
@@ -28,15 +29,9 @@
 namespace quentier::synchronization {
 
 ResourceFullDataDownloader::ResourceFullDataDownloader(
-    qevercloud::INoteStorePtr noteStore, quint32 maxInFlightDownloads) :
-    m_noteStore{std::move(noteStore)},
+    quint32 maxInFlightDownloads) :
     m_maxInFlightDownloads{maxInFlightDownloads}
 {
-    if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "ResourceFullDataDownloader ctor: note store is null")}};
-    }
-
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourceFullDataDownloader ctor: max in flight downloads must be "
@@ -46,8 +41,15 @@ ResourceFullDataDownloader::ResourceFullDataDownloader(
 
 QFuture<qevercloud::Resource>
     ResourceFullDataDownloader::downloadFullResourceData(
-        qevercloud::Guid resourceGuid, qevercloud::IRequestContextPtr ctx)
+        qevercloud::Guid resourceGuid, qevercloud::INoteStorePtr noteStore,
+        qevercloud::IRequestContextPtr ctx)
 {
+    if (Q_UNLIKELY(!noteStore)) {
+        return threading::makeExceptionalFuture<qevercloud::Resource>(
+            InvalidArgument{ErrorString{QStringLiteral(
+                "ResourceFullDataDownloader: note store is null")}});
+    }
+
     auto promise = std::make_shared<QPromise<qevercloud::Resource>>();
     auto future = promise->future();
 
@@ -58,26 +60,30 @@ QFuture<qevercloud::Resource>
         // and execute it later, when some of the previous requests are finished
         const QMutexLocker lock{&m_queuedRequestsMutex};
         m_queuedRequests.append(QueuedRequest{
-            std::move(resourceGuid), std::move(ctx), std::move(promise)});
+            std::move(resourceGuid), std::move(ctx), std::move(noteStore),
+            std::move(promise)});
         return future;
     }
 
     downloadFullResourceDataImpl(
-        std::move(resourceGuid), std::move(ctx), promise);
+        std::move(resourceGuid), noteStore, std::move(ctx), promise);
 
     return future;
 }
 
 void ResourceFullDataDownloader::downloadFullResourceDataImpl(
-    qevercloud::Guid resourceGuid, qevercloud::IRequestContextPtr ctx,
+    qevercloud::Guid resourceGuid, const qevercloud::INoteStorePtr & noteStore,
+    qevercloud::IRequestContextPtr ctx,
     const std::shared_ptr<QPromise<qevercloud::Resource>> & promise)
 {
+    Q_ASSERT(noteStore);
+
     Q_ASSERT(promise);
     promise->start();
 
     m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
-    auto getResourceFuture = m_noteStore->getResourceAsync(
+    auto getResourceFuture = noteStore->getResourceAsync(
         std::move(resourceGuid),
         /* withData = */ true,
         /* withRecognition = */ true,
@@ -127,8 +133,8 @@ void ResourceFullDataDownloader::onResourceFullDataDownloadFinished()
     }
 
     downloadFullResourceDataImpl(
-        std::move(request.m_resourceGuid), std::move(request.m_ctx),
-        request.m_promise);
+        std::move(request.m_resourceGuid), request.m_noteStore,
+        std::move(request.m_ctx), request.m_promise);
 }
 
 } // namespace quentier::synchronization

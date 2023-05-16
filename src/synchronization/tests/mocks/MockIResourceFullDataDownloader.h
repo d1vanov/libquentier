@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,8 @@ class MockIResourceFullDataDownloader : public IResourceFullDataDownloader
 public:
     MOCK_METHOD(
         QFuture<qevercloud::Resource>, downloadFullResourceData,
-        (qevercloud::Guid resourceGuid, qevercloud::IRequestContextPtr ctx),
+        (qevercloud::Guid resourceGuid, qevercloud::INoteStorePtr noteStore,
+         qevercloud::IRequestContextPtr ctx),
         (override));
 };
 
