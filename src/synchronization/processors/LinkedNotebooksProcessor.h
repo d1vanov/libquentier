@@ -44,7 +44,7 @@ class LinkedNotebooksProcessor final :
 public:
     LinkedNotebooksProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        threading::QThreadPoolPtr threadPool);
+        threading::QThreadPoolPtr threadPool = {});
 
     [[nodiscard]] QFuture<void> processLinkedNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
