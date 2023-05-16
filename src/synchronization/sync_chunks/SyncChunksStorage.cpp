@@ -318,16 +318,23 @@ SyncChunksStorage::SyncChunksStorage(
         m_rootDir.absoluteFilePath(QStringLiteral("user_own"))}
 // clang-format on
 {
-    const QFileInfo rootDirInfo{m_rootDir.absolutePath()};
-
-    if (Q_UNLIKELY(!rootDirInfo.isReadable())) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("SyncChunksStorage requires a readable root dir")}};
+    if (!m_rootDir.exists()) {
+        if (Q_UNLIKELY(!m_rootDir.mkpath(m_rootDir.absolutePath()))) {
+            throw RuntimeError{ErrorString{QStringLiteral(
+                "Cannot create root dir for temporary sync chunks storage")}};
+        }
     }
+    else {
+        const QFileInfo rootDirInfo{m_rootDir.absolutePath()};
+        if (Q_UNLIKELY(!rootDirInfo.isReadable())) {
+            throw InvalidArgument{ErrorString{QStringLiteral(
+                "SyncChunksStorage requires readable root dir")}};
+        }
 
-    if (Q_UNLIKELY(!rootDirInfo.isWritable())) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("SyncChunksStorage requires a writable root dir")}};
+        if (Q_UNLIKELY(!rootDirInfo.isWritable())) {
+            throw InvalidArgument{ErrorString{QStringLiteral(
+                "SyncChunksStorage requires writable root dir")}};
+        }
     }
 
     if (!m_userOwnSyncChunksDir.exists()) {
