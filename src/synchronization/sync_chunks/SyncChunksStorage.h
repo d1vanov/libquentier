@@ -42,7 +42,7 @@ class SyncChunksStorage final : public ISyncChunksStorage
 {
 public:
     explicit SyncChunksStorage(
-        const QDir & rootDir, const threading::QThreadPoolPtr & threadPool);
+        const QDir & rootDir, const threading::QThreadPoolPtr & threadPool = {});
 
     [[nodiscard]] QList<std::pair<qint32, qint32>>
         fetchUserOwnSyncChunksLowAndHighUsns() const override;

@@ -22,6 +22,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Factory.h>
 #include <quentier/threading/Runnable.h>
 #include <quentier/utility/FileSystem.h>
 
@@ -711,12 +712,6 @@ SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsDataAccessor(
             "is null")}};
     }
 
-    if (Q_UNLIKELY(!threadPool)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "SyncChunksStorage::LowAndHighUsnsDataAccessor ctor: thread pool "
-            "is null")}};
-    }
-
     auto promise = std::make_shared<QPromise<LowAndHighUsnsData>>();
     m_lowAndHighUsnsDataFuture = promise->future();
 
@@ -762,7 +757,10 @@ SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsDataAccessor(
             promise->finish();
         })};
 
-    threadPool->start(runnable.release());
+    const auto & actualThreadPool =
+        (threadPool ? threadPool : threading::globalThreadPool());
+
+    actualThreadPool->start(runnable.release());
 }
 
 SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsData &
