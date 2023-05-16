@@ -22,6 +22,10 @@
 
 #include <synchronization/IAccountSynchronizerFactory.h>
 
+#include <qevercloud/Fwd.h>
+
+#include <QDir>
+
 namespace quentier::synchronization {
 
 class AccountSynchronizerFactory: public IAccountSynchronizerFactory
@@ -29,7 +33,8 @@ class AccountSynchronizerFactory: public IAccountSynchronizerFactory
 public:
     AccountSynchronizerFactory(
         ISyncStateStoragePtr syncStateStorage,
-        IAuthenticationInfoProviderPtr authenticationInfoProvider);
+        IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        const QDir & synchronizationPersistenceDir);
 
 public: // IAccountSynchronizerFactory
     [[nodiscard]] IAccountSynchronizerPtr createAccountSynchronizer(
@@ -39,8 +44,19 @@ public: // IAccountSynchronizerFactory
         ISyncOptionsPtr options) override;
 
 private:
+    [[nodiscard]] qevercloud::IRequestContextPtr accountRequestContext(
+        const Account & account) const;
+
+    [[nodiscard]] qevercloud::IRetryPolicyPtr accountRetryPolicy(
+        const Account & account) const;
+
+    [[nodiscard]] qint32 accountMaxInFlightNoteDownloads(
+        const Account & account) const;
+
+private:
     const ISyncStateStoragePtr m_syncStateStorage;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
+    const QDir m_synchronizationPersistenceDir;
 };
 
 } // namespace quentier::synchronization
