@@ -46,6 +46,17 @@ public:
      */
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByNoteLocalId(const QString & noteLocalId) = 0;
+
+    /**
+     * @brief Find notebook by its local id
+     * @param notebookLocalId The local id of the notebook to be found
+     * @return future with std::nullopt if the notebook with given local id
+     *         was not found or with notebook otherwise. Or future with
+     *         exception in case of some error while trying to find the
+     *         notebook.
+     */
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByLocalId(const QString & notebookLocalId) = 0;
 };
 
 } // namespace quentier::synchronization

@@ -16,6 +16,7 @@ add_executable(${TESTS_NAME}
   InkNoteImageDownloaderFactoryTest.cpp
   LinkedNotebookFinderTest.cpp
   LinkedNotebooksProcessorTest.cpp
+  NotebookFinderTest.cpp
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
   NoteStoreProviderTest.cpp

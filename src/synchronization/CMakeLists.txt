@@ -38,6 +38,8 @@ target_sources(${LIBRARY_NAME}
   IUserInfoProvider.h
   LinkedNotebookFinder.cpp
   LinkedNotebookFinder.h
+  NotebookFinder.cpp
+  NotebookFinder.h
   NoteStoreFactory.cpp
   NoteStoreFactory.h
   NoteStoreProvider.cpp

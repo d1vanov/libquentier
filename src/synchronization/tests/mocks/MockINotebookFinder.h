@@ -30,6 +30,10 @@ public:
     MOCK_METHOD(
         QFuture<std::optional<qevercloud::Notebook>>, findNotebookByNoteLocalId,
         (const QString & noteLocalId), (override));
+
+    MOCK_METHOD(
+        QFuture<std::optional<qevercloud::Notebook>>, findNotebookByLocalId,
+        (const QString & notebookLocalId), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks
