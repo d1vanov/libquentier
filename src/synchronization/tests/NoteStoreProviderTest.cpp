@@ -169,7 +169,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
                 return noteStore;
             });
 
-    auto resultFuture = noteStoreProvider->noteStore(
+    auto resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
@@ -178,7 +178,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     EXPECT_EQ(result, noteStore);
 
     // The second call should use cached information
-    resultFuture = noteStoreProvider->noteStore(
+    resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
@@ -222,7 +222,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
                 return noteStore;
             });
 
-    resultFuture = noteStoreProvider->noteStore(
+    resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
@@ -259,7 +259,7 @@ TEST_F(
     const auto defaultCtx = qevercloud::newRequestContext();
     const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
 
-    auto resultFuture = noteStoreProvider->noteStore(
+    auto resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     EXPECT_THROW(resultFuture.result(), RuntimeError);
@@ -327,7 +327,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
             return noteStore;
         });
 
-    auto resultFuture = noteStoreProvider->noteStore(
+    auto resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
@@ -336,7 +336,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
     EXPECT_EQ(result, noteStore);
 
     // The second call should use cached information
-    resultFuture = noteStoreProvider->noteStore(
+    resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
@@ -379,7 +379,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebook)
             return noteStore;
         });
 
-    resultFuture = noteStoreProvider->noteStore(
+    resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     ASSERT_EQ(resultFuture.resultCount(), 1);
@@ -423,7 +423,7 @@ TEST_F(
     const auto defaultCtx = qevercloud::newRequestContext();
     const auto defaultRetryPolicy = qevercloud::newRetryPolicy();
 
-    auto resultFuture = noteStoreProvider->noteStore(
+    auto resultFuture = noteStoreProvider->noteStoreForNotebook(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
     ASSERT_TRUE(resultFuture.isFinished());
     EXPECT_THROW(resultFuture.result(), RuntimeError);

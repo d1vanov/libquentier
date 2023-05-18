@@ -409,8 +409,9 @@ void Sender::sendNote(
                     return;
                 }
 
-                auto noteStoreFuture = m_noteStoreProvider->noteStore(
-                    note.notebookLocalId(), m_ctx, m_retryPolicy);
+                auto noteStoreFuture =
+                    m_noteStoreProvider->noteStoreForNotebook(
+                        note.notebookLocalId(), m_ctx, m_retryPolicy);
 
                 threading::thenOrFailed(
                     std::move(noteStoreFuture), notePromise,

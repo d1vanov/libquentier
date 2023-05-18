@@ -30,7 +30,7 @@ class MockINoteStoreProvider : public INoteStoreProvider
 {
 public:
     MOCK_METHOD(
-        QFuture<qevercloud::INoteStorePtr>, noteStore,
+        QFuture<qevercloud::INoteStorePtr>, noteStoreForNotebook,
         (QString notebookLocalId, qevercloud::IRequestContextPtr ctx,
          qevercloud::IRetryPolicyPtr retryPolicy),
         (override));

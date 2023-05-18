@@ -50,7 +50,7 @@ public:
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         INoteStoreFactoryPtr noteStoreFactory, Account account);
 
-    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStore(
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNotebook(
         QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 

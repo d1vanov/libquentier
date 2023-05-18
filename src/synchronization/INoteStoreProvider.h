@@ -33,9 +33,10 @@ class INoteStoreProvider
 public:
     virtual ~INoteStoreProvider() = default;
 
-    [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr> noteStore(
-        QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
+    [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr>
+        noteStoreForNotebook(
+            QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
+            qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
 
     [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr> userOwnNoteStore(
         qevercloud::IRequestContextPtr ctx = {},

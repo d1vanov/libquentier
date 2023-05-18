@@ -86,7 +86,7 @@ NoteStoreProvider::NoteStoreProvider(
     }
 }
 
-QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStore(
+QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNotebook(
     QString notebookLocalId, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy)
 {
