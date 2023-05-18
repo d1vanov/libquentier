@@ -23,6 +23,7 @@
 
 #include <synchronization/InkNoteImageDownloaderFactory.h>
 #include <synchronization/LinkedNotebookFinder.h>
+#include <synchronization/NotebookFinder.h>
 #include <synchronization/NoteStoreFactory.h>
 #include <synchronization/NoteStoreProvider.h>
 #include <synchronization/NoteThumbnailDownloaderFactory.h>
@@ -115,8 +116,13 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto linkedNotebookFinder =
         std::make_shared<LinkedNotebookFinder>(localStorage);
 
+    linkedNotebookFinder->init();
+
+    auto notebookFinder = std::make_shared<NotebookFinder>(localStorage);
+    notebookFinder->init();
+
     auto noteStoreProvider = std::make_shared<NoteStoreProvider>(
-        linkedNotebookFinder, m_authenticationInfoProvider,
+        linkedNotebookFinder, notebookFinder, m_authenticationInfoProvider,
         std::move(noteStoreFactory), account);
 
     auto syncChunksDownloader = std::make_shared<SyncChunksDownloader>(

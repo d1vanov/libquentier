@@ -47,11 +47,16 @@ class NoteStoreProvider final :
 public:
     NoteStoreProvider(
         ILinkedNotebookFinderPtr linkedNotebookFinder,
+        INotebookFinderPtr notebookFinder,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         INoteStoreFactoryPtr noteStoreFactory, Account account);
 
     [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNotebook(
         QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNote(
+        QString noteLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
     [[nodiscard]] QFuture<qevercloud::INoteStorePtr> userOwnNoteStore(
@@ -81,6 +86,7 @@ private:
 
 private:
     const ILinkedNotebookFinderPtr m_linkedNotebookFinder;
+    const INotebookFinderPtr m_notebookFinder;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const INoteStoreFactoryPtr m_noteStoreFactory;
     const Account m_account;
