@@ -50,7 +50,6 @@ public:
         local_storage::ILocalStoragePtr localStorage,
         IResourceFullDataDownloaderPtr resourceFullDataDownloader,
         INoteStoreProviderPtr noteStoreProvider,
-        INotebookFinderPtr notebookFinder,
         qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {},
         threading::QThreadPoolPtr threadPool = {});
@@ -117,12 +116,6 @@ private:
         ContextPtr context,
         std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
         qevercloud::Resource resource, ResourceKind resourceKind,
-        const qevercloud::Notebook & notebook);
-
-    void downloadFullResourceData(
-        ContextPtr context,
-        std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
-        qevercloud::Resource resource, ResourceKind resourceKind,
         const qevercloud::INoteStorePtr & noteStore);
 
     void putResourceToLocalStorage(
@@ -134,7 +127,6 @@ private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const IResourceFullDataDownloaderPtr m_resourceFullDataDownloader;
     const INoteStoreProviderPtr m_noteStoreProvider;
-    const INotebookFinderPtr m_notebookFinder;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;
     const threading::QThreadPoolPtr m_threadPool;

@@ -19,7 +19,6 @@
 #include "ResourcesProcessor.h"
 
 #include <synchronization/INoteStoreProvider.h>
-#include <synchronization/INotebookFinder.h>
 #include <synchronization/conflict_resolvers/Utils.h>
 #include <synchronization/processors/IResourceFullDataDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
@@ -53,13 +52,12 @@ namespace quentier::synchronization {
 ResourcesProcessor::ResourcesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     IResourceFullDataDownloaderPtr resourceFullDataDownloader,
-    INoteStoreProviderPtr noteStoreProvider, INotebookFinderPtr notebookFinder,
-    qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy,
+    INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy,
     threading::QThreadPoolPtr threadPool) :
     m_localStorage{std::move(localStorage)},
     m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)},
-    m_noteStoreProvider{std::move(noteStoreProvider)},
-    m_notebookFinder{std::move(notebookFinder)}, m_ctx{std::move(ctx)},
+    m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
     m_retryPolicy{std::move(retryPolicy)},
     m_threadPool{
         threadPool ? std::move(threadPool) : threading::globalThreadPool()}
@@ -77,11 +75,6 @@ ResourcesProcessor::ResourcesProcessor(
     if (Q_UNLIKELY(!m_noteStoreProvider)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesProcessor ctor: note store provider is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_notebookFinder)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "ResourcesProcessor ctor: notebook finder is null")}};
     }
 
     Q_ASSERT(m_threadPool);
@@ -521,69 +514,8 @@ void ResourcesProcessor::downloadFullResourceData(
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
 
-    auto notebookFuture =
-        m_notebookFinder->findNotebookByNoteLocalId(resource.noteLocalId());
-
-    const auto selfWeak = weak_from_this();
-
-    auto notebookThenFuture = threading::then(
-        std::move(notebookFuture),
-        threading::TrackedTask{
-            selfWeak,
-            [this, context = context, promise = promise, resource = resource,
-             resourceKind](
-                const std::optional<qevercloud::Notebook> & notebook) mutable {
-                if (Q_UNLIKELY(!notebook)) {
-                    if (const auto callback = context->callbackWeak.lock()) {
-                        callback->onResourceFailedToDownload(
-                            resource,
-                            RuntimeError{ErrorString{QStringLiteral(
-                                "ResourcesProcessor: could not find notebook "
-                                "for resource's note")}});
-                    }
-
-                    promise->addResult(ProcessResourceStatus::
-                                           FailedToDownloadFullResourceData);
-
-                    promise->finish();
-                    return;
-                }
-
-                downloadFullResourceData(
-                    std::move(context), std::move(promise), std::move(resource),
-                    resourceKind, *notebook);
-            }});
-
-    threading::onFailed(
-        std::move(notebookThenFuture),
-        [context = std::move(context), promise = std::move(promise),
-         resource = std::move(resource)](const QException & e) {
-            if (const auto callback = context->callbackWeak.lock()) {
-                callback->onResourceFailedToDownload(resource, e);
-            }
-
-            promise->addResult(
-                ProcessResourceStatus::FailedToDownloadFullResourceData);
-
-            promise->finish();
-            return;
-        });
-}
-
-void ResourcesProcessor::downloadFullResourceData(
-    ContextPtr context,
-    std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
-    qevercloud::Resource resource, ResourceKind resourceKind,
-    const qevercloud::Notebook & notebook)
-{
-    Q_ASSERT(context);
-    Q_ASSERT(resource.guid());
-
-    auto noteStoreFuture =
-        (notebook.linkedNotebookGuid()
-             ? m_noteStoreProvider->linkedNotebookNoteStore(
-                   *notebook.linkedNotebookGuid(), m_ctx, m_retryPolicy)
-             : m_noteStoreProvider->userOwnNoteStore(m_ctx, m_retryPolicy));
+    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNote(
+        resource.noteLocalId(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
 

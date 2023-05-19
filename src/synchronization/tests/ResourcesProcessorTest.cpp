@@ -18,7 +18,6 @@
 
 #include <synchronization/processors/ResourcesProcessor.h>
 #include <synchronization/tests/mocks/MockINoteStoreProvider.h>
-#include <synchronization/tests/mocks/MockINotebookFinder.h>
 #include <synchronization/tests/mocks/MockIResourceFullDataDownloader.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
@@ -115,9 +114,6 @@ protected:
         m_mockNoteStoreProvider =
             std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
 
-    const std::shared_ptr<mocks::MockINotebookFinder> m_mockNotebookFinder =
-        std::make_shared<StrictMock<mocks::MockINotebookFinder>>();
-
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -179,9 +175,8 @@ TEST_F(ResourcesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, m_mockNotebookFinder,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool));
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), m_threadPool));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullLocalStorage)
@@ -189,8 +184,8 @@ TEST_F(ResourcesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             nullptr, m_mockResourceFullDataDownloader, m_mockNoteStoreProvider,
-            m_mockNotebookFinder, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -199,8 +194,8 @@ TEST_F(ResourcesProcessorTest, CtorNullResourceFullDataDownloader)
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, nullptr, m_mockNoteStoreProvider,
-            m_mockNotebookFinder, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -209,18 +204,8 @@ TEST_F(ResourcesProcessorTest, CtorNullNoteStoreProvider)
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader, nullptr,
-            m_mockNotebookFinder, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
-        InvalidArgument);
-}
-
-TEST_F(ResourcesProcessorTest, CtorNullNotebookFinder)
-{
-    EXPECT_THROW(
-        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, nullptr, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
+            m_threadPool),
         InvalidArgument);
 }
 
@@ -229,8 +214,8 @@ TEST_F(ResourcesProcessorTest, CtorNullRequestContext)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, m_mockNotebookFinder, nullptr,
-            qevercloud::newRetryPolicy(), m_threadPool));
+            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy(),
+            m_threadPool));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullRetryPolicy)
@@ -238,8 +223,8 @@ TEST_F(ResourcesProcessorTest, CtorNullRetryPolicy)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, m_mockNotebookFinder,
-            qevercloud::newRequestContext(), nullptr, m_threadPool));
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr,
+            m_threadPool));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullThreadPool)
@@ -247,9 +232,8 @@ TEST_F(ResourcesProcessorTest, CtorNullThreadPool)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, m_mockNotebookFinder,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            nullptr));
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+            qevercloud::newRetryPolicy(), nullptr));
 }
 
 TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
@@ -259,9 +243,8 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -330,12 +313,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -412,9 +390,8 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -505,12 +482,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -593,9 +565,8 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -716,12 +687,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -805,9 +771,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -928,12 +893,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1015,9 +975,8 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1141,12 +1100,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1234,9 +1188,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1331,12 +1284,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1469,9 +1417,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1566,12 +1513,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1671,9 +1613,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -1794,12 +1735,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1899,9 +1835,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -2022,12 +1957,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -2127,9 +2057,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -2315,12 +2244,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId)
-        .WillRepeatedly(Return(
-            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
-                qevercloud::Notebook{})));
-
-    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNote)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -2417,9 +2341,8 @@ TEST_F(
 
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
-        m_mockNoteStoreProvider, m_mockNotebookFinder,
-        qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-        m_threadPool);
+        m_mockNoteStoreProvider, qevercloud::newRequestContext(),
+        qevercloud::newRetryPolicy(), m_threadPool);
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
