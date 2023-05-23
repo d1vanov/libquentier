@@ -31,24 +31,17 @@
 namespace quentier::synchronization {
 
 FullSyncStaleDataExpunger::FullSyncStaleDataExpunger(
-    local_storage::ILocalStoragePtr localStorage,
-    utility::cancelers::ICancelerPtr canceler) :
-    m_localStorage{std::move(localStorage)},
-    m_canceler{std::move(canceler)}
+    local_storage::ILocalStoragePtr localStorage) :
+    m_localStorage{std::move(localStorage)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "FullSyncStaleDataExpunger ctor: local storage is null")}};
     }
-
-    if (Q_UNLIKELY(!m_canceler)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "FullSyncStaleDataExpunger ctor: canceler is null")}};
-    }
 }
 
 QFuture<void> FullSyncStaleDataExpunger::expungeStaleData(
-    PreservedGuids preservedGuids,
+    PreservedGuids preservedGuids, utility::cancelers::ICancelerPtr canceler,
     std::optional<qevercloud::Guid> linkedNotebookGuid)
 {
     const local_storage::ILocalStorage::ListGuidsFilters modifiedFilters{
@@ -107,10 +100,11 @@ QFuture<void> FullSyncStaleDataExpunger::expungeStaleData(
         std::move(listAllFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [this, promise, linkedNotebookGuid = std::move(linkedNotebookGuid),
+            [this, promise, canceler = std::move(canceler),
+             linkedNotebookGuid = std::move(linkedNotebookGuid),
              preservedGuids = std::move(preservedGuids)](
                 QList<QSet<qevercloud::Guid>> result) mutable {
-                if (m_canceler->isCanceled()) {
+                if (canceler->isCanceled()) {
                     return;
                 }
 
@@ -127,8 +121,8 @@ QFuture<void> FullSyncStaleDataExpunger::expungeStaleData(
                 guids.unmodifiedSavedSearchGuids = std::move(result[7]);
 
                 onGuidsListed(
-                    guids, preservedGuids, std::move(linkedNotebookGuid),
-                    promise);
+                    guids, preservedGuids, std::move(canceler),
+                    std::move(linkedNotebookGuid), promise);
             }});
 
     return future;
@@ -137,6 +131,7 @@ QFuture<void> FullSyncStaleDataExpunger::expungeStaleData(
 void FullSyncStaleDataExpunger::onGuidsListed(
     const FullSyncStaleDataExpunger::Guids & guids,
     const PreservedGuids & preservedGuids,
+    utility::cancelers::ICancelerPtr canceler,
     std::optional<qevercloud::Guid> linkedNotebookGuid,
     const std::shared_ptr<QPromise<void>> & promise)
 {
@@ -227,13 +222,13 @@ void FullSyncStaleDataExpunger::onGuidsListed(
                                   : threading::whenAll(expungeFutures));
 
     auto newNotebooksMapFuture = processModifiedNotebooks(
-        notebookGuidsToReCreateLocally, linkedNotebookGuid);
+        notebookGuidsToReCreateLocally, canceler, linkedNotebookGuid);
 
-    auto newTagsMapFuture =
-        processModifiedTags(tagGuidsToReCreateLocally, linkedNotebookGuid);
+    auto newTagsMapFuture = processModifiedTags(
+        tagGuidsToReCreateLocally, canceler, linkedNotebookGuid);
 
     auto processSavedSearchesFuture =
-        processModifiedSavedSearches(savedSearchGuidsToUpdate);
+        processModifiedSavedSearches(savedSearchGuidsToUpdate, canceler);
 
     auto newNotebooksMap = std::make_shared<GuidToLocalIdHash>();
     auto newTagsMap = std::make_shared<GuidToTagDataHash>();
@@ -278,14 +273,15 @@ void FullSyncStaleDataExpunger::onGuidsListed(
         std::move(allButNotesFuture), promise,
         [promise, newNotebooksMap, newTagsMap, selfWeak,
          noteGuidsToUpdate = std::move(noteGuidsToUpdate),
+         canceler = std::move(canceler),
          linkedNotebookGuid = std::move(linkedNotebookGuid)] {
             const auto self = selfWeak.lock();
-            if (!self || self->m_canceler->isCanceled()) {
+            if (!self || canceler->isCanceled()) {
                 return;
             }
 
             auto processNotesFuture = self->processModifiedNotes(
-                noteGuidsToUpdate, newNotebooksMap, newTagsMap);
+                noteGuidsToUpdate, canceler, newNotebooksMap, newTagsMap);
 
             threading::thenOrFailed(std::move(processNotesFuture), promise);
         });
@@ -294,6 +290,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
 QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
     FullSyncStaleDataExpunger::processModifiedNotebooks(
         const QSet<qevercloud::Guid> & notebookGuids,
+        utility::cancelers::ICancelerPtr canceler,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     if (notebookGuids.isEmpty()) {
@@ -311,7 +308,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
         QFuture<std::pair<qevercloud::Guid, QString>> processNotebookFuture =
             threading::then(
                 std::move(notebookFuture),
-                [guid, linkedNotebookGuid,
+                [guid, canceler, linkedNotebookGuid,
                  selfWeak](std::optional<qevercloud::Notebook> notebook) {
                     if (Q_UNLIKELY(!notebook)) {
                         QNWARNING(
@@ -324,7 +321,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
                     }
 
                     const auto self = selfWeak.lock();
-                    if (!self || self->m_canceler->isCanceled()) {
+                    if (!self || canceler->isCanceled()) {
                         return threading::makeReadyFuture<
                             std::pair<qevercloud::Guid, QString>>({});
                     }
@@ -353,10 +350,10 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
 
                     threading::thenOrFailed(
                         std::move(expungeNotebookFuture), promise,
-                        [promise, guid, newLocalId, selfWeak,
+                        [promise, canceler, guid, newLocalId, selfWeak,
                          notebook = std::move(*notebook)]() mutable {
                             const auto self = selfWeak.lock();
-                            if (!self || self->m_canceler->isCanceled()) {
+                            if (!self || canceler->isCanceled()) {
                                 promise->addResult(
                                     std::pair<qevercloud::Guid, QString>{});
                                 promise->finish();
@@ -392,7 +389,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
 
     threading::thenOrFailed(
         std::move(allNotebooksFuture), promise,
-        [promise, canceler = m_canceler](
+        [promise, canceler = std::move(canceler)](
             QList<std::pair<qevercloud::Guid, QString>> pairs) {
             if (canceler->isCanceled()) {
                 return;
@@ -414,6 +411,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
 QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
     FullSyncStaleDataExpunger::processModifiedTags(
         const QSet<qevercloud::Guid> & tagGuids,
+        utility::cancelers::ICancelerPtr canceler,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid)
 {
     if (tagGuids.isEmpty()) {
@@ -431,7 +429,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
         QFuture<std::pair<qevercloud::Guid, TagData>> processTagFuture =
             threading::then(
                 std::move(tagFuture),
-                [guid, linkedNotebookGuid,
+                [guid, canceler, linkedNotebookGuid,
                  selfWeak](std::optional<qevercloud::Tag> tag) {
                     if (Q_UNLIKELY(!tag)) {
                         QNWARNING(
@@ -444,7 +442,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
                     }
 
                     const auto self = selfWeak.lock();
-                    if (!self || self->m_canceler->isCanceled()) {
+                    if (!self || canceler->isCanceled()) {
                         return threading::makeReadyFuture<
                             std::pair<qevercloud::Guid, TagData>>({});
                     }
@@ -471,12 +469,12 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
 
                     auto expungeTagThenFuture = threading::then(
                         std::move(expungeTagFuture),
-                        [promise, guid, selfWeak,
+                        [promise, guid, selfWeak, canceler,
                          oldLocalId = std::move(oldLocalId),
                          newLocalId = std::move(newLocalId),
                          tag = std::move(*tag)]() mutable {
                             const auto self = selfWeak.lock();
-                            if (!self || self->m_canceler->isCanceled()) {
+                            if (!self || canceler->isCanceled()) {
                                 promise->addResult(
                                     std::pair<qevercloud::Guid, TagData>{});
                                 promise->finish();
@@ -539,7 +537,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
 
     threading::thenOrFailed(
         std::move(allTagsFuture), promise,
-        [promise, canceler = m_canceler](
+        [promise, canceler = std::move(canceler)](
             QList<std::pair<qevercloud::Guid, TagData>> pairs) {
             if (canceler->isCanceled()) {
                 return;
@@ -559,7 +557,8 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
 }
 
 QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
-    const QSet<qevercloud::Guid> & savedSearchGuids)
+    const QSet<qevercloud::Guid> & savedSearchGuids,
+    const utility::cancelers::ICancelerPtr & canceler)
 {
     if (savedSearchGuids.isEmpty()) {
         return threading::makeReadyFuture();
@@ -575,7 +574,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
 
         QFuture<void> processSavedSearchFuture = threading::then(
             std::move(savedSearchFuture),
-            [guid,
+            [guid, canceler,
              selfWeak](std::optional<qevercloud::SavedSearch> savedSearch) {
                 if (Q_UNLIKELY(!savedSearch)) {
                     QNWARNING(
@@ -587,7 +586,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
                 }
 
                 const auto self = selfWeak.lock();
-                if (!self || self->m_canceler->isCanceled()) {
+                if (!self || canceler->isCanceled()) {
                     return threading::makeReadyFuture();
                 }
 
@@ -605,10 +604,10 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
 
                 threading::thenOrFailed(
                     std::move(expungeSavedSearchFuture), promise,
-                    [promise, guid, selfWeak,
+                    [promise, guid, selfWeak, canceler,
                      savedSearch = std::move(*savedSearch)]() mutable {
                         const auto self = selfWeak.lock();
-                        if (!self || self->m_canceler->isCanceled()) {
+                        if (!self || canceler->isCanceled()) {
                             promise->finish();
                             return;
                         }
@@ -632,6 +631,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
 
 QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
     const QSet<qevercloud::Guid> & noteGuids,
+    const utility::cancelers::ICancelerPtr & canceler,
     const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap,
     const std::shared_ptr<const GuidToTagDataHash> & newTagsMap)
 {
@@ -654,7 +654,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
 
         QFuture<void> processNoteFuture = threading::then(
             std::move(noteFuture),
-            [guid, selfWeak, newNotebooksMap,
+            [guid, selfWeak, newNotebooksMap, canceler,
              newTagsMap](std::optional<qevercloud::Note> note) {
                 if (Q_UNLIKELY(!note)) {
                     QNWARNING(
@@ -673,7 +673,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
                 }
 
                 const auto self = selfWeak.lock();
-                if (!self || self->m_canceler->isCanceled()) {
+                if (!self || canceler->isCanceled()) {
                     return threading::makeReadyFuture();
                 }
 
@@ -728,10 +728,10 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
 
                 threading::thenOrFailed(
                     std::move(expungeNoteFuture), promise,
-                    [promise, guid, selfWeak,
+                    [promise, guid, selfWeak, canceler,
                      note = std::move(*note)]() mutable {
                         const auto self = selfWeak.lock();
-                        if (!self || self->m_canceler->isCanceled()) {
+                        if (!self || canceler->isCanceled()) {
                             promise->finish();
                             return;
                         }

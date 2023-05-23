@@ -1433,10 +1433,12 @@ TEST_P(DownloaderSyncChunksTest, Download)
         if (testData.m_syncMode == SyncMode::FullNonFirst) {
             EXPECT_CALL(
                 *m_mockFullSyncStaleDataExpunger,
-                expungeStaleData(_, Eq(std::nullopt)))
+                expungeStaleData(_, _, Eq(std::nullopt)))
                 .WillOnce(
                     [&](const IFullSyncStaleDataExpunger::PreservedGuids &
                             preservedGuids,
+                        [[maybe_unused]] const utility::cancelers::
+                            ICancelerPtr & canceler,
                         [[maybe_unused]] const std::optional<qevercloud::Guid> &
                             linkedNotebookGuid) {
                         const auto expectedPreservedGuids =
@@ -1705,10 +1707,12 @@ TEST_P(DownloaderSyncChunksTest, Download)
         if (testData.m_syncMode == SyncMode::FullNonFirst) {
             EXPECT_CALL(
                 *m_mockFullSyncStaleDataExpunger,
-                expungeStaleData(_, Eq(linkedNotebook.guid())))
+                expungeStaleData(_, _, Eq(linkedNotebook.guid())))
                 .WillOnce(
                     [&](const IFullSyncStaleDataExpunger::PreservedGuids &
                             preservedGuids,
+                        [[maybe_unused]] const utility::cancelers::
+                            ICancelerPtr & canceler,
                         [[maybe_unused]] const std::optional<qevercloud::Guid> &
                             linkedNotebookGuid) {
                         const auto expectedPreservedGuids =

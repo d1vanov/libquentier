@@ -1202,6 +1202,7 @@ void Downloader::processSyncChunks(
 
             auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
                 std::move(preservedGuids),
+                downloadContext->canceler,
                 downloadContext->linkedNotebook
                     ? downloadContext->linkedNotebook->guid()
                     : std::nullopt);

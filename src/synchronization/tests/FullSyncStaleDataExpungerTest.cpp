@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,25 +67,14 @@ TEST_F(FullSyncStaleDataExpungerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto fullSyncStaleDataExpunger =
-            std::make_shared<FullSyncStaleDataExpunger>(
-                m_mockLocalStorage, m_manualCanceler));
+            std::make_shared<FullSyncStaleDataExpunger>(m_mockLocalStorage));
 }
 
 TEST_F(FullSyncStaleDataExpungerTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto fullSyncStaleDataExpunger =
-            std::make_shared<FullSyncStaleDataExpunger>(
-                nullptr, m_manualCanceler),
-        InvalidArgument);
-}
-
-TEST_F(FullSyncStaleDataExpungerTest, CtorNullCanceler)
-{
-    EXPECT_THROW(
-        const auto fullSyncStaleDataExpunger =
-            std::make_shared<FullSyncStaleDataExpunger>(
-                m_mockLocalStorage, nullptr),
+            std::make_shared<FullSyncStaleDataExpunger>(nullptr),
         InvalidArgument);
 }
 
@@ -380,8 +369,8 @@ Q_DECLARE_FLAGS(
         }
     }
 
-    if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithPreservedNotebookGuids))
+    if (options.testFlag(FullSyncStaleDataExpungerTestDataOption::
+                             WithPreservedNotebookGuids))
     {
         int counter = 0;
         for (const auto it:
@@ -416,7 +405,8 @@ Q_DECLARE_FLAGS(
     }
 
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids)) {
+            FullSyncStaleDataExpungerTestDataOption::WithPreservedTagGuids))
+    {
         int counter = 0;
         for (const auto it:
              qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
@@ -442,14 +432,14 @@ Q_DECLARE_FLAGS(
             // Just add some random guids then to make sure nothing bad would
             // happen with them present
             for (int i = 0; i < itemCount; ++i) {
-                result.m_preservedTagGuids.insert(
-                    UidGenerator::Generate());
+                result.m_preservedTagGuids.insert(UidGenerator::Generate());
             }
         }
     }
 
     if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids)) {
+            FullSyncStaleDataExpungerTestDataOption::WithPreservedNoteGuids))
+    {
         int counter = 0;
         for (const auto it:
              qevercloud::toRange(qAsConst(result.m_unmodifiedNotes))) {
@@ -475,17 +465,18 @@ Q_DECLARE_FLAGS(
             // Just add some random guids then to make sure nothing bad would
             // happen with them present
             for (int i = 0; i < itemCount; ++i) {
-                result.m_preservedNoteGuids.insert(
-                    UidGenerator::Generate());
+                result.m_preservedNoteGuids.insert(UidGenerator::Generate());
             }
         }
     }
 
-    if (options.testFlag(
-            FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids)) {
+    if (options.testFlag(FullSyncStaleDataExpungerTestDataOption::
+                             WithPreservedSavedSearchGuids))
+    {
         int counter = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedSavedSearches))) {
+             qevercloud::toRange(qAsConst(result.m_unmodifiedSavedSearches)))
+        {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -495,7 +486,8 @@ Q_DECLARE_FLAGS(
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedSavedSearches))) {
+             qevercloud::toRange(qAsConst(result.m_modifiedSavedSearches)))
+        {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -708,15 +700,18 @@ const std::array gFullSyncStaleDataExpungerTestData{
         FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid),
     createFullSyncStaleDataExpungerTestData(
         FullSyncStaleDataExpungerTestDataOptions{
-            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches} |
+            FullSyncStaleDataExpungerTestDataOption::
+                WithUnmodifiedSavedSearches} |
         FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
     createFullSyncStaleDataExpungerTestData(
         FullSyncStaleDataExpungerTestDataOptions{
-            FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches} |
+            FullSyncStaleDataExpungerTestDataOption::
+                WithModifiedSavedSearches} |
         FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
     createFullSyncStaleDataExpungerTestData(
         FullSyncStaleDataExpungerTestDataOptions{
-            FullSyncStaleDataExpungerTestDataOption::WithUnmodifiedSavedSearches} |
+            FullSyncStaleDataExpungerTestDataOption::
+                WithUnmodifiedSavedSearches} |
         FullSyncStaleDataExpungerTestDataOption::WithModifiedSavedSearches |
         FullSyncStaleDataExpungerTestDataOption::WithPreservedSavedSearchGuids),
     createFullSyncStaleDataExpungerTestData(
@@ -755,8 +750,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
 {
     const auto fullSyncStaleDataExpunger =
-        std::make_shared<FullSyncStaleDataExpunger>(
-            m_mockLocalStorage, m_manualCanceler);
+        std::make_shared<FullSyncStaleDataExpunger>(m_mockLocalStorage);
 
     const auto & testData = GetParam();
 
@@ -1039,7 +1033,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             testData.m_preservedNotebookGuids, testData.m_preservedTagGuids,
             testData.m_preservedNoteGuids,
             testData.m_preservedSavedSearchGuids},
-        testData.m_linkedNotebookGuid);
+        m_manualCanceler, testData.m_linkedNotebookGuid);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 

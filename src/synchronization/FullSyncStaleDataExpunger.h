@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "IFullSyncStaleDataExpunger.h"
 #include "Fwd.h"
+#include "IFullSyncStaleDataExpunger.h"
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/utility/cancelers/Fwd.h>
@@ -42,11 +42,11 @@ class FullSyncStaleDataExpunger final :
 {
 public:
     explicit FullSyncStaleDataExpunger(
-        local_storage::ILocalStoragePtr localStorage,
-        utility::cancelers::ICancelerPtr canceler);
+        local_storage::ILocalStoragePtr localStorage);
 
     [[nodiscard]] QFuture<void> expungeStaleData(
         PreservedGuids preservedGuids,
+        utility::cancelers::ICancelerPtr canceler,
         std::optional<qevercloud::Guid> linkedNotebookGuid = {}) override;
 
 private:
@@ -67,6 +67,7 @@ private:
 
     void onGuidsListed(
         const Guids & guids, const PreservedGuids & preservedGuids,
+        utility::cancelers::ICancelerPtr canceler,
         std::optional<qevercloud::Guid> linkedNotebookGuid,
         const std::shared_ptr<QPromise<void>> & promise);
 
@@ -76,6 +77,7 @@ private:
     // local ids corresponding to newly created local notebooks
     [[nodiscard]] QFuture<GuidToLocalIdHash> processModifiedNotebooks(
         const QSet<qevercloud::Guid> & notebookGuids,
+        utility::cancelers::ICancelerPtr canceler,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
     struct TagData
@@ -90,19 +92,21 @@ private:
     // corresponding to newly created local tags
     [[nodiscard]] QFuture<GuidToTagDataHash> processModifiedTags(
         const QSet<qevercloud::Guid> & tagGuids,
+        utility::cancelers::ICancelerPtr canceler,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid);
 
     [[nodiscard]] QFuture<void> processModifiedSavedSearches(
-        const QSet<qevercloud::Guid> & savedSearchGuids);
+        const QSet<qevercloud::Guid> & savedSearchGuids,
+        const utility::cancelers::ICancelerPtr & canceler);
 
     [[nodiscard]] QFuture<void> processModifiedNotes(
         const QSet<qevercloud::Guid> & noteGuids,
+        const utility::cancelers::ICancelerPtr & canceler,
         const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap,
         const std::shared_ptr<const GuidToTagDataHash> & newTagsMap);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
-    const utility::cancelers::ICancelerPtr m_canceler;
 };
 
 } // namespace quentier::synchronization

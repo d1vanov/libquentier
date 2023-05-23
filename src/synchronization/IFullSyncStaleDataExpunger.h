@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,8 @@
  */
 
 #pragma once
+
+#include <quentier/utility/cancelers/Fwd.h>
 
 #include <qevercloud/types/TypeAliases.h>
 
@@ -79,6 +81,8 @@ public:
      * Expunge relevant data items not matching the guids meant to be preserved.
      * @param preservedGuids        Guids of data items which should not be
      *                              expunged.
+     * @param canceler              Canceler for asynchronous process of stale
+     *                              data expunging.
      * @param linkedNotebookGuid    If not equal to std::nullopt, this guid
      *                              represents the fact that the only stale data
      *                              which should be expunged is the data
@@ -89,6 +93,7 @@ public:
      */
     [[nodiscard]] virtual QFuture<void> expungeStaleData(
         PreservedGuids preservedGuids,
+        utility::cancelers::ICancelerPtr canceler,
         std::optional<qevercloud::Guid> linkedNotebookGuid = {}) = 0;
 };
 
