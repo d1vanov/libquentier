@@ -21,17 +21,23 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 
+#include <synchronization/FullSyncStaleDataExpunger.h>
 #include <synchronization/InkNoteImageDownloaderFactory.h>
 #include <synchronization/LinkedNotebookFinder.h>
-#include <synchronization/NotebookFinder.h>
 #include <synchronization/NoteStoreFactory.h>
 #include <synchronization/NoteStoreProvider.h>
 #include <synchronization/NoteThumbnailDownloaderFactory.h>
+#include <synchronization/NotebookFinder.h>
 #include <synchronization/processors/DurableNotesProcessor.h>
+#include <synchronization/processors/DurableResourcesProcessor.h>
 #include <synchronization/processors/LinkedNotebooksProcessor.h>
 #include <synchronization/processors/NoteFullDataDownloader.h>
 #include <synchronization/processors/NotebooksProcessor.h>
 #include <synchronization/processors/NotesProcessor.h>
+#include <synchronization/processors/ResourceFullDataDownloader.h>
+#include <synchronization/processors/ResourcesProcessor.h>
+#include <synchronization/processors/SavedSearchesProcessor.h>
+#include <synchronization/processors/TagsProcessor.h>
 #include <synchronization/sync_chunks/SyncChunksDownloader.h>
 #include <synchronization/sync_chunks/SyncChunksProvider.h>
 #include <synchronization/sync_chunks/SyncChunksStorage.h>
@@ -70,7 +76,8 @@ AccountSynchronizerFactory::AccountSynchronizerFactory(
         }
     }
     else {
-        const QFileInfo rootDirInfo{m_synchronizationPersistenceDir.absolutePath()};
+        const QFileInfo rootDirInfo{
+            m_synchronizationPersistenceDir.absolutePath()};
 
         if (Q_UNLIKELY(!rootDirInfo.isReadable())) {
             throw InvalidArgument{ErrorString{QStringLiteral(
@@ -87,14 +94,12 @@ AccountSynchronizerFactory::AccountSynchronizerFactory(
 }
 
 IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
-    Account account,
-    ISyncConflictResolverPtr syncConflictResolver,
-    local_storage::ILocalStoragePtr localStorage,
-    ISyncOptionsPtr options)
+    Account account, ISyncConflictResolverPtr syncConflictResolver,
+    local_storage::ILocalStoragePtr localStorage, ISyncOptionsPtr options)
 {
     if (Q_UNLIKELY(account.isEmpty())) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "AccountSynchronizerFactory: account is empty")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("AccountSynchronizerFactory: account is empty")}};
     }
 
     if (Q_UNLIKELY(!syncConflictResolver)) {
@@ -158,8 +163,8 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto syncChunksProvider = std::make_shared<SyncChunksProvider>(
         std::move(syncChunksDownloader), std::move(syncChunksStorage));
 
-    auto linkedNotebooksProcessor = std::make_shared<LinkedNotebooksProcessor>(
-        localStorage);
+    auto linkedNotebooksProcessor =
+        std::make_shared<LinkedNotebooksProcessor>(localStorage);
 
     auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
         localStorage, syncConflictResolver);
@@ -186,12 +191,34 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         std::move(notesProcessor), m_synchronizationPersistenceDir);
 
+    auto resourceFullDataDownloader =
+        std::make_shared<ResourceFullDataDownloader>(
+            accountMaxInFlightResourceDownloads(account));
+
+    auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
+        localStorage, std::move(resourceFullDataDownloader), noteStoreProvider,
+        ctx, retryPolicy);
+
+    auto durableResourcesProcessor =
+        std::make_shared<DurableResourcesProcessor>(
+            std::move(resourcesProcessor), m_synchronizationPersistenceDir);
+
+    auto savedSearchesProcessor = std::make_shared<SavedSearchesProcessor>(
+        localStorage, syncConflictResolver);
+
+    auto tagsProcessor =
+        std::make_shared<TagsProcessor>(localStorage, syncConflictResolver);
+
+    auto fullSyncStaleDataExpunger =
+        std::make_shared<FullSyncStaleDataExpunger>(localStorage);
+    
     // TODO: implement further
     return nullptr;
 }
 
-qevercloud::IRequestContextPtr AccountSynchronizerFactory::accountRequestContext(
-    const Account & account) const
+qevercloud::IRequestContextPtr
+    AccountSynchronizerFactory::accountRequestContext(
+        const Account & account) const
 {
     // TODO: implement
     Q_UNUSED(account)
@@ -207,6 +234,14 @@ qevercloud::IRetryPolicyPtr AccountSynchronizerFactory::accountRetryPolicy(
 }
 
 qint32 AccountSynchronizerFactory::accountMaxInFlightNoteDownloads(
+    const Account & account) const
+{
+    // TODO: implement
+    Q_UNUSED(account)
+    return 100;
+}
+
+qint32 AccountSynchronizerFactory::accountMaxInFlightResourceDownloads(
     const Account & account) const
 {
     // TODO: implement
