@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -68,8 +68,10 @@ public:
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
         IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
-        qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
-        local_storage::ILocalStoragePtr localStorage);
+        INoteStoreProviderPtr noteStoreProvider,
+        local_storage::ILocalStoragePtr localStorage,
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {});
 
     ~Downloader() override;
 
@@ -160,9 +162,10 @@ private:
     const ISavedSearchesProcessorPtr m_savedSearchesProcessor;
     const ITagsProcessorPtr m_tagsProcessor;
     const IFullSyncStaleDataExpungerPtr m_fullSyncStaleDataExpunger;
-    const qevercloud::IRequestContextPtr m_ctx;
-    const qevercloud::INoteStorePtr m_noteStore;
+    const INoteStoreProviderPtr m_noteStoreProvider;
     const local_storage::ILocalStoragePtr m_localStorage;
+    const qevercloud::IRequestContextPtr m_ctx;
+    const qevercloud::IRetryPolicyPtr m_retryPolicy;
 
     std::shared_ptr<QMutex> m_mutex;
 

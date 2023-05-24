@@ -30,6 +30,7 @@
 
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IFullSyncStaleDataExpunger.h>
+#include <synchronization/INoteStoreProvider.h>
 #include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/IDurableNotesProcessor.h>
@@ -668,8 +669,10 @@ Downloader::Downloader(
     ISavedSearchesProcessorPtr savedSearchesProcessor,
     ITagsProcessorPtr tagsProcessor,
     IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
-    qevercloud::IRequestContextPtr ctx, qevercloud::INoteStorePtr noteStore,
-    local_storage::ILocalStoragePtr localStorage) :
+    INoteStoreProviderPtr noteStoreProvider,
+    local_storage::ILocalStoragePtr localStorage,
+    qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy) :
     m_account{std::move(account)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_syncStateStorage{std::move(syncStateStorage)},
@@ -683,8 +686,10 @@ Downloader::Downloader(
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
     m_tagsProcessor{std::move(tagsProcessor)},
     m_fullSyncStaleDataExpunger{std::move(fullSyncStaleDataExpunger)},
-    m_ctx{std::move(ctx)}, m_noteStore{std::move(noteStore)},
+    m_noteStoreProvider{std::move(noteStoreProvider)},
     m_localStorage{std::move(localStorage)},
+    m_ctx{std::move(ctx)},
+    m_retryPolicy{std::move(retryPolicy)},
     m_mutex{std::make_shared<QMutex>()}
 // clang-format on
 {
@@ -748,14 +753,9 @@ Downloader::Downloader(
             "Downloader ctor: full sync stale data expunger is null")}};
     }
 
-    if (Q_UNLIKELY(!m_ctx)) {
+    if (Q_UNLIKELY(!m_noteStoreProvider)) {
         throw InvalidArgument{ErrorString{
-            QStringLiteral("Downloader ctor: request context is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{
-            ErrorString{QStringLiteral("Downloader ctor: note store is null")}};
+            QStringLiteral("Downloader ctor: note store provider is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorage)) {
@@ -839,15 +839,19 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 
     promise->start();
 
-    auto ctx = qevercloud::RequestContextBuilder{}
-                   .setAuthenticationToken(authenticationInfo.authToken())
-                   .setCookies(authenticationInfo.userStoreCookies())
-                   .setRequestTimeout(m_ctx->requestTimeout())
-                   .setIncreaseRequestTimeoutExponentially(
-                       m_ctx->increaseRequestTimeoutExponentially())
-                   .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
-                   .setMaxRetryCount(m_ctx->maxRequestRetryCount())
-                   .build();
+    auto ctxBuilder = qevercloud::RequestContextBuilder{};
+    ctxBuilder.setAuthenticationToken(authenticationInfo.authToken())
+        .setCookies(authenticationInfo.userStoreCookies());
+
+    if (m_ctx) {
+        ctxBuilder.setRequestTimeout(m_ctx->requestTimeout())
+            .setIncreaseRequestTimeoutExponentially(
+                m_ctx->increaseRequestTimeoutExponentially())
+            .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
+            .setMaxRetryCount(m_ctx->maxRequestRetryCount());
+    }
+
+    auto ctx = ctxBuilder.build();
 
     auto downloadContext = std::make_shared<DownloadContext>();
     downloadContext->lastSyncState = std::move(lastSyncState);
@@ -857,60 +861,75 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
     downloadContext->canceler = std::move(canceler);
     downloadContext->callbackWeak = std::move(callbackWeak);
 
-    auto syncStateFuture = m_noteStore->getSyncStateAsync(downloadContext->ctx);
+    auto noteStoreFuture =
+        m_noteStoreProvider->userOwnNoteStore(ctx, m_retryPolicy);
+
     threading::thenOrFailed(
-        std::move(syncStateFuture), promise,
-        [selfWeak = weak_from_this(),
+        std::move(noteStoreFuture), promise,
+        [selfWeak = weak_from_this(), promise,
          downloadContext = std::move(downloadContext)](
-            qevercloud::SyncState && syncState) mutable {
-            if (const auto self = selfWeak.lock()) {
-                QNDEBUG(
-                    "synchronization::Downloader",
-                    "Sync state from Evernote: " << syncState);
+            const qevercloud::INoteStorePtr & noteStore) mutable {
+            Q_ASSERT(noteStore);
 
-                if (syncState.fullSyncBefore() >
-                    downloadContext->lastSyncState->m_userDataLastSyncTime)
-                {
-                    QNDEBUG(
-                        "synchronization::Downloader",
-                        "Performing full synchronization instead of "
-                        "incremental one");
+            auto syncStateFuture =
+                noteStore->getSyncStateAsync(downloadContext->ctx);
 
-                    self->launchUserOwnDataDownload(
-                        std::move(downloadContext), SynchronizationMode::Full);
-                }
-                else if (
-                    syncState.updateCount() ==
-                    downloadContext->lastSyncState->m_userDataUpdateCount)
-                {
-                    QNDEBUG(
-                        "synchronization::Downloader",
-                        "Evernote has no updates for user own data");
+            threading::thenOrFailed(
+                std::move(syncStateFuture), promise,
+                [selfWeak, downloadContext = std::move(downloadContext)](
+                    qevercloud::SyncState && syncState) mutable {
+                    if (const auto self = selfWeak.lock()) {
+                        QNDEBUG(
+                            "synchronization::Downloader",
+                            "Sync state from Evernote: " << syncState);
 
-                    // NOTE: will nevertheless try to download both notes and
-                    // resources with empty sync chunks list so that any notes
-                    // or resources which haven't been downloaded/processed
-                    // during the last previous sync would be attempted to be
-                    // processed now
-                    self->downloadNotes(
-                        std::move(downloadContext),
-                        SynchronizationMode::Incremental);
-                }
-                else {
-                    QNDEBUG(
-                        "synchronization::Downloader",
-                        "Launching incremental sync of user own data");
+                        if (syncState.fullSyncBefore() >
+                            downloadContext->lastSyncState
+                                ->m_userDataLastSyncTime)
+                        {
+                            QNDEBUG(
+                                "synchronization::Downloader",
+                                "Performing full synchronization instead of "
+                                "incremental one");
 
-                    self->launchUserOwnDataDownload(
-                        std::move(downloadContext),
-                        SynchronizationMode::Incremental);
-                }
+                            self->launchUserOwnDataDownload(
+                                std::move(downloadContext),
+                                SynchronizationMode::Full);
+                        }
+                        else if (
+                            syncState.updateCount() ==
+                            downloadContext->lastSyncState
+                                ->m_userDataUpdateCount)
+                        {
+                            QNDEBUG(
+                                "synchronization::Downloader",
+                                "Evernote has no updates for user own data");
 
-                return;
-            }
+                            // NOTE: will nevertheless try to download both
+                            // notes and resources with empty sync chunks list
+                            // so that any notes or resources which haven't been
+                            // downloaded/processed during the last previous
+                            // sync would be attempted to be processed now
+                            self->downloadNotes(
+                                std::move(downloadContext),
+                                SynchronizationMode::Incremental);
+                        }
+                        else {
+                            QNDEBUG(
+                                "synchronization::Downloader",
+                                "Launching incremental sync of user own data");
 
-            downloadContext->promise->setException(OperationCanceled{});
-            downloadContext->promise->finish();
+                            self->launchUserOwnDataDownload(
+                                std::move(downloadContext),
+                                SynchronizationMode::Incremental);
+                        }
+
+                        return;
+                    }
+
+                    downloadContext->promise->setException(OperationCanceled{});
+                    downloadContext->promise->finish();
+                });
         });
 
     return future;
@@ -1201,8 +1220,7 @@ void Downloader::processSyncChunks(
                 collectPreservedGuids(downloadContext->syncChunks);
 
             auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
-                std::move(preservedGuids),
-                downloadContext->canceler,
+                std::move(preservedGuids), downloadContext->canceler,
                 downloadContext->linkedNotebook
                     ? downloadContext->linkedNotebook->guid()
                     : std::nullopt);
