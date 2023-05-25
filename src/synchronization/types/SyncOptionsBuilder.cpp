@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,16 +24,30 @@
 namespace quentier::synchronization {
 
 ISyncOptionsBuilder & SyncOptionsBuilder::setDownloadNoteThumbnails(
-    bool value) noexcept
+    const bool value) noexcept
 {
     m_downloadNoteThumbnails = value;
     return *this;
 }
 
 ISyncOptionsBuilder & SyncOptionsBuilder::setInkNoteImagesStorageDir(
-    std::optional<QDir> dir)
+    const std::optional<QDir> dir)
 {
     m_inkNoteImagesStorageDir = dir;
+    return *this;
+}
+
+ISyncOptionsBuilder & SyncOptionsBuilder::setRequestContext(
+    qevercloud::IRequestContextPtr ctx)
+{
+    m_ctx = std::move(ctx);
+    return *this;
+}
+
+ISyncOptionsBuilder & SyncOptionsBuilder::setRetryPolicy(
+    qevercloud::IRetryPolicyPtr retryPolicy)
+{
+    m_retryPolicy = std::move(retryPolicy);
     return *this;
 }
 
@@ -42,9 +56,13 @@ ISyncOptionsPtr SyncOptionsBuilder::build()
     auto options = std::make_shared<SyncOptions>();
     options->m_downloadNoteThumbnails = m_downloadNoteThumbnails;
     options->m_inkNoteImagesStorageDir = m_inkNoteImagesStorageDir;
+    options->m_ctx = std::move(m_ctx);
+    options->m_retryPolicy = std::move(m_retryPolicy);
 
     m_downloadNoteThumbnails = false;
     m_inkNoteImagesStorageDir.reset();
+    m_ctx.reset();
+    m_retryPolicy.reset();
 
     return options;
 }

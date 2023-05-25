@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,11 +31,19 @@ public:
     ISyncOptionsBuilder & setInkNoteImagesStorageDir(
         std::optional<QDir> dir) override;
 
+    ISyncOptionsBuilder & setRequestContext(
+        qevercloud::IRequestContextPtr ctx) override;
+
+    ISyncOptionsBuilder & setRetryPolicy(
+        qevercloud::IRetryPolicyPtr retryPolicy) override;
+
     [[nodiscard]] ISyncOptionsPtr build() override;
 
 private:
     bool m_downloadNoteThumbnails = false;
     std::optional<QDir> m_inkNoteImagesStorageDir;
+    qevercloud::IRequestContextPtr m_ctx;
+    qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
 
 } // namespace quentier::synchronization

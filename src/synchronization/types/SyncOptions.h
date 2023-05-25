@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,32 +29,21 @@ struct SyncOptions final : public ISyncOptions
 {
     ~SyncOptions() noexcept override = default;
 
-    /**
-     * Flag to enable or disable downloading of note thumbnails during the sync.
-     * Note thumbnails are stored inside the local storage along with other
-     * note data.
-     */
     [[nodiscard]] bool downloadNoteThumbnails() const noexcept override;
-
-    /**
-     * Directory to store the downloaded ink note images in. If not set, ink
-     * note images would not be downloaded during the sync.
-     *
-     * Ink notes images data is stored inside note's resources but the format
-     * of the data is not documented, which makes it nearly impossible to
-     * implement note editor able to fully handle ink notes. What is possible
-     * is to visualize a static image corresponding to the last revision of
-     * the ink note. Such images need to be downloaded separately during the
-     * sync if they are required.
-     *
-     * TODO: clarify the storage layout within this directory.
-     */
     [[nodiscard]] std::optional<QDir> inkNoteImagesStorageDir() const override;
+
+    [[nodiscard]] qevercloud::IRequestContextPtr requestContext()
+        const noexcept override;
+
+    [[nodiscard]] qevercloud::IRetryPolicyPtr retryPolicy()
+        const noexcept override;
 
     QTextStream & print(QTextStream & strm) const override;
 
     bool m_downloadNoteThumbnails = false;
     std::optional<QDir> m_inkNoteImagesStorageDir;
+    qevercloud::IRequestContextPtr m_ctx;
+    qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
 
 [[nodiscard]] bool operator==(

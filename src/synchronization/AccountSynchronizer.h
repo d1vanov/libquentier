@@ -44,7 +44,7 @@ public:
         Account account, IDownloaderPtr downloader, ISenderPtr sender,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         ISyncStateStoragePtr syncStateStorage,
-        threading::QThreadPoolPtr threadPool = nullptr);
+        threading::QThreadPoolPtr threadPool = {});
 
 public: // IAccountSynchronizer
     [[nodiscard]] QFuture<ISyncResultPtr> synchronize(

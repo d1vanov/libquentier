@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,8 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
+
+#include <qevercloud/Fwd.h>
 
 #include <QDir>
 
@@ -43,20 +45,34 @@ public:
     [[nodiscard]] virtual bool downloadNoteThumbnails() const = 0;
 
     /**
-     * Directory to store the downloaded ink note images in. If not set, ink
-     * note images would not be downloaded during the sync.
+     * Directory to store the downloaded ink note images. If this method returns
+     * std::nullopt, ink note images would not be downloaded during the sync.
      *
      * Ink notes images data is stored inside note's resources but the format
-     * of the data is not documented, which makes it nearly impossible to
-     * implement note editor able to fully handle ink notes. What is possible
-     * is to visualize a static image corresponding to the last revision of
+     * of the data is not documented, which makes it quite hard to implement
+     * note editor able to fully handle ink notes. An easier option is to
+     * visualize a static image corresponding to the last revision of
      * the ink note. Such images need to be downloaded separately during the
      * sync if they are required.
      *
-     * TODO: clarify the storage layout within this directory.
+     * Ink note images are stored right in this directory without any
+     * subdirectories, file names correspond to pattern <resource guid>.png.
      */
     [[nodiscard]] virtual std::optional<QDir> inkNoteImagesStorageDir()
         const = 0;
+
+    /**
+     * Request context with settings which should be used during the sync. If
+     * nullptr then request context with default settings would be used.
+     */
+    [[nodiscard]] virtual qevercloud::IRequestContextPtr requestContext()
+        const = 0;
+
+    /**
+     * Retry policy which should be used during the sync. If nullptr then the
+     * default retry policy would be used.
+     */
+    [[nodiscard]] virtual qevercloud::IRetryPolicyPtr retryPolicy() const = 0;
 };
 
 } // namespace quentier::synchronization

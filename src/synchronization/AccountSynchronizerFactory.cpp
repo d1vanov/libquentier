@@ -20,7 +20,10 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/synchronization/types/ISyncOptions.h>
 
+#include <synchronization/AccountSynchronizer.h>
+#include <synchronization/Downloader.h>
 #include <synchronization/FullSyncStaleDataExpunger.h>
 #include <synchronization/InkNoteImageDownloaderFactory.h>
 #include <synchronization/LinkedNotebookFinder.h>
@@ -28,6 +31,7 @@
 #include <synchronization/NoteStoreProvider.h>
 #include <synchronization/NoteThumbnailDownloaderFactory.h>
 #include <synchronization/NotebookFinder.h>
+#include <synchronization/Sender.h>
 #include <synchronization/processors/DurableNotesProcessor.h>
 #include <synchronization/processors/DurableResourcesProcessor.h>
 #include <synchronization/processors/LinkedNotebooksProcessor.h>
@@ -177,8 +181,8 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
         std::make_shared<NoteThumbnailDownloaderFactory>(
             account, m_authenticationInfoProvider, linkedNotebookFinder);
 
-    auto ctx = accountRequestContext(account);
-    auto retryPolicy = accountRetryPolicy(account);
+    auto ctx = options->requestContext();
+    auto retryPolicy = options->retryPolicy();
 
     auto noteFullDataDownloader = std::make_shared<NoteFullDataDownloader>(
         accountMaxInFlightNoteDownloads(account));
@@ -211,26 +215,22 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
 
     auto fullSyncStaleDataExpunger =
         std::make_shared<FullSyncStaleDataExpunger>(localStorage);
-    
-    // TODO: implement further
-    return nullptr;
-}
 
-qevercloud::IRequestContextPtr
-    AccountSynchronizerFactory::accountRequestContext(
-        const Account & account) const
-{
-    // TODO: implement
-    Q_UNUSED(account)
-    return qevercloud::newRequestContext();
-}
+    auto downloader = std::make_shared<Downloader>(
+        account, m_authenticationInfoProvider, m_syncStateStorage,
+        std::move(syncChunksProvider), std::move(linkedNotebooksProcessor),
+        std::move(notebooksProcessor), std::move(durableNotesProcessor),
+        std::move(durableResourcesProcessor), std::move(savedSearchesProcessor),
+        std::move(tagsProcessor), std::move(fullSyncStaleDataExpunger),
+        noteStoreProvider, localStorage, ctx, retryPolicy);
 
-qevercloud::IRetryPolicyPtr AccountSynchronizerFactory::accountRetryPolicy(
-    const Account & account) const
-{
-    // TODO: implement
-    Q_UNUSED(account)
-    return qevercloud::newRetryPolicy();
+    auto sender = std::make_shared<Sender>(
+        account, std::move(localStorage), m_syncStateStorage,
+        std::move(noteStoreProvider), ctx, retryPolicy);
+
+    return std::make_shared<AccountSynchronizer>(
+        std::move(account), std::move(downloader), std::move(sender),
+        m_authenticationInfoProvider, m_syncStateStorage);
 }
 
 qint32 AccountSynchronizerFactory::accountMaxInFlightNoteDownloads(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,8 @@
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
+#include <qevercloud/Fwd.h>
+
 #include <QDir>
 
 #include <optional>
@@ -36,6 +38,12 @@ public:
 
     virtual ISyncOptionsBuilder & setInkNoteImagesStorageDir(
         std::optional<QDir> dir) = 0;
+
+    virtual ISyncOptionsBuilder & setRequestContext(
+        qevercloud::IRequestContextPtr ctx) = 0;
+
+    virtual ISyncOptionsBuilder & setRetryPolicy(
+        qevercloud::IRetryPolicyPtr retryPolicy) = 0;
 
     [[nodiscard]] virtual ISyncOptionsPtr build() = 0;
 };

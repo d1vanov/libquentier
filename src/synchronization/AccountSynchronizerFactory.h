@@ -44,12 +44,6 @@ public: // IAccountSynchronizerFactory
         ISyncOptionsPtr options) override;
 
 private:
-    [[nodiscard]] qevercloud::IRequestContextPtr accountRequestContext(
-        const Account & account) const;
-
-    [[nodiscard]] qevercloud::IRetryPolicyPtr accountRetryPolicy(
-        const Account & account) const;
-
     [[nodiscard]] qint32 accountMaxInFlightNoteDownloads(
         const Account & account) const;
 
