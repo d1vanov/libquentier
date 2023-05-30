@@ -106,6 +106,12 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
             QStringLiteral("AccountSynchronizerFactory: account is empty")}};
     }
 
+    if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("AccountSynchronizerFactory: account is not of "
+                           "Evernote type")}};
+    }
+
     if (Q_UNLIKELY(!syncConflictResolver)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountSynchronizerFactory: sync conflict resolver is null")}};
