@@ -45,6 +45,12 @@ public:
     virtual ISyncOptionsBuilder & setRetryPolicy(
         qevercloud::IRetryPolicyPtr retryPolicy) = 0;
 
+    virtual ISyncOptionsBuilder & setMaxConcurrentNoteDownloads(
+        std::optional<quint32> maxConcurrentNoteDownloads) = 0;
+
+    virtual ISyncOptionsBuilder & setMaxConcurrentResourceDownloads(
+        std::optional<quint32> maxConcurrentResourceDownloads) = 0;
+
     [[nodiscard]] virtual ISyncOptionsPtr build() = 0;
 };
 

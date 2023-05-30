@@ -24,6 +24,7 @@
 #include <qevercloud/Fwd.h>
 
 #include <QDir>
+#include <QtGlobal>
 
 #include <optional>
 
@@ -73,6 +74,24 @@ public:
      * default retry policy would be used.
      */
     [[nodiscard]] virtual qevercloud::IRetryPolicyPtr retryPolicy() const = 0;
+
+    /**
+     * Maximal number of concurrent note downloads. Allowing unlimited
+     * concurrent note downloads can lead to errors due to reaching the
+     * platform's limit on the number of open files. If std::nullopt is
+     * returned, the default limit is used.
+     */
+    [[nodiscard]] virtual std::optional<quint32> maxConcurrentNoteDownloads()
+        const = 0;
+
+    /**
+     * Maximal number of concurrent resource downloads. Allowing unlimited
+     * concurrent resource downloads can lead to errors due to reaching the
+     * platform's limit on the number of open files. If std::nullopt is
+     * returned, the default limit is used.
+     */
+    [[nodiscard]] virtual std::optional<quint32>
+        maxConcurrentResourceDownloads() const = 0;
 };
 
 } // namespace quentier::synchronization

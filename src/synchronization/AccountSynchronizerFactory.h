@@ -44,13 +44,6 @@ public: // IAccountSynchronizerFactory
         ISyncOptionsPtr options) override;
 
 private:
-    [[nodiscard]] qint32 accountMaxInFlightNoteDownloads(
-        const Account & account) const;
-
-    [[nodiscard]] qint32 accountMaxInFlightResourceDownloads(
-        const Account & account) const;
-
-private:
     const ISyncStateStoragePtr m_syncStateStorage;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const QDir m_synchronizationPersistenceDir;

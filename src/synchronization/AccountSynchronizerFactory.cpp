@@ -184,8 +184,10 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto ctx = options->requestContext();
     auto retryPolicy = options->retryPolicy();
 
+    constexpr quint32 defaultMaxConcurrentNoteDownloads = 100;
     auto noteFullDataDownloader = std::make_shared<NoteFullDataDownloader>(
-        accountMaxInFlightNoteDownloads(account));
+        options->maxConcurrentNoteDownloads().value_or(
+            defaultMaxConcurrentNoteDownloads));
 
     auto notesProcessor = std::make_shared<NotesProcessor>(
         localStorage, syncConflictResolver, noteFullDataDownloader,
@@ -195,9 +197,11 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         std::move(notesProcessor), m_synchronizationPersistenceDir);
 
+    constexpr quint32 defaultMaxConcurrentResourceDownloads = 100;
     auto resourceFullDataDownloader =
         std::make_shared<ResourceFullDataDownloader>(
-            accountMaxInFlightResourceDownloads(account));
+            options->maxConcurrentResourceDownloads().value_or(
+                defaultMaxConcurrentResourceDownloads));
 
     auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         localStorage, std::move(resourceFullDataDownloader), noteStoreProvider,
@@ -231,22 +235,6 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     return std::make_shared<AccountSynchronizer>(
         std::move(account), std::move(downloader), std::move(sender),
         m_authenticationInfoProvider, m_syncStateStorage);
-}
-
-qint32 AccountSynchronizerFactory::accountMaxInFlightNoteDownloads(
-    const Account & account) const
-{
-    // TODO: implement
-    Q_UNUSED(account)
-    return 100;
-}
-
-qint32 AccountSynchronizerFactory::accountMaxInFlightResourceDownloads(
-    const Account & account) const
-{
-    // TODO: implement
-    Q_UNUSED(account)
-    return 100;
 }
 
 } // namespace quentier::synchronization

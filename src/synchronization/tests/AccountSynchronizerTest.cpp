@@ -56,6 +56,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <gtest/gtest.h>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 

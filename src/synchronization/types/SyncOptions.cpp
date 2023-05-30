@@ -42,6 +42,17 @@ qevercloud::IRetryPolicyPtr SyncOptions::retryPolicy() const noexcept
     return m_retryPolicy;
 }
 
+std::optional<quint32> SyncOptions::maxConcurrentNoteDownloads() const noexcept
+{
+    return m_maxConcurrentNoteDownloads;
+}
+
+std::optional<quint32> SyncOptions::maxConcurrentResourceDownloads()
+    const noexcept
+{
+    return m_maxConcurrentResourceDownloads;
+}
+
 QTextStream & SyncOptions::print(QTextStream & strm) const
 {
     strm << "SyncOptions: downloadNoteThumbnails = "
@@ -54,11 +65,12 @@ QTextStream & SyncOptions::print(QTextStream & strm) const
     strm << ", request context = ";
     if (m_ctx) {
         strm << "{timeout = " << m_ctx->requestTimeout()
-            << ", increase request timeout exponentially = "
-            << (m_ctx->increaseRequestTimeoutExponentially() ? "true" : "false")
-            << ", max request timeout = " << m_ctx->maxRequestTimeout()
-            << ", max request retry count = " << m_ctx->maxRequestRetryCount()
-            << ", cookies: ";
+             << ", increase request timeout exponentially = "
+             << (m_ctx->increaseRequestTimeoutExponentially() ? "true"
+                                                              : "false")
+             << ", max request timeout = " << m_ctx->maxRequestTimeout()
+             << ", max request retry count = " << m_ctx->maxRequestRetryCount()
+             << ", cookies: ";
         const auto cookies = m_ctx->cookies();
         for (const auto & cookie: qAsConst(cookies)) {
             strm << "[" << cookie.name() << ": " << cookie.value() << "]; ";
@@ -70,14 +82,37 @@ QTextStream & SyncOptions::print(QTextStream & strm) const
     }
 
     strm << ", retry policy = " << (m_retryPolicy ? "<not null>" : "<null>");
+
+    strm << ", max concurrent note downloads = ";
+    if (m_maxConcurrentNoteDownloads) {
+        strm << *m_maxConcurrentNoteDownloads;
+    }
+    else {
+        strm << "<nullopt>";
+    }
+
+    strm << ", max concurrent resource downloads = ";
+    if (m_maxConcurrentResourceDownloads) {
+        strm << *m_maxConcurrentResourceDownloads;
+    }
+    else {
+        strm << "<nullopt>";
+    }
+
     return strm;
 }
 
 bool operator==(const SyncOptions & lhs, const SyncOptions & rhs) noexcept
 {
+    // clang-format off
     return lhs.m_downloadNoteThumbnails == rhs.m_downloadNoteThumbnails &&
         lhs.m_inkNoteImagesStorageDir == rhs.m_inkNoteImagesStorageDir &&
-        lhs.m_ctx == rhs.m_ctx && lhs.m_retryPolicy == rhs.m_retryPolicy;
+        lhs.m_ctx == rhs.m_ctx &&
+        lhs.m_retryPolicy == rhs.m_retryPolicy &&
+        lhs.m_maxConcurrentNoteDownloads == rhs.m_maxConcurrentNoteDownloads &&
+        lhs.m_maxConcurrentResourceDownloads ==
+            rhs.m_maxConcurrentResourceDownloads;
+    // clang-format on
 }
 
 bool operator!=(const SyncOptions & lhs, const SyncOptions & rhs) noexcept

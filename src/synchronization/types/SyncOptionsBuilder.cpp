@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SyncOptionsBuilder.h"
 #include "SyncOptions.h"
+#include "SyncOptionsBuilder.h"
 
 #include <memory>
 
@@ -51,6 +51,20 @@ ISyncOptionsBuilder & SyncOptionsBuilder::setRetryPolicy(
     return *this;
 }
 
+ISyncOptionsBuilder & SyncOptionsBuilder::setMaxConcurrentNoteDownloads(
+    const std::optional<quint32> maxConcurrentNoteDownloads) noexcept
+{
+    m_maxConcurrentNoteDownloads = maxConcurrentNoteDownloads;
+    return *this;
+}
+
+ISyncOptionsBuilder & SyncOptionsBuilder::setMaxConcurrentResourceDownloads(
+    const std::optional<quint32> maxConcurrentResourceDownloads) noexcept
+{
+    m_maxConcurrentResourceDownloads = maxConcurrentResourceDownloads;
+    return *this;
+}
+
 ISyncOptionsPtr SyncOptionsBuilder::build()
 {
     auto options = std::make_shared<SyncOptions>();
@@ -58,11 +72,16 @@ ISyncOptionsPtr SyncOptionsBuilder::build()
     options->m_inkNoteImagesStorageDir = m_inkNoteImagesStorageDir;
     options->m_ctx = std::move(m_ctx);
     options->m_retryPolicy = std::move(m_retryPolicy);
+    options->m_maxConcurrentNoteDownloads = m_maxConcurrentNoteDownloads;
+    options->m_maxConcurrentResourceDownloads =
+        m_maxConcurrentResourceDownloads;
 
     m_downloadNoteThumbnails = false;
     m_inkNoteImagesStorageDir.reset();
     m_ctx.reset();
     m_retryPolicy.reset();
+    m_maxConcurrentNoteDownloads.reset();
+    m_maxConcurrentResourceDownloads.reset();
 
     return options;
 }

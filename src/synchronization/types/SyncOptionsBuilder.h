@@ -37,6 +37,13 @@ public:
     ISyncOptionsBuilder & setRetryPolicy(
         qevercloud::IRetryPolicyPtr retryPolicy) override;
 
+    ISyncOptionsBuilder & setMaxConcurrentNoteDownloads(
+        std::optional<quint32> maxConcurrentNoteDownloads) noexcept override;
+
+    ISyncOptionsBuilder & setMaxConcurrentResourceDownloads(
+        std::optional<quint32> maxConcurrentResourceDownloads) noexcept
+        override;
+
     [[nodiscard]] ISyncOptionsPtr build() override;
 
 private:
@@ -44,6 +51,8 @@ private:
     std::optional<QDir> m_inkNoteImagesStorageDir;
     qevercloud::IRequestContextPtr m_ctx;
     qevercloud::IRetryPolicyPtr m_retryPolicy;
+    std::optional<quint32> m_maxConcurrentNoteDownloads;
+    std::optional<quint32> m_maxConcurrentResourceDownloads;
 };
 
 } // namespace quentier::synchronization

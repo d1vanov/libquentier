@@ -38,12 +38,20 @@ struct SyncOptions final : public ISyncOptions
     [[nodiscard]] qevercloud::IRetryPolicyPtr retryPolicy()
         const noexcept override;
 
+    [[nodiscard]] std::optional<quint32> maxConcurrentNoteDownloads()
+        const noexcept override;
+
+    [[nodiscard]] std::optional<quint32> maxConcurrentResourceDownloads()
+        const noexcept override;
+
     QTextStream & print(QTextStream & strm) const override;
 
     bool m_downloadNoteThumbnails = false;
     std::optional<QDir> m_inkNoteImagesStorageDir;
     qevercloud::IRequestContextPtr m_ctx;
     qevercloud::IRetryPolicyPtr m_retryPolicy;
+    std::optional<quint32> m_maxConcurrentNoteDownloads;
+    std::optional<quint32> m_maxConcurrentResourceDownloads;
 };
 
 [[nodiscard]] bool operator==(
