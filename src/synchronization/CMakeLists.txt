@@ -51,6 +51,8 @@ target_sources(${LIBRARY_NAME}
   Sender.cpp
   Sender.h
   SynchronizationMode.h
+  Synchronizer.cpp
+  Synchronizer.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
   SyncEventsNotifier.cpp

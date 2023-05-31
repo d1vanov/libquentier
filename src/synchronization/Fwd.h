@@ -30,6 +30,10 @@ using IAccountLimitsProviderPtr = std::shared_ptr<IAccountLimitsProvider>;
 class IAccountSynchronizer;
 using IAccountSynchronizerPtr = std::shared_ptr<IAccountSynchronizer>;
 
+class IAccountSynchronizerFactory;
+using IAccountSynchronizerFactoryPtr =
+    std::shared_ptr<IAccountSynchronizerFactory>;
+
 class IAuthenticationInfoProvider;
 using IAuthenticationInfoProviderPtr =
     std::shared_ptr<IAuthenticationInfoProvider>;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,27 +20,16 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/Fwd.h>
-#include <quentier/synchronization/types/IAuthenticationInfo.h>
-#include <quentier/synchronization/types/ISyncOptions.h>
-#include <quentier/synchronization/types/ISyncResult.h>
-#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Printable.h>
+#include <quentier/utility/cancelers/Fwd.h>
 
-#include <qevercloud/types/Note.h>
 #include <qevercloud/types/TypeAliases.h>
 
-#include <QDir>
-#include <QException>
 #include <QFuture>
-#include <QHash>
-#include <QList>
-#include <QNetworkCookie>
 
 #include <memory>
-#include <optional>
+#include <utility>
 
 namespace quentier {
 
@@ -55,32 +44,21 @@ class QUENTIER_EXPORT ISynchronizer
 public:
     virtual ~ISynchronizer() noexcept;
 
-    /**
-     * @return true if synchronization is being performed at the moment,
-     *         false otherwise
-     */
-    [[nodiscard]] virtual bool isSyncRunning() const = 0;
-
-    /**
-     * @return options passed to ISynchronizer on the last sync
-     */
-    [[nodiscard]] virtual ISyncOptionsPtr options() const = 0;
-
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
         authenticateNewAccount() = 0;
 
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account) = 0;
 
-    [[nodiscard]] virtual QFuture<ISyncResultPtr> synchronizeAccount(
+    using SyncResult =
+        std::pair<QFuture<ISyncResultPtr>, ISyncEventsNotifier *>;
+
+    [[nodiscard]] virtual SyncResult synchronizeAccount(
         Account account, ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,
-        ISyncOptionsPtr options) = 0;
+        ISyncOptionsPtr options, utility::cancelers::ICancelerPtr canceler) = 0;
 
-    [[nodiscard]] virtual QFuture<void> revokeAuthentication(
-        qevercloud::UserID userId) = 0;
-
-    [[nodiscard]] virtual ISyncEventsNotifier * notifier() const = 0;
+    virtual void revokeAuthentication(qevercloud::UserID userId) = 0;
 };
 
 } // namespace quentier::synchronization
