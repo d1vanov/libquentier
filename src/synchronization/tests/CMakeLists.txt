@@ -36,6 +36,7 @@ add_executable(${TESTS_NAME}
   SyncChunksDownloaderTest.cpp
   SyncChunksProviderTest.cpp
   SyncChunksStorageTest.cpp
+  SynchronizerTest.cpp
   TagsProcessorTest.cpp
   UserInfoProviderTest.cpp
   Utils.cpp

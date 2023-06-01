@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -110,21 +110,24 @@ public:
 
     struct ClearCacheOption
     {
-        struct All{};
+        struct All
+        {};
 
         struct User
         {
             qevercloud::UserID id;
         };
 
-        struct AllUsers{};
+        struct AllUsers
+        {};
 
         struct LinkedNotebook
         {
             qevercloud::Guid guid;
         };
 
-        struct AllLinkedNotebooks{};
+        struct AllLinkedNotebooks
+        {};
     };
 
     using ClearCacheOptions = std::variant<
@@ -136,5 +139,53 @@ public:
         const ClearCacheOptions & clearCacheOptions = ClearCacheOptions{
             ClearCacheOption::All{}}) = 0;
 };
+
+[[nodiscard]] bool operator==(
+    const IAuthenticationInfoProvider::ClearCacheOption::All & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::All & rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const IAuthenticationInfoProvider::ClearCacheOption::All & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::All & rhs) noexcept;
+
+[[nodiscard]] bool operator==(
+    const IAuthenticationInfoProvider::ClearCacheOption::User & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::User & rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const IAuthenticationInfoProvider::ClearCacheOption::User & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::User & rhs) noexcept;
+
+[[nodiscard]] bool operator==(
+    const IAuthenticationInfoProvider::ClearCacheOption::AllUsers & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::AllUsers &
+        rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const IAuthenticationInfoProvider::ClearCacheOption::AllUsers & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::AllUsers &
+        rhs) noexcept;
+
+[[nodiscard]] bool operator==(
+    const IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook &
+        rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook & lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::LinkedNotebook &
+        rhs) noexcept;
+
+[[nodiscard]] bool operator==(
+    const IAuthenticationInfoProvider::ClearCacheOption::AllLinkedNotebooks &
+        lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::AllLinkedNotebooks &
+        rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const IAuthenticationInfoProvider::ClearCacheOption::AllLinkedNotebooks &
+        lhs,
+    const IAuthenticationInfoProvider::ClearCacheOption::AllLinkedNotebooks &
+        rhs) noexcept;
 
 } // namespace quentier::synchronization

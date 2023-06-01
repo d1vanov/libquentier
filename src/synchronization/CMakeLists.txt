@@ -22,6 +22,7 @@ target_sources(${LIBRARY_NAME}
   IAccountLimitsProvider.h
   IAccountSynchronizer.h
   IAccountSynchronizerFactory.h
+  IAuthenticationInfoProvider.cpp
   IAuthenticationInfoProvider.h
   IDownloader.h
   IFullSyncStaleDataExpunger.cpp
