@@ -110,6 +110,7 @@ set(ENML_HEADERS
     headers/quentier/enml/HTMLCleaner.h)
 
 set(LOCAL_STORAGE_HEADERS
+    headers/quentier/local_storage/Factory.h
     headers/quentier/local_storage/ILocalStorage.h
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/ILocalStorageNotifier.h
@@ -400,6 +401,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/LoggerInitializationException.cpp
     src/exception/OperationCanceled.cpp
     src/exception/RuntimeError.cpp
+    src/local_storage/Factory.cpp
     src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageNotifier.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp

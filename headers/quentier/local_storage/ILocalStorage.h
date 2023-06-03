@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,6 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
-#include <quentier/threading/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QFlags>
@@ -42,10 +41,13 @@
 #include <optional>
 #include <utility>
 
+QT_BEGIN_NAMESPACE;
+
 class QDebug;
-class QDir;
 class QTextStream;
 class QThreadPool;
+
+QT_END_NAMESPACE;
 
 namespace quentier {
 
@@ -752,9 +754,5 @@ public:
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const ILocalStorage::ListGuidsFilters & lhs,
     const ILocalStorage::ListGuidsFilters & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT ILocalStoragePtr createSqliteLocalStorage(
-    const Account & account, const QDir & localStorageDir,
-    threading::QThreadPoolPtr threadPool);
 
 } // namespace quentier::local_storage
