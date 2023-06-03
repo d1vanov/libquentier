@@ -125,6 +125,7 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
+    headers/quentier/synchronization/Factory.h
     headers/quentier/synchronization/Fwd.h
     headers/quentier/synchronization/IAuthenticationManager.h
     headers/quentier/synchronization/IAuthenticator.h
@@ -422,6 +423,7 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/patches/LocalStoragePatch1To2.cpp
     src/logging/QuentierLogger.cpp
     src/logging/QuentierLogger_p.cpp
+    src/synchronization/Factory.cpp
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/IAuthenticator.cpp
     src/synchronization/InkNoteImageDownloader.cpp
