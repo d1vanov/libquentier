@@ -14,6 +14,8 @@ target_sources(${LIBRARY_NAME}
   AccountSynchronizerFactory.h
   AuthenticationInfoProvider.cpp
   AuthenticationInfoProvider.h
+  Authenticator.cpp
+  Authenticator.h
   Downloader.cpp
   Downloader.h
   Fwd.h
