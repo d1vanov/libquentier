@@ -22,6 +22,7 @@
 
 #include <synchronization/AccountSynchronizerFactory.h>
 #include <synchronization/AuthenticationInfoProvider.h>
+#include <synchronization/Authenticator.h>
 #include <synchronization/NoteStoreFactory.h>
 #include <synchronization/Synchronizer.h>
 #include <synchronization/UserInfoProvider.h>
@@ -31,6 +32,15 @@
 #include <QUrl>
 
 namespace quentier::synchronization {
+
+IAuthenticatorPtr createQEverCloudAuthenticator(
+    QString consumerKey, QString consumerSecret, QString host,
+    threading::QThreadPtr uiThread, QWidget * parentWidget)
+{
+    return std::make_shared<Authenticator>(
+        std::move(consumerKey), std::move(consumerSecret), std::move(host),
+        std::move(uiThread), parentWidget);
+}
 
 ISynchronizerPtr createSynchronizer(
     const QUrl & serverUrl, const QDir & synchronizationPersistenceDir,
