@@ -22,7 +22,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/types/builders/UserBuilder.h>
 
 #include <gtest/gtest.h>

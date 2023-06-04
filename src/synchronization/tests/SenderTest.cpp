@@ -35,7 +35,7 @@
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/DurableService.h>
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>

@@ -46,9 +46,9 @@ bool UserStore::checkVersion(
     try {
         auto ctx = qevercloud::newRequestContext(
             m_authenticationToken, USER_STORE_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
-            qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
+            qevercloud::gDefaultConnectionTimeoutExponentialIncrease,
+            qevercloud::gDefaultMaxConnectionTimeoutMsec,
+            qevercloud::gDefaultMaxRequestRetryCount, m_cookies);
 
         return m_pUserStore->checkVersion(
             clientName, edamVersionMajor, edamVersionMinor, ctx);
@@ -65,9 +65,9 @@ qint32 UserStore::getUser(
     try {
         auto ctx = qevercloud::newRequestContext(
             m_authenticationToken, USER_STORE_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
-            qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
+            qevercloud::gDefaultConnectionTimeoutExponentialIncrease,
+            qevercloud::gDefaultMaxConnectionTimeoutMsec,
+            qevercloud::gDefaultMaxRequestRetryCount, m_cookies);
 
         user = m_pUserStore->getUser(ctx);
         return 0;
@@ -93,9 +93,9 @@ qint32 UserStore::getAccountLimits(
     try {
         auto ctx = qevercloud::newRequestContext(
             m_authenticationToken, USER_STORE_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
-            qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
+            qevercloud::gDefaultConnectionTimeoutExponentialIncrease,
+            qevercloud::gDefaultMaxConnectionTimeoutMsec,
+            qevercloud::gDefaultMaxRequestRetryCount, m_cookies);
 
         limits = m_pUserStore->getAccountLimits(serviceLevel, ctx);
         return 0;

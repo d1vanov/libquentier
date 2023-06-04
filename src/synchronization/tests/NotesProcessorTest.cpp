@@ -43,7 +43,7 @@
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <qevercloud/DurableService.h>
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/ResourceBuilder.h>

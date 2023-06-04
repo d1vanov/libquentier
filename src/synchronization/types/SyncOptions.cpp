@@ -18,7 +18,7 @@
 
 #include "SyncOptions.h"
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 
 namespace quentier::synchronization {
 
@@ -64,11 +64,11 @@ QTextStream & SyncOptions::print(QTextStream & strm) const
 
     strm << ", request context = ";
     if (m_ctx) {
-        strm << "{timeout = " << m_ctx->requestTimeout()
-             << ", increase request timeout exponentially = "
-             << (m_ctx->increaseRequestTimeoutExponentially() ? "true"
+        strm << "{timeout = " << m_ctx->connectionTimeout()
+             << ", increase connection timeout exponentially = "
+             << (m_ctx->increaseConnectionTimeoutExponentially() ? "true"
                                                               : "false")
-             << ", max request timeout = " << m_ctx->maxRequestTimeout()
+             << ", max connection timeout = " << m_ctx->maxConnectionTimeout()
              << ", max request retry count = " << m_ctx->maxRequestRetryCount()
              << ", cookies: ";
         const auto cookies = m_ctx->cookies();

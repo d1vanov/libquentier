@@ -31,7 +31,7 @@
 #include <quentier/utility/tests/mocks/MockIKeychainService.h>
 
 #include <qevercloud/DurableService.h>
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/types/builders/AuthenticationResultBuilder.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/UserBuilder.h>

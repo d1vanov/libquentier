@@ -34,7 +34,7 @@
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/types/AuthenticationInfo.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>
 #include <qevercloud/utility/ToRange.h>

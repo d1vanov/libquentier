@@ -25,7 +25,7 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/DateTime.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/services/IUserStore.h>
 
 #include <QDateTime>

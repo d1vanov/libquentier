@@ -31,7 +31,7 @@
 #include <synchronization/types/AuthenticationInfo.h>
 
 #include <qevercloud/DurableService.h>
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
 

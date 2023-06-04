@@ -25,7 +25,7 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/SysInfo.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 
 #include <QCoreApplication>
 

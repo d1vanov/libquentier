@@ -46,10 +46,10 @@ namespace {
     const qevercloud::IRequestContext & noteStoreCtx,
     const qevercloud::IRequestContext & ctx)
 {
-    return ctx.requestTimeout() == noteStoreCtx.requestTimeout() &&
-        ctx.increaseRequestTimeoutExponentially() ==
-        noteStoreCtx.increaseRequestTimeoutExponentially() &&
-        ctx.maxRequestTimeout() == noteStoreCtx.maxRequestTimeout() &&
+    return ctx.connectionTimeout() == noteStoreCtx.connectionTimeout() &&
+        ctx.increaseConnectionTimeoutExponentially() ==
+        noteStoreCtx.increaseConnectionTimeoutExponentially() &&
+        ctx.maxConnectionTimeout() == noteStoreCtx.maxConnectionTimeout() &&
         ctx.maxRequestRetryCount() == noteStoreCtx.maxRequestRetryCount();
 }
 
@@ -332,10 +332,10 @@ void NoteStoreProvider::createNoteStore(
             ctx = qevercloud::RequestContextBuilder{}
                       .setAuthenticationToken(authInfo->authToken())
                       .setCookies(authInfo->userStoreCookies())
-                      .setRequestTimeout(ctx->requestTimeout())
-                      .setIncreaseRequestTimeoutExponentially(
-                          ctx->increaseRequestTimeoutExponentially())
-                      .setMaxRequestTimeout(ctx->maxRequestTimeout())
+                      .setConnectionTimeout(ctx->connectionTimeout())
+                      .setIncreaseConnectionTimeoutExponentially(
+                          ctx->increaseConnectionTimeoutExponentially())
+                      .setMaxConnectionTimeout(ctx->maxConnectionTimeout())
                       .setMaxRetryCount(ctx->maxRequestRetryCount())
                       .build();
 

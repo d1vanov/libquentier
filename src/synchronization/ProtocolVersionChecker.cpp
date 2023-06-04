@@ -24,7 +24,7 @@
 #include <quentier/utility/SysInfo.h>
 
 #include <qevercloud/Constants.h>
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/services/IUserStore.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -80,9 +80,9 @@ QFuture<void> ProtocolVersionChecker::checkProtocolVersion(
 
     auto ctx = qevercloud::newRequestContext(
         authenticationInfo.authToken(), userStoreRequestTimeoutMsec,
-        qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
-        qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-        qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
+        qevercloud::gDefaultConnectionTimeoutExponentialIncrease,
+        qevercloud::gDefaultMaxConnectionTimeoutMsec,
+        qevercloud::gDefaultMaxRequestRetryCount,
         authenticationInfo.userStoreCookies());
 
     auto clientName = clientNameForProtocolVersionCheck();

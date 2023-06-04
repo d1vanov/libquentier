@@ -27,7 +27,7 @@
 #include <synchronization/tests/mocks/MockILinkedNotebookFinder.h>
 #include <synchronization/types/AuthenticationInfo.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 
 #include <gtest/gtest.h>

@@ -844,10 +844,10 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
         .setCookies(authenticationInfo.userStoreCookies());
 
     if (m_ctx) {
-        ctxBuilder.setRequestTimeout(m_ctx->requestTimeout())
-            .setIncreaseRequestTimeoutExponentially(
-                m_ctx->increaseRequestTimeoutExponentially())
-            .setMaxRequestTimeout(m_ctx->maxRequestTimeout())
+        ctxBuilder.setConnectionTimeout(m_ctx->connectionTimeout())
+            .setIncreaseConnectionTimeoutExponentially(
+                m_ctx->increaseConnectionTimeoutExponentially())
+            .setMaxConnectionTimeout(m_ctx->maxConnectionTimeout())
             .setMaxRetryCount(m_ctx->maxRequestRetryCount());
     }
 

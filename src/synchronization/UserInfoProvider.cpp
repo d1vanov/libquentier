@@ -21,7 +21,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/services/IUserStore.h>
 
 #include <QReadLocker>

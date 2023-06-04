@@ -38,10 +38,10 @@ namespace {
     builder.setAuthenticationToken(std::move(authToken));
 
     if (sourceCtx) {
-        builder.setRequestTimeout(sourceCtx->requestTimeout())
-            .setMaxRequestTimeout(sourceCtx->maxRequestTimeout())
-            .setIncreaseRequestTimeoutExponentially(
-                sourceCtx->increaseRequestTimeoutExponentially())
+        builder.setConnectionTimeout(sourceCtx->connectionTimeout())
+            .setMaxConnectionTimeout(sourceCtx->maxConnectionTimeout())
+            .setIncreaseConnectionTimeoutExponentially(
+                sourceCtx->increaseConnectionTimeoutExponentially())
             .setMaxRetryCount(sourceCtx->maxRequestRetryCount())
             .setCookies(sourceCtx->cookies());
     }

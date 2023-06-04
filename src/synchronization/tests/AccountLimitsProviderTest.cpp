@@ -23,7 +23,7 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/types/builders/AccountLimitsBuilder.h>
 
 #include <QDateTime>

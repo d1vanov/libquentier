@@ -29,7 +29,7 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
-#include <qevercloud/RequestContext.h>
+#include <qevercloud/IRequestContext.h>
 #include <qevercloud/types/builders/DataBuilder.h>
 #include <qevercloud/types/builders/ResourceBuilder.h>
 
