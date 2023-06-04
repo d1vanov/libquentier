@@ -21,6 +21,9 @@
 #include <quentier/synchronization/IAuthenticator.h>
 #include <quentier/threading/Fwd.h>
 
+#include <QString>
+#include <QUrl>
+
 #include <memory>
 
 QT_BEGIN_NAMESPACE;
@@ -37,7 +40,7 @@ class Authenticator final :
 {
 public:
     Authenticator(
-        QString consumerKey, QString consumerSecret, QString host,
+        QString consumerKey, QString consumerSecret, QUrl serverUrl,
         threading::QThreadPtr uiThread, QWidget * parentWidget = nullptr);
 
 public: // IAuthenticator
@@ -53,7 +56,7 @@ private:
 private:
     const QString m_consumerKey;
     const QString m_consumerSecret;
-    const QString m_host;
+    const QUrl m_serverUrl;
     const threading::QThreadPtr m_uiThread;
     QWidget * m_parentWidget;
 };

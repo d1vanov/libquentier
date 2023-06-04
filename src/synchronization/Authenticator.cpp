@@ -45,13 +45,14 @@
 namespace quentier::synchronization {
 
 Authenticator::Authenticator(
-    QString consumerKey, QString consumerSecret, QString host,
+    QString consumerKey, QString consumerSecret, QUrl serverUrl,
     threading::QThreadPtr uiThread, QWidget * parentWidget) :
     m_consumerKey{std::move(consumerKey)},
-    m_consumerSecret{std::move(consumerSecret)}, m_host{std::move(host)},
-    m_uiThread{std::move(uiThread)}, m_parentWidget{parentWidget}
+    m_consumerSecret{std::move(consumerSecret)},
+    m_serverUrl{std::move(serverUrl)}, m_uiThread{std::move(uiThread)},
+    m_parentWidget{parentWidget}
 {
-    if (Q_UNLIKELY(m_host.isEmpty())) {
+    if (Q_UNLIKELY(m_serverUrl.isEmpty())) {
         throw InvalidArgument{
             ErrorString{QStringLiteral("Authenticator ctor: host is empty")}};
     }
@@ -115,7 +116,7 @@ QFuture<IAuthenticationInfoPtr> Authenticator::authenticateAccount(
 IAuthenticationInfoPtr Authenticator::authenticateNewAccountImpl()
 {
     auto pDialog = std::make_unique<qevercloud::EvernoteOAuthDialog>(
-        m_consumerKey, m_consumerSecret, m_host, m_parentWidget);
+        m_consumerKey, m_consumerSecret, m_serverUrl, m_parentWidget);
 
     pDialog->setWindowModality(Qt::WindowModal);
 

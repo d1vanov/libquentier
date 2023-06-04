@@ -26,12 +26,12 @@
 #include <qevercloud/Fwd.h>
 
 #include <QString>
+#include <QUrl>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE;
 
 class QDir;
-class QUrl;
 class QWidget;
 
 QT_END_NAMESPACE;
@@ -39,7 +39,7 @@ QT_END_NAMESPACE;
 namespace quentier::synchronization {
 
 [[nodiscard]] QUENTIER_EXPORT IAuthenticatorPtr createQEverCloudAuthenticator(
-    QString consumerKey, QString consumerSecret, QString host,
+    QString consumerKey, QString consumerSecret, QUrl serverUrl,
     threading::QThreadPtr uiThread, QWidget * parentWidget = nullptr);
 
 [[nodiscard]] QUENTIER_EXPORT ISynchronizerPtr createSynchronizer(

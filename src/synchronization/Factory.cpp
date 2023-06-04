@@ -29,16 +29,14 @@
 
 #include <qevercloud/services/IUserStore.h>
 
-#include <QUrl>
-
 namespace quentier::synchronization {
 
 IAuthenticatorPtr createQEverCloudAuthenticator(
-    QString consumerKey, QString consumerSecret, QString host,
+    QString consumerKey, QString consumerSecret, QUrl serverUrl,
     threading::QThreadPtr uiThread, QWidget * parentWidget)
 {
     return std::make_shared<Authenticator>(
-        std::move(consumerKey), std::move(consumerSecret), std::move(host),
+        std::move(consumerKey), std::move(consumerSecret), std::move(serverUrl),
         std::move(uiThread), parentWidget);
 }
 
