@@ -22,16 +22,19 @@
 
 #include <synchronization/Fwd.h>
 
-#include <atomic>
+#include <memory>
 
 namespace quentier::synchronization {
 
-class Synchronizer final : public ISynchronizer
+class Synchronizer final :
+    public ISynchronizer,
+    public std::enable_shared_from_this<Synchronizer>
 {
 public:
     Synchronizer(
         IAccountSynchronizerFactoryPtr accountSynchronizerFactory,
-        IAuthenticationInfoProviderPtr authenticationInfoProvider);
+        IAuthenticationInfoProviderPtr authenticationInfoProvider,
+        IProtocolVersionCheckerPtr protocolVersionChecker);
 
 public: // ISynchronizer
     [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateNewAccount()
@@ -48,8 +51,11 @@ public: // ISynchronizer
     void revokeAuthentication(qevercloud::UserID userId) override;
 
 private:
+
+private:
     const IAccountSynchronizerFactoryPtr m_accountSynchronizerFactory;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
+    const IProtocolVersionCheckerPtr m_protocolVersionChecker;
 };
 
 } // namespace quentier::synchronization

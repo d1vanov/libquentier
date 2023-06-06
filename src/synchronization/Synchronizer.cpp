@@ -20,10 +20,12 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
+#include <quentier/threading/TrackedTask.h>
 
 #include <synchronization/IAccountSynchronizer.h>
 #include <synchronization/IAccountSynchronizerFactory.h>
 #include <synchronization/IAuthenticationInfoProvider.h>
+#include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/SyncEventsNotifier.h>
 #include <synchronization/types/SendStatus.h>
@@ -150,9 +152,11 @@ private:
 
 Synchronizer::Synchronizer(
     IAccountSynchronizerFactoryPtr accountSynchronizerFactory,
-    IAuthenticationInfoProviderPtr authenticationInfoProvider) :
+    IAuthenticationInfoProviderPtr authenticationInfoProvider,
+    IProtocolVersionCheckerPtr protocolVersionChecker) :
     m_accountSynchronizerFactory{std::move(accountSynchronizerFactory)},
-    m_authenticationInfoProvider{std::move(authenticationInfoProvider)}
+    m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
+    m_protocolVersionChecker{std::move(protocolVersionChecker)}
 {
     if (Q_UNLIKELY(!m_accountSynchronizerFactory)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -162,6 +166,11 @@ Synchronizer::Synchronizer(
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "Synchronizer ctor: authentication info provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_protocolVersionChecker)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Synchronizer ctor: protocol version checker is null")}};
     }
 }
 
@@ -184,29 +193,71 @@ ISynchronizer::SyncResult Synchronizer::synchronizeAccount(
 {
     auto notifier = std::make_shared<SyncEventsNotifier>();
 
-    auto accountSynchronizer =
-        m_accountSynchronizerFactory->createAccountSynchronizer(
-            std::move(account), std::move(syncConflictResolver),
-            std::move(localStorage), std::move(options));
-
     auto promise = std::make_shared<QPromise<ISyncResultPtr>>();
     auto future = promise->future();
     promise->start();
 
-    auto callback = std::make_shared<AccountSynchronizerCallback>(notifier);
+    auto authenticationInfoFuture =
+        m_authenticationInfoProvider->authenticateAccount(
+            account, IAuthenticationInfoProvider::Mode::Cache);
 
-    auto accountSyncFuture =
-        accountSynchronizer->synchronize(callback, std::move(canceler));
-
+    const auto selfWeak = weak_from_this();
     auto * rawNotifier = notifier.get();
 
     threading::thenOrFailed(
-        std::move(accountSyncFuture), promise,
-        [promise, accountSynchronizer = std::move(accountSynchronizer),
-         notifier = std::move(notifier),
-         callback = std::move(callback)](ISyncResultPtr result) {
-            promise->addResult(result);
-            promise->finish();
+        std::move(authenticationInfoFuture), promise,
+        [this, selfWeak, promise, notifier,
+         syncConflictResolver = std::move(syncConflictResolver),
+         localStorage = std::move(localStorage), options = std::move(options),
+         canceler = std::move(canceler), account = std::move(account)](
+            const IAuthenticationInfoPtr & authenticationInfo) mutable {
+            Q_ASSERT(authenticationInfo);
+
+            const auto self = selfWeak.lock();
+            if (!self) {
+                return;
+            }
+
+            auto protocolVersionCheckFuture =
+                m_protocolVersionChecker->checkProtocolVersion(
+                    *authenticationInfo);
+
+            threading::thenOrFailed(
+                std::move(protocolVersionCheckFuture), promise,
+                [this, selfWeak, promise, notifier = std::move(notifier),
+                 syncConflictResolver = std::move(syncConflictResolver),
+                 localStorage = std::move(localStorage),
+                 options = std::move(options), account = std::move(account),
+                 canceler = std::move(canceler)]() mutable {
+                    const auto self = selfWeak.lock();
+                    if (!self) {
+                        return;
+                    }
+
+                    auto accountSynchronizer =
+                        m_accountSynchronizerFactory->createAccountSynchronizer(
+                            std::move(account), std::move(syncConflictResolver),
+                            std::move(localStorage), std::move(options));
+
+                    auto callback =
+                        std::make_shared<AccountSynchronizerCallback>(notifier);
+
+                    auto accountSyncFuture = accountSynchronizer->synchronize(
+                        callback, std::move(canceler));
+
+                    // Passing notifier to the lambda to prolong its lifetime
+                    // until the result or promise's failure is available.
+                    threading::thenOrFailed(
+                        std::move(accountSyncFuture), promise,
+                        [promise,
+                         accountSynchronizer = std::move(accountSynchronizer),
+                         notifier = std::move(notifier),
+                         callback =
+                             std::move(callback)](ISyncResultPtr result) {
+                            promise->addResult(result);
+                            promise->finish();
+                        });
+                });
         });
 
     return std::make_pair(std::move(future), rawNotifier);

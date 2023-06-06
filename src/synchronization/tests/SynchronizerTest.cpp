@@ -21,6 +21,7 @@
 #include <synchronization/tests/mocks/MockIAccountSynchronizer.h>
 #include <synchronization/tests/mocks/MockIAccountSynchronizerFactory.h>
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
+#include <synchronization/tests/mocks/MockIProtocolVersionChecker.h>
 #include <synchronization/types/AuthenticationInfo.h>
 #include <synchronization/types/SyncOptionsBuilder.h>
 #include <synchronization/types/SyncResult.h>
@@ -75,6 +76,10 @@ protected:
         m_mockAuthenticationInfoProvider = std::make_shared<
             StrictMock<mocks::MockIAuthenticationInfoProvider>>();
 
+    const std::shared_ptr<mocks::MockIProtocolVersionChecker>
+        m_mockProtocolVersionChecker =
+            std::make_shared<StrictMock<mocks::MockIProtocolVersionChecker>>();
+
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
@@ -91,15 +96,16 @@ TEST_F(SynchronizerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
-            m_mockAccountSynchronizerFactory,
-            m_mockAuthenticationInfoProvider));
+            m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker));
 }
 
 TEST_F(SynchronizerTest, CtorNullAccountSynchronizerFactory)
 {
     EXPECT_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
-            nullptr, m_mockAuthenticationInfoProvider),
+            nullptr, m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker),
         InvalidArgument);
 }
 
@@ -107,14 +113,25 @@ TEST_F(SynchronizerTest, CtorNullAuthenticationInfoProvider)
 {
     EXPECT_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
-            m_mockAccountSynchronizerFactory, nullptr),
+            m_mockAccountSynchronizerFactory, nullptr,
+            m_mockProtocolVersionChecker),
+        InvalidArgument);
+}
+
+TEST_F(SynchronizerTest, CtorNullProtocolVersionChecker)
+{
+    EXPECT_THROW(
+        const auto synchronizer = std::make_shared<Synchronizer>(
+            m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+            nullptr),
         InvalidArgument);
 }
 
 TEST_F(SynchronizerTest, AuthenticateNewAccount)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
-        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider);
+        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+        m_mockProtocolVersionChecker);
 
     const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
@@ -131,7 +148,8 @@ TEST_F(SynchronizerTest, AuthenticateNewAccount)
 TEST_F(SynchronizerTest, AuthenticateAccount)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
-        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider);
+        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+        m_mockProtocolVersionChecker);
 
     const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
@@ -151,7 +169,8 @@ TEST_F(SynchronizerTest, AuthenticateAccount)
 TEST_F(SynchronizerTest, RevokeAuthentication)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
-        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider);
+        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+        m_mockProtocolVersionChecker);
 
     const qevercloud::UserID userId = 42;
 
@@ -166,7 +185,8 @@ TEST_F(SynchronizerTest, RevokeAuthentication)
 TEST_F(SynchronizerTest, SynchronizeAccount)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
-        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider);
+        m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+        m_mockProtocolVersionChecker);
 
     bool onSyncChunksDownloadProgressCalled = false;
     bool onSyncChunksDownloadedCalled = false;
@@ -187,6 +207,17 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
     auto future = promise->future();
 
     const auto syncOptions = SyncOptionsBuilder{}.build();
+    const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
+
+    EXPECT_CALL(
+        *m_mockAuthenticationInfoProvider,
+        authenticateAccount(
+            m_account, IAuthenticationInfoProvider::Mode::Cache))
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            authenticationInfo)));
+
+    EXPECT_CALL(*m_mockProtocolVersionChecker, checkProtocolVersion)
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     EXPECT_CALL(
         *m_mockAccountSynchronizerFactory,

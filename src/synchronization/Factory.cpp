@@ -24,6 +24,7 @@
 #include <synchronization/AuthenticationInfoProvider.h>
 #include <synchronization/Authenticator.h>
 #include <synchronization/NoteStoreFactory.h>
+#include <synchronization/ProtocolVersionChecker.h>
 #include <synchronization/Synchronizer.h>
 #include <synchronization/UserInfoProvider.h>
 
@@ -63,6 +64,9 @@ ISynchronizerPtr createSynchronizer(
     auto userStore =
         qevercloud::newUserStore(std::move(userStoreUrl), ctx, retryPolicy);
 
+    auto protocolVersionChecker =
+        std::make_shared<ProtocolVersionChecker>(userStore);
+
     auto userInfoProvider =
         std::make_shared<UserInfoProvider>(std::move(userStore));
 
@@ -81,7 +85,8 @@ ISynchronizerPtr createSynchronizer(
 
     return std::make_shared<Synchronizer>(
         std::move(accountSynchronizerFactory),
-        std::move(authenticationInfoProvider));
+        std::move(authenticationInfoProvider),
+        std::move(protocolVersionChecker));
 }
 
 } // namespace quentier::synchronization
