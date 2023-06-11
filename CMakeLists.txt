@@ -820,6 +820,7 @@ add_subdirectory(src/local_storage/sql)
 add_subdirectory(src/synchronization)
 add_subdirectory(src/threading)
 add_subdirectory(src/utility)
+add_subdirectory(tests)
 
 target_link_libraries(${LIBNAME}
   PUBLIC
