@@ -6,8 +6,6 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
-  AccountLimitsProvider.cpp
-  AccountLimitsProvider.h
   AccountSynchronizer.cpp
   AccountSynchronizer.h
   AccountSynchronizerFactory.cpp
@@ -21,7 +19,6 @@ target_sources(${LIBRARY_NAME}
   Fwd.h
   FullSyncStaleDataExpunger.cpp
   FullSyncStaleDataExpunger.h
-  IAccountLimitsProvider.h
   IAccountSynchronizer.h
   IAccountSynchronizerFactory.h
   IAuthenticationInfoProvider.cpp

@@ -1,7 +1,6 @@
 #include <quentier/synchronization/tests/mocks/MockIAuthenticator.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
-#include "MockIAccountLimitsProvider.h"
 #include "MockIAccountSynchronizer.h"
 #include "MockIAccountSynchronizerFactory.h"
 #include "MockIAuthenticationInfoProvider.h"

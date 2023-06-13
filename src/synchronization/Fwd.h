@@ -24,9 +24,6 @@ namespace quentier::synchronization {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class IAccountLimitsProvider;
-using IAccountLimitsProviderPtr = std::shared_ptr<IAccountLimitsProvider>;
-
 class IAccountSynchronizer;
 using IAccountSynchronizerPtr = std::shared_ptr<IAccountSynchronizer>;
 
