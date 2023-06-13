@@ -22,7 +22,6 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
-#include <quentier/utility/Unreachable.h>
 
 #include <qevercloud/services/UserStoreServer.h>
 
@@ -33,27 +32,6 @@
 #include <algorithm>
 
 namespace quentier::synchronization::tests {
-
-namespace {
-
-[[nodiscard]] QString serviceLevelToString(
-    const qevercloud::ServiceLevel serviceLevel)
-{
-    switch (serviceLevel) {
-    case qevercloud::ServiceLevel::BASIC:
-        return QStringLiteral("BASIC");
-    case qevercloud::ServiceLevel::PLUS:
-        return QStringLiteral("PLUS");
-    case qevercloud::ServiceLevel::PREMIUM:
-        return QStringLiteral("PREMIUM");
-    case qevercloud::ServiceLevel::BUSINESS:
-        return QStringLiteral("BUSINESS");
-    }
-
-    UNREACHABLE;
-}
-
-} // namespace
 
 UserStoreServer::UserStoreServer(
     QString authenticationToken, QList<QNetworkCookie> cookies,
@@ -113,20 +91,12 @@ UserStoreServer::UserStoreServer(
         &UserStoreServer::onGetUserRequest);
 
     QObject::connect(
-        m_server, &qevercloud::UserStoreServer::getAccountLimitsRequest, this,
-        &UserStoreServer::onGetAccountLimitsRequest);
-
-    QObject::connect(
         this, &UserStoreServer::checkVersionRequestReady, m_server,
         &qevercloud::UserStoreServer::onCheckVersionRequestReady);
 
     QObject::connect(
         this, &UserStoreServer::getUserRequestReady, m_server,
         &qevercloud::UserStoreServer::onGetUserRequestReady);
-
-    QObject::connect(
-        this, &UserStoreServer::getAccountLimitsRequestReady, m_server,
-        &qevercloud::UserStoreServer::onGetAccountLimitsRequestReady);
 }
 
 UserStoreServer::~UserStoreServer() = default;
@@ -158,31 +128,7 @@ void UserStoreServer::setEdamVersionMinor(
     m_edamVersionMinor = edamVersionMinor;
 }
 
-std::optional<qevercloud::AccountLimits> UserStoreServer::findAccountLimits(
-    const qevercloud::ServiceLevel serviceLevel) const
-{
-    const auto it = m_accountLimits.constFind(serviceLevel);
-    if (it != m_accountLimits.constEnd()) {
-        return it.value();
-    }
-
-    return std::nullopt;
-}
-
-void UserStoreServer::setAccountLimits(
-    const qevercloud::ServiceLevel serviceLevel,
-    qevercloud::AccountLimits limits)
-{
-    m_accountLimits[serviceLevel] = std::move(limits);
-}
-
-void UserStoreServer::removeAccountLimits(
-    const qevercloud::ServiceLevel serviceLevel)
-{
-    m_accountLimits.remove(serviceLevel);
-}
-
-std::optional<qevercloud::User> UserStoreServer::findUser(
+std::optional<UserStoreServer::UserOrException> UserStoreServer::findUser(
     const QString & authenticationToken) const
 {
     const auto it = m_users.constFind(authenticationToken);
@@ -197,6 +143,12 @@ void UserStoreServer::putUser(
     const QString & authenticationToken, qevercloud::User user)
 {
     m_users[authenticationToken] = std::move(user);
+}
+
+void UserStoreServer::putUserException(
+    const QString & authenticationToken, std::exception_ptr e)
+{
+    m_users[authenticationToken] = std::move(e);
 }
 
 void UserStoreServer::removeUser(const QString & authenticationToken)
@@ -247,7 +199,14 @@ void UserStoreServer::onGetUserRequest(
     Q_ASSERT(ctx);
     const auto it = m_users.constFind(ctx->authenticationToken());
     if (it != m_users.constEnd()) {
-        Q_EMIT getUserRequestReady(it.value(), nullptr);
+        if (std::holds_alternative<qevercloud::User>(it.value())) {
+            Q_EMIT getUserRequestReady(
+                std::get<qevercloud::User>(it.value()), nullptr);
+        }
+        else {
+            Q_EMIT getUserRequestReady(
+                qevercloud::User{}, std::get<std::exception_ptr>(it.value()));
+        }
         return;
     }
 
@@ -257,31 +216,6 @@ void UserStoreServer::onGetUserRequest(
             QString::fromUtf8(
                 "Could not find user corresponding to authentication token %1")
                 .arg(ctx->authenticationToken())}}));
-}
-
-void UserStoreServer::onGetAccountLimitsRequest(
-    const qevercloud::ServiceLevel serviceLevel,
-    const qevercloud::IRequestContextPtr & ctx)
-{
-    if (auto e = checkAuthentication(ctx)) {
-        Q_EMIT getAccountLimitsRequestReady(
-            qevercloud::AccountLimits{}, std::move(e));
-        return;
-    }
-
-    const auto it = m_accountLimits.constFind(serviceLevel);
-    if (it != m_accountLimits.constEnd()) {
-        Q_EMIT getAccountLimitsRequestReady(it.value(), nullptr);
-        return;
-    }
-
-    Q_EMIT getAccountLimitsRequestReady(
-        qevercloud::AccountLimits{},
-        std::make_exception_ptr(RuntimeError{ErrorString{
-            QString::fromUtf8(
-                "Could not find account limits corresponding to service level "
-                "%1")
-                .arg(serviceLevelToString(serviceLevel))}}));
 }
 
 void UserStoreServer::onRequestReady(const QByteArray & responseData)
