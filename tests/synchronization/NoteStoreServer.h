@@ -261,10 +261,110 @@ public:
     [[nodiscard]] quint64 maxResourceSize() const noexcept;
     void setMaxResourceSize(quint64 maxResourceSize) noexcept;
 
+    // private signals
+Q_SIGNALS:
+    void createNotebookRequestReady(
+        qevercloud::Notebook notebook, std::exception_ptr e);
+
+    void updateNotebookRequestReady(
+        qevercloud::Notebook notebook, std::exception_ptr e);
+
+    void createNoteRequestReady(qevercloud::Note note, std::exception_ptr e);
+    void updateNoteRequestReady(qevercloud::Note note, std::exception_ptr e);
+    void createTagRequestReady(qevercloud::Tag tag, std::exception_ptr e);
+    void updateTagRequestReady(qevercloud::Tag, std::exception_ptr e);
+
+    void createSavedSearchRequestReady(
+        qevercloud::SavedSearch search, std::exception_ptr e);
+
+    void updateSavedSearchRequestReady(
+        qevercloud::SavedSearch search, std::exception_ptr e);
+
+    void getSyncStateRequestReady(
+        qevercloud::SyncState syncState, std::exception_ptr e);
+
+    void getLinkedNotebookSyncStateReady(
+        qevercloud::SyncState syncState, std::exception_ptr e);
+
+    void getFilteredSyncChunkRequestReady(
+        qevercloud::SyncChunk syncChunk, std::exception_ptr e);
+
+    void getLinkedNotebookSyncChunkRequestReady(
+        qevercloud::SyncChunk syncChunk, std::exception_ptr e);
+
+    void getNoteWithResultSpecRequestReady(
+        qevercloud::Note note, std::exception_ptr e);
+
+    void getResourceRequestReady(
+        qevercloud::Resource resource, std::exception_ptr e);
+
+    void authenticateToSharedNotebookRequestReady(
+        qevercloud::AuthenticationResult result, std::exception_ptr e);
+
 private Q_SLOTS:
     void onRequestReady(const QByteArray & responseData);
 
+    void onCreateNotebookRequest(
+        qevercloud::Notebook notebook,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onUpdateNotebookRequest(
+        qevercloud::Notebook notebook,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onCreateNoteRequest(
+        qevercloud::Note note, const qevercloud::IRequestContextPtr & ctx);
+
+    void onUpdateNoteRequest(
+        qevercloud::Note note, const qevercloud::IRequestContextPtr & ctx);
+
+    void onCreateTagRequest(
+        qevercloud::Tag tag, const qevercloud::IRequestContextPtr & ctx);
+
+    void onUpdateTagRequest(
+        qevercloud::Tag tag, const qevercloud::IRequestContextPtr & ctx);
+
+    void onCreateSavedSearchRequest(
+        qevercloud::SavedSearch search,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onUpdateSavedSearchRequest(
+        qevercloud::SavedSearch search,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onGetSyncStateRequest(const qevercloud::IRequestContextPtr & ctx);
+
+    void onGetLinkedNotebookSyncStateRequest(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onGetFilteredSyncChunkRequest(
+        qint32 afterUSN, qint32 maxEntries,
+        const qevercloud::SyncChunkFilter & filter,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onGetLinkedNotebookSyncChunkRequest(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        qint32 afterUSN, qint32 maxEntries, bool fullSyncOnly,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onGetNoteWithResultSpecRequest(
+        const qevercloud::Guid & guid,
+        const qevercloud::NoteResultSpec & resultSpec,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onGetResourceRequest(
+        const qevercloud::Guid & guid, bool withData, bool withRecognition,
+        bool withAttributes, bool withAlternateData,
+        const qevercloud::IRequestContextPtr & ctx);
+
+    void onAuthenticateToSharedNotebookRequest(
+        const QString & shareKeyOrGlobalId,
+        const qevercloud::IRequestContextPtr & ctx);
+
 private:
+    void connectToQEverCloudServer();
+
     [[nodiscard]] std::exception_ptr checkAuthentication(
         const qevercloud::IRequestContextPtr & ctx) const;
 
