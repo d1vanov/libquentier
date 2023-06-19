@@ -70,6 +70,10 @@ public:
         // corresponding type) if generation and/or adjustment was necessary.
         std::optional<QString> name;
 
+        // Contains automatically generated guid of the item if it didn't have
+        // guid when it was put to the server.
+        std::optional<qevercloud::Guid> guid;
+
         // Update sequence number assigned to the item
         qint32 usn = 0;
     };
@@ -109,30 +113,32 @@ public:
 
     [[nodiscard]] ItemData putSavedSearch(qevercloud::SavedSearch search);
     [[nodiscard]] std::optional<qevercloud::SavedSearch> findSavedSearch(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeSavedSearch(const QString & guid);
+    void removeSavedSearch(const qevercloud::Guid & guid);
 
     // Expunged saved searches
-    void putExpungedSavedSearchGuid(const QString & guid);
+    void putExpungedSavedSearchGuid(const qevercloud::Guid & guid);
     [[nodiscard]] bool containsExpungedSavedSearchGuid(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeExpungedSavedSearchGuid(const QString & guid);
+    void removeExpungedSavedSearchGuid(const qevercloud::Guid & guid);
 
     // Tags
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Tag> tags() const;
-    [[nodiscard]] ItemData putTag(qevercloud::Tag & tag);
+    [[nodiscard]] ItemData putTag(qevercloud::Tag tag);
 
     [[nodiscard]] std::optional<qevercloud::Tag> findTag(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeTag(const QString & guid);
+    void removeTag(const qevercloud::Guid & guid);
 
     // Expunged tags
-    void putExpungedTagGuid(const QString & guid);
-    [[nodiscard]] bool containsExpungedTagGuid(const QString & guid) const;
-    void removeExpungedTagGuid(const QString & guid);
+    void putExpungedTagGuid(const qevercloud::Guid & guid);
+    [[nodiscard]] bool containsExpungedTagGuid(
+        const qevercloud::Guid & guid) const;
+
+    void removeExpungedTagGuid(const qevercloud::Guid & guid);
 
     // Notebooks
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Notebook> notebooks()
@@ -140,43 +146,48 @@ public:
 
     [[nodiscard]] ItemData putNotebook(qevercloud::Notebook notebook);
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebook(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeNotebook(const QString & guid);
+    void removeNotebook(const qevercloud::Guid & guid);
 
     [[nodiscard]] QList<qevercloud::Notebook>
         findNotebooksForLinkedNotebookGuid(
-            const QString & linkedNotebookGuid) const;
+            const qevercloud::Guid & linkedNotebookGuid) const;
 
     // Expunged notebooks
-    void putExpungedNotebookGuid(const QString & guid);
-    [[nodiscard]] bool containsExpungedNotebookGuid(const QString & guid) const;
-    void removeExpungedNotebookGuid(const QString & guid);
+    void putExpungedNotebookGuid(const qevercloud::Guid & guid);
+    [[nodiscard]] bool containsExpungedNotebookGuid(
+        const qevercloud::Guid & guid) const;
+
+    void removeExpungedNotebookGuid(const qevercloud::Guid & guid);
 
     // Notes
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Note> notes() const;
     [[nodiscard]] ItemData putNote(qevercloud::Note note);
     [[nodiscard]] std::optional<qevercloud::Note> findNote(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeNote(const QString & guid);
+    void removeNote(const qevercloud::Guid & guid);
 
     // Expunged notes
-    void putExpungedNoteGuid(const QString & guid);
-    [[nodiscard]] bool containsExpungedNoteGuid(const QString & guid) const;
-    void removeExpungedNoteGuid(const QString & guid);
+    void putExpungedNoteGuid(const qevercloud::Guid & guid);
+    [[nodiscard]] bool containsExpungedNoteGuid(
+        const qevercloud::Guid & guid) const;
+
+    void removeExpungedNoteGuid(const qevercloud::Guid & guid);
 
     [[nodiscard]] QList<qevercloud::Note> getNotesByConflictSourceNoteGuid(
-        const QString & conflictSourceNoteGuid) const;
+        const qevercloud::Guid & conflictSourceNoteGuid) const;
 
     // Resources
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Resource> resources()
         const;
-    [[nodiscard]] bool putResource(qevercloud::Resource resource);
-    [[nodiscard]] std::optional<qevercloud::Resource> findResource(
-        const QString & guid) const;
 
-    void removeResource(const QString & guid);
+    [[nodiscard]] ItemData putResource(qevercloud::Resource resource);
+    [[nodiscard]] std::optional<qevercloud::Resource> findResource(
+        const qevercloud::Guid & guid) const;
+
+    void removeResource(const qevercloud::Guid & guid);
 
     // Linked notebooks
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::LinkedNotebook>
@@ -186,16 +197,16 @@ public:
         qevercloud::LinkedNotebook & linkedNotebook);
 
     [[nodiscard]] std::optional<qevercloud::LinkedNotebook> findLinkedNotebook(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeLinkedNotebook(const QString & guid);
+    void removeLinkedNotebook(const qevercloud::Guid & guid);
 
     // Expunged linked notebooks
-    void putExpungedLinkedNotebookGuid(const QString & guid);
+    void putExpungedLinkedNotebookGuid(const qevercloud::Guid & guid);
     [[nodiscard]] bool containsExpungedLinkedNotebookGuid(
-        const QString & guid) const;
+        const qevercloud::Guid & guid) const;
 
-    void removeExpungedLinkedNotebookGuid(const QString & guid);
+    void removeExpungedLinkedNotebookGuid(const qevercloud::Guid & guid);
 
     // User own sync state
     [[nodiscard]] std::optional<qevercloud::SyncState> userOwnSyncState() const;
