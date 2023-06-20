@@ -194,7 +194,7 @@ public:
         linkedNotebooks() const;
 
     [[nodiscard]] ItemData putLinkedNotebook(
-        qevercloud::LinkedNotebook & linkedNotebook);
+        qevercloud::LinkedNotebook linkedNotebook);
 
     [[nodiscard]] std::optional<qevercloud::LinkedNotebook> findLinkedNotebook(
         const qevercloud::Guid & guid) const;

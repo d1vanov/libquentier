@@ -158,10 +158,10 @@ NoteStoreServer::ItemData NoteStoreServer::putSavedSearch(
 
     const auto it = savedSearchGuidIndex.find(*search.guid());
     if (it == savedSearchGuidIndex.end()) {
-        m_savedSearches.insert(search);
+        m_savedSearches.emplace(std::move(search));
     }
     else {
-        savedSearchGuidIndex.replace(it, search);
+        savedSearchGuidIndex.replace(it, std::move(search));
     }
 
     return result;
@@ -285,10 +285,10 @@ NoteStoreServer::ItemData NoteStoreServer::putTag(qevercloud::Tag tag)
     auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
     const auto tagIt = tagGuidIndex.find(*tag.guid());
     if (tagIt == tagGuidIndex.end()) {
-        m_tags.insert(tag);
+        m_tags.emplace(std::move(tag));
     }
     else {
-        tagGuidIndex.replace(tagIt, tag);
+        tagGuidIndex.replace(tagIt, std::move(tag));
     }
 
     return result;
@@ -467,10 +467,10 @@ NoteStoreServer::ItemData NoteStoreServer::putNotebook(
     auto & notebookGuidIndex = m_notebooks.get<note_store::NotebookByGuidTag>();
     const auto notebookIt = notebookGuidIndex.find(*notebook.guid());
     if (notebookIt == notebookGuidIndex.end()) {
-        m_notebooks.insert(notebook);
+        m_notebooks.emplace(std::move(notebook));
     }
     else {
-        notebookGuidIndex.replace(notebookIt, notebook);
+        notebookGuidIndex.replace(notebookIt, std::move(notebook));
     }
 
     return result;
@@ -567,8 +567,6 @@ QHash<qevercloud::Guid, qevercloud::Note> NoteStoreServer::notes() const
 
 NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
 {
-    ItemData result;
-
     if (!note.notebookGuid()) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "Detected attempt to put note without notebook guid")}};
@@ -582,6 +580,8 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
         throw InvalidArgument{ErrorString{QStringLiteral(
             "Detected attempt to put note without existing notebook")}};
     }
+
+    ItemData result;
 
     if (!note.guid()) {
         result.guid = UidGenerator::Generate();
@@ -719,6 +719,222 @@ QList<qevercloud::Note> NoteStoreServer::getNotesByConflictSourceNoteGuid(
         result << *it;
     }
     return result;
+}
+
+QHash<qevercloud::Guid, qevercloud::Resource> NoteStoreServer::resources() const
+{
+    QHash<qevercloud::Guid, qevercloud::Resource> result;
+    result.reserve(static_cast<int>(m_resources.size()));
+
+    for (const auto & resource: m_resources) {
+        Q_ASSERT(resource.guid());
+        result[*resource.guid()] = resource;
+    }
+
+    return result;
+}
+
+NoteStoreServer::ItemData NoteStoreServer::putResource(
+    qevercloud::Resource resource)
+{
+    if (!resource.noteGuid()) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Detected attempt to put resource without note guid")}};
+    }
+
+    const auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
+    const auto noteIt = noteGuidIndex.find(*resource.noteGuid());
+    if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Detected attempt to put resource without existing note")}};
+    }
+
+    Q_ASSERT(noteIt->notebookGuid());
+
+    const auto & notebookGuidIndex =
+        m_notebooks.get<note_store::NotebookByGuidTag>();
+    const auto notebookIt = notebookGuidIndex.find(*noteIt->notebookGuid());
+    if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Could not find notebook corresponding to the note of the "
+            "resource")}};
+    }
+
+    ItemData result;
+
+    if (!resource.guid()) {
+        result.guid = UidGenerator::Generate();
+        resource.setGuid(result.guid);
+    }
+
+    if (!resource.updateSequenceNum()) {
+        std::optional<qint32> maxUsn = notebookIt->linkedNotebookGuid()
+            ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
+            : std::make_optional(currentUserOwnMaxUsn());
+
+        if (Q_UNLIKELY(!maxUsn)) {
+            throw InvalidArgument{ErrorString{QStringLiteral(
+                "Failed to find max USN on attempt to put resource")}};
+        }
+
+        ++(*maxUsn);
+        resource.setUpdateSequenceNum(maxUsn);
+        result.usn = *maxUsn;
+    }
+
+    auto & resourceGuidIndex = m_resources.get<note_store::ResourceByGuidTag>();
+    auto resourceIt = resourceGuidIndex.find(*resource.guid());
+    if (resourceIt == resourceGuidIndex.end()) {
+        resourceGuidIndex.emplace(std::move(resource));
+    }
+    else {
+        resourceGuidIndex.replace(resourceIt, std::move(resource));
+    }
+
+    return result;
+}
+
+std::optional<qevercloud::Resource> NoteStoreServer::findResource(
+    const qevercloud::Guid & guid) const
+{
+    const auto & index = m_resources.get<note_store::ResourceByGuidTag>();
+    if (const auto it = index.find(guid); it != index.end()) {
+        return *it;
+    }
+
+    return std::nullopt;
+}
+
+void NoteStoreServer::removeResource(const qevercloud::Guid & guid)
+{
+    auto & index = m_resources.get<note_store::ResourceByGuidTag>();
+    const auto it = index.find(guid);
+    if (it == index.end()) {
+        return;
+    }
+
+    const auto & noteGuid = it->noteGuid().value();
+    auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
+    const auto noteIt = noteGuidIndex.find(noteGuid);
+    if (noteIt != noteGuidIndex.end()) {
+        qevercloud::Note note{*noteIt};
+        if (note.resources() && !note.resources()->isEmpty()) {
+            auto resourceIt = std::find_if(
+                note.mutableResources()->begin(),
+                note.mutableResources()->end(),
+                [resourceGuid =
+                     it->guid()](const qevercloud::Resource & resource) {
+                    return resource.guid() == resourceGuid;
+                });
+            if (resourceIt != note.mutableResources()->end()) {
+                note.mutableResources()->erase(resourceIt);
+            }
+        }
+        noteGuidIndex.replace(noteIt, note);
+    }
+    else {
+        QNWARNING(
+            "tests::synchronization",
+            "Found no note corresponding to the removed resource: " << *it);
+    }
+
+    index.erase(it);
+}
+
+QHash<qevercloud::Guid, qevercloud::LinkedNotebook>
+    NoteStoreServer::linkedNotebooks() const
+{
+    QHash<qevercloud::Guid, qevercloud::LinkedNotebook> result;
+    result.reserve(static_cast<int>(m_linkedNotebooks.size()));
+
+    for (const auto & linkedNotebook: m_linkedNotebooks) {
+        Q_ASSERT(linkedNotebook.guid());
+        result[*linkedNotebook.guid()] = linkedNotebook;
+    }
+
+    return result;
+}
+
+NoteStoreServer::ItemData NoteStoreServer::putLinkedNotebook(
+    qevercloud::LinkedNotebook linkedNotebook)
+{
+    if (!linkedNotebook.shardId() && !linkedNotebook.uri()) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Detected attempt to put linked notebook without either shard id "
+            "or uri")}};
+    }
+
+    ItemData result;
+
+    if (!linkedNotebook.guid()) {
+        result.guid = UidGenerator::Generate();
+        linkedNotebook.setGuid(result.guid);
+    }
+
+    if (!linkedNotebook.username()) {
+        result.name = nextName(QStringLiteral("Linked notebook"));
+        linkedNotebook.setUsername(result.name);
+    }
+
+    if (!linkedNotebook.updateSequenceNum()) {
+        qint32 maxUsn = currentUserOwnMaxUsn();
+        ++maxUsn;
+        result.usn = maxUsn;
+        linkedNotebook.setUpdateSequenceNum(result.usn);
+    }
+
+    removeExpungedLinkedNotebookGuid(*linkedNotebook.guid());
+
+    auto & index = m_linkedNotebooks.get<note_store::LinkedNotebookByGuidTag>();
+    const auto it = index.find(*linkedNotebook.guid());
+    if (it == index.end()) {
+        index.emplace(std::move(linkedNotebook));
+    }
+    else {
+        index.replace(it, std::move(linkedNotebook));
+    }
+
+    return result;
+}
+
+std::optional<qevercloud::LinkedNotebook> NoteStoreServer::findLinkedNotebook(
+    const qevercloud::Guid & guid) const
+{
+    const auto & index =
+        m_linkedNotebooks.get<note_store::LinkedNotebookByGuidTag>();
+
+    if (const auto it = index.find(guid); it != index.end()) {
+        return *it;
+    }
+
+    return std::nullopt;
+}
+
+void NoteStoreServer::removeLinkedNotebook(const qevercloud::Guid & guid)
+{
+    auto & index = m_linkedNotebooks.get<note_store::LinkedNotebookByGuidTag>();
+    if (const auto it = index.find(guid); it != index.end()) {
+        index.erase(it);
+    }
+}
+
+void NoteStoreServer::putExpungedLinkedNotebookGuid(
+    const qevercloud::Guid & guid)
+{
+    removeLinkedNotebook(guid);
+    m_expungedLinkedNotebookGuids.insert(guid);
+}
+
+bool NoteStoreServer::containsExpungedLinkedNotebookGuid(
+    const qevercloud::Guid & guid) const
+{
+    return m_expungedLinkedNotebookGuids.contains(guid);
+}
+
+void NoteStoreServer::removeExpungedLinkedNotebookGuid(
+    const qevercloud::Guid & guid)
+{
+    m_expungedLinkedNotebookGuids.remove(guid);
 }
 
 void NoteStoreServer::connectToQEverCloudServer()
