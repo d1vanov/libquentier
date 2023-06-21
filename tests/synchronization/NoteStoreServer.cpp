@@ -148,6 +148,7 @@ NoteStoreServer::ItemData NoteStoreServer::putSavedSearch(
         qint32 maxUsn = currentUserOwnMaxUsn();
         ++maxUsn;
         search.setUpdateSequenceNum(maxUsn);
+        setMaxUsn(maxUsn);
         result.usn = maxUsn;
     }
 
@@ -275,6 +276,7 @@ NoteStoreServer::ItemData NoteStoreServer::putTag(qevercloud::Tag tag)
 
         ++(*maxUsn);
         tag.setUpdateSequenceNum(maxUsn);
+        setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
         result.usn = *maxUsn;
     }
 
@@ -457,6 +459,7 @@ NoteStoreServer::ItemData NoteStoreServer::putNotebook(
 
         ++(*maxUsn);
         notebook.setUpdateSequenceNum(maxUsn);
+        setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
         result.usn = *maxUsn;
     }
 
@@ -600,6 +603,7 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
 
         ++(*maxUsn);
         note.setUpdateSequenceNum(maxUsn);
+        setMaxUsn(*maxUsn, notebookIt->linkedNotebookGuid());
         result.usn = *maxUsn;
     }
 
@@ -779,6 +783,7 @@ NoteStoreServer::ItemData NoteStoreServer::putResource(
 
         ++(*maxUsn);
         resource.setUpdateSequenceNum(maxUsn);
+        setMaxUsn(*maxUsn, notebookIt->linkedNotebookGuid());
         result.usn = *maxUsn;
     }
 
@@ -879,8 +884,9 @@ NoteStoreServer::ItemData NoteStoreServer::putLinkedNotebook(
     if (!linkedNotebook.updateSequenceNum()) {
         qint32 maxUsn = currentUserOwnMaxUsn();
         ++maxUsn;
+        linkedNotebook.setUpdateSequenceNum(maxUsn);
+        setMaxUsn(maxUsn);
         result.usn = maxUsn;
-        linkedNotebook.setUpdateSequenceNum(result.usn);
     }
 
     removeExpungedLinkedNotebookGuid(*linkedNotebook.guid());
@@ -935,6 +941,200 @@ void NoteStoreServer::removeExpungedLinkedNotebookGuid(
     const qevercloud::Guid & guid)
 {
     m_expungedLinkedNotebookGuids.remove(guid);
+}
+
+qevercloud::SyncState NoteStoreServer::userOwnSyncState() const
+{
+    return m_userOwnSyncState;
+}
+
+void NoteStoreServer::putUserOwnSyncState(qevercloud::SyncState syncState)
+{
+    m_userOwnSyncState = std::move(syncState);
+}
+
+QHash<qevercloud::Guid, qevercloud::SyncState>
+    NoteStoreServer::linkedNotebookSyncStates() const
+{
+    return m_linkedNotebookSyncStates;
+}
+
+void NoteStoreServer::putLinkedNotebookSyncState(
+    const qevercloud::Guid & linkedNotebookGuid,
+    qevercloud::SyncState syncState)
+{
+    m_linkedNotebookSyncStates[linkedNotebookGuid] = std::move(syncState);
+}
+
+std::optional<qevercloud::SyncState>
+    NoteStoreServer::findLinkedNotebookSyncState(
+        const qevercloud::Guid & linkedNotebookGuid) const
+{
+    if (const auto it =
+            m_linkedNotebookSyncStates.constFind(linkedNotebookGuid);
+        it != m_linkedNotebookSyncStates.constEnd())
+    {
+        return it.value();
+    }
+
+    return std::nullopt;
+}
+
+void NoteStoreServer::removeLinkedNotebookSyncState(
+    const qevercloud::Guid & linkedNotebookGuid)
+{
+    m_linkedNotebookSyncStates.remove(linkedNotebookGuid);
+}
+
+void NoteStoreServer::clearLinkedNotebookSyncStates()
+{
+    m_linkedNotebookSyncStates.clear();
+}
+
+qint32 NoteStoreServer::currentUserOwnMaxUsn() const noexcept
+{
+    return m_userOwnMaxUsn;
+}
+
+std::optional<qint32> NoteStoreServer::currentLinkedNotebookMaxUsn(
+    const qevercloud::Guid & linkedNotebookGuid) const noexcept
+{
+    if (const auto it = m_linkedNotebookMaxUsns.constFind(linkedNotebookGuid);
+        it != m_linkedNotebookMaxUsns.constEnd())
+    {
+        return it.value();
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::pair<
+    NoteStoreServer::StopSynchronizationErrorTrigger, StopSynchronizationError>>
+    NoteStoreServer::stopSynchronizationError() const
+{
+    if (!m_stopSynchronizationErrorData) {
+        return std::nullopt;
+    }
+
+    return std::make_pair(
+        m_stopSynchronizationErrorData->trigger,
+        m_stopSynchronizationErrorData->error);
+}
+
+void NoteStoreServer::setStopSynchronizationError(
+    const StopSynchronizationErrorTrigger trigger,
+    const StopSynchronizationError error)
+{
+    m_stopSynchronizationErrorData =
+        StopSynchronizationErrorData{trigger, error};
+}
+
+void NoteStoreServer::clearStopSynchronizationError()
+{
+    m_stopSynchronizationErrorData.reset();
+}
+
+quint32 NoteStoreServer::maxNumSavedSearches() const noexcept
+{
+    return m_maxNumSavedSearches;
+}
+
+void NoteStoreServer::setMaxNumSavedSearches(
+    const quint32 maxNumSavedSearches) noexcept
+{
+    m_maxNumSavedSearches = maxNumSavedSearches;
+}
+
+quint32 NoteStoreServer::maxNumTags() const noexcept
+{
+    return m_maxNumTags;
+}
+
+void NoteStoreServer::setMaxNumTags(const quint32 maxNumTags) noexcept
+{
+    m_maxNumTags = maxNumTags;
+}
+
+quint32 NoteStoreServer::maxNumNotebooks() const noexcept
+{
+    return m_maxNumNotebooks;
+}
+
+void NoteStoreServer::setMaxNumNotebooks(const quint32 maxNumNotebooks) noexcept
+{
+    m_maxNumNotebooks = maxNumNotebooks;
+}
+
+quint32 NoteStoreServer::maxNumNotes() const noexcept
+{
+    return m_maxNumNotes;
+}
+
+void NoteStoreServer::setMaxNumNotes(const quint32 maxNumNotes) noexcept
+{
+    m_maxNumNotes = maxNumNotes;
+}
+
+quint64 NoteStoreServer::maxNoteSize() const noexcept
+{
+    return m_maxNoteSize;
+}
+
+void NoteStoreServer::setMaxNoteSize(quint64 maxNoteSize) noexcept
+{
+    m_maxNoteSize = maxNoteSize;
+}
+
+quint32 NoteStoreServer::maxNumResourcesPerNote() const noexcept
+{
+    return m_maxNumResourcesPerNote;
+}
+
+void NoteStoreServer::setMaxNumResourcesPerNote(
+    const quint32 maxNumResourcesPerNote) noexcept
+{
+    m_maxNumResourcesPerNote = maxNumResourcesPerNote;
+}
+
+quint32 NoteStoreServer::maxNumTagsPerNote() const noexcept
+{
+    return m_maxNumTagsPerNote;
+}
+
+void NoteStoreServer::setMaxNumTagsPerNote(
+    const quint32 maxNumTagsPerNote) noexcept
+{
+    m_maxNumTagsPerNote = maxNumTagsPerNote;
+}
+
+quint64 NoteStoreServer::maxResourceSize() const noexcept
+{
+    return m_maxResourceSize;
+}
+
+void NoteStoreServer::setMaxResourceSize(const quint64 maxResourceSize) noexcept
+{
+    m_maxResourceSize = maxResourceSize;
+}
+
+void NoteStoreServer::onRequestReady(const QByteArray & responseData)
+{
+    if (Q_UNLIKELY(!m_tcpSocket)) {
+        QFAIL("NoteStoreServer: no socket on ready request");
+        return;
+    }
+
+    QByteArray buffer;
+    buffer.append("HTTP/1.1 200 OK\r\n");
+    buffer.append("Content-Length: ");
+    buffer.append(QString::number(responseData.size()).toUtf8());
+    buffer.append("\r\n");
+    buffer.append("Content-Type: application/x-thrift\r\n\r\n");
+    buffer.append(responseData);
+
+    if (!utils::writeBufferToSocket(buffer, *m_tcpSocket)) {
+        QFAIL("Failed to write response to socket");
+    }
 }
 
 void NoteStoreServer::connectToQEverCloudServer()
@@ -1132,6 +1332,18 @@ void NoteStoreServer::connectToQEverCloudServer()
         m_server,
         &qevercloud::NoteStoreServer::
             onAuthenticateToSharedNotebookRequestReady);
+}
+
+void NoteStoreServer::setMaxUsn(
+    const qint32 maxUsn,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid)
+{
+    if (!linkedNotebookGuid) {
+        m_userOwnMaxUsn = maxUsn;
+        return;
+    }
+
+    m_linkedNotebookMaxUsns[*linkedNotebookGuid] = maxUsn;
 }
 
 } // namespace quentier::synchronization::tests

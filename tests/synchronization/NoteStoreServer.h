@@ -209,9 +209,8 @@ public:
     void removeExpungedLinkedNotebookGuid(const qevercloud::Guid & guid);
 
     // User own sync state
-    [[nodiscard]] std::optional<qevercloud::SyncState> userOwnSyncState() const;
+    [[nodiscard]] qevercloud::SyncState userOwnSyncState() const;
     void putUserOwnSyncState(qevercloud::SyncState syncState);
-    void removeUserOwnSyncState();
 
     // Linked notebook sync states
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::SyncState>
@@ -223,7 +222,7 @@ public:
 
     [[nodiscard]] std::optional<qevercloud::SyncState>
         findLinkedNotebookSyncState(
-            const qevercloud::Guid & linkedNotebookGuid);
+            const qevercloud::Guid & linkedNotebookGuid) const;
 
     void removeLinkedNotebookSyncState(
         const qevercloud::Guid & linkedNotebookGuid);
@@ -231,10 +230,10 @@ public:
     void clearLinkedNotebookSyncStates();
 
     // Update sequence numbers
-    [[nodiscard]] qint32 currentUserOwnMaxUsn() const;
+    [[nodiscard]] qint32 currentUserOwnMaxUsn() const noexcept;
 
     [[nodiscard]] std::optional<qint32> currentLinkedNotebookMaxUsn(
-        const qevercloud::Guid & linkedNotebookGuid) const;
+        const qevercloud::Guid & linkedNotebookGuid) const noexcept;
 
     // Stop synchronization error
     [[nodiscard]] std::optional<
@@ -382,6 +381,11 @@ private:
     [[nodiscard]] std::exception_ptr checkLinkedNotetookAuthentication(
         const qevercloud::IRequestContextPtr & ctx) const;
 
+    void setMaxUsn(
+        qint32 maxUsn,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid =
+            std::nullopt);
+
 private:
     struct StopSynchronizationErrorData
     {
@@ -427,7 +431,10 @@ private:
     quint64 m_maxResourceSize;
 
     qevercloud::SyncState m_userOwnSyncState;
-    QHash<QString, qevercloud::SyncState> m_linkedNotebookSyncStates;
+    QHash<qevercloud::Guid, qevercloud::SyncState> m_linkedNotebookSyncStates;
+
+    qint32 m_userOwnMaxUsn = 0;
+    QHash<qevercloud::Guid, qint32> m_linkedNotebookMaxUsns;
 };
 
 } // namespace quentier::synchronization::tests
