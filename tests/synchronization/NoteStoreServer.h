@@ -378,7 +378,8 @@ private:
     [[nodiscard]] std::exception_ptr checkAuthentication(
         const qevercloud::IRequestContextPtr & ctx) const;
 
-    [[nodiscard]] std::exception_ptr checkLinkedNotetookAuthentication(
+    [[nodiscard]] std::exception_ptr checkLinkedNotebookAuthentication(
+        const qevercloud::Guid & linkedNotebookGuid,
         const qevercloud::IRequestContextPtr & ctx) const;
 
     void setMaxUsn(

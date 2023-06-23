@@ -10,6 +10,16 @@ add_library(${TESTS_LIB_NAME} STATIC
   FakeKeychainService.h
   UserStoreServer.cpp
   UserStoreServer.h
+  note_store/Checks.cpp
+  note_store/Checks.h
+  note_store/LinkedNotebooks.h
+  note_store/Notebooks.h
+  note_store/Notes.h
+  note_store/Resources.h
+  note_store/SavedSearches.h
+  note_store/Tags.h
+  utils/ExceptionUtils.cpp
+  utils/ExceptionUtils.h
   utils/HttpRequestData.h
   utils/HttpRequestParser.cpp
   utils/HttpRequestParser.h

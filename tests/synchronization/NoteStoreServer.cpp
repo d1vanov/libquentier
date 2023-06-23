@@ -18,6 +18,8 @@
 
 #include "NoteStoreServer.h"
 
+#include "note_store/Checks.h"
+#include "utils/ExceptionUtils.h"
 #include "utils/HttpUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
@@ -25,6 +27,8 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
+#include <qevercloud/exceptions/builders/EDAMUserExceptionBuilder.h>
 #include <qevercloud/services/NoteStoreServer.h>
 
 #include <QTcpServer>
@@ -144,13 +148,11 @@ NoteStoreServer::ItemData NoteStoreServer::putSavedSearch(
         result.name = *search.name();
     }
 
-    if (!search.updateSequenceNum()) {
-        qint32 maxUsn = currentUserOwnMaxUsn();
-        ++maxUsn;
-        search.setUpdateSequenceNum(maxUsn);
-        setMaxUsn(maxUsn);
-        result.usn = maxUsn;
-    }
+    qint32 maxUsn = currentUserOwnMaxUsn();
+    ++maxUsn;
+    search.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(maxUsn);
+    result.usn = maxUsn;
 
     removeExpungedSavedSearchGuid(*search.guid());
 
@@ -264,21 +266,19 @@ NoteStoreServer::ItemData NoteStoreServer::putTag(qevercloud::Tag tag)
         result.name = *tag.name();
     }
 
-    if (!tag.updateSequenceNum()) {
-        std::optional<qint32> maxUsn = tag.linkedNotebookGuid()
-            ? currentLinkedNotebookMaxUsn(*tag.linkedNotebookGuid())
-            : std::make_optional(currentUserOwnMaxUsn());
+    std::optional<qint32> maxUsn = tag.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*tag.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
 
-        if (Q_UNLIKELY(!maxUsn)) {
-            throw InvalidArgument{ErrorString{QStringLiteral(
-                "Failed to find max USN on attempt to put tag")}};
-        }
-
-        ++(*maxUsn);
-        tag.setUpdateSequenceNum(maxUsn);
-        setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
-        result.usn = *maxUsn;
+    if (Q_UNLIKELY(!maxUsn)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Failed to find max USN on attempt to put tag")}};
     }
+
+    ++(*maxUsn);
+    tag.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
+    result.usn = *maxUsn;
 
     if (!tag.linkedNotebookGuid()) {
         removeExpungedTagGuid(*tag.guid());
@@ -447,21 +447,19 @@ NoteStoreServer::ItemData NoteStoreServer::putNotebook(
         result.name = *notebook.name();
     }
 
-    if (!notebook.updateSequenceNum()) {
-        std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
-            ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
-            : std::make_optional(currentUserOwnMaxUsn());
+    std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
 
-        if (Q_UNLIKELY(!maxUsn)) {
-            throw InvalidArgument{ErrorString{QStringLiteral(
-                "Failed to find max USN on attempt to put notebook")}};
-        }
-
-        ++(*maxUsn);
-        notebook.setUpdateSequenceNum(maxUsn);
-        setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
-        result.usn = *maxUsn;
+    if (Q_UNLIKELY(!maxUsn)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Failed to find max USN on attempt to put notebook")}};
     }
+
+    ++(*maxUsn);
+    notebook.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+    result.usn = *maxUsn;
 
     if (!notebook.linkedNotebookGuid()) {
         removeExpungedNotebookGuid(*notebook.guid());
@@ -591,21 +589,19 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
         note.setGuid(result.guid);
     }
 
-    if (!note.updateSequenceNum()) {
-        std::optional<qint32> maxUsn = notebookIt->linkedNotebookGuid()
-            ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
-            : std::make_optional(currentUserOwnMaxUsn());
+    std::optional<qint32> maxUsn = notebookIt->linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
 
-        if (Q_UNLIKELY(!maxUsn)) {
-            throw InvalidArgument{ErrorString{QStringLiteral(
-                "Failed to find max USN on attempt to put note")}};
-        }
-
-        ++(*maxUsn);
-        note.setUpdateSequenceNum(maxUsn);
-        setMaxUsn(*maxUsn, notebookIt->linkedNotebookGuid());
-        result.usn = *maxUsn;
+    if (Q_UNLIKELY(!maxUsn)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Failed to find max USN on attempt to put note")}};
     }
+
+    ++(*maxUsn);
+    note.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebookIt->linkedNotebookGuid());
+    result.usn = *maxUsn;
 
     if (!notebookIt->linkedNotebookGuid()) {
         removeExpungedNoteGuid(*note.guid());
@@ -771,21 +767,19 @@ NoteStoreServer::ItemData NoteStoreServer::putResource(
         resource.setGuid(result.guid);
     }
 
-    if (!resource.updateSequenceNum()) {
-        std::optional<qint32> maxUsn = notebookIt->linkedNotebookGuid()
-            ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
-            : std::make_optional(currentUserOwnMaxUsn());
+    std::optional<qint32> maxUsn = notebookIt->linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
 
-        if (Q_UNLIKELY(!maxUsn)) {
-            throw InvalidArgument{ErrorString{QStringLiteral(
-                "Failed to find max USN on attempt to put resource")}};
-        }
-
-        ++(*maxUsn);
-        resource.setUpdateSequenceNum(maxUsn);
-        setMaxUsn(*maxUsn, notebookIt->linkedNotebookGuid());
-        result.usn = *maxUsn;
+    if (Q_UNLIKELY(!maxUsn)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Failed to find max USN on attempt to put resource")}};
     }
+
+    ++(*maxUsn);
+    resource.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebookIt->linkedNotebookGuid());
+    result.usn = *maxUsn;
 
     auto & resourceGuidIndex = m_resources.get<note_store::ResourceByGuidTag>();
     auto resourceIt = resourceGuidIndex.find(*resource.guid());
@@ -881,13 +875,11 @@ NoteStoreServer::ItemData NoteStoreServer::putLinkedNotebook(
         linkedNotebook.setUsername(result.name);
     }
 
-    if (!linkedNotebook.updateSequenceNum()) {
-        qint32 maxUsn = currentUserOwnMaxUsn();
-        ++maxUsn;
-        linkedNotebook.setUpdateSequenceNum(maxUsn);
-        setMaxUsn(maxUsn);
-        result.usn = maxUsn;
-    }
+    qint32 maxUsn = currentUserOwnMaxUsn();
+    ++maxUsn;
+    linkedNotebook.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(maxUsn);
+    result.usn = maxUsn;
 
     removeExpungedLinkedNotebookGuid(*linkedNotebook.guid());
 
@@ -1135,6 +1127,223 @@ void NoteStoreServer::onRequestReady(const QByteArray & responseData)
     if (!utils::writeBufferToSocket(buffer, *m_tcpSocket)) {
         QFAIL("Failed to write response to socket");
     }
+}
+
+void NoteStoreServer::onCreateNotebookRequest(
+    qevercloud::Notebook notebook, const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnCreateNotebook)
+    {
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (m_notebooks.size() + 1 > m_maxNumNotebooks) {
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(
+                qevercloud::EDAMUserExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::LIMIT_REACHED)
+                    .setParameter(QStringLiteral("Notebook"))
+                    .build()));
+        return;
+    }
+
+    if (auto exc = note_store::checkNotebook(notebook)) {
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    if (notebook.linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *notebook.linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT createNotebookRequestReady(
+                qevercloud::Notebook{},
+                std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else {
+        if (auto exc = checkAuthentication(ctx)) {
+            Q_EMIT createNotebookRequestReady(
+                qevercloud::Notebook{},
+                std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+
+    if (notebook.linkedNotebookGuid() &&
+        notebook.defaultNotebook().value_or(false)) {
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::PERMISSION_DENIED,
+                QStringLiteral("Notebook.defaultNotebook"))));
+        return;
+    }
+
+    auto & nameIndex = m_notebooks.get<note_store::NotebookByNameUpperTag>();
+    const auto nameIt = nameIndex.find(notebook.name()->toUpper());
+    if (nameIt != nameIndex.end()) {
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Notebook.name"))));
+        return;
+    }
+
+    notebook.setGuid(UidGenerator::Generate());
+
+    std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
+
+    if (Q_UNLIKELY(!maxUsn)) {
+        // Evernote API reference doesn't really specify what would happen on
+        // attempt to create a notebook not corresponding to a known linked
+        // notebook so improvising
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Notebook"))));
+        return;
+    }
+
+    ++(*maxUsn);
+    notebook.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+
+    m_notebooks.insert(notebook);
+    Q_EMIT createNotebookRequestReady(std::move(notebook), nullptr);
+}
+
+void NoteStoreServer::onUpdateNotebookRequest(
+    qevercloud::Notebook notebook, const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnUpdateNotebook)
+    {
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (!notebook.guid()) {
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createNotFoundException(
+                QStringLiteral("Notebook.guid"))));
+        return;
+    }
+
+    if (auto exc = note_store::checkNotebook(notebook)) {
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    if (notebook.linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *notebook.linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT updateNotebookRequestReady(
+                qevercloud::Notebook{},
+                std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else {
+        if (auto exc = checkAuthentication(ctx)) {
+            Q_EMIT updateNotebookRequestReady(
+                qevercloud::Notebook{},
+                std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+
+    if (notebook.linkedNotebookGuid() &&
+        notebook.defaultNotebook().value_or(false)) {
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::PERMISSION_DENIED,
+                QStringLiteral("Notebook.defaultNotebook"))));
+        return;
+    }
+
+    auto & index = m_notebooks.get<note_store::NotebookByGuidTag>();
+    const auto it = index.find(*notebook.guid());
+    if (it == index.end()) {
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createNotFoundException(
+                QStringLiteral("Notebook.guid"), *notebook.guid())));
+        return;
+    }
+
+    const auto & originalNotebook = *it;
+    if (originalNotebook.restrictions() &&
+        originalNotebook.restrictions()->noUpdateNotebook() &&
+        *originalNotebook.restrictions()->noUpdateNotebook())
+    {
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::PERMISSION_DENIED,
+                QStringLiteral("Notebook"))));
+        return;
+    }
+
+    if (originalNotebook.name().value().toUpper() != notebook.name()->toUpper())
+    {
+        auto & nameIndex =
+            m_notebooks.get<note_store::NotebookByNameUpperTag>();
+
+        const auto nameIt = nameIndex.find(notebook.name()->toUpper());
+        if (nameIt != nameIndex.end()) {
+            Q_EMIT updateNotebookRequestReady(
+                qevercloud::Notebook{},
+                std::make_exception_ptr(utils::createUserException(
+                    qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                    QStringLiteral("Notebook.name"))));
+            return;
+        }
+    }
+
+    std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
+
+    if (Q_UNLIKELY(!maxUsn)) {
+        // Evernote API reference doesn't really specify what would happen on
+        // attempt to update a notebook not corresponding to a known linked
+        // notebook so improvising
+        Q_EMIT updateNotebookRequestReady(
+            qevercloud::Notebook{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Notebook"))));
+        return;
+    }
+
+    ++(*maxUsn);
+    notebook.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+
+    index.replace(it, notebook);
+    Q_EMIT updateNotebookRequestReady(std::move(notebook), nullptr);
 }
 
 void NoteStoreServer::connectToQEverCloudServer()
