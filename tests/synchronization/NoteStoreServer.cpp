@@ -27,6 +27,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/exceptions/builders/EDAMNotFoundExceptionBuilder.h>
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/exceptions/builders/EDAMUserExceptionBuilder.h>
 #include <qevercloud/services/NoteStoreServer.h>
@@ -1344,6 +1345,122 @@ void NoteStoreServer::onUpdateNotebookRequest(
 
     index.replace(it, notebook);
     Q_EMIT updateNotebookRequestReady(std::move(notebook), nullptr);
+}
+
+void NoteStoreServer::onCreateNoteRequest(
+    qevercloud::Note note, const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnCreateNote)
+    {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (m_notes.size() + 1 > m_maxNumNotes) {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMUserExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::LIMIT_REACHED)
+                    .setParameter(QStringLiteral("Note"))
+                    .build()));
+        return;
+    }
+
+    if (Q_UNLIKELY(!note.notebookGuid())) {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Note.notebookGuid"))
+                    .build()));
+        return;
+    }
+
+    const auto & notebookGuidIndex =
+        m_notebooks.get<note_store::NotebookByGuidTag>();
+
+    const auto notebookIt = notebookGuidIndex.find(*note.notebookGuid());
+    if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Note.notebookGuid"))
+                    .setKey(*note.notebookGuid())
+                    .build()));
+        return;
+    }
+
+    const auto & notebook = *notebookIt;
+    if (notebook.restrictions() &&
+        notebook.restrictions()->noCreateNotes().value_or(false))
+    {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::PERMISSION_DENIED)
+                    .setMessage(QStringLiteral(
+                        "Cannot create note due to notebook restrictions"))
+                    .build()));
+        return;
+    }
+
+    if (auto exc = note_store::checkNote(
+            note, m_maxNumResourcesPerNote, m_maxNumTagsPerNote))
+    {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    if (notebook.linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *notebook.linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT createNoteRequestReady(
+                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else {
+        if (auto exc = checkAuthentication(ctx)) {
+            Q_EMIT createNoteRequestReady(
+                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+
+    note.setGuid(UidGenerator::Generate());
+
+    std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
+
+    if (Q_UNLIKELY(!maxUsn)) {
+        // Evernote API reference doesn't really specify what would happen on
+        // attempt to create a note not corresponding to a known linked
+        // notebook so improvising
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Note"))));
+        return;
+    }
+
+    ++(*maxUsn);
+    note.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+
+    m_notes.insert(note);
+    Q_EMIT createNoteRequestReady(std::move(note), nullptr);
 }
 
 void NoteStoreServer::connectToQEverCloudServer()

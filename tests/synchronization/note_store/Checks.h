@@ -28,4 +28,8 @@ namespace quentier::synchronization::tests::note_store {
 [[nodiscard]] std::optional<qevercloud::EDAMUserException> checkNotebook(
     const qevercloud::Notebook & notebook);
 
+[[nodiscard]] std::optional<qevercloud::EDAMUserException> checkNote(
+    const qevercloud::Note & note, quint32 maxNumResourcesPerNote,
+    quint32 maxTagsPerNote);
+
 } // namespace quentier::synchronization::tests::note_store

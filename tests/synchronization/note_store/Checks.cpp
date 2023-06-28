@@ -16,16 +16,113 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Checks.h"
 #include "../utils/ExceptionUtils.h"
+#include "Checks.h"
 
 #include <qevercloud/Constants.h>
 #include <qevercloud/exceptions/builders/EDAMUserExceptionBuilder.h>
+#include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
 
 #include <QRegularExpression>
 
 namespace quentier::synchronization::tests::note_store {
+
+namespace {
+
+[[nodiscard]] std::optional<qevercloud::EDAMUserException> checkAppDataKey(
+    const QString & key, const QRegularExpression & keyRegExp)
+{
+    if (key.size() < qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::LIMIT_REACHED,
+            QStringLiteral("ApplicationData"));
+    }
+
+    if (key.size() > qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::LIMIT_REACHED,
+            QStringLiteral("ApplicationData"));
+    }
+
+    if (!keyRegExp.match(key).hasMatch()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::LIMIT_REACHED,
+            QStringLiteral("ApplicationData"));
+    }
+
+    return std::nullopt;
+}
+
+[[nodiscard]] std::optional<qevercloud::EDAMUserException> checkAppData(
+    const qevercloud::LazyMap & appData)
+{
+    static const QRegularExpression keyRegExp{
+        qevercloud::EDAM_APPLICATIONDATA_NAME_REGEX};
+
+    static const QRegularExpression valueRegExp{
+        qevercloud::EDAM_APPLICATIONDATA_VALUE_REGEX};
+
+    if (appData.keysOnly()) {
+        if (appData.keysOnly()->size() > qevercloud::EDAM_ATTRIBUTE_LIST_MAX) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("ApplicationData"));
+        }
+
+        for (auto it = appData.keysOnly()->constBegin(),
+                  end = appData.keysOnly()->constEnd();
+             it != end; ++it)
+        {
+            const QString & key = *it;
+            if (auto exc = checkAppDataKey(key, keyRegExp)) {
+                return exc;
+            }
+        }
+    }
+
+    if (appData.fullMap()) {
+        if (appData.fullMap()->size() > qevercloud::EDAM_ATTRIBUTE_MAP_MAX) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("ApplicationData"));
+        }
+
+        for (auto it = appData.fullMap()->constBegin(),
+                  end = appData.fullMap()->constEnd();
+             it != end; ++it)
+        {
+            const QString & key = it.key();
+            if (auto exc = checkAppDataKey(key, keyRegExp)) {
+                return exc;
+            }
+
+            const QString & value = it.value();
+
+            if (value.size() < qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MIN) {
+                return utils::createUserException(
+                    qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                    QStringLiteral("ApplicationData"));
+            }
+
+            if (value.size() > qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX) {
+                return utils::createUserException(
+                    qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                    QStringLiteral("ApplicationData"));
+            }
+
+            if (!valueRegExp.match(value).hasMatch()) {
+                return utils::createUserException(
+                    qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                    QStringLiteral("ApplicationData"));
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
+} // namespace
 
 std::optional<qevercloud::EDAMUserException> checkNotebook(
     const qevercloud::Notebook & notebook)
@@ -153,6 +250,233 @@ std::optional<qevercloud::EDAMUserException> checkNotebook(
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
                 QStringLiteral("Publishing.publicDescription"));
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<qevercloud::EDAMUserException> checkNote(
+    const qevercloud::Note & note, const quint32 maxNumResourcesPerNote,
+    const quint32 maxTagsPerNote)
+{
+    if (note.title()) {
+        const QString & title = *note.title();
+
+        if (title.size() < qevercloud::EDAM_NOTE_TITLE_LEN_MIN) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Note.title"));
+        }
+
+        if (title.size() > qevercloud::EDAM_NOTE_TITLE_LEN_MAX) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Note.title"));
+        }
+
+        static const QRegularExpression noteTitleRegExp{
+            qevercloud::EDAM_NOTE_TITLE_REGEX};
+
+        if (!noteTitleRegExp.match(title).hasMatch()) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Note.title"));
+        }
+    }
+
+    if (note.content()) {
+        const QString & content = *note.content();
+
+        if (content.size() < qevercloud::EDAM_NOTE_CONTENT_LEN_MIN) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Note.content"));
+        }
+
+        if (content.size() > qevercloud::EDAM_NOTE_CONTENT_LEN_MAX) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Note.content"));
+        }
+    }
+
+    if (note.tagGuids() && note.tagGuids()->size() > maxTagsPerNote) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::LIMIT_REACHED,
+            QStringLiteral("Note.tagGuids"));
+    }
+
+    if (note.active().value_or(false) && note.deleted()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::DATA_CONFLICT,
+            QStringLiteral("Note.deleted"));
+    }
+
+    if (note.resources() && !note.resources()->isEmpty()) {
+        const auto & resources = *note.resources();
+        if (resources.size() > maxNumResourcesPerNote) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("Note.resources"));
+        }
+
+        for (const auto & resource: qAsConst(resources)) {
+            if (!resource.data() || !resource.data()->body()) {
+                return utils::createUserException(
+                    qevercloud::EDAMErrorCode::DATA_REQUIRED,
+                    QStringLiteral("Resource.data"));
+            }
+
+            if (resource.data()->body()->size() >
+                qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE) {
+                return utils::createUserException(
+                    qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                    QStringLiteral("Resource.data.size"));
+            }
+
+            if (resource.mime()) {
+                const QString & mime = *resource.mime();
+
+                if (mime.size() < qevercloud::EDAM_MIME_LEN_MIN) {
+                    return utils::createUserException(
+                        qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                        QStringLiteral("Resource.mime"));
+                }
+
+                if (mime.size() > qevercloud::EDAM_MIME_LEN_MAX) {
+                    return utils::createUserException(
+                        qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                        QStringLiteral("Resource.mime"));
+                }
+
+                static const QRegularExpression mimeRegExp{
+                    qevercloud::EDAM_MIME_REGEX};
+
+                if (!mimeRegExp.match(mime).hasMatch()) {
+                    return utils::createUserException(
+                        qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                        QStringLiteral("Resource.mime"));
+                }
+            }
+
+            if (resource.attributes()) {
+                const auto & attributes = *resource.attributes();
+
+                if (attributes.sourceURL() &&
+                        (attributes.sourceURL()->size() <
+                         qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                    (attributes.sourceURL()->size() >
+                     qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+                {
+                    return utils::createUserException(
+                        qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                        QStringLiteral("ResourceAttribute.sourceURL"));
+                }
+
+                if (attributes.cameraMake() &&
+                        (attributes.cameraMake()->size() <
+                         qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                    (attributes.cameraMake()->size() >
+                     qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+                {
+                    return utils::createUserException(
+                        qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                        QStringLiteral("ResourceAttribute.cameraMake"));
+                }
+
+                if (attributes.cameraModel() &&
+                        (attributes.cameraModel()->size() <
+                         qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                    (attributes.cameraModel()->size() >
+                     qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+                {
+                    return utils::createUserException(
+                        qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                        QStringLiteral("ResourceAttribute.cameraModel"));
+                }
+
+                if (attributes.applicationData()) {
+                    if (auto exc = checkAppData(*attributes.applicationData()))
+                    {
+                        return exc;
+                    }
+                }
+            }
+        }
+    }
+
+    if (note.attributes()) {
+        const auto & attributes = *note.attributes();
+
+        if (attributes.author() &&
+                (attributes.author()->size() <
+                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+            (attributes.author()->size() > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+        {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("NoteAttribute.author"));
+        }
+
+        if (attributes.source() &&
+                (attributes.source()->size() <
+                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+            (attributes.source()->size() > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+        {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("NoteAttribute.source"));
+        }
+
+        if (attributes.sourceURL() &&
+                (attributes.sourceURL()->size() <
+                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+            (attributes.sourceURL()->size() >
+             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+        {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("NoteAttribute.sourceURL"));
+        }
+
+        if (attributes.sourceApplication() &&
+                (attributes.sourceApplication()->size() <
+                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+            (attributes.sourceApplication()->size() >
+             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+        {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("NoteAttribute.sourceApplication"));
+        }
+
+        if (attributes.placeName() &&
+                (attributes.placeName()->size() <
+                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+            (attributes.placeName()->size() >
+             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+        {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("NoteAttribute.placeName"));
+        }
+
+        if (attributes.contentClass() &&
+                (attributes.contentClass()->size() <
+                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+            (attributes.contentClass()->size() >
+             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+        {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::LIMIT_REACHED,
+                QStringLiteral("NoteAttribute.contentClass"));
+        }
+
+        if (attributes.applicationData()) {
+            if (auto exc = checkAppData(*attributes.applicationData())) {
+                return exc;
+            }
         }
     }
 
