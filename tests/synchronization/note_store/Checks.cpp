@@ -23,6 +23,7 @@
 #include <qevercloud/exceptions/builders/EDAMUserExceptionBuilder.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Tag.h>
 
 #include <QRegularExpression>
 
@@ -301,7 +302,9 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         }
     }
 
-    if (note.tagGuids() && note.tagGuids()->size() > maxTagsPerNote) {
+    if (note.tagGuids() &&
+        note.tagGuids()->size() > static_cast<int>(maxTagsPerNote))
+    {
         return utils::createUserException(
             qevercloud::EDAMErrorCode::LIMIT_REACHED,
             QStringLiteral("Note.tagGuids"));
@@ -315,7 +318,7 @@ std::optional<qevercloud::EDAMUserException> checkNote(
 
     if (note.resources() && !note.resources()->isEmpty()) {
         const auto & resources = *note.resources();
-        if (resources.size() > maxNumResourcesPerNote) {
+        if (resources.size() > static_cast<int>(maxNumResourcesPerNote)) {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
                 QStringLiteral("Note.resources"));
@@ -364,10 +367,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
                 const auto & attributes = *resource.attributes();
 
                 if (attributes.sourceURL() &&
-                        (attributes.sourceURL()->size() <
-                         qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-                    (attributes.sourceURL()->size() >
-                     qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+                    ((attributes.sourceURL()->size() <
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                     (attributes.sourceURL()->size() >
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
                 {
                     return utils::createUserException(
                         qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -375,10 +378,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
                 }
 
                 if (attributes.cameraMake() &&
-                        (attributes.cameraMake()->size() <
-                         qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-                    (attributes.cameraMake()->size() >
-                     qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+                    ((attributes.cameraMake()->size() <
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                     (attributes.cameraMake()->size() >
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
                 {
                     return utils::createUserException(
                         qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -386,10 +389,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
                 }
 
                 if (attributes.cameraModel() &&
-                        (attributes.cameraModel()->size() <
-                         qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-                    (attributes.cameraModel()->size() >
-                     qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+                    ((attributes.cameraModel()->size() <
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                     (attributes.cameraModel()->size() >
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
                 {
                     return utils::createUserException(
                         qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -410,9 +413,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         const auto & attributes = *note.attributes();
 
         if (attributes.author() &&
-                (attributes.author()->size() <
-                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-            (attributes.author()->size() > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            ((attributes.author()->size() <
+              qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+             (attributes.author()->size() >
+              qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
         {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -420,9 +424,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         }
 
         if (attributes.source() &&
-                (attributes.source()->size() <
-                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-            (attributes.source()->size() > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            ((attributes.source()->size() <
+              qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+             (attributes.source()->size() >
+              qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
         {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -430,10 +435,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         }
 
         if (attributes.sourceURL() &&
-                (attributes.sourceURL()->size() <
-                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-            (attributes.sourceURL()->size() >
-             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            ((attributes.sourceURL()->size() <
+              qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+             (attributes.sourceURL()->size() >
+              qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
         {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -441,10 +446,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         }
 
         if (attributes.sourceApplication() &&
-                (attributes.sourceApplication()->size() <
-                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-            (attributes.sourceApplication()->size() >
-             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            ((attributes.sourceApplication()->size() <
+              qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+             (attributes.sourceApplication()->size() >
+              qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
         {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -452,10 +457,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         }
 
         if (attributes.placeName() &&
-                (attributes.placeName()->size() <
-                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-            (attributes.placeName()->size() >
-             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            ((attributes.placeName()->size() <
+              qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+             (attributes.placeName()->size() >
+              qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
         {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -463,10 +468,10 @@ std::optional<qevercloud::EDAMUserException> checkNote(
         }
 
         if (attributes.contentClass() &&
-                (attributes.contentClass()->size() <
-                 qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
-            (attributes.contentClass()->size() >
-             qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            ((attributes.contentClass()->size() <
+              qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+             (attributes.contentClass()->size() >
+              qevercloud::EDAM_ATTRIBUTE_LEN_MAX)))
         {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::LIMIT_REACHED,
@@ -477,6 +482,64 @@ std::optional<qevercloud::EDAMUserException> checkNote(
             if (auto exc = checkAppData(*attributes.applicationData())) {
                 return exc;
             }
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<qevercloud::EDAMUserException> checkTag(
+    const qevercloud::Tag & tag)
+{
+    if (!tag.name()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("Tag.name"));
+    }
+
+    const auto & name = *tag.name();
+
+    if (name.size() < qevercloud::EDAM_TAG_NAME_LEN_MIN) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("Tag.name"));
+    }
+
+    if (name.size() > qevercloud::EDAM_TAG_NAME_LEN_MAX) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("Tag.name"));
+    }
+
+    static const QRegularExpression tagNameRegExp{
+        qevercloud::EDAM_TAG_NAME_REGEX};
+
+    if (!tagNameRegExp.match(name).hasMatch()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("Tag.name"));
+    }
+
+    if (tag.parentGuid()) {
+        const auto & parentGuid = *tag.parentGuid();
+
+        if (parentGuid.size() < qevercloud::EDAM_GUID_LEN_MIN) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Tag.parentGuid"));
+        }
+
+        if (parentGuid.size() > qevercloud::EDAM_GUID_LEN_MAX) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Tag.parentGuid"));
+        }
+
+        static const QRegularExpression guidRegExp{qevercloud::EDAM_GUID_REGEX};
+        if (!guidRegExp.match(parentGuid).hasMatch()) {
+            return utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Tag.parentGuid"));
         }
     }
 

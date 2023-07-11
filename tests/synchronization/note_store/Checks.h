@@ -32,4 +32,7 @@ namespace quentier::synchronization::tests::note_store {
     const qevercloud::Note & note, quint32 maxNumResourcesPerNote,
     quint32 maxTagsPerNote);
 
+[[nodiscard]] std::optional<qevercloud::EDAMUserException> checkTag(
+    const qevercloud::Tag & tag);
+
 } // namespace quentier::synchronization::tests::note_store

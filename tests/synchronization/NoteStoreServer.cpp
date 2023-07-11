@@ -1463,6 +1463,352 @@ void NoteStoreServer::onCreateNoteRequest(
     Q_EMIT createNoteRequestReady(std::move(note), nullptr);
 }
 
+void NoteStoreServer::onUpdateNoteRequest(
+    qevercloud::Note note, const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnUpdateNote)
+    {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (Q_UNLIKELY(!note.guid())) {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Note.guid"))
+                    .build()));
+        return;
+    }
+
+    const auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
+    const auto noteIt = noteGuidIndex.find(*note.guid());
+    if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Note.guid"))
+                    .setKey(*note.guid())
+                    .build()));
+    }
+
+    if (Q_UNLIKELY(!note.notebookGuid())) {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Note.notebookGuid"))
+                    .build()));
+        return;
+    }
+
+    const auto & notebookGuidIndex =
+        m_notebooks.get<note_store::NotebookByGuidTag>();
+
+    const auto notebookIt = notebookGuidIndex.find(*note.notebookGuid());
+    if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Note.notebookGuid"))
+                    .setKey(*note.notebookGuid())
+                    .build()));
+        return;
+    }
+
+    const auto & notebook = *notebookIt;
+    if (notebook.restrictions() &&
+        notebook.restrictions()->noUpdateNotes().value_or(false))
+    {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::PERMISSION_DENIED)
+                    .setMessage(QStringLiteral(
+                        "Cannot update note due to notebook restrictions"))
+                    .build()));
+        return;
+    }
+
+    if (auto exc = note_store::checkNote(
+            note, m_maxNumResourcesPerNote, m_maxNumTagsPerNote))
+    {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    if (notebook.linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *notebook.linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT updateNoteRequestReady(
+                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else {
+        if (auto exc = checkAuthentication(ctx)) {
+            Q_EMIT updateNoteRequestReady(
+                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+
+    std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
+
+    if (Q_UNLIKELY(!maxUsn)) {
+        // Evernote API reference doesn't really specify what would happen on
+        // attempt to update a note not corresponding to a known linked
+        // notebook so improvising
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Note"))));
+        return;
+    }
+
+    ++(*maxUsn);
+    note.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+
+    m_notes.insert(note);
+    Q_EMIT updateNoteRequestReady(std::move(note), nullptr);
+}
+
+void NoteStoreServer::onCreateTagRequest(
+    qevercloud::Tag tag, const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnCreateTag)
+    {
+        Q_EMIT createTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (m_tags.size() + 1 > m_maxNumTags) {
+        Q_EMIT createTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(
+                qevercloud::EDAMUserExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::LIMIT_REACHED)
+                    .setParameter(QStringLiteral("Tag"))
+                    .build()));
+        return;
+    }
+
+    if (tag.parentGuid()) {
+        const auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
+        const auto tagIt = tagGuidIndex.find(*tag.parentGuid());
+        if (Q_UNLIKELY(tagIt == tagGuidIndex.end())) {
+            Q_EMIT createTagRequestReady(
+                qevercloud::Tag{},
+                std::make_exception_ptr(
+                    qevercloud::EDAMNotFoundExceptionBuilder{}
+                        .setIdentifier(QStringLiteral("Tag.parentGuid"))
+                        .setKey(*tag.parentGuid())
+                        .build()));
+            return;
+        }
+    }
+
+    if (auto exc = note_store::checkTag(tag)) {
+        Q_EMIT createTagRequestReady(
+            qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    Q_ASSERT(tag.name());
+
+    const auto & name = *tag.name();
+
+    const auto & tagNameIndex = m_tags.get<note_store::TagByNameUpperTag>();
+    const auto tagNameIt = tagNameIndex.find(name.toUpper());
+    if (Q_UNLIKELY(tagNameIt != tagNameIndex.end())) {
+        Q_EMIT createTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(
+                qevercloud::EDAMUserExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::DATA_CONFLICT)
+                    .setParameter(QStringLiteral("Tag.name"))
+                    .build()));
+        return;
+    }
+
+    if (tag.linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *tag.linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT createTagRequestReady(
+                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else {
+        if (auto exc = checkAuthentication(ctx)) {
+            Q_EMIT createTagRequestReady(
+                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+
+    std::optional<qint32> maxUsn = tag.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*tag.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
+
+    if (Q_UNLIKELY(!maxUsn)) {
+        // Evernote API reference doesn't really specify what would happen on
+        // attempt to create a tag not corresponding to a known linked
+        // notebook so improvising
+        Q_EMIT createTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Tag"))));
+        return;
+    }
+
+    ++(*maxUsn);
+    tag.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
+
+    m_tags.insert(tag);
+    Q_EMIT createTagRequestReady(std::move(tag), nullptr);
+}
+
+void NoteStoreServer::onUpdateTagRequest(
+    qevercloud::Tag tag, const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnUpdateTag)
+    {
+        Q_EMIT updateTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (Q_UNLIKELY(!tag.guid())) {
+        Q_EMIT updateTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Tag.guid"))
+                    .build()));
+        return;
+    }
+
+    const auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
+    const auto tagIt = tagGuidIndex.find(*tag.guid());
+    if (Q_UNLIKELY(tagIt == tagGuidIndex.end())) {
+        Q_EMIT updateTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("Tag.guid"))
+                    .setKey(*tag.guid())
+                    .build()));
+    }
+
+    if (tag.parentGuid()) {
+        const auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
+        const auto tagIt = tagGuidIndex.find(*tag.parentGuid());
+        if (Q_UNLIKELY(tagIt == tagGuidIndex.end())) {
+            Q_EMIT updateTagRequestReady(
+                qevercloud::Tag{},
+                std::make_exception_ptr(
+                    qevercloud::EDAMNotFoundExceptionBuilder{}
+                        .setIdentifier(QStringLiteral("Tag.parentGuid"))
+                        .setKey(*tag.parentGuid())
+                        .build()));
+            return;
+        }
+    }
+
+    if (auto exc = note_store::checkTag(tag)) {
+        Q_EMIT updateTagRequestReady(
+            qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    Q_ASSERT(tag.name());
+
+    const auto & name = *tag.name();
+
+    const auto & tagNameIndex = m_tags.get<note_store::TagByNameUpperTag>();
+    const auto tagNameIt = tagNameIndex.find(name.toUpper());
+    if (Q_UNLIKELY(
+            tagNameIt != tagNameIndex.end() && tagNameIt->guid() != tag.guid()))
+    {
+        Q_EMIT updateTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(
+                qevercloud::EDAMUserExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::DATA_CONFLICT)
+                    .setParameter(QStringLiteral("Tag.name"))
+                    .build()));
+        return;
+    }
+
+    if (tag.linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *tag.linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT updateTagRequestReady(
+                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else {
+        if (auto exc = checkAuthentication(ctx)) {
+            Q_EMIT updateTagRequestReady(
+                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+
+    std::optional<qint32> maxUsn = tag.linkedNotebookGuid()
+        ? currentLinkedNotebookMaxUsn(*tag.linkedNotebookGuid())
+        : std::make_optional(currentUserOwnMaxUsn());
+
+    if (Q_UNLIKELY(!maxUsn)) {
+        // Evernote API reference doesn't really specify what would happen on
+        // attempt to create a tag not corresponding to a known linked
+        // notebook so improvising
+        Q_EMIT updateTagRequestReady(
+            qevercloud::Tag{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::DATA_CONFLICT,
+                QStringLiteral("Tag"))));
+        return;
+    }
+
+    ++(*maxUsn);
+    tag.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
+
+    m_tags.insert(tag);
+    Q_EMIT updateTagRequestReady(std::move(tag), nullptr);
+}
+
 void NoteStoreServer::connectToQEverCloudServer()
 {
     // 1. Connect QEverCloud server's request ready signals to local slot
