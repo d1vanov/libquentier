@@ -23,6 +23,7 @@
 #include <qevercloud/exceptions/builders/EDAMUserExceptionBuilder.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/SavedSearch.h>
 #include <qevercloud/types/Tag.h>
 
 #include <QRegularExpression>
@@ -541,6 +542,61 @@ std::optional<qevercloud::EDAMUserException> checkTag(
                 qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
                 QStringLiteral("Tag.parentGuid"));
         }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<qevercloud::EDAMUserException> checkSavedSearch(
+    const qevercloud::SavedSearch & savedSearch)
+{
+    if (!savedSearch.name()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.name"));
+    }
+
+    const auto & name = *savedSearch.name();
+
+    if (name.size() < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.name"));
+    }
+
+    if (name.size() > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.name"));
+    }
+
+    static const QRegularExpression savedSearchNameRegExp{
+        qevercloud::EDAM_SAVED_SEARCH_NAME_REGEX};
+
+    if (!savedSearchNameRegExp.match(name).hasMatch()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.name"));
+    }
+
+    if (!savedSearch.query()) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.query"));
+    }
+
+    const auto & query = *savedSearch.query();
+
+    if (query.size() < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.query"));
+    }
+
+    if (query.size() > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX) {
+        return utils::createUserException(
+            qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+            QStringLiteral("SavedSearch.query"));
     }
 
     return std::nullopt;

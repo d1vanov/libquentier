@@ -293,7 +293,7 @@ Q_SIGNALS:
     void getSyncStateRequestReady(
         qevercloud::SyncState syncState, std::exception_ptr e);
 
-    void getLinkedNotebookSyncStateReady(
+    void getLinkedNotebookSyncStateRequestReady(
         qevercloud::SyncState syncState, std::exception_ptr e);
 
     void getFilteredSyncChunkRequestReady(

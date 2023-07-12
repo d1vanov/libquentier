@@ -35,4 +35,7 @@ namespace quentier::synchronization::tests::note_store {
 [[nodiscard]] std::optional<qevercloud::EDAMUserException> checkTag(
     const qevercloud::Tag & tag);
 
+[[nodiscard]] std::optional<qevercloud::EDAMUserException> checkSavedSearch(
+    const qevercloud::SavedSearch & savedSearch);
+
 } // namespace quentier::synchronization::tests::note_store
