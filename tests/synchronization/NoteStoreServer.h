@@ -354,8 +354,8 @@ private Q_SLOTS:
         const qevercloud::IRequestContextPtr & ctx);
 
     void onGetLinkedNotebookSyncChunkRequest(
-        const qevercloud::LinkedNotebook & linkedNotebook,
-        qint32 afterUSN, qint32 maxEntries, bool fullSyncOnly,
+        const qevercloud::LinkedNotebook & linkedNotebook, qint32 afterUSN,
+        qint32 maxEntries, bool fullSyncOnly,
         const qevercloud::IRequestContextPtr & ctx);
 
     void onGetNoteWithResultSpecRequest(
@@ -386,6 +386,24 @@ private:
         qint32 maxUsn,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid =
             std::nullopt);
+
+    [[nodiscard]] std::pair<qevercloud::SyncChunk, std::exception_ptr>
+        getSyncChunkImpl(
+            qint32 afterUsn, qint32 maxEntries, bool fullSyncOnly,
+            const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+            const qevercloud::SyncChunkFilter & filter,
+            const qevercloud::IRequestContextPtr & ctx) const;
+
+    [[nodiscard]] note_store::NotesByUSN::const_iterator nextNoteByUsnIterator(
+        note_store::NotesByUSN::const_iterator it,
+        const std::optional<qevercloud::Guid> & targetLinkedNotebookGuid = {})
+        const;
+
+    [[nodiscard]] note_store::ResourcesByUSN::const_iterator
+        nextResourceByUsnIterator(
+            note_store::ResourcesByUSN::const_iterator it,
+            const std::optional<qevercloud::Guid> & targetLinkedNotebookGuid =
+                {}) const;
 
 private:
     struct StopSynchronizationErrorData
