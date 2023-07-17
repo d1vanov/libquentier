@@ -29,11 +29,13 @@
 
 #include <qevercloud/Constants.h>
 #include <qevercloud/Fwd.h>
+#include <qevercloud/types/AuthenticationResult.h>
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/Resource.h>
 #include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/SyncChunk.h>
 #include <qevercloud/types/SyncState.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/types/TypeAliases.h>
@@ -277,18 +279,18 @@ Q_SIGNALS:
         qevercloud::Notebook notebook, std::exception_ptr e);
 
     void updateNotebookRequestReady(
-        qevercloud::Notebook notebook, std::exception_ptr e);
+        qint32 updateSequenceNum, std::exception_ptr e);
 
     void createNoteRequestReady(qevercloud::Note note, std::exception_ptr e);
     void updateNoteRequestReady(qevercloud::Note note, std::exception_ptr e);
-    void createTagRequestReady(qevercloud::Tag tag, std::exception_ptr e);
-    void updateTagRequestReady(qevercloud::Tag, std::exception_ptr e);
+    void createTagRequestReady(qevercloud::Tag, std::exception_ptr e);
+    void updateTagRequestReady(qint32 updateSequenceNum, std::exception_ptr e);
 
     void createSavedSearchRequestReady(
         qevercloud::SavedSearch search, std::exception_ptr e);
 
     void updateSavedSearchRequestReady(
-        qevercloud::SavedSearch search, std::exception_ptr e);
+        qint32 updateSequenceNum, std::exception_ptr e);
 
     void getSyncStateRequestReady(
         qevercloud::SyncState syncState, std::exception_ptr e);
@@ -439,6 +441,8 @@ private:
     QSet<QString> m_expungedLinkedNotebookGuids;
 
     std::optional<StopSynchronizationErrorData> m_stopSynchronizationErrorData;
+
+    bool m_onceGetLinkedNotebookSyncChunkCalled = false;
 
     quint32 m_maxNumSavedSearches;
     quint32 m_maxNumTags;

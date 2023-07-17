@@ -8,10 +8,13 @@ add_library(${TESTS_LIB_NAME} STATIC
   FakeAuthenticator.h
   FakeKeychainService.cpp
   FakeKeychainService.h
+  NoteStoreServer.cpp
+  NoteStoreServer.h
   UserStoreServer.cpp
   UserStoreServer.h
   note_store/Checks.cpp
   note_store/Checks.h
+  note_store/Compat.h
   note_store/LinkedNotebooks.h
   note_store/Notebooks.h
   note_store/Notes.h

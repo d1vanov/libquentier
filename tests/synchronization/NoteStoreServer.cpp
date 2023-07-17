@@ -19,6 +19,7 @@
 #include "NoteStoreServer.h"
 
 #include "note_store/Checks.h"
+#include "note_store/Compat.h"
 #include "utils/ExceptionUtils.h"
 #include "utils/HttpUtils.h"
 
@@ -1259,13 +1260,10 @@ void NoteStoreServer::onCreateNotebookRequest(
             return;
         }
     }
-    else {
-        if (auto exc = checkAuthentication(ctx)) {
-            Q_EMIT createNotebookRequestReady(
-                qevercloud::Notebook{},
-                std::make_exception_ptr(std::move(exc)));
-            return;
-        }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT createNotebookRequestReady(
+            qevercloud::Notebook{}, std::make_exception_ptr(std::move(exc)));
+        return;
     }
 
     if (notebook.linkedNotebookGuid() &&
@@ -1323,7 +1321,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
             StopSynchronizationErrorTrigger::OnUpdateNotebook)
     {
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{},
+            0,
             std::make_exception_ptr(utils::createStopSyncException(
                 m_stopSynchronizationErrorData->error)));
         return;
@@ -1331,7 +1329,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
 
     if (!notebook.guid()) {
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{},
+            0,
             std::make_exception_ptr(utils::createNotFoundException(
                 QStringLiteral("Notebook.guid"))));
         return;
@@ -1339,7 +1337,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
 
     if (auto exc = note_store::checkNotebook(notebook)) {
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{}, std::make_exception_ptr(std::move(exc)));
+            0, std::make_exception_ptr(std::move(exc)));
         return;
     }
 
@@ -1348,24 +1346,20 @@ void NoteStoreServer::onUpdateNotebookRequest(
                 *notebook.linkedNotebookGuid(), ctx))
         {
             Q_EMIT updateNotebookRequestReady(
-                qevercloud::Notebook{},
-                std::make_exception_ptr(std::move(exc)));
+                0, std::make_exception_ptr(std::move(exc)));
             return;
         }
     }
-    else {
-        if (auto exc = checkAuthentication(ctx)) {
-            Q_EMIT updateNotebookRequestReady(
-                qevercloud::Notebook{},
-                std::make_exception_ptr(std::move(exc)));
-            return;
-        }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT updateNotebookRequestReady(
+            0, std::make_exception_ptr(std::move(exc)));
+        return;
     }
 
     if (notebook.linkedNotebookGuid() &&
         notebook.defaultNotebook().value_or(false)) {
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{},
+            0,
             std::make_exception_ptr(utils::createUserException(
                 qevercloud::EDAMErrorCode::PERMISSION_DENIED,
                 QStringLiteral("Notebook.defaultNotebook"))));
@@ -1376,7 +1370,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
     const auto it = index.find(*notebook.guid());
     if (it == index.end()) {
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{},
+            0,
             std::make_exception_ptr(utils::createNotFoundException(
                 QStringLiteral("Notebook.guid"), *notebook.guid())));
         return;
@@ -1388,7 +1382,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
         *originalNotebook.restrictions()->noUpdateNotebook())
     {
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{},
+            0,
             std::make_exception_ptr(utils::createUserException(
                 qevercloud::EDAMErrorCode::PERMISSION_DENIED,
                 QStringLiteral("Notebook"))));
@@ -1403,7 +1397,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
         const auto nameIt = nameIndex.find(notebook.name()->toUpper());
         if (nameIt != nameIndex.end()) {
             Q_EMIT updateNotebookRequestReady(
-                qevercloud::Notebook{},
+                0,
                 std::make_exception_ptr(utils::createUserException(
                     qevercloud::EDAMErrorCode::DATA_CONFLICT,
                     QStringLiteral("Notebook.name"))));
@@ -1420,7 +1414,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
         // attempt to update a notebook not corresponding to a known linked
         // notebook so improvising
         Q_EMIT updateNotebookRequestReady(
-            qevercloud::Notebook{},
+            0,
             std::make_exception_ptr(utils::createUserException(
                 qevercloud::EDAMErrorCode::DATA_CONFLICT,
                 QStringLiteral("Notebook"))));
@@ -1431,8 +1425,8 @@ void NoteStoreServer::onUpdateNotebookRequest(
     notebook.setUpdateSequenceNum(maxUsn);
     setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
-    index.replace(it, notebook);
-    Q_EMIT updateNotebookRequestReady(std::move(notebook), nullptr);
+    index.replace(it, std::move(notebook));
+    Q_EMIT updateNotebookRequestReady(*maxUsn, nullptr);
 }
 
 void NoteStoreServer::onCreateNoteRequest(
@@ -1517,12 +1511,10 @@ void NoteStoreServer::onCreateNoteRequest(
             return;
         }
     }
-    else {
-        if (auto exc = checkAuthentication(ctx)) {
-            Q_EMIT createNoteRequestReady(
-                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
-            return;
-        }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT createNoteRequestReady(
+            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+        return;
     }
 
     note.setGuid(UidGenerator::Generate());
@@ -1644,12 +1636,10 @@ void NoteStoreServer::onUpdateNoteRequest(
             return;
         }
     }
-    else {
-        if (auto exc = checkAuthentication(ctx)) {
-            Q_EMIT updateNoteRequestReady(
-                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
-            return;
-        }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT updateNoteRequestReady(
+            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+        return;
     }
 
     std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
@@ -1748,12 +1738,10 @@ void NoteStoreServer::onCreateTagRequest(
             return;
         }
     }
-    else {
-        if (auto exc = checkAuthentication(ctx)) {
-            Q_EMIT createTagRequestReady(
-                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
-            return;
-        }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT createTagRequestReady(
+            qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+        return;
     }
 
     tag.setGuid(UidGenerator::Generate());
@@ -1790,7 +1778,7 @@ void NoteStoreServer::onUpdateTagRequest(
             StopSynchronizationErrorTrigger::OnUpdateTag)
     {
         Q_EMIT updateTagRequestReady(
-            qevercloud::Tag{},
+            0,
             std::make_exception_ptr(utils::createStopSyncException(
                 m_stopSynchronizationErrorData->error)));
         return;
@@ -1798,7 +1786,7 @@ void NoteStoreServer::onUpdateTagRequest(
 
     if (Q_UNLIKELY(!tag.guid())) {
         Q_EMIT updateTagRequestReady(
-            qevercloud::Tag{},
+            0,
             std::make_exception_ptr(
                 qevercloud::EDAMNotFoundExceptionBuilder{}
                     .setIdentifier(QStringLiteral("Tag.guid"))
@@ -1810,7 +1798,7 @@ void NoteStoreServer::onUpdateTagRequest(
     const auto tagIt = tagGuidIndex.find(*tag.guid());
     if (Q_UNLIKELY(tagIt == tagGuidIndex.end())) {
         Q_EMIT updateTagRequestReady(
-            qevercloud::Tag{},
+            0,
             std::make_exception_ptr(
                 qevercloud::EDAMNotFoundExceptionBuilder{}
                     .setIdentifier(QStringLiteral("Tag.guid"))
@@ -1823,7 +1811,7 @@ void NoteStoreServer::onUpdateTagRequest(
         const auto tagIt = tagGuidIndex.find(*tag.parentGuid());
         if (Q_UNLIKELY(tagIt == tagGuidIndex.end())) {
             Q_EMIT updateTagRequestReady(
-                qevercloud::Tag{},
+                0,
                 std::make_exception_ptr(
                     qevercloud::EDAMNotFoundExceptionBuilder{}
                         .setIdentifier(QStringLiteral("Tag.parentGuid"))
@@ -1835,7 +1823,7 @@ void NoteStoreServer::onUpdateTagRequest(
 
     if (auto exc = note_store::checkTag(tag)) {
         Q_EMIT updateTagRequestReady(
-            qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+            0, std::make_exception_ptr(std::move(exc)));
         return;
     }
 
@@ -1849,7 +1837,7 @@ void NoteStoreServer::onUpdateTagRequest(
             tagNameIt != tagNameIndex.end() && tagNameIt->guid() != tag.guid()))
     {
         Q_EMIT updateTagRequestReady(
-            qevercloud::Tag{},
+            0,
             std::make_exception_ptr(
                 qevercloud::EDAMUserExceptionBuilder{}
                     .setErrorCode(qevercloud::EDAMErrorCode::DATA_CONFLICT)
@@ -1863,16 +1851,14 @@ void NoteStoreServer::onUpdateTagRequest(
                 *tag.linkedNotebookGuid(), ctx))
         {
             Q_EMIT updateTagRequestReady(
-                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
+                0, std::make_exception_ptr(std::move(exc)));
             return;
         }
     }
-    else {
-        if (auto exc = checkAuthentication(ctx)) {
-            Q_EMIT updateTagRequestReady(
-                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)));
-            return;
-        }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT updateTagRequestReady(
+            0, std::make_exception_ptr(std::move(exc)));
+        return;
     }
 
     std::optional<qint32> maxUsn = tag.linkedNotebookGuid()
@@ -1884,7 +1870,7 @@ void NoteStoreServer::onUpdateTagRequest(
         // attempt to create a tag not corresponding to a known linked
         // notebook so improvising
         Q_EMIT updateTagRequestReady(
-            qevercloud::Tag{},
+            0,
             std::make_exception_ptr(utils::createUserException(
                 qevercloud::EDAMErrorCode::DATA_CONFLICT,
                 QStringLiteral("Tag"))));
@@ -1896,7 +1882,7 @@ void NoteStoreServer::onUpdateTagRequest(
     setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
 
     m_tags.insert(tag);
-    Q_EMIT updateTagRequestReady(std::move(tag), nullptr);
+    Q_EMIT updateTagRequestReady(*maxUsn, nullptr);
 }
 
 void NoteStoreServer::onCreateSavedSearchRequest(
@@ -1973,7 +1959,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
             StopSynchronizationErrorTrigger::OnUpdateSavedSearch)
     {
         Q_EMIT updateSavedSearchRequestReady(
-            qevercloud::SavedSearch{},
+            0,
             std::make_exception_ptr(utils::createStopSyncException(
                 m_stopSynchronizationErrorData->error)));
         return;
@@ -1981,7 +1967,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
 
     if (Q_UNLIKELY(!search.guid())) {
         Q_EMIT updateSavedSearchRequestReady(
-            qevercloud::SavedSearch{},
+            0,
             std::make_exception_ptr(
                 qevercloud::EDAMNotFoundExceptionBuilder{}
                     .setIdentifier(QStringLiteral("SavedSearch.guid"))
@@ -1995,7 +1981,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
     const auto savedSearchIt = savedSearchGuidIndex.find(*search.guid());
     if (Q_UNLIKELY(savedSearchIt == savedSearchGuidIndex.end())) {
         Q_EMIT updateSavedSearchRequestReady(
-            qevercloud::SavedSearch{},
+            0,
             std::make_exception_ptr(
                 qevercloud::EDAMNotFoundExceptionBuilder{}
                     .setIdentifier(QStringLiteral("SavedSearch.guid"))
@@ -2006,7 +1992,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
 
     if (auto exc = note_store::checkSavedSearch(search)) {
         Q_EMIT updateSavedSearchRequestReady(
-            qevercloud::SavedSearch{}, std::make_exception_ptr(std::move(exc)));
+            0, std::make_exception_ptr(std::move(exc)));
         return;
     }
 
@@ -2022,7 +2008,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
             savedSearchNameIt->guid() != search.guid()))
     {
         Q_EMIT updateSavedSearchRequestReady(
-            qevercloud::SavedSearch{},
+            0,
             std::make_exception_ptr(
                 qevercloud::EDAMUserExceptionBuilder{}
                     .setErrorCode(qevercloud::EDAMErrorCode::DATA_CONFLICT)
@@ -2033,7 +2019,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
 
     if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateSavedSearchRequestReady(
-            qevercloud::SavedSearch{}, std::make_exception_ptr(std::move(exc)));
+            0, std::make_exception_ptr(std::move(exc)));
         return;
     }
 
@@ -2043,7 +2029,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
     m_userOwnMaxUsn = maxUsn;
 
     m_savedSearches.insert(search);
-    Q_EMIT updateSavedSearchRequestReady(std::move(search), nullptr);
+    Q_EMIT updateSavedSearchRequestReady(maxUsn, nullptr);
 }
 
 void NoteStoreServer::onGetSyncStateRequest(
@@ -2162,6 +2148,8 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
     const qint32 maxEntries, const bool fullSyncOnly,
     const qevercloud::IRequestContextPtr & ctx)
 {
+    m_onceGetLinkedNotebookSyncChunkCalled = true;
+
     if (m_stopSynchronizationErrorData &&
         m_stopSynchronizationErrorData->trigger ==
             StopSynchronizationErrorTrigger::OnGetLinkedNotebookSyncChunk)
@@ -2218,6 +2206,393 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
 
     Q_EMIT getLinkedNotebookSyncChunkRequestReady(
         std::move(result.first), std::move(result.second));
+}
+
+void NoteStoreServer::onGetNoteWithResultSpecRequest(
+    const qevercloud::Guid & guid,
+    const qevercloud::NoteResultSpec & resultSpec,
+    const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData) {
+        if (m_onceGetLinkedNotebookSyncChunkCalled) {
+            // Downloading note from a linked notebook
+            if (m_stopSynchronizationErrorData->trigger ==
+                StopSynchronizationErrorTrigger::
+                    OnGetNoteAfterDownloadingLinkedNotebookSyncChunks)
+            {
+                Q_EMIT getNoteWithResultSpecRequestReady(
+                    qevercloud::Note{},
+                    std::make_exception_ptr(utils::createStopSyncException(
+                        m_stopSynchronizationErrorData->error)));
+                return;
+            }
+        }
+        else if (
+            m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::
+                OnGetNoteAfterDownloadingUserOwnSyncChunks)
+        {
+            Q_EMIT getNoteWithResultSpecRequestReady(
+                qevercloud::Note{},
+                std::make_exception_ptr(utils::createStopSyncException(
+                    m_stopSynchronizationErrorData->error)));
+            return;
+        }
+    }
+
+    if (guid.isEmpty()) {
+        Q_EMIT getNoteWithResultSpecRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Note.guid"))));
+        return;
+    }
+
+    const auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
+    const auto noteIt = noteGuidIndex.find(guid);
+    if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
+        Q_EMIT getNoteWithResultSpecRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(utils::createNotFoundException(
+                QStringLiteral("Note.guid"), guid)));
+        return;
+    }
+
+    if (Q_UNLIKELY(!noteIt->notebookGuid())) {
+        Q_EMIT getNoteWithResultSpecRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(
+                        QStringLiteral("Detected note without notebook guid"))
+                    .build()));
+        return;
+    }
+
+    const auto & notebookGuidIndex =
+        m_notebooks.get<note_store::NotebookByGuidTag>();
+
+    const auto notebookIt = notebookGuidIndex.find(*noteIt->notebookGuid());
+    if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+        Q_EMIT getNoteWithResultSpecRequestReady(
+            qevercloud::Note{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(
+                        QStringLiteral("Detected note from unknown notebook"))
+                    .build()));
+        return;
+    }
+
+    if (notebookIt->linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *notebookIt->linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT getNoteWithResultSpecRequestReady(
+                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT getNoteWithResultSpecRequestReady(
+            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    auto note = *noteIt;
+
+    note.setLocalId(UidGenerator::Generate());
+    note.setLocalData({});
+    note.setLocalOnly(false);
+    note.setLocallyModified(false);
+    note.setLocallyFavorited(false);
+    note.setTagLocalIds(QStringList{});
+    note.setNotebookLocalId(QString{});
+
+    if (!resultSpec.includeContent().value_or(false)) {
+        note.setContent(std::nullopt);
+    }
+
+    if (note.resources() && !note.resources()->isEmpty()) {
+        const auto & resourceGuidIndex =
+            m_resources.get<note_store::ResourceByGuidTag>();
+
+        auto resources = *note.resources();
+        for (auto it = resources.begin(); it != resources.end();) {
+            auto & resource = *it;
+            if (Q_UNLIKELY(!resource.guid())) {
+                it = resources.erase(it);
+                continue;
+            }
+
+            auto resourceIt = resourceGuidIndex.find(*resource.guid());
+            if (Q_UNLIKELY(resourceIt == resourceGuidIndex.end())) {
+                it = resources.erase(it);
+                continue;
+            }
+
+            resource = *resourceIt;
+
+            resource.setLocalId(UidGenerator::Generate());
+            resource.setLocalData({});
+            resource.setLocalOnly(false);
+            resource.setLocallyModified(false);
+            resource.setLocallyFavorited(false);
+            resource.setNoteLocalId(QString{});
+
+            if (!resultSpec.includeResourcesData().value_or(false) &&
+                resource.data()) {
+                resource.mutableData()->setBody(std::nullopt);
+            }
+
+            if (!resultSpec.includeResourcesRecognition().value_or(false) &&
+                resource.recognition())
+            {
+                resource.mutableRecognition()->setBody(std::nullopt);
+            }
+
+            if (!resultSpec.includeResourcesAlternateData().value_or(false) &&
+                resource.alternateData())
+            {
+                resource.mutableAlternateData()->setBody(std::nullopt);
+            }
+
+            ++it;
+        }
+
+        note.setResources(resources);
+    }
+
+    Q_EMIT getNoteWithResultSpecRequestReady(std::move(note), nullptr);
+}
+
+void NoteStoreServer::onGetResourceRequest(
+    const qevercloud::Guid & guid, bool withData, bool withRecognition,
+    bool withAttributes, bool withAlternateData,
+    const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData) {
+        if (m_onceGetLinkedNotebookSyncChunkCalled) {
+            // Downloading resource from a linked notebook
+            if (m_stopSynchronizationErrorData->trigger ==
+                StopSynchronizationErrorTrigger::
+                    OnGetResourceAfterDownloadingLinkedNotebookSyncChunks)
+            {
+                Q_EMIT getResourceRequestReady(
+                    qevercloud::Resource{},
+                    std::make_exception_ptr(utils::createStopSyncException(
+                        m_stopSynchronizationErrorData->error)));
+                return;
+            }
+        }
+        else if (
+            m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::
+                OnGetResourceAfterDownloadingUserOwnSyncChunks)
+        {
+            Q_EMIT getResourceRequestReady(
+                qevercloud::Resource{},
+                std::make_exception_ptr(utils::createStopSyncException(
+                    m_stopSynchronizationErrorData->error)));
+            return;
+        }
+    }
+
+    if (guid.isEmpty()) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{},
+            std::make_exception_ptr(utils::createUserException(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
+                QStringLiteral("Resource.guid"))));
+        return;
+    }
+
+    const auto & resourceGuidIndex =
+        m_resources.get<note_store::ResourceByGuidTag>();
+
+    const auto resourceIt = resourceGuidIndex.find(guid);
+    if (Q_UNLIKELY(resourceIt == resourceGuidIndex.end())) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{},
+            std::make_exception_ptr(utils::createNotFoundException(
+                QStringLiteral("Resource.guid"), guid)));
+        return;
+    }
+
+    if (Q_UNLIKELY(!resourceIt->noteGuid())) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(
+                        QStringLiteral("Detected resource without note guid"))
+                    .build()));
+        return;
+    }
+
+    const auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
+    const auto noteIt = noteGuidIndex.find(*resourceIt->noteGuid());
+    if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(QStringLiteral(
+                        "Detected resource without corresponding note"))
+                    .build()));
+        return;
+    }
+
+    if (Q_UNLIKELY(!noteIt->notebookGuid())) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(
+                        QStringLiteral("Detected note without notebook guid"))
+                    .build()));
+        return;
+    }
+
+    const auto & notebookGuidIndex =
+        m_notebooks.get<note_store::NotebookByGuidTag>();
+
+    const auto notebookIt = notebookGuidIndex.find(*noteIt->notebookGuid());
+    if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(
+                        QStringLiteral("Detected note from unknown notebook"))
+                    .build()));
+        return;
+    }
+
+    if (notebookIt->linkedNotebookGuid()) {
+        if (auto exc = checkLinkedNotebookAuthentication(
+                *notebookIt->linkedNotebookGuid(), ctx))
+        {
+            Q_EMIT getResourceRequestReady(
+                qevercloud::Resource{},
+                std::make_exception_ptr(std::move(exc)));
+            return;
+        }
+    }
+    else if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT getResourceRequestReady(
+            qevercloud::Resource{}, std::make_exception_ptr(std::move(exc)));
+        return;
+    }
+
+    auto resource = *resourceIt;
+
+    resource.setLocalId(UidGenerator::Generate());
+    resource.setLocalData({});
+    resource.setLocalOnly(false);
+    resource.setLocallyModified(false);
+    resource.setLocallyFavorited(false);
+    resource.setNoteLocalId(QString{});
+
+    if (!withData && resource.data()) {
+        resource.mutableData()->setBody(std::nullopt);
+    }
+
+    if (!withRecognition && resource.recognition()) {
+        resource.mutableRecognition()->setBody(std::nullopt);
+    }
+
+    if (!withAlternateData && resource.alternateData()) {
+        resource.mutableAlternateData()->setBody(std::nullopt);
+    }
+
+    if (!withAttributes && resource.attributes()) {
+        resource.setAttributes(std::nullopt);
+    }
+
+    Q_EMIT getResourceRequestReady(std::move(resource), nullptr);
+}
+
+void NoteStoreServer::onAuthenticateToSharedNotebookRequest(
+    const QString & shareKeyOrGlobalId,
+    const qevercloud::IRequestContextPtr & ctx)
+{
+    if (m_stopSynchronizationErrorData &&
+        m_stopSynchronizationErrorData->trigger ==
+            StopSynchronizationErrorTrigger::OnAuthenticateToSharedNotebook)
+    {
+        Q_EMIT authenticateToSharedNotebookRequestReady(
+            qevercloud::AuthenticationResult{},
+            std::make_exception_ptr(utils::createStopSyncException(
+                m_stopSynchronizationErrorData->error)));
+        return;
+    }
+
+    if (auto exc = checkAuthentication(ctx)) {
+        Q_EMIT authenticateToSharedNotebookRequestReady(
+            qevercloud::AuthenticationResult{},
+            std::make_exception_ptr(std::move(exc)));
+    }
+
+    const auto & index =
+        m_linkedNotebooks
+            .get<note_store::LinkedNotebookBySharedNotebookGlobalIdTag>();
+
+    const auto it = index.find(shareKeyOrGlobalId);
+    if (Q_UNLIKELY(it == index.end())) {
+        Q_EMIT authenticateToSharedNotebookRequestReady(
+            qevercloud::AuthenticationResult{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INVALID_AUTH)
+                    .setMessage(QStringLiteral("shareKey"))
+                    .build()));
+        return;
+    }
+
+    const auto & linkedNotebook = *it;
+    if (Q_UNLIKELY(!linkedNotebook.guid())) {
+        Q_EMIT authenticateToSharedNotebookRequestReady(
+            qevercloud::AuthenticationResult{},
+            std::make_exception_ptr(
+                qevercloud::EDAMSystemExceptionBuilder{}
+                    .setErrorCode(qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                    .setMessage(
+                        QStringLiteral("Detected linked notebook without guid"))
+                    .build()));
+        return;
+    }
+
+    auto authTokenIt =
+        m_linkedNotebookAuthTokensByGuid.find(*linkedNotebook.guid());
+
+    if (Q_UNLIKELY(authTokenIt == m_linkedNotebookAuthTokensByGuid.end())) {
+        Q_EMIT authenticateToSharedNotebookRequestReady(
+            qevercloud::AuthenticationResult{},
+            std::make_exception_ptr(utils::createNotFoundException(
+                QStringLiteral("SharedNotebook.id"))));
+        return;
+    }
+
+    qevercloud::AuthenticationResult authResult;
+    authResult.setAuthenticationToken(authTokenIt.value());
+    authResult.setCurrentTime(QDateTime::currentMSecsSinceEpoch());
+
+    authResult.setExpiration(
+        QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch());
+
+    authResult.setNoteStoreUrl(QStringLiteral("Fake note store URL"));
+    authResult.setWebApiUrlPrefix(QStringLiteral("Fake web API url prefix"));
+
+    Q_EMIT authenticateToSharedNotebookRequestReady(
+        std::move(authResult), nullptr);
 }
 
 void NoteStoreServer::connectToQEverCloudServer()
@@ -2437,6 +2812,19 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         const qevercloud::SyncChunkFilter & filter,
         const qevercloud::IRequestContextPtr & ctx) const
 {
+    if (linkedNotebookGuid) {
+        if (auto exc =
+                checkLinkedNotebookAuthentication(*linkedNotebookGuid, ctx)) {
+            return std::make_pair(
+                qevercloud::SyncChunk{},
+                std::make_exception_ptr(std::move(exc)));
+        }
+    }
+    else if (auto exc = checkAuthentication(ctx)) {
+        return std::make_pair(
+            qevercloud::SyncChunk{}, std::make_exception_ptr(std::move(exc)));
+    }
+
     if (afterUsn < 0) {
         return std::make_pair(
             qevercloud::SyncChunk{},
