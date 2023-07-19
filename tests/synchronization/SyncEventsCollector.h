@@ -127,7 +127,7 @@ public Q_SLOTS:
     void onSyncChunksDownloaded();
 
     void onSyncChunksDataProcessingProgress(
-        ISyncChunksDataCountersPtr counters);
+        const ISyncChunksDataCountersPtr & counters);
 
     void onStartLinkedNotebooksDataDownloading(
         const QList<qevercloud::LinkedNotebook> & linkedNotebooks);
@@ -141,7 +141,7 @@ public Q_SLOTS:
         const qevercloud::LinkedNotebook & linkedNotebook);
 
     void onLinkedNotebookSyncChunksDataProcessingProgress(
-        ISyncChunksDataCountersPtr counters,
+        const ISyncChunksDataCountersPtr & counters,
         const qevercloud::LinkedNotebook & linkedNotebook);
 
     void onNotesDownloadProgress(
@@ -158,10 +158,11 @@ public Q_SLOTS:
         quint32 resourcesDownloaded, quint32 totalResourcesToDownload,
         const qevercloud::LinkedNotebook & linkedNotebook);
 
-    void onUserOwnSendStatusUpdate(ISendStatusPtr sendStatus);
+    void onUserOwnSendStatusUpdate(const ISendStatusPtr & sendStatus);
 
     void onLinkedNotebookSendStatusUpdate(
-        const qevercloud::Guid & linkedNotebookGuid, ISendStatusPtr sendStatus);
+        const qevercloud::Guid & linkedNotebookGuid,
+        const ISendStatusPtr & sendStatus);
 
 private:
     QList<SyncChunksDownloadProgressMessage>
@@ -169,7 +170,7 @@ private:
 
     bool m_userOwnSyncChunksDownloaded = false;
     QList<ISyncChunksDataCountersPtr> m_userOwnSyncChunksDataCounters;
-    bool m_statedLinkedNotebooksDataDownloading = false;
+    bool m_startedLinkedNotebooksDataDownloading = false;
 
     LinkedNotebookSyncChunksDownloadProgressMessages
         m_linkedNotebookSyncChunksDownloadProgressMessages;

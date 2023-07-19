@@ -10,6 +10,8 @@ add_library(${TESTS_LIB_NAME} STATIC
   FakeKeychainService.h
   NoteStoreServer.cpp
   NoteStoreServer.h
+  SyncEventsCollector.cpp
+  SyncEventsCollector.h
   UserStoreServer.cpp
   UserStoreServer.h
   note_store/Checks.cpp
