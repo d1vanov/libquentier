@@ -22,6 +22,8 @@ add_library(${TESTS_LIB_NAME} STATIC
   note_store/Notes.h
   note_store/Resources.h
   note_store/SavedSearches.h
+  note_store/Setup.cpp
+  note_store/Setup.h
   note_store/Tags.h
   utils/ExceptionUtils.cpp
   utils/ExceptionUtils.h
