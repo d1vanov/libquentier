@@ -60,9 +60,7 @@ Q_DECLARE_FLAGS(ItemSources, ItemSource);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
 
 void setupNoteStoreServer(
-    DataItemTypes dataItemTypes,
-    GeneratorOptions generatorOptions,
-    ItemSources itemSources,
-    NoteStoreServer & noteStoreServer);
+    DataItemTypes dataItemTypes, GeneratorOptions generatorOptions,
+    ItemSources itemSources, NoteStoreServer & noteStoreServer);
 
 } // namespace quentier::synchronization::tests::note_store

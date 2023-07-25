@@ -113,7 +113,7 @@ public:
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::SavedSearch>
         savedSearches() const;
 
-    [[nodiscard]] ItemData putSavedSearch(qevercloud::SavedSearch search);
+    ItemData putSavedSearch(qevercloud::SavedSearch search);
     [[nodiscard]] std::optional<qevercloud::SavedSearch> findSavedSearch(
         const qevercloud::Guid & guid) const;
 
@@ -128,7 +128,7 @@ public:
 
     // Tags
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Tag> tags() const;
-    [[nodiscard]] ItemData putTag(qevercloud::Tag tag);
+    ItemData putTag(qevercloud::Tag tag);
 
     [[nodiscard]] std::optional<qevercloud::Tag> findTag(
         const qevercloud::Guid & guid) const;
@@ -146,7 +146,7 @@ public:
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Notebook> notebooks()
         const;
 
-    [[nodiscard]] ItemData putNotebook(qevercloud::Notebook notebook);
+    ItemData putNotebook(qevercloud::Notebook notebook);
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebook(
         const qevercloud::Guid & guid) const;
 
@@ -165,7 +165,7 @@ public:
 
     // Notes
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Note> notes() const;
-    [[nodiscard]] ItemData putNote(qevercloud::Note note);
+    ItemData putNote(qevercloud::Note note);
     [[nodiscard]] std::optional<qevercloud::Note> findNote(
         const qevercloud::Guid & guid) const;
 
@@ -185,7 +185,7 @@ public:
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Resource> resources()
         const;
 
-    [[nodiscard]] ItemData putResource(qevercloud::Resource resource);
+    ItemData putResource(qevercloud::Resource resource);
     [[nodiscard]] std::optional<qevercloud::Resource> findResource(
         const qevercloud::Guid & guid) const;
 
@@ -195,7 +195,7 @@ public:
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::LinkedNotebook>
         linkedNotebooks() const;
 
-    [[nodiscard]] ItemData putLinkedNotebook(
+    ItemData putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook);
 
     [[nodiscard]] std::optional<qevercloud::LinkedNotebook> findLinkedNotebook(
