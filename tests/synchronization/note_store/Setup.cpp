@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../NoteStoreServer.h"
 #include "Setup.h"
+#include "../NoteStoreServer.h"
 
 #include <quentier/utility/UidGenerator.h>
 
@@ -387,8 +387,8 @@ void setupNoteStoreServer(
                     }
 
                     auto note = generateNote(
-                        i, *notebookIt, nameSuffix, std::move(resources),
-                        std::move(tagGuids));
+                        noteIndex++, *notebookIt, nameSuffix,
+                        std::move(resources), std::move(tagGuids));
 
                     noteStoreServer.putNote(std::move(note));
                 }
@@ -397,7 +397,7 @@ void setupNoteStoreServer(
         auto [userOwnNotebookGuids, linkedNotebookGuids] = [&] {
             QList<qevercloud::Guid> userOwnNotebookGuids;
             QList<qevercloud::Guid> linkedNotebookGuids;
-            auto notebooksByGuid = noteStoreServer.notebooks();
+            const auto notebooksByGuid = noteStoreServer.notebooks();
             for (const auto it: qevercloud::toRange(qAsConst(notebooksByGuid)))
             {
                 const auto & notebook = it.value();
@@ -445,11 +445,87 @@ void setupNoteStoreServer(
         }
     }
 
-    // TODO: implement
-    Q_UNUSED(dataItemTypes)
-    Q_UNUSED(generatorOptions)
-    Q_UNUSED(itemSources)
-    Q_UNUSED(noteStoreServer)
+    if (dataItemTypes.testFlag(DataItemType::Resource)) {
+        int resourceIndex = 1;
+        const auto notesByGuid = noteStoreServer.notes();
+
+        const QList<qevercloud::Guid> noteGuids = [&] {
+            return notesByGuid.keys();
+        }();
+
+        Q_ASSERT(!noteGuids.isEmpty());
+
+        int noteGuidsListIndex = 0;
+        const auto putResources =
+            [&](const QString & nameSuffix,
+                const QList<qevercloud::Guid> & noteGuids) {
+                for (int i = 0; i < itemCount; ++i) {
+                    auto noteGuid = noteGuids[noteGuidsListIndex++];
+                    if (noteGuidsListIndex >= noteGuids.size()) {
+                        noteGuidsListIndex = 0;
+                    }
+
+                    auto resource = generateResource(resourceIndex++, nameSuffix);
+                    resource.setNoteGuid(std::move(noteGuid));
+
+                    noteStoreServer.putResource(std::move(resource));
+                }
+            };
+
+        auto [userOwnNoteGuids, linkedNotebookNoteGuids] = [&] {
+            QList<qevercloud::Guid> userOwnNoteGuids;
+            QList<qevercloud::Guid> linkedNotebookNoteGuids;
+            const auto notebooksByGuids = noteStoreServer.notebooks();
+            for (const auto it: qevercloud::toRange(qAsConst(notesByGuid))) {
+                const auto & note = it.value();
+                Q_ASSERT(note.guid());
+                Q_ASSERT(note.notebookGuid());
+
+                const auto notebookIt =
+                    notebooksByGuids.constFind(*note.notebookGuid());
+                Q_ASSERT(notebookIt != notebooksByGuids.constEnd());
+                if (notebookIt->linkedNotebookGuid()) {
+                    linkedNotebookNoteGuids << *note.guid();
+                }
+                else {
+                    userOwnNoteGuids << *note.guid();
+                }
+            }
+            return std::make_pair(
+                std::move(userOwnNoteGuids),
+                std::move(linkedNotebookNoteGuids));
+        }();
+
+        if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+            if (generatorOptions.testFlag(GeneratorOption::IncludeBaseItems)) {
+                putResources(*gBaseItems, userOwnNoteGuids);
+            }
+
+            if (generatorOptions.testFlag(
+                    GeneratorOption::IncludeModifiedItems)) {
+                putResources(*gModifiedItems, userOwnNoteGuids);
+            }
+
+            if (generatorOptions.testFlag(GeneratorOption::IncludeNewItems)) {
+                putResources(*gNewItems, userOwnNoteGuids);
+            }
+        }
+
+        if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+            if (generatorOptions.testFlag(GeneratorOption::IncludeBaseItems)) {
+                putResources(*gBaseItems, linkedNotebookNoteGuids);
+            }
+
+            if (generatorOptions.testFlag(
+                    GeneratorOption::IncludeModifiedItems)) {
+                putResources(*gModifiedItems, linkedNotebookNoteGuids);
+            }
+
+            if (generatorOptions.testFlag(GeneratorOption::IncludeNewItems)) {
+                putResources(*gNewItems, linkedNotebookNoteGuids);
+            }
+        }
+    }
 }
 
 } // namespace quentier::synchronization::tests::note_store
