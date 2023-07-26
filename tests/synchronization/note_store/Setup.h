@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "TestData.h"
+
 #include <QFlags>
 
 namespace quentier::synchronization::tests {
@@ -59,8 +61,8 @@ enum class ItemSource
 Q_DECLARE_FLAGS(ItemSources, ItemSource);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
 
-void setupNoteStoreServer(
+void setupTestData(
     DataItemTypes dataItemTypes, GeneratorOptions generatorOptions,
-    ItemSources itemSources, NoteStoreServer & noteStoreServer);
+    ItemSources itemSources, TestData & testData);
 
 } // namespace quentier::synchronization::tests::note_store

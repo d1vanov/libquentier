@@ -25,6 +25,7 @@ add_library(${TESTS_LIB_NAME} STATIC
   note_store/Setup.cpp
   note_store/Setup.h
   note_store/Tags.h
+  note_store/TestData.h
   utils/ExceptionUtils.cpp
   utils/ExceptionUtils.h
   utils/HttpRequestData.h
