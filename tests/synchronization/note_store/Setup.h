@@ -22,11 +22,21 @@
 
 #include <QFlags>
 
+////////////////////////////////////////////////////////////////////////////////
+
+namespace quentier::local_storage {
+
+class ILocalStorage;
+
+} // namespace quentier::local_storage
+
 namespace quentier::synchronization::tests {
 
 class NoteStoreServer;
 
 } // namespace quentier::synchronization::tests
+
+////////////////////////////////////////////////////////////////////////////////
 
 namespace quentier::synchronization::tests::note_store {
 
@@ -42,15 +52,15 @@ enum class DataItemType
 Q_DECLARE_FLAGS(DataItemTypes, DataItemType);
 Q_DECLARE_OPERATORS_FOR_FLAGS(DataItemTypes);
 
-enum class GeneratorOption
+enum class ItemGroup
 {
-    IncludeBaseItems = 1 << 0,
-    IncludeNewItems = 1 << 1,
-    IncludeModifiedItems = 1 << 2,
+    Base = 1 << 0,
+    New = 1 << 1,
+    Modified = 1 << 2,
 };
 
-Q_DECLARE_FLAGS(GeneratorOptions, GeneratorOption);
-Q_DECLARE_OPERATORS_FOR_FLAGS(GeneratorOptions);
+Q_DECLARE_FLAGS(ItemGroups, ItemGroup);
+Q_DECLARE_OPERATORS_FOR_FLAGS(ItemGroups);
 
 enum class ItemSource
 {
@@ -62,7 +72,15 @@ Q_DECLARE_FLAGS(ItemSources, ItemSource);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
 
 void setupTestData(
-    DataItemTypes dataItemTypes, GeneratorOptions generatorOptions,
-    ItemSources itemSources, TestData & testData);
+    DataItemTypes dataItemTypes, ItemGroups itemGroups, ItemSources itemSources,
+    TestData & testData);
+
+void setupNoteStoreServer(
+    TestData & testData, NoteStoreServer & noteStoreServer);
+
+void setupLocalStorage(
+    const TestData & testData, DataItemTypes dataItemTypes,
+    ItemGroups itemGroups, ItemSources itemSources,
+    local_storage::ILocalStorage & localStorage);
 
 } // namespace quentier::synchronization::tests::note_store
