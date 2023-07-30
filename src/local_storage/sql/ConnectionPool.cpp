@@ -30,6 +30,7 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QTextStream>
 #include <QThread>
 #include <QWriteLocker>
 
@@ -68,7 +69,7 @@ ConnectionPool::ConnectionPool(
             }
         }
 
-        QNWARNING("local_storage:sql:connection_pool", error);
+        QNWARNING("local_storage::sql::connection_pool", error);
         throw DatabaseRequestException(error);
     }
 }
@@ -86,9 +87,8 @@ QSqlDatabase ConnectionPool::database()
 {
     auto * pCurrentThread = QThread::currentThread();
     {
-        QReadLocker lock{&m_connectionsLock};
-
-        auto it = m_connections.find(pCurrentThread);
+        const QReadLocker lock{&m_connectionsLock};
+        const auto it = m_connections.find(pCurrentThread);
         if (it != m_connections.end()) {
             return QSqlDatabase::database(
                 it->m_connectionName, /* open = */ true);
@@ -98,7 +98,7 @@ QSqlDatabase ConnectionPool::database()
     QWriteLocker lock{&m_connectionsLock};
 
     // Try to find the existing connection again
-    auto it = m_connections.find(pCurrentThread);
+    const auto it = m_connections.find(pCurrentThread);
     if (it != m_connections.end()) {
         return QSqlDatabase::database(it->m_connectionName, /* open = */ true);
     }
@@ -113,11 +113,19 @@ QSqlDatabase ConnectionPool::database()
     // QSqlDatabase::addDatabase with the same connection name, it might fail
     // with an error saying "duplicate connection name <...>, old connection
     // removed" and then the created connection would actually fail to do any
-    // useful work. So will ensure that each newly created connection name
-    // is unique, even if the same thread makes the connection again.
-    QString connectionName =
-        QStringLiteral("quentier_local_storage_db_connection_") +
-        QString::fromStdString(sstrm.str()) + UidGenerator::Generate();
+    // useful work. Most probably it is caused by asynchronous connection
+    // closure which is not guaranteed to be finished by the time of exit from
+    // QSqlDatabase::removeDatabase call. So will ensure that each newly created
+    // connection name is unique, even if the same thread makes the connection
+    // again.
+    const QString connectionName = [&] {
+        QString result;
+        QTextStream strm{&result};
+        strm << "quentier_local_storage_db_connection_"
+            << QString::fromStdString(sstrm.str())
+            << "_" << UidGenerator::Generate();
+        return result;
+    }();
 
     m_connections[pCurrentThread] =
         ConnectionData{QPointer{pCurrentThread}, connectionName};
@@ -130,8 +138,8 @@ QSqlDatabase ConnectionPool::database()
                 return;
             }
 
-            QWriteLocker lock{&self->m_connectionsLock};
-            auto it = self->m_connections.find(pCurrentThread);
+            const QWriteLocker lock{&self->m_connectionsLock};
+            const auto it = self->m_connections.find(pCurrentThread);
             if (Q_LIKELY(it != self->m_connections.end())) {
                 QSqlDatabase::removeDatabase(it.value().m_connectionName);
                 self->m_connections.erase(it);
@@ -169,7 +177,7 @@ QSqlDatabase ConnectionPool::database()
         error.details() += QStringLiteral("; native error code = ");
         error.details() += lastError.nativeErrorCode();
 
-        QNWARNING("local_storage:sql:connection_pool", error);
+        QNWARNING("local_storage::sql::connection_pool", error);
         throw DatabaseRequestException(error);
     }
 
@@ -185,7 +193,7 @@ QSqlDatabase ConnectionPool::database()
         error.details() += QStringLiteral("; native error code = ");
         error.details() += lastError.nativeErrorCode();
 
-        QNWARNING("local_storage:sql:connection_pool", error);
+        QNWARNING("local_storage::sql::connection_pool", error);
         throw DatabaseRequestException(error);
     }
 
