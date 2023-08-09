@@ -50,6 +50,18 @@ FakeKeychainService::PasswordByKeyByService FakeKeychainService::passwords()
     return m_servicesKeysAndPasswords;
 }
 
+void FakeKeychainService::setPasswords(PasswordByKeyByService passwords)
+{
+    const QMutexLocker locker{&m_mutex};
+    m_servicesKeysAndPasswords = std::move(passwords);
+}
+
+void FakeKeychainService::clear()
+{
+    const QMutexLocker locker{&m_mutex};
+    m_servicesKeysAndPasswords.clear();
+}
+
 QFuture<void> FakeKeychainService::writePassword(
     QString service, QString key, QString password)
 {

@@ -37,6 +37,8 @@ public:
         PasswordByKeyByService passwords = {});
 
     [[nodiscard]] PasswordByKeyByService passwords() const;
+    void setPasswords(PasswordByKeyByService passwords);
+    void clear();
 
 public: // IKeychainService
     [[nodiscard]] QFuture<void> writePassword(

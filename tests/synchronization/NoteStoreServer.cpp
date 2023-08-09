@@ -152,12 +152,12 @@ QDebug & operator<<(QDebug & dbg, NextItemType nextItemType)
 
 NoteStoreServer::NoteStoreServer(
     QString authenticationToken, QList<QNetworkCookie> cookies,
-    QHash<qevercloud::Guid, QString> linkedNotebookAuthTokensByGuid,
     QObject * parent) :
     QObject(parent),
-    m_authenticationToken{std::move(authenticationToken)}, m_cookies{std::move(
-                                                               cookies)},
-    m_linkedNotebookAuthTokensByGuid{std::move(linkedNotebookAuthTokensByGuid)}
+    // clang-format off
+    m_authenticationToken{std::move(authenticationToken)},
+    m_cookies{std::move(cookies)}
+// clang-format on
 {
     bool res = m_tcpServer->listen(QHostAddress::LocalHost);
     if (Q_UNLIKELY(!res)) {
@@ -1197,6 +1197,18 @@ quint64 NoteStoreServer::maxResourceSize() const noexcept
 void NoteStoreServer::setMaxResourceSize(const quint64 maxResourceSize) noexcept
 {
     m_maxResourceSize = maxResourceSize;
+}
+
+QHash<qevercloud::Guid, QString>
+    NoteStoreServer::linkedNotebookAuthTokensByGuid() const
+{
+    return m_linkedNotebookAuthTokensByGuid;
+}
+
+void NoteStoreServer::setLinkedNotebookAuthTokensByGuid(
+    QHash<qevercloud::Guid, QString> tokens)
+{
+    m_linkedNotebookAuthTokensByGuid = std::move(tokens);
 }
 
 void NoteStoreServer::onRequestReady(const QByteArray & responseData)

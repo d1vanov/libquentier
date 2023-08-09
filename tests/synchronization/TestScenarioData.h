@@ -38,6 +38,15 @@ struct TestScenarioData
 
     StopSynchronizationError stopSyncError;
     bool expectFailure = false;
+
+    // Expectations of sync events received during the sync
+    bool expectSomeUserOwnSyncChunks = false;
+    bool expectSomeLinkedNotebooksSyncChunks = false;
+    bool expectSomeUserOwnNotes = false;
+    bool expectSomeUserOwnResources = false;
+    bool expectSomeLinkedNotebookNotes = false;
+    bool expectSomeUserOwnDataSent = false;
+    bool expectSomeLinkedNotebookDataSent = false;
 };
 
 } // namespace quentier::synchronization::tests

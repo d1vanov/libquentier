@@ -22,11 +22,14 @@
 #include "TestScenarioData.h"
 
 #include <quentier/local_storage/Fwd.h>
+#include <quentier/threading/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <QObject>
+#include <QTemporaryDir>
 
 #include <memory>
+#include <optional>
 
 namespace quentier::synchronization::tests {
 
@@ -34,14 +37,26 @@ class TestRunner : public QObject
 {
     Q_OBJECT
 public:
-    explicit TestRunner(QObject * parent = nullptr);
+    explicit TestRunner(
+        QObject * parent = nullptr,
+        threading::QThreadPoolPtr threadPool = {});
+
     ~TestRunner() override;
 
+private Q_SLOTS:
+    void init();
+    void cleanup();
+
+    void initTestCase();
+    void cleanupTestCase();
+
 private:
-    const Account m_testAccount;
     const FakeAuthenticatorPtr m_fakeAuthenticator;
     const FakeKeychainServicePtr m_fakeKeychainService;
+    const threading::QThreadPoolPtr m_threadPool;
 
+    Account m_testAccount;
+    std::optional<QTemporaryDir> m_tempDir;
     local_storage::ILocalStoragePtr m_localStorage;
     NoteStoreServer * m_noteStoreServer = nullptr;
     UserStoreServer * m_userStoreServer = nullptr;

@@ -104,7 +104,6 @@ public:
 public:
     NoteStoreServer(
         QString authenticationToken, QList<QNetworkCookie> cookies,
-        QHash<qevercloud::Guid, QString> linkedNotebookAuthTokensByGuid,
         QObject * parent = nullptr);
 
     ~NoteStoreServer() override;
@@ -273,6 +272,12 @@ public:
     [[nodiscard]] quint64 maxResourceSize() const noexcept;
     void setMaxResourceSize(quint64 maxResourceSize) noexcept;
 
+    [[nodiscard]] QHash<qevercloud::Guid, QString>
+        linkedNotebookAuthTokensByGuid() const;
+
+    void setLinkedNotebookAuthTokensByGuid(
+        QHash<qevercloud::Guid, QString> tokens);
+
     // private signals
 Q_SIGNALS:
     void createNotebookRequestReady(
@@ -417,7 +422,8 @@ private:
 private:
     const QString m_authenticationToken;
     const QList<QNetworkCookie> m_cookies;
-    const QHash<qevercloud::Guid, QString> m_linkedNotebookAuthTokensByGuid;
+
+    QHash<qevercloud::Guid, QString> m_linkedNotebookAuthTokensByGuid;
 
     QTcpServer * m_tcpServer = nullptr;
     QTcpSocket * m_tcpSocket = nullptr;
