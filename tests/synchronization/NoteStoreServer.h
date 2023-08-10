@@ -108,6 +108,8 @@ public:
 
     ~NoteStoreServer() override;
 
+    [[nodiscard]] quint16 port() const noexcept;
+
     // Saved searches
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::SavedSearch>
         savedSearches() const;

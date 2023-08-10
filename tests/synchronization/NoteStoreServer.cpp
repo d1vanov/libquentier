@@ -190,6 +190,11 @@ NoteStoreServer::NoteStoreServer(
 
 NoteStoreServer::~NoteStoreServer() = default;
 
+quint16 NoteStoreServer::port() const noexcept
+{
+    return m_tcpServer->serverPort();
+}
+
 QHash<qevercloud::Guid, qevercloud::SavedSearch>
     NoteStoreServer::savedSearches() const
 {

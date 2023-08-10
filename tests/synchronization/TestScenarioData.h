@@ -24,6 +24,10 @@
 
 #include <qevercloud/exceptions/Fwd.h>
 
+#include <QMetaType>
+
+#include <string_view>
+
 namespace quentier::synchronization::tests {
 
 struct TestScenarioData
@@ -47,6 +51,11 @@ struct TestScenarioData
     bool expectSomeLinkedNotebookNotes = false;
     bool expectSomeUserOwnDataSent = false;
     bool expectSomeLinkedNotebookDataSent = false;
+
+    // Name of the test scenario
+    std::string_view name;
 };
 
 } // namespace quentier::synchronization::tests
+
+Q_DECLARE_METATYPE(quentier::synchronization::tests::TestScenarioData); // NOLINT

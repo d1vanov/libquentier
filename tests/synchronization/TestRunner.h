@@ -19,7 +19,6 @@
 #pragma once
 
 #include "Fwd.h"
-#include "TestScenarioData.h"
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/threading/Fwd.h>
@@ -49,6 +48,9 @@ private Q_SLOTS:
 
     void initTestCase();
     void cleanupTestCase();
+
+    void runTestScenario();
+    void runTestScenario_data();
 
 private:
     const FakeAuthenticatorPtr m_fakeAuthenticator;

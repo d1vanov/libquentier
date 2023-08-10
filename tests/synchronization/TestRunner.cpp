@@ -23,6 +23,7 @@
 #include "FakeSyncStateStorage.h"
 #include "NoteStoreServer.h"
 #include "SyncEventsCollector.h"
+#include "TestScenarioData.h"
 #include "UserStoreServer.h"
 
 #include <synchronization/types/AuthenticationInfo.h>
@@ -37,8 +38,10 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QTest>
 #include <QTextStream>
 
+#include <array>
 #include <cstdio>
 
 namespace quentier::synchronization::tests {
@@ -102,6 +105,9 @@ void TestRunner::init()
     const QString webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
+    const auto userStoreCookies = generateUserStoreCookies();
+    m_noteStoreServer = new NoteStoreServer(authToken, userStoreCookies, this);
+
     auto authenticationInfo = [&] {
         auto info = std::make_shared<AuthenticationInfo>();
         info->m_userId = m_testAccount.id();
@@ -110,10 +116,10 @@ void TestRunner::init()
         info->m_authenticationTime = now;
         info->m_shardId = shardId;
         info->m_webApiUrlPrefix = webApiUrlPrefix;
+        info->m_noteStoreUrl = QString::fromUtf8("http://localhost:%1")
+                                   .arg(m_noteStoreServer->port());
         return info;
     }();
-
-    const auto userStoreCookies = generateUserStoreCookies();
 
     m_fakeAuthenticator->putAccountAuthInfo(
         m_testAccount, std::move(authenticationInfo));
@@ -133,7 +139,6 @@ void TestRunner::init()
             .setServiceLevel(qevercloud::ServiceLevel::BASIC)
             .build());
 
-    m_noteStoreServer = new NoteStoreServer(authToken, userStoreCookies, this);
     m_fakeSyncStateStorage = new FakeSyncStateStorage(this);
 }
 
@@ -164,5 +169,46 @@ void TestRunner::initTestCase()
 }
 
 void TestRunner::cleanupTestCase() {}
+
+void TestRunner::runTestScenario()
+{
+    // TODO: implement
+    // QFETCH(TestScenarioData, testScenarioData);
+}
+
+void TestRunner::runTestScenario_data()
+{
+    QTest::addColumn<TestScenarioData>("testScenarioData");
+
+    using namespace std::string_view_literals;
+
+    static const std::array testScenarioData{
+        TestScenarioData{
+            note_store::DataItemTypes{} |
+                note_store::DataItemType::SavedSearch, // serverDataItemTypes
+            note_store::ItemGroups{} |
+                note_store::ItemGroup::Base, // serverItemGroups
+            note_store::ItemSources{} |
+                note_store::ItemSource::UserOwnAccount, // serverItemSources
+            note_store::DataItemTypes{},                // localDataItemTypes
+            note_store::ItemGroups{},                   // localItemGroups
+            note_store::ItemSources{},                  // localItemSources
+            StopSynchronizationError{std::monostate{}}, // stopSyncError
+            false,                                      // expectFailure
+            true,  // expectSomeUserOwnSyncChunks
+            false, // expectSomeLinkedNotebooksSyncChunks
+            false, // expectSomeUserOwnNotes
+            false, // expectSomeUserOwnResources
+            false, // expectSomeLinkedNotebookNotes
+            false, // expectSomeUserOwnDataSent
+            false, // expectSomeLinkedNotebookDataSent
+            "Full sync with only saved searches"sv, // name
+        },
+    };
+
+    for (const auto & scenarioData: testScenarioData) {
+        QTest::newRow(scenarioData.name.data()) << scenarioData;
+    }
+}
 
 } // namespace quentier::synchronization::tests
