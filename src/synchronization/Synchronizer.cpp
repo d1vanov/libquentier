@@ -19,6 +19,7 @@
 #include "Synchronizer.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/synchronization/Factory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -29,6 +30,7 @@
 #include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/SyncEventsNotifier.h>
 #include <synchronization/types/SendStatus.h>
+#include <synchronization/types/SyncOptions.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -187,10 +189,18 @@ QFuture<IAuthenticationInfoPtr> Synchronizer::authenticateAccount(
 }
 
 ISynchronizer::SyncResult Synchronizer::synchronizeAccount(
-    Account account, ISyncConflictResolverPtr syncConflictResolver,
-    local_storage::ILocalStoragePtr localStorage, ISyncOptionsPtr options,
-    utility::cancelers::ICancelerPtr canceler)
+    Account account, local_storage::ILocalStoragePtr localStorage,
+    utility::cancelers::ICancelerPtr canceler, ISyncOptionsPtr options,
+    ISyncConflictResolverPtr syncConflictResolver)
 {
+    if (!options) {
+        options = std::make_shared<SyncOptions>();
+    }
+
+    if (!syncConflictResolver) {
+        syncConflictResolver = createSimpleSyncConflictResolver(localStorage);
+    }
+
     auto notifier = std::make_shared<SyncEventsNotifier>();
 
     auto promise = std::make_shared<QPromise<ISyncResultPtr>>();

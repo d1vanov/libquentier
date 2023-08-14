@@ -54,9 +54,10 @@ public:
         std::pair<QFuture<ISyncResultPtr>, ISyncEventsNotifier *>;
 
     [[nodiscard]] virtual SyncResult synchronizeAccount(
-        Account account, ISyncConflictResolverPtr syncConflictResolver,
-        local_storage::ILocalStoragePtr localStorage,
-        ISyncOptionsPtr options, utility::cancelers::ICancelerPtr canceler) = 0;
+        Account account, local_storage::ILocalStoragePtr localStorage,
+        utility::cancelers::ICancelerPtr canceler,
+        ISyncOptionsPtr options = nullptr,
+        ISyncConflictResolverPtr syncConflictResolver = nullptr) = 0;
 
     virtual void revokeAuthentication(qevercloud::UserID userId) = 0;
 };

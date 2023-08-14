@@ -32,7 +32,10 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/local_storage/ILocalStorageNotifier.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/synchronization/Factory.h>
+#include <quentier/synchronization/ISynchronizer.h>
 #include <quentier/threading/Factory.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/types/builders/UserBuilder.h>
 
@@ -139,7 +142,15 @@ void TestRunner::init()
             .setServiceLevel(qevercloud::ServiceLevel::BASIC)
             .build());
 
-    m_fakeSyncStateStorage = new FakeSyncStateStorage(this);
+    m_fakeSyncStateStorage = std::shared_ptr<FakeSyncStateStorage>(
+        new FakeSyncStateStorage(this),
+        [](FakeSyncStateStorage * storage)
+        {
+            storage->disconnect();
+            storage->deleteLater();
+        });
+
+    m_syncEventsCollector = new SyncEventsCollector(this);
 }
 
 void TestRunner::cleanup()
@@ -159,6 +170,10 @@ void TestRunner::cleanup()
     m_fakeSyncStateStorage->deleteLater();
     m_fakeSyncStateStorage = nullptr;
 
+    m_syncEventsCollector->disconnect();
+    m_syncEventsCollector->deleteLater();
+    m_syncEventsCollector = nullptr;
+
     m_fakeAuthenticator->clear();
     m_fakeKeychainService->clear();
 }
@@ -172,8 +187,36 @@ void TestRunner::cleanupTestCase() {}
 
 void TestRunner::runTestScenario()
 {
-    // TODO: implement
-    // QFETCH(TestScenarioData, testScenarioData);
+    QFETCH(TestScenarioData, testScenarioData);
+
+    // TODO: setup items corresponding to testScenarioData in both note store
+    // server and local storage
+
+    const QUrl userStoreUrl =
+        QUrl::fromEncoded(QString::fromUtf8("http://localhost:%1")
+                              .arg(m_userStoreServer->port())
+                              .toUtf8());
+    QVERIFY(userStoreUrl.isValid());
+
+    const QString syncPersistenceDirPath =
+        m_tempDir->path() + QStringLiteral("/syncPersistence");
+
+    QDir syncPersistenceDir{syncPersistenceDirPath};
+    if (!syncPersistenceDir.exists()) {
+        QVERIFY(syncPersistenceDir.mkpath(syncPersistenceDirPath));
+    }
+
+    auto synchronizer = createSynchronizer(
+        userStoreUrl, syncPersistenceDir, m_fakeAuthenticator,
+        m_fakeSyncStateStorage, m_fakeKeychainService);
+
+    auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto syncResultPair = synchronizer->synchronizeAccount(
+        m_testAccount, m_localStorage, canceler);
+
+    auto * notifier = syncResultPair.second;
+    // TODO: connect sync events collector to the notifier
 }
 
 void TestRunner::runTestScenario_data()

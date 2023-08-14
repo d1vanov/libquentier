@@ -62,7 +62,8 @@ private:
     local_storage::ILocalStoragePtr m_localStorage;
     NoteStoreServer * m_noteStoreServer = nullptr;
     UserStoreServer * m_userStoreServer = nullptr;
-    FakeSyncStateStorage * m_fakeSyncStateStorage = nullptr;
+    SyncEventsCollector * m_syncEventsCollector = nullptr;
+    std::shared_ptr<FakeSyncStateStorage> m_fakeSyncStateStorage;
 };
 
 } // namespace quentier::synchronization::tests

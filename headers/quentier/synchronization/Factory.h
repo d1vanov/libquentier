@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/threading/Fwd.h>
 #include <quentier/utility/Fwd.h>
@@ -49,5 +50,9 @@ namespace quentier::synchronization {
     IKeychainServicePtr keychainService = nullptr,
     qevercloud::IRequestContextPtr ctx = nullptr,
     qevercloud::IRetryPolicyPtr retryPolicy = nullptr);
+
+[[nodiscard]] QUENTIER_EXPORT ISyncConflictResolverPtr
+    createSimpleSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage);
 
 } // namespace quentier::synchronization

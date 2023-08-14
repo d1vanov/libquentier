@@ -27,6 +27,9 @@
 #include <synchronization/ProtocolVersionChecker.h>
 #include <synchronization/Synchronizer.h>
 #include <synchronization/UserInfoProvider.h>
+#include <synchronization/conflict_resolvers/Factory.h>
+#include <synchronization/conflict_resolvers/SimpleNoteSyncConflictResolver.h>
+#include <synchronization/conflict_resolvers/SimpleSyncConflictResolver.h>
 
 #include <qevercloud/services/IUserStore.h>
 
@@ -87,6 +90,28 @@ ISynchronizerPtr createSynchronizer(
         std::move(accountSynchronizerFactory),
         std::move(authenticationInfoProvider),
         std::move(protocolVersionChecker));
+}
+
+ISyncConflictResolverPtr createSimpleSyncConflictResolver(
+    local_storage::ILocalStoragePtr localStorage)
+{
+    auto notebookConflictResolver = createSimpleNotebookSyncConflictResolver(
+        localStorage);
+
+    auto savedSearchConflictResolver =
+        createSimpleSavedSearchSyncConflictResolver(localStorage);
+
+    auto tagConflictResolver =
+        createSimpleTagSyncConflictResolver(std::move(localStorage));
+
+    auto noteConflictResolver =
+        std::make_shared<SimpleNoteSyncConflictResolver>();
+
+    return std::make_shared<SimpleSyncConflictResolver>(
+        std::move(notebookConflictResolver),
+        std::move(noteConflictResolver),
+        std::move(savedSearchConflictResolver),
+        std::move(tagConflictResolver));
 }
 
 } // namespace quentier::synchronization

@@ -44,9 +44,10 @@ public: // ISynchronizer
         Account account) override;
 
     [[nodiscard]] SyncResult synchronizeAccount(
-        Account account, ISyncConflictResolverPtr syncConflictResolver,
-        local_storage::ILocalStoragePtr localStorage, ISyncOptionsPtr options,
-        utility::cancelers::ICancelerPtr canceler) override;
+        Account account, local_storage::ILocalStoragePtr localStorage,
+        utility::cancelers::ICancelerPtr canceler,
+        ISyncOptionsPtr options = nullptr,
+        ISyncConflictResolverPtr syncConflictResolver = nullptr) override;
 
     void revokeAuthentication(qevercloud::UserID userId) override;
 

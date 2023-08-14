@@ -236,8 +236,8 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
             });
 
     auto result = synchronizer->synchronizeAccount(
-        m_account, m_mockSyncConflictResolver, m_mockLocalStorage, syncOptions,
-        m_canceler);
+        m_account, m_mockLocalStorage, m_canceler, syncOptions,
+        m_mockSyncConflictResolver);
 
     ASSERT_TRUE(callback);
 
