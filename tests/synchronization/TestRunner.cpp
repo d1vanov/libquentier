@@ -25,6 +25,8 @@
 #include "SyncEventsCollector.h"
 #include "TestScenarioData.h"
 #include "UserStoreServer.h"
+#include "note_store/Setup.h"
+#include "note_store/TestData.h"
 
 #include <synchronization/types/AuthenticationInfo.h>
 
@@ -189,8 +191,17 @@ void TestRunner::runTestScenario()
 {
     QFETCH(TestScenarioData, testScenarioData);
 
-    // TODO: setup items corresponding to testScenarioData in both note store
-    // server and local storage
+    note_store::TestData testData;
+    note_store::setupTestData(
+        testScenarioData.serverDataItemTypes, testScenarioData.serverItemGroups,
+        testScenarioData.serverItemSources, testData);
+
+    note_store::setupNoteStoreServer(testData, *m_noteStoreServer);
+
+    note_store::setupLocalStorage(
+        testData, testScenarioData.localDataItemTypes,
+        testScenarioData.localItemGroups, testScenarioData.localItemSources,
+        *m_localStorage);
 
     const QUrl userStoreUrl =
         QUrl::fromEncoded(QString::fromUtf8("http://localhost:%1")
@@ -215,8 +226,32 @@ void TestRunner::runTestScenario()
     auto syncResultPair = synchronizer->synchronizeAccount(
         m_testAccount, m_localStorage, canceler);
 
-    auto * notifier = syncResultPair.second;
-    // TODO: connect sync events collector to the notifier
+    m_syncEventsCollector->connectToNotifier(syncResultPair.second);
+
+    bool caughtException = false;
+    try {
+        syncResultPair.first.waitForFinished();
+    }
+    catch (...) {
+        caughtException = true;
+    }
+
+    const char * errorMessage = nullptr;
+    QVERIFY2(
+        m_syncEventsCollector->checkProgressNotificationsOrder(errorMessage),
+        errorMessage);
+
+    // TODO: check that events captured by m_syncEventsCollector correspond to testScenarioData
+
+    if (testScenarioData.expectFailure) {
+        QVERIFY(caughtException);
+        return;
+    }
+
+    QVERIFY(syncResultPair.first.resultCount() == 1);
+
+    // TODO: check that the actual result conforms to the expectations
+    // TODO: check that the contents of m_noteStoreServer and m_localStorage correspond to each other
 }
 
 void TestRunner::runTestScenario_data()

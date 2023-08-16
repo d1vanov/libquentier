@@ -30,6 +30,12 @@
 
 #include <utility>
 
+namespace quentier::synchronization {
+
+class ISyncEventsNotifier;
+
+} // namespace quentier::synchronization
+
 namespace quentier::synchronization::tests {
 
 class SyncEventsCollector : public QObject
@@ -119,7 +125,12 @@ public:
     [[nodiscard]] LinkedNotebookSendStatusMessages
         linkedNotebookSendStatusMessages() const;
 
-public Q_SLOTS:
+    void connectToNotifier(ISyncEventsNotifier * notifier) const;
+
+    [[nodiscard]] bool checkProgressNotificationsOrder(
+        const char *& errorMessage) const;
+
+private Q_SLOTS:
     void onSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
         qint32 lastPreviousUsn);
@@ -163,6 +174,59 @@ public Q_SLOTS:
     void onLinkedNotebookSendStatusUpdate(
         const qevercloud::Guid & linkedNotebookGuid,
         const ISendStatusPtr & sendStatus);
+
+private:
+    [[nodiscard]] bool checkUserOwnSyncChunksDownloadProgressOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkLinkedNotebookSyncChunksDownloadProgressOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkSyncChunksDownloadProgressOrderImpl(
+        const QList<SyncChunksDownloadProgressMessage> & messages,
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkSingleSyncChunkDownloadProgressMessage(
+        const SyncChunksDownloadProgressMessage & message,
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkUserOwnNotesDownloadProgressOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkLinkedNotebookNotesDownloadProgressOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkNotesDownloadProgressOrderImpl(
+        const QList<NoteDownloadProgressMessage> & messages,
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkSingleNoteDownloadProgressMessage(
+        const NoteDownloadProgressMessage & message,
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkUserOwnResourcesDownloadProgressOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkLinkedNotebookResourcesDownloadProgressOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkResourcesDownloadProgressOrderImpl(
+        const QList<ResourceDownloadProgressMessage> & messages,
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkSingleResourceDownloadProgressMessage(
+        const ResourceDownloadProgressMessage & message,
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkUserOwnSyncChunksDataCountersOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkLinkedNotebookSyncChunkDataCountersOrder(
+        const char *& errorMessage) const;
+
+    [[nodiscard]] bool checkSyncChunksDataCountersOrderImpl(
+        const QList<ISyncChunksDataCountersPtr> & messages,
+        const char *& errorMessage) const;
 
 private:
     QList<SyncChunksDownloadProgressMessage>
