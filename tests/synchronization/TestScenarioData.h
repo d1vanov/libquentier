@@ -49,6 +49,7 @@ struct TestScenarioData
     bool expectSomeUserOwnNotes = false;
     bool expectSomeUserOwnResources = false;
     bool expectSomeLinkedNotebookNotes = false;
+    bool expectSomeLinkedNotebookResources = false;
     bool expectSomeUserOwnDataSent = false;
     bool expectSomeLinkedNotebookDataSent = false;
 

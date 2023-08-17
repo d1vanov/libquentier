@@ -35,6 +35,7 @@
 #include <quentier/local_storage/ILocalStorageNotifier.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/Factory.h>
+#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISynchronizer.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
@@ -145,9 +146,7 @@ void TestRunner::init()
             .build());
 
     m_fakeSyncStateStorage = std::shared_ptr<FakeSyncStateStorage>(
-        new FakeSyncStateStorage(this),
-        [](FakeSyncStateStorage * storage)
-        {
+        new FakeSyncStateStorage(this), [](FakeSyncStateStorage * storage) {
             storage->disconnect();
             storage->deleteLater();
         });
@@ -241,7 +240,56 @@ void TestRunner::runTestScenario()
         m_syncEventsCollector->checkProgressNotificationsOrder(errorMessage),
         errorMessage);
 
-    // TODO: check that events captured by m_syncEventsCollector correspond to testScenarioData
+    QVERIFY2(
+        !m_syncEventsCollector->userOwnSyncChunksDownloadProgressMessages()
+                .isEmpty() == testScenarioData.expectSomeUserOwnSyncChunks,
+        "User own sync chunks download progress messages count doesn't "
+        "correspond to the expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector
+                ->linkedNotebookSyncChunksDownloadProgressMessages()
+                .isEmpty() ==
+            testScenarioData.expectSomeLinkedNotebooksSyncChunks,
+        "Linked notebook sync chunks download progress messages count doesn't "
+        "correspond to the expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector->userOwnNoteDownloadProgressMessages()
+                .isEmpty() == testScenarioData.expectSomeUserOwnNotes,
+        "User own notes download progress messages count doesn't correspond "
+        "to the expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector->userOwnResourceDownloadProgressMessages()
+                .isEmpty() == testScenarioData.expectSomeUserOwnResources,
+        "User own resources download progress messages count doesn't "
+        "correspond to the expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector->linkedNotebookNoteDownloadProgressMessages()
+                .isEmpty() == testScenarioData.expectSomeLinkedNotebookNotes,
+        "Linked notebook notes download progress messages count doesn't "
+        "correspond to the expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector->linkedNotebookResourceDownloadProgressMessages()
+                .isEmpty() ==
+            testScenarioData.expectSomeLinkedNotebookResources,
+        "Linked notebook resources download progress messages count doesn't "
+        "correspond to the expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector->userOwnSendStatusMessages().isEmpty() ==
+            testScenarioData.expectSomeUserOwnDataSent,
+        "User own sent data messages count doesn't correspond to the "
+        "expectation");
+
+    QVERIFY2(
+        !m_syncEventsCollector->linkedNotebookSendStatusMessages().isEmpty() ==
+            testScenarioData.expectSomeLinkedNotebookDataSent,
+        "Linked notebook sent data messages count doesn't correspond to the "
+        "expectation");
 
     if (testScenarioData.expectFailure) {
         QVERIFY(caughtException);
@@ -251,7 +299,8 @@ void TestRunner::runTestScenario()
     QVERIFY(syncResultPair.first.resultCount() == 1);
 
     // TODO: check that the actual result conforms to the expectations
-    // TODO: check that the contents of m_noteStoreServer and m_localStorage correspond to each other
+    // TODO: check that the contents of m_noteStoreServer and m_localStorage
+    // correspond to each other
 }
 
 void TestRunner::runTestScenario_data()
@@ -278,6 +327,7 @@ void TestRunner::runTestScenario_data()
             false, // expectSomeUserOwnNotes
             false, // expectSomeUserOwnResources
             false, // expectSomeLinkedNotebookNotes
+            false, // expectSomeLinkedNotebookResources
             false, // expectSomeUserOwnDataSent
             false, // expectSomeLinkedNotebookDataSent
             "Full sync with only saved searches"sv, // name
