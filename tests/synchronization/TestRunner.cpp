@@ -37,10 +37,12 @@
 #include <quentier/synchronization/Factory.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/types/builders/UserBuilder.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QDateTime>
 #include <QDebug>
@@ -297,6 +299,63 @@ void TestRunner::runTestScenario()
     }
 
     QVERIFY(syncResultPair.first.resultCount() == 1);
+
+    const auto syncResult = syncResultPair.first.result();
+    QVERIFY(syncResult);
+
+    if (testScenarioData.expectSomeUserOwnSyncChunks ||
+        testScenarioData.expectSomeLinkedNotebooksSyncChunks)
+    {
+        const auto syncState = syncResult->syncState();
+        QVERIFY2(syncState, "Null pointer to sync state in sync result");
+
+        if (testScenarioData.expectSomeUserOwnSyncChunks) {
+            QVERIFY2(
+                syncState->userDataLastSyncTime() > 0,
+                "Detected zero last sync time for user own account in sync "
+                "state");
+        }
+
+        QVERIFY2(
+            syncState->userDataUpdateCount() ==
+                m_noteStoreServer->currentUserOwnMaxUsn(),
+            "Max user own USN in sync state doesn't correspond to the USN "
+            "recorded by note store server");
+
+        const auto linkedNotebookUpdateCounts =
+            syncState->linkedNotebookUpdateCounts();
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+            const auto serverMaxUsn =
+                m_noteStoreServer->currentLinkedNotebookMaxUsn(it.key());
+
+            QVERIFY2(
+                serverMaxUsn,
+                "Could not find max USN for one of linked notebook guids "
+                "from sync state in sync result");
+
+            QVERIFY2(
+                *serverMaxUsn == it.value(),
+                "Max USN for one of linked notebooks doesn't match update "
+                "count for this linked notebook on the server");
+        }
+
+        const auto linkedNotebookLastSyncTimes =
+            syncState->linkedNotebookLastSyncTimes();
+
+        QVERIFY(
+            linkedNotebookLastSyncTimes.size() ==
+            linkedNotebookUpdateCounts.size());
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(linkedNotebookLastSyncTimes))) {
+            QVERIFY2(
+                it.value() > 0,
+                "Detected zero last sync time in sync state for some linked "
+                "notebook");
+        }
+    }
 
     // TODO: check that the actual result conforms to the expectations
     // TODO: check that the contents of m_noteStoreServer and m_localStorage
