@@ -37,6 +37,8 @@
 #include <quentier/synchronization/Factory.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/IDownloadNotesStatus.h>
+#include <quentier/synchronization/types/IDownloadResourcesStatus.h>
 #include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
@@ -79,6 +81,31 @@ inline void messageHandler(
     }
 
     return result;
+}
+
+[[nodiscard]] bool empty(const ISyncChunksDataCounters & counters) noexcept
+{
+    return counters.totalSavedSearches() != 0
+        || counters.totalExpungedSavedSearches() != 0
+        || counters.totalTags() != 0
+        || counters.totalExpungedTags() != 0
+        || counters.totalLinkedNotebooks() != 0
+        || counters.totalExpungedLinkedNotebooks() != 0
+        || counters.totalNotebooks() != 0
+        || counters.totalExpungedNotebooks() != 0;
+}
+
+[[nodiscard]] bool empty(const IDownloadNotesStatus & status) noexcept
+{
+    return status.totalNewNotes() != 0
+        || status.totalUpdatedNotes() != 0
+        || status.totalExpungedNotes() != 0;
+}
+
+[[nodiscard]] bool empty(const IDownloadResourcesStatus & status) noexcept
+{
+    return status.totalNewResources() != 0
+        || status.totalUpdatedResources() != 0;
 }
 
 } // namespace
@@ -294,11 +321,13 @@ void TestRunner::runTestScenario()
         "expectation");
 
     if (testScenarioData.expectFailure) {
-        QVERIFY(caughtException);
+        QVERIFY2(
+            caughtException, "Sync which was expected to fail did not fail");
         return;
     }
 
-    QVERIFY(syncResultPair.first.resultCount() == 1);
+    QVERIFY2(
+        syncResultPair.first.resultCount() == 1, "Empty sync result future");
 
     const auto syncResult = syncResultPair.first.result();
     QVERIFY(syncResult);
@@ -356,6 +385,32 @@ void TestRunner::runTestScenario()
                 "notebook");
         }
     }
+
+    const auto userOwnCounters =
+        syncResult->userAccountSyncChunksDataCounters();
+
+    QVERIFY(
+        (userOwnCounters && !empty(*userOwnCounters)) ==
+        testScenarioData.expectSomeUserOwnSyncChunks);
+
+    const auto userOwnNotesStatus =
+        syncResult->userAccountDownloadNotesStatus();
+
+    QVERIFY(
+        (userOwnNotesStatus && !empty(*userOwnNotesStatus)) ==
+        testScenarioData.expectSomeUserOwnNotes);
+
+    const auto userOwnResourcesStatus =
+        syncResult->userAccountDownloadResourcesStatus();
+
+    QVERIFY(
+        (userOwnResourcesStatus && !empty(*userOwnResourcesStatus)) ==
+        testScenarioData.expectSomeUserOwnResources);
+
+    const auto userOwnSendStatus = syncResult->userAccountSendStatus();
+    QVERIFY(
+        static_cast<bool>(userOwnSendStatus) ==
+        testScenarioData.expectSomeUserOwnDataSent);
 
     // TODO: check that the actual result conforms to the expectations
     // TODO: check that the contents of m_noteStoreServer and m_localStorage
