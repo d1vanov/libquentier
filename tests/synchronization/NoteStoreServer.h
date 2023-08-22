@@ -137,11 +137,11 @@ public:
     void removeTag(const qevercloud::Guid & guid);
 
     // Expunged tags
-    void putExpungedTagGuid(const qevercloud::Guid & guid);
-    [[nodiscard]] bool containsExpungedTagGuid(
+    void putExpungedUserOwnTagGuid(const qevercloud::Guid & guid);
+    [[nodiscard]] bool containsExpungedUserOwnTagGuid(
         const qevercloud::Guid & guid) const;
 
-    void removeExpungedTagGuid(const qevercloud::Guid & guid);
+    void removeExpungedUserOwnTagGuid(const qevercloud::Guid & guid);
 
     // Notebooks
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Notebook> notebooks()
@@ -158,11 +158,11 @@ public:
             const qevercloud::Guid & linkedNotebookGuid) const;
 
     // Expunged notebooks
-    void putExpungedNotebookGuid(const qevercloud::Guid & guid);
-    [[nodiscard]] bool containsExpungedNotebookGuid(
+    void putExpungedUserOwnNotebookGuid(const qevercloud::Guid & guid);
+    [[nodiscard]] bool containsExpungedUserOwnNotebookGuid(
         const qevercloud::Guid & guid) const;
 
-    void removeExpungedNotebookGuid(const qevercloud::Guid & guid);
+    void removeExpungedUserOwnNotebookGuid(const qevercloud::Guid & guid);
 
     // Notes
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::Note> notes() const;
@@ -173,11 +173,11 @@ public:
     void removeNote(const qevercloud::Guid & guid);
 
     // Expunged notes
-    void putExpungedNoteGuid(const qevercloud::Guid & guid);
-    [[nodiscard]] bool containsExpungedNoteGuid(
+    void putExpungedUserOwnNoteGuid(const qevercloud::Guid & guid);
+    [[nodiscard]] bool containsExpungedUserOwnNoteGuid(
         const qevercloud::Guid & guid) const;
 
-    void removeExpungedNoteGuid(const qevercloud::Guid & guid);
+    void removeExpungedUserOwnNoteGuid(const qevercloud::Guid & guid);
 
     [[nodiscard]] QList<qevercloud::Note> getNotesByConflictSourceNoteGuid(
         const qevercloud::Guid & conflictSourceNoteGuid) const;
@@ -196,8 +196,7 @@ public:
     [[nodiscard]] QHash<qevercloud::Guid, qevercloud::LinkedNotebook>
         linkedNotebooks() const;
 
-    ItemData putLinkedNotebook(
-        qevercloud::LinkedNotebook linkedNotebook);
+    ItemData putLinkedNotebook(qevercloud::LinkedNotebook linkedNotebook);
 
     [[nodiscard]] std::optional<qevercloud::LinkedNotebook> findLinkedNotebook(
         const qevercloud::Guid & guid) const;
@@ -435,13 +434,13 @@ private:
     QSet<qevercloud::Guid> m_expungedSavedSearchGuids;
 
     note_store::Tags m_tags;
-    QSet<qevercloud::Guid> m_expungedTagGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnTagGuids;
 
     note_store::Notebooks m_notebooks;
-    QSet<qevercloud::Guid> m_expungedNotebookGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnNotebookGuids;
 
     note_store::Notes m_notes;
-    QSet<qevercloud::Guid> m_expungedNoteGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnNoteGuids;
 
     note_store::Resources m_resources;
 

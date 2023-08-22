@@ -376,7 +376,7 @@ NoteStoreServer::ItemData NoteStoreServer::putTag(qevercloud::Tag tag)
     result.usn = *maxUsn;
 
     if (!tag.linkedNotebookGuid()) {
-        removeExpungedTagGuid(*tag.guid());
+        removeExpungedUserOwnTagGuid(*tag.guid());
     }
 
     auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
@@ -465,21 +465,22 @@ void NoteStoreServer::removeTag(const qevercloud::Guid & guid)
     index.erase(tagIt);
 }
 
-void NoteStoreServer::putExpungedTagGuid(const qevercloud::Guid & guid)
+void NoteStoreServer::putExpungedUserOwnTagGuid(const qevercloud::Guid & guid)
 {
     removeTag(guid);
-    m_expungedTagGuids.insert(guid);
+    m_expungedUserOwnTagGuids.insert(guid);
 }
 
-bool NoteStoreServer::containsExpungedTagGuid(
+bool NoteStoreServer::containsExpungedUserOwnTagGuid(
     const qevercloud::Guid & guid) const
 {
-    return m_expungedTagGuids.contains(guid);
+    return m_expungedUserOwnTagGuids.contains(guid);
 }
 
-void NoteStoreServer::removeExpungedTagGuid(const qevercloud::Guid & guid)
+void NoteStoreServer::removeExpungedUserOwnTagGuid(
+    const qevercloud::Guid & guid)
 {
-    m_expungedTagGuids.remove(guid);
+    m_expungedUserOwnTagGuids.remove(guid);
 }
 
 QHash<qevercloud::Guid, qevercloud::Notebook> NoteStoreServer::notebooks() const
@@ -557,7 +558,7 @@ NoteStoreServer::ItemData NoteStoreServer::putNotebook(
     result.usn = *maxUsn;
 
     if (!notebook.linkedNotebookGuid()) {
-        removeExpungedNotebookGuid(*notebook.guid());
+        removeExpungedUserOwnNotebookGuid(*notebook.guid());
     }
 
     auto & notebookGuidIndex = m_notebooks.get<note_store::NotebookByGuidTag>();
@@ -631,21 +632,23 @@ QList<qevercloud::Notebook> NoteStoreServer::findNotebooksForLinkedNotebookGuid(
     return notebooks;
 }
 
-void NoteStoreServer::putExpungedNotebookGuid(const qevercloud::Guid & guid)
+void NoteStoreServer::putExpungedUserOwnNotebookGuid(
+    const qevercloud::Guid & guid)
 {
     removeNotebook(guid);
-    m_expungedNotebookGuids.insert(guid);
+    m_expungedUserOwnNotebookGuids.insert(guid);
 }
 
-bool NoteStoreServer::containsExpungedNotebookGuid(
+bool NoteStoreServer::containsExpungedUserOwnNotebookGuid(
     const qevercloud::Guid & guid) const
 {
-    return m_expungedNotebookGuids.contains(guid);
+    return m_expungedUserOwnNotebookGuids.contains(guid);
 }
 
-void NoteStoreServer::removeExpungedNotebookGuid(const qevercloud::Guid & guid)
+void NoteStoreServer::removeExpungedUserOwnNotebookGuid(
+    const qevercloud::Guid & guid)
 {
-    m_expungedNotebookGuids.remove(guid);
+    m_expungedUserOwnNotebookGuids.remove(guid);
 }
 
 QHash<qevercloud::Guid, qevercloud::Note> NoteStoreServer::notes() const
@@ -699,7 +702,7 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
     result.usn = *maxUsn;
 
     if (!notebookIt->linkedNotebookGuid()) {
-        removeExpungedNoteGuid(*note.guid());
+        removeExpungedUserOwnNoteGuid(*note.guid());
     }
 
     auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
@@ -785,21 +788,22 @@ void NoteStoreServer::removeNote(const qevercloud::Guid & guid)
     index.erase(it);
 }
 
-void NoteStoreServer::putExpungedNoteGuid(const qevercloud::Guid & guid)
+void NoteStoreServer::putExpungedUserOwnNoteGuid(const qevercloud::Guid & guid)
 {
     removeNote(guid);
-    m_expungedNoteGuids.insert(guid);
+    m_expungedUserOwnNoteGuids.insert(guid);
 }
 
-bool NoteStoreServer::containsExpungedNoteGuid(
+bool NoteStoreServer::containsExpungedUserOwnNoteGuid(
     const qevercloud::Guid & guid) const
 {
-    return m_expungedNoteGuids.contains(guid);
+    return m_expungedUserOwnNoteGuids.contains(guid);
 }
 
-void NoteStoreServer::removeExpungedNoteGuid(const qevercloud::Guid & guid)
+void NoteStoreServer::removeExpungedUserOwnNoteGuid(
+    const qevercloud::Guid & guid)
 {
-    m_expungedNoteGuids.remove(guid);
+    m_expungedUserOwnNoteGuids.remove(guid);
 }
 
 QList<qevercloud::Note> NoteStoreServer::getNotesByConflictSourceNoteGuid(
@@ -3355,46 +3359,48 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         }
     }
 
-    if (!linkedNotebookGuid && !m_expungedTagGuids.isEmpty()) {
+    if (!linkedNotebookGuid && !m_expungedUserOwnTagGuids.isEmpty()) {
         if (!syncChunk.expungedTags()) {
             syncChunk.setExpungedTags(QList<qevercloud::Guid>{});
         }
 
-        syncChunk.mutableExpungedTags()->reserve(m_expungedTagGuids.size());
+        syncChunk.mutableExpungedTags()->reserve(
+            m_expungedUserOwnTagGuids.size());
 
-        for (auto it = m_expungedTagGuids.constBegin(),
-                  end = m_expungedTagGuids.constEnd();
+        for (auto it = m_expungedUserOwnTagGuids.constBegin(),
+                  end = m_expungedUserOwnTagGuids.constEnd();
              it != end; ++it)
         {
             syncChunk.mutableExpungedTags()->append(*it);
         }
     }
 
-    if (!m_expungedNotebookGuids.isEmpty()) {
+    if (!m_expungedUserOwnNotebookGuids.isEmpty()) {
         if (!syncChunk.expungedNotebooks()) {
             syncChunk.setExpungedNotebooks(QList<qevercloud::Guid>{});
         }
 
         syncChunk.mutableExpungedNotebooks()->reserve(
-            m_expungedNotebookGuids.size());
+            m_expungedUserOwnNotebookGuids.size());
 
-        for (auto it = m_expungedNotebookGuids.constBegin(),
-                  end = m_expungedNotebookGuids.constEnd();
+        for (auto it = m_expungedUserOwnNotebookGuids.constBegin(),
+                  end = m_expungedUserOwnNotebookGuids.constEnd();
              it != end; ++it)
         {
             syncChunk.mutableExpungedNotebooks()->append(*it);
         }
     }
 
-    if (!m_expungedNoteGuids.isEmpty()) {
+    if (!m_expungedUserOwnNoteGuids.isEmpty()) {
         if (!syncChunk.expungedNotes()) {
             syncChunk.setExpungedNotes(QList<qevercloud::Guid>{});
         }
 
-        syncChunk.mutableExpungedNotes()->reserve(m_expungedNoteGuids.size());
+        syncChunk.mutableExpungedNotes()->reserve(
+            m_expungedUserOwnNoteGuids.size());
 
-        for (auto it = m_expungedNoteGuids.constBegin(),
-                  end = m_expungedNoteGuids.constEnd();
+        for (auto it = m_expungedUserOwnNoteGuids.constBegin(),
+                  end = m_expungedUserOwnNoteGuids.constEnd();
              it != end; ++it)
         {
             syncChunk.mutableExpungedNotes()->append(*it);

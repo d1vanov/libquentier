@@ -787,15 +787,15 @@ void setupNoteStoreServer(
     }
 
     for (const auto & guid: qAsConst(testData.m_expungedUserOwnTagGuids)) {
-        noteStoreServer.putExpungedTagGuid(guid);
+        noteStoreServer.putExpungedUserOwnTagGuid(guid);
     }
 
     for (const auto & guid: qAsConst(testData.m_expungedUserOwnNotebookGuids)) {
-        noteStoreServer.putExpungedNotebookGuid(guid);
+        noteStoreServer.putExpungedUserOwnNotebookGuid(guid);
     }
 
     for (const auto & guid: qAsConst(testData.m_expungedUserOwnNoteGuids)) {
-        noteStoreServer.putExpungedNoteGuid(guid);
+        noteStoreServer.putExpungedUserOwnNoteGuid(guid);
     }
 
     // TODO: setup guids of expunged data items for linked notebooks too
