@@ -36,6 +36,9 @@ struct TestScenarioData
     note_store::ItemGroups serverItemGroups;
     note_store::ItemSources serverItemSources;
 
+    note_store::DataItemTypes serverExpungedDataItemTypes;
+    note_store::ItemSources serverExpungedDataItemSources;
+
     note_store::DataItemTypes localDataItemTypes;
     note_store::ItemGroups localItemGroups;
     note_store::ItemSources localItemSources;

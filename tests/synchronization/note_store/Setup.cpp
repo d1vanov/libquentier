@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../NoteStoreServer.h"
 #include "Setup.h"
+#include "../NoteStoreServer.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/utility/UidGenerator.h>
@@ -177,7 +177,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 
 void setupTestData(
     const DataItemTypes dataItemTypes, const ItemGroups itemGroups,
-    const ItemSources itemSources, TestData & testData)
+    const ItemSources itemSources, const DataItemTypes expungedDataItemTypes,
+    const ItemSources expungedItemSources, TestData & testData)
 {
     constexpr int itemCount = 10;
 
@@ -588,6 +589,80 @@ void setupTestData(
             }
         }
     }
+
+    const auto generateExpungedGuids =
+        [](QList<qevercloud::Guid> & expungedGuids) {
+            expungedGuids.reserve(itemCount);
+            for (int i = 0; i < itemCount; ++i) {
+                expungedGuids << UidGenerator::Generate();
+            }
+        };
+
+    if (expungedDataItemTypes.testFlag(DataItemType::SavedSearch) &&
+        expungedItemSources.testFlag(ItemSource::UserOwnAccount))
+    {
+        generateExpungedGuids(testData.m_expungedUserOwnSavedSearchGuids);
+    }
+
+    if (expungedDataItemTypes.testFlag(DataItemType::Tag)) {
+        if (expungedItemSources.testFlag(ItemSource::UserOwnAccount)) {
+            generateExpungedGuids(testData.m_expungedUserOwnTagGuids);
+        }
+
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+            testData.m_expungedLinkedNotebookTagGuids.reserve(
+                linkedNotebookGuids.size());
+
+            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
+            {
+                auto & expungedTagGuids =
+                    testData
+                        .m_expungedLinkedNotebookTagGuids[linkedNotebookGuid];
+
+                generateExpungedGuids(expungedTagGuids);
+            }
+        }
+    }
+
+    if (expungedDataItemTypes.testFlag(DataItemType::Notebook)) {
+        if (expungedItemSources.testFlag(ItemSource::UserOwnAccount)) {
+            generateExpungedGuids(testData.m_expungedUserOwnNotebookGuids);
+        }
+
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+            testData.m_expungedLinkedNotebookNotebookGuids.reserve(
+                linkedNotebookGuids.size());
+
+            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
+            {
+                auto & expungedNotebookGuids =
+                    testData.m_expungedLinkedNotebookNotebookGuids
+                        [linkedNotebookGuid];
+
+                generateExpungedGuids(expungedNotebookGuids);
+            }
+        }
+    }
+
+    if (expungedDataItemTypes.testFlag(DataItemType::Note)) {
+        if (expungedItemSources.testFlag(ItemSource::UserOwnAccount)) {
+            generateExpungedGuids(testData.m_expungedUserOwnNoteGuids);
+        }
+
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+            testData.m_expungedLinkedNotebookNoteGuids.reserve(
+                linkedNotebookGuids.size());
+
+            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
+            {
+                auto & expungedNoteGuids =
+                    testData
+                        .m_expungedLinkedNotebookNoteGuids[linkedNotebookGuid];
+
+                generateExpungedGuids(expungedNoteGuids);
+            }
+        }
+    }
 }
 
 void setupNoteStoreServer(
@@ -705,6 +780,26 @@ void setupNoteStoreServer(
 
     putResources(testData.m_userOwnModifiedResources);
     putResources(testData.m_linkedNotebookModifiedResources);
+
+    for (const auto & guid:
+         qAsConst(testData.m_expungedUserOwnSavedSearchGuids)) {
+        noteStoreServer.putExpungedSavedSearchGuid(guid);
+    }
+
+    for (const auto & guid: qAsConst(testData.m_expungedUserOwnTagGuids)) {
+        noteStoreServer.putExpungedTagGuid(guid);
+    }
+
+    for (const auto & guid: qAsConst(testData.m_expungedUserOwnNotebookGuids)) {
+        noteStoreServer.putExpungedNotebookGuid(guid);
+    }
+
+    for (const auto & guid: qAsConst(testData.m_expungedUserOwnNoteGuids)) {
+        noteStoreServer.putExpungedNoteGuid(guid);
+    }
+
+    // TODO: setup guids of expunged data items for linked notebooks too
+    // when the support in NoteStoreServer for that is done
 }
 
 void setupLocalStorage(

@@ -72,7 +72,8 @@ Q_DECLARE_FLAGS(ItemSources, ItemSource);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
 
 void setupTestData(
-    DataItemTypes dataItemTypes, ItemGroups itemGroups, ItemSources itemSources,
+    DataItemTypes dataItemTypes,  ItemGroups itemGroups, ItemSources itemSources,
+    DataItemTypes expungedDataItemTypes, ItemSources expungedItemSources,
     TestData & testData);
 
 void setupNoteStoreServer(

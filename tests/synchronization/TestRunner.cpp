@@ -85,27 +85,25 @@ inline void messageHandler(
 
 [[nodiscard]] bool empty(const ISyncChunksDataCounters & counters) noexcept
 {
-    return counters.totalSavedSearches() != 0
-        || counters.totalExpungedSavedSearches() != 0
-        || counters.totalTags() != 0
-        || counters.totalExpungedTags() != 0
-        || counters.totalLinkedNotebooks() != 0
-        || counters.totalExpungedLinkedNotebooks() != 0
-        || counters.totalNotebooks() != 0
-        || counters.totalExpungedNotebooks() != 0;
+    return counters.totalSavedSearches() != 0 ||
+        counters.totalExpungedSavedSearches() != 0 ||
+        counters.totalTags() != 0 || counters.totalExpungedTags() != 0 ||
+        counters.totalLinkedNotebooks() != 0 ||
+        counters.totalExpungedLinkedNotebooks() != 0 ||
+        counters.totalNotebooks() != 0 ||
+        counters.totalExpungedNotebooks() != 0;
 }
 
 [[nodiscard]] bool empty(const IDownloadNotesStatus & status) noexcept
 {
-    return status.totalNewNotes() != 0
-        || status.totalUpdatedNotes() != 0
-        || status.totalExpungedNotes() != 0;
+    return status.totalNewNotes() != 0 || status.totalUpdatedNotes() != 0 ||
+        status.totalExpungedNotes() != 0;
 }
 
 [[nodiscard]] bool empty(const IDownloadResourcesStatus & status) noexcept
 {
-    return status.totalNewResources() != 0
-        || status.totalUpdatedResources() != 0;
+    return status.totalNewResources() != 0 ||
+        status.totalUpdatedResources() != 0;
 }
 
 } // namespace
@@ -222,7 +220,9 @@ void TestRunner::runTestScenario()
     note_store::TestData testData;
     note_store::setupTestData(
         testScenarioData.serverDataItemTypes, testScenarioData.serverItemGroups,
-        testScenarioData.serverItemSources, testData);
+        testScenarioData.serverItemSources,
+        testScenarioData.serverExpungedDataItemTypes,
+        testScenarioData.serverExpungedDataItemSources, testData);
 
     note_store::setupNoteStoreServer(testData, *m_noteStoreServer);
 
@@ -431,9 +431,11 @@ void TestRunner::runTestScenario_data()
                 note_store::ItemGroup::Base, // serverItemGroups
             note_store::ItemSources{} |
                 note_store::ItemSource::UserOwnAccount, // serverItemSources
-            note_store::DataItemTypes{},                // localDataItemTypes
-            note_store::ItemGroups{},                   // localItemGroups
-            note_store::ItemSources{},                  // localItemSources
+            note_store::DataItemTypes{}, // serverExpungedDataItemTypes
+            note_store::ItemSources{},   // serverExpungedDataItemSources
+            note_store::DataItemTypes{}, // localDataItemTypes
+            note_store::ItemGroups{},    // localItemGroups
+            note_store::ItemSources{},   // localItemSources
             StopSynchronizationError{std::monostate{}}, // stopSyncError
             false,                                      // expectFailure
             true,  // expectSomeUserOwnSyncChunks

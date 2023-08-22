@@ -76,9 +76,14 @@ struct TestData
 
     QList<qevercloud::Resource> m_linkedNotebookModifiedResources;
 
-    QList<qevercloud::Guid> m_expungedLinkedNotebookNotebookGuids;
-    QList<qevercloud::Guid> m_expungedLinkedNotebookTagGuids;
-    QList<qevercloud::Guid> m_expungedLinkedNotebookNoteGuids;
+    QHash<qevercloud::Guid, QList<qevercloud::Guid>>
+        m_expungedLinkedNotebookNotebookGuids;
+
+    QHash<qevercloud::Guid, QList<qevercloud::Guid>>
+        m_expungedLinkedNotebookTagGuids;
+
+    QHash<qevercloud::Guid, QList<qevercloud::Guid>>
+        m_expungedLinkedNotebookNoteGuids;
 };
 
 } // namespace quentier::synchronization::tests::note_store
