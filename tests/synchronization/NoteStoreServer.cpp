@@ -483,6 +483,45 @@ void NoteStoreServer::removeExpungedUserOwnTagGuid(
     m_expungedUserOwnTagGuids.remove(guid);
 }
 
+void NoteStoreServer::putExpungedLinkedNotebookTagGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & tagGuid)
+{
+    removeTag(tagGuid);
+    m_expungedLinkedNotebookTagGuids[linkedNotebookGuid].insert(tagGuid);
+}
+
+bool NoteStoreServer::containsExpungedLinkedNotebookTagGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & tagGuid) const
+{
+    const auto it =
+        m_expungedLinkedNotebookTagGuids.constFind(linkedNotebookGuid);
+    if (it == m_expungedLinkedNotebookTagGuids.constEnd()) {
+        return false;
+    }
+
+    return it->contains(tagGuid);
+}
+
+void NoteStoreServer::removeExpungedLinkedNotebookTagGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & tagGuid)
+{
+    const auto it = m_expungedLinkedNotebookTagGuids.find(linkedNotebookGuid);
+    if (it == m_expungedLinkedNotebookTagGuids.end()) {
+        return;
+    }
+
+    if (!it->remove(tagGuid)) {
+        return;
+    }
+
+    if (it->isEmpty()) {
+        m_expungedLinkedNotebookTagGuids.erase(it);
+    }
+}
+
 QHash<qevercloud::Guid, qevercloud::Notebook> NoteStoreServer::notebooks() const
 {
     QHash<qevercloud::Guid, qevercloud::Notebook> result;
@@ -651,6 +690,47 @@ void NoteStoreServer::removeExpungedUserOwnNotebookGuid(
     m_expungedUserOwnNotebookGuids.remove(guid);
 }
 
+void NoteStoreServer::putExpungedLinkedNotebookNotebookGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & notebookGuid)
+{
+    removeNotebook(notebookGuid);
+    m_expungedLinkedNotebookNotebookGuids[linkedNotebookGuid].insert(
+        notebookGuid);
+}
+
+bool NoteStoreServer::containsExpungedLinkedNotebookNotebookGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & notebookGuid) const
+{
+    const auto it =
+        m_expungedLinkedNotebookNotebookGuids.constFind(linkedNotebookGuid);
+    if (it == m_expungedLinkedNotebookNotebookGuids.constEnd()) {
+        return false;
+    }
+
+    return it->contains(notebookGuid);
+}
+
+void NoteStoreServer::removeExpungedLinkedNotebookNotebookGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & notebookGuid)
+{
+    const auto it =
+        m_expungedLinkedNotebookNotebookGuids.find(linkedNotebookGuid);
+    if (it == m_expungedLinkedNotebookNotebookGuids.end()) {
+        return;
+    }
+
+    if (!it->remove(notebookGuid)) {
+        return;
+    }
+
+    if (it->isEmpty()) {
+        m_expungedLinkedNotebookNotebookGuids.erase(it);
+    }
+}
+
 QHash<qevercloud::Guid, qevercloud::Note> NoteStoreServer::notes() const
 {
     QHash<qevercloud::Guid, qevercloud::Note> result;
@@ -788,6 +868,20 @@ void NoteStoreServer::removeNote(const qevercloud::Guid & guid)
     index.erase(it);
 }
 
+QList<qevercloud::Note> NoteStoreServer::getNotesByConflictSourceNoteGuid(
+    const qevercloud::Guid & conflictSourceNoteGuid) const
+{
+    const auto & index =
+        m_notes.get<note_store::NoteByConflictSourceNoteGuidTag>();
+    auto range = index.equal_range(conflictSourceNoteGuid);
+    QList<qevercloud::Note> result;
+    result.reserve(static_cast<int>(std::distance(range.first, range.second)));
+    for (auto it = range.first; it != range.second; ++it) {
+        result << *it;
+    }
+    return result;
+}
+
 void NoteStoreServer::putExpungedUserOwnNoteGuid(const qevercloud::Guid & guid)
 {
     removeNote(guid);
@@ -806,18 +900,43 @@ void NoteStoreServer::removeExpungedUserOwnNoteGuid(
     m_expungedUserOwnNoteGuids.remove(guid);
 }
 
-QList<qevercloud::Note> NoteStoreServer::getNotesByConflictSourceNoteGuid(
-    const qevercloud::Guid & conflictSourceNoteGuid) const
+void NoteStoreServer::putExpungedLinkedNotebookNoteGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & noteGuid)
 {
-    const auto & index =
-        m_notes.get<note_store::NoteByConflictSourceNoteGuidTag>();
-    auto range = index.equal_range(conflictSourceNoteGuid);
-    QList<qevercloud::Note> result;
-    result.reserve(static_cast<int>(std::distance(range.first, range.second)));
-    for (auto it = range.first; it != range.second; ++it) {
-        result << *it;
+    removeNote(noteGuid);
+    m_expungedLinkedNotebookNoteGuids[linkedNotebookGuid].insert(noteGuid);
+}
+
+bool NoteStoreServer::containsExpungedLinkedNotebookNoteGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & noteGuid) const
+{
+    const auto it =
+        m_expungedLinkedNotebookNoteGuids.constFind(linkedNotebookGuid);
+    if (it == m_expungedLinkedNotebookNoteGuids.constEnd()) {
+        return false;
     }
-    return result;
+
+    return it->contains(noteGuid);
+}
+
+void NoteStoreServer::removeExpungedLinkedNotebookNoteGuid(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::Guid & noteGuid)
+{
+    const auto it = m_expungedLinkedNotebookNoteGuids.find(linkedNotebookGuid);
+    if (it == m_expungedLinkedNotebookNoteGuids.end()) {
+        return;
+    }
+
+    if (!it->remove(noteGuid)) {
+        return;
+    }
+
+    if (it->isEmpty()) {
+        m_expungedLinkedNotebookNoteGuids.erase(it);
+    }
 }
 
 QHash<qevercloud::Guid, qevercloud::Resource> NoteStoreServer::resources() const
@@ -3351,11 +3470,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedSearches()->reserve(
             m_expungedSavedSearchGuids.size());
 
-        for (auto it = m_expungedSavedSearchGuids.constBegin(),
-                  end = m_expungedSavedSearchGuids.constEnd();
-             it != end; ++it)
-        {
-            syncChunk.mutableExpungedSearches()->append(*it);
+        for (const auto & guid: qAsConst(m_expungedSavedSearchGuids)) {
+            syncChunk.mutableExpungedSearches()->append(guid);
         }
     }
 
@@ -3367,15 +3483,29 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedTags()->reserve(
             m_expungedUserOwnTagGuids.size());
 
-        for (auto it = m_expungedUserOwnTagGuids.constBegin(),
-                  end = m_expungedUserOwnTagGuids.constEnd();
-             it != end; ++it)
-        {
-            syncChunk.mutableExpungedTags()->append(*it);
+        for (const auto & guid: qAsConst(m_expungedUserOwnTagGuids)) {
+            syncChunk.mutableExpungedTags()->append(guid);
+        }
+    }
+    else if (linkedNotebookGuid) {
+        const auto it =
+            m_expungedLinkedNotebookTagGuids.constFind(*linkedNotebookGuid);
+        if (it != m_expungedLinkedNotebookTagGuids.constEnd()) {
+            const auto & expungedTagGuids = it.value();
+
+            if (!syncChunk.expungedTags()) {
+                syncChunk.setExpungedTags(QList<qevercloud::Guid>{});
+            }
+
+            syncChunk.mutableExpungedTags()->reserve(expungedTagGuids.size());
+
+            for (const auto & guid: qAsConst(expungedTagGuids)) {
+                syncChunk.mutableExpungedTags()->append(guid);
+            }
         }
     }
 
-    if (!m_expungedUserOwnNotebookGuids.isEmpty()) {
+    if (!linkedNotebookGuid && !m_expungedUserOwnNotebookGuids.isEmpty()) {
         if (!syncChunk.expungedNotebooks()) {
             syncChunk.setExpungedNotebooks(QList<qevercloud::Guid>{});
         }
@@ -3383,15 +3513,30 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedNotebooks()->reserve(
             m_expungedUserOwnNotebookGuids.size());
 
-        for (auto it = m_expungedUserOwnNotebookGuids.constBegin(),
-                  end = m_expungedUserOwnNotebookGuids.constEnd();
-             it != end; ++it)
-        {
-            syncChunk.mutableExpungedNotebooks()->append(*it);
+        for (const auto & guid: qAsConst(m_expungedUserOwnNotebookGuids)) {
+            syncChunk.mutableExpungedNotebooks()->append(guid);
+        }
+    }
+    else if (linkedNotebookGuid) {
+        const auto it = m_expungedLinkedNotebookNotebookGuids.constFind(
+            *linkedNotebookGuid);
+        if (it != m_expungedLinkedNotebookNotebookGuids.constEnd()) {
+            const auto & expungedNotebookGuids = it.value();
+
+            if (!syncChunk.expungedNotebooks()) {
+                syncChunk.setExpungedNotebooks(QList<qevercloud::Guid>{});
+            }
+
+            syncChunk.mutableExpungedNotebooks()->reserve(
+                expungedNotebookGuids.size());
+
+            for (const auto & guid: qAsConst(expungedNotebookGuids)) {
+                syncChunk.mutableExpungedNotebooks()->append(guid);
+            }
         }
     }
 
-    if (!m_expungedUserOwnNoteGuids.isEmpty()) {
+    if (!linkedNotebookGuid && !m_expungedUserOwnNoteGuids.isEmpty()) {
         if (!syncChunk.expungedNotes()) {
             syncChunk.setExpungedNotes(QList<qevercloud::Guid>{});
         }
@@ -3399,11 +3544,25 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedNotes()->reserve(
             m_expungedUserOwnNoteGuids.size());
 
-        for (auto it = m_expungedUserOwnNoteGuids.constBegin(),
-                  end = m_expungedUserOwnNoteGuids.constEnd();
-             it != end; ++it)
-        {
-            syncChunk.mutableExpungedNotes()->append(*it);
+        for (const auto & guid: qAsConst(m_expungedUserOwnNoteGuids)) {
+            syncChunk.mutableExpungedNotes()->append(guid);
+        }
+    }
+    else if (linkedNotebookGuid) {
+        const auto it =
+            m_expungedLinkedNotebookNoteGuids.constFind(*linkedNotebookGuid);
+        if (it != m_expungedLinkedNotebookNoteGuids.constEnd()) {
+            const auto & expungedNoteGuids = it.value();
+
+            if (!syncChunk.expungedNotes()) {
+                syncChunk.setExpungedNotes(QList<qevercloud::Guid>{});
+            }
+
+            syncChunk.mutableExpungedNotes()->reserve(expungedNoteGuids.size());
+
+            for (const auto & guid: qAsConst(expungedNoteGuids)) {
+                syncChunk.mutableExpungedNotes()->append(guid);
+            }
         }
     }
 
