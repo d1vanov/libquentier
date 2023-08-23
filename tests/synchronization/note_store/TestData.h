@@ -56,10 +56,10 @@ struct TestData
     QList<qevercloud::LinkedNotebook> m_modifiedLinkedNotebooks;
     QList<qevercloud::LinkedNotebook> m_newLinkedNotebooks;
 
-    QList<qevercloud::Guid> m_expungedUserOwnNotebookGuids;
-    QList<qevercloud::Guid> m_expungedUserOwnTagGuids;
-    QList<qevercloud::Guid> m_expungedUserOwnSavedSearchGuids;
-    QList<qevercloud::Guid> m_expungedUserOwnNoteGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnNotebookGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnTagGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnSavedSearchGuids;
+    QSet<qevercloud::Guid> m_expungedUserOwnNoteGuids;
 
     // Data from linked notebooks
     QList<qevercloud::Notebook> m_linkedNotebookBaseNotebooks;
@@ -76,13 +76,13 @@ struct TestData
 
     QList<qevercloud::Resource> m_linkedNotebookModifiedResources;
 
-    QHash<qevercloud::Guid, QList<qevercloud::Guid>>
+    QHash<qevercloud::Guid, QSet<qevercloud::Guid>>
         m_expungedLinkedNotebookNotebookGuids;
 
-    QHash<qevercloud::Guid, QList<qevercloud::Guid>>
+    QHash<qevercloud::Guid, QSet<qevercloud::Guid>>
         m_expungedLinkedNotebookTagGuids;
 
-    QHash<qevercloud::Guid, QList<qevercloud::Guid>>
+    QHash<qevercloud::Guid, QSet<qevercloud::Guid>>
         m_expungedLinkedNotebookNoteGuids;
 };
 

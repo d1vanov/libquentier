@@ -591,10 +591,10 @@ void setupTestData(
     }
 
     const auto generateExpungedGuids =
-        [](QList<qevercloud::Guid> & expungedGuids) {
+        [](QSet<qevercloud::Guid> & expungedGuids) {
             expungedGuids.reserve(itemCount);
             for (int i = 0; i < itemCount; ++i) {
-                expungedGuids << UidGenerator::Generate();
+                expungedGuids.insert(UidGenerator::Generate());
             }
         };
 
@@ -798,8 +798,35 @@ void setupNoteStoreServer(
         noteStoreServer.putExpungedUserOwnNoteGuid(guid);
     }
 
-    // TODO: setup guids of expunged data items for linked notebooks too
-    // when the support in NoteStoreServer for that is done
+    for (const auto it: qevercloud::toRange(
+             qAsConst(testData.m_expungedLinkedNotebookTagGuids)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        for (const auto & tagGuid: qAsConst(it.value())) {
+            noteStoreServer.putExpungedLinkedNotebookTagGuid(
+                linkedNotebookGuid, tagGuid);
+        }
+    }
+
+    for (const auto it: qevercloud::toRange(
+             qAsConst(testData.m_expungedLinkedNotebookNotebookGuids)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        for (const auto & notebookGuid: qAsConst(it.value())) {
+            noteStoreServer.putExpungedLinkedNotebookNotebookGuid(
+                linkedNotebookGuid, notebookGuid);
+        }
+    }
+
+    for (const auto it: qevercloud::toRange(
+             qAsConst(testData.m_expungedLinkedNotebookNoteGuids)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        for (const auto & noteGuid: qAsConst(it.value())) {
+            noteStoreServer.putExpungedLinkedNotebookNoteGuid(
+                linkedNotebookGuid, noteGuid);
+        }
+    }
 }
 
 void setupLocalStorage(
