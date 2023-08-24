@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NoteStoreServer.h"
 #include "Setup.h"
+#include "NoteStoreServer.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/utility/UidGenerator.h>
@@ -33,6 +33,7 @@
 
 #include <QCryptographicHash>
 #include <QGlobalStatic>
+#include <QtTest>
 
 #include <algorithm>
 
@@ -830,8 +831,8 @@ void setupNoteStoreServer(
 }
 
 void setupLocalStorage(
-    const TestData & testData, DataItemTypes dataItemTypes,
-    ItemGroups itemGroups, ItemSources itemSources,
+    const TestData & testData, const DataItemTypes dataItemTypes,
+    const ItemGroups itemGroups, const ItemSources itemSources,
     local_storage::ILocalStorage & localStorage)
 {
     if (dataItemTypes.testFlag(DataItemType::SavedSearch) &&
@@ -1088,6 +1089,160 @@ void setupLocalStorage(
 
             if (itemGroups.testFlag(ItemGroup::New)) {
                 putNotes(testData.m_linkedNotebookNewNotes, ItemGroup::New);
+            }
+        }
+    }
+
+    int expungedSavedSearchIndex = 1;
+    for (const auto & guid:
+         qAsConst(testData.m_expungedUserOwnSavedSearchGuids)) {
+        localStorage
+            .putSavedSearch(
+                qevercloud::SavedSearchBuilder{}
+                    .setGuid(guid)
+                    .setName(QString::fromUtf8("Expunged saved search #")
+                                 .arg(expungedSavedSearchIndex++))
+                    .setUpdateSequenceNum(42)
+                    .build())
+            .waitForFinished();
+    }
+
+    int expungedNotebookIndex = 1;
+    for (const auto & guid: qAsConst(testData.m_expungedUserOwnNotebookGuids)) {
+        localStorage
+            .putNotebook(qevercloud::NotebookBuilder{}
+                             .setGuid(guid)
+                             .setName(QString::fromUtf8("Expunged notebook #")
+                                          .arg(expungedNotebookIndex++))
+                             .setUpdateSequenceNum(42)
+                             .build())
+            .waitForFinished();
+    }
+
+    for (const auto it: qevercloud::toRange(
+             qAsConst(testData.m_expungedLinkedNotebookNotebookGuids)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        const auto & guids = it.value();
+        for (const auto & guid: qAsConst(guids)) {
+            localStorage
+                .putNotebook(
+                    qevercloud::NotebookBuilder{}
+                        .setGuid(guid)
+                        .setLinkedNotebookGuid(linkedNotebookGuid)
+                        .setName(QString::fromUtf8(
+                                     "Expunged linked notebook's notebook #")
+                                     .arg(expungedNotebookIndex++))
+                        .setUpdateSequenceNum(42)
+                        .build())
+                .waitForFinished();
+        }
+    }
+
+    int expungedTagIndex = 1;
+    for (const auto & guid: qAsConst(testData.m_expungedUserOwnTagGuids)) {
+        localStorage
+            .putTag(qevercloud::TagBuilder{}
+                        .setGuid(guid)
+                        .setName(QString::fromUtf8("Expunged tag #")
+                                     .arg(expungedTagIndex++))
+                        .setUpdateSequenceNum(42)
+                        .build())
+            .waitForFinished();
+    }
+
+    for (const auto it: qevercloud::toRange(
+             qAsConst(testData.m_expungedLinkedNotebookTagGuids)))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        const auto & guids = it.value();
+        for (const auto & guid: qAsConst(guids)) {
+            localStorage
+                .putTag(qevercloud::TagBuilder{}
+                            .setGuid(guid)
+                            .setLinkedNotebookGuid(linkedNotebookGuid)
+                            .setName(QString::fromUtf8(
+                                         "Expunged linked notebook's tag #")
+                                         .arg(expungedTagIndex++))
+                            .setUpdateSequenceNum(42)
+                            .build())
+                .waitForFinished();
+        }
+    }
+
+    int expungedNoteIndex = 1;
+    if (!testData.m_expungedUserOwnNoteGuids.isEmpty()) {
+        const auto listNotebooksOptions = [] {
+            local_storage::ILocalStorage::ListNotebooksOptions options;
+            options.m_affiliation =
+                local_storage::ILocalStorage::Affiliation::User;
+            return options;
+        }();
+
+        auto notebooksFuture = localStorage.listNotebooks(listNotebooksOptions);
+        notebooksFuture.waitForFinished();
+        QVERIFY(notebooksFuture.resultCount() == 1);
+
+        const auto notebooks = notebooksFuture.result();
+        QVERIFY(!notebooks.isEmpty());
+
+        const auto & notebook = notebooks[0];
+
+        for (const auto & guid: qAsConst(testData.m_expungedUserOwnNoteGuids)) {
+            localStorage
+                .putNote(qevercloud::NoteBuilder{}
+                             .setGuid(guid)
+                             .setTitle(QString::fromUtf8("Expunged note #")
+                                           .arg(expungedNoteIndex++))
+                             .setUpdateSequenceNum(42)
+                             .setNotebookGuid(notebook.guid())
+                             .setNotebookLocalId(notebook.localId())
+                             .build())
+                .waitForFinished();
+        }
+    }
+
+    if (!testData.m_expungedLinkedNotebookNoteGuids.isEmpty()) {
+        const auto listNotebooksOptions = [] {
+            local_storage::ILocalStorage::ListNotebooksOptions options;
+            options.m_affiliation =
+                local_storage::ILocalStorage::Affiliation::AnyLinkedNotebook;
+            return options;
+        }();
+
+        auto notebooksFuture = localStorage.listNotebooks(listNotebooksOptions);
+        notebooksFuture.waitForFinished();
+        QVERIFY(notebooksFuture.resultCount() == 1);
+
+        const auto notebooks = notebooksFuture.result();
+
+        for (const auto it: qevercloud::toRange(
+                 qAsConst(testData.m_expungedLinkedNotebookTagGuids)))
+        {
+            const auto & linkedNotebookGuid = it.key();
+            const auto & guids = it.value();
+            for (const auto & guid: qAsConst(guids)) {
+                const auto notebookIt = std::find_if(
+                    notebooks.constBegin(), notebooks.constEnd(),
+                    [&](const qevercloud::Notebook & notebook) {
+                        return notebook.linkedNotebookGuid() ==
+                            linkedNotebookGuid;
+                    });
+                QVERIFY(notebookIt != notebooks.constEnd());
+                const auto & notebook = *notebookIt;
+
+                localStorage
+                    .putNote(
+                        qevercloud::NoteBuilder{}
+                            .setGuid(guid)
+                            .setTitle(QString::fromUtf8(
+                                          "Expunged linked notebook's note #")
+                                          .arg(expungedNoteIndex++))
+                            .setUpdateSequenceNum(42)
+                            .setNotebookGuid(notebook.guid())
+                            .setNotebookLocalId(notebook.localId())
+                            .build())
+                    .waitForFinished();
             }
         }
     }
