@@ -12,8 +12,11 @@ add_library(${TESTS_LIB_NAME} STATIC
   FakeSyncStateStorage.h
   NoteStoreServer.cpp
   NoteStoreServer.h
+  Setup.cpp
+  Setup.h
   SyncEventsCollector.cpp
   SyncEventsCollector.h
+  TestData.h
   TestScenarioData.h
   TestRunner.cpp
   TestRunner.h
@@ -27,10 +30,7 @@ add_library(${TESTS_LIB_NAME} STATIC
   note_store/Notes.h
   note_store/Resources.h
   note_store/SavedSearches.h
-  note_store/Setup.cpp
-  note_store/Setup.h
   note_store/Tags.h
-  note_store/TestData.h
   utils/ExceptionUtils.cpp
   utils/ExceptionUtils.h
   utils/HttpRequestData.h

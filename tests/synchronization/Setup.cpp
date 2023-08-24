@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "NoteStoreServer.h"
 #include "Setup.h"
-#include "../NoteStoreServer.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/utility/UidGenerator.h>
@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-namespace quentier::synchronization::tests::note_store {
+namespace quentier::synchronization::tests {
 
 namespace {
 
@@ -1093,4 +1093,4 @@ void setupLocalStorage(
     }
 }
 
-} // namespace quentier::synchronization::tests::note_store
+} // namespace quentier::synchronization::tests

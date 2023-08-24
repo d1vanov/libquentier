@@ -29,7 +29,7 @@
 #include <QHash>
 #include <QList>
 
-namespace quentier::synchronization::tests::note_store {
+namespace quentier::synchronization::tests {
 
 struct TestData
 {
@@ -86,4 +86,4 @@ struct TestData
         m_expungedLinkedNotebookNoteGuids;
 };
 
-} // namespace quentier::synchronization::tests::note_store
+} // namespace quentier::synchronization::tests

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "note_store/Setup.h"
+#include "Setup.h"
 
 #include <quentier/synchronization/types/Errors.h>
 
@@ -32,16 +32,16 @@ namespace quentier::synchronization::tests {
 
 struct TestScenarioData
 {
-    note_store::DataItemTypes serverDataItemTypes;
-    note_store::ItemGroups serverItemGroups;
-    note_store::ItemSources serverItemSources;
+    DataItemTypes serverDataItemTypes;
+    ItemGroups serverItemGroups;
+    ItemSources serverItemSources;
 
-    note_store::DataItemTypes serverExpungedDataItemTypes;
-    note_store::ItemSources serverExpungedDataItemSources;
+    DataItemTypes serverExpungedDataItemTypes;
+    ItemSources serverExpungedDataItemSources;
 
-    note_store::DataItemTypes localDataItemTypes;
-    note_store::ItemGroups localItemGroups;
-    note_store::ItemSources localItemSources;
+    DataItemTypes localDataItemTypes;
+    ItemGroups localItemGroups;
+    ItemSources localItemSources;
 
     StopSynchronizationError stopSyncError;
     bool expectFailure = false;

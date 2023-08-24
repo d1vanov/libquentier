@@ -22,11 +22,11 @@
 #include "FakeKeychainService.h"
 #include "FakeSyncStateStorage.h"
 #include "NoteStoreServer.h"
+#include "Setup.h"
 #include "SyncEventsCollector.h"
+#include "TestData.h"
 #include "TestScenarioData.h"
 #include "UserStoreServer.h"
-#include "note_store/Setup.h"
-#include "note_store/TestData.h"
 
 #include <synchronization/types/AuthenticationInfo.h>
 
@@ -217,16 +217,16 @@ void TestRunner::runTestScenario()
 {
     QFETCH(TestScenarioData, testScenarioData);
 
-    note_store::TestData testData;
-    note_store::setupTestData(
+    TestData testData;
+    setupTestData(
         testScenarioData.serverDataItemTypes, testScenarioData.serverItemGroups,
         testScenarioData.serverItemSources,
         testScenarioData.serverExpungedDataItemTypes,
         testScenarioData.serverExpungedDataItemSources, testData);
 
-    note_store::setupNoteStoreServer(testData, *m_noteStoreServer);
+    setupNoteStoreServer(testData, *m_noteStoreServer);
 
-    note_store::setupLocalStorage(
+    setupLocalStorage(
         testData, testScenarioData.localDataItemTypes,
         testScenarioData.localItemGroups, testScenarioData.localItemSources,
         *m_localStorage);
@@ -425,17 +425,14 @@ void TestRunner::runTestScenario_data()
 
     static const std::array testScenarioData{
         TestScenarioData{
-            note_store::DataItemTypes{} |
-                note_store::DataItemType::SavedSearch, // serverDataItemTypes
-            note_store::ItemGroups{} |
-                note_store::ItemGroup::Base, // serverItemGroups
-            note_store::ItemSources{} |
-                note_store::ItemSource::UserOwnAccount, // serverItemSources
-            note_store::DataItemTypes{}, // serverExpungedDataItemTypes
-            note_store::ItemSources{},   // serverExpungedDataItemSources
-            note_store::DataItemTypes{}, // localDataItemTypes
-            note_store::ItemGroups{},    // localItemGroups
-            note_store::ItemSources{},   // localItemSources
+            DataItemTypes{} | DataItemType::SavedSearch, // serverDataItemTypes
+            ItemGroups{} | ItemGroup::Base,              // serverItemGroups
+            ItemSources{} | ItemSource::UserOwnAccount,  // serverItemSources
+            DataItemTypes{}, // serverExpungedDataItemTypes
+            ItemSources{},   // serverExpungedDataItemSources
+            DataItemTypes{}, // localDataItemTypes
+            ItemGroups{},    // localItemGroups
+            ItemSources{},   // localItemSources
             StopSynchronizationError{std::monostate{}}, // stopSyncError
             false,                                      // expectFailure
             true,  // expectSomeUserOwnSyncChunks

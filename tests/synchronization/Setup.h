@@ -38,7 +38,7 @@ class NoteStoreServer;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace quentier::synchronization::tests::note_store {
+namespace quentier::synchronization::tests {
 
 enum class DataItemType
 {
@@ -84,4 +84,4 @@ void setupLocalStorage(
     ItemGroups itemGroups, ItemSources itemSources,
     local_storage::ILocalStorage & localStorage);
 
-} // namespace quentier::synchronization::tests::note_store
+} // namespace quentier::synchronization::tests
