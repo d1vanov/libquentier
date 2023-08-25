@@ -51,6 +51,7 @@
 #include <QTest>
 #include <QTextStream>
 
+#include <algorithm>
 #include <array>
 #include <cstdio>
 
@@ -104,6 +105,103 @@ inline void messageHandler(
 {
     return status.totalNewResources() != 0 ||
         status.totalUpdatedResources() != 0;
+}
+
+template <class T>
+void copyLocalFields(const T & source, T & dest)
+{
+    dest.setLocalId(source.localId());
+    dest.setLocallyModified(source.isLocallyModified());
+    dest.setLocallyFavorited(source.isLocallyFavorited());
+    dest.setLocalOnly(source.isLocalOnly());
+    dest.setLocalData(source.localData());
+}
+
+template <>
+void copyLocalFields(
+    const qevercloud::LinkedNotebook & source,
+    qevercloud::LinkedNotebook & dest)
+{
+    dest.setLocallyModified(source.isLocallyModified());
+    dest.setLocallyFavorited(source.isLocallyFavorited());
+    dest.setLocalOnly(source.isLocalOnly());
+    dest.setLocalData(source.localData());
+}
+
+template <class T>
+[[nodiscard]] bool compareLists(
+    const QList<T> & lhs, const QList<T> & rhs, QList<T> & onlyLhs,
+    QList<T> & onlyRhs, QList<std::pair<T, T>> & diffs)
+{
+    QSet<qevercloud::Guid> processedRhsGuids;
+    for (const auto & lhsItem: qAsConst(lhs)) {
+        Q_ASSERT(lhsItem.guid());
+        const auto it = std::find_if(
+            rhs.constBegin(), rhs.constEnd(), [&lhsItem](const T & rhsItem) {
+                return lhsItem.guid() == rhsItem.guid();
+            });
+        if (it == rhs.constEnd()) {
+            onlyLhs << lhsItem;
+            continue;
+        }
+
+        Q_ASSERT(it->guid());
+        processedRhsGuids << it->guid().value();
+
+        auto rhsItemCopy = *it;
+        copyLocalFields(lhsItem, rhsItemCopy);
+
+        if (lhsItem != rhsItemCopy) {
+            diffs << std::make_pair(lhsItem, *it);
+        }
+    }
+
+    for (const auto & rhsItem: qAsConst(rhs)) {
+        Q_ASSERT(rhsItem.guid());
+        if (processedRhsGuids.contains(*rhsItem.guid())) {
+            continue;
+        }
+
+        const auto it = std::find_if(
+            lhs.constBegin(), lhs.constEnd(), [&rhsItem](const T & lhsItem) {
+                return rhsItem.guid() == lhsItem.guid();
+            });
+        if (it == lhs.constEnd()) {
+            onlyRhs << rhsItem;
+        }
+    }
+
+    return onlyLhs.isEmpty() && onlyRhs.isEmpty() && diffs.isEmpty();
+}
+
+[[nodiscard]] bool checkNoteStoreServerAndLocalStorageContentsEquality(
+    const NoteStoreServer & noteStoreServer,
+    const local_storage::ILocalStorage & localStorage,
+    QString & errorDescription)
+{
+    QList<qevercloud::SavedSearch> onlyServerSavedSearches;
+    QList<qevercloud::SavedSearch> onlyLocalSavedSearches;
+    QList<std::pair<qevercloud::SavedSearch, qevercloud::SavedSearch>>
+        differentSavedSearches;
+
+    const auto serverSavedSearches = noteStoreServer.savedSearches().values();
+
+    auto localSavedSearchesFuture = localStorage.listSavedSearches();
+    localSavedSearchesFuture.waitForFinished();
+    Q_ASSERT(localSavedSearchesFuture.resultCount() == 1);
+    const auto localSavedSearches = localSavedSearchesFuture.result();
+
+    bool res = compareLists(
+        localSavedSearches, serverSavedSearches, onlyLocalSavedSearches,
+        onlyServerSavedSearches, differentSavedSearches);
+    if (!res) {
+        // TODO: compose error description
+        Q_UNUSED(errorDescription);
+        return false;
+    }
+
+    // TODO: implement further
+    return true;
 }
 
 } // namespace
@@ -264,10 +362,13 @@ void TestRunner::runTestScenario()
         caughtException = true;
     }
 
-    const char * errorMessage = nullptr;
-    QVERIFY2(
-        m_syncEventsCollector->checkProgressNotificationsOrder(errorMessage),
-        errorMessage);
+    {
+        const char * errorMessage = nullptr;
+        QVERIFY2(
+            m_syncEventsCollector->checkProgressNotificationsOrder(
+                errorMessage),
+            errorMessage);
+    }
 
     QVERIFY2(
         !m_syncEventsCollector->userOwnSyncChunksDownloadProgressMessages()
@@ -331,6 +432,10 @@ void TestRunner::runTestScenario()
 
     const auto syncResult = syncResultPair.first.result();
     QVERIFY(syncResult);
+
+    // TODO: check whether the first synchronization attempt should yield stop
+    // synchronization error. If so, check the presence of the error and restart
+    // the sync, the next attempt should be successful.
 
     if (testScenarioData.expectSomeUserOwnSyncChunks ||
         testScenarioData.expectSomeLinkedNotebooksSyncChunks)
@@ -412,9 +517,19 @@ void TestRunner::runTestScenario()
         static_cast<bool>(userOwnSendStatus) ==
         testScenarioData.expectSomeUserOwnDataSent);
 
-    // TODO: check that the actual result conforms to the expectations
-    // TODO: check that the contents of m_noteStoreServer and m_localStorage
-    // correspond to each other
+    const auto linkedNotebookSendStatuses =
+        syncResult->linkedNotebookSendStatuses();
+    QVERIFY(
+        !linkedNotebookSendStatuses.isEmpty() ==
+        testScenarioData.expectSomeLinkedNotebookDataSent);
+
+    {
+        QString errorMessage;
+        const bool res = checkNoteStoreServerAndLocalStorageContentsEquality(
+            *m_noteStoreServer, *m_localStorage, errorMessage);
+        const QByteArray errorMessageData = errorMessage.toLatin1();
+        QVERIFY2(res, errorMessageData.data());
+    }
 }
 
 void TestRunner::runTestScenario_data()
