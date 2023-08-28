@@ -54,6 +54,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <functional>
 
 namespace quentier::synchronization::tests {
 
@@ -174,33 +175,136 @@ template <class T>
     return onlyLhs.isEmpty() && onlyRhs.isEmpty() && diffs.isEmpty();
 }
 
+template <class T>
+QString composeDifferentListsErrorMessage(
+    const QList<T> & onlyLhs, const QList<T> & onlyRhs,
+    const QList<std::pair<T, T>> & diffs)
+{
+    QString res;
+    QTextStream strm{&res};
+
+    strm << "Found differences in item lists:\n\n";
+
+    strm << "Items present only on the local side:\n\n";
+    for (const auto & item: qAsConst(onlyLhs)) {
+        strm << item << "\n\n";
+    }
+
+    strm << "Items present only on the server side:\n\n";
+    for (const auto & item: qAsConst(onlyRhs)) {
+        strm << item << "\n\n";
+    }
+
+    strm << "Items which differ from each other:\n\n";
+    for (const auto & pair: qAsConst(diffs)) {
+        strm << pair.first << "\n";
+        strm << pair.second << "\n\n";
+    }
+
+    return res;
+}
+
+template <class T>
+struct ItemListsChecker
+{
+    using NoteStoreServerItemsProvider = std::function<QList<T>()>;
+    using LocalStorageItemsProvider = std::function<QFuture<QList<T>>()>;
+
+    static bool check(
+        const NoteStoreServerItemsProvider & noteStoreServerItemsProvider,
+        const LocalStorageItemsProvider & localStorageItemsProvider,
+        QString & errorDescription)
+    {
+        Q_ASSERT(noteStoreServerItemsProvider);
+        Q_ASSERT(localStorageItemsProvider);
+
+        QList<T> onlyServerItems;
+        QList<T> onlyLocalItems;
+        QList<std::pair<T, T>> differentItems;
+
+        const auto serverItems = noteStoreServerItemsProvider();
+        auto localItemsFuture = localStorageItemsProvider();
+        localItemsFuture.waitForFinished();
+        Q_ASSERT(localItemsFuture.resultCount() == 1);
+        const auto localItems = localItemsFuture.result();
+
+        bool res = compareLists(
+            localItems, serverItems, onlyLocalItems, onlyServerItems,
+            differentItems);
+        if (!res) {
+            errorDescription = composeDifferentListsErrorMessage(
+                onlyLocalItems, onlyServerItems, differentItems);
+            return false;
+        }
+
+        return true;
+    }
+};
+
 [[nodiscard]] bool checkNoteStoreServerAndLocalStorageContentsEquality(
     const NoteStoreServer & noteStoreServer,
     const local_storage::ILocalStorage & localStorage,
     QString & errorDescription)
 {
-    QList<qevercloud::SavedSearch> onlyServerSavedSearches;
-    QList<qevercloud::SavedSearch> onlyLocalSavedSearches;
-    QList<std::pair<qevercloud::SavedSearch, qevercloud::SavedSearch>>
-        differentSavedSearches;
-
-    const auto serverSavedSearches = noteStoreServer.savedSearches().values();
-
-    auto localSavedSearchesFuture = localStorage.listSavedSearches();
-    localSavedSearchesFuture.waitForFinished();
-    Q_ASSERT(localSavedSearchesFuture.resultCount() == 1);
-    const auto localSavedSearches = localSavedSearchesFuture.result();
-
-    bool res = compareLists(
-        localSavedSearches, serverSavedSearches, onlyLocalSavedSearches,
-        onlyServerSavedSearches, differentSavedSearches);
-    if (!res) {
-        // TODO: compose error description
-        Q_UNUSED(errorDescription);
+    if (!ItemListsChecker<qevercloud::SavedSearch>::check(
+            [&noteStoreServer] {
+                return noteStoreServer.savedSearches().values();
+            },
+            [&localStorage] { return localStorage.listSavedSearches(); },
+            errorDescription))
+    {
         return false;
     }
 
-    // TODO: implement further
+    if (!ItemListsChecker<qevercloud::LinkedNotebook>::check(
+            [&noteStoreServer] {
+                return noteStoreServer.linkedNotebooks().values();
+            },
+            [&localStorage] { return localStorage.listLinkedNotebooks(); },
+            errorDescription))
+    {
+        return false;
+    }
+
+    if (!ItemListsChecker<qevercloud::Notebook>::check(
+            [&noteStoreServer] {
+                return noteStoreServer.notebooks().values();
+            },
+            [&localStorage] { return localStorage.listNotebooks(); },
+            errorDescription))
+    {
+        return false;
+    }
+
+    if (!ItemListsChecker<qevercloud::Tag>::check(
+            [&noteStoreServer] {
+                return noteStoreServer.tags().values();
+            },
+            [&localStorage] { return localStorage.listTags(); },
+            errorDescription))
+    {
+        return false;
+    }
+
+    if (!ItemListsChecker<qevercloud::Note>::check(
+            [&noteStoreServer] {
+                // TODO: might need to merge modified resources within
+                // NoteStoreServer into their corresponding notes here
+                return noteStoreServer.notes().values();
+            },
+            [&localStorage] {
+                return localStorage.listNotes(
+                    local_storage::ILocalStorage::FetchNoteOptions{} |
+                    local_storage::ILocalStorage::FetchNoteOption::
+                        WithResourceMetadata |
+                    local_storage::ILocalStorage::FetchNoteOption::
+                        WithResourceBinaryData);
+            },
+            errorDescription))
+    {
+        return false;
+    }
+
     return true;
 }
 
