@@ -140,6 +140,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/Errors.h
     headers/quentier/synchronization/types/Fwd.h
     headers/quentier/synchronization/types/IAuthenticationInfo.h
+    headers/quentier/synchronization/types/IAuthenticationInfoBuilder.h
     headers/quentier/synchronization/types/IDownloadNotesStatus.h
     headers/quentier/synchronization/types/IDownloadResourcesStatus.h
     headers/quentier/synchronization/types/ISendStatus.h
@@ -452,6 +453,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/SyncChunksDataCounters.cpp
     src/synchronization/types/Errors.cpp
+    src/synchronization/types/IAuthenticationInfoBuilder.cpp
     src/synchronization/types/IDownloadNotesStatus.cpp
     src/synchronization/types/IDownloadResourcesStatus.cpp
     src/synchronization/types/ISyncOptions.cpp

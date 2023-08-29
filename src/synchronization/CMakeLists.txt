@@ -127,6 +127,8 @@ target_sources(${LIBRARY_NAME}
   sync_chunks/Utils.h
   types/AuthenticationInfo.cpp
   types/AuthenticationInfo.h
+  types/AuthenticationInfoBuilder.cpp
+  types/AuthenticationInfoBuilder.h
   types/DownloadNotesStatus.cpp
   types/DownloadNotesStatus.h
   types/DownloadResourcesStatus.cpp

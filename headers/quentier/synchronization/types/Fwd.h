@@ -25,6 +25,10 @@ namespace quentier::synchronization {
 class IAuthenticationInfo;
 using IAuthenticationInfoPtr = std::shared_ptr<IAuthenticationInfo>;
 
+class IAuthenticationInfoBuilder;
+using IAuthenticationInfoBuilderPtr =
+    std::shared_ptr<IAuthenticationInfoBuilder>;
+
 class IDownloadNotesStatus;
 using IDownloadNotesStatusPtr = std::shared_ptr<IDownloadNotesStatus>;
 
