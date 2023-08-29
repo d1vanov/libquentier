@@ -2933,6 +2933,77 @@ void NoteStoreServer::connectToQEverCloudServer()
             onAuthenticateToSharedNotebookRequestReady);
 }
 
+std::exception_ptr NoteStoreServer::checkAuthentication(
+    const qevercloud::IRequestContextPtr & ctx) const
+{
+    if (!ctx) {
+        return std::make_exception_ptr(InvalidArgument{
+            ErrorString{QStringLiteral("Request context is null")}});
+    }
+
+    if (ctx->authenticationToken() != m_authenticationToken) {
+        return std::make_exception_ptr(InvalidArgument{ErrorString{
+            QString::fromUtf8(
+                "Invalid authentication token, expected %1, got %2")
+                .arg(m_authenticationToken, ctx->authenticationToken())}});
+    }
+
+    const auto cookies = ctx->cookies();
+    for (const auto & cookie: m_cookies) {
+        const auto it = std::find_if(
+            cookies.constBegin(), cookies.constEnd(),
+            [&cookie](const QNetworkCookie & c) {
+                return c.name() == cookie.name();
+            });
+        if (it == cookies.constEnd()) {
+            return std::make_exception_ptr(InvalidArgument{ErrorString{
+                QString::fromUtf8(
+                    "Missing network cookie in request: expected to find "
+                    "cookie with name %1 but haven't found it")
+                    .arg(QString::fromUtf8(cookie.name()))}});
+        }
+
+        if (it->value() != cookie.value()) {
+            return std::make_exception_ptr(InvalidArgument{ErrorString{
+                QString::fromUtf8(
+                    "Network cookie contains unexpected value: expected for "
+                    "cookie with name %1 to have value %2 but got %3")
+                    .arg(
+                        QString::fromUtf8(cookie.name()),
+                        QString::fromUtf8(cookie.value()),
+                        QString::fromUtf8(it->value()))}});
+        }
+    }
+
+    return nullptr;
+}
+
+std::exception_ptr NoteStoreServer::checkLinkedNotebookAuthentication(
+    const qevercloud::Guid & linkedNotebookGuid,
+    const qevercloud::IRequestContextPtr & ctx) const
+{
+    if (!ctx) {
+        return std::make_exception_ptr(InvalidArgument{
+            ErrorString{QStringLiteral("Request context is null")}});
+    }
+
+    const auto it =
+        m_linkedNotebookAuthTokensByGuid.constFind(linkedNotebookGuid);
+    if (it == m_linkedNotebookAuthTokensByGuid.constEnd()) {
+        return std::make_exception_ptr(InvalidArgument{ErrorString{
+            QStringLiteral("Cannot find auth token for linked notebook")}});
+    }
+
+    if (it.value() != ctx->authenticationToken()) {
+        return std::make_exception_ptr(InvalidArgument{
+            ErrorString{QString::fromUtf8(
+                            "Invalid authentication token, expected %1, got %2")
+                            .arg(it.value(), ctx->authenticationToken())}});
+    }
+
+    return nullptr;
+}
+
 void NoteStoreServer::setMaxUsn(
     const qint32 maxUsn,
     const std::optional<qevercloud::Guid> & linkedNotebookGuid)

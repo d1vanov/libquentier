@@ -44,3 +44,10 @@ target_link_libraries(${TESTS_LIB_NAME}
     ${LIBNAME}_interface
     ${QT_LIBRARIES}
     Qt5::Test)
+
+add_executable(${TESTS_NAME}
+  main.cpp)
+
+target_link_libraries(${TESTS_NAME} ${TESTS_LIB_NAME} ${LIBNAME} ${THIRDPARTY_LIBS})
+
+add_test(${TESTS_NAME} ${TESTS_NAME})

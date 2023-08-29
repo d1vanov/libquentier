@@ -18,10 +18,10 @@
 
 #include "FakeAuthenticator.h"
 
+#include <quentier/synchronization/types/IAuthenticationInfoBuilder.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Runnable.h>
-
-#include <synchronization/types/AuthenticationInfo.h>
+#include <quentier/utility/DateTime.h>
 
 #include <QDateTime>
 #include <QMutexLocker>
@@ -103,15 +103,17 @@ QFuture<IAuthenticationInfoPtr> FakeAuthenticator::authenticateNewAccount()
         QStringLiteral("www.evernote.com"),
         QStringLiteral("shard id")};
 
-    auto authInfo = std::make_shared<AuthenticationInfo>();
-    authInfo->m_userId = account.id();
-    authInfo->m_authToken = QStringLiteral("Auth token");
-    authInfo->m_authenticationTime = QDateTime::currentMSecsSinceEpoch();
-    authInfo->m_authTokenExpirationTime =
-        authInfo->m_authenticationTime + 100000;
+    auto authInfoBuilder = createAuthenticationInfoBuilder();
+    const auto now = QDateTime::currentMSecsSinceEpoch();
 
-    authInfo->m_noteStoreUrl = QStringLiteral("Note store url");
-    authInfo->m_shardId = account.shardId();
+    auto authInfo = authInfoBuilder
+        ->setUserId(account.id())
+        .setAuthToken(QStringLiteral("Auth token"))
+        .setAuthenticationTime(now)
+        .setAuthTokenExpirationTime(now + 1000)
+        .setNoteStoreUrl(QStringLiteral("Note store url"))
+        .setShardId(account.shardId())
+        .build();
 
     {
         const QMutexLocker locker{&m_mutex};

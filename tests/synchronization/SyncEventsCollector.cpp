@@ -439,6 +439,25 @@ bool SyncEventsCollector::checkSyncChunksDownloadProgressOrderImpl(
     return true;
 }
 
+bool SyncEventsCollector::checkSingleSyncChunkDownloadProgressMessage(
+    const SyncChunksDownloadProgressMessage & message,
+    const char *& errorMessage) const
+{
+    if (message.m_highestDownloadedUsn > message.m_highestServerUsn) {
+        errorMessage =
+            "Detected highest downloaded USN greater than highest server USN";
+        return false;
+    }
+
+    if (message.m_lastPreviousUsn > message.m_highestDownloadedUsn) {
+        errorMessage =
+            "Detected last previous USN greater than highest downloaded USN";
+        return false;
+    }
+
+    return true;
+}
+
 bool SyncEventsCollector::checkUserOwnNotesDownloadProgressOrder(
     const char *& errorMessage) const
 {
@@ -503,6 +522,20 @@ bool SyncEventsCollector::checkNotesDownloadProgressOrderImpl(
                 "changed between two progresses";
             return false;
         }
+    }
+
+    return true;
+}
+
+bool SyncEventsCollector::checkSingleNoteDownloadProgressMessage(
+    const NoteDownloadProgressMessage & message,
+    const char *& errorMessage) const
+{
+    if (message.m_notesDownloaded > message.m_totalNotesToDownload) {
+        errorMessage =
+            "The number of downloaded notes is greater than the total number "
+            "of notes to download";
+        return false;
     }
 
     return true;

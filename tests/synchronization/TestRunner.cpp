@@ -37,6 +37,7 @@
 #include <quentier/synchronization/Factory.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/IAuthenticationInfoBuilder.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/IDownloadResourcesStatus.h>
 #include <quentier/synchronization/types/ISyncResult.h>
@@ -344,16 +345,16 @@ void TestRunner::init()
     m_noteStoreServer = new NoteStoreServer(authToken, userStoreCookies, this);
 
     auto authenticationInfo = [&] {
-        auto info = std::make_shared<AuthenticationInfo>();
-        info->m_userId = m_testAccount.id();
-        info->m_authToken = authToken;
-        info->m_authTokenExpirationTime = now + 999999999999;
-        info->m_authenticationTime = now;
-        info->m_shardId = shardId;
-        info->m_webApiUrlPrefix = webApiUrlPrefix;
-        info->m_noteStoreUrl = QString::fromUtf8("http://localhost:%1")
-                                   .arg(m_noteStoreServer->port());
-        return info;
+        auto builder = createAuthenticationInfoBuilder();
+        return builder->setUserId(m_testAccount.id())
+            .setAuthToken(authToken)
+            .setAuthTokenExpirationTime(now + 999999999999)
+            .setAuthenticationTime(now)
+            .setShardId(shardId)
+            .setWebApiUrlPrefix(webApiUrlPrefix)
+            .setNoteStoreUrl(QString::fromUtf8("http://localhost:%1")
+                                 .arg(m_noteStoreServer->port()))
+            .build();
     }();
 
     m_fakeAuthenticator->putAccountAuthInfo(
