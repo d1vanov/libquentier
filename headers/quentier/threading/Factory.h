@@ -26,6 +26,6 @@ namespace quentier::threading {
 /**
  * @return global threadpool corresponding to QThreadPool::globalInstance()
  */
-[[nodiscard]] QThreadPoolPtr globalThreadPool();
+[[nodiscard]] QUENTIER_EXPORT QThreadPoolPtr globalThreadPool();
 
 } // namespace quentier::threading
