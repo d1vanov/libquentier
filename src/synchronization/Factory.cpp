@@ -45,7 +45,7 @@ IAuthenticatorPtr createQEverCloudAuthenticator(
 }
 
 ISynchronizerPtr createSynchronizer(
-    const QUrl & serverUrl, const QDir & synchronizationPersistenceDir,
+    const QUrl & userStoreUrl, const QDir & synchronizationPersistenceDir,
     IAuthenticatorPtr authenticator, ISyncStateStoragePtr syncStateStorage,
     IKeychainServicePtr keychainService, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy)
@@ -59,13 +59,10 @@ ISynchronizerPtr createSynchronizer(
         keychainService = newQtKeychainService();
     }
 
-    QString host = serverUrl.host();
+    QString host = userStoreUrl.host();
 
-    auto userStoreUrl =
-        QString::fromUtf8("%1%2/edam/user").arg(serverUrl.scheme(), host);
-
-    auto userStore =
-        qevercloud::newUserStore(std::move(userStoreUrl), ctx, retryPolicy);
+    auto userStore = qevercloud::newUserStore(
+        userStoreUrl.toString(), ctx, retryPolicy);
 
     auto protocolVersionChecker =
         std::make_shared<ProtocolVersionChecker>(userStore);

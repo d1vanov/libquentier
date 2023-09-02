@@ -44,7 +44,7 @@ namespace quentier::synchronization {
     threading::QThreadPtr uiThread, QWidget * parentWidget = nullptr);
 
 [[nodiscard]] QUENTIER_EXPORT ISynchronizerPtr createSynchronizer(
-    const QUrl & serverUrl, const QDir & synchronizationPersistenceDir,
+    const QUrl & userStoreUrl, const QDir & synchronizationPersistenceDir,
     IAuthenticatorPtr authenticator,
     ISyncStateStoragePtr syncStateStorage = nullptr,
     IKeychainServicePtr keychainService = nullptr,
