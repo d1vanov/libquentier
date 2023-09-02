@@ -70,33 +70,7 @@ UserStoreServer::UserStoreServer(
         m_server->onRequest(std::move(requestData));
     });
 
-    QObject::connect(
-        m_server, &qevercloud::UserStoreServer::checkVersionRequestReady, this,
-        &UserStoreServer::onRequestReady);
-
-    QObject::connect(
-        m_server, &qevercloud::UserStoreServer::getUserRequestReady, this,
-        &UserStoreServer::onRequestReady);
-
-    QObject::connect(
-        m_server, &qevercloud::UserStoreServer::getAccountLimitsRequestReady,
-        this, &UserStoreServer::onRequestReady);
-
-    QObject::connect(
-        m_server, &qevercloud::UserStoreServer::checkVersionRequest, this,
-        &UserStoreServer::onCheckVersionRequest);
-
-    QObject::connect(
-        m_server, &qevercloud::UserStoreServer::getUserRequest, this,
-        &UserStoreServer::onGetUserRequest);
-
-    QObject::connect(
-        this, &UserStoreServer::checkVersionRequestReady, m_server,
-        &qevercloud::UserStoreServer::onCheckVersionRequestReady);
-
-    QObject::connect(
-        this, &UserStoreServer::getUserRequestReady, m_server,
-        &qevercloud::UserStoreServer::onGetUserRequestReady);
+    connectToQEverCloudServer();
 }
 
 UserStoreServer::~UserStoreServer() = default;
@@ -236,6 +210,37 @@ void UserStoreServer::onRequestReady(const QByteArray & responseData)
     if (!utils::writeBufferToSocket(buffer, *m_tcpSocket)) {
         QFAIL("Failed to write response to socket");
     }
+}
+
+void UserStoreServer::connectToQEverCloudServer()
+{
+    QObject::connect(
+        m_server, &qevercloud::UserStoreServer::checkVersionRequestReady, this,
+        &UserStoreServer::onRequestReady);
+
+    QObject::connect(
+        m_server, &qevercloud::UserStoreServer::getUserRequestReady, this,
+        &UserStoreServer::onRequestReady);
+
+    QObject::connect(
+        m_server, &qevercloud::UserStoreServer::getAccountLimitsRequestReady,
+        this, &UserStoreServer::onRequestReady);
+
+    QObject::connect(
+        m_server, &qevercloud::UserStoreServer::checkVersionRequest, this,
+        &UserStoreServer::onCheckVersionRequest);
+
+    QObject::connect(
+        m_server, &qevercloud::UserStoreServer::getUserRequest, this,
+        &UserStoreServer::onGetUserRequest);
+
+    QObject::connect(
+        this, &UserStoreServer::checkVersionRequestReady, m_server,
+        &qevercloud::UserStoreServer::onCheckVersionRequestReady);
+
+    QObject::connect(
+        this, &UserStoreServer::getUserRequestReady, m_server,
+        &qevercloud::UserStoreServer::onGetUserRequestReady);
 }
 
 std::exception_ptr UserStoreServer::checkAuthentication(

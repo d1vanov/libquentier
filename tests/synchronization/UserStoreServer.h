@@ -82,6 +82,8 @@ private Q_SLOTS:
     void onRequestReady(const QByteArray & responseData);
 
 private:
+    void connectToQEverCloudServer();
+
     [[nodiscard]] std::exception_ptr checkAuthentication(
         const qevercloud::IRequestContextPtr & ctx) const;
 
