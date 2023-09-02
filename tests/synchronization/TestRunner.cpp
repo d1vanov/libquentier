@@ -329,9 +329,9 @@ void TestRunner::init()
     const QString shardId = QStringLiteral("shardId");
 
     m_testAccount = Account(
-        m_testAccount.name(), Account::Type::Evernote, m_testAccount.id() + 1,
-        Account::EvernoteAccountType::Free, QStringLiteral("www.evernote.com"),
-        shardId);
+        QStringLiteral("Sync integrational tests"), Account::Type::Evernote,
+        m_testAccount.id() + 1, Account::EvernoteAccountType::Free,
+        QStringLiteral("www.evernote.com"), shardId);
 
     m_tempDir.emplace();
     m_localStorage = local_storage::createSqliteLocalStorage(
