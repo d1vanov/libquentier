@@ -352,7 +352,7 @@ void TestRunner::init()
             .setAuthenticationTime(now)
             .setShardId(shardId)
             .setWebApiUrlPrefix(webApiUrlPrefix)
-            .setNoteStoreUrl(QString::fromUtf8("http://localhost:%1")
+            .setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1")
                                  .arg(m_noteStoreServer->port()))
             .build();
     }();
@@ -435,7 +435,7 @@ void TestRunner::runTestScenario()
         *m_localStorage);
 
     const QUrl userStoreUrl =
-        QUrl::fromEncoded(QString::fromUtf8("http://localhost:%1")
+        QUrl::fromEncoded(QString::fromUtf8("http://127.0.0.1:%1")
                               .arg(m_userStoreServer->port())
                               .toUtf8());
     QVERIFY(userStoreUrl.isValid());
@@ -461,7 +461,9 @@ void TestRunner::runTestScenario()
 
     bool caughtException = false;
     try {
-        syncResultPair.first.waitForFinished();
+        while (!syncResultPair.first.isFinished()) {
+            QCoreApplication::processEvents();
+        }
     }
     catch (...) {
         caughtException = true;
