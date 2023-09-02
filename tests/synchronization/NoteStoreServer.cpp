@@ -156,7 +156,9 @@ NoteStoreServer::NoteStoreServer(
     QObject(parent),
     // clang-format off
     m_authenticationToken{std::move(authenticationToken)},
-    m_cookies{std::move(cookies)}
+    m_cookies{std::move(cookies)},
+    m_tcpServer{new QTcpServer(this)},
+    m_server{new qevercloud::NoteStoreServer(this)}
 // clang-format on
 {
     bool res = m_tcpServer->listen(QHostAddress::LocalHost);
