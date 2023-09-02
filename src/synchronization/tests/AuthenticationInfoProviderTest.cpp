@@ -369,24 +369,22 @@ TEST_F(AuthenticationInfoProviderTest, CtorNullNoteStoreFactory)
 
 TEST_F(AuthenticationInfoProviderTest, CtorNullRequestContext)
 {
-    EXPECT_THROW(
+    EXPECT_NO_THROW(
         const auto authenticationInfoProvider =
             std::make_shared<AuthenticationInfoProvider>(
                 m_mockAuthenticator, m_mockKeychainService,
                 m_mockUserInfoProvider, m_mockNoteStoreFactory, nullptr,
-                qevercloud::nullRetryPolicy(), m_host),
-        InvalidArgument);
+                qevercloud::nullRetryPolicy(), m_host));
 }
 
 TEST_F(AuthenticationInfoProviderTest, CtorNullRetryPolicy)
 {
-    EXPECT_THROW(
+    EXPECT_NO_THROW(
         const auto authenticationInfoProvider =
             std::make_shared<AuthenticationInfoProvider>(
                 m_mockAuthenticator, m_mockKeychainService,
                 m_mockUserInfoProvider, m_mockNoteStoreFactory,
-                qevercloud::newRequestContext(), nullptr, m_host),
-        InvalidArgument);
+                qevercloud::newRequestContext(), nullptr, m_host));
 }
 
 TEST_F(AuthenticationInfoProviderTest, CtorEmptyHost)

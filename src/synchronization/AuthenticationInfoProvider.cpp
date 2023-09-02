@@ -172,16 +172,6 @@ AuthenticationInfoProvider::AuthenticationInfoProvider(
             "AuthenticationInfoProvider ctor: note store factory is null")}};
     }
 
-    if (Q_UNLIKELY(!m_ctx)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "AuthenticationInfoProvider ctor: request context is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_retryPolicy)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "AuthenticationInfoProvider ctor: retry policy is null")}};
-    }
-
     if (Q_UNLIKELY(m_host.isEmpty())) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "AuthenticationInfoProvider ctor: host is empty")}};
