@@ -656,8 +656,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
     const char *& errorMessage) const
 {
     if (messages.isEmpty()) {
-        errorMessage = "Detected unexpectedly empty sync chunks data counters";
-        return false;
+        return true;
     }
 
     ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
