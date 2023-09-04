@@ -18,14 +18,8 @@
 
 #pragma once
 
-#include <QtGlobal>
-
-QT_BEGIN_NAMESPACE;
-
 class QDebug;
 class QTextStream;
-
-QT_END_NAMESPACE;
 
 namespace quentier::synchronization {
 

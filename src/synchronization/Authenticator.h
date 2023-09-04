@@ -26,11 +26,7 @@
 
 #include <memory>
 
-QT_BEGIN_NAMESPACE;
-
 class QWidget;
-
-QT_END_NAMESPACE;
 
 namespace quentier::synchronization {
 

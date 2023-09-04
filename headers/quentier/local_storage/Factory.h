@@ -24,11 +24,7 @@
 
 #include <QtGlobal>
 
-QT_BEGIN_NAMESPACE;
-
 class QDir;
-
-QT_END_NAMESPACE;
 
 namespace quentier {
 

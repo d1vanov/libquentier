@@ -30,12 +30,8 @@
 #include <QUrl>
 #include <QtGlobal>
 
-QT_BEGIN_NAMESPACE;
-
 class QDir;
 class QWidget;
-
-QT_END_NAMESPACE;
 
 namespace quentier::synchronization {
 

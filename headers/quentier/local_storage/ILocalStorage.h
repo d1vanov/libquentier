@@ -41,13 +41,9 @@
 #include <optional>
 #include <utility>
 
-QT_BEGIN_NAMESPACE;
-
 class QDebug;
 class QTextStream;
 class QThreadPool;
-
-QT_END_NAMESPACE;
 
 namespace quentier {
 
