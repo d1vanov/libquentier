@@ -18,6 +18,8 @@
 
 #include "FakeSyncStateStorage.h"
 
+#include <quentier/logging/QuentierLogger.h>
+
 #include <QMutexLocker>
 
 #include <algorithm>
@@ -30,37 +32,57 @@ FakeSyncStateStorage::FakeSyncStateStorage(QObject * parent) :
 
 ISyncStatePtr FakeSyncStateStorage::getSyncState(const Account & account)
 {
+    QNDEBUG(
+        "synchronization::tests::FakeSyncStateStorage",
+        "FakeSyncStateStorage::getSyncState: " << account.name() << " ("
+                                               << account.id() << ")");
+
     const QMutexLocker lock{&m_mutex};
 
     const auto it = std::find_if(
-        m_syncStateData.constBegin(),
-        m_syncStateData.constEnd(),
+        m_syncStateData.constBegin(), m_syncStateData.constEnd(),
         [&account](const SyncStateData & syncStateData) {
             return syncStateData.m_account == account;
         });
     if (it != m_syncStateData.constEnd()) {
+        QNDEBUG(
+            "synchronization::tests::FakeSyncStateStorage",
+            "Found some sync state");
         return it->m_syncStateData;
     }
 
+    QNDEBUG(
+        "synchronization::tests::FakeSyncStateStorage", "Found no sync state");
     return nullptr;
 }
 
 void FakeSyncStateStorage::setSyncState(
     const Account & account, ISyncStatePtr syncState)
 {
+    QNDEBUG(
+        "synchronization::tests::FakeSyncStateStorage",
+        "FakeSyncStateStorage::setSyncState: "
+            << account.name() << "(" << account.id()
+            << "): " << (syncState ? "non-null" : "null") << " sync state");
+
     const QMutexLocker lock{&m_mutex};
 
     const auto it = std::find_if(
-        m_syncStateData.begin(),
-        m_syncStateData.end(),
+        m_syncStateData.begin(), m_syncStateData.end(),
         [&account](const SyncStateData & syncStateData) {
             return syncStateData.m_account == account;
         });
     if (it != m_syncStateData.end()) {
+        QNDEBUG(
+            "synchronization::tests::FakeSyncStateStorage",
+            "Updated sync state for account");
         it->m_syncStateData = std::move(syncState);
         return;
     }
 
+    QNDEBUG(
+        "synchronization::tests::FakeSyncStateStorage",
+        "Added new sync state for account");
     m_syncStateData << SyncStateData{account, std::move(syncState)};
 }
 
