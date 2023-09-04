@@ -50,4 +50,7 @@ using ISyncResultPtr = std::shared_ptr<ISyncResult>;
 class ISyncState;
 using ISyncStatePtr = std::shared_ptr<ISyncState>;
 
+class ISyncStateBuilder;
+using ISyncStateBuilderPtr = std::shared_ptr<ISyncStateBuilder>;
+
 } // namespace quentier::synchronization

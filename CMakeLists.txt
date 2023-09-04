@@ -147,7 +147,8 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncResult.h
-    headers/quentier/synchronization/types/ISyncState.h)
+    headers/quentier/synchronization/types/ISyncState.h
+    headers/quentier/synchronization/types/ISyncStateBuilder.h)
 
 set(THREADING_HEADERS
     headers/quentier/threading/Future.h
@@ -275,6 +276,7 @@ set(PRIVATE_HEADERS
     src/synchronization/types/AuthenticationInfo.h
     src/synchronization/types/SyncOptions.h
     src/synchronization/types/SyncOptionsBuilder.h
+    src/synchronization/types/SyncStateBuilder.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/EncryptionManager_p.h
@@ -458,8 +460,10 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/IDownloadResourcesStatus.cpp
     src/synchronization/types/ISyncOptions.cpp
     src/synchronization/types/ISyncOptionsBuilder.cpp
+    src/synchronization/types/ISyncStateBuilder.cpp
     src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncOptionsBuilder.cpp
+    src/synchronization/types/SyncStateBuilder.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp
     src/types/Account.cpp
