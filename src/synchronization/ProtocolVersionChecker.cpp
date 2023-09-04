@@ -20,6 +20,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/SysInfo.h>
 
@@ -71,8 +72,15 @@ ProtocolVersionChecker::ProtocolVersionChecker(
 QFuture<void> ProtocolVersionChecker::checkProtocolVersion(
     const IAuthenticationInfo & authenticationInfo)
 {
+    QNDEBUG(
+        "synchronization::ProtocolVersionChecker",
+        "ProtocolVersionChecker::checkProtocolVersion");
+
     const QMutexLocker locker{&m_mutex};
     if (m_future) {
+        QNDEBUG(
+            "synchronization::ProtocolVersionChecker",
+            "Already tried to check once, returning existing future");
         return *m_future;
     }
 
@@ -100,6 +108,11 @@ QFuture<void> ProtocolVersionChecker::checkProtocolVersion(
         std::move(protocolVersionFuture), promise,
         [promise](bool res)
         {
+            QNDEBUG(
+                "synchronization::ProtocolVersionChecker",
+                "Protocol version check completed: "
+                    << (res ? "success" : "failure"));
+
             if (!res) {
                 promise->setException(RuntimeError{ErrorString{
                     QStringLiteral(
