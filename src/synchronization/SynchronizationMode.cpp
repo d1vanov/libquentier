@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,26 +16,42 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "SynchronizationMode.h"
 
-#include <QtGlobal>
-
-QT_BEGIN_NAMESPACE;
-
-class QDebug;
-class QTextStream;
-
-QT_END_NAMESPACE;
+#include <QDebug>
+#include <QTextStream>
 
 namespace quentier::synchronization {
 
-enum class SynchronizationMode
+namespace
 {
-    Full,
-    Incremental
-};
 
-QDebug & operator<<(QDebug & dbg, SynchronizationMode mode);
-QTextStream & operator<<(QTextStream & strm, SynchronizationMode mode);
+template <class T>
+void printSyncMode(T & t, const SynchronizationMode syncMode)
+{
+    switch (syncMode)
+    {
+    case SynchronizationMode::Full:
+        t << "Full";
+        break;
+    case SynchronizationMode::Incremental:
+        t << "Incremental";
+        break;
+    }
+}
+
+} // namespace
+
+QDebug & operator<<(QDebug & dbg, const SynchronizationMode mode)
+{
+    printSyncMode(dbg, mode);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const SynchronizationMode mode)
+{
+    printSyncMode(strm, mode);
+    return strm;
+}
 
 } // namespace quentier::synchronization

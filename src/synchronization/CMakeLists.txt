@@ -50,6 +50,7 @@ target_sources(${LIBRARY_NAME}
   ProtocolVersionChecker.h
   Sender.cpp
   Sender.h
+  SynchronizationMode.cpp
   SynchronizationMode.h
   Synchronizer.cpp
   Synchronizer.h
