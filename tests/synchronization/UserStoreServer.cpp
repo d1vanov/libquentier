@@ -22,6 +22,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/logging/QuentierLogger.h>
 
 #include <qevercloud/services/UserStoreServer.h>
 
@@ -131,15 +132,23 @@ void UserStoreServer::removeUser(const QString & authenticationToken)
 }
 
 void UserStoreServer::onCheckVersionRequest(
-    [[maybe_unused]] const QString & clientName, qint16 edamVersionMajor,
-    qint16 edamVersionMinor, const qevercloud::IRequestContextPtr & ctx)
+    const QString & clientName, qint16 edamVersionMajor,
+    qint16 edamVersionMinor,
+    [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx)
 {
-    if (auto e = checkAuthentication(ctx)) {
-        Q_EMIT checkVersionRequestReady(false, std::move(e));
-        return;
-    }
+    QNDEBUG(
+        "synchronization::tests::UserStoreServer",
+        "UserStoreServer::onCheckVersionRequest: client name = "
+            << clientName << ", edam version major = "
+            << edamVersionMajor << ", edam version minor = "
+            << edamVersionMinor);
 
     if (edamVersionMajor != m_edamVersionMajor) {
+        QNWARNING(
+            "synchronization::tests::UserStoreServer",
+            "UserStoreServer::onCheckVersionRequest: expected EDAM major "
+                "version " << m_edamVersionMajor);
+
         Q_EMIT checkVersionRequestReady(
             false,
             std::make_exception_ptr(RuntimeError{
@@ -150,6 +159,11 @@ void UserStoreServer::onCheckVersionRequest(
     }
 
     if (edamVersionMinor != m_edamVersionMinor) {
+        QNWARNING(
+            "synchronization::tests::UserStoreServer",
+            "UserStoreServer::onCheckVersionRequest: expected EDAM minor "
+                "version " << m_edamVersionMinor);
+
         Q_EMIT checkVersionRequestReady(
             false,
             std::make_exception_ptr(RuntimeError{
