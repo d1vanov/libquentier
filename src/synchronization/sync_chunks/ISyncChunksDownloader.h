@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,6 +32,8 @@
 #include <memory>
 
 class QException;
+class QDebug;
+class QTextStream;
 
 namespace quentier::synchronization {
 
@@ -76,5 +78,11 @@ public:
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) = 0;
 };
+
+QDebug & operator<<(
+    QDebug & dbg, const ISyncChunksDownloader::SyncChunksResult & result);
+
+QTextStream & operator<<(
+    QTextStream & strm, const ISyncChunksDownloader::SyncChunksResult & result);
 
 } // namespace quentier::synchronization
