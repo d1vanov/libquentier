@@ -434,6 +434,11 @@ void TestRunner::runTestScenario()
         testScenarioData.localItemGroups, testScenarioData.localItemSources,
         *m_localStorage);
 
+    setupSyncState(
+        testData, m_testAccount, testScenarioData.localDataItemTypes,
+        testScenarioData.localItemGroups, testScenarioData.localItemSources,
+        *m_fakeSyncStateStorage);
+
     const QUrl userStoreUrl =
         QUrl::fromEncoded(QString::fromUtf8("http://127.0.0.1:%1")
                               .arg(m_userStoreServer->port())

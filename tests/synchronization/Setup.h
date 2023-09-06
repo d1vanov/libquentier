@@ -22,7 +22,16 @@
 
 #include <QFlags>
 
+#include <optional>
+
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace quentier {
+
+class Account;
+class ISyncStateStorage;
+
+} // namespace quentier
 
 namespace quentier::local_storage {
 
@@ -32,6 +41,7 @@ class ILocalStorage;
 
 namespace quentier::synchronization::tests {
 
+class FakeSyncStateStorage;
 class NoteStoreServer;
 
 } // namespace quentier::synchronization::tests
@@ -83,5 +93,11 @@ void setupLocalStorage(
     const TestData & testData, DataItemTypes dataItemTypes,
     ItemGroups itemGroups, ItemSources itemSources,
     local_storage::ILocalStorage & localStorage);
+
+void setupSyncState(
+    const TestData & testData, const Account & testAccount,
+    DataItemTypes dataItemTypes, ItemGroups itemGroups, ItemSources itemSources,
+    ISyncStateStorage & syncStateStorage,
+    std::optional<qint32> lastUpdateTimestamp = std::nullopt);
 
 } // namespace quentier::synchronization::tests
