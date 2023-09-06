@@ -34,6 +34,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <QTextStream>
+
 #include <algorithm>
 #include <functional>
 #include <optional>
@@ -96,6 +98,19 @@ using StoredSyncChunksFetcher =
 
 using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 
+[[nodiscard]] QString printSyncChunksUsnRange(
+    const QList<std::pair<qint32, qint32>> & usnRange)
+{
+    QString result;
+    QTextStream strm{&result};
+
+    for (const auto & pair: qAsConst(usnRange)) {
+        strm << "[" << pair.first << ", " << pair.second << "]; ";
+    }
+
+    return result;
+}
+
 [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunksImpl(
     qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler,
@@ -105,6 +120,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     const StoredSyncChunksFetcher & storedSyncChunksFetcher,
     SyncChunksStorer syncChunksStorer)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksProvider",
+        "SyncChunksProvider: fetchSyncChunksImpl: afterUsn = " << afterUsn);
+
     Q_ASSERT(storedSyncChunksUsnRangeFetcher);
     Q_ASSERT(syncChunksDownloader);
     Q_ASSERT(storedSyncChunksFetcher);
@@ -131,6 +150,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
                 std::move(syncChunksDownloaderFuture),
                 [promise, syncChunksStorer = std::move(syncChunksStorer)](
                     ISyncChunksDownloader::SyncChunksResult result) mutable {
+                    QNDEBUG(
+                        "synchronization::SyncChunksProvider",
+                        "Downloaded sync chunks: " << result);
+
                     if (!result.m_exception) {
                         promise->addResult(std::move(result.m_syncChunks));
                         promise->finish();
@@ -157,12 +180,24 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     const QList<std::pair<qint32, qint32>> storedSyncChunksUsnRange =
         storedSyncChunksUsnRangeFetcher();
 
+    if (QuentierIsLogLevelActive(LogLevel::Debug)) {
+        QNDEBUG(
+            "synchronization::SyncChunksProvider",
+            "Stored sync chunks usn ranges: "
+                << printSyncChunksUsnRange(storedSyncChunksUsnRange));
+    }
+
     const auto nextSyncChunkLowUsnIt = std::upper_bound(
         storedSyncChunksUsnRange.begin(), storedSyncChunksUsnRange.end(),
         std::pair<qint32, qint32>{afterUsn, 0});
     if ((nextSyncChunkLowUsnIt == storedSyncChunksUsnRange.end()) ||
         (afterUsn != 0 && nextSyncChunkLowUsnIt->first != (afterUsn + 1)))
     {
+        QNDEBUG(
+            "synchronization::SyncChunksProvider",
+            "No stored sync chunks corresponding to the required range, "
+                << "downloading these sync chunks");
+
         // There are no stored sync chunks corresponding to the range
         // we are looking for, will download the sync chunks right away
         return downloadSyncChunks(
@@ -236,6 +271,11 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     auto promise = std::make_shared<QPromise<QList<qevercloud::SyncChunk>>>();
     auto future = promise->future();
 
+    QNDEBUG(
+        "synchronization::SyncChunksProvider",
+        "Downloading sync chunks after highest USN from stores sync chunks: "
+            << *chunksHighUsn);
+
     auto downloaderFuture = downloadSyncChunks(
         *chunksHighUsn, std::move(ctx), std::move(canceler),
         std::move(callbackWeak));
@@ -247,6 +287,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
         [promise, storedSyncChunks = std::move(storedSyncChunks)](
             QList<qevercloud::SyncChunk>
                 downloadedSyncChunks) mutable { // NOLINT
+            QNDEBUG(
+                "synchronization::SyncChunksProvider",
+                "Downloaded sync chunks, uniting them with stored sync chunks "
+                    << "and returning as the overall result");
             storedSyncChunks << downloadedSyncChunks;
             promise->addResult(storedSyncChunks);
             promise->finish();
@@ -284,6 +328,11 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
     qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksProvider",
+        "SyncChunksProvider::fetchSyncChunks: afterUsn = " << afterUsn
+            << ", sync mode = " << syncMode);
+
     return fetchSyncChunksImpl(
         afterUsn, std::move(ctx), std::move(canceler), std::move(callbackWeak),
         [this] {
