@@ -832,6 +832,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
     const IAuthenticationInfo & authenticationInfo, SyncStatePtr lastSyncState,
     utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
+    QNDEBUG("synchronization::Downloader", "Downloader::launchDownload");
+
     Q_ASSERT(lastSyncState);
 
     auto promise = std::make_shared<QPromise<Result>>();
@@ -910,6 +912,11 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                             // so that any notes or resources which haven't been
                             // downloaded/processed during the last previous
                             // sync would be attempted to be processed now
+                            if (!downloadContext->syncChunksDataCounters) {
+                                downloadContext->syncChunksDataCounters =
+                                    std::make_shared<SyncChunksDataCounters>();
+                            }
+
                             self->downloadNotes(
                                 std::move(downloadContext),
                                 SynchronizationMode::Incremental);
@@ -938,6 +945,10 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
 void Downloader::launchUserOwnDataDownload(
     DownloadContextPtr downloadContext, const SynchronizationMode syncMode)
 {
+    QNDEBUG(
+        "synchronization::Downloader",
+        "Downloader::launchUserOwnDataDownload: sync mode = " << syncMode);
+
     Q_ASSERT(downloadContext);
 
     const qint32 afterUsn =
@@ -1159,6 +1170,8 @@ void Downloader::processSyncChunks(
     DownloadContextPtr downloadContext, SynchronizationMode syncMode,
     CheckForFirstSync checkForFirstSync)
 {
+    QNDEBUG("synchronization::Downloader", "Downloader::processSyncChunks");
+
     Q_ASSERT(downloadContext);
 
     if (downloadContext->canceler->isCanceled()) {
@@ -1187,6 +1200,11 @@ void Downloader::processSyncChunks(
         // or resources which haven't been downloaded/processed
         // during the last previous sync would be attempted to be
         // processed now
+        if (!downloadContext->syncChunksDataCounters) {
+            downloadContext->syncChunksDataCounters =
+                std::make_shared<SyncChunksDataCounters>();
+        }
+
         downloadNotes(std::move(downloadContext), syncMode);
         return;
     }
