@@ -74,8 +74,8 @@ NoteStoreProvider::NoteStoreProvider(
     }
 
     if (Q_UNLIKELY(!m_notebookFinder)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "NoteStoreProvider ctor: notebook finder is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NoteStoreProvider ctor: notebook finder is null")}};
     }
 
     if (Q_UNLIKELY(!m_authenticationInfoProvider)) {
@@ -141,7 +141,8 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNote(
         threading::TrackedTask{
             selfWeak,
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
-             promise](const std::optional<qevercloud::Notebook> & notebook) mutable {
+             promise](
+                const std::optional<qevercloud::Notebook> & notebook) mutable {
                 if (Q_UNLIKELY(!notebook)) {
                     promise->setException(
                         RuntimeError{ErrorString{QStringLiteral(
@@ -151,13 +152,16 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNote(
                     return;
                 }
 
-                auto f = (notebook->linkedNotebookGuid()
-                          ? linkedNotebookNoteStore(*notebook->linkedNotebookGuid(), std::move(ctx), std::move(retryPolicy))
-                          : userOwnNoteStore(std::move(ctx), std::move(retryPolicy)));
+                auto f =
+                    (notebook->linkedNotebookGuid()
+                         ? linkedNotebookNoteStore(
+                               *notebook->linkedNotebookGuid(), std::move(ctx),
+                               std::move(retryPolicy))
+                         : userOwnNoteStore(
+                               std::move(ctx), std::move(retryPolicy)));
                 threading::thenOrFailed(
                     std::move(f), promise,
-                    [promise](qevercloud::INoteStorePtr noteStore)
-                    {
+                    [promise](qevercloud::INoteStorePtr noteStore) {
                         Q_ASSERT(noteStore);
                         promise->addResult(std::move(noteStore));
                         promise->finish();
@@ -329,15 +333,20 @@ void NoteStoreProvider::createNoteStore(
             }
 
             Q_ASSERT(authInfo);
-            ctx = qevercloud::RequestContextBuilder{}
-                      .setAuthenticationToken(authInfo->authToken())
-                      .setCookies(authInfo->userStoreCookies())
-                      .setConnectionTimeout(ctx->connectionTimeout())
-                      .setIncreaseConnectionTimeoutExponentially(
-                          ctx->increaseConnectionTimeoutExponentially())
-                      .setMaxConnectionTimeout(ctx->maxConnectionTimeout())
-                      .setMaxRetryCount(ctx->maxRequestRetryCount())
-                      .build();
+
+            qevercloud::RequestContextBuilder ctxBuilder;
+            ctxBuilder.setAuthenticationToken(authInfo->authToken())
+                .setCookies(authInfo->userStoreCookies());
+
+            if (ctx) {
+                ctxBuilder.setConnectionTimeout(ctx->connectionTimeout())
+                    .setIncreaseConnectionTimeoutExponentially(
+                        ctx->increaseConnectionTimeoutExponentially())
+                    .setMaxConnectionTimeout(ctx->maxConnectionTimeout())
+                    .setMaxRetryCount(ctx->maxRequestRetryCount());
+            }
+
+            ctx = ctxBuilder.build();
 
             auto noteStore = m_noteStoreFactory->noteStore(
                 authInfo->noteStoreUrl(), linkedNotebookGuid, ctx, retryPolicy);
