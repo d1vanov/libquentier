@@ -27,6 +27,7 @@
 #include <local_storage/sql/ResourcesHandler.h>
 #include <local_storage/sql/SavedSearchesHandler.h>
 #include <local_storage/sql/SynchronizationInfoHandler.h>
+#include <local_storage/sql/TablesInitializer.h>
 #include <local_storage/sql/TagsHandler.h>
 #include <local_storage/sql/UsersHandler.h>
 #include <local_storage/sql/VersionHandler.h>
@@ -46,6 +47,11 @@ ILocalStoragePtr createSqliteLocalStorage(
     auto connectionPool = std::make_shared<sql::ConnectionPool>(
         QStringLiteral("localhost"), QString{}, QString{},
         std::move(localStorageMainFilePath), QStringLiteral("QSQLITE"));
+
+    {
+        auto database = connectionPool->database();
+        sql::TablesInitializer::initializeTables(database);
+    }
 
     auto resourceDataFilesLock = std::make_shared<QReadWriteLock>();
 
