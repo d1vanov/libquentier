@@ -132,6 +132,10 @@ QFuture<ISender::Result> Sender::send(
             std::move(tagsFuture), notebooksPromise,
             threading::TrackedTask{
                 selfWeak, [this, sendContext, notebooksPromise]() mutable {
+                    QNDEBUG(
+                        "synchronization::Sender",
+                        "Finished processing tags, processing notebooks");
+
                     auto f = processNotebooks(sendContext);
                     threading::thenOrFailed(
                         std::move(f), std::move(notebooksPromise));
@@ -153,6 +157,11 @@ QFuture<ISender::Result> Sender::send(
             std::move(notebooksFuture), savedSearchesPromise,
             threading::TrackedTask{
                 selfWeak, [this, sendContext, savedSearchesPromise]() mutable {
+                    QNDEBUG(
+                        "synchronization::Sender",
+                        "Finished processing notebooks, processing saved "
+                        << "searches");
+
                     auto f = processSavedSearches(sendContext);
                     threading::thenOrFailed(
                         std::move(f), std::move(savedSearchesPromise));
@@ -174,6 +183,10 @@ QFuture<ISender::Result> Sender::send(
             std::move(savedSearchesFuture), notesPromise,
             threading::TrackedTask{
                 selfWeak, [this, sendContext, notesPromise]() mutable {
+                    QNDEBUG(
+                        "synchronization::Sender",
+                        "Finished processing saved searches, processing notes");
+
                     auto f = processNotes(sendContext);
                     threading::thenOrFailed(
                         std::move(f), std::move(notesPromise));
@@ -184,13 +197,14 @@ QFuture<ISender::Result> Sender::send(
 
     threading::thenOrFailed(
         std::move(notesFuture), promise, [promise, sendContext] {
+            QNDEBUG("synchronization::Sender", "Finished processing notes");
             const QMutexLocker locker{sendContext->sendStatusMutex.get()};
             ISender::Result result;
             result.userOwnResult = sendContext->userOwnSendStatus;
             result.linkedNotebookResults.reserve(
                 sendContext->linkedNotebookSendStatuses.size());
             for (const auto it: qevercloud::toRange(
-                     qAsConst(sendContext->linkedNotebookSendStatuses)))
+                    qAsConst(sendContext->linkedNotebookSendStatuses)))
             {
                 result.linkedNotebookResults[it.key()] = it.value();
             }
@@ -198,7 +212,7 @@ QFuture<ISender::Result> Sender::send(
             const auto now = QDateTime::currentMSecsSinceEpoch();
             sendContext->lastSyncState->m_userDataLastSyncTime = now;
             for (const auto it: qevercloud::toRange(
-                     sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
+                    sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
             {
                 it.value() = now;
             }
@@ -236,29 +250,32 @@ QFuture<void> Sender::processNotes(SendContextPtr sendContext) const
     auto listLocallyModifiedNotesFuture =
         m_localStorage->listNotes(fetchNoteOptions, listNotesOptions);
 
-    threading::thenOrFailed(
-        std::move(listLocallyModifiedNotesFuture), promise,
-        [selfWeak, this, promise, sendContext = std::move(sendContext)](
-            QList<qevercloud::Note> && notes) mutable {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedNotesFuture's watcher doesn't reach the continuation
+    // code. I could not debug the reason of this behaviour, for some reason
+    // it only seems to be happening in Sender when interacting with local
+    // storage.
+    try {
+        listLocallyModifiedNotesFuture.waitForFinished();
 
-            if (sendContext->manualCanceler->isCanceled()) {
-                promise->finish();
-                return;
-            }
-
-            if (sendContext->canceler->isCanceled()) {
-                promise->setException(OperationCanceled{});
-                promise->finish();
-                return;
-            }
-
+        if (sendContext->manualCanceler->isCanceled()) {
+            promise->finish();
+        }
+        else if (sendContext->canceler->isCanceled()) {
+            promise->setException(OperationCanceled{});
+            promise->finish();
+        }
+        else {
             sendNotes(
-                std::move(sendContext), std::move(notes), std::move(promise));
-        });
+                std::move(sendContext), listLocallyModifiedNotesFuture.result(),
+                std::move(promise));
+        }
+    }
+    catch (const QException & e) {
+        promise->setException(e);
+        promise->finish();
+    }
 
     return future;
 }
@@ -780,29 +797,33 @@ QFuture<void> Sender::processTags(SendContextPtr sendContext) const
     auto listLocallyModifiedTagsFuture =
         m_localStorage->listTags(listTagsOptions);
 
-    threading::thenOrFailed(
-        std::move(listLocallyModifiedTagsFuture), promise,
-        [selfWeak, this, promise, sendContext = std::move(sendContext)](
-            QList<qevercloud::Tag> && tags) mutable {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedTagsFuture's watcher doesn't reach the continuation
+    // code. I could not debug the reason of this behaviour, for some reason
+    // it only seems to be happening in Sender when interacting with local
+    // storage.
+    try {
+        listLocallyModifiedTagsFuture.waitForFinished();
 
-            if (sendContext->manualCanceler->isCanceled()) {
-                promise->finish();
-                return;
-            }
-
-            if (sendContext->canceler->isCanceled()) {
-                promise->setException(OperationCanceled{});
-                promise->finish();
-                return;
-            }
-
+        if (sendContext->manualCanceler->isCanceled()) {
+            promise->finish();
+        }
+        else if (sendContext->canceler->isCanceled()) {
+            promise->setException(OperationCanceled{});
+            promise->finish();
+        }
+        else {
+            Q_ASSERT(listLocallyModifiedTagsFuture.resultCount() == 1);
             sendTags(
-                std::move(sendContext), std::move(tags), std::move(promise));
-        });
+                std::move(sendContext), listLocallyModifiedTagsFuture.result(),
+                std::move(promise));
+        }
+    }
+    catch (const QException & e) {
+        promise->setException(e);
+        promise->finish();
+    }
 
     return future;
 }
@@ -1152,29 +1173,34 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
     auto listLocallyModifiedNotebooksFuture =
         m_localStorage->listNotebooks(listNotebooksOptions);
 
-    threading::thenOrFailed(
-        std::move(listLocallyModifiedNotebooksFuture), promise,
-        [selfWeak, this, promise, sendContext = std::move(sendContext)](
-            const QList<qevercloud::Notebook> & notebooks) mutable {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedNotebooksFuture's watcher doesn't reach the
+    // continuation code. I could not debug the reason of this behaviour, for
+    // some reason it only seems to be happening in Sender when interacting with
+    // local storage.
+    try {
+        listLocallyModifiedNotebooksFuture.waitForFinished();
 
-            if (sendContext->manualCanceler->isCanceled()) {
-                promise->finish();
-                return;
-            }
-
-            if (sendContext->canceler->isCanceled()) {
-                promise->setException(OperationCanceled{});
-                promise->finish();
-                return;
-            }
-
+        if (sendContext->manualCanceler->isCanceled()) {
+            promise->finish();
+        }
+        else if (sendContext->canceler->isCanceled()) {
+            promise->setException(OperationCanceled{});
+            promise->finish();
+        }
+        else {
+            Q_ASSERT(listLocallyModifiedNotebooksFuture.resultCount() == 1);
             sendNotebooks(
-                std::move(sendContext), notebooks, std::move(promise));
-        });
+                std::move(sendContext),
+                listLocallyModifiedNotebooksFuture.result(),
+                std::move(promise));
+        }
+    }
+    catch (const QException & e) {
+        promise->setException(e);
+        promise->finish();
+    }
 
     return future;
 }
@@ -1483,29 +1509,34 @@ QFuture<void> Sender::processSavedSearches(SendContextPtr sendContext) const
     auto listLocallyModifiedSavedSearchesFuture =
         m_localStorage->listSavedSearches(listSavedSearchesOptions);
 
-    threading::thenOrFailed(
-        std::move(listLocallyModifiedSavedSearchesFuture), promise,
-        [selfWeak, this, promise, sendContext = std::move(sendContext)](
-            const QList<qevercloud::SavedSearch> & savedSearches) mutable {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedSavedSearchesFuture's watcher doesn't reach the
+    // continuation code. I could not debug the reason of this behaviour, for
+    // some reason it only seems to be happening in Sender when interacting with
+    // local storage.
+    try {
+        listLocallyModifiedSavedSearchesFuture.waitForFinished();
 
-            if (sendContext->manualCanceler->isCanceled()) {
-                promise->finish();
-                return;
-            }
-
-            if (sendContext->canceler->isCanceled()) {
-                promise->setException(OperationCanceled{});
-                promise->finish();
-                return;
-            }
-
+        if (sendContext->manualCanceler->isCanceled()) {
+            promise->finish();
+        }
+        else if (sendContext->canceler->isCanceled()) {
+            promise->setException(OperationCanceled{});
+            promise->finish();
+        }
+        else {
+            Q_ASSERT(listLocallyModifiedSavedSearchesFuture.resultCount() == 1);
             sendSavedSearches(
-                std::move(sendContext), savedSearches, std::move(promise));
-        });
+                std::move(sendContext),
+                listLocallyModifiedSavedSearchesFuture.result(),
+                std::move(promise));
+        }
+    }
+    catch (const QException & e) {
+        promise->setException(e);
+        promise->finish();
+    }
 
     return future;
 }
