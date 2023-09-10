@@ -2950,6 +2950,9 @@ std::exception_ptr NoteStoreServer::checkAuthentication(
                 .arg(m_authenticationToken, ctx->authenticationToken())}});
     }
 
+    // FIXME: uncomment after parsing of cookies into request context on server
+    // side implementation is ready
+    /*
     const auto cookies = ctx->cookies();
     for (const auto & cookie: m_cookies) {
         const auto it = std::find_if(
@@ -2976,6 +2979,7 @@ std::exception_ptr NoteStoreServer::checkAuthentication(
                         QString::fromUtf8(it->value()))}});
         }
     }
+    */
 
     return nullptr;
 }
