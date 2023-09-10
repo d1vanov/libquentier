@@ -72,7 +72,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
         .setLocallyModified(false)
         .setLocallyFavorited(false)
         .setName(composeName(index, QStringLiteral("Saved search"), nameSuffix))
-        .setFormat(qevercloud::QueryFormat::SEXP)
+        .setFormat(qevercloud::QueryFormat::USER)
         .setQuery(QString::fromUtf8("Saved search query %1").arg(index))
         .build();
 }
@@ -1250,10 +1250,9 @@ void setupLocalStorage(
     }
 }
 
-void setupSyncState(
-    const TestData & testData, const Account & testAccount,
-    const DataItemTypes dataItemTypes, const ItemGroups itemGroups,
-    const ItemSources itemSources, ISyncStateStorage & syncStateStorage,
+ISyncStatePtr setupSyncState(
+    const TestData & testData, const DataItemTypes dataItemTypes,
+    const ItemGroups itemGroups, const ItemSources itemSources,
     std::optional<qint32> lastUpdateTimestamp)
 {
     qint32 userOwnUpdateCount = 0;
@@ -1479,14 +1478,12 @@ void setupSyncState(
     }
 
     auto syncStateBuilder = createSyncStateBuilder();
-    auto syncState = syncStateBuilder
+    return syncStateBuilder
         ->setUserDataUpdateCount(userOwnUpdateCount)
         .setUserDataLastSyncTime(*lastUpdateTimestamp)
         .setLinkedNotebookUpdateCounts(std::move(linkedNotebookUpdateCounts))
         .setLinkedNotebookLastSyncTimes(std::move(linkedNotebookLastSyncTimes))
         .build();
-
-    syncStateStorage.setSyncState(testAccount, std::move(syncState));
 }
 
 } // namespace quentier::synchronization::tests

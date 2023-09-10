@@ -44,6 +44,7 @@
 #include <quentier/threading/Factory.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <qevercloud/types/builders/SyncStateBuilder.h>
 #include <qevercloud/types/builders/UserBuilder.h>
 #include <qevercloud/utility/ToRange.h>
 
@@ -79,7 +80,9 @@ inline void messageHandler(
 
     for (int i = 0; i < cookieCount; ++i) {
         result << QNetworkCookie{
-            QString::fromUtf8("sampleCookieName_%1").arg(i + 1).toUtf8(),
+            QString::fromUtf8("webSampleCookieName_%1_PreUserGuid")
+                .arg(i + 1)
+                .toUtf8(),
             QString::fromUtf8("sampleCookieValue_%1").arg(i + 1).toUtf8()};
     }
 
@@ -268,9 +271,7 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::Notebook>::check(
-            [&noteStoreServer] {
-                return noteStoreServer.notebooks().values();
-            },
+            [&noteStoreServer] { return noteStoreServer.notebooks().values(); },
             [&localStorage] { return localStorage.listNotebooks(); },
             errorDescription))
     {
@@ -278,9 +279,7 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::Tag>::check(
-            [&noteStoreServer] {
-                return noteStoreServer.tags().values();
-            },
+            [&noteStoreServer] { return noteStoreServer.tags().values(); },
             [&localStorage] { return localStorage.listTags(); },
             errorDescription))
     {
@@ -354,6 +353,7 @@ void TestRunner::init()
             .setWebApiUrlPrefix(webApiUrlPrefix)
             .setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1")
                                  .arg(m_noteStoreServer->port()))
+            .setUserStoreCookies(userStoreCookies)
             .build();
     }();
 
@@ -434,10 +434,48 @@ void TestRunner::runTestScenario()
         testScenarioData.localItemGroups, testScenarioData.localItemSources,
         *m_localStorage);
 
-    setupSyncState(
-        testData, m_testAccount, testScenarioData.localDataItemTypes,
-        testScenarioData.localItemGroups, testScenarioData.localItemSources,
-        *m_fakeSyncStateStorage);
+    auto localSyncState = setupSyncState(
+        testData, testScenarioData.localDataItemTypes,
+        testScenarioData.localItemGroups, testScenarioData.localItemSources);
+    QVERIFY(localSyncState);
+
+    m_fakeSyncStateStorage->setSyncState(
+        m_testAccount, std::move(localSyncState));
+
+    auto serverSyncState = setupSyncState(
+        testData, testScenarioData.serverDataItemTypes,
+        testScenarioData.serverItemGroups, testScenarioData.serverItemSources);
+    QVERIFY(serverSyncState);
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    m_noteStoreServer->putUserOwnSyncState(
+        qevercloud::SyncStateBuilder{}
+            .setUpdateCount(serverSyncState->userDataUpdateCount())
+            .setUserLastUpdated(serverSyncState->userDataLastSyncTime())
+            .setFullSyncBefore(
+                serverSyncState->userDataLastSyncTime() + 9999999999)
+            .setCurrentTime(now)
+            .build());
+
+    const auto linkedNotebookUpdateCounts =
+        serverSyncState->linkedNotebookUpdateCounts();
+
+    const auto linkedNotebookLastSyncTimes =
+        serverSyncState->linkedNotebookLastSyncTimes();
+
+    for (const auto it:
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+        const auto lastSyncTime = linkedNotebookLastSyncTimes.value(it.key());
+        m_noteStoreServer->putLinkedNotebookSyncState(
+            it.key(),
+            qevercloud::SyncStateBuilder{}
+                .setUpdateCount(it.value())
+                .setCurrentTime(now)
+                .setUserLastUpdated(lastSyncTime)
+                .setFullSyncBefore(lastSyncTime + 9999999999)
+                .build());
+    }
 
     const QUrl userStoreUrl =
         QUrl::fromEncoded(QString::fromUtf8("http://127.0.0.1:%1")

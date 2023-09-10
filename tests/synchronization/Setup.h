@@ -20,6 +20,8 @@
 
 #include "TestData.h"
 
+#include <quentier/synchronization/types/Fwd.h>
+
 #include <QFlags>
 
 #include <optional>
@@ -29,7 +31,6 @@
 namespace quentier {
 
 class Account;
-class ISyncStateStorage;
 
 } // namespace quentier
 
@@ -94,10 +95,9 @@ void setupLocalStorage(
     ItemGroups itemGroups, ItemSources itemSources,
     local_storage::ILocalStorage & localStorage);
 
-void setupSyncState(
-    const TestData & testData, const Account & testAccount,
-    DataItemTypes dataItemTypes, ItemGroups itemGroups, ItemSources itemSources,
-    ISyncStateStorage & syncStateStorage,
+[[nodiscard]] ISyncStatePtr setupSyncState(
+    const TestData & testData, DataItemTypes dataItemTypes,
+    ItemGroups itemGroups, ItemSources itemSources,
     std::optional<qint32> lastUpdateTimestamp = std::nullopt);
 
 } // namespace quentier::synchronization::tests
