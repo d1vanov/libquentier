@@ -21,6 +21,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/utility/cancelers/ICanceler.h>
@@ -35,11 +36,38 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <QTextStream>
+
 #include <functional>
 
 namespace quentier::synchronization {
 
 namespace {
+
+[[nodiscard]] QString linkedNotebookInfo(
+    const qevercloud::LinkedNotebook & linkedNotebook)
+{
+    QString res;
+    QTextStream strm{&res};
+
+    if (linkedNotebook.username()) {
+        strm << *linkedNotebook.username();
+    }
+    else {
+        strm << "<no username>";
+    }
+
+    strm << " (";
+    if (linkedNotebook.guid()) {
+        strm << *linkedNotebook.guid();
+    }
+    else {
+        strm << "<no guid>";
+    }
+    strm << ")";
+
+    return res;
+}
 
 [[nodiscard]] QFuture<qevercloud::SyncChunk> downloadSingleUserOwnSyncChunk(
     const qint32 afterUsn, const SynchronizationMode synchronizationMode,
@@ -91,6 +119,12 @@ namespace {
         const qint32 afterUsn, const SynchronizationMode synchronizationMode,
         qevercloud::INoteStore & noteStore, qevercloud::IRequestContextPtr ctx)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksDownloader",
+        "downloadSingleLinkedNotebookSyncChunk: "
+            << linkedNotebookInfo(linkedNotebook) << ", after usn = "
+            << afterUsn << ", sync mode = " << synchronizationMode);
+
     Q_ASSERT(linkedNotebook.guid());
 
     constexpr qint32 maxEntries = 50;
@@ -148,6 +182,15 @@ void downloadSyncChunksList(
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult = {})
 {
+    QNDEBUG(
+        "synchronization::SyncChunksDownloader",
+        "downloadSyncChunksList: last previous usn = "
+            << lastPreviousUsn << ", after usn = " << afterUsn
+            << ", sync mode = " << synchronizationMode << ", "
+            << (linkedNotebook ? linkedNotebookInfo(*linkedNotebook)
+                               : "user own")
+            << " sync chunks");
+
     Q_ASSERT(noteStore);
     Q_ASSERT(singleSyncChunkDownloader);
     Q_ASSERT(canceler);
@@ -203,12 +246,24 @@ void processSingleDownloadedSyncChunk(
     QList<qevercloud::SyncChunk> runningResult,
     qevercloud::SyncChunk syncChunk) // NOLINT
 {
+    QNDEBUG(
+        "synchronization::SyncChunksDownloader",
+        "processSingleDownloadedSyncChunk: "
+            << (linkedNotebook
+                ? linkedNotebookInfo(*linkedNotebook)
+                : QStringLiteral("user own"))
+            << " sync chunks, last previous usn = " << lastPreviousUsn
+            << ", sync mode = " << synchronizationMode);
+
     if (Q_UNLIKELY(!syncChunk.chunkHighUSN())) {
+        QNWARNING(
+            "synchronization::SyncChunksDownloader",
+            "Downloaded sync chunk without chunkHighUsn: " << syncChunk);
+
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult),
             std::make_shared<RuntimeError>(ErrorString{
                 QStringLiteral("Got sync chunk without chunkHighUSN")})});
-
         promise->finish();
         return;
     }
@@ -216,9 +271,11 @@ void processSingleDownloadedSyncChunk(
     runningResult << syncChunk;
 
     if (*syncChunk.chunkHighUSN() >= syncChunk.updateCount()) {
+        QNDEBUG(
+            "synchronization::SyncChunksDownloader",
+            "Downloaded all sync chunks");
         promise->addResult(ISyncChunksDownloader::SyncChunksResult{
             std::move(runningResult), nullptr});
-
         promise->finish();
         return;
     }
@@ -265,6 +322,11 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksDownloader",
+        "SyncChunksDownloader::downloadSyncChunks: after usn = "
+            << afterUsn << ", sync mode = " << syncMode);
+
     auto promise =
         std::make_shared<QPromise<ISyncChunksDownloader::SyncChunksResult>>();
 
@@ -306,6 +368,12 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksDownloader",
+        "SyncChunksDownloader::downloadLinkedNotebookSyncChunks: "
+            << linkedNotebookInfo(linkedNotebook)
+            << ", after usn = " << afterUsn << ", sync mode = " << syncMode);
+
     if (Q_UNLIKELY(!linkedNotebook.guid())) {
         return threading::makeExceptionalFuture<
             ISyncChunksDownloader::SyncChunksResult>(
