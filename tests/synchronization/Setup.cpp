@@ -56,7 +56,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 [[nodiscard]] QString composeName(
     const int index, const QString & typeName, const QString & nameSuffix)
 {
-    auto name = QString::fromUtf8("%1 #%2").arg(typeName, index);
+    auto name = QString::fromUtf8("%1 #%2").arg(typeName).arg(index);
     if (!nameSuffix.isEmpty()) {
         name += QString::fromUtf8(" (%1)").arg(nameSuffix);
     }
