@@ -58,6 +58,7 @@
 #include <array>
 #include <cstdio>
 #include <functional>
+#include <type_traits>
 
 namespace quentier::synchronization::tests {
 
@@ -139,6 +140,10 @@ void copyLocalFields(const T & source, T & dest)
     dest.setLocallyFavorited(source.isLocallyFavorited());
     dest.setLocalOnly(source.isLocalOnly());
     dest.setLocalData(source.localData());
+
+    if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::Tag>) {
+        dest.setParentTagLocalId(source.parentTagLocalId());
+    }
 }
 
 template <>
