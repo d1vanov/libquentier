@@ -25,7 +25,7 @@
 #include "Setup.h"
 #include "SyncEventsCollector.h"
 #include "TestData.h"
-#include "TestScenarioData.h"
+#include "TestScenarios.h"
 #include "UserStoreServer.h"
 
 #include <synchronization/types/AuthenticationInfo.h>
@@ -55,7 +55,6 @@
 #include <QTextStream>
 
 #include <algorithm>
-#include <array>
 #include <cstdio>
 #include <functional>
 #include <type_traits>
@@ -711,33 +710,7 @@ void TestRunner::runTestScenario_data()
 {
     QTest::addColumn<TestScenarioData>("testScenarioData");
 
-    using namespace std::string_view_literals;
-
-    static const std::array testScenarioData{
-        TestScenarioData{
-            DataItemTypes{} | DataItemType::SavedSearch, // serverDataItemTypes
-            ItemGroups{} | ItemGroup::Base,              // serverItemGroups
-            ItemSources{} | ItemSource::UserOwnAccount,  // serverItemSources
-            DataItemTypes{}, // serverExpungedDataItemTypes
-            ItemSources{},   // serverExpungedDataItemSources
-            DataItemTypes{}, // localDataItemTypes
-            ItemGroups{},    // localItemGroups
-            ItemSources{},   // localItemSources
-            StopSynchronizationError{std::monostate{}}, // stopSyncError
-            false,                                      // expectFailure
-            true,  // expectSomeUserOwnSyncChunks
-            false, // expectSomeLinkedNotebooksSyncChunks
-            false, // expectSomeUserOwnNotes
-            false, // expectSomeUserOwnResources
-            false, // expectSomeLinkedNotebookNotes
-            false, // expectSomeLinkedNotebookResources
-            false, // expectSomeUserOwnDataSent
-            false, // expectSomeLinkedNotebookDataSent
-            "Full sync with only saved searches"sv, // name
-        },
-    };
-
-    for (const auto & scenarioData: testScenarioData) {
+    for (const auto & scenarioData: gTestScenarioData) {
         QTest::newRow(scenarioData.name.data()) << scenarioData;
     }
 }

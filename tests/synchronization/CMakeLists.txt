@@ -18,6 +18,7 @@ add_library(${TESTS_LIB_NAME} STATIC
   SyncEventsCollector.h
   TestData.h
   TestScenarioData.h
+  TestScenarios.h
   TestRunner.cpp
   TestRunner.h
   UserStoreServer.cpp
