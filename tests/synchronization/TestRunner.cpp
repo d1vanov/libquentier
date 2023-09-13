@@ -40,6 +40,7 @@
 #include <quentier/synchronization/types/IAuthenticationInfoBuilder.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/IDownloadResourcesStatus.h>
+#include <quentier/synchronization/types/ISendStatus.h>
 #include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
@@ -91,25 +92,43 @@ inline void messageHandler(
 
 [[nodiscard]] bool empty(const ISyncChunksDataCounters & counters) noexcept
 {
-    return counters.totalSavedSearches() != 0 ||
-        counters.totalExpungedSavedSearches() != 0 ||
-        counters.totalTags() != 0 || counters.totalExpungedTags() != 0 ||
-        counters.totalLinkedNotebooks() != 0 ||
-        counters.totalExpungedLinkedNotebooks() != 0 ||
-        counters.totalNotebooks() != 0 ||
-        counters.totalExpungedNotebooks() != 0;
+    return counters.totalSavedSearches() == 0 &&
+        counters.totalExpungedSavedSearches() == 0 &&
+        counters.totalTags() == 0 && counters.totalExpungedTags() == 0 &&
+        counters.totalLinkedNotebooks() == 0 &&
+        counters.totalExpungedLinkedNotebooks() == 0 &&
+        counters.totalNotebooks() == 0 &&
+        counters.totalExpungedNotebooks() == 0;
 }
 
 [[nodiscard]] bool empty(const IDownloadNotesStatus & status) noexcept
 {
-    return status.totalNewNotes() != 0 || status.totalUpdatedNotes() != 0 ||
-        status.totalExpungedNotes() != 0;
+    return status.totalNewNotes() == 0 && status.totalUpdatedNotes() == 0 &&
+        status.totalExpungedNotes() == 0;
 }
 
 [[nodiscard]] bool empty(const IDownloadResourcesStatus & status) noexcept
 {
-    return status.totalNewResources() != 0 ||
-        status.totalUpdatedResources() != 0;
+    return status.totalNewResources() == 0 &&
+        status.totalUpdatedResources() == 0;
+}
+
+[[nodiscard]] bool empty(const ISendStatus & status) noexcept
+{
+    return status.totalAttemptedToSendNotes() == 0 &&
+        status.totalAttemptedToSendNotebooks() == 0 &&
+        status.totalAttemptedToSendSavedSearches() == 0 &&
+        status.totalAttemptedToSendTags() == 0 &&
+        status.totalSuccessfullySentNotes() == 0 &&
+        status.failedToSendNotes().isEmpty() &&
+        status.totalSuccessfullySentNotebooks() == 0 &&
+        status.failedToSendNotebooks().isEmpty() &&
+        status.totalSuccessfullySentSavedSearches() == 0 &&
+        status.failedToSendSavedSearches().isEmpty() &&
+        status.totalSuccessfullySentTags() == 0 &&
+        status.failedToSendTags().isEmpty() &&
+        std::holds_alternative<std::monostate>(
+               status.stopSynchronizationError());
 }
 
 template <class T>
@@ -663,8 +682,9 @@ void TestRunner::runTestScenario()
         testScenarioData.expectSomeUserOwnResources);
 
     const auto userOwnSendStatus = syncResult->userAccountSendStatus();
+
     QVERIFY(
-        static_cast<bool>(userOwnSendStatus) ==
+        (userOwnSendStatus && !empty(*userOwnSendStatus)) ==
         testScenarioData.expectSomeUserOwnDataSent);
 
     const auto linkedNotebookSendStatuses =
