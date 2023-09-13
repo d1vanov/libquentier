@@ -270,16 +270,6 @@ void processSingleDownloadedSyncChunk(
 
     runningResult << syncChunk;
 
-    if (*syncChunk.chunkHighUSN() >= syncChunk.updateCount()) {
-        QNDEBUG(
-            "synchronization::SyncChunksDownloader",
-            "Downloaded all sync chunks");
-        promise->addResult(ISyncChunksDownloader::SyncChunksResult{
-            std::move(runningResult), nullptr});
-        promise->finish();
-        return;
-    }
-
     if (const auto callback = callbackWeak.lock()) {
         if (linkedNotebook) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
@@ -291,6 +281,16 @@ void processSingleDownloadedSyncChunk(
                 *syncChunk.chunkHighUSN(), syncChunk.updateCount(),
                 lastPreviousUsn);
         }
+    }
+
+    if (*syncChunk.chunkHighUSN() >= syncChunk.updateCount()) {
+        QNDEBUG(
+            "synchronization::SyncChunksDownloader",
+            "Downloaded all sync chunks");
+        promise->addResult(ISyncChunksDownloader::SyncChunksResult{
+            std::move(runningResult), nullptr});
+        promise->finish();
+        return;
     }
 
     downloadSyncChunksList(
