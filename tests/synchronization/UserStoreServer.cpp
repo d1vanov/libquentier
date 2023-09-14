@@ -28,7 +28,7 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QtTest/QtTest>
+#include <QtTest>
 
 #include <algorithm>
 
@@ -56,19 +56,50 @@ UserStoreServer::UserStoreServer(
     }
 
     QObject::connect(m_tcpServer, &QTcpServer::newConnection, this, [this] {
-        m_tcpSocket = m_tcpServer->nextPendingConnection();
-        Q_ASSERT(m_tcpSocket);
+        auto * socket = m_tcpServer->nextPendingConnection();
+        Q_ASSERT(socket);
+
+        QUuid requestId = QUuid::createUuid();
+        m_sockets[requestId] = socket;
+
+        QNDEBUG(
+            "synchronization::tests::UserStoreServer",
+            "New connection: socket " << static_cast<const void *>(socket)
+                                      << ", request id " << requestId);
+
+        socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+        socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 
         QObject::connect(
-            m_tcpSocket, &QAbstractSocket::disconnected, m_tcpSocket,
-            &QAbstractSocket::deleteLater);
-        if (!m_tcpSocket->waitForConnected()) {
+            socket, &QAbstractSocket::disconnected, this,
+            [this, socket, requestId] {
+                QNDEBUG(
+                    "synchronization::tests::UserStoreServer",
+                    "Socket " << static_cast<const void *>(socket)
+                              << " corresponding to request id " << requestId
+                              << " disconnected");
+
+                const auto it = m_sockets.find(requestId);
+                if (it != m_sockets.end()) {
+                    m_sockets.erase(it);
+                }
+
+                socket->disconnect();
+                socket->deleteLater();
+            });
+
+        if (!socket->waitForConnected()) {
+            QNWARNING(
+                "synchronization::tests::UserStoreServer",
+                "Failed to establish connection for socket "
+                    << static_cast<const void *>(socket)
+                    << ", request id = " << requestId);
             QFAIL("Failed to establish connection");
+            return;
         }
 
-        QByteArray requestData = utils::readRequestBodyFromSocket(*m_tcpSocket);
-
-        m_server->onRequest(std::move(requestData));
+        QByteArray requestData = utils::readRequestBodyFromSocket(*socket);
+        m_server->onRequest(std::move(requestData), requestId);
     });
 
     connectToQEverCloudServer();
@@ -133,28 +164,30 @@ void UserStoreServer::removeUser(const QString & authenticationToken)
 
 void UserStoreServer::onCheckVersionRequest(
     const QString & clientName, qint16 edamVersionMajor,
-    qint16 edamVersionMinor,
-    [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx)
+    qint16 edamVersionMinor, const qevercloud::IRequestContextPtr & ctx)
 {
     QNDEBUG(
         "synchronization::tests::UserStoreServer",
         "UserStoreServer::onCheckVersionRequest: client name = "
-            << clientName << ", edam version major = "
-            << edamVersionMajor << ", edam version minor = "
-            << edamVersionMinor);
+            << clientName << ", edam version major = " << edamVersionMajor
+            << ", edam version minor = " << edamVersionMinor);
+
+    Q_ASSERT(ctx);
 
     if (edamVersionMajor != m_edamVersionMajor) {
         QNWARNING(
             "synchronization::tests::UserStoreServer",
             "UserStoreServer::onCheckVersionRequest: expected EDAM major "
-                "version " << m_edamVersionMajor);
+            "version "
+                << m_edamVersionMajor);
 
         Q_EMIT checkVersionRequestReady(
             false,
             std::make_exception_ptr(RuntimeError{
                 ErrorString{QString::fromUtf8(
                                 "Wrong EDAM version major, expected %1, got %2")
-                                .arg(m_edamVersionMajor, edamVersionMajor)}}));
+                                .arg(m_edamVersionMajor, edamVersionMajor)}}),
+            ctx->requestId());
         return;
     }
 
@@ -162,38 +195,44 @@ void UserStoreServer::onCheckVersionRequest(
         QNWARNING(
             "synchronization::tests::UserStoreServer",
             "UserStoreServer::onCheckVersionRequest: expected EDAM minor "
-                "version " << m_edamVersionMinor);
+            "version "
+                << m_edamVersionMinor);
 
         Q_EMIT checkVersionRequestReady(
             false,
             std::make_exception_ptr(RuntimeError{
                 ErrorString{QString::fromUtf8(
                                 "Wrong EDAM version minor, expected %1, got %2")
-                                .arg(m_edamVersionMinor, edamVersionMinor)}}));
+                                .arg(m_edamVersionMinor, edamVersionMinor)}}),
+            ctx->requestId());
         return;
     }
 
-    Q_EMIT checkVersionRequestReady(true, nullptr);
+    Q_EMIT checkVersionRequestReady(true, nullptr, ctx->requestId());
 }
 
 void UserStoreServer::onGetUserRequest(
     const qevercloud::IRequestContextPtr & ctx)
 {
+    Q_ASSERT(ctx);
+
     if (auto e = checkAuthentication(ctx)) {
-        Q_EMIT getUserRequestReady(qevercloud::User{}, std::move(e));
+        Q_EMIT getUserRequestReady(
+            qevercloud::User{}, std::move(e), ctx->requestId());
         return;
     }
 
-    Q_ASSERT(ctx);
     const auto it = m_users.constFind(ctx->authenticationToken());
     if (it != m_users.constEnd()) {
         if (std::holds_alternative<qevercloud::User>(it.value())) {
             Q_EMIT getUserRequestReady(
-                std::get<qevercloud::User>(it.value()), nullptr);
+                std::get<qevercloud::User>(it.value()), nullptr,
+                ctx->requestId());
         }
         else {
             Q_EMIT getUserRequestReady(
-                qevercloud::User{}, std::get<std::exception_ptr>(it.value()));
+                qevercloud::User{}, std::get<std::exception_ptr>(it.value()),
+                ctx->requestId());
         }
         return;
     }
@@ -203,13 +242,33 @@ void UserStoreServer::onGetUserRequest(
         std::make_exception_ptr(RuntimeError{ErrorString{
             QString::fromUtf8(
                 "Could not find user corresponding to authentication token %1")
-                .arg(ctx->authenticationToken())}}));
+                .arg(ctx->authenticationToken())}}),
+        ctx->requestId());
 }
 
-void UserStoreServer::onRequestReady(const QByteArray & responseData)
+void UserStoreServer::onRequestReady(
+    const QByteArray & responseData, const QUuid requestId)
 {
-    if (Q_UNLIKELY(!m_tcpSocket)) {
+    QNDEBUG(
+        "synchronization::tests::UserStoreServer",
+        "UserStoreServer::onRequestReady: request id = " << requestId);
+
+    const auto it = m_sockets.find(requestId);
+    if (Q_UNLIKELY(it == m_sockets.end())) {
+        QNWARNING(
+            "synchronization::tests::UserStoreServer",
+            "Cannot find socket for request id " << requestId);
         QFAIL("UserStoreServer: no socket on ready request");
+        return;
+    }
+
+    auto * socket = it.value();
+    if (!socket->isOpen()) {
+        QNWARNING(
+            "synchronization::tests::UserStoreServer",
+            "Cannot respond to request with id " << requestId
+                                                 << ": socket is closed");
+        QFAIL("UserStoreServer: socket is closed on ready request");
         return;
     }
 
@@ -221,7 +280,13 @@ void UserStoreServer::onRequestReady(const QByteArray & responseData)
     buffer.append("Content-Type: application/x-thrift\r\n\r\n");
     buffer.append(responseData);
 
-    if (!utils::writeBufferToSocket(buffer, *m_tcpSocket)) {
+    if (!utils::writeBufferToSocket(buffer, *socket)) {
+        QNWARNING(
+            "synchronization::tests::UserStoreServer",
+            "Cannot respond to request with id "
+                << requestId
+                << ": cannot write response data to socket; last socket error "
+                << "= (" << socket->error() << ") " << socket->errorString());
         QFAIL("Failed to write response to socket");
     }
 }

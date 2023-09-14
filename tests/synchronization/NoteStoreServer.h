@@ -44,6 +44,7 @@
 #include <QNetworkCookie>
 #include <QObject>
 #include <QSet>
+#include <QUuid>
 
 #include <boost/bimap.hpp>
 
@@ -318,45 +319,54 @@ public:
     // private signals
 Q_SIGNALS:
     void createNotebookRequestReady(
-        qevercloud::Notebook notebook, std::exception_ptr e);
+        qevercloud::Notebook notebook, std::exception_ptr e, QUuid requestId);
 
     void updateNotebookRequestReady(
-        qint32 updateSequenceNum, std::exception_ptr e);
+        qint32 updateSequenceNum, std::exception_ptr e, QUuid requestId);
 
-    void createNoteRequestReady(qevercloud::Note note, std::exception_ptr e);
-    void updateNoteRequestReady(qevercloud::Note note, std::exception_ptr e);
-    void createTagRequestReady(qevercloud::Tag, std::exception_ptr e);
-    void updateTagRequestReady(qint32 updateSequenceNum, std::exception_ptr e);
+    void createNoteRequestReady(
+        qevercloud::Note note, std::exception_ptr e, QUuid requestId);
+
+    void updateNoteRequestReady(
+        qevercloud::Note note, std::exception_ptr e, QUuid requestId);
+
+    void createTagRequestReady(
+        qevercloud::Tag, std::exception_ptr e, QUuid requestId);
+
+    void updateTagRequestReady(
+        qint32 updateSequenceNum, std::exception_ptr e, QUuid requestId);
 
     void createSavedSearchRequestReady(
-        qevercloud::SavedSearch search, std::exception_ptr e);
+        qevercloud::SavedSearch search, std::exception_ptr e, QUuid requestId);
 
     void updateSavedSearchRequestReady(
-        qint32 updateSequenceNum, std::exception_ptr e);
+        qint32 updateSequenceNum, std::exception_ptr e, QUuid requestId);
 
     void getSyncStateRequestReady(
-        qevercloud::SyncState syncState, std::exception_ptr e);
+        qevercloud::SyncState syncState, std::exception_ptr e, QUuid requestId);
 
     void getLinkedNotebookSyncStateRequestReady(
-        qevercloud::SyncState syncState, std::exception_ptr e);
+        qevercloud::SyncState syncState, std::exception_ptr e, QUuid requestId);
 
     void getFilteredSyncChunkRequestReady(
-        qevercloud::SyncChunk syncChunk, std::exception_ptr e);
+        qevercloud::SyncChunk syncChunk, std::exception_ptr e, QUuid requestId);
 
     void getLinkedNotebookSyncChunkRequestReady(
-        qevercloud::SyncChunk syncChunk, std::exception_ptr e);
+        qevercloud::SyncChunk syncChunk, std::exception_ptr e, QUuid requestId);
 
     void getNoteWithResultSpecRequestReady(
-        qevercloud::Note note, std::exception_ptr e);
+        qevercloud::Note note, std::exception_ptr e, QUuid requestId);
 
     void getResourceRequestReady(
-        qevercloud::Resource resource, std::exception_ptr e);
+        qevercloud::Resource resource, std::exception_ptr e, QUuid requestId);
 
     void authenticateToSharedNotebookRequestReady(
-        qevercloud::AuthenticationResult result, std::exception_ptr e);
+        qevercloud::AuthenticationResult result, std::exception_ptr e,
+        QUuid requestId);
 
 private Q_SLOTS:
-    void onRequestReady(const QByteArray & responseData);
+    void onRequestReady(
+        const QByteArray & responseData, QUuid requestId);
 
     void onCreateNotebookRequest(
         qevercloud::Notebook notebook,
@@ -463,8 +473,8 @@ private:
     QHash<qevercloud::Guid, QString> m_linkedNotebookAuthTokensByGuid;
 
     QTcpServer * m_tcpServer = nullptr;
-    QTcpSocket * m_tcpSocket = nullptr;
     qevercloud::NoteStoreServer * m_server = nullptr;
+    QHash<QUuid, QTcpSocket*> m_sockets;
 
     note_store::SavedSearches m_savedSearches;
     QSet<qevercloud::Guid> m_expungedSavedSearchGuids;

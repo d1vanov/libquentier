@@ -25,17 +25,14 @@
 #include <QList>
 #include <QNetworkCookie>
 #include <QObject>
+#include <QUuid>
 
 #include <exception>
 #include <optional>
 #include <variant>
 
-QT_BEGIN_NAMESPACE
-
 class QTcpServer;
 class QTcpSocket;
-
-QT_END_NAMESPACE
 
 namespace quentier::synchronization::tests {
 
@@ -70,8 +67,11 @@ public:
 
     // private signals
 Q_SIGNALS:
-    void checkVersionRequestReady(bool value, std::exception_ptr e);
-    void getUserRequestReady(qevercloud::User value, std::exception_ptr e);
+    void checkVersionRequestReady(
+        bool value, std::exception_ptr e, QUuid requestId);
+
+    void getUserRequestReady(
+        qevercloud::User value, std::exception_ptr e, QUuid requestId);
 
 private Q_SLOTS:
     void onCheckVersionRequest(
@@ -79,7 +79,7 @@ private Q_SLOTS:
         qint16 edamVersionMinor, const qevercloud::IRequestContextPtr & ctx);
 
     void onGetUserRequest(const qevercloud::IRequestContextPtr & ctx);
-    void onRequestReady(const QByteArray & responseData);
+    void onRequestReady(const QByteArray & responseData, QUuid requestId);
 
 private:
     void connectToQEverCloudServer();
@@ -92,8 +92,8 @@ private:
     const QList<QNetworkCookie> m_cookies;
 
     QTcpServer * m_tcpServer = nullptr;
-    QTcpSocket * m_tcpSocket = nullptr;
     qevercloud::UserStoreServer * m_server = nullptr;
+    QHash<QUuid, QTcpSocket *> m_sockets;
 
     qint16 m_edamVersionMajor = 0;
     qint16 m_edamVersionMinor = 0;
