@@ -149,6 +149,7 @@ void copyLocalFields(const T & source, T & dest)
     }
     else if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::Note>) {
         dest.setNotebookLocalId(source.notebookLocalId());
+        dest.setTagLocalIds(source.tagLocalIds());
         if (source.resources()) {
             Q_ASSERT(dest.resources());
             Q_ASSERT(dest.resources()->size() == source.resources()->size());
