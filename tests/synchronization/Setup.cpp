@@ -148,7 +148,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 
     return qevercloud::ResourceBuilder{}
         .setGuid(UidGenerator::Generate())
-        .setActive(true)
         .setHeight(32)
         .setWidth(24)
         .setLocalOnly(false)
