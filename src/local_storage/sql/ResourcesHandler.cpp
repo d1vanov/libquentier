@@ -88,7 +88,7 @@ ResourcesHandler::ResourcesHandler(
             "ResourcesHandler ctor: local storage dir is not readable")}};
     }
 
-    if (Q_UNLIKELY(
+    if (Q_UNLIKELY( // NOLINT
             !m_localStorageDir.exists() &&
             !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
     {
