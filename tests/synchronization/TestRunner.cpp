@@ -134,7 +134,11 @@ inline void messageHandler(
 template <class T>
 void copyLocalFields(const T & source, T & dest)
 {
-    dest.setLocalId(source.localId());
+    if constexpr (!std::is_same_v<std::decay_t<T>, qevercloud::LinkedNotebook>)
+    {
+        dest.setLocalId(source.localId());
+    }
+
     dest.setLocallyModified(source.isLocallyModified());
     dest.setLocallyFavorited(source.isLocallyFavorited());
     dest.setLocalOnly(source.isLocalOnly());
@@ -143,17 +147,21 @@ void copyLocalFields(const T & source, T & dest)
     if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::Tag>) {
         dest.setParentTagLocalId(source.parentTagLocalId());
     }
-}
-
-template <>
-void copyLocalFields(
-    const qevercloud::LinkedNotebook & source,
-    qevercloud::LinkedNotebook & dest)
-{
-    dest.setLocallyModified(source.isLocallyModified());
-    dest.setLocallyFavorited(source.isLocallyFavorited());
-    dest.setLocalOnly(source.isLocalOnly());
-    dest.setLocalData(source.localData());
+    else if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::Note>) {
+        dest.setNotebookLocalId(source.notebookLocalId());
+        if (source.resources()) {
+            Q_ASSERT(dest.resources());
+            Q_ASSERT(dest.resources()->size() == source.resources()->size());
+            for (int i = 0; i < source.resources()->size(); ++i) {
+                const auto & sourceResource = (*source.resources())[i];
+                auto & destResource = (*dest.mutableResources())[i];
+                copyLocalFields(sourceResource, destResource);
+            }
+        }
+    }
+    else if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::Resource>) {
+        dest.setNoteLocalId(source.noteLocalId());
+    }
 }
 
 template <class T>
@@ -180,7 +188,7 @@ template <class T>
         copyLocalFields(lhsItem, rhsItemCopy);
 
         if (lhsItem != rhsItemCopy) {
-            diffs << std::make_pair(lhsItem, *it);
+            diffs << std::make_pair(lhsItem, rhsItemCopy);
         }
     }
 
@@ -311,9 +319,43 @@ struct ItemListsChecker
 
     if (!ItemListsChecker<qevercloud::Note>::check(
             [&noteStoreServer] {
-                // TODO: might need to merge modified resources within
-                // NoteStoreServer into their corresponding notes here
-                return noteStoreServer.notes().values();
+                auto notes = noteStoreServer.notes().values();
+
+                // Resource binary data is not stored along with notes in
+                // NoteStoreServer so need to do an additional swipe to fetch
+                // resource binary data and put them to the returned notes
+                for (auto & note: notes) {
+                    if (!note.resources() || note.resources()->isEmpty()) {
+                        continue;
+                    }
+
+                    for (auto & resource: *note.mutableResources()) {
+                        Q_ASSERT(resource.guid());
+                        auto storedResource =
+                            noteStoreServer.findResource(*resource.guid());
+                        Q_ASSERT(storedResource);
+
+                        if (storedResource->data() &&
+                            storedResource->data()->body()) {
+                            resource.mutableData()->setBody(
+                                *storedResource->data()->body());
+                        }
+
+                        if (storedResource->recognition() &&
+                            storedResource->recognition()->body()) {
+                            resource.mutableRecognition()->setBody(
+                                *storedResource->recognition()->body());
+                        }
+
+                        if (storedResource->alternateData() &&
+                            storedResource->alternateData()->body()) {
+                            resource.mutableAlternateData()->setBody(
+                                *storedResource->alternateData()->body());
+                        }
+                    }
+                }
+
+                return notes;
             },
             [&localStorage] {
                 return localStorage.listNotes(
