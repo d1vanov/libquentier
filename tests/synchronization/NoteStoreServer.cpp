@@ -409,9 +409,14 @@ NoteStoreServer::ItemData NoteStoreServer::putTag(qevercloud::Tag tag)
         ? currentLinkedNotebookMaxUsn(*tag.linkedNotebookGuid())
         : std::make_optional(currentUserOwnMaxUsn());
 
-    if (Q_UNLIKELY(!maxUsn)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("Failed to find max USN on attempt to put tag")}};
+    if (tag.linkedNotebookGuid()) {
+        if (!maxUsn) {
+            maxUsn = 0;
+        }
+    }
+    else if (!maxUsn) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Failed to find user own max USN on attempt to put tag")}};
     }
 
     ++(*maxUsn);
@@ -630,9 +635,14 @@ NoteStoreServer::ItemData NoteStoreServer::putNotebook(
         ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
         : std::make_optional(currentUserOwnMaxUsn());
 
-    if (Q_UNLIKELY(!maxUsn)) {
+    if (notebook.linkedNotebookGuid()) {
+        if (!maxUsn) {
+            maxUsn = 0;
+        }
+    }
+    else if (!maxUsn) {
         throw InvalidArgument{ErrorString{QStringLiteral(
-            "Failed to find max USN on attempt to put notebook")}};
+            "Failed to find user own max USN on attempt to put notebook")}};
     }
 
     ++(*maxUsn);
@@ -815,9 +825,14 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
         ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
         : std::make_optional(currentUserOwnMaxUsn());
 
-    if (Q_UNLIKELY(!maxUsn)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("Failed to find max USN on attempt to put note")}};
+    if (notebookIt->linkedNotebookGuid()) {
+        if (!maxUsn) {
+            maxUsn = 0;
+        }
+    }
+    else if (!maxUsn) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "Failed to find user own max USN on attempt to put note")}};
     }
 
     ++(*maxUsn);
@@ -1033,9 +1048,14 @@ NoteStoreServer::ItemData NoteStoreServer::putResource(
         ? currentLinkedNotebookMaxUsn(*notebookIt->linkedNotebookGuid())
         : std::make_optional(currentUserOwnMaxUsn());
 
-    if (Q_UNLIKELY(!maxUsn)) {
+    if (notebookIt->linkedNotebookGuid()) {
+        if (!maxUsn) {
+            maxUsn = 0;
+        }
+    }
+    else if (!maxUsn) {
         throw InvalidArgument{ErrorString{QStringLiteral(
-            "Failed to find max USN on attempt to put resource")}};
+            "Failed to find user own max USN on attempt to put resource")}};
     }
 
     ++(*maxUsn);
@@ -1124,6 +1144,9 @@ NoteStoreServer::ItemData NoteStoreServer::putLinkedNotebook(
             "Detected attempt to put linked notebook without either shard id "
             "or uri")}};
     }
+
+    linkedNotebook.setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1")
+                                       .arg(m_tcpServer->serverPort()));
 
     ItemData result;
 

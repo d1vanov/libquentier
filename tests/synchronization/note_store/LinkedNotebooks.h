@@ -103,12 +103,12 @@ using LinkedNotebooks = boost::multi_index_container<
             boost::multi_index::global_fun<
                 const qevercloud::LinkedNotebook &, QString,
                 &LinkedNotebookDataExtractor::uri>>,
-        boost::multi_index::hashed_unique<
+        boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<LinkedNotebookByUsernameTag>,
             boost::multi_index::global_fun<
                 const qevercloud::LinkedNotebook &, QString,
                 &LinkedNotebookDataExtractor::username>>,
-        boost::multi_index::ordered_unique<
+        boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<LinkedNotebookByUSNTag>,
             boost::multi_index::global_fun<
                 const qevercloud::LinkedNotebook &, qint32,

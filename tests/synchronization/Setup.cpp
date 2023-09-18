@@ -174,6 +174,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
         .setWebApiUrlPrefix(QStringLiteral("Fake web api url prefix"))
         .setUsername(QString::fromUtf8("Username #%1").arg(index))
         .setShareName(QStringLiteral("Share name #%1").arg(index))
+        .setSharedNotebookGlobalId(QStringLiteral("Global id #%1").arg(index))
         .setUri(QString::fromUtf8("Uri #%1").arg(index))
         .build();
 }
