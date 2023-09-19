@@ -694,6 +694,7 @@ void setupNoteStoreServer(
     putSavedSearches(testData.m_modifiedSavedSearches);
     putSavedSearches(testData.m_newSavedSearches);
 
+    QHash<qevercloud::Guid, QString> linkedNotebookAuthTokens;
     const auto putLinkedNotebooks =
         [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks) {
             for (auto & linkedNotebook: linkedNotebooks) {
@@ -704,12 +705,19 @@ void setupNoteStoreServer(
                 if (itemData.guid) {
                     linkedNotebook.setGuid(*itemData.guid);
                 }
+
+                linkedNotebookAuthTokens[*linkedNotebook.guid()] =
+                    QString::fromUtf8("Auth Token #%1")
+                        .arg(*linkedNotebook.guid());
             }
         };
 
     putLinkedNotebooks(testData.m_baseLinkedNotebooks);
     putLinkedNotebooks(testData.m_modifiedLinkedNotebooks);
     putLinkedNotebooks(testData.m_newLinkedNotebooks);
+
+    noteStoreServer.setLinkedNotebookAuthTokensByGuid(
+        std::move(linkedNotebookAuthTokens));
 
     const auto putNotebooks = [&](QList<qevercloud::Notebook> & notebooks) {
         for (auto & notebook: notebooks) {
