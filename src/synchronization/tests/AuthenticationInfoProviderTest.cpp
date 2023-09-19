@@ -52,6 +52,7 @@ namespace quentier::synchronization::tests {
 
 using testing::_;
 using testing::InSequence;
+using testing::Ne;
 using testing::Return;
 using testing::StrictMock;
 
@@ -134,7 +135,7 @@ void checkLinkedNotebookAuthenticationInfoPartPersistence(
 
     ApplicationSettings::GroupCloser groupCloser{appSettings};
 
-    EXPECT_EQ(appSettings.allKeys().size(), 2);
+    EXPECT_GE(appSettings.allKeys().size(), 2);
 
     EXPECT_EQ(
         appSettings
@@ -1397,6 +1398,9 @@ TEST_F(
             .setShardId(m_authenticationInfo->shardId())
             .build();
 
+    setupAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
     InSequence s;
 
     // NOTE: preventing the leak of m_mockNoteStore below and corresponding
@@ -1421,12 +1425,52 @@ TEST_F(
                 return noteStoreWeak.lock();
             });
 
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->shardId());
+        });
+
     EXPECT_CALL(
         *m_mockNoteStore,
         authenticateToSharedNotebookAsync(
-            linkedNotebook.sharedNotebookGlobalId().value(), requestContext))
-        .WillOnce(
-            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+            linkedNotebook.sharedNotebookGlobalId().value(),
+            Ne(requestContext)))
+        .WillOnce([this](
+                      [[maybe_unused]] const QString & shareKeyOrGlobalId,
+                      const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(
+                    ctx->authenticationToken(),
+                    m_authenticationInfo->authToken());
+            }
+
+            return threading::makeReadyFuture<qevercloud::AuthenticationResult>(
                 qevercloud::AuthenticationResultBuilder{}
                     .setAuthenticationToken(m_authenticationInfo->authToken())
                     .setExpiration(
@@ -1438,9 +1482,8 @@ TEST_F(
                                  .setWebApiUrlPrefix(
                                      m_authenticationInfo->webApiUrlPrefix())
                                  .build())
-                    .build())));
-
-    static const QString appName = QCoreApplication::applicationName();
+                    .build());
+        });
 
     EXPECT_CALL(*m_mockKeychainService, writePassword)
         .WillOnce([&](const QString & service, const QString & key, // NOLINT
@@ -1509,6 +1552,9 @@ TEST_F(
             .setShardId(m_authenticationInfo->shardId())
             .build();
 
+    setupAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
     InSequence s;
 
     // NOTE: preventing the leak of m_mockNoteStore below and corresponding
@@ -1533,12 +1579,52 @@ TEST_F(
                 return noteStoreWeak.lock();
             });
 
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->shardId());
+        });
+
     EXPECT_CALL(
         *m_mockNoteStore,
         authenticateToSharedNotebookAsync(
-            linkedNotebook.sharedNotebookGlobalId().value(), requestContext))
-        .WillOnce(
-            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+            linkedNotebook.sharedNotebookGlobalId().value(),
+            Ne(requestContext)))
+        .WillOnce([this](
+                      [[maybe_unused]] const QString & shareKeyOrGlobalId,
+                      const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(
+                    ctx->authenticationToken(),
+                    m_authenticationInfo->authToken());
+            }
+
+            return threading::makeReadyFuture<qevercloud::AuthenticationResult>(
                 qevercloud::AuthenticationResultBuilder{}
                     .setAuthenticationToken(m_authenticationInfo->authToken())
                     .setExpiration(
@@ -1550,9 +1636,8 @@ TEST_F(
                                  .setWebApiUrlPrefix(
                                      m_authenticationInfo->webApiUrlPrefix())
                                  .build())
-                    .build())));
-
-    static const QString appName = QCoreApplication::applicationName();
+                    .build());
+        });
 
     EXPECT_CALL(*m_mockKeychainService, writePassword)
         .WillOnce([&](const QString & service, const QString & key, // NOLINT
@@ -1713,6 +1798,9 @@ TEST_F(
             .setShardId(m_authenticationInfo->shardId())
             .build();
 
+    setupAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
     setupLinkedNotebookAuthenticationInfoPartPersistence(
         m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
 
@@ -1759,12 +1847,50 @@ TEST_F(
                 return noteStoreWeak.lock();
             });
 
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->shardId());
+        });
+
     EXPECT_CALL(
         *m_mockNoteStore,
         authenticateToSharedNotebookAsync(
-            linkedNotebook.sharedNotebookGlobalId().value(), requestContext))
-        .WillOnce(
-            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+            linkedNotebook.sharedNotebookGlobalId().value(),
+            Ne(requestContext)))
+        .WillOnce([this](
+                      [[maybe_unused]] const QString & shareKeyOrGlobalId,
+                      const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(
+                    ctx->authenticationToken(),
+                    m_authenticationInfo->authToken());
+            }
+
+            return threading::makeReadyFuture<qevercloud::AuthenticationResult>(
                 qevercloud::AuthenticationResultBuilder{}
                     .setAuthenticationToken(m_authenticationInfo->authToken())
                     .setExpiration(
@@ -1776,7 +1902,8 @@ TEST_F(
                                  .setWebApiUrlPrefix(
                                      m_authenticationInfo->webApiUrlPrefix())
                                  .build())
-                    .build())));
+                    .build());
+        });
 
     EXPECT_CALL(*m_mockKeychainService, writePassword)
         .WillOnce([&](const QString & service, const QString & key, // NOLINT
@@ -1846,6 +1973,9 @@ TEST_F(
             .setShardId(m_authenticationInfo->shardId())
             .build();
 
+    setupAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
     const auto originalAuthTokenExpirationTime =
         m_authenticationInfo->m_authTokenExpirationTime;
 
@@ -1882,12 +2012,52 @@ TEST_F(
                 return noteStoreWeak.lock();
             });
 
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->shardId());
+        });
+
     EXPECT_CALL(
         *m_mockNoteStore,
         authenticateToSharedNotebookAsync(
-            linkedNotebook.sharedNotebookGlobalId().value(), requestContext))
-        .WillOnce(
-            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+            linkedNotebook.sharedNotebookGlobalId().value(),
+            Ne(requestContext)))
+        .WillOnce([this](
+                      [[maybe_unused]] const QString & shareKeyOrGlobalId,
+                      const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(
+                    ctx->authenticationToken(),
+                    m_authenticationInfo->authToken());
+            }
+
+            return threading::makeReadyFuture<qevercloud::AuthenticationResult>(
                 qevercloud::AuthenticationResultBuilder{}
                     .setAuthenticationToken(m_authenticationInfo->authToken())
                     .setExpiration(
@@ -1899,9 +2069,8 @@ TEST_F(
                                  .setWebApiUrlPrefix(
                                      m_authenticationInfo->webApiUrlPrefix())
                                  .build())
-                    .build())));
-
-    static const QString appName = QCoreApplication::applicationName();
+                    .build());
+        });
 
     EXPECT_CALL(*m_mockKeychainService, writePassword)
         .WillOnce([&](const QString & service, const QString & key, // NOLINT
@@ -2182,6 +2351,9 @@ TEST_P(
             .setShardId(m_authenticationInfo->shardId())
             .build();
 
+    setupAuthenticationInfoPartPersistence(
+        m_authenticationInfo, account, m_host);
+
     setupLinkedNotebookAuthenticationInfoPartPersistence(
         m_authenticationInfo, account, m_host, linkedNotebook.guid().value());
 
@@ -2286,12 +2458,50 @@ TEST_P(
                 return noteStoreWeak.lock();
             });
 
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->authToken());
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, readPassword)
+        .WillOnce([&](const QString & service, const QString & key) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            return threading::makeReadyFuture<QString>(
+                m_authenticationInfo->shardId());
+        });
+
     EXPECT_CALL(
         *m_mockNoteStore,
         authenticateToSharedNotebookAsync(
-            linkedNotebook.sharedNotebookGlobalId().value(), _))
-        .WillOnce(
-            Return(threading::makeReadyFuture<qevercloud::AuthenticationResult>(
+            linkedNotebook.sharedNotebookGlobalId().value(),
+            _))
+        .WillOnce([this](
+                      [[maybe_unused]] const QString & shareKeyOrGlobalId,
+                      const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_TRUE(ctx);
+            if (ctx) {
+                EXPECT_EQ(
+                    ctx->authenticationToken(),
+                    m_authenticationInfo->authToken());
+            }
+
+            return threading::makeReadyFuture<qevercloud::AuthenticationResult>(
                 qevercloud::AuthenticationResultBuilder{}
                     .setAuthenticationToken(m_authenticationInfo->authToken())
                     .setExpiration(
@@ -2303,7 +2513,8 @@ TEST_P(
                                  .setWebApiUrlPrefix(
                                      m_authenticationInfo->webApiUrlPrefix())
                                  .build())
-                    .build())));
+                    .build());
+        });
 
     EXPECT_CALL(*m_mockKeychainService, writePassword)
         .WillOnce([&](const QString & service, const QString & key, // NOLINT

@@ -80,6 +80,11 @@ private:
         Account account, qevercloud::LinkedNotebook linkedNotebook,
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
+    void onAuthenticatedToLinkedNotebook(
+        Account account, qevercloud::LinkedNotebook linkedNotebook,
+        const qevercloud::AuthenticationResult & result,
+        const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
+
     /**
      * @return either nonnull pointer to AuthenticationInfo with data filled
      *         from persistent ApplicationSettings but without authentication

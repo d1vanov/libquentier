@@ -173,8 +173,8 @@ AuthenticationInfoProvider::AuthenticationInfoProvider(
     }
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "AuthenticationInfoProvider ctor: host is empty")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("AuthenticationInfoProvider ctor: host is empty")}};
     }
 }
 
@@ -659,7 +659,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
         return;
     }
 
-    const auto noteStore = m_noteStoreFactory->noteStore(
+    auto noteStore = m_noteStoreFactory->noteStore(
         *noteStoreUrl, linkedNotebookGuid, m_ctx, m_retryPolicy);
 
     if (Q_UNLIKELY(!noteStore)) {
@@ -670,135 +670,165 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
         return;
     }
 
-    auto authFuture = noteStore->authenticateToSharedNotebookAsync(
-        *sharedNotebookGlobalId, m_ctx);
-
     const auto selfWeak = weak_from_this();
 
+    // We need authentication token from main account in order to create
+    // request context with valid authentication token for the call
+    QFuture<IAuthenticationInfoPtr> userOwnAccountAuthInfoFuture =
+        authenticateAccount(account, Mode::Cache);
+
     threading::thenOrFailed(
-        std::move(authFuture), promise,
+        std::move(userOwnAccountAuthInfoFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [this, promise, account = std::move(account),
-             linkedNotebook = std::move(linkedNotebook)](
-                const qevercloud::AuthenticationResult & result) mutable {
-                auto authenticationInfo =
-                    std::make_shared<AuthenticationInfo>();
-                authenticationInfo->m_userId = account.id();
-                authenticationInfo->m_authToken = result.authenticationToken();
-                authenticationInfo->m_authTokenExpirationTime =
-                    result.expiration();
+            [this, selfWeak, promise, account = std::move(account),
+             linkedNotebook = std::move(linkedNotebook),
+             noteStore = std::move(noteStore)](
+                const IAuthenticationInfoPtr & authenticationInfo) mutable {
+                Q_ASSERT(authenticationInfo);
 
-                authenticationInfo->m_authenticationTime = result.currentTime();
+                qevercloud::RequestContextBuilder ctxBuilder;
+                ctxBuilder
+                    .setAuthenticationToken(authenticationInfo->authToken())
+                    .setCookies(authenticationInfo->userStoreCookies());
 
-                authenticationInfo->m_shardId =
-                    linkedNotebook.shardId().value_or(QString{});
-
-                const auto & urls = result.urls();
-                const auto & publicUserInfo = result.publicUserInfo();
-
-                authenticationInfo->m_noteStoreUrl = [&] {
-                    if (urls) {
-                        const auto & noteStoreUrl = urls->noteStoreUrl();
-                        if (noteStoreUrl) {
-                            return *noteStoreUrl;
-                        }
-
-                        QNWARNING(
-                            "synchronization::AuthenticationInfoProvider",
-                            "No noteStoreUrl in "
-                            "qevercloud::AuthenticationResult::urls");
-                    }
-
-                    if (publicUserInfo) {
-                        const auto & noteStoreUrl =
-                            publicUserInfo->noteStoreUrl();
-
-                        if (noteStoreUrl) {
-                            return *noteStoreUrl;
-                        }
-
-                        QNWARNING(
-                            "synchronization::AuthenticationInfoProvider",
-                            "No noteStoreUrl in "
-                            "qevercloud::AuthenticationResult::publicUserInfo");
-                    }
-
-                    return linkedNotebook.noteStoreUrl().value_or(QString{});
-                }();
-
-                authenticationInfo->m_webApiUrlPrefix = [&] {
-                    if (urls) {
-                        const auto & webApiUrlPrefix = urls->webApiUrlPrefix();
-                        if (webApiUrlPrefix) {
-                            return *webApiUrlPrefix;
-                        }
-
-                        QNWARNING(
-                            "synchronization::AuthenticationInfoProvider",
-                            "No webApiUrlPrefix in "
-                            "qevercloud::AuthenticationResult::urls");
-                    }
-
-                    if (publicUserInfo) {
-                        const auto & webApiUrlPrefix =
-                            publicUserInfo->webApiUrlPrefix();
-                        if (webApiUrlPrefix) {
-                            return *webApiUrlPrefix;
-                        }
-
-                        QNWARNING(
-                            "synchronization::AuthenticationInfoProvider",
-                            "No webApiUrlPrefix in "
-                            "qevercloud::AuthenticationResult::publicUserInfo");
-                    }
-
-                    return linkedNotebook.webApiUrlPrefix().value_or(QString{});
-                }();
-
-                {
-                    const QWriteLocker locker{
-                        &m_linkedNotebookAuthenticationInfosRWLock};
-
-                    m_linkedNotebookAuthenticationInfos[*linkedNotebook
-                                                             .guid()] =
-                        AccountAuthenticationInfo{account, authenticationInfo};
+                if (m_ctx) {
+                    ctxBuilder.setConnectionTimeout(m_ctx->connectionTimeout())
+                        .setMaxConnectionTimeout(m_ctx->maxConnectionTimeout())
+                        .setIncreaseConnectionTimeoutExponentially(
+                            m_ctx->increaseConnectionTimeoutExponentially())
+                        .setMaxRetryCount(m_ctx->maxRequestRetryCount());
                 }
 
-                qevercloud::Guid linkedNotebookGuid = *linkedNotebook.guid();
+                auto ctx = ctxBuilder.build();
 
-                auto storeAuthInfoFuture =
-                    storeLinkedNotebookAuthenticationInfo(
-                        authenticationInfo, linkedNotebookGuid,
-                        std::move(account));
+                auto authFuture = noteStore->authenticateToSharedNotebookAsync(
+                    *linkedNotebook.sharedNotebookGlobalId(), ctx);
 
-                auto storeAuthInfoThenFuture = threading::then(
-                    std::move(storeAuthInfoFuture),
-                    [promise, authenticationInfo]() mutable {
-                        promise->addResult(std::move(authenticationInfo));
-                        promise->finish();
-                    });
-
-                threading::onFailed(
-                    std::move(storeAuthInfoThenFuture),
-                    [promise,
-                     authenticationInfo = std::move(authenticationInfo),
-                     linkedNotebookGuid = std::move(linkedNotebookGuid)](
-                        const QException & e) mutable {
-                        QNWARNING(
-                            "synchronization::AuthenticationInfoProvider",
-                            "Failed to store authentication info for "
-                                << "linked notebook with guid "
-                                << linkedNotebookGuid << ": " << e.what());
-
-                        // Even though we failed to save the
-                        // authentication info locally, we still got
-                        // it from Evernote so it should be returned
-                        // to the original caller.
-                        promise->addResult(std::move(authenticationInfo));
-                        promise->finish();
-                    });
+                threading::thenOrFailed(
+                    std::move(authFuture), promise,
+                    threading::TrackedTask{
+                        selfWeak,
+                        [this, promise, account = std::move(account),
+                         linkedNotebook = std::move(linkedNotebook)](
+                            const qevercloud::AuthenticationResult &
+                                result) mutable {
+                            onAuthenticatedToLinkedNotebook(
+                                std::move(account), std::move(linkedNotebook),
+                                result, promise);
+                        }});
             }});
+}
+
+void AuthenticationInfoProvider::onAuthenticatedToLinkedNotebook(
+    Account account, qevercloud::LinkedNotebook linkedNotebook,
+    const qevercloud::AuthenticationResult & result,
+    const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise)
+{
+    auto authenticationInfo = std::make_shared<AuthenticationInfo>();
+    authenticationInfo->m_userId = account.id();
+    authenticationInfo->m_authToken = result.authenticationToken();
+    authenticationInfo->m_authTokenExpirationTime = result.expiration();
+
+    authenticationInfo->m_authenticationTime = result.currentTime();
+
+    authenticationInfo->m_shardId =
+        linkedNotebook.shardId().value_or(QString{});
+
+    const auto & urls = result.urls();
+    const auto & publicUserInfo = result.publicUserInfo();
+
+    authenticationInfo->m_noteStoreUrl = [&] {
+        if (urls) {
+            const auto & noteStoreUrl = urls->noteStoreUrl();
+            if (noteStoreUrl) {
+                return *noteStoreUrl;
+            }
+
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "No noteStoreUrl in qevercloud::AuthenticationResult::urls");
+        }
+
+        if (publicUserInfo) {
+            const auto & noteStoreUrl = publicUserInfo->noteStoreUrl();
+
+            if (noteStoreUrl) {
+                return *noteStoreUrl;
+            }
+
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "No noteStoreUrl in "
+                "qevercloud::AuthenticationResult::publicUserInfo");
+        }
+
+        return linkedNotebook.noteStoreUrl().value_or(QString{});
+    }();
+
+    authenticationInfo->m_webApiUrlPrefix = [&] {
+        if (urls) {
+            const auto & webApiUrlPrefix = urls->webApiUrlPrefix();
+            if (webApiUrlPrefix) {
+                return *webApiUrlPrefix;
+            }
+
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "No webApiUrlPrefix in qevercloud::AuthenticationResult::urls");
+        }
+
+        if (publicUserInfo) {
+            const auto & webApiUrlPrefix = publicUserInfo->webApiUrlPrefix();
+            if (webApiUrlPrefix) {
+                return *webApiUrlPrefix;
+            }
+
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "No webApiUrlPrefix in "
+                "qevercloud::AuthenticationResult::publicUserInfo");
+        }
+
+        return linkedNotebook.webApiUrlPrefix().value_or(QString{});
+    }();
+
+    {
+        const QWriteLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
+
+        m_linkedNotebookAuthenticationInfos[*linkedNotebook.guid()] =
+            AccountAuthenticationInfo{account, authenticationInfo};
+    }
+
+    qevercloud::Guid linkedNotebookGuid = *linkedNotebook.guid();
+
+    auto storeAuthInfoFuture = storeLinkedNotebookAuthenticationInfo(
+        authenticationInfo, linkedNotebookGuid, std::move(account));
+
+    auto storeAuthInfoThenFuture = threading::then(
+        std::move(storeAuthInfoFuture),
+        [promise, authenticationInfo]() mutable {
+            promise->addResult(std::move(authenticationInfo));
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(storeAuthInfoThenFuture),
+        [promise, authenticationInfo = std::move(authenticationInfo),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) mutable {
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "Failed to store authentication info for linked notebook with "
+                    << "guid " << linkedNotebookGuid << ": " << e.what());
+
+            // Even though we failed to save the
+            // authentication info locally, we still got
+            // it from Evernote so it should be returned
+            // to the original caller.
+            promise->addResult(std::move(authenticationInfo));
+            promise->finish();
+        });
 }
 
 std::shared_ptr<AuthenticationInfo>
@@ -1023,9 +1053,8 @@ QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
                     "synchronization::AuthenticationInfoProvider",
                     "User for id " << userId
                                    << " has no name or username: " << user);
-                promise->setException(
-                    RuntimeError{ErrorString{QStringLiteral(
-                        "Authenticated user has no name or username")}});
+                promise->setException(RuntimeError{ErrorString{QStringLiteral(
+                    "Authenticated user has no name or username")}});
                 promise->finish();
                 return;
             }
@@ -1333,8 +1362,8 @@ void AuthenticationInfoProvider::clearUserCacheImpl(
         [userId = authenticationInfo->userId()](const QException & e) {
             QNWARNING(
                 "AuthenticationInfoProvider",
-                "Failed to delete authentication token for user id " << userId
-                    << ": " << e.what());
+                "Failed to delete authentication token for user id "
+                    << userId << ": " << e.what());
         });
 
     auto deleteShardIdFuture = m_keychainService->deletePassword(
@@ -1346,8 +1375,8 @@ void AuthenticationInfoProvider::clearUserCacheImpl(
         [userId = authenticationInfo->userId()](const QException & e) {
             QNWARNING(
                 "AuthenticationInfoProvider",
-                "Failed to delete shard id for user id " << userId
-                    << ": " << e.what());
+                "Failed to delete shard id for user id " << userId << ": "
+                                                         << e.what());
         });
 
     const Account & account = accountAuthenticationInfo.account;
