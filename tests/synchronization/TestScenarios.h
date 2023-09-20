@@ -136,7 +136,6 @@ static const std::array gTestScenarioData{
         false, // expectSomeLinkedNotebookDataSent
         "Full sync with user own saved searches, notebooks, tags and notes"sv, // name
     },
-    /*
     TestScenarioData{
         DataItemTypes{} | DataItemType::Notebook,    // serverDataItemTypes
         ItemGroups{} | ItemGroup::Base,              // serverItemGroups
@@ -158,7 +157,6 @@ static const std::array gTestScenarioData{
         false, // expectSomeLinkedNotebookDataSent
         "Full sync with linked notebooks' notebooks"sv, // name
     },
-    */
 };
 
 } // namespace quentier::synchronization::tests
