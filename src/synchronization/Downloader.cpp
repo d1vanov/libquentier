@@ -1273,6 +1273,9 @@ void Downloader::processSyncChunks(
     if (!downloadContext->syncChunksDataCounters) {
         downloadContext->syncChunksDataCounters =
             std::make_shared<SyncChunksDataCounters>();
+        initializeTotalsInSyncChunksDataCounters(
+            downloadContext->syncChunks,
+            *downloadContext->syncChunksDataCounters);
     }
 
     Callbacks callbacks;
@@ -1331,6 +1334,79 @@ void Downloader::processSyncChunks(
              callbacks = std::move(callbacks), syncMode]() mutable {
                 downloadNotes(std::move(downloadContext), syncMode);
             }});
+}
+
+void Downloader::initializeTotalsInSyncChunksDataCounters(
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    SyncChunksDataCounters & syncChunksDataCounters) const
+{
+    int totalSavedSearches = 0;
+    int totalExpungedSavedSearches = 0;
+
+    int totalTags = 0;
+    int totalExpungedTags = 0;
+
+    int totalLinkedNotebooks = 0;
+    int totalExpungedLinkedNotebooks = 0;
+
+    int totalNotebooks = 0;
+    int totalExpungedNotebooks = 0;
+
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        if (syncChunk.searches()) {
+            totalSavedSearches += syncChunk.searches()->size();
+        }
+
+        if (syncChunk.expungedSearches()) {
+            totalExpungedSavedSearches += syncChunk.expungedSearches()->size();
+        }
+
+        if (syncChunk.tags()) {
+            totalTags += syncChunk.tags()->size();
+        }
+
+        if (syncChunk.expungedTags()) {
+            totalExpungedTags += syncChunk.expungedTags()->size();
+        }
+
+        if (syncChunk.linkedNotebooks()) {
+            totalLinkedNotebooks += syncChunk.linkedNotebooks()->size();
+        }
+
+        if (syncChunk.expungedLinkedNotebooks()) {
+            totalExpungedLinkedNotebooks +=
+                syncChunk.expungedLinkedNotebooks()->size();
+        }
+
+        if (syncChunk.notebooks()) {
+            totalNotebooks += syncChunk.notebooks()->size();
+        }
+
+        if (syncChunk.expungedNotebooks()) {
+            totalExpungedNotebooks += syncChunk.expungedNotebooks()->size();
+        }
+    }
+
+    const auto toCounter = [](const int value) {
+        return static_cast<quint64>(std::max(value, 0));
+    };
+
+    syncChunksDataCounters.m_totalSavedSearches = toCounter(totalSavedSearches);
+    syncChunksDataCounters.m_totalExpungedSavedSearches =
+        toCounter(totalExpungedSavedSearches);
+
+    syncChunksDataCounters.m_totalTags = toCounter(totalTags);
+    syncChunksDataCounters.m_totalExpungedTags = toCounter(totalExpungedTags);
+
+    syncChunksDataCounters.m_totalLinkedNotebooks =
+        toCounter(totalLinkedNotebooks);
+
+    syncChunksDataCounters.m_totalExpungedLinkedNotebooks =
+        toCounter(totalExpungedLinkedNotebooks);
+
+    syncChunksDataCounters.m_totalNotebooks = toCounter(totalNotebooks);
+    syncChunksDataCounters.m_totalExpungedNotebooks =
+        toCounter(totalExpungedNotebooks);
 }
 
 void Downloader::updateSyncState(const DownloadContext & downloadContext)

@@ -667,13 +667,8 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
             continue;
         }
 
-        // NOTE: currently different kinds of items are processed sequentially
-        // which means that sync chunks data counters might have zeros for
-        // e.g. notebooks and tags while saved searches are processed. So here
-        // if some total counter was zero but became non-zero, consider it ok.
         if (currentCounters->totalSavedSearches() !=
-                lastSyncChunksDataCounters->totalSavedSearches() &&
-            lastSyncChunksDataCounters->totalSavedSearches() != 0)
+            lastSyncChunksDataCounters->totalSavedSearches())
         {
             errorMessage =
                 "The number of total saved searches is different in consequent "
@@ -682,8 +677,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalExpungedSavedSearches() !=
-                lastSyncChunksDataCounters->totalExpungedSavedSearches() &&
-            lastSyncChunksDataCounters->totalExpungedSavedSearches() != 0)
+            lastSyncChunksDataCounters->totalExpungedSavedSearches())
         {
             errorMessage =
                 "The number of total expunged saved searches is different in "
@@ -692,9 +686,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalTags() !=
-                lastSyncChunksDataCounters->totalTags() &&
-            lastSyncChunksDataCounters->totalTags() != 0)
-        {
+            lastSyncChunksDataCounters->totalTags()) {
             errorMessage =
                 "The number of total tags is different in consequent sync "
                 "chunks data counters";
@@ -702,8 +694,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalExpungedTags() !=
-                lastSyncChunksDataCounters->totalExpungedTags() &&
-            lastSyncChunksDataCounters->totalExpungedTags() != 0)
+            lastSyncChunksDataCounters->totalExpungedTags())
         {
             errorMessage =
                 "The number of total expunged tags is different in consequent "
@@ -712,8 +703,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalNotebooks() !=
-                lastSyncChunksDataCounters->totalNotebooks() &&
-            lastSyncChunksDataCounters->totalNotebooks() != 0)
+            lastSyncChunksDataCounters->totalNotebooks())
         {
             errorMessage =
                 "The number of total notebooks is different in consequent sync "
@@ -722,8 +712,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalExpungedNotebooks() !=
-                lastSyncChunksDataCounters->totalExpungedNotebooks() &&
-            lastSyncChunksDataCounters->totalExpungedNotebooks() != 0)
+            lastSyncChunksDataCounters->totalExpungedNotebooks())
         {
             errorMessage =
                 "The number of total expunged notebooks is different in "
@@ -732,8 +721,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalLinkedNotebooks() !=
-                lastSyncChunksDataCounters->totalLinkedNotebooks() &&
-            lastSyncChunksDataCounters->totalLinkedNotebooks() != 0)
+            lastSyncChunksDataCounters->totalLinkedNotebooks())
         {
             errorMessage =
                 "The number of total linked notebooks is different in "
@@ -742,8 +730,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalExpungedLinkedNotebooks() !=
-                lastSyncChunksDataCounters->totalExpungedLinkedNotebooks() &&
-            lastSyncChunksDataCounters->totalExpungedLinkedNotebooks() != 0)
+            lastSyncChunksDataCounters->totalExpungedLinkedNotebooks())
         {
             errorMessage =
                 "The number of total expunged linked notebooks is different in "

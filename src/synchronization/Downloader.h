@@ -139,6 +139,10 @@ private:
         DownloadContextPtr downloadContext, SynchronizationMode syncMode,
         CheckForFirstSync checkForFirstSync = CheckForFirstSync::Yes);
 
+    void initializeTotalsInSyncChunksDataCounters(
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        SyncChunksDataCounters & syncChunksDataCounters) const;
+
     static void updateSyncState(const DownloadContext & downloadContext);
 
     void downloadNotes(
