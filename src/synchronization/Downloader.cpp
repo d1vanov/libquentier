@@ -1200,7 +1200,9 @@ void Downloader::startLinkedNotebookDataDownload(
         std::move(syncChunksFuture), std::move(promise),
         threading::TrackedTask{
             weak_from_this(),
-            [this, syncMode, downloadContext = std::move(downloadContext)](
+            [this, syncMode, downloadContext = std::move(downloadContext),
+             syncChunksProviderCallback =
+                 std::move(syncChunksProviderCallback)](
                 QList<qevercloud::SyncChunk> syncChunks) mutable {
                 if (const auto callback = downloadContext->callbackWeak.lock())
                 {
