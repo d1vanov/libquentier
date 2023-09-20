@@ -130,10 +130,13 @@ private:
         DownloadContextPtr downloadContext, SynchronizationMode syncMode,
         QList<qevercloud::LinkedNotebook> linkedNotebooks);
 
-    [[nodiscard]] QFuture<Result> startLinkedNotebookDataDownload(
+    [[nodiscard]] QFuture<Result> fetchAuthInfoAndStartLinkedNotebookDataDownload(
         const DownloadContextPtr & downloadContext,
         SynchronizationMode syncMode,
         qevercloud::LinkedNotebook linkedNotebook);
+
+    void startLinkedNotebookDataDownload(
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void processSyncChunks(
         DownloadContextPtr downloadContext, SynchronizationMode syncMode,
