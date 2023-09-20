@@ -2490,12 +2490,23 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
         return;
     }
 
+    if (!linkedNotebook.guid()) {
+        Q_EMIT getLinkedNotebookSyncChunkRequestReady(
+            qevercloud::SyncChunk{},
+            std::make_exception_ptr(
+                qevercloud::EDAMNotFoundExceptionBuilder{}
+                    .setIdentifier(QStringLiteral("LinkedNotebook.guid"))
+                    .build()),
+            ctx->requestId());
+        return;
+    }
+
     if (!linkedNotebook.username()) {
         Q_EMIT getLinkedNotebookSyncChunkRequestReady(
             qevercloud::SyncChunk{},
             std::make_exception_ptr(
                 qevercloud::EDAMNotFoundExceptionBuilder{}
-                    .setIdentifier(QStringLiteral("LinkedNotebook"))
+                    .setIdentifier(QStringLiteral("LinkedNotebook.username"))
                     .build()),
             ctx->requestId());
         return;
@@ -2533,7 +2544,8 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
     }
 
     auto result = getSyncChunkImpl(
-        afterUSN, maxEntries, (afterUSN == 0), std::nullopt, filter, ctx);
+        afterUSN, maxEntries, (afterUSN == 0), *linkedNotebook.guid(), filter,
+        ctx);
 
     Q_EMIT getLinkedNotebookSyncChunkRequestReady(
         std::move(result.first), std::move(result.second), ctx->requestId());
@@ -3743,14 +3755,6 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                 "Unexpected next item type: " << nextItemType);
             break;
         }
-    }
-
-    if (!syncChunk.chunkHighUSN()) {
-        syncChunk.setChunkHighUSN(syncChunk.updateCount());
-        QNDEBUG(
-            "tests::synchronization",
-            "Sync chunk's high USN was still not set, set it to the update "
-                << "count: " << syncChunk.updateCount());
     }
 
     if (fullSyncOnly) {
