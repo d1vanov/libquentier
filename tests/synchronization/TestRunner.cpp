@@ -578,6 +578,10 @@ void TestRunner::runTestScenario()
         caughtException = true;
     }
 
+    // process events once more just to be sure that they are all delivered
+    // to SyncEventsCollector
+    QCoreApplication::processEvents();
+
     {
         const char * errorMessage = nullptr;
         QVERIFY2(
