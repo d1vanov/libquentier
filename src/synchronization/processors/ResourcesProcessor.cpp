@@ -514,7 +514,7 @@ void ResourcesProcessor::downloadFullResourceData(
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
 
-    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNote(
+    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNoteLocalId(
         resource.noteLocalId(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();

@@ -427,7 +427,7 @@ void Sender::sendNote(
                 }
 
                 auto noteStoreFuture =
-                    m_noteStoreProvider->noteStoreForNotebook(
+                    m_noteStoreProvider->noteStoreForNotebookLocalId(
                         note.notebookLocalId(), m_ctx, m_retryPolicy);
 
                 threading::thenOrFailed(

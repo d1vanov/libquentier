@@ -1976,13 +1976,13 @@ void setupNoteStoreProviderMock(
     if (!testData.m_newUserOwnNotes.isEmpty() ||
         !testData.m_updatedUserOwnNotes.isEmpty())
     {
-        EXPECT_CALL(*mockNoteStoreProvider, noteStoreForNotebook)
+        EXPECT_CALL(*mockNoteStoreProvider, noteStoreForNotebookLocalId)
             .WillRepeatedly(
                 Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                     mockUserOwnNoteStore)));
     }
 
-    EXPECT_CALL(*mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly([&](const QString & notebookLocalId,
                             [[maybe_unused]] const qevercloud::
                                 IRequestContextPtr & ctx,
@@ -2469,7 +2469,7 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
@@ -2565,7 +2565,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
@@ -2688,7 +2688,7 @@ TEST_F(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
@@ -2814,7 +2814,7 @@ TEST_F(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));

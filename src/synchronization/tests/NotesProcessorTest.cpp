@@ -480,7 +480,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -663,7 +663,7 @@ TEST_P(
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -884,7 +884,7 @@ TEST_P(
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1096,7 +1096,7 @@ TEST_P(
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1321,7 +1321,7 @@ TEST_P(
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1555,7 +1555,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
             return findNoteByGuidPromises.back()->future();
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1845,7 +1845,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
             return findNoteByGuidPromises.back()->future();
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -2478,7 +2478,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -2717,7 +2717,7 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -2913,7 +2913,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -3106,7 +3106,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -3297,7 +3297,7 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -3515,7 +3515,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -3718,7 +3718,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
                 std::nullopt);
         });
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebook)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNotebookLocalId)
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));

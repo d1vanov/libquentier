@@ -51,11 +51,12 @@ public:
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         INoteStoreFactoryPtr noteStoreFactory, Account account);
 
-    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNotebook(
-        QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr>
+        noteStoreForNotebookLocalId(
+            QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
+            qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
-    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNote(
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNoteLocalId(
         QString noteLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
