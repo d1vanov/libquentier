@@ -301,6 +301,10 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
                     alreadyProcessedNotesInfo.find(*it->guid());
 
                 if (processedNoteIt != alreadyProcessedNotesInfo.end()) {
+                    QNDEBUG(
+                        "synchronization::DurableNotesProcessor",
+                        "Already processed note with guid " << *it->guid()
+                            << ", erasing it from the sync chunk");
                     it = notes.erase(it);
                     continue;
                 }

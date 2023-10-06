@@ -24,12 +24,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QPromise>
-#else
-#include <quentier/threading/Qt5Promise.h>
-#endif
+#include <quentier/threading/TrackedTask.h>
 
 namespace quentier::synchronization {
 
@@ -84,6 +79,10 @@ void LinkedNotebookFinder::init()
             }
 
             removeFutureByNotebookLocalId(notebook.localId());
+
+            if (notebook.guid()) {
+                removeFutureByNotebookGuid(*notebook.guid());
+            }
         });
 
     m_localStorageConnections << QObject::connect(
@@ -97,6 +96,21 @@ void LinkedNotebookFinder::init()
             }
 
             removeFutureByNotebookLocalId(notebookLocalId);
+
+            std::optional<qevercloud::Guid> notebookGuid;
+            {
+                const QMutexLocker locker{&m_notebookGuidsByLocalIdsMutex};
+                const auto it =
+                    m_notebookGuidsByLocalIds.constFind(notebookLocalId);
+                if (it != m_notebookGuidsByLocalIds.constEnd()) {
+                    notebookGuid = it.value();
+                    m_notebookGuidsByLocalIds.erase(it);
+                }
+            }
+
+            if (notebookGuid) {
+                removeFutureByNotebookGuid(*notebookGuid);
+            }
         });
 
     m_localStorageConnections << QObject::connect(
@@ -157,6 +171,23 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 }
 
 QFuture<std::optional<qevercloud::LinkedNotebook>>
+    LinkedNotebookFinder::findLinkedNotebookByNotebookGuid(
+        const qevercloud::Guid & notebookGuid)
+{
+    const QMutexLocker locker{&m_linkedNotebooksByNotebookGuidMutex};
+    auto it = m_linkedNotebooksByNotebookGuid.find(notebookGuid);
+    if (it != m_linkedNotebooksByNotebookGuid.end() &&
+        isLinkedNotebookFutureValid(it.value()))
+    {
+        return it.value();
+    }
+
+    it = m_linkedNotebooksByNotebookGuid.insert(
+        notebookGuid, findLinkedNotebookByNotebookGuidImpl(notebookGuid));
+    return it.value();
+}
+
+QFuture<std::optional<qevercloud::LinkedNotebook>>
     LinkedNotebookFinder::findLinkedNotebookByGuid(
         const qevercloud::Guid & guid)
 {
@@ -190,88 +221,129 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 
     threading::thenOrFailed(
         std::move(notebookFuture), promise,
-        [selfWeak, this, promise, notebookLocalId](
-            const std::optional<qevercloud::Notebook> & notebook) {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
-
-            if (Q_UNLIKELY(!notebook)) {
-                QNDEBUG(
-                    "synchronization::LinkedNotebookFinder",
-                    "Could not find notebook by local id in the local storage: "
-                        << notebookLocalId);
-                promise->addResult(std::nullopt);
-                promise->finish();
-                return;
-            }
-
-            if (!notebook->linkedNotebookGuid()) {
-                promise->addResult(std::nullopt);
-                promise->finish();
-                return;
-            }
-
-            auto linkedNotebookGuid = *notebook->linkedNotebookGuid();
-
-            QFuture<std::optional<qevercloud::LinkedNotebook>>
-                linkedNotebookFuture = [&] {
-                    const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
-
-                    auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
-                    if (it != m_linkedNotebooksByGuid.end() &&
-                        isLinkedNotebookFutureValid(it.value()))
-                    {
-                        return it.value();
-                    }
-
-                    it = m_linkedNotebooksByGuid.insert(
-                        linkedNotebookGuid,
-                        m_localStorage->findLinkedNotebookByGuid(
-                            linkedNotebookGuid));
-                    return it.value();
-                }();
-
-            const auto selfWeak = weak_from_this();
-
-            threading::thenOrFailed(
-                std::move(linkedNotebookFuture), promise,
-                [selfWeak, this, promise,
-                 linkedNotebookGuid = std::move(linkedNotebookGuid)](
-                    std::optional<qevercloud::LinkedNotebook> linkedNotebook) {
-                    const auto self = selfWeak.lock();
-                    if (!self) {
-                        return;
-                    }
-
-                    if (Q_UNLIKELY(!linkedNotebook)) {
-                        QNDEBUG(
-                            "synchronization::LinkedNotebookFinder",
-                            "Could not find linked notebook by guid in the "
-                                << "local storage: linked notebook guid = "
-                                << linkedNotebookGuid);
-                        promise->addResult(std::nullopt);
-                        promise->finish();
-                        return;
-                    }
-
-                    {
-                        const QMutexLocker locker{
-                            &m_linkedNotebooksByGuidMutex};
-
-                        m_linkedNotebooksByGuid[linkedNotebookGuid] =
-                            threading::makeReadyFuture<
-                                std::optional<qevercloud::LinkedNotebook>>(
-                                linkedNotebook);
-                    }
-
-                    promise->addResult(std::move(linkedNotebook));
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, notebookLocalId](
+                const std::optional<qevercloud::Notebook> & notebook) {
+                if (Q_UNLIKELY(!notebook)) {
+                    QNDEBUG(
+                        "synchronization::LinkedNotebookFinder",
+                        "Could not find notebook by local id in the local "
+                        "storage: "
+                            << notebookLocalId);
+                    promise->addResult(std::nullopt);
                     promise->finish();
-                });
-        });
+                    return;
+                }
+
+                onNotebookFound(*notebook, promise);
+            }});
 
     return future;
+}
+
+QFuture<std::optional<qevercloud::LinkedNotebook>>
+    LinkedNotebookFinder::findLinkedNotebookByNotebookGuidImpl(
+        const qevercloud::Guid & notebookGuid)
+{
+    auto promise =
+        std::make_shared<QPromise<std::optional<qevercloud::LinkedNotebook>>>();
+
+    auto future = promise->future();
+    promise->start();
+
+    auto notebookFuture = m_localStorage->findNotebookByGuid(notebookGuid);
+
+    const auto selfWeak = weak_from_this();
+
+    threading::thenOrFailed(
+        std::move(notebookFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, notebookGuid](
+                const std::optional<qevercloud::Notebook> & notebook) {
+                if (Q_UNLIKELY(!notebook)) {
+                    QNDEBUG(
+                        "synchronization::LinkedNotebookFinder",
+                        "Could not find notebook by guid in the local storage: "
+                            << notebookGuid);
+                    promise->addResult(std::nullopt);
+                    promise->finish();
+                    return;
+                }
+
+                onNotebookFound(*notebook, promise);
+            }});
+
+    return future;
+}
+
+void LinkedNotebookFinder::onNotebookFound(
+    const qevercloud::Notebook & notebook,
+    const std::shared_ptr<QPromise<std::optional<qevercloud::LinkedNotebook>>> &
+        promise)
+{
+    {
+        const QMutexLocker locker{&m_notebookGuidsByLocalIdsMutex};
+        m_notebookGuidsByLocalIds[notebook.localId()] = notebook.guid();
+    }
+
+    if (!notebook.linkedNotebookGuid()) {
+        promise->addResult(std::nullopt);
+        promise->finish();
+        return;
+    }
+
+    auto linkedNotebookGuid = *notebook.linkedNotebookGuid();
+
+    QFuture<std::optional<qevercloud::LinkedNotebook>> linkedNotebookFuture =
+        [&] {
+            const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
+
+            auto it = m_linkedNotebooksByGuid.find(linkedNotebookGuid);
+            if (it != m_linkedNotebooksByGuid.end() &&
+                isLinkedNotebookFutureValid(it.value()))
+            {
+                return it.value();
+            }
+
+            it = m_linkedNotebooksByGuid.insert(
+                linkedNotebookGuid,
+                m_localStorage->findLinkedNotebookByGuid(linkedNotebookGuid));
+            return it.value();
+        }();
+
+    const auto selfWeak = weak_from_this();
+
+    threading::thenOrFailed(
+        std::move(linkedNotebookFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, linkedNotebookGuid = std::move(linkedNotebookGuid)](
+                std::optional<qevercloud::LinkedNotebook> linkedNotebook) {
+                if (Q_UNLIKELY(!linkedNotebook)) {
+                    QNDEBUG(
+                        "synchronization::LinkedNotebookFinder",
+                        "Could not find linked notebook by guid in the "
+                            << "local storage: linked notebook guid = "
+                            << linkedNotebookGuid);
+                    promise->addResult(std::nullopt);
+                    promise->finish();
+                    return;
+                }
+
+                {
+                    const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
+
+                    m_linkedNotebooksByGuid[linkedNotebookGuid] =
+                        threading::makeReadyFuture<
+                            std::optional<qevercloud::LinkedNotebook>>(
+                            linkedNotebook);
+                }
+
+                promise->addResult(std::move(linkedNotebook));
+                promise->finish();
+            }});
 }
 
 void LinkedNotebookFinder::removeFutureByNotebookLocalId(
@@ -282,6 +354,16 @@ void LinkedNotebookFinder::removeFutureByNotebookLocalId(
         m_linkedNotebooksByNotebookLocalId.constFind(notebookLocalId);
     if (it != m_linkedNotebooksByNotebookLocalId.constEnd()) {
         m_linkedNotebooksByNotebookLocalId.erase(it);
+    }
+}
+
+void LinkedNotebookFinder::removeFutureByNotebookGuid(
+    const qevercloud::Guid & notebookGuid)
+{
+    const QMutexLocker locker{&m_linkedNotebooksByNotebookGuidMutex};
+    const auto it = m_linkedNotebooksByNotebookGuid.constFind(notebookGuid);
+    if (it != m_linkedNotebooksByNotebookGuid.constEnd()) {
+        m_linkedNotebooksByNotebookGuid.erase(it);
     }
 }
 
@@ -296,38 +378,99 @@ void LinkedNotebookFinder::removeFuturesByLinkedNotebookGuid(
         }
     }
 
-    const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
-    for (auto it = m_linkedNotebooksByNotebookLocalId.begin();
-         it != m_linkedNotebooksByNotebookLocalId.end();)
+    QStringList removedNotebookLocalIds;
     {
-        if (!it.value().isFinished()) {
+        const QMutexLocker locker{&m_linkedNotebooksByNotebookLocalIdMutex};
+        for (auto it = m_linkedNotebooksByNotebookLocalId.begin();
+             it != m_linkedNotebooksByNotebookLocalId.end();)
+        {
+            if (!it.value().isFinished()) {
+                ++it;
+                continue;
+            }
+
+            if (Q_UNLIKELY(it.value().resultCount() != 1)) {
+                ++it;
+                continue;
+            }
+
+            std::optional<qevercloud::LinkedNotebook> linkedNotebook;
+            try {
+                linkedNotebook = it.value().result();
+            }
+            catch (...) {
+            }
+
+            if (!linkedNotebook) {
+                ++it;
+                continue;
+            }
+
+            if (linkedNotebook->guid() == linkedNotebookGuid) {
+                removedNotebookLocalIds << it.key();
+                it = m_linkedNotebooksByNotebookLocalId.erase(it);
+                continue;
+            }
+
             ++it;
-            continue;
         }
+    }
 
-        if (Q_UNLIKELY(it.value().resultCount() != 1)) {
+    QList<qevercloud::Guid> removedNotebookGuids;
+    if (!removedNotebookLocalIds.isEmpty()) {
+        const QMutexLocker locker{&m_notebookGuidsByLocalIdsMutex};
+        for (const auto & notebookLocalId: qAsConst(removedNotebookLocalIds)) {
+            const auto it =
+                m_notebookGuidsByLocalIds.constFind(notebookLocalId);
+            if (it != m_notebookGuidsByLocalIds.constEnd()) {
+                if (it.value()) {
+                    removedNotebookGuids << *it.value();
+                }
+
+                m_notebookGuidsByLocalIds.erase(it);
+            }
+        }
+    }
+
+    {
+        const QMutexLocker locker{&m_linkedNotebooksByNotebookGuidMutex};
+        for (auto it = m_linkedNotebooksByNotebookGuid.begin();
+             it != m_linkedNotebooksByNotebookGuid.end();)
+        {
+            if (removedNotebookGuids.contains(it.key())) {
+                it = m_linkedNotebooksByNotebookGuid.erase(it);
+                continue;
+            }
+
+            if (!it.value().isFinished()) {
+                ++it;
+                continue;
+            }
+
+            if (Q_UNLIKELY(it.value().resultCount() != 1)) {
+                ++it;
+                continue;
+            }
+
+            std::optional<qevercloud::LinkedNotebook> linkedNotebook;
+            try {
+                linkedNotebook = it.value().result();
+            }
+            catch (...) {
+            }
+
+            if (!linkedNotebook) {
+                ++it;
+                continue;
+            }
+
+            if (linkedNotebook->guid() == linkedNotebookGuid) {
+                it = m_linkedNotebooksByNotebookGuid.erase(it);
+                continue;
+            }
+
             ++it;
-            continue;
         }
-
-        std::optional<qevercloud::LinkedNotebook> linkedNotebook;
-        try {
-            linkedNotebook = it.value().result();
-        }
-        catch (...) {
-        }
-
-        if (!linkedNotebook) {
-            ++it;
-            continue;
-        }
-
-        if (linkedNotebook->guid() == linkedNotebookGuid) {
-            it = m_linkedNotebooksByNotebookLocalId.erase(it);
-            continue;
-        }
-
-        ++it;
     }
 }
 

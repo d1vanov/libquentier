@@ -25,6 +25,14 @@
 #include <QMetaObject>
 #include <QMutex>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <qevercloud/types/Fwd.h>
+
 #include <memory>
 
 namespace quentier::synchronization {
@@ -51,6 +59,9 @@ public: // ILinkedNotebookFinder
             const QString & notebookLocalId) override;
 
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByNotebookGuid(const QString & notebookGuid) override;
+
+    [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByGuid(
             const qevercloud::Guid & guid) override;
 
@@ -59,7 +70,16 @@ private:
         findLinkedNotebookByNotebookLocalIdImpl(
             const QString & notebookLocalId);
 
+    [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByNotebookGuidImpl(
+            const qevercloud::Guid & notebookGuid);
+
+    void onNotebookFound(
+        const qevercloud::Notebook & notebook,
+        const std::shared_ptr<QPromise<std::optional<qevercloud::LinkedNotebook>>> & promise);
+
     void removeFutureByNotebookLocalId(const QString & notebookLocalId);
+    void removeFutureByNotebookGuid(const qevercloud::Guid & notebookGuid);
 
     void removeFuturesByLinkedNotebookGuid(
         const qevercloud::Guid & linkedNotebookGuid);
@@ -69,13 +89,18 @@ private:
 
     QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
         m_linkedNotebooksByNotebookLocalId;
-
     QMutex m_linkedNotebooksByNotebookLocalIdMutex;
 
     QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
         m_linkedNotebooksByGuid;
-
     QMutex m_linkedNotebooksByGuidMutex;
+
+    QHash<qevercloud::Guid, QFuture<std::optional<qevercloud::LinkedNotebook>>>
+        m_linkedNotebooksByNotebookGuid;
+    QMutex m_linkedNotebooksByNotebookGuidMutex;
+
+    QHash<QString, std::optional<qevercloud::Guid>> m_notebookGuidsByLocalIds;
+    QMutex m_notebookGuidsByLocalIdsMutex;
 
     QList<QMetaObject::Connection> m_localStorageConnections;
 };

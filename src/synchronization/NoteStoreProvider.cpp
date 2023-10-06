@@ -129,6 +129,39 @@ QFuture<qevercloud::INoteStorePtr>
     return future;
 }
 
+QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNotebookGuid(
+    qevercloud::Guid notebookGuid, qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy)
+{
+    QNDEBUG(
+        "synchronization::NoteStoreProvider",
+        "NoteStoreProvider::noteStoreForNotebookGuid: notebook guid = "
+            << notebookGuid);
+
+    auto promise = std::make_shared<QPromise<qevercloud::INoteStorePtr>>();
+    auto future = promise->future();
+    promise->start();
+
+    const auto selfWeak = weak_from_this();
+
+    auto linkedNotebookFuture =
+        m_linkedNotebookFinder->findLinkedNotebookByNotebookGuid(notebookGuid);
+
+    threading::thenOrFailed(
+        std::move(linkedNotebookFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
+             promise](const std::optional<qevercloud::LinkedNotebook> &
+                          linkedNotebook) mutable {
+                createNoteStore(
+                    linkedNotebook, std::move(ctx), std::move(retryPolicy),
+                    promise);
+            }});
+
+    return future;
+}
+
 QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNoteLocalId(
     QString noteLocalId, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy)

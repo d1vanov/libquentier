@@ -513,9 +513,10 @@ void NotesProcessor::downloadFullNoteData(
 {
     Q_ASSERT(context);
     Q_ASSERT(note.guid());
+    Q_ASSERT(note.notebookGuid());
 
-    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNotebookLocalId(
-        note.notebookLocalId(), m_ctx, m_retryPolicy);
+    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNotebookGuid(
+        *note.notebookGuid(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
 

@@ -56,6 +56,12 @@ public:
             QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
             qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr>
+        noteStoreForNotebookGuid(
+            qevercloud::Guid notebookGuid,
+            qevercloud::IRequestContextPtr ctx = {},
+            qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+
     [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNoteLocalId(
         QString noteLocalId, qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {}) override;

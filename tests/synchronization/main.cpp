@@ -31,8 +31,8 @@ int main(int argc, char * argv[])
     QCoreApplication::setApplicationName(QStringLiteral("LibquentierTests"));
 
     QUENTIER_INITIALIZE_LOGGING();
-    QUENTIER_SET_MIN_LOG_LEVEL(Trace);
-    // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
+    QUENTIER_SET_MIN_LOG_LEVEL(Warning);
+    QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
     quentier::initializeLibquentier();
 

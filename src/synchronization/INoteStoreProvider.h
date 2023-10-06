@@ -39,6 +39,12 @@ public:
             qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
 
     [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr>
+        noteStoreForNotebookGuid(
+            qevercloud::Guid notebookGuid,
+            qevercloud::IRequestContextPtr ctx = {},
+            qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
+
+    [[nodiscard]] virtual QFuture<qevercloud::INoteStorePtr>
         noteStoreForNoteLocalId(
             QString noteLocalId, qevercloud::IRequestContextPtr ctx = {},
             qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;

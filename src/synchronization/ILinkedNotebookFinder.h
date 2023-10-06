@@ -19,6 +19,7 @@
 #pragma once
 
 #include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 #include <QString>
@@ -40,7 +41,7 @@ public:
     /**
      * @brief Find linked notebook by local id of the notebook corresponding
      * to the linked notebook
-     * @param notebookLocalId The local id of the notebook which might
+     * @param notebookLocalId Local id of the notebook which might
      *                        correspond to a linked notebook
      * @return future with std::nullopt if the notebook with given local id
      *         was not found or does not correspond to a linked notebook or
@@ -52,6 +53,22 @@ public:
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByNotebookLocalId(
             const QString & notebookLocalId) = 0;
+
+    /**
+     * @brief Find linked notebook by guid of the notebook corresponding
+     * to the linked notebook
+     * @param notebookGuid Guid of the notebook which might
+     *                     correspond to a linked notebook
+     * @return future with std::nullopt if the notebook with given guid
+     *         was not found or does not correspond to a linked notebook or
+     *         with linked notebook if the notebook with given guid
+     *         actually corresponds to a linked notebook. Or future with
+     *         exception in case of some error while trying to find the linked
+     *         notebook.
+     */
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByNotebookGuid(
+            const QString & notebookGuid) = 0;
 
     /**
      * @brief Find linked notebook by its guid
