@@ -2447,6 +2447,11 @@ void NoteStoreServer::onGetFilteredSyncChunkRequest(
     const qevercloud::SyncChunkFilter & filter,
     const qevercloud::IRequestContextPtr & ctx)
 {
+    QNDEBUG(
+        "tests::synchronization::NoteStoreServer",
+        "NoteStoreServer::onGetFilteredSyncChunkRequest: afterUsn = "
+            << afterUSN << ", max entries = " << maxEntries);
+
     Q_ASSERT(ctx);
 
     if (m_stopSynchronizationErrorData &&
@@ -2474,6 +2479,13 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
     const qint32 maxEntries, const bool fullSyncOnly,
     const qevercloud::IRequestContextPtr & ctx)
 {
+    QNDEBUG(
+        "tests::synchronization::NoteStoreServer",
+        "NoteStoreServer::onGetLinkedNotebookSyncChunkRequest: afterUsn = "
+            << afterUSN << ", max entries = " << maxEntries
+            << ", linked notebook guid = "
+            << linkedNotebook.guid().value_or(QStringLiteral("<none>")));
+
     Q_ASSERT(ctx);
 
     m_onceGetLinkedNotebookSyncChunkCalled = true;
@@ -3261,6 +3273,13 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         const qevercloud::SyncChunkFilter & filter,
         const qevercloud::IRequestContextPtr & ctx) const
 {
+    QNDEBUG(
+        "tests::synchronization::NoteStoreServer",
+        "NoteStoreServer::getSyncChunkImpl: afterUsn = " << afterUsn
+            << ", max entries = " << maxEntries
+            << ", linked notebook guid = "
+            << linkedNotebookGuid.value_or(QStringLiteral("<none>")));
+
     if (linkedNotebookGuid) {
         if (auto exc =
                 checkLinkedNotebookAuthentication(*linkedNotebookGuid, ctx)) {
@@ -3409,6 +3428,24 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         }
 
         if ((nextItemType == NextItemType::None) &&
+            (linkedNotebookIt != linkedNotebookUsnIndex.end()))
+        {
+            const auto & nextLinkedNotebook = *linkedNotebookIt;
+            QNDEBUG(
+                "tests::synchronization",
+                "Checking linked notebook for the possibility to include it "
+                    << "into the sync chunk: " << nextLinkedNotebook);
+
+            qint32 usn = nextLinkedNotebook.updateSequenceNum().value();
+            if (usn < lastItemUsn) {
+                nextItemType = NextItemType::LinkedNotebook;
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Will include linked notebook into the sync chunk");
+            }
+        }
+
+        if ((nextItemType == NextItemType::None) &&
             (tagIt != tagUsnIndex.end())) {
             const auto & nextTag = *tagIt;
             QNDEBUG(
@@ -3479,24 +3516,6 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                 QNDEBUG(
                     "tests::synchronization",
                     "Will include resource into the sync chunk");
-            }
-        }
-
-        if ((nextItemType == NextItemType::None) &&
-            (linkedNotebookIt != linkedNotebookUsnIndex.end()))
-        {
-            const auto & nextLinkedNotebook = *linkedNotebookIt;
-            QNDEBUG(
-                "tests::synchronization",
-                "Checking linked notebook for the possibility to include it "
-                    << "into the sync chunk: " << nextLinkedNotebook);
-
-            qint32 usn = nextLinkedNotebook.updateSequenceNum().value();
-            if (usn < lastItemUsn) {
-                nextItemType = NextItemType::LinkedNotebook;
-                QNDEBUG(
-                    "tests::synchronization",
-                    "Will include linked notebook into the sync chunk");
             }
         }
 

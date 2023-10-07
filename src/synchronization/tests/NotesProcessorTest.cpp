@@ -96,13 +96,21 @@ void compareNoteLists(
             continue;
         }
 
+        qevercloud::Note rc;
         if (!r.content()) {
-            qevercloud::Note noteWithContent = addContentToNote(r, i);
-            EXPECT_EQ(*it, noteWithContent);
+            rc = addContentToNote(r, i);
         }
         else {
-            EXPECT_EQ(*it, r);
+            rc = r;
         }
+
+        if (rc.resources() && !rc.resources()->isEmpty()) {
+            for (auto & resource: *rc.mutableResources()) {
+                resource.setNoteLocalId(rc.localId());
+            }
+        }
+
+        EXPECT_EQ(*it, rc);
     }
 }
 

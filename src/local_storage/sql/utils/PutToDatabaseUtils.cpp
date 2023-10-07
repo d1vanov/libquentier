@@ -174,7 +174,8 @@ struct NoteTagIds
     QStringList tagLocalIds = note.tagLocalIds();
 
     const bool hasTagLocalIds = !tagLocalIds.isEmpty();
-    const bool hasTagGuids = (note.tagGuids() != std::nullopt);
+    const bool hasTagGuids =
+        (note.tagGuids() != std::nullopt && !note.tagGuids()->isEmpty());
 
     NoteTagIds result;
     if (!hasTagLocalIds && !hasTagGuids) {

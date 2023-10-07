@@ -561,12 +561,48 @@ void NotesProcessor::downloadFullNoteDataImpl(
 
     const auto selfWeak = weak_from_this();
 
+    // Need to preserve local ids of note itself and all of its resources as
+    // note full data downloader would substitute its own auto-generated local
+    // ids.
+    QString noteLocalId = note.localId();
+    QHash<qevercloud::Guid, QString> resourceLocalIdsByGuids = [&] {
+        QHash<qevercloud::Guid, QString> result;
+        if (note.resources() && !note.resources()->isEmpty()) {
+            for (const auto & resource: qAsConst(*note.resources())) {
+                Q_ASSERT(resource.guid());
+                result[*resource.guid()] = resource.localId();
+            }
+        }
+        return result;
+    }();
+
     auto thenFuture = threading::then(
         std::move(noteFuture),
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, promise, context,
-             noteKind](qevercloud::Note note) mutable {
+             noteKind, noteLocalId = std::move(noteLocalId),
+             resourceLocalIdsByGuids = std::move(resourceLocalIdsByGuids)](
+                qevercloud::Note note) mutable {
+                note.setLocalId(std::move(noteLocalId));
+                if (note.resources() && !note.resources()->isEmpty()) {
+                    for (auto & resource: *note.mutableResources()) {
+                        resource.setNoteLocalId(note.localId());
+                        Q_ASSERT(resource.guid());
+                        const auto it = resourceLocalIdsByGuids.constFind(
+                            *resource.guid());
+                        if (it != resourceLocalIdsByGuids.constEnd()) {
+                            resource.setLocalId(it.value());
+                        }
+                        else {
+                            QNWARNING(
+                                "synchronization::NotesProcessor",
+                                "Detected note resource which metadata wasn't "
+                                    << "present in the note before note's full "
+                                    << "data was downloaded: " << resource);
+                        }
+                    }
+                }
                 processDownloadedFullNoteData(
                     context, promise, std::move(note), noteKind);
             }});

@@ -366,19 +366,40 @@ void setupTestData(
     {
         int noteIndex = 1;
 
-        const QList<QList<qevercloud::Guid>> tagGuidsLists = [&] {
-            QList<QList<qevercloud::Guid>> result;
+        const auto splitTagsIntoBatches =
+            [](const QHash<qevercloud::Guid, qevercloud::Tag> & tagsByGuid) {
+                QList<QList<qevercloud::Guid>> result;
+                const auto tagCount = tagsByGuid.size();
 
+                const int tagBatchCount = 3;
+                const auto tagCountPerBatch = tagCount / tagBatchCount;
+                auto it = tagsByGuid.constBegin();
+                for (int i = 0; i < tagBatchCount; ++i) {
+                    QList<qevercloud::Guid> tagGuids;
+                    tagGuids.reserve(tagCountPerBatch);
+                    for (int j = 0; j < tagCountPerBatch; ++j) {
+                        tagGuids << it.key();
+
+                        ++it;
+                        if (it == tagsByGuid.constEnd()) {
+                            it = tagsByGuid.constBegin();
+                        }
+                    }
+
+                    result << tagGuids;
+                }
+
+                return result;
+            };
+
+        const QList<QList<qevercloud::Guid>> userOwnTagGuidsLists = [&] {
             const auto tagsByGuid = [&] {
                 QHash<qevercloud::Guid, qevercloud::Tag> result;
 
                 const auto allTags = QList<qevercloud::Tag>{}
                     << testData.m_userOwnBaseTags
                     << testData.m_userOwnModifiedTags
-                    << testData.m_userOwnNewTags
-                    << testData.m_linkedNotebookBaseTags
-                    << testData.m_linkedNotebookModifiedTags
-                    << testData.m_linkedNotebookNewTags;
+                    << testData.m_userOwnNewTags;
 
                 for (const auto & tag: qAsConst(allTags)) {
                     result[*tag.guid()] = tag;
@@ -387,35 +408,14 @@ void setupTestData(
                 return result;
             }();
 
-            const auto tagCount = tagsByGuid.size();
-
-            const int tagBatchCount = 3;
-            const auto tagCountPerBatch = tagCount / tagBatchCount;
-            auto it = tagsByGuid.constBegin();
-            for (int i = 0; i < tagBatchCount; ++i) {
-                QList<qevercloud::Guid> tagGuids;
-                tagGuids.reserve(tagCountPerBatch);
-                for (int j = 0; j < tagCountPerBatch; ++j) {
-                    tagGuids << it.key();
-
-                    ++it;
-                    if (it == tagsByGuid.constEnd()) {
-                        it = tagsByGuid.constBegin();
-                    }
-                }
-
-                result << tagGuids;
-            }
-
-            return result;
+            return splitTagsIntoBatches(tagsByGuid);
         }();
-
-        Q_ASSERT(!tagGuidsLists.isEmpty());
 
         int tagGuidsListIndex = 0;
         const auto putNotes =
             [&](const QString & nameSuffix, QList<qevercloud::Note> & notes,
-                const QList<qevercloud::Guid> & notebookGuids) {
+                const QList<qevercloud::Guid> & notebookGuids,
+                const QList<QList<qevercloud::Guid>> & tagGuidsLists) {
                 auto notebookIt = notebookGuids.constBegin();
                 for (int i = 0; i < itemCount; ++i) {
                     QList<qevercloud::Resource> resources;
@@ -429,7 +429,7 @@ void setupTestData(
                     }
 
                     QList<qevercloud::Guid> tagGuids;
-                    if (i % 3 == 0) {
+                    if (!tagGuidsLists.isEmpty() && (i % 3 == 0)) {
                         tagGuids = tagGuidsLists[tagGuidsListIndex++];
                         if (tagGuidsListIndex >= tagGuidsLists.size()) {
                             tagGuidsListIndex = 0;
@@ -440,6 +440,7 @@ void setupTestData(
                         noteIndex++, *notebookIt, nameSuffix,
                         std::move(resources), std::move(tagGuids));
                     notes << note;
+                    ++notebookIt;
                 }
             };
 
@@ -473,39 +474,54 @@ void setupTestData(
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 putNotes(
                     *gBaseItems, testData.m_userOwnBaseNotes,
-                    userOwnNotebookGuids);
+                    userOwnNotebookGuids, userOwnTagGuidsLists);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
                 putNotes(
                     *gModifiedItems, testData.m_userOwnModifiedNotes,
-                    userOwnNotebookGuids);
+                    userOwnNotebookGuids, userOwnTagGuidsLists);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
                 putNotes(
                     *gNewItems, testData.m_userOwnNewNotes,
-                    userOwnNotebookGuids);
+                    userOwnNotebookGuids, userOwnTagGuidsLists);
             }
         }
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+            // FIXME: currently for notes from linked notebooks tags are not set
+            // up because it needs to be done with correspondence taken into
+            // account: any note from a particular linked notebook needs to have
+            // tags from this linked notebook, not from any other linked
+            // notebook. Otherwise the sync process might run into a data race
+            // as it downloads data for each linked notebook independently so
+            // it might start downloading notes from linked notebook A before
+            // tags from linked notebook B are downloaded.
+            // It needs to be figured out if tagging notes from some linked
+            // notebook with tags from another linked notebook is supported at
+            // all by Evernote but for now pretending that it isn't supported.
+            // In this test setup it should be possible to tag notes with proper
+            // tags but it requires a rework of putNotes function or maybe even
+            // the creation of another separate function for linked notebook
+            // notes. It is just not done yet.
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 putNotes(
                     *gBaseItems, testData.m_linkedNotebookBaseNotes,
-                    linkedNotebookNotebookGuids);
+                    linkedNotebookNotebookGuids, {});
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
                 putNotes(
                     *gModifiedItems, testData.m_linkedNotebookModifiedNotes,
-                    linkedNotebookNotebookGuids);
+                    linkedNotebookNotebookGuids, {});
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
                 putNotes(
                     *gNewItems, testData.m_linkedNotebookNewNotes,
-                    linkedNotebookNotebookGuids);
+                    linkedNotebookNotebookGuids, {});
             }
         }
     }

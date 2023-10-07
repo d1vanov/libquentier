@@ -224,9 +224,17 @@ private:
     [[nodiscard]] bool checkLinkedNotebookSyncChunkDataCountersOrder(
         const char *& errorMessage) const;
 
+    enum class CheckTotalCounters
+    {
+        Yes,
+        No
+    };
+
     [[nodiscard]] bool checkSyncChunksDataCountersOrderImpl(
         const QList<ISyncChunksDataCountersPtr> & messages,
-        const char *& errorMessage) const;
+        const char *& errorMessage,
+        CheckTotalCounters checkTotalCounters =
+            CheckTotalCounters::Yes) const;
 
 private:
     QList<SyncChunksDownloadProgressMessage>

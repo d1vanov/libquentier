@@ -243,7 +243,7 @@ QFuture<void> TagsProcessor::processTag(
     const std::shared_ptr<TagCounters> & tagCounters,
     CheckParentTag checkParentTag)
 {
-    if (Q_UNLIKELY(tagIndex < 0 || tagIndex >= tags.size())) {
+    if (Q_UNLIKELY(tagIndex < 0 || tagIndex >= tags.size())) { // NOLINT
         return threading::makeExceptionalFuture<void>(RuntimeError{
             ErrorString{QStringLiteral("TagsProcessor: wrong tag index")}});
     }
