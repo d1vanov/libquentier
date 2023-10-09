@@ -1131,9 +1131,6 @@ QFuture<IDownloader::Result>
                 linkedNotebookDownloadContext->linkedNotebook =
                     std::move(linkedNotebook);
 
-                linkedNotebookDownloadContext->syncChunksDataCounters =
-                    std::make_shared<SyncChunksDataCounters>();
-
                 auto ctxBuilder = qevercloud::RequestContextBuilder{};
                 ctxBuilder.setAuthenticationToken(authInfo->authToken())
                     .setCookies(authInfo->userStoreCookies());
