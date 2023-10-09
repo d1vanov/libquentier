@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Setup.h"
 #include "NoteStoreServer.h"
+#include "Setup.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
@@ -411,11 +411,12 @@ void setupTestData(
             return splitTagsIntoBatches(tagsByGuid);
         }();
 
-        int tagGuidsListIndex = 0;
-        const auto putNotes =
+        int userOwnTagGuidsListIndex = 0;
+        const auto putUserOwnNotes =
             [&](const QString & nameSuffix, QList<qevercloud::Note> & notes,
                 const QList<qevercloud::Guid> & notebookGuids,
-                const QList<QList<qevercloud::Guid>> & tagGuidsLists) {
+                const QList<QList<qevercloud::Guid>> & userOwnTagGuidsLists) {
+                Q_ASSERT(!notebookGuids.isEmpty());
                 auto notebookIt = notebookGuids.constBegin();
                 for (int i = 0; i < itemCount; ++i) {
                     QList<qevercloud::Resource> resources;
@@ -429,10 +430,12 @@ void setupTestData(
                     }
 
                     QList<qevercloud::Guid> tagGuids;
-                    if (!tagGuidsLists.isEmpty() && (i % 3 == 0)) {
-                        tagGuids = tagGuidsLists[tagGuidsListIndex++];
-                        if (tagGuidsListIndex >= tagGuidsLists.size()) {
-                            tagGuidsListIndex = 0;
+                    if (!userOwnTagGuidsLists.isEmpty() && (i % 3 == 0)) {
+                        tagGuids =
+                            userOwnTagGuidsLists[userOwnTagGuidsListIndex++];
+                        if (userOwnTagGuidsListIndex >=
+                            userOwnTagGuidsLists.size()) {
+                            userOwnTagGuidsListIndex = 0;
                         }
                     }
 
@@ -440,7 +443,65 @@ void setupTestData(
                         noteIndex++, *notebookIt, nameSuffix,
                         std::move(resources), std::move(tagGuids));
                     notes << note;
+
                     ++notebookIt;
+                    if (notebookIt == notebookGuids.constEnd()) {
+                        notebookIt = notebookGuids.constBegin();
+                    }
+                }
+            };
+
+        const auto putLinkedNotebookNotes =
+            [&](const QString & nameSuffix, QList<qevercloud::Note> & notes,
+                const QList<qevercloud::Notebook> & notebooks,
+                const QList<qevercloud::Tag> & tags) {
+                auto notebookIt = notebooks.constBegin();
+                for (int i = 0; i < itemCount; ++i) {
+                    QList<qevercloud::Resource> resources;
+                    if (i % 2 == 0) {
+                        constexpr int resourceCountPerNote = 3;
+                        resources.reserve(resourceCountPerNote);
+                        for (int j = 0; j < resourceCountPerNote; ++j) {
+                            auto resource = generateResource(j, nameSuffix);
+                            resources << resource;
+                        }
+                    }
+
+                    const auto & notebook = *notebookIt;
+                    Q_ASSERT(notebook.guid());
+                    Q_ASSERT(notebook.linkedNotebookGuid());
+
+                    const auto & linkedNotebookGuid =
+                        *notebook.linkedNotebookGuid();
+
+                    QList<qevercloud::Guid> tagGuids;
+                    if (i % 3 == 0) {
+                        int tagCount = 0;
+                        for (const auto & tag: qAsConst(tags)) {
+                            Q_ASSERT(tag.guid());
+                            if (tag.linkedNotebookGuid() != linkedNotebookGuid)
+                            {
+                                continue;
+                            }
+
+                            tagGuids << *tag.guid();
+
+                            ++tagCount;
+                            if (tagCount == itemCount) {
+                                break;
+                            }
+                        }
+                    }
+
+                    auto note = generateNote(
+                        noteIndex++, *notebookIt->guid(), nameSuffix,
+                        std::move(resources), std::move(tagGuids));
+                    notes << note;
+
+                    ++notebookIt;
+                    if (notebookIt == notebooks.constEnd()) {
+                        notebookIt = notebooks.constBegin();
+                    }
                 }
             };
 
@@ -457,71 +518,46 @@ void setupTestData(
             return result;
         }();
 
-        const QList<qevercloud::Guid> linkedNotebookNotebookGuids = [&] {
-            QList<qevercloud::Guid> result;
-            const auto allNotebooks = QList<qevercloud::Notebook>{}
-                << testData.m_linkedNotebookBaseNotebooks
-                << testData.m_linkedNotebookModifiedNotebooks
-                << testData.m_linkedNotebookNewNotebooks;
-            result.reserve(allNotebooks.size());
-            for (const auto & notebook: qAsConst(allNotebooks)) {
-                result << *notebook.guid();
-            }
-            return result;
-        }();
-
         if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
             if (itemGroups.testFlag(ItemGroup::Base)) {
-                putNotes(
+                putUserOwnNotes(
                     *gBaseItems, testData.m_userOwnBaseNotes,
                     userOwnNotebookGuids, userOwnTagGuidsLists);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
-                putNotes(
+                putUserOwnNotes(
                     *gModifiedItems, testData.m_userOwnModifiedNotes,
                     userOwnNotebookGuids, userOwnTagGuidsLists);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
-                putNotes(
+                putUserOwnNotes(
                     *gNewItems, testData.m_userOwnNewNotes,
                     userOwnNotebookGuids, userOwnTagGuidsLists);
             }
         }
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
-            // FIXME: currently for notes from linked notebooks tags are not set
-            // up because it needs to be done with correspondence taken into
-            // account: any note from a particular linked notebook needs to have
-            // tags from this linked notebook, not from any other linked
-            // notebook. Otherwise the sync process might run into a data race
-            // as it downloads data for each linked notebook independently so
-            // it might start downloading notes from linked notebook A before
-            // tags from linked notebook B are downloaded.
-            // It needs to be figured out if tagging notes from some linked
-            // notebook with tags from another linked notebook is supported at
-            // all by Evernote but for now pretending that it isn't supported.
-            // In this test setup it should be possible to tag notes with proper
-            // tags but it requires a rework of putNotes function or maybe even
-            // the creation of another separate function for linked notebook
-            // notes. It is just not done yet.
             if (itemGroups.testFlag(ItemGroup::Base)) {
-                putNotes(
+                putLinkedNotebookNotes(
                     *gBaseItems, testData.m_linkedNotebookBaseNotes,
-                    linkedNotebookNotebookGuids, {});
+                    testData.m_linkedNotebookBaseNotebooks,
+                    testData.m_linkedNotebookBaseTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
-                putNotes(
+                putLinkedNotebookNotes(
                     *gModifiedItems, testData.m_linkedNotebookModifiedNotes,
-                    linkedNotebookNotebookGuids, {});
+                    testData.m_linkedNotebookModifiedNotebooks,
+                    testData.m_linkedNotebookModifiedTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
-                putNotes(
+                putLinkedNotebookNotes(
                     *gNewItems, testData.m_linkedNotebookNewNotes,
-                    linkedNotebookNotebookGuids, {});
+                    testData.m_linkedNotebookNewNotebooks,
+                    testData.m_linkedNotebookNewTags);
             }
         }
     }
@@ -711,22 +747,20 @@ void setupNoteStoreServer(
     putSavedSearches(testData.m_newSavedSearches);
 
     QHash<qevercloud::Guid, QString> linkedNotebookAuthTokens;
-    const auto putLinkedNotebooks =
-        [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks) {
-            for (auto & linkedNotebook: linkedNotebooks) {
-                auto itemData =
-                    noteStoreServer.putLinkedNotebook(linkedNotebook);
-                linkedNotebook.setUpdateSequenceNum(itemData.usn);
+    const auto putLinkedNotebooks = [&](QList<qevercloud::LinkedNotebook> &
+                                            linkedNotebooks) {
+        for (auto & linkedNotebook: linkedNotebooks) {
+            auto itemData = noteStoreServer.putLinkedNotebook(linkedNotebook);
+            linkedNotebook.setUpdateSequenceNum(itemData.usn);
 
-                if (itemData.guid) {
-                    linkedNotebook.setGuid(*itemData.guid);
-                }
-
-                linkedNotebookAuthTokens[*linkedNotebook.guid()] =
-                    QString::fromUtf8("Auth Token #%1")
-                        .arg(*linkedNotebook.guid());
+            if (itemData.guid) {
+                linkedNotebook.setGuid(*itemData.guid);
             }
-        };
+
+            linkedNotebookAuthTokens[*linkedNotebook.guid()] =
+                QString::fromUtf8("Auth Token #%1").arg(*linkedNotebook.guid());
+        }
+    };
 
     putLinkedNotebooks(testData.m_baseLinkedNotebooks);
     putLinkedNotebooks(testData.m_modifiedLinkedNotebooks);
@@ -927,9 +961,9 @@ void setupLocalStorage(
                             .waitForFinished();
                     } break;
                     case ItemGroup::New:
-                      // It makes no sense to put new linked notebooks to local
-                      // storage, they can only be created on the server
-                      break;
+                        // It makes no sense to put new linked notebooks to
+                        // local storage, they can only be created on the server
+                        break;
                     }
                 }
             };
@@ -1337,8 +1371,8 @@ ISyncStatePtr setupSyncState(
                 }
             }
             else if constexpr (std::is_same_v<
-                              std::decay_t<decltype(item)>,
-                              qevercloud::Note>)
+                                   std::decay_t<decltype(item)>,
+                                   qevercloud::Note>)
             {
                 Q_ASSERT(item.notebookGuid());
 
@@ -1349,8 +1383,7 @@ ISyncStatePtr setupSyncState(
 
                 for (const auto & list: qAsConst(lists)) {
                     const auto it = std::find_if(
-                        list->constBegin(),
-                        list->constEnd(),
+                        list->constBegin(), list->constEnd(),
                         [&](const qevercloud::Notebook & notebook) {
                             return notebook.guid() == item.notebookGuid();
                         });
@@ -1424,7 +1457,8 @@ ISyncStatePtr setupSyncState(
 
         if (dataItemTypes.testFlag(DataItemType::Note) ||
             (dataItemTypes.testFlag(DataItemType::Resource) &&
-             itemGroups.testFlag(ItemGroup::Modified))) {
+             itemGroups.testFlag(ItemGroup::Modified)))
+        {
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 processItems(testData.m_userOwnBaseNotes);
             }
@@ -1476,7 +1510,8 @@ ISyncStatePtr setupSyncState(
 
         if (dataItemTypes.testFlag(DataItemType::Note) ||
             (dataItemTypes.testFlag(DataItemType::Resource) &&
-             itemGroups.testFlag(ItemGroup::Modified))) {
+             itemGroups.testFlag(ItemGroup::Modified)))
+        {
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 processItems(testData.m_linkedNotebookBaseNotes);
             }
@@ -1496,14 +1531,12 @@ ISyncStatePtr setupSyncState(
     QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
     linkedNotebookLastSyncTimes.reserve(linkedNotebookUpdateCounts.size());
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
-    {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
         linkedNotebookLastSyncTimes[it.key()] = *lastUpdateTimestamp;
     }
 
     auto syncStateBuilder = createSyncStateBuilder();
-    return syncStateBuilder
-        ->setUserDataUpdateCount(userOwnUpdateCount)
+    return syncStateBuilder->setUserDataUpdateCount(userOwnUpdateCount)
         .setUserDataLastSyncTime(*lastUpdateTimestamp)
         .setLinkedNotebookUpdateCounts(std::move(linkedNotebookUpdateCounts))
         .setLinkedNotebookLastSyncTimes(std::move(linkedNotebookLastSyncTimes))
