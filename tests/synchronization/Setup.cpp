@@ -414,10 +414,10 @@ void setupTestData(
         int userOwnTagGuidsListIndex = 0;
         const auto putUserOwnNotes =
             [&](const QString & nameSuffix, QList<qevercloud::Note> & notes,
-                const QList<qevercloud::Guid> & notebookGuids,
+                const QList<qevercloud::Notebook> & notebooks,
                 const QList<QList<qevercloud::Guid>> & userOwnTagGuidsLists) {
-                Q_ASSERT(!notebookGuids.isEmpty());
-                auto notebookIt = notebookGuids.constBegin();
+                Q_ASSERT(!notebooks.isEmpty());
+                auto notebookIt = notebooks.constBegin();
                 for (int i = 0; i < itemCount; ++i) {
                     QList<qevercloud::Resource> resources;
                     if (i % 2 == 0) {
@@ -439,14 +439,17 @@ void setupTestData(
                         }
                     }
 
+                    const auto & notebook = *notebookIt;
+                    Q_ASSERT(notebook.guid());
+
                     auto note = generateNote(
-                        noteIndex++, *notebookIt, nameSuffix,
+                        noteIndex++, *notebook.guid(), nameSuffix,
                         std::move(resources), std::move(tagGuids));
                     notes << note;
 
                     ++notebookIt;
-                    if (notebookIt == notebookGuids.constEnd()) {
-                        notebookIt = notebookGuids.constBegin();
+                    if (notebookIt == notebooks.constEnd()) {
+                        notebookIt = notebooks.constBegin();
                     }
                 }
             };
@@ -505,36 +508,23 @@ void setupTestData(
                 }
             };
 
-        const QList<qevercloud::Guid> userOwnNotebookGuids = [&] {
-            QList<qevercloud::Guid> result;
-            const auto allNotebooks = QList<qevercloud::Notebook>{}
-                << testData.m_userOwnBaseNotebooks
-                << testData.m_userOwnModifiedNotebooks
-                << testData.m_userOwnNewNotebooks;
-            result.reserve(allNotebooks.size());
-            for (const auto & notebook: qAsConst(allNotebooks)) {
-                result << *notebook.guid();
-            }
-            return result;
-        }();
-
         if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 putUserOwnNotes(
                     *gBaseItems, testData.m_userOwnBaseNotes,
-                    userOwnNotebookGuids, userOwnTagGuidsLists);
+                    testData.m_userOwnBaseNotebooks, userOwnTagGuidsLists);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
                 putUserOwnNotes(
                     *gModifiedItems, testData.m_userOwnModifiedNotes,
-                    userOwnNotebookGuids, userOwnTagGuidsLists);
+                    testData.m_userOwnModifiedNotebooks, userOwnTagGuidsLists);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
                 putUserOwnNotes(
                     *gNewItems, testData.m_userOwnNewNotes,
-                    userOwnNotebookGuids, userOwnTagGuidsLists);
+                    testData.m_userOwnNewNotebooks, userOwnTagGuidsLists);
             }
         }
 
