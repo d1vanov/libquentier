@@ -22,6 +22,7 @@
 #include <quentier/utility/Initialize.h>
 #include <quentier/utility/QuentierApplication.h>
 
+#include <QDebug>
 #include <QtTest>
 
 int main(int argc, char * argv[])
@@ -31,8 +32,10 @@ int main(int argc, char * argv[])
     QCoreApplication::setApplicationName(QStringLiteral("LibquentierTests"));
 
     QUENTIER_INITIALIZE_LOGGING();
-    QUENTIER_SET_MIN_LOG_LEVEL(Warning);
-    QUENTIER_ADD_STDOUT_LOG_DESTINATION();
+    QUENTIER_SET_MIN_LOG_LEVEL(Trace);
+    // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
+
+    qWarning() << "Logs directory: " << quentier::QuentierLogFilesDirPath();
 
     quentier::initializeLibquentier();
 
