@@ -37,9 +37,11 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace quentier::threading {
 
@@ -175,16 +177,19 @@ template <class T>
 
     promise->start();
 
-    auto resultList = std::make_shared<QList<std::decay_t<T>>>();
+    auto resultIndexedList =
+        std::make_shared<QList<std::pair<int, std::decay_t<T>>>>();
+
     auto processedItemsCount = std::make_shared<int>(0);
     auto exceptionFlag = std::make_shared<bool>(false);
     auto mutex = std::make_shared<QMutex>();
 
-    for (auto & f: futures) {
+    for (int i = 0; i < futures.size(); ++i) {
+        auto & f = futures[i];
         auto thenFuture = then(
             std::move(f),
             [promise, processedItemsCount, totalItemCount, exceptionFlag, mutex,
-             resultList](auto result) {
+             resultIndexedList, i](auto result) {
                 if (promise->isCanceled()) {
                     return;
                 }
@@ -201,10 +206,24 @@ template <class T>
                     count = *processedItemsCount;
                     promise->setProgressValue(count);
 
-                    resultList->append(std::move(result));
+                    resultIndexedList->append(
+                        std::make_pair(i, std::move(result)));
                 }
 
                 if (count == totalItemCount) {
+                    std::sort(
+                        resultIndexedList->begin(), resultIndexedList->end(),
+                        [](const auto & lhs, const auto & rhs) {
+                            return lhs.first < rhs.first;
+                        });
+
+                    auto resultList =
+                        std::make_shared<QList<std::decay_t<T>>>();
+                    resultList->reserve(resultIndexedList->size());
+                    for (auto & [i, v] : *resultIndexedList) {
+                        resultList->append(std::move(v));
+                    }
+
                     promise->addResult(*resultList);
                     promise->finish();
                 }
