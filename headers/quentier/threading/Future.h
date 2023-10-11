@@ -50,7 +50,7 @@ namespace quentier::threading {
  */
 template <class T>
 [[nodiscard]] std::enable_if_t<
-        std::negation_v<std::is_same<std::decay_t<T>, void>>,
+    std::negation_v<std::is_same<std::decay_t<T>, void>>,
     QFuture<std::decay_t<T>>>
     makeReadyFuture(T t)
 {
@@ -114,23 +114,15 @@ void bindCancellation(const QFuture<T> & from, QFuture<U> to)
     auto * rawWatcher = watcher.get();
 
     QObject::connect(
-        rawWatcher,
-        &QFutureWatcher<T>::canceled,
-        rawWatcher,
-        [rawWatcher, to]() mutable
-        {
+        rawWatcher, &QFutureWatcher<T>::canceled, rawWatcher,
+        [rawWatcher, to]() mutable {
             to.cancel();
             rawWatcher->deleteLater();
         });
 
     QObject::connect(
-        rawWatcher,
-        &QFutureWatcher<T>::finished,
-        rawWatcher,
-        [rawWatcher]
-        {
-            rawWatcher->deleteLater();
-        });
+        rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
+        [rawWatcher] { rawWatcher->deleteLater(); });
 
     watcher->setFuture(from);
     Q_UNUSED(watcher.release());
@@ -220,7 +212,7 @@ template <class T>
                     auto resultList =
                         std::make_shared<QList<std::decay_t<T>>>();
                     resultList->reserve(resultIndexedList->size());
-                    for (auto & [i, v] : *resultIndexedList) {
+                    for (auto & [i, v]: *resultIndexedList) {
                         resultList->append(std::move(v));
                     }
 
