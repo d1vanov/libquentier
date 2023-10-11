@@ -1481,7 +1481,7 @@ void NoteStoreServer::onCreateNotebookRequest(
 
     if (auto exc = note_store::checkNotebook(notebook)) {
         Q_EMIT createNotebookRequestReady(
-            qevercloud::Notebook{}, std::make_exception_ptr(std::move(exc)),
+            qevercloud::Notebook{}, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -1491,16 +1491,13 @@ void NoteStoreServer::onCreateNotebookRequest(
                 *notebook.linkedNotebookGuid(), ctx))
         {
             Q_EMIT createNotebookRequestReady(
-                qevercloud::Notebook{},
-                std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                qevercloud::Notebook{}, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT createNotebookRequestReady(
-            qevercloud::Notebook{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::Notebook{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -1583,7 +1580,7 @@ void NoteStoreServer::onUpdateNotebookRequest(
 
     if (auto exc = note_store::checkNotebook(notebook)) {
         Q_EMIT updateNotebookRequestReady(
-            0, std::make_exception_ptr(std::move(exc)),
+            0, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -1593,15 +1590,13 @@ void NoteStoreServer::onUpdateNotebookRequest(
                 *notebook.linkedNotebookGuid(), ctx))
         {
             Q_EMIT updateNotebookRequestReady(
-                0, std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                0, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateNotebookRequestReady(
-            0, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            0, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -1759,7 +1754,7 @@ void NoteStoreServer::onCreateNoteRequest(
             note, m_maxNumResourcesPerNote, m_maxNumTagsPerNote))
     {
         Q_EMIT createNoteRequestReady(
-            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
+            qevercloud::Note{}, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -1769,15 +1764,13 @@ void NoteStoreServer::onCreateNoteRequest(
                 *notebook.linkedNotebookGuid(), ctx))
         {
             Q_EMIT createNoteRequestReady(
-                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                qevercloud::Note{}, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT createNoteRequestReady(
-            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::Note{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -1896,7 +1889,7 @@ void NoteStoreServer::onUpdateNoteRequest(
             note, m_maxNumResourcesPerNote, m_maxNumTagsPerNote))
     {
         Q_EMIT updateNoteRequestReady(
-            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
+            qevercloud::Note{}, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -1906,15 +1899,13 @@ void NoteStoreServer::onUpdateNoteRequest(
                 *notebook.linkedNotebookGuid(), ctx))
         {
             Q_EMIT updateNoteRequestReady(
-                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                qevercloud::Note{}, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateNoteRequestReady(
-            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::Note{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -1990,7 +1981,7 @@ void NoteStoreServer::onCreateTagRequest(
 
     if (auto exc = note_store::checkTag(tag)) {
         Q_EMIT createTagRequestReady(
-            qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)),
+            qevercloud::Tag{}, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -2018,15 +2009,13 @@ void NoteStoreServer::onCreateTagRequest(
                 *tag.linkedNotebookGuid(), ctx))
         {
             Q_EMIT createTagRequestReady(
-                qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                qevercloud::Tag{}, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT createTagRequestReady(
-            qevercloud::Tag{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::Tag{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2116,7 +2105,7 @@ void NoteStoreServer::onUpdateTagRequest(
 
     if (auto exc = note_store::checkTag(tag)) {
         Q_EMIT updateTagRequestReady(
-            0, std::make_exception_ptr(std::move(exc)), ctx->requestId());
+            0, std::make_exception_ptr(std::move(*exc)), ctx->requestId());
         return;
     }
 
@@ -2145,13 +2134,13 @@ void NoteStoreServer::onUpdateTagRequest(
                 *tag.linkedNotebookGuid(), ctx))
         {
             Q_EMIT updateTagRequestReady(
-                0, std::make_exception_ptr(std::move(exc)), ctx->requestId());
+                0, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateTagRequestReady(
-            0, std::make_exception_ptr(std::move(exc)), ctx->requestId());
+            0, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2209,7 +2198,7 @@ void NoteStoreServer::onCreateSavedSearchRequest(
 
     if (auto exc = note_store::checkSavedSearch(search)) {
         Q_EMIT createSavedSearchRequestReady(
-            qevercloud::SavedSearch{}, std::make_exception_ptr(std::move(exc)),
+            qevercloud::SavedSearch{}, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -2235,8 +2224,7 @@ void NoteStoreServer::onCreateSavedSearchRequest(
 
     if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT createSavedSearchRequestReady(
-            qevercloud::SavedSearch{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::SavedSearch{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2298,7 +2286,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
 
     if (auto exc = note_store::checkSavedSearch(search)) {
         Q_EMIT updateSavedSearchRequestReady(
-            0, std::make_exception_ptr(std::move(exc)),
+            0, std::make_exception_ptr(std::move(*exc)),
             ctx->requestId());
         return;
     }
@@ -2327,8 +2315,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
 
     if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateSavedSearchRequestReady(
-            0, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            0, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2344,12 +2331,20 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
 void NoteStoreServer::onGetSyncStateRequest(
     const qevercloud::IRequestContextPtr & ctx)
 {
+    QNDEBUG(
+        "tests::synchronization::NoteStoreServer",
+        "NoteStoreServer::onGetSyncStateRequest");
+
     Q_ASSERT(ctx);
 
     if (m_stopSynchronizationErrorData &&
         m_stopSynchronizationErrorData->trigger ==
             StopSynchronizationErrorTrigger::OnGetUserOwnSyncState)
     {
+        QNDEBUG(
+            "tests::synchronization::NoteStoreServer",
+            "Triggering stop synchronization error");
+
         Q_EMIT getSyncStateRequestReady(
             qevercloud::SyncState{},
             std::make_exception_ptr(utils::createStopSyncException(
@@ -2360,8 +2355,7 @@ void NoteStoreServer::onGetSyncStateRequest(
 
     if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT getSyncStateRequestReady(
-            qevercloud::SyncState{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::SyncState{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2389,8 +2383,7 @@ void NoteStoreServer::onGetLinkedNotebookSyncStateRequest(
 
     if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT getLinkedNotebookSyncStateRequestReady(
-            qevercloud::SyncState{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::SyncState{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2655,15 +2648,13 @@ void NoteStoreServer::onGetNoteWithResultSpecRequest(
                 *notebookIt->linkedNotebookGuid(), ctx))
         {
             Q_EMIT getNoteWithResultSpecRequestReady(
-                qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                qevercloud::Note{}, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT getNoteWithResultSpecRequestReady(
-            qevercloud::Note{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::Note{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2857,16 +2848,13 @@ void NoteStoreServer::onGetResourceRequest(
                 *notebookIt->linkedNotebookGuid(), ctx))
         {
             Q_EMIT getResourceRequestReady(
-                qevercloud::Resource{},
-                std::make_exception_ptr(std::move(exc)),
-                ctx->requestId());
+                qevercloud::Resource{}, std::move(exc), ctx->requestId());
             return;
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT getResourceRequestReady(
-            qevercloud::Resource{}, std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            qevercloud::Resource{}, std::move(exc), ctx->requestId());
         return;
     }
 
@@ -2920,8 +2908,7 @@ void NoteStoreServer::onAuthenticateToSharedNotebookRequest(
     if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT authenticateToSharedNotebookRequestReady(
             qevercloud::AuthenticationResult{},
-            std::make_exception_ptr(std::move(exc)),
-            ctx->requestId());
+            std::move(exc), ctx->requestId());
     }
 
     const auto & index =
@@ -3283,14 +3270,11 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
     if (linkedNotebookGuid) {
         if (auto exc =
                 checkLinkedNotebookAuthentication(*linkedNotebookGuid, ctx)) {
-            return std::make_pair(
-                qevercloud::SyncChunk{},
-                std::make_exception_ptr(std::move(exc)));
+            return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
         }
     }
     else if (auto exc = checkAuthentication(ctx)) {
-        return std::make_pair(
-            qevercloud::SyncChunk{}, std::make_exception_ptr(std::move(exc)));
+        return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
     }
 
     if (afterUsn < 0) {
