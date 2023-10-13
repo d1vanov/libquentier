@@ -18,6 +18,8 @@
 
 #include "FakeAuthenticator.h"
 
+#include <quentier/logging/QuentierLogger.h>
+#include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/synchronization/types/IAuthenticationInfoBuilder.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Runnable.h>
@@ -54,6 +56,11 @@ QList<FakeAuthenticator::AccountAuthInfo> FakeAuthenticator::accountAuthInfos() 
 void FakeAuthenticator::putAccountAuthInfo(
     Account account, IAuthenticationInfoPtr authInfo)
 {
+    QNDEBUG(
+        "tests::synchronization::FakeAuthenticator",
+        "FakeAuthenticator::putAccountAuthInfo: account = " << account
+            << "\nAuth info: " << *authInfo);
+
     const QMutexLocker locker{&m_mutex};
     m_accountAuthInfos
         << AccountAuthInfo{std::move(account), std::move(authInfo)};
@@ -65,6 +72,11 @@ IAuthenticationInfoPtr FakeAuthenticator::findAuthInfo(
     const QMutexLocker locker{&m_mutex};
     for (const auto & accountAuthInfo: qAsConst(m_accountAuthInfos)) {
         if (accountAuthInfo.account == account) {
+            QNDEBUG(
+                "tests::synchronization::FakeAuthenticator",
+                "FakeAuthenticator::findAuthInfo: found auth info: "
+                    << *accountAuthInfo.authInfo
+                    << "\nFor account: " << account);
             return accountAuthInfo.authInfo;
         }
     }
@@ -138,7 +150,17 @@ QFuture<IAuthenticationInfoPtr> FakeAuthenticator::authenticateNewAccount()
 QFuture<IAuthenticationInfoPtr> FakeAuthenticator::authenticateAccount(
     Account account) // NOLINT
 {
+    QNDEBUG(
+        "tests::synchronization::FakeAuthenticator",
+        "FakeAuthenticator::authenticateAccount: " << account);
+
     IAuthenticationInfoPtr authInfo = findAuthInfo(account);
+    if (authInfo) {
+        QNDEBUG(
+            "tests::synchronization::FakeAuthenticator",
+            "FakeAuthenticator::authenticateAccount: found authentication info: "
+                << *authInfo);
+    }
 
     auto promise = std::make_shared<QPromise<IAuthenticationInfoPtr>>();
     auto future = promise->future();
