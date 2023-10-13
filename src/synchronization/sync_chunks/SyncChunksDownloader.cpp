@@ -18,6 +18,7 @@
 
 #include "SyncChunksDownloader.h"
 #include "Utils.h"
+#include "../Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -43,31 +44,6 @@
 namespace quentier::synchronization {
 
 namespace {
-
-[[nodiscard]] QString linkedNotebookInfo(
-    const qevercloud::LinkedNotebook & linkedNotebook)
-{
-    QString res;
-    QTextStream strm{&res};
-
-    if (linkedNotebook.username()) {
-        strm << *linkedNotebook.username();
-    }
-    else {
-        strm << "<no username>";
-    }
-
-    strm << " (";
-    if (linkedNotebook.guid()) {
-        strm << *linkedNotebook.guid();
-    }
-    else {
-        strm << "<no guid>";
-    }
-    strm << ")";
-
-    return res;
-}
 
 [[nodiscard]] QFuture<qevercloud::SyncChunk> downloadSingleUserOwnSyncChunk(
     const qint32 afterUsn, const SynchronizationMode synchronizationMode,

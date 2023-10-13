@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
 namespace quentier {
@@ -37,5 +38,8 @@ namespace quentier::synchronization {
 
 [[nodiscard]] bool isAuthenticationTokenAboutToExpire(
     qevercloud::Timestamp authenticationTokenExpirationTimestamp);
+
+[[nodiscard]] QString linkedNotebookInfo(
+    const qevercloud::LinkedNotebook & linkedNotebook);
 
 } // namespace quentier::synchronization

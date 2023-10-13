@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,7 +39,7 @@ SyncStatePtr readLastSyncState(
         syncState->linkedNotebookLastSyncTimes());
 }
 
-[[nodiscard]] bool isAuthenticationTokenAboutToExpire(
+bool isAuthenticationTokenAboutToExpire(
     const qevercloud::Timestamp authenticationTokenExpirationTimestamp)
 {
     const qevercloud::Timestamp currentTimestamp =
@@ -49,6 +49,31 @@ SyncStatePtr readLastSyncState(
 
     return (authenticationTokenExpirationTimestamp - currentTimestamp) <
         halfAnHourMsec;
+}
+
+QString linkedNotebookInfo(
+    const qevercloud::LinkedNotebook & linkedNotebook)
+{
+    QString res;
+    QTextStream strm{&res};
+
+    if (linkedNotebook.username()) {
+        strm << *linkedNotebook.username();
+    }
+    else {
+        strm << "<no username>";
+    }
+
+    strm << " (";
+    if (linkedNotebook.guid()) {
+        strm << *linkedNotebook.guid();
+    }
+    else {
+        strm << "<no guid>";
+    }
+    strm << ")";
+
+    return res;
 }
 
 } // namespace quentier::synchronization
