@@ -18,6 +18,7 @@
 
 #include "FakeKeychainService.h"
 
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Runnable.h>
 
@@ -65,6 +66,12 @@ void FakeKeychainService::clear()
 QFuture<void> FakeKeychainService::writePassword(
     QString service, QString key, QString password)
 {
+    QNDEBUG(
+        "tests::synchronization::FakeKeychainService",
+        "FakeKeychainService::writePassword: service = "
+            << service << ", key = " << key
+            << ", password = " << password);
+
     {
         const QMutexLocker locker{&m_mutex};
         m_servicesKeysAndPasswords[service][key] = std::move(password);
@@ -84,6 +91,7 @@ QFuture<void> FakeKeychainService::writePassword(
 QFuture<QString> FakeKeychainService::readPassword(
     QString service, QString key) const
 {
+
     std::optional<QString> result;
     {
         const QMutexLocker locker{&m_mutex};
@@ -97,6 +105,21 @@ QFuture<QString> FakeKeychainService::readPassword(
                 result = it.value();
             }
         }
+    }
+
+    if (result)
+    {
+        QNDEBUG(
+            "tests::synchronization::FakeKeychainService",
+            "FakeKeychainService::readPassword: service = " << service
+                << ", key = " << key << ": found result: " << *result);
+    }
+    else
+    {
+        QNDEBUG(
+            "tests::synchronization::FakeKeychainService",
+            "FakeKeychainService::readPassword: service = " << service
+                << ", key = " << key << ": no result found");
     }
 
     auto promise = std::make_shared<QPromise<QString>>();
@@ -122,6 +145,11 @@ QFuture<QString> FakeKeychainService::readPassword(
 
 QFuture<void> FakeKeychainService::deletePassword(QString service, QString key)
 {
+    QNDEBUG(
+        "tests::synchronization::FakeKeychainService",
+        "FakeKeychainService::deletePassword: service = " << service
+            << ", key = " << key);
+
     {
         const QMutexLocker locker{&m_mutex};
 
