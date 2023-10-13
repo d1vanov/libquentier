@@ -68,6 +68,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 {
     return qevercloud::SavedSearchBuilder{}
         .setGuid(UidGenerator::Generate())
+        .setLocalId(UidGenerator::Generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
@@ -84,6 +85,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
     return qevercloud::TagBuilder{}
         .setGuid(UidGenerator::Generate())
         .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
+        .setLocalId(UidGenerator::Generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
@@ -98,6 +100,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
     return qevercloud::NotebookBuilder{}
         .setGuid(UidGenerator::Generate())
         .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
+        .setLocalId(UidGenerator::Generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
@@ -114,6 +117,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
         qevercloud::NoteBuilder{}
             .setGuid(UidGenerator::Generate())
             .setNotebookGuid(std::move(notebookGuid))
+            .setLocalId(UidGenerator::Generate())
             .setLocalOnly(false)
             .setLocallyModified(false)
             .setLocallyFavorited(false)
@@ -124,6 +128,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
     if (!resources.isEmpty()) {
         for (auto & resource: resources) {
             resource.setNoteGuid(note.guid());
+            resource.setNoteLocalId(note.localId());
         }
         note.setResources(std::move(resources));
     }
@@ -148,6 +153,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 
     return qevercloud::ResourceBuilder{}
         .setGuid(UidGenerator::Generate())
+        .setLocalId(UidGenerator::Generate())
         .setHeight(32)
         .setWidth(24)
         .setLocalOnly(false)
@@ -162,14 +168,15 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
         .build();
 }
 
-[[nodiscard]] qevercloud::LinkedNotebook generateLinkedNotebook(const int index)
+[[nodiscard]] qevercloud::LinkedNotebook generateLinkedNotebook(
+    const int index, const quint16 port)
 {
     return qevercloud::LinkedNotebookBuilder{}
         .setGuid(UidGenerator::Generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
-        .setNoteStoreUrl(QStringLiteral("Fake note store url"))
+        .setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1").arg(port))
         .setShardId(QStringLiteral("Fake shard id"))
         .setWebApiUrlPrefix(QStringLiteral("Fake web api url prefix"))
         .setUsername(QString::fromUtf8("Username #%1").arg(index))
@@ -184,7 +191,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 void setupTestData(
     const DataItemTypes dataItemTypes, const ItemGroups itemGroups,
     const ItemSources itemSources, const DataItemTypes expungedDataItemTypes,
-    const ItemSources expungedItemSources, TestData & testData)
+    const ItemSources expungedItemSources, const quint16 port,
+    TestData & testData)
 {
     constexpr int itemCount = 10;
 
@@ -224,7 +232,7 @@ void setupTestData(
             [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks) {
                 for (int i = 0; i < itemCount; ++i) {
                     auto linkedNotebook =
-                        generateLinkedNotebook(linkedNotebookIndex++);
+                        generateLinkedNotebook(linkedNotebookIndex++, port);
                     linkedNotebooks << linkedNotebook;
                     linkedNotebookGuids << *linkedNotebook.guid();
                 }
@@ -1301,7 +1309,7 @@ void setupLocalStorage(
 ISyncStatePtr setupSyncState(
     const TestData & testData, const DataItemTypes dataItemTypes,
     const ItemGroups itemGroups, const ItemSources itemSources,
-    std::optional<qint32> lastUpdateTimestamp)
+    std::optional<qevercloud::Timestamp> lastUpdateTimestamp)
 {
     qint32 userOwnUpdateCount = 0;
     QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts;

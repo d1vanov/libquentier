@@ -486,12 +486,17 @@ void TestRunner::runTestScenario()
 {
     QFETCH(TestScenarioData, testScenarioData);
 
+    QNINFO(
+        "tests::synchronization::TestRunner",
+        "TestRunner::runTestScenario: " << testScenarioData.name.data());
+
     TestData testData;
     setupTestData(
         testScenarioData.serverDataItemTypes, testScenarioData.serverItemGroups,
         testScenarioData.serverItemSources,
         testScenarioData.serverExpungedDataItemTypes,
-        testScenarioData.serverExpungedDataItemSources, testData);
+        testScenarioData.serverExpungedDataItemSources,
+        m_noteStoreServer->port(), testData);
 
     setupNoteStoreServer(testData, *m_noteStoreServer);
 
@@ -500,9 +505,12 @@ void TestRunner::runTestScenario()
         testScenarioData.localItemGroups, testScenarioData.localItemSources,
         *m_localStorage);
 
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
     auto localSyncState = setupSyncState(
         testData, testScenarioData.localDataItemTypes,
-        testScenarioData.localItemGroups, testScenarioData.localItemSources);
+        testScenarioData.localItemGroups, testScenarioData.localItemSources,
+        now);
     QVERIFY(localSyncState);
 
     m_fakeSyncStateStorage->setSyncState(
@@ -510,17 +518,18 @@ void TestRunner::runTestScenario()
 
     auto serverSyncState = setupSyncState(
         testData, testScenarioData.serverDataItemTypes,
-        testScenarioData.serverItemGroups, testScenarioData.serverItemSources);
+        testScenarioData.serverItemGroups, testScenarioData.serverItemSources,
+        now);
     QVERIFY(serverSyncState);
-
-    const auto now = QDateTime::currentMSecsSinceEpoch();
 
     m_noteStoreServer->putUserOwnSyncState(
         qevercloud::SyncStateBuilder{}
             .setUpdateCount(serverSyncState->userDataUpdateCount())
             .setUserLastUpdated(serverSyncState->userDataLastSyncTime())
-            .setFullSyncBefore(
-                serverSyncState->userDataLastSyncTime() + 9999999999)
+            .setFullSyncBefore(QDateTime::fromMSecsSinceEpoch(
+                                   serverSyncState->userDataLastSyncTime())
+                                   .addMonths(-1)
+                                   .toMSecsSinceEpoch())
             .setCurrentTime(now)
             .build());
 

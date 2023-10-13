@@ -85,7 +85,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
 void setupTestData(
     DataItemTypes dataItemTypes,  ItemGroups itemGroups, ItemSources itemSources,
     DataItemTypes expungedDataItemTypes, ItemSources expungedItemSources,
-    TestData & testData);
+    quint16 port, TestData & testData);
 
 void setupNoteStoreServer(
     TestData & testData, NoteStoreServer & noteStoreServer);
@@ -98,6 +98,6 @@ void setupLocalStorage(
 [[nodiscard]] ISyncStatePtr setupSyncState(
     const TestData & testData, DataItemTypes dataItemTypes,
     ItemGroups itemGroups, ItemSources itemSources,
-    std::optional<qint32> lastUpdateTimestamp = std::nullopt);
+    std::optional<qevercloud::Timestamp> lastUpdateTimestamp = std::nullopt);
 
 } // namespace quentier::synchronization::tests

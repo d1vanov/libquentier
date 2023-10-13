@@ -1145,9 +1145,6 @@ NoteStoreServer::ItemData NoteStoreServer::putLinkedNotebook(
             "or uri")}};
     }
 
-    linkedNotebook.setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1")
-                                       .arg(m_tcpServer->serverPort()));
-
     ItemData result;
 
     if (!linkedNotebook.guid()) {
