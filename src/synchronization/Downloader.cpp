@@ -863,8 +863,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
     downloadContext->canceler = std::move(canceler);
     downloadContext->callbackWeak = std::move(callbackWeak);
 
-    auto noteStoreFuture =
-        m_noteStoreProvider->userOwnNoteStore(ctx, m_retryPolicy);
+    auto noteStoreFuture = m_noteStoreProvider->userOwnNoteStore(
+        downloadContext->ctx, m_retryPolicy);
 
     threading::thenOrFailed(
         std::move(noteStoreFuture), promise,
