@@ -105,6 +105,11 @@ private:
         // Linked notebook to which this DownloadContext belongs
         std::optional<qevercloud::LinkedNotebook> linkedNotebook;
 
+        // Authentication token to be used for downloading notes and resources
+        // from linked notebook if this download context belongs to a linked
+        // notebook.
+        std::optional<QString> linkedNotebookAuthToken;
+
         // Running result
         SyncChunksDataCountersPtr syncChunksDataCounters;
         DownloadNotesStatusPtr downloadNotesStatus;
@@ -132,11 +137,14 @@ private:
 
     [[nodiscard]] QFuture<Result> fetchAuthInfoAndStartLinkedNotebookDataDownload(
         const DownloadContextPtr & downloadContext,
+        qevercloud::SyncState linkedNotebookSyncState,
         SynchronizationMode syncMode,
         qevercloud::LinkedNotebook linkedNotebook);
 
     void startLinkedNotebookDataDownload(
-        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
+        DownloadContextPtr downloadContext,
+        const qevercloud::SyncState & linkedNotebookSyncState,
+        SynchronizationMode syncMode);
 
     void processSyncChunks(
         DownloadContextPtr downloadContext, SynchronizationMode syncMode,

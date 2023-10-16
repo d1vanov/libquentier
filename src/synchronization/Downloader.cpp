@@ -1011,83 +1011,147 @@ void Downloader::launchLinkedNotebooksDataDownload(
     DownloadContextPtr downloadContext, const SynchronizationMode syncMode,
     QList<qevercloud::LinkedNotebook> linkedNotebooks)
 {
-    if (!linkedNotebooks.isEmpty()) {
-        if (const auto callback = downloadContext->callbackWeak.lock()) {
-            callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
-        }
-    }
+    Q_ASSERT(downloadContext);
+    Q_ASSERT(downloadContext->ctx);
 
-    QList<qevercloud::Guid> linkedNotebookGuids;
-    linkedNotebookGuids.reserve(std::max(linkedNotebooks.size(), 0));
-
-    QList<QFuture<Result>> linkedNotebookFutures;
-    linkedNotebookFutures.reserve(std::max(linkedNotebooks.size(), 0));
-
-    for (auto & linkedNotebook: linkedNotebooks) {
-        if (Q_UNLIKELY(!linkedNotebook.guid())) {
-            QNWARNING(
-                "synchronization::Downloader",
-                "Skipping linked notebook without guid: " << linkedNotebook);
-            continue;
-        }
-
-        linkedNotebookGuids << *linkedNotebook.guid();
-
-        linkedNotebookFutures
-            << fetchAuthInfoAndStartLinkedNotebookDataDownload(
-                   downloadContext, syncMode, std::move(linkedNotebook));
-    }
-
-    if (linkedNotebookFutures.isEmpty()) {
+    if (linkedNotebooks.isEmpty()) {
         finalize(downloadContext);
         return;
     }
 
-    auto allLinkedNotebooksFuture =
-        threading::whenAll<Result>(std::move(linkedNotebookFutures));
+    if (const auto callback = downloadContext->callbackWeak.lock()) {
+        callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
+    }
+
+    auto noteStoreFuture = m_noteStoreProvider->userOwnNoteStore(
+        downloadContext->ctx, m_retryPolicy);
 
     auto promise = downloadContext->promise;
     threading::thenOrFailed(
-        std::move(allLinkedNotebooksFuture), promise,
-        [downloadContext = std::move(downloadContext),
-         linkedNotebookGuids = std::move(linkedNotebookGuids)](
-            QList<Result> linkedNotebookResults) {
-            const int size = linkedNotebookResults.size();
-            Q_ASSERT(linkedNotebookGuids.size() == size);
+        std::move(noteStoreFuture), promise,
+        [selfWeak = weak_from_this(), this, promise, syncMode,
+         downloadContext = std::move(downloadContext),
+         linkedNotebooks = std::move(linkedNotebooks)](
+            const qevercloud::INoteStorePtr & noteStore) mutable {
+            Q_ASSERT(noteStore);
 
-            QHash<qevercloud::Guid, LocalResult> results;
-            results.reserve(std::max(size, 0));
-
-            for (int i = 0; i < size; ++i) {
-                // Somewhat confusing piece: for the sake of
-                // code unification when processing stuff from
-                // linked notebooks we still put things into
-                // userOwnResult of local DownloadContext
-                // results and only here we properly unite all
-                // the local results into a single global one.
-                auto & currentResult = linkedNotebookResults[i].userOwnResult;
-
-                results[linkedNotebookGuids[i]] = LocalResult{
-                    std::move(currentResult.syncChunksDataCounters),
-                    std::move(currentResult.downloadNotesStatus),
-                    std::move(currentResult.downloadResourcesStatus)};
+            const auto self = selfWeak.lock();
+            if (!self) {
+                downloadContext->promise->setException(OperationCanceled{});
+                downloadContext->promise->finish();
+                return;
             }
 
-            Downloader::updateSyncState(*downloadContext);
-            downloadContext->promise->addResult(Result{
-                LocalResult{
-                    std::move(downloadContext->syncChunksDataCounters),
-                    std::move(downloadContext->downloadNotesStatus),
-                    std::move(downloadContext->downloadResourcesStatus)},
-                std::move(results), std::move(downloadContext->lastSyncState)});
+            QList<qevercloud::Guid> linkedNotebookGuids;
+            linkedNotebookGuids.reserve(std::max(linkedNotebooks.size(), 0));
 
-            downloadContext->promise->finish();
+            QList<QFuture<Result>> linkedNotebookFutures;
+            linkedNotebookFutures.reserve(std::max(linkedNotebooks.size(), 0));
+
+            for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+                if (Q_UNLIKELY(!linkedNotebook.guid())) {
+                    QNWARNING(
+                        "synchronization::Downloader",
+                        "Skipping linked notebook without guid: "
+                            << linkedNotebook);
+                    continue;
+                }
+
+                linkedNotebookGuids << *linkedNotebook.guid();
+
+                auto syncStateFuture =
+                    noteStore->getLinkedNotebookSyncStateAsync(
+                        linkedNotebook, downloadContext->ctx);
+
+                auto linkedNotebookResultPromise =
+                    std::make_shared<QPromise<Result>>();
+
+                linkedNotebookFutures << linkedNotebookResultPromise->future();
+                linkedNotebookResultPromise->start();
+
+                threading::thenOrFailed(
+                    std::move(syncStateFuture), linkedNotebookResultPromise,
+                    [selfWeak, this, linkedNotebookResultPromise, syncMode,
+                     downloadContext, linkedNotebook = linkedNotebook](
+                        qevercloud::SyncState linkedNotebookSyncState) mutable {
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            downloadContext->promise->setException(
+                                OperationCanceled{});
+                            downloadContext->promise->finish();
+                            return;
+                        }
+
+                        auto f =
+                            fetchAuthInfoAndStartLinkedNotebookDataDownload(
+                                downloadContext,
+                                std::move(linkedNotebookSyncState), syncMode,
+                                std::move(linkedNotebook));
+
+                        threading::thenOrFailed(
+                            std::move(f), linkedNotebookResultPromise,
+                            [linkedNotebookResultPromise](Result result) {
+                                linkedNotebookResultPromise->addResult(
+                                    std::move(result));
+                                linkedNotebookResultPromise->finish();
+                            });
+                    });
+            }
+
+            if (linkedNotebookFutures.isEmpty()) {
+                finalize(downloadContext);
+                return;
+            }
+
+            auto allLinkedNotebooksFuture =
+                threading::whenAll<Result>(std::move(linkedNotebookFutures));
+
+            threading::thenOrFailed(
+                std::move(allLinkedNotebooksFuture), promise,
+                [downloadContext = std::move(downloadContext),
+                 linkedNotebookGuids = std::move(linkedNotebookGuids)](
+                    QList<Result> linkedNotebookResults) {
+                    const int size = linkedNotebookResults.size();
+                    Q_ASSERT(linkedNotebookGuids.size() == size);
+
+                    QHash<qevercloud::Guid, LocalResult> results;
+                    results.reserve(std::max(size, 0));
+
+                    for (int i = 0; i < size; ++i) {
+                        // Somewhat confusing piece: for the sake of
+                        // code unification when processing stuff from
+                        // linked notebooks we still put things into
+                        // userOwnResult of local DownloadContext
+                        // results and only here we properly unite all
+                        // the local results into a single global one.
+                        auto & currentResult =
+                            linkedNotebookResults[i].userOwnResult;
+
+                        results[linkedNotebookGuids[i]] = LocalResult{
+                            std::move(currentResult.syncChunksDataCounters),
+                            std::move(currentResult.downloadNotesStatus),
+                            std::move(currentResult.downloadResourcesStatus)};
+                    }
+
+                    Downloader::updateSyncState(*downloadContext);
+                    downloadContext->promise->addResult(Result{
+                        LocalResult{
+                            std::move(downloadContext->syncChunksDataCounters),
+                            std::move(downloadContext->downloadNotesStatus),
+                            std::move(
+                                downloadContext->downloadResourcesStatus)},
+                        std::move(results),
+                        std::move(downloadContext->lastSyncState)});
+
+                    downloadContext->promise->finish();
+                });
         });
 }
 
 QFuture<IDownloader::Result>
     Downloader::fetchAuthInfoAndStartLinkedNotebookDataDownload(
         const DownloadContextPtr & downloadContext,
+        qevercloud::SyncState linkedNotebookSyncState,
         const SynchronizationMode syncMode,
         qevercloud::LinkedNotebook linkedNotebook)
 {
@@ -1108,7 +1172,8 @@ QFuture<IDownloader::Result>
         threading::TrackedTask{
             weak_from_this(),
             [this, downloadContext, syncMode, promise = promise,
-             linkedNotebook = std::move(linkedNotebook)](
+             linkedNotebook = std::move(linkedNotebook),
+             linkedNotebookSyncState = std::move(linkedNotebookSyncState)](
                 const IAuthenticationInfoPtr & authInfo) mutable {
                 Q_ASSERT(authInfo);
 
@@ -1128,41 +1193,30 @@ QFuture<IDownloader::Result>
                 linkedNotebookDownloadContext->callbackWeak =
                     downloadContext->callbackWeak;
 
+                linkedNotebookDownloadContext->ctx = downloadContext->ctx;
                 linkedNotebookDownloadContext->linkedNotebook =
                     std::move(linkedNotebook);
 
-                auto ctxBuilder = qevercloud::RequestContextBuilder{};
-                ctxBuilder.setAuthenticationToken(authInfo->authToken())
-                    .setCookies(authInfo->userStoreCookies());
-
-                if (downloadContext->ctx) {
-                    ctxBuilder
-                        .setConnectionTimeout(
-                            downloadContext->ctx->connectionTimeout())
-                        .setMaxConnectionTimeout(
-                            downloadContext->ctx->maxConnectionTimeout())
-                        .setIncreaseConnectionTimeoutExponentially(
-                            downloadContext->ctx
-                                ->increaseConnectionTimeoutExponentially())
-                        .setMaxRetryCount(
-                            downloadContext->ctx->maxRequestRetryCount());
-                }
-
-                linkedNotebookDownloadContext->ctx = ctxBuilder.build();
+                linkedNotebookDownloadContext->linkedNotebookAuthToken =
+                    authInfo->authToken();
 
                 startLinkedNotebookDataDownload(
-                    std::move(linkedNotebookDownloadContext), syncMode);
+                    std::move(linkedNotebookDownloadContext),
+                    linkedNotebookSyncState, syncMode);
             }});
 
     return future;
 }
 
 void Downloader::startLinkedNotebookDataDownload(
-    DownloadContextPtr downloadContext, const SynchronizationMode syncMode)
+    DownloadContextPtr downloadContext,
+    const qevercloud::SyncState & linkedNotebookSyncState,
+    const SynchronizationMode syncMode)
 {
     Q_ASSERT(downloadContext);
     Q_ASSERT(downloadContext->linkedNotebook);
     Q_ASSERT(downloadContext->linkedNotebook->guid());
+    Q_ASSERT(downloadContext->linkedNotebookAuthToken);
 
     const qint32 afterUsn = [&] {
         if (syncMode == SynchronizationMode::Full) {
@@ -1182,6 +1236,15 @@ void Downloader::startLinkedNotebookDataDownload(
 
         return 0;
     }();
+
+    if (afterUsn == linkedNotebookSyncState.updateCount()) {
+        QNDEBUG(
+            "synchronization::Downloader",
+            "Evernote has no updates for linked notebook "
+                << linkedNotebookInfo(*downloadContext->linkedNotebook));
+        finalize(downloadContext);
+        return;
+    }
 
     auto syncChunksProviderCallback =
         std::make_shared<SyncChunksProviderCallback>(
@@ -1208,6 +1271,30 @@ void Downloader::startLinkedNotebookDataDownload(
                 }
 
                 downloadContext->syncChunks = std::move(syncChunks);
+
+                // Below calls to NoteStore should use authentication token
+                // corresponding to the linked notebook instead of the
+                // token corresponding to user own account
+                auto ctxBuilder = qevercloud::RequestContextBuilder{};
+                ctxBuilder.setAuthenticationToken(
+                    *downloadContext->linkedNotebookAuthToken);
+
+                if (downloadContext->ctx) {
+                    ctxBuilder
+                        .setCookies(downloadContext->ctx->cookies())
+                        .setConnectionTimeout(
+                            downloadContext->ctx->connectionTimeout())
+                        .setMaxConnectionTimeout(
+                            downloadContext->ctx->maxConnectionTimeout())
+                        .setIncreaseConnectionTimeoutExponentially(
+                            downloadContext->ctx
+                            ->increaseConnectionTimeoutExponentially())
+                        .setMaxRetryCount(
+                            downloadContext->ctx->maxRequestRetryCount());
+                }
+
+                downloadContext->ctx = ctxBuilder.build();
+
                 processSyncChunks(std::move(downloadContext), syncMode);
             }});
 }

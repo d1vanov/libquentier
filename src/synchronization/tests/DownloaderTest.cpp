@@ -877,8 +877,8 @@ protected:
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
     const std::shared_ptr<mocks::MockINoteStoreProvider>
-        m_mockNoteStoreProvider = std::make_shared<
-            StrictMock<mocks::MockINoteStoreProvider>>();
+        m_mockNoteStoreProvider =
+            std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
 
     const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
         m_mockLocalStorage = std::make_shared<
@@ -903,8 +903,7 @@ TEST_F(DownloaderTest, Ctor)
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
             m_mockTagsProcessor, m_mockFullSyncStaleDataExpunger,
-            m_mockNoteStoreProvider, m_mockLocalStorage,
-            m_ctx, m_retryPolicy));
+            m_mockNoteStoreProvider, m_mockLocalStorage, m_ctx, m_retryPolicy));
 }
 
 TEST_F(DownloaderTest, CtorEmptyAccount)
@@ -916,8 +915,7 @@ TEST_F(DownloaderTest, CtorEmptyAccount)
             m_mockNotebooksProcessor, m_mockNotesProcessor,
             m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
             m_mockTagsProcessor, m_mockFullSyncStaleDataExpunger,
-            m_mockNoteStoreProvider, m_mockLocalStorage,
-            m_ctx, m_retryPolicy),
+            m_mockNoteStoreProvider, m_mockLocalStorage, m_ctx, m_retryPolicy),
         InvalidArgument);
 }
 
@@ -1242,6 +1240,18 @@ constexpr std::array gSyncChunksTestData{
             SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
             SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags,
         SyncMode::Incremental},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags |
+            SyncChunksFlag::WithLinkedNotebooks,
+        SyncMode::FullFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags |
+            SyncChunksFlag::WithLinkedNotebooks,
+        SyncMode::Incremental},
 };
 
 class DownloaderSyncChunksTest :
@@ -1265,7 +1275,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
-    auto authenticationInfo = std::make_shared<AuthenticationInfo>();
+    const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
     authenticationInfo->m_userId = m_account.id();
     authenticationInfo->m_authToken = QStringLiteral("authToken");
     authenticationInfo->m_authTokenExpirationTime = now + 100000000;
@@ -1289,6 +1299,19 @@ TEST_P(DownloaderSyncChunksTest, Download)
         UNREACHABLE;
     }();
 
+    const qint32 linkedNotebookAfterUsn = [&] {
+        switch (testData.m_syncMode) {
+        case SyncMode::FullFirst:
+            return 0;
+        case SyncMode::FullNonFirst:
+            [[fallthrough]];
+        case SyncMode::Incremental:
+            return 15;
+        }
+
+        UNREACHABLE;
+    }();
+
     const auto syncChunks =
         generateSyncChunks(testData.m_syncChunksFlags, userOwnAfterUsn);
     ASSERT_FALSE(syncChunks.isEmpty());
@@ -1300,6 +1323,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
     std::shared_ptr<mocks::MockIDownloaderICallback> mockDownloaderCallback =
         std::make_shared<StrictMock<mocks::MockIDownloaderICallback>>();
 
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            [noteStoreWeak = std::weak_ptr{
+                 m_mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
     {
         InSequence s;
 
@@ -1310,6 +1340,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 if (testData.m_syncMode == SyncMode::FullNonFirst) {
                     syncState->m_userDataLastSyncTime = now;
                 }
+                for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+                    Q_ASSERT(linkedNotebook.guid());
+                    const auto & guid = *linkedNotebook.guid();
+                    syncState->m_linkedNotebookUpdateCounts[guid] =
+                        linkedNotebookAfterUsn;
+                    syncState->m_linkedNotebookLastSyncTimes[guid] = now;
+                }
                 return syncState;
             });
 
@@ -1319,14 +1356,6 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 m_account, IAuthenticationInfoProvider::Mode::Cache))
             .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
                 authenticationInfo)));
-
-        EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
-            .WillOnce(
-                [noteStoreWeak = std::weak_ptr{
-                     m_mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
-                    return threading::makeReadyFuture<
-                        qevercloud::INoteStorePtr>(noteStoreWeak.lock());
-                });
 
         EXPECT_CALL(*m_mockNoteStore, getSyncStateAsync)
             .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
@@ -1620,17 +1649,17 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
                     std::move(downloadResourcesStatus));
             });
+    }
 
-        EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
-            .WillOnce(Return(
-                threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
-                    linkedNotebooks)));
+    EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
+                linkedNotebooks)));
 
-        if (!linkedNotebooks.isEmpty()) {
-            EXPECT_CALL(
-                *mockDownloaderCallback,
-                onStartLinkedNotebooksDataDownloading(linkedNotebooks));
-        }
+    if (!linkedNotebooks.isEmpty()) {
+        EXPECT_CALL(
+            *mockDownloaderCallback,
+            onStartLinkedNotebooksDataDownloading(linkedNotebooks));
     }
 
     struct LinkedNotebookData
@@ -1653,27 +1682,61 @@ TEST_P(DownloaderSyncChunksTest, Download)
     linkedNotebooksData.reserve(linkedNotebooks.size());
 
     for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
-        const qint32 linkedNotebookAfterUsn = [&] {
-            switch (testData.m_syncMode) {
-            case SyncMode::FullFirst:
-                return 0;
-            case SyncMode::FullNonFirst:
-                [[fallthrough]];
-            case SyncMode::Incremental:
-                return 15;
-            }
-
-            UNREACHABLE;
-        }();
-
         const auto linkedNotebookSyncChunks = generateSyncChunks(
             SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
                 SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
                 SyncChunksFlag::WithTags,
             linkedNotebookAfterUsn);
+        ASSERT_FALSE(linkedNotebookSyncChunks.isEmpty());
 
-        EXPECT_CALL(*m_mockSyncChunksProvider, fetchLinkedNotebookSyncChunks)
-            .WillOnce([&](const qevercloud::LinkedNotebook & ln,
+        const qint32 chunksHighUsn =
+            linkedNotebookSyncChunks.constLast().chunkHighUSN().value();
+
+        EXPECT_CALL(
+            *m_mockNoteStore,
+            getLinkedNotebookSyncStateAsync(linkedNotebook, _))
+            .WillOnce([&, chunksHighUsn](
+                          const qevercloud::LinkedNotebook & linkedNotebook,
+                          const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_TRUE(ctx);
+                if (ctx) {
+                    EXPECT_EQ(
+                        ctx->authenticationToken(),
+                        authenticationInfo->authToken());
+                }
+
+                EXPECT_TRUE(linkedNotebooks.contains(linkedNotebook));
+
+                return threading::makeReadyFuture<qevercloud::SyncState>(
+                    qevercloud::SyncStateBuilder{}
+                        .setUpdateCount(chunksHighUsn)
+                        .setFullSyncBefore(
+                            testData.m_syncMode == SyncMode::FullNonFirst
+                                ? (now + 100500)
+                                : 0)
+                        .build());
+            });
+
+        const auto linkedNotebookAuthenticationInfo =
+            std::make_shared<AuthenticationInfo>();
+        linkedNotebookAuthenticationInfo->m_authToken =
+            QString::fromUtf8("%1 authToken")
+                .arg(linkedNotebook.username().value());
+
+        EXPECT_CALL(
+            *m_mockAuthenticationInfoProvider,
+            authenticateToLinkedNotebook(
+                m_account, linkedNotebook,
+                IAuthenticationInfoProvider::Mode::Cache))
+            .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                linkedNotebookAuthenticationInfo)));
+
+        EXPECT_CALL(
+            *m_mockSyncChunksProvider,
+            fetchLinkedNotebookSyncChunks(
+                linkedNotebook, _, _, _, _, _))
+            .WillOnce([&, linkedNotebookSyncChunks](
+                          const qevercloud::LinkedNotebook & ln,
                           [[maybe_unused]] qint32 afterUsn,
                           [[maybe_unused]] const SynchronizationMode syncMode,
                           const qevercloud::IRequestContextPtr & ctx,
@@ -1739,7 +1802,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 *m_mockFullSyncStaleDataExpunger,
                 expungeStaleData(_, _, Eq(linkedNotebook.guid())))
                 .WillOnce(
-                    [&](const IFullSyncStaleDataExpunger::PreservedGuids &
+                    [&, linkedNotebookSyncChunks](
+                        const IFullSyncStaleDataExpunger::PreservedGuids &
                             preservedGuids,
                         [[maybe_unused]] const utility::cancelers::
                             ICancelerPtr & canceler,
@@ -1758,8 +1822,9 @@ TEST_P(DownloaderSyncChunksTest, Download)
             onLinkedNotebookSyncChunksDataProcessingProgress(
                 Ne(nullptr), linkedNotebook))
             .WillRepeatedly(
-                [&](const SyncChunksDataCountersPtr & counters,
-                    [[maybe_unused]] const qevercloud::LinkedNotebook & ln) {
+                [lastSyncChunksDataCounters = lastSyncChunksDataCounters](
+                    const SyncChunksDataCountersPtr & counters,
+                    [[maybe_unused]] const qevercloud::LinkedNotebook & ln) mutable {
                     ASSERT_TRUE(counters);
                     if (!lastSyncChunksDataCounters) {
                         lastSyncChunksDataCounters = counters;

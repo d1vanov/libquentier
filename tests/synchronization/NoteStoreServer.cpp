@@ -3264,13 +3264,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             << ", linked notebook guid = "
             << linkedNotebookGuid.value_or(QStringLiteral("<none>")));
 
-    if (linkedNotebookGuid) {
-        if (auto exc =
-                checkLinkedNotebookAuthentication(*linkedNotebookGuid, ctx)) {
-            return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
-        }
-    }
-    else if (auto exc = checkAuthentication(ctx)) {
+    if (auto exc = checkAuthentication(ctx)) {
         return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
     }
 
