@@ -224,6 +224,32 @@ static const std::array gTestScenarioData{
         false, // expectSomeLinkedNotebookDataSent
         "Full sync with user own linked notebooks' data"sv, // name
     },
+    TestScenarioData{
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch |
+            DataItemType::Tag,          // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base, // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount |
+            ItemSource::LinkedNotebook, // serverItemSources
+        DataItemTypes{},                // serverExpungedDataItemTypes
+        ItemSources{},                  // serverExpungedDataItemSources
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch | DataItemType::Tag, // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base,                    // localItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount |
+            ItemSource::LinkedNotebook,             // localItemSources
+        StopSynchronizationError{std::monostate{}}, // stopSyncError
+        false,                                      // expectFailure
+        false, // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        false, // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        false, // expectSomeUserOwnDataSent
+        false, // expectSomeLinkedNotebookDataSent
+        "Incremental sync with nothing to sync' data"sv, // name
+    },
 };
 
 } // namespace quentier::synchronization::tests
