@@ -819,6 +819,16 @@ void setupNoteStoreServer(
             if (itemData.guid) {
                 note.setGuid(*itemData.guid);
             }
+
+            if (note.resources() && !note.resources()->isEmpty()) {
+                for (auto & resource: *note.mutableResources()) {
+                    Q_ASSERT(resource.guid());
+                    const auto it = itemData.resourceUsns.constFind(
+                        *resource.guid());
+                    Q_ASSERT(it != itemData.resourceUsns.constEnd());
+                    resource.setUpdateSequenceNum(it.value());
+                }
+            }
         }
     };
 

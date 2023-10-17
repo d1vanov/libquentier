@@ -79,6 +79,9 @@ public:
 
         // Update sequence number assigned to the item
         qint32 usn = 0;
+
+        // For notes only: update sequence numbers assigned to note's resources
+        QHash<qevercloud::Guid, qint32> resourceUsns;
     };
 
     enum class StopSynchronizationErrorTrigger

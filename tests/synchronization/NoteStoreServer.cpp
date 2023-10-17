@@ -872,6 +872,7 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
 
         auto resourceItemData = putResource(resource);
         resource.setUpdateSequenceNum(resourceItemData.usn);
+        result.resourceUsns[*resource.guid()] = resourceItemData.usn;
     }
 
     auto originalResources = resources;
