@@ -19,7 +19,27 @@ if(CLANG_TIDY_BINARY)
       set(NEWLINE "\n")
     endif()
 
-    foreach(SOURCE IN LISTS ${PROJECT_NAME}_HEADERS ${PROJECT_NAME}_SOURCES TEST_SOURCES TEST_HEADERS)
+    file(GLOB_RECURSE PUBLIC_HEADERS
+      LIST_DIRECTORIES FALSE
+      RELATIVE "${PROJECT_SOURCE_DIR}"
+      "headers/*.h*")
+
+    file(GLOB_RECURSE SOURCES
+      LIST_DIRECTORIES FALSE
+      RELATIVE "${PROJECT_SOURCE_DIR}"
+      "src/*.cpp")
+
+    file(GLOB_RECURSE TEST_HEADERS
+      LIST_DIRECTORIES FALSE
+      RELATIVE "${PROJECT_SOURCE_DIR}"
+      "tests/*.h*")
+
+    file(GLOB_RECURSE TEST_SOURCES
+      LIST_DIRECTORIES FALSE
+      RELATIVE "${PROJECT_SOURCE_DIR}"
+      "tests/*.cpp")
+
+    foreach(SOURCE IN LISTS PUBLIC_HEADERS SOURCES TEST_HEADERS TEST_SOURCES)
       # workaround for third party source which triggers a lot of noise
       if("${SOURCE}" STREQUAL "src/utility/unix/linux/StackTrace.cpp" OR
           "${SOURCE}" STREQUAL "src/utility/unix/linux/StackTrace.h")
