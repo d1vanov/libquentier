@@ -1251,6 +1251,12 @@ constexpr std::array gSyncChunksTestData{
             SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
             SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags |
             SyncChunksFlag::WithLinkedNotebooks,
+        SyncMode::FullNonFirst},
+    DownloaderSyncChunksTestData{
+        SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
+            SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
+            SyncChunksFlag::WithSavedSearches | SyncChunksFlag::WithTags |
+            SyncChunksFlag::WithLinkedNotebooks,
         SyncMode::Incremental},
 };
 
@@ -1345,7 +1351,10 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     const auto & guid = *linkedNotebook.guid();
                     syncState->m_linkedNotebookUpdateCounts[guid] =
                         linkedNotebookAfterUsn;
-                    syncState->m_linkedNotebookLastSyncTimes[guid] = now;
+
+                    if (testData.m_syncMode == SyncMode::FullNonFirst) {
+                        syncState->m_linkedNotebookLastSyncTimes[guid] = now;
+                    }
                 }
                 return syncState;
             });
@@ -1763,10 +1772,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
                 EXPECT_FALSE(callbackWeak.expired());
                 if (const auto callback = callbackWeak.lock()) {
-                    const qint32 lastPreviousUsn =
-                        (testData.m_syncMode == SyncMode::FullNonFirst
-                             ? 0
-                             : afterUsn);
+                    const qint32 lastPreviousUsn = linkedNotebookAfterUsn;
                     const qint32 highestServerUsn =
                         linkedNotebookSyncChunks.last().chunkHighUSN().value();
                     for (const auto & syncChunk:
@@ -1796,25 +1802,6 @@ TEST_P(DownloaderSyncChunksTest, Download)
         EXPECT_CALL(
             *mockDownloaderCallback,
             onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
-
-        if (testData.m_syncMode == SyncMode::FullNonFirst) {
-            EXPECT_CALL(
-                *m_mockFullSyncStaleDataExpunger,
-                expungeStaleData(_, _, Eq(linkedNotebook.guid())))
-                .WillOnce(
-                    [&, linkedNotebookSyncChunks](
-                        const IFullSyncStaleDataExpunger::PreservedGuids &
-                            preservedGuids,
-                        [[maybe_unused]] const utility::cancelers::
-                            ICancelerPtr & canceler,
-                        [[maybe_unused]] const std::optional<qevercloud::Guid> &
-                            linkedNotebookGuid) {
-                        const auto expectedPreservedGuids =
-                            collectPreservedGuids(linkedNotebookSyncChunks);
-                        EXPECT_EQ(preservedGuids, expectedPreservedGuids);
-                        return threading::makeReadyFuture();
-                    });
-        }
 
         SyncChunksDataCountersPtr lastSyncChunksDataCounters;
         EXPECT_CALL(
@@ -1905,6 +1892,24 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
         {
             InSequence s;
+
+            if (testData.m_syncMode == SyncMode::FullNonFirst) {
+                EXPECT_CALL(
+                    *m_mockFullSyncStaleDataExpunger,
+                    expungeStaleData(_, _, Eq(linkedNotebookGuid)))
+                    .WillOnce(
+                        [&, linkedNotebookSyncChunks](const IFullSyncStaleDataExpunger::PreservedGuids &
+                                preservedGuids,
+                            [[maybe_unused]] const utility::cancelers::
+                                ICancelerPtr & canceler,
+                            [[maybe_unused]] const std::optional<qevercloud::Guid> &
+                                linkedNotebookGuid) {
+                            const auto expectedPreservedGuids =
+                                collectPreservedGuids(linkedNotebookSyncChunks);
+                            EXPECT_EQ(preservedGuids, expectedPreservedGuids);
+                            return threading::makeReadyFuture();
+                        });
+            }
 
             EXPECT_CALL(
                 *m_mockNotebooksProcessor,
