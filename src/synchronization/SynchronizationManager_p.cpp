@@ -30,7 +30,6 @@
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/DateTime.h>
 
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/synchronization/INoteStore.h>

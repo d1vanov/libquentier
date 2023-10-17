@@ -115,7 +115,7 @@ ILocalStoragePtr createSqliteLocalStorage(
         account, connectionPool, threadPool, writerThread);
 
     auto usersHandler = std::make_shared<sql::UsersHandler>(
-        connectionPool, threadPool, notifier, writerThread);
+        connectionPool, std::move(threadPool), notifier, writerThread);
 
     return std::make_shared<sql::LocalStorage>(
         std::move(linkedNotebooksHandler), std::move(notebooksHandler),
