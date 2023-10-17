@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -76,7 +76,7 @@ ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
     m_allowedEnMediaAttributes(QSet<QString>()
 #include "allowedEnMediaAttributes.inl"
                                    ),
-    m_pHtmlCleaner(nullptr), m_cachedConvertedXml()
+    m_pHtmlCleaner(nullptr)
 {}
 
 #undef WRAP
@@ -1514,12 +1514,12 @@ QString ENMLConverterPrivate::resourceHtml(
 {
     QNDEBUG("enml", "ENMLConverterPrivate::resourceHtml");
 
-    if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
+    if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't compose the resource's html "
                        "representation: no data hash is set"));
         QNWARNING("enml", errorDescription << ", resource: " << resource);
-        return QString();
+        return {};
     }
 
     if (Q_UNLIKELY(!resource.mime())) {
@@ -1527,7 +1527,7 @@ QString ENMLConverterPrivate::resourceHtml(
             QT_TR_NOOP("Can't compose the resource's html "
                        "representation: no mime type is set"));
         QNWARNING("enml", errorDescription << ", resource: " << resource);
-        return QString();
+        return {};
     }
 
     QXmlStreamAttributes attributes;
@@ -1545,7 +1545,7 @@ QString ENMLConverterPrivate::resourceHtml(
             QT_TR_NOOP("Can't compose the resource's html representation: "
                        "can't open the buffer to write the html into"));
         errorDescription.details() = htmlBuffer.errorString();
-        return QString();
+        return {};
     }
 
     QXmlStreamWriter writer(&htmlBuffer);
@@ -1553,7 +1553,7 @@ QString ENMLConverterPrivate::resourceHtml(
     res = resourceInfoToHtml(attributes, writer, errorDescription);
     if (Q_UNLIKELY(!res)) {
         QNWARNING("enml", errorDescription << ", resource: " << resource);
-        return QString();
+        return {};
     }
 
     writer.writeEndElement();
@@ -3213,9 +3213,9 @@ bool ENMLConverterPrivate::importEnex(
             if (elementName == QStringLiteral("resource")) {
                 QNTRACE("enml", "End of resource");
 
-                if (Q_UNLIKELY(!currentResource.data() ||
-                               !currentResource.data()->body()))
-                {
+                if (Q_UNLIKELY(
+                        !(currentResource.data() &&
+                          currentResource.data()->body()))) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Parsed resource without a data body"));
                     QNWARNING(
@@ -3224,9 +3224,9 @@ bool ENMLConverterPrivate::importEnex(
                     return false;
                 }
 
-                if (Q_UNLIKELY(!currentResource.data() ||
-                               !currentResource.data()->bodyHash()))
-                {
+                if (Q_UNLIKELY(
+                        !(currentResource.data() &&
+                          currentResource.data()->bodyHash()))) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Internal error: data hash is not computed "
                                    "for the resource"));
@@ -3236,9 +3236,9 @@ bool ENMLConverterPrivate::importEnex(
                     return false;
                 }
 
-                if (Q_UNLIKELY(!currentResource.data() ||
-                               !currentResource.data()->size()))
-                {
+                if (Q_UNLIKELY(
+                        !(currentResource.data() &&
+                          currentResource.data()->size()))) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Internal error: data size is not computed "
                                    "for the resource"));
