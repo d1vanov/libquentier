@@ -3878,6 +3878,33 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         }
     }
 
+    // Should not include resources into the sync chunk if note containing
+    // the resource is also included into the sync chunk. Only resources updated
+    // separately from their respective notes should be present in the sync
+    // chunk.
+    if (syncChunk.resources() && !syncChunk.resources()->isEmpty()
+        && syncChunk.notes()) {
+        for (auto it = syncChunk.mutableResources()->begin();
+             it != syncChunk.mutableResources()->end();) {
+            const auto & resource = *it;
+            Q_ASSERT(resource.noteGuid());
+
+            const auto noteIt =
+                std::find_if(
+                    syncChunk.notes()->constBegin(),
+                    syncChunk.notes()->constEnd(),
+                    [&resource](const qevercloud::Note & note) {
+                        return note.guid() == resource.noteGuid();
+                    });
+            if (noteIt != syncChunk.notes()->constEnd()) {
+                it = syncChunk.mutableResources()->erase(it);
+                continue;
+            }
+
+            ++it;
+        }
+    }
+
     return std::make_pair(std::move(syncChunk), nullptr);
 }
 
