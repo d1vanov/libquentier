@@ -60,29 +60,33 @@ QHash<qevercloud::Guid, qevercloud::Timestamp>
 
 QTextStream & SyncState::print(QTextStream & strm) const
 {
-    strm << "SyncState: userDataUpdateCount = " << m_userDataUpdateCount
-         << ", userDataLastSyncTime = "
-         << printableDateTimeFromTimestamp(m_userDataLastSyncTime);
+    strm << "SyncState:\n"
+         << "    userDataUpdateCount = " << m_userDataUpdateCount << ",\n"
+         << "    userDataLastSyncTime = "
+         << printableDateTimeFromTimestamp(m_userDataLastSyncTime)
+         << ",\n";
 
-    strm << ", linked notebook update counts: ";
+    strm << "    linked notebook update counts:";
     if (m_linkedNotebookUpdateCounts.isEmpty()) {
-        strm << "<empty>, ";
+        strm << " <empty>,\n";
     }
     else {
+        strm << "\n";
         for (const auto it: qevercloud::toRange(m_linkedNotebookUpdateCounts)) {
-            strm << "[" << it.key() << " => " << it.value() << "]; ";
+            strm << "        [" << it.key() << " => " << it.value() << "];\n";
         }
     }
 
-    strm << "linked notebook last sync times: ";
+    strm << "    linked notebook last sync times:";
     if (m_linkedNotebookLastSyncTimes.isEmpty()) {
-        strm << "<empty>";
+        strm << " <empty>\n";
     }
     else {
+        strm << "\n";
         for (const auto it: qevercloud::toRange(m_linkedNotebookLastSyncTimes))
         {
-            strm << "[" << it.key() << " => "
-                 << printableDateTimeFromTimestamp(it.value()) << "]; ";
+            strm << "        [" << it.key() << " => "
+                 << printableDateTimeFromTimestamp(it.value()) << "];\n";
         }
     }
 
