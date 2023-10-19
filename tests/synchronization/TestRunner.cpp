@@ -507,20 +507,36 @@ void TestRunner::runTestScenario()
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
+    QNINFO(
+        "tests::synchronization::TestRunner",
+        "Setting up local sync state");
+
     auto localSyncState = setupSyncState(
         testData, testScenarioData.localDataItemTypes,
         testScenarioData.localItemGroups, testScenarioData.localItemSources,
         now);
     QVERIFY(localSyncState);
 
+    QNINFO(
+        "tests::synchronization::TestRunner",
+        "Local sync state: " << *localSyncState);
+
     m_fakeSyncStateStorage->setSyncState(
         m_testAccount, std::move(localSyncState));
+
+    QNINFO(
+        "tests::synchronization::TestRunner",
+        "Setting up server sync state");
 
     auto serverSyncState = setupSyncState(
         testData, testScenarioData.serverDataItemTypes,
         testScenarioData.serverItemGroups, testScenarioData.serverItemSources,
         now);
     QVERIFY(serverSyncState);
+
+    QNINFO(
+        "tests::synchronization::TestRunner",
+        "Server sync state: " << *serverSyncState);
 
     m_noteStoreServer->putUserOwnSyncState(
         qevercloud::SyncStateBuilder{}

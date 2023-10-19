@@ -16,10 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NoteStoreServer.h"
 #include "Setup.h"
+#include "NoteStoreServer.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/types/ISyncStateBuilder.h>
 #include <quentier/utility/UidGenerator.h>
@@ -224,12 +225,15 @@ void setupTestData(
         }
     }
 
-    QList<qevercloud::Guid> linkedNotebookGuids;
+    QList<qevercloud::Guid> baseLinkedNotebookGuids;
+    QList<qevercloud::Guid> modifiedLinkedNotebookGuids;
+    QList<qevercloud::Guid> newLinkedNotebookGuids;
     if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
         int linkedNotebookIndex = 1;
 
         const auto putLinkedNotebooks =
-            [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks) {
+            [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks,
+                QList<qevercloud::Guid> & linkedNotebookGuids) {
                 for (int i = 0; i < itemCount; ++i) {
                     auto linkedNotebook =
                         generateLinkedNotebook(linkedNotebookIndex++, port);
@@ -239,15 +243,19 @@ void setupTestData(
             };
 
         if (itemGroups.testFlag(ItemGroup::Base)) {
-            putLinkedNotebooks(testData.m_baseLinkedNotebooks);
+            putLinkedNotebooks(
+                testData.m_baseLinkedNotebooks, baseLinkedNotebookGuids);
         }
 
         if (itemGroups.testFlag(ItemGroup::Modified)) {
-            putLinkedNotebooks(testData.m_modifiedLinkedNotebooks);
+            putLinkedNotebooks(
+                testData.m_modifiedLinkedNotebooks,
+                modifiedLinkedNotebookGuids);
         }
 
         if (itemGroups.testFlag(ItemGroup::New)) {
-            putLinkedNotebooks(testData.m_newLinkedNotebooks);
+            putLinkedNotebooks(
+                testData.m_newLinkedNotebooks, newLinkedNotebookGuids);
         }
     }
 
@@ -275,36 +283,57 @@ void setupTestData(
 
         if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
             if (itemGroups.testFlag(ItemGroup::Base)) {
-                putTags(*gBaseItems, testData.m_userOwnBaseTags);
+                putTags(
+                    *gBaseItems + QStringLiteral(" user own"),
+                    testData.m_userOwnBaseTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
-                putTags(*gModifiedItems, testData.m_userOwnModifiedTags);
+                putTags(
+                    *gModifiedItems + QStringLiteral(" user own"),
+                    testData.m_userOwnModifiedTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
-                putTags(*gNewItems, testData.m_userOwnNewTags);
+                putTags(
+                    *gNewItems + QStringLiteral(" user own"),
+                    testData.m_userOwnNewTags);
             }
         }
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
-            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
-            {
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(baseLinkedNotebookGuids)) {
                 if (itemGroups.testFlag(ItemGroup::Base)) {
                     putTags(
-                        *gBaseItems, testData.m_linkedNotebookBaseTags,
+                        *gBaseItems +
+                        QString::fromUtf8(" linked notebook %1")
+                            .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookBaseTags,
                         linkedNotebookGuid);
                 }
+            }
 
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(modifiedLinkedNotebookGuids)) {
                 if (itemGroups.testFlag(ItemGroup::Modified)) {
                     putTags(
-                        *gModifiedItems, testData.m_linkedNotebookModifiedTags,
+                        *gModifiedItems +
+                        QString::fromUtf8(" linked notebook %1")
+                            .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookModifiedTags,
                         linkedNotebookGuid);
                 }
+            }
 
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(newLinkedNotebookGuids)) {
                 if (itemGroups.testFlag(ItemGroup::New)) {
                     putTags(
-                        *gNewItems, testData.m_linkedNotebookNewTags,
+                        *gNewItems +
+                        QString::fromUtf8(" linked notebook %1")
+                            .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookNewTags,
                         linkedNotebookGuid);
                 }
             }
@@ -331,38 +360,57 @@ void setupTestData(
 
         if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
             if (itemGroups.testFlag(ItemGroup::Base)) {
-                putNotebooks(*gBaseItems, testData.m_userOwnBaseNotebooks);
+                putNotebooks(
+                    *gBaseItems + QStringLiteral(" user own"),
+                    testData.m_userOwnBaseNotebooks);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
                 putNotebooks(
-                    *gModifiedItems, testData.m_userOwnModifiedNotebooks);
+                    *gModifiedItems + QStringLiteral(" user own"),
+                    testData.m_userOwnModifiedNotebooks);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
-                putNotebooks(*gNewItems, testData.m_userOwnNewNotebooks);
+                putNotebooks(
+                    *gNewItems + QStringLiteral(" user own"),
+                    testData.m_userOwnNewNotebooks);
             }
         }
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
-            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
-            {
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(baseLinkedNotebookGuids)) {
                 if (itemGroups.testFlag(ItemGroup::Base)) {
                     putNotebooks(
-                        *gNewItems, testData.m_linkedNotebookBaseNotebooks,
+                        *gNewItems +
+                        QString::fromUtf8(" linked notebook %1")
+                            .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookBaseNotebooks,
                         linkedNotebookGuid);
                 }
+            }
 
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(modifiedLinkedNotebookGuids)) {
                 if (itemGroups.testFlag(ItemGroup::Modified)) {
                     putNotebooks(
-                        *gModifiedItems,
+                        *gModifiedItems +
+                        QString::fromUtf8(" linked notebook %1")
+                            .arg(linkedNotebookGuid),
                         testData.m_linkedNotebookModifiedNotebooks,
                         linkedNotebookGuid);
                 }
+            }
 
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(newLinkedNotebookGuids)) {
                 if (itemGroups.testFlag(ItemGroup::New)) {
                     putNotebooks(
-                        *gNewItems, testData.m_linkedNotebookNewNotebooks,
+                        *gNewItems +
+                        QString::fromUtf8(" linked notebook %1")
+                            .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookNewNotebooks,
                         linkedNotebookGuid);
                 }
             }
@@ -471,43 +519,49 @@ void setupTestData(
         if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 putUserOwnNotes(
-                    *gBaseItems, testData.m_userOwnBaseNotes,
+                    *gBaseItems + QStringLiteral(" user own"),
+                    testData.m_userOwnBaseNotes,
                     testData.m_userOwnBaseNotebooks,
                     testData.m_userOwnBaseTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
                 putUserOwnNotes(
-                    *gModifiedItems, testData.m_userOwnModifiedNotes,
+                    *gModifiedItems + QStringLiteral(" user own"),
+                    testData.m_userOwnModifiedNotes,
                     testData.m_userOwnModifiedNotebooks,
                     testData.m_userOwnModifiedTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
                 putUserOwnNotes(
-                    *gNewItems, testData.m_userOwnNewNotes,
-                    testData.m_userOwnNewNotebooks, testData.m_userOwnNewTags);
+                    *gNewItems + QStringLiteral(" user own"),
+                    testData.m_userOwnNewNotes, testData.m_userOwnNewNotebooks,
+                    testData.m_userOwnNewTags);
             }
         }
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
             if (itemGroups.testFlag(ItemGroup::Base)) {
                 putLinkedNotebookNotes(
-                    *gBaseItems, testData.m_linkedNotebookBaseNotes,
+                    *gBaseItems + QStringLiteral(" linked notebook"),
+                    testData.m_linkedNotebookBaseNotes,
                     testData.m_linkedNotebookBaseNotebooks,
                     testData.m_linkedNotebookBaseTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::Modified)) {
                 putLinkedNotebookNotes(
-                    *gModifiedItems, testData.m_linkedNotebookModifiedNotes,
+                    *gModifiedItems + QStringLiteral(" linked notebook"),
+                    testData.m_linkedNotebookModifiedNotes,
                     testData.m_linkedNotebookModifiedNotebooks,
                     testData.m_linkedNotebookModifiedTags);
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
                 putLinkedNotebookNotes(
-                    *gNewItems, testData.m_linkedNotebookNewNotes,
+                    *gNewItems + QStringLiteral(" linked notebook"),
+                    testData.m_linkedNotebookNewNotes,
                     testData.m_linkedNotebookNewNotebooks,
                     testData.m_linkedNotebookNewTags);
             }
@@ -552,38 +606,35 @@ void setupTestData(
             itemGroups.testFlag(ItemGroup::Modified))
         {
             putResources(
-                *gBaseItems, testData.m_userOwnModifiedResources,
+                *gBaseItems + QStringLiteral(" user own"),
+                testData.m_userOwnModifiedResources,
                 userOwnNoteGuids);
         }
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook) &&
             itemGroups.testFlag(ItemGroup::Modified))
         {
-            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
-            {
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(modifiedLinkedNotebookGuids)) {
                 const QList<qevercloud::Guid> noteGuids = [&] {
                     QList<qevercloud::Guid> result;
-
-                    const auto allNotes = QList<qevercloud::Note>{}
-                        << testData.m_linkedNotebookBaseNotes
-                        << testData.m_linkedNotebookModifiedNotes
-                        << testData.m_linkedNotebookNewNotes;
-
-                    const auto allNotebooks = QList<qevercloud::Notebook>{}
-                        << testData.m_linkedNotebookBaseNotebooks
-                        << testData.m_linkedNotebookModifiedNotebooks
-                        << testData.m_linkedNotebookNewNotebooks;
-
-                    for (const auto & note: qAsConst(allNotes)) {
+                    for (const auto & note:
+                         qAsConst(testData.m_linkedNotebookModifiedNotes)) {
                         Q_ASSERT(note.guid());
                         Q_ASSERT(note.notebookGuid());
 
                         const auto notebookIt = std::find_if(
-                            allNotebooks.constBegin(), allNotebooks.constEnd(),
+                            testData.m_linkedNotebookModifiedNotebooks
+                                .constBegin(),
+                            testData.m_linkedNotebookModifiedNotebooks
+                                .constEnd(),
                             [&note](const qevercloud::Notebook & notebook) {
                                 return note.notebookGuid() == notebook.guid();
                             });
-                        Q_ASSERT(notebookIt != allNotebooks.constEnd());
+                        Q_ASSERT(
+                            notebookIt !=
+                            testData.m_linkedNotebookModifiedNotebooks
+                                .constEnd());
                         if (notebookIt->linkedNotebookGuid() ==
                             linkedNotebookGuid) {
                             result << *note.guid();
@@ -602,7 +653,7 @@ void setupTestData(
 
     const auto generateExpungedGuids =
         [](QSet<qevercloud::Guid> & expungedGuids) {
-            expungedGuids.reserve(itemCount);
+            expungedGuids.reserve(expungedGuids.size() + itemCount);
             for (int i = 0; i < itemCount; ++i) {
                 expungedGuids.insert(UidGenerator::Generate());
             }
@@ -619,12 +670,14 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnTagGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook) &&
+            itemGroups.testFlag(ItemGroup::Modified))
+        {
             testData.m_expungedLinkedNotebookTagGuids.reserve(
-                linkedNotebookGuids.size());
+                modifiedLinkedNotebookGuids.size());
 
-            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
-            {
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(modifiedLinkedNotebookGuids)) {
                 auto & expungedTagGuids =
                     testData
                         .m_expungedLinkedNotebookTagGuids[linkedNotebookGuid];
@@ -639,12 +692,14 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnNotebookGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook) &&
+            itemGroups.testFlag(ItemGroup::Modified))
+        {
             testData.m_expungedLinkedNotebookNotebookGuids.reserve(
-                linkedNotebookGuids.size());
+                modifiedLinkedNotebookGuids.size());
 
-            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
-            {
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(modifiedLinkedNotebookGuids)) {
                 auto & expungedNotebookGuids =
                     testData.m_expungedLinkedNotebookNotebookGuids
                         [linkedNotebookGuid];
@@ -659,12 +714,14 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnNoteGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook) &&
+            itemGroups.testFlag(ItemGroup::Modified))
+        {
             testData.m_expungedLinkedNotebookNoteGuids.reserve(
-                linkedNotebookGuids.size());
+                modifiedLinkedNotebookGuids.size());
 
-            for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
-            {
+            for (const auto & linkedNotebookGuid:
+                 qAsConst(modifiedLinkedNotebookGuids)) {
                 auto & expungedNoteGuids =
                     testData
                         .m_expungedLinkedNotebookNoteGuids[linkedNotebookGuid];
@@ -678,12 +735,13 @@ void setupTestData(
 void setupNoteStoreServer(
     TestData & testData, NoteStoreServer & noteStoreServer)
 {
+    QNINFO("tests::synchronization::Setup", "setupNoteStoreServer");
+
     const auto putSavedSearches =
         [&](QList<qevercloud::SavedSearch> & savedSearches) {
             for (auto & savedSearch: savedSearches) {
                 auto itemData = noteStoreServer.putSavedSearch(savedSearch);
                 savedSearch.setUpdateSequenceNum(itemData.usn);
-
                 if (itemData.name) {
                     savedSearch.setName(*itemData.name);
                 }
@@ -694,14 +752,15 @@ void setupNoteStoreServer(
             }
         };
 
-    const auto putLinkedNotebooks = [&](QList<qevercloud::LinkedNotebook> &
-                                            linkedNotebooks) {
-        for (auto & linkedNotebook: linkedNotebooks) {
-            auto itemData = noteStoreServer.putLinkedNotebook(linkedNotebook);
-            linkedNotebook.setUpdateSequenceNum(itemData.usn);
-            Q_ASSERT(!itemData.guid);
-        }
-    };
+    const auto putLinkedNotebooks =
+        [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks) {
+            for (auto & linkedNotebook: linkedNotebooks) {
+                auto itemData =
+                    noteStoreServer.putLinkedNotebook(linkedNotebook);
+                linkedNotebook.setUpdateSequenceNum(itemData.usn);
+                Q_ASSERT(!itemData.guid);
+            }
+        };
 
     const auto putNotebooks = [&](QList<qevercloud::Notebook> & notebooks) {
         for (auto & notebook: notebooks) {
@@ -745,8 +804,8 @@ void setupNoteStoreServer(
             if (note.resources() && !note.resources()->isEmpty()) {
                 for (auto & resource: *note.mutableResources()) {
                     Q_ASSERT(resource.guid());
-                    const auto it = itemData.resourceUsns.constFind(
-                        *resource.guid());
+                    const auto it =
+                        itemData.resourceUsns.constFind(*resource.guid());
                     Q_ASSERT(it != itemData.resourceUsns.constEnd());
                     resource.setUpdateSequenceNum(it.value());
                 }
@@ -1286,6 +1345,9 @@ ISyncStatePtr setupSyncState(
     const ItemGroups itemGroups, const ItemSources itemSources,
     std::optional<qevercloud::Timestamp> lastUpdateTimestamp)
 {
+    QNINFO(
+        "tests::synchronization::Setup", "setupSyncState");
+
     qint32 userOwnUpdateCount = 0;
     QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts;
 
@@ -1307,12 +1369,20 @@ ISyncStatePtr setupSyncState(
                 const QList<const QList<qevercloud::Note> *> noteLists{
                     &testData.m_userOwnBaseNotes,
                     &testData.m_userOwnModifiedNotes,
-                    &testData.m_userOwnNewNotes};
+                    &testData.m_userOwnNewNotes,
+                    &testData.m_linkedNotebookBaseNotes,
+                    &testData.m_linkedNotebookModifiedNotes,
+                    &testData.m_linkedNotebookNewNotes,
+                };
 
                 const QList<const QList<qevercloud::Notebook> *> notebookLists{
                     &testData.m_userOwnBaseNotebooks,
                     &testData.m_userOwnModifiedNotebooks,
-                    &testData.m_userOwnNewNotebooks};
+                    &testData.m_userOwnNewNotebooks,
+                    &testData.m_linkedNotebookBaseNotebooks,
+                    &testData.m_linkedNotebookModifiedNotebooks,
+                    &testData.m_linkedNotebookNewNotebooks,
+                };
 
                 for (const auto & noteList: qAsConst(noteLists)) {
                     const auto noteIt = std::find_if(
@@ -1352,7 +1422,11 @@ ISyncStatePtr setupSyncState(
                 const QList<const QList<qevercloud::Notebook> *> lists{
                     &testData.m_userOwnBaseNotebooks,
                     &testData.m_userOwnModifiedNotebooks,
-                    &testData.m_userOwnNewNotebooks};
+                    &testData.m_userOwnNewNotebooks,
+                    &testData.m_linkedNotebookBaseNotebooks,
+                    &testData.m_linkedNotebookModifiedNotebooks,
+                    &testData.m_linkedNotebookNewNotebooks,
+                };
 
                 for (const auto & list: qAsConst(lists)) {
                     const auto it = std::find_if(

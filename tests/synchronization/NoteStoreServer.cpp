@@ -3514,15 +3514,22 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             search.setLocallyFavorited(false);
 
             syncChunk.mutableSearches()->append(search);
-
-            syncChunk.setChunkHighUSN(
-                savedSearchIt->updateSequenceNum().value());
-
             QNDEBUG(
                 "tests::synchronization",
-                "Added saved search to sync chunk: "
-                    << *savedSearchIt << "\nSync chunk high USN updated to "
-                    << *syncChunk.chunkHighUSN());
+                "Added saved search to sync chunk: " << *savedSearchIt);
+
+            if (!syncChunk.chunkHighUSN() ||
+                *syncChunk.chunkHighUSN() <
+                    savedSearchIt->updateSequenceNum().value())
+            {
+                syncChunk.setChunkHighUSN(
+                    savedSearchIt->updateSequenceNum().value());
+
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
+            }
 
             ++savedSearchIt;
         } break;
@@ -3542,12 +3549,20 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             tag.setParentTagLocalId(QString{});
 
             syncChunk.mutableTags()->append(tag);
-            syncChunk.setChunkHighUSN(tagIt->updateSequenceNum().value());
             QNDEBUG(
                 "tests::synchronization",
-                "Added tag to sync chunk: "
-                    << *tagIt << "\nSync chunk high USN updated to "
-                    << *syncChunk.chunkHighUSN());
+                "Added tag to sync chunk: " << *tagIt);
+
+            if (!syncChunk.chunkHighUSN() ||
+                *syncChunk.chunkHighUSN() <
+                    tagIt->updateSequenceNum().value())
+            {
+                syncChunk.setChunkHighUSN(tagIt->updateSequenceNum().value());
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
+            }
 
             ++tagIt;
             tagIt = advanceIterator(tagIt, tagUsnIndex, linkedNotebookGuid);
@@ -3567,13 +3582,22 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             notebook.setLinkedNotebookGuid(std::nullopt);
 
             syncChunk.mutableNotebooks()->append(notebook);
-            syncChunk.setChunkHighUSN(notebookIt->updateSequenceNum().value());
-
             QNDEBUG(
                 "tests::synchronization",
-                "Added notebook to sync chunk: "
-                    << *notebookIt << "\nSync chunk high USN updated to "
-                    << *syncChunk.chunkHighUSN());
+                "Added notebook to sync chunk: " << *notebookIt);
+
+            if (!syncChunk.chunkHighUSN() ||
+                *syncChunk.chunkHighUSN() <
+                    notebookIt->updateSequenceNum().value())
+            {
+                syncChunk.setChunkHighUSN(
+                    notebookIt->updateSequenceNum().value());
+
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
+            }
 
             ++notebookIt;
 
@@ -3635,7 +3659,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             // Notes within the sync chunks should include only note
-            // metadata bt no content, resource content, resource
+            // metadata but no content, resource content, resource
             // recognition data or resource alternate data
             qecNote.setContent(std::nullopt);
             if (qecNote.resources()) {
@@ -3660,13 +3684,38 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             syncChunk.mutableNotes()->append(qecNote);
-            syncChunk.setChunkHighUSN(noteIt->updateSequenceNum().value());
-
             QNDEBUG(
                 "tests::synchronization",
-                "Added note to sync chunk: "
-                    << qecNote << "\nSync chunk high USN updated to "
-                    << *syncChunk.chunkHighUSN());
+                "Added note to sync chunk: " << qecNote);
+
+            if (!syncChunk.chunkHighUSN() ||
+                *syncChunk.chunkHighUSN() <
+                    noteIt->updateSequenceNum().value())
+            {
+                syncChunk.setChunkHighUSN(noteIt->updateSequenceNum().value());
+
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
+            }
+
+            if (noteIt->resources() && !noteIt->resources()->isEmpty()) {
+                for (const auto & resource: qAsConst(*noteIt->resources())) {
+                    if (!syncChunk.chunkHighUSN() ||
+                        syncChunk.chunkHighUSN() <
+                            resource.updateSequenceNum().value())
+                    {
+                        syncChunk.setChunkHighUSN(
+                            *resource.updateSequenceNum());
+
+                        QNDEBUG(
+                            "tests::synchronization",
+                            "Sync chunk high USN updated to "
+                            << *syncChunk.chunkHighUSN());
+                    }
+                }
+            }
 
             ++noteIt;
             noteIt = nextNoteByUsnIterator(noteIt, linkedNotebookGuid);
@@ -3710,14 +3759,22 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             syncChunk.mutableResources()->append(qecResource);
-            syncChunk.setChunkHighUSN(resourceIt->updateSequenceNum().value());
-
             QNDEBUG(
                 "tests::synchronization",
-                "Added resource to sync "
-                    << "chunk: " << qecResource
-                    << "\nSync chunk high USN updated to "
-                    << *syncChunk.chunkHighUSN());
+                "Added resource to sync chunk: " << qecResource);
+
+            if (!syncChunk.chunkHighUSN() ||
+                *syncChunk.chunkHighUSN() <
+                    resourceIt->updateSequenceNum().value())
+            {
+                syncChunk.setChunkHighUSN(
+                    resourceIt->updateSequenceNum().value());
+
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
+            }
 
             ++resourceIt;
 
@@ -3732,15 +3789,22 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             syncChunk.mutableLinkedNotebooks()->append(*linkedNotebookIt);
-
-            syncChunk.setChunkHighUSN(
-                linkedNotebookIt->updateSequenceNum().value());
-
             QNDEBUG(
                 "tests::synchronization",
-                "Added linked notebook to sync chunk: "
-                    << *linkedNotebookIt << "\nSync chunk high USN updated to "
-                    << *syncChunk.chunkHighUSN());
+                "Added linked notebook to sync chunk: " << *linkedNotebookIt);
+
+            if (!syncChunk.chunkHighUSN() ||
+                *syncChunk.chunkHighUSN() <
+                    linkedNotebookIt->updateSequenceNum().value())
+            {
+                syncChunk.setChunkHighUSN(
+                    linkedNotebookIt->updateSequenceNum().value());
+
+                QNDEBUG(
+                    "tests::synchronization",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
+            }
 
             ++linkedNotebookIt;
         } break;
