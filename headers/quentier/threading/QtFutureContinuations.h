@@ -29,7 +29,12 @@
 #include <quentier/threading/Qt5FutureHelpers.h>
 #include <quentier/threading/Qt5Promise.h>
 #include <quentier/threading/Runnable.h>
-#endif
+
+#include <boost/core/demangle.hpp>
+
+#include <typeinfo>
+
+#endif // QT_VERSION
 
 #include <memory>
 #include <type_traits>
@@ -123,6 +128,17 @@ void processParentFuture(
                 function();
             }
             else {
+                if (future.resultCount() == 0) {
+                    promise->setException(RuntimeError{ErrorString{
+                        QString::fromUtf8(
+                            "Invalid future continuation: detected future "
+                            "without result for type %1")
+                            .arg(QString::fromStdString(std::string{
+                                boost::core::demangle(typeid(T).name())}))}});
+                    promise->finish();
+                    return;
+                }
+
                 function(future.result());
             }
         }
