@@ -213,6 +213,10 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
         threading::onFailed(
             std::move(thenFuture),
             [resourcePromise, context, resource](const QException & e) {
+                QNWARNING(
+                    "synchronization::ResourcesProcessor",
+                    "Failed to process resource: " << e.what());
+
                 if (const auto callback = context->callbackWeak.lock()) {
                     callback->onResourceFailedToProcess(resource, e);
                 }
@@ -263,7 +267,15 @@ void ResourcesProcessor::onFoundDuplicate(
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
     Q_ASSERT(context);
+    Q_ASSERT(updatedResource.guid());
     Q_ASSERT(updatedResource.noteGuid());
+
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::onFoundDuplicate: updated resource guid = "
+            << *updatedResource.guid() << ", note guid = "
+            << *updatedResource.noteGuid()
+            << ", local resource local id = " << localResource.localId());
 
     bool shouldMakeLocalConflictNewResource = false;
 
@@ -314,6 +326,13 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
 {
     Q_ASSERT(context);
     Q_ASSERT(updatedResource.guid());
+
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::onFoundNoteOwningConflictingResource: updated "
+            << "resource guid = " << *updatedResource.guid()
+            << ", local resource local id = " << localResource.localId()
+            << ", local note local id = " << localNote.localId());
 
     // Local note would be turned into the conflicting local one with local
     // duplicates of all resources.
@@ -401,6 +420,12 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         std::move(thenFuture),
         [context, promise, updatedResource = std::move(updatedResource)](
             const QException & e) mutable {
+            QNWARNING(
+                "synchronization::ResourcesProcessor",
+                "Failed to download/process resource: " << e.what()
+                    << "; updated resource guid = "
+                    << *updatedResource.guid());
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onResourceFailedToProcess(updatedResource, e);
             }
@@ -425,6 +450,12 @@ void ResourcesProcessor::handleResourceConflict(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & promise,
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::handleResourceConflict: local resource local id = "
+            << localResource.localId() << ", updated resource guid = "
+            << updatedResource.guid().value_or(QStringLiteral("<none>")));
+
     Q_ASSERT(context);
 
     localResource.setLocalId(UidGenerator::Generate());
@@ -453,6 +484,11 @@ void ResourcesProcessor::handleResourceConflict(
                         "owning the conflicting resource was not found by "
                         "guid")};
                     error.details() = *updatedResource.noteGuid();
+
+                    QNWARNING(
+                        "synchronization::ResourcesProcessor",
+                        "ResourcesProcessor::handleResourceConflict: "
+                            << error);
 
                     auto resourceWithException =
                         DownloadResourcesStatus::ResourceWithException{
@@ -487,6 +523,11 @@ void ResourcesProcessor::handleResourceConflict(
         std::move(thenFuture),
         [context, promise, updatedResource = std::move(updatedResource)](
             const QException & e) mutable {
+            QNWARNING(
+                "synchronization::ResourcesProcessor",
+                "ResourcesProcessor::handleResourceConflict: failed to "
+                    << "process resources conflict: " << e.what());
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onResourceFailedToProcess(updatedResource, e);
             }
@@ -514,6 +555,14 @@ void ResourcesProcessor::downloadFullResourceData(
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
 
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::downloadFullResourceData: resource guid = "
+            << *resource.guid() << ", resource kind = "
+            << (resourceKind == ResourceKind::NewResource
+                ? "new"
+                : "updated"));
+
     auto noteStoreFuture = m_noteStoreProvider->noteStoreForNoteLocalId(
         resource.noteLocalId(), m_ctx, m_retryPolicy);
 
@@ -537,6 +586,11 @@ void ResourcesProcessor::downloadFullResourceData(
         std::move(noteStoreThenFuture),
         [context = std::move(context), promise = std::move(promise),
          resource = std::move(resource)](const QException & e) {
+            QNWARNING(
+                "synchronization::ResourcesProcessor",
+                "Failed to download resource: " << e.what()
+                    << "; resource guid = " << *resource.guid());
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onResourceFailedToDownload(resource, e);
             }
@@ -559,6 +613,14 @@ void ResourcesProcessor::downloadFullResourceData(
     Q_ASSERT(resource.guid());
     Q_ASSERT(noteStore);
 
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::downloadFullResourceData (with note store): "
+            << "resource guid = " << *resource.guid() << ", resource kind = "
+            << (resourceKind == ResourceKind::NewResource
+                ? "new"
+                : "updated"));
+
     auto downloadFullResourceDataFuture =
         m_resourceFullDataDownloader->downloadFullResourceData(
             *resource.guid(), noteStore);
@@ -579,6 +641,11 @@ void ResourcesProcessor::downloadFullResourceData(
         std::move(thenFuture),
         [context = std::move(context), promise = std::move(promise),
          resource = std::move(resource)](const QException & e) mutable {
+            QNWARNING(
+                "synchronization::ResourcesProcessor",
+                "Failed to download/process resource: " << e.what()
+                    << "; resource guid = " << *resource.guid());
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onResourceFailedToDownload(resource, e);
             }
@@ -632,12 +699,25 @@ void ResourcesProcessor::putResourceToLocalStorage(
     Q_ASSERT(resource.guid());
     Q_ASSERT(resource.updateSequenceNum());
 
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::putResourceToLocalStorage: resource guid = "
+            << *resource.guid() << ", resource kind = "
+            << (putResourceKind == ResourceKind::NewResource
+                ? "new"
+                : "updated"));
+
     auto putResourceFuture = m_localStorage->putResource(resource);
 
     auto thenFuture = threading::then(
         std::move(putResourceFuture), m_threadPool.get(),
         [promise, context, putResourceKind, resourceGuid = *resource.guid(),
          resourceUsn = *resource.updateSequenceNum()] {
+            QNDEBUG(
+                "synchronization::ResourcesProcessor",
+                "Successfully put resource to local storage: resource guid = "
+                    << resourceGuid);
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onProcessedResource(resourceGuid, resourceUsn);
             }
@@ -660,6 +740,11 @@ void ResourcesProcessor::putResourceToLocalStorage(
         std::move(thenFuture),
         [context, promise,
          resource = std::move(resource)](const QException & e) mutable {
+            QNWARNING(
+                "synchronization::ResourcesProcessor",
+                "Failed to put resource to local storage: " << e.what()
+                    << "; resource guid = " << *resource.guid());
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onResourceFailedToProcess(resource, e);
             }
