@@ -187,29 +187,40 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNoteLocalId(
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
              promise](
                 const std::optional<qevercloud::Notebook> & notebook) mutable {
-                if (Q_UNLIKELY(!notebook)) {
-                    promise->setException(
-                        RuntimeError{ErrorString{QStringLiteral(
-                            "Could not find notebook corresponding to the "
-                            "note")}});
-                    promise->finish();
-                    return;
-                }
+                onFindNotebookResult(
+                    notebook, std::move(ctx), std::move(retryPolicy), promise);
+            }});
 
-                auto f =
-                    (notebook->linkedNotebookGuid()
-                         ? linkedNotebookNoteStore(
-                               *notebook->linkedNotebookGuid(), std::move(ctx),
-                               std::move(retryPolicy))
-                         : userOwnNoteStore(
-                               std::move(ctx), std::move(retryPolicy)));
-                threading::thenOrFailed(
-                    std::move(f), promise,
-                    [promise](qevercloud::INoteStorePtr noteStore) {
-                        Q_ASSERT(noteStore);
-                        promise->addResult(std::move(noteStore));
-                        promise->finish();
-                    });
+    return future;
+}
+
+QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNoteGuid(
+    qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy)
+{
+    QNDEBUG(
+        "synchronization::NoteStoreProvider",
+        "NoteStoreProvider::noteStoreForNoteGuid: note guid = "
+            << noteGuid);
+
+    auto promise = std::make_shared<QPromise<qevercloud::INoteStorePtr>>();
+    auto future = promise->future();
+    promise->start();
+
+    const auto selfWeak = weak_from_this();
+
+    auto notebookFuture =
+        m_notebookFinder->findNotebookByNoteGuid(noteGuid);
+
+    threading::thenOrFailed(
+        std::move(notebookFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
+             promise](
+                const std::optional<qevercloud::Notebook> & notebook) mutable {
+                onFindNotebookResult(
+                    notebook, std::move(ctx), std::move(retryPolicy), promise);
             }});
 
     return future;
@@ -413,6 +424,37 @@ void NoteStoreProvider::createNoteStore(
                         noteStore, authInfo->authTokenExpirationTime()});
             }
 
+            promise->addResult(std::move(noteStore));
+            promise->finish();
+        });
+}
+
+void NoteStoreProvider::onFindNotebookResult(
+    const std::optional<qevercloud::Notebook> & notebook,
+    qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy,
+    const std::shared_ptr<QPromise<qevercloud::INoteStorePtr>> & promise)
+{
+    if (Q_UNLIKELY(!notebook)) {
+        promise->setException(
+            RuntimeError{ErrorString{QStringLiteral(
+                        "Could not find notebook corresponding to the "
+                        "note")}});
+        promise->finish();
+        return;
+    }
+
+    auto f =
+        (notebook->linkedNotebookGuid()
+         ? linkedNotebookNoteStore(
+             *notebook->linkedNotebookGuid(), std::move(ctx),
+             std::move(retryPolicy))
+         : userOwnNoteStore(
+             std::move(ctx), std::move(retryPolicy)));
+    threading::thenOrFailed(
+        std::move(f), promise,
+        [promise](qevercloud::INoteStorePtr noteStore) {
+            Q_ASSERT(noteStore);
             promise->addResult(std::move(noteStore));
             promise->finish();
         });

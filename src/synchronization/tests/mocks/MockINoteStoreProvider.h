@@ -48,6 +48,12 @@ public:
         (override));
 
     MOCK_METHOD(
+        QFuture<qevercloud::INoteStorePtr>, noteStoreForNoteGuid,
+        (qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
+         qevercloud::IRetryPolicyPtr retryPolicy),
+        (override));
+
+    MOCK_METHOD(
         QFuture<qevercloud::INoteStorePtr>, userOwnNoteStore,
         (qevercloud::IRequestContextPtr ctx,
          qevercloud::IRetryPolicyPtr retryPolicy),
