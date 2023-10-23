@@ -22,10 +22,18 @@
 
 #include <quentier/local_storage/Fwd.h>
 
+#include <qevercloud/types/Fwd.h>
+
 #include <QHash>
 #include <QList>
 #include <QMetaObject>
 #include <QMutex>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
 
 #include <memory>
 
@@ -52,13 +60,25 @@ public: // INotebookFinder
         findNotebookByNoteLocalId(const QString & noteLocalId) override;
 
     [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByNoteGuid(const qevercloud::Guid & noteGuid) override;
+
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByLocalId(const QString & notebookLocalId) override;
 
 private:
     [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByNoteLocalIdImpl(const QString & noteLocalId);
 
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByNoteGuidImpl(const qevercloud::Guid & noteGuid);
+
+    void onNoteFound(
+        const qevercloud::Note & note,
+        const std::shared_ptr<QPromise<std::optional<qevercloud::Notebook>>> &
+            promise);
+
     void removeFutureByNoteLocalId(const QString & noteLocalId);
+    void removeFutureByNoteGuid(const qevercloud::Guid & noteGuid);
 
     void removeFuturesByNotebookLocalId(const QString & notebookLocalId);
 
@@ -67,12 +87,14 @@ private:
 
     QHash<QString, QFuture<std::optional<qevercloud::Notebook>>>
         m_notebooksByNoteLocalId;
-
     QMutex m_notebooksByNoteLocalIdMutex;
 
     QHash<QString, QFuture<std::optional<qevercloud::Notebook>>>
-        m_notebooksByLocalId;
+        m_notebooksByNoteGuid;
+    QMutex m_notebooksByNoteGuidMutex;
 
+    QHash<QString, QFuture<std::optional<qevercloud::Notebook>>>
+        m_notebooksByLocalId;
     QMutex m_notebooksByLocalIdMutex;
 
     QList<QMetaObject::Connection> m_localStorageConnections;

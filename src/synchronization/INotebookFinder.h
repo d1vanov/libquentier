@@ -19,6 +19,7 @@
 #pragma once
 
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 #include <QString>
@@ -29,7 +30,7 @@ namespace quentier::synchronization {
 
 /**
  * @brief The INotebookFinder interface provides the means to look up
- * notebook given the local id of the note from the the notebook
+ * notebook given id of some data item belonging to the notebook
  */
 class INotebookFinder
 {
@@ -38,7 +39,7 @@ public:
 
     /**
      * @brief Find notebook by local id of the note from the notebook
-     * @param noteLocalId The local id of the note for which the notebook is
+     * @param noteLocalId Local id of the note for which the notebook is
      *                    requested
      * @return future with std::nullopt if the notebook was not found or with
      *         notebook if it was found. Or future with exception in case of
@@ -48,8 +49,18 @@ public:
         findNotebookByNoteLocalId(const QString & noteLocalId) = 0;
 
     /**
+     * @brief Find notebook by guid of the note from the notebook
+     * @param noteGuid Guid of the note for which the notebook is requested
+     * @return future with std::nullopt if the notebook was not found or with
+     *         notebook if it was found. Or future with exception in case of
+     *         some error while trying to find the notebook.
+     */
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByNoteGuid(const qevercloud::Guid & noteGuid) = 0;
+
+    /**
      * @brief Find notebook by its local id
-     * @param notebookLocalId The local id of the notebook to be found
+     * @param notebookLocalId Local id of the notebook to be found
      * @return future with std::nullopt if the notebook with given local id
      *         was not found or with notebook otherwise. Or future with
      *         exception in case of some error while trying to find the

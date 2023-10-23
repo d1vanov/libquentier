@@ -545,4 +545,302 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
     EXPECT_FALSE(res);
 }
 
+TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
+{
+    const auto notebookFinder =
+        std::make_shared<NotebookFinder>(m_mockLocalStorage);
+
+    local_storage::sql::Notifier notifier;
+    EXPECT_CALL(*m_mockLocalStorage, notifier).WillOnce(Return(&notifier));
+
+    notebookFinder->init();
+
+    const auto noteGuid = UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            noteGuid, local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(
+            Return(threading::makeReadyFuture<std::optional<qevercloud::Note>>(
+                std::nullopt)));
+
+    auto future = notebookFinder->findNotebookByNoteGuid(noteGuid);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    auto res = future.result();
+    EXPECT_FALSE(res);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(noteGuid);
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+
+    const auto notebookLocalId = UidGenerator::Generate();
+
+    const auto note = qevercloud::NoteBuilder{}
+                          .setGuid(noteGuid)
+                          .setNotebookLocalId(notebookLocalId)
+                          .build();
+
+    // If this note gets put, the entry should be removed from the
+    // cache so the next call would go to local storage again
+    notifier.notifyNotePut(note);
+    QCoreApplication::processEvents();
+
+    const auto notebook = qevercloud::NotebookBuilder{}
+                              .setLocalId(notebookLocalId)
+                              .setName(QStringLiteral("Notebook"))
+                              .build();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            noteGuid, local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Note>>(note)));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebookLocalId))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                notebook)));
+
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // If this note gets expunged, the entry should be removed from the
+    // cache so the next call would go to local storage again
+    notifier.notifyNoteExpunged(note.localId());
+    QCoreApplication::processEvents();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            note.guid().value(),
+            local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(
+            Return(threading::makeReadyFuture<std::optional<qevercloud::Note>>(
+                std::nullopt)));
+
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+}
+
+TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
+{
+    const auto notebookFinder =
+        std::make_shared<NotebookFinder>(m_mockLocalStorage);
+
+    local_storage::sql::Notifier notifier;
+    EXPECT_CALL(*m_mockLocalStorage, notifier).WillOnce(Return(&notifier));
+
+    notebookFinder->init();
+
+    const auto notebook = qevercloud::NotebookBuilder{}
+                              .setGuid(UidGenerator::Generate())
+                              .setLocalId(UidGenerator::Generate())
+                              .setName(QStringLiteral("Notebook"))
+                              .build();
+
+    const auto note = qevercloud::NoteBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setNotebookLocalId(notebook.localId())
+                          .setTitle(QStringLiteral("Note"))
+                          .build();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            note.guid().value(),
+            local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Note>>(note)));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebook.localId()))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                notebook)));
+
+    auto future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    auto res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // If this note gets updated, the entry should be removed from the
+    // cache so the next call would go to local storage again
+    notifier.notifyNoteUpdated(note, {});
+    QCoreApplication::processEvents();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            note.guid().value(),
+            local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Note>>(note)));
+
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // If this notebook gets expunged, it should be removed from the
+    // cache so the next call would go to local storage again
+    notifier.notifyNotebookExpunged(notebook.localId());
+    QCoreApplication::processEvents();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            note.guid().value(),
+            local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(
+            Return(threading::makeReadyFuture<std::optional<qevercloud::Note>>(
+                std::nullopt)));
+
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+
+    // Now imitate the fact that this note was put to local storage again
+    // and ensure that the expunging of the notebook would be processed
+    // as needed
+    notifier.notifyNotePut(note);
+    QCoreApplication::processEvents();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            note.guid().value(),
+            local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Note>>(note)));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebook.localId()))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                notebook)));
+
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    ASSERT_TRUE(res);
+    EXPECT_EQ(*res, notebook);
+
+    // If this notebook gets expunged, the entry should be removed from the
+    // cache so the next call would go to local storage again
+    notifier.notifyNotebookExpunged(notebook.localId());
+    QCoreApplication::processEvents();
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNoteByGuid(
+            note.guid().value(),
+            local_storage::ILocalStorage::FetchNoteOptions{}))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Note>>(note)));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(notebook.localId()))
+        .WillOnce(Return(
+            threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
+                std::nullopt)));
+
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+
+    // The next call should not go to local storage but use cached value instead
+    future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+
+    res = future.result();
+    EXPECT_FALSE(res);
+}
+
 } // namespace quentier::synchronization::tests

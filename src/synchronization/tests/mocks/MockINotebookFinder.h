@@ -32,6 +32,10 @@ public:
         (const QString & noteLocalId), (override));
 
     MOCK_METHOD(
+        QFuture<std::optional<qevercloud::Notebook>>, findNotebookByNoteGuid,
+        (const QString & noteGuid), (override));
+
+    MOCK_METHOD(
         QFuture<std::optional<qevercloud::Notebook>>, findNotebookByLocalId,
         (const QString & notebookLocalId), (override));
 };
