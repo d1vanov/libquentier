@@ -2507,6 +2507,24 @@ bool putResource(
         resource.setLocalId(localId);
     }
 
+    if (resource.noteLocalId().isEmpty()) {
+        error.clear();
+        auto noteLocalId = noteLocalIdByResourceLocalId(
+            resource.localId(), database, error);
+        if (noteLocalId.isEmpty() && !error.isEmpty()) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(
+                "local_storage::sql::utils",
+                errorDescription << "\nResource: " << resource);
+            return false;
+        }
+
+        resource.setNoteLocalId(std::move(noteLocalId));
+    }
+
     if (!putCommonResourceData(
             resource,
             (putResourceBinaryDataOption ==
@@ -2864,8 +2882,9 @@ bool putCommonResourceData(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QStringLiteral(
-            "Cannot put resource metadata into the local storage database"),
+        QString::fromUtf8(
+            "Cannot put resource metadata into the local storage database: %1")
+            .arg(resource.toString()),
         false);
 
     return true;
