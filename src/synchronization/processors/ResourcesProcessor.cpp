@@ -554,6 +554,7 @@ void ResourcesProcessor::downloadFullResourceData(
 {
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
+    Q_ASSERT(resource.noteGuid());
 
     QNDEBUG(
         "synchronization::ResourcesProcessor",
@@ -561,10 +562,11 @@ void ResourcesProcessor::downloadFullResourceData(
             << *resource.guid() << ", resource kind = "
             << (resourceKind == ResourceKind::NewResource
                 ? "new"
-                : "updated"));
+                : "updated")
+            << ", note guid = " << *resource.noteGuid());
 
-    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNoteLocalId(
-        resource.noteLocalId(), m_ctx, m_retryPolicy);
+    auto noteStoreFuture = m_noteStoreProvider->noteStoreForNoteGuid(
+        *resource.noteGuid(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
 
@@ -611,6 +613,7 @@ void ResourcesProcessor::downloadFullResourceData(
 {
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
+    Q_ASSERT(resource.noteGuid());
     Q_ASSERT(noteStore);
 
     QNDEBUG(
@@ -619,7 +622,8 @@ void ResourcesProcessor::downloadFullResourceData(
             << "resource guid = " << *resource.guid() << ", resource kind = "
             << (resourceKind == ResourceKind::NewResource
                 ? "new"
-                : "updated"));
+                : "updated")
+            << ", note guid = " << *resource.noteGuid());
 
     auto downloadFullResourceDataFuture =
         m_resourceFullDataDownloader->downloadFullResourceData(
@@ -631,8 +635,13 @@ void ResourcesProcessor::downloadFullResourceData(
         std::move(downloadFullResourceDataFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, context, promise,
-             resourceKind](qevercloud::Resource resource) mutable {
+            [this, context, promise, resourceKind](
+                qevercloud::Resource resource) mutable {
+                // Clearing local id from the resource to let the local
+                // storage figure it out on its own from the resource's guid.
+                // Resource local id might have been substituted by
+                // auto-generated new value by ResourceFullDataDownloader.
+                resource.setLocalId(QString{});
                 putResourceToLocalStorage(
                     context, promise, std::move(resource), resourceKind);
             }});

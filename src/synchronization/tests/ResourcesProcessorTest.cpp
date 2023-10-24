@@ -53,6 +53,7 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::_;
 using testing::Return;
 using testing::StrictMock;
 
@@ -78,17 +79,18 @@ void compareResourceLists(
     ASSERT_EQ(lhs.size(), rhs.size());
 
     for (int i = 0; i < rhs.size(); ++i) {
-        const auto & r = rhs[i];
+        auto r = rhs[i];
         const auto it = std::find_if(
             lhs.constBegin(), lhs.constEnd(),
-            [localId = r.localId()](const qevercloud::Resource & res) {
-                return res.localId() == localId;
+            [guid = r.guid()](const qevercloud::Resource & res) {
+                return res.guid() == guid;
             });
         EXPECT_NE(it, lhs.constEnd());
         if (Q_UNLIKELY(it == lhs.constEnd())) {
             continue;
         }
 
+        r.setLocalId(it->localId());
         if (!r.data()) {
             qevercloud::Resource resourceWithData = addDataToResource(r, i);
             EXPECT_EQ(*it, resourceWithData);
@@ -313,7 +315,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -482,7 +484,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -687,7 +689,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -893,7 +895,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1013,9 +1015,12 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     EXPECT_TRUE(status->m_cancelledResourceGuidsAndUsns.isEmpty());
 
     ASSERT_EQ(status->m_resourcesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(
-        status->m_resourcesWhichFailedToProcess[0].first,
-        addDataToResource(resources[1], 1));
+
+    {
+        auto resource = status->m_resourcesWhichFailedToProcess[0].first;
+        resource.setLocalId(resources[1].localId());
+        EXPECT_EQ(resource, addDataToResource(resources[1], 1));
+    }
 
     ASSERT_EQ(
         status->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
@@ -1039,9 +1044,13 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
 
     ASSERT_EQ(callback->m_resourcesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(
-        callback->m_resourcesWhichFailedToProcess.constBegin()->first,
-        addDataToResource(resources[1], 1));
+
+    {
+        auto resource =
+            callback->m_resourcesWhichFailedToProcess.constBegin()->first;
+        resource.setLocalId(resources[1].localId());
+        EXPECT_EQ(resource, addDataToResource(resources[1], 1));
+    }
 
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
@@ -1100,7 +1109,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1284,7 +1293,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1513,7 +1522,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1735,7 +1744,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -1957,7 +1966,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
@@ -2244,7 +2253,7 @@ TEST_F(
     QList<qevercloud::Resource> resourcesPutIntoLocalStorage;
     QSet<qevercloud::Guid> triedGuids;
 
-    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteLocalId)
+    EXPECT_CALL(*m_mockNoteStoreProvider, noteStoreForNoteGuid(noteGuid, _, _))
         .WillRepeatedly(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 m_mockNoteStore)));
