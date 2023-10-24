@@ -862,8 +862,6 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
         result.resourceUsns[*resource.guid()] = resourceItemData.usn;
     }
 
-    auto originalResources = resources;
-
     for (auto & resource: resources) {
         // Won't store resource binary data along with notes
         if (resource.data()) {
@@ -880,8 +878,7 @@ NoteStoreServer::ItemData NoteStoreServer::putNote(qevercloud::Note note)
     }
 
     note.setResources(resources);
-    noteGuidIndex.replace(noteIt, note);
-    note.setResources(originalResources);
+    noteGuidIndex.replace(noteIt, std::move(note));
     return result;
 }
 
@@ -3571,6 +3568,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             auto qecNote = *noteIt;
+            Q_ASSERT(qecNote.guid());
+
             qecNote.setLocalId(UidGenerator::Generate());
             qecNote.setLocalData({});
             qecNote.setLocalOnly(false);
@@ -3579,18 +3578,16 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             qecNote.setTagLocalIds(QStringList{});
             qecNote.setNotebookLocalId(QString{});
 
-            if (!filter.includeNoteResources() ||
-                !*filter.includeNoteResources()) {
+            if (!filter.includeNoteResources().value_or(false)) {
                 qecNote.setResources(std::nullopt);
             }
 
-            if (!filter.includeNoteAttributes() ||
-                !*filter.includeNoteAttributes()) {
+            if (!filter.includeNoteAttributes().value_or(false)) {
                 qecNote.setAttributes(std::nullopt);
             }
             else {
-                if ((!filter.includeNoteApplicationDataFullMap() ||
-                     !*filter.includeNoteApplicationDataFullMap()) &&
+                if (!filter.includeNoteApplicationDataFullMap().value_or(
+                        false) &&
                     qecNote.attributes() &&
                     qecNote.attributes()->applicationData())
                 {
@@ -3599,8 +3596,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                         ->setFullMap(std::nullopt);
                 }
 
-                if ((!filter.includeNoteResourceApplicationDataFullMap() ||
-                     !*filter.includeNoteResourceApplicationDataFullMap()) &&
+                if (!filter.includeNoteResourceApplicationDataFullMap()
+                         .value_or(false) &&
                     qecNote.resources())
                 {
                     for (auto & resource: *qecNote.mutableResources()) {
@@ -3614,7 +3611,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                 }
             }
 
-            if (!filter.includeSharedNotes() || !*filter.includeSharedNotes()) {
+            if (!filter.includeSharedNotes().value_or(false)) {
                 qecNote.setSharedNotes(std::nullopt);
             }
 

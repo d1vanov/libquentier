@@ -327,7 +327,7 @@ static const std::array gTestScenarioData{
     },
     TestScenarioData{
         DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
-            DataItemType::SavedSearch |
+            DataItemType::Resource | DataItemType::SavedSearch |
             DataItemType::Tag, // serverDataItemTypes
         ItemGroups{} | ItemGroup::Base |
             ItemGroup::Modified,                    // serverItemGroups
@@ -335,15 +335,16 @@ static const std::array gTestScenarioData{
         DataItemTypes{}, // serverExpungedDataItemTypes
         ItemSources{},   // serverExpungedDataItemSources
         DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
-            DataItemType::SavedSearch | DataItemType::Tag, // localDataItemTypes
-        ItemGroups{} | ItemGroup::Base,                    // localItemGroups
-        ItemSources{} | ItemSource::UserOwnAccount,        // localItemSources
-        StopSynchronizationError{std::monostate{}},        // stopSyncError
-        false,                                             // expectFailure
+            DataItemType::SavedSearch | DataItemType::Resource |
+            DataItemType::Tag,                      // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // localItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // localItemSources
+        StopSynchronizationError{std::monostate{}}, // stopSyncError
+        false,                                      // expectFailure
         true,  // expectSomeUserOwnSyncChunks
         false, // expectSomeLinkedNotebooksSyncChunks
         true,  // expectSomeUserOwnNotes
-        false, // expectSomeUserOwnResources
+        true,  // expectSomeUserOwnResources
         false, // expectSomeLinkedNotebookNotes
         false, // expectSomeLinkedNotebookResources
         false, // expectSomeUserOwnDataSent
@@ -352,7 +353,7 @@ static const std::array gTestScenarioData{
     },
     TestScenarioData{
         DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
-            DataItemType::SavedSearch |
+            DataItemType::Resource | DataItemType::Resource |
             DataItemType::Tag, // serverDataItemTypes
         ItemGroups{} | ItemGroup::Base |
             ItemGroup::Modified,                    // serverItemGroups
@@ -360,17 +361,18 @@ static const std::array gTestScenarioData{
         DataItemTypes{}, // serverExpungedDataItemTypes
         ItemSources{},   // serverExpungedDataItemSources
         DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
-            DataItemType::SavedSearch | DataItemType::Tag, // localDataItemTypes
-        ItemGroups{} | ItemGroup::Base,                    // localItemGroups
-        ItemSources{} | ItemSource::LinkedNotebook,        // localItemSources
-        StopSynchronizationError{std::monostate{}},        // stopSyncError
-        false,                                             // expectFailure
+            DataItemType::Resource | DataItemType::SavedSearch |
+            DataItemType::Tag,                      // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // localItemGroups
+        ItemSources{} | ItemSource::LinkedNotebook, // localItemSources
+        StopSynchronizationError{std::monostate{}}, // stopSyncError
+        false,                                      // expectFailure
         true,  // expectSomeUserOwnSyncChunks
         true,  // expectSomeLinkedNotebooksSyncChunks
         false, // expectSomeUserOwnNotes
         false, // expectSomeUserOwnResources
         true,  // expectSomeLinkedNotebookNotes
-        false, // expectSomeLinkedNotebookResources
+        true,  // expectSomeLinkedNotebookResources
         false, // expectSomeUserOwnDataSent
         false, // expectSomeLinkedNotebookDataSent
         "Incremental sync with modified server data from linked notebooks"sv, // name
@@ -473,7 +475,7 @@ static const std::array gTestScenarioData{
         false,                                      // expectFailure
         true,  // expectSomeUserOwnSyncChunks
         true,  // expectSomeLinkedNotebooksSyncChunks
-        true, // expectSomeUserOwnNotes
+        true,  // expectSomeUserOwnNotes
         false, // expectSomeUserOwnResources
         true,  // expectSomeLinkedNotebookNotes
         false, // expectSomeLinkedNotebookResources

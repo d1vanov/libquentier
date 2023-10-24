@@ -568,85 +568,48 @@ void setupTestData(
         }
     }
 
-    if (dataItemTypes.testFlag(DataItemType::Resource)) {
-        int resourceIndex = 1;
-
-        int noteGuidsListIndex = 0;
-        const auto putResources =
-            [&](const QString & nameSuffix,
-                QList<qevercloud::Resource> & resources,
-                const QList<qevercloud::Guid> & noteGuids) {
-                for (int i = 0; i < itemCount; ++i) {
-                    auto noteGuid = noteGuids[noteGuidsListIndex++];
-                    if (noteGuidsListIndex >= noteGuids.size()) {
-                        noteGuidsListIndex = 0;
-                    }
-
-                    auto resource =
-                        generateResource(resourceIndex++, nameSuffix);
-                    resource.setNoteGuid(std::move(noteGuid));
-                    resources << resource;
-                }
-            };
-
-        const QList<qevercloud::Guid> userOwnNoteGuids = [&] {
-            QList<qevercloud::Guid> result;
-            const auto allNotes = QList<qevercloud::Note>{}
-                << testData.m_userOwnBaseNotes
-                << testData.m_userOwnModifiedNotes
-                << testData.m_userOwnNewNotes;
-            result.reserve(allNotes.size());
-            for (const auto & note: qAsConst(allNotes)) {
-                result << *note.guid();
+    if (dataItemTypes.testFlag(DataItemType::Resource) &&
+        itemGroups.testFlag(ItemGroup::Modified))
+    {
+        const auto modifyResource = [](qevercloud::Resource resource) {
+            if (resource.data() && resource.data()->body()) {
+                resource.mutableData()->setBody(QString{
+                    QString::fromUtf8(*resource.data()->body()) +
+                    QStringLiteral("_modified")}
+                                                    .toUtf8());
+                resource.mutableData()->setSize(
+                    resource.data()->body()->size());
+                resource.mutableData()->setBodyHash(QCryptographicHash::hash(
+                    *resource.data()->body(), QCryptographicHash::Md5));
             }
-            return result;
-        }();
 
-        if (itemSources.testFlag(ItemSource::UserOwnAccount) &&
-            itemGroups.testFlag(ItemGroup::Modified))
-        {
-            putResources(
-                *gBaseItems + QStringLiteral(" user own"),
-                testData.m_userOwnModifiedResources,
-                userOwnNoteGuids);
+            return resource;
+        };
+
+        if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+            for (const auto & note: qAsConst(testData.m_userOwnModifiedNotes)) {
+                if (!note.resources() || note.resources()->isEmpty()) {
+                    continue;
+                }
+
+                for (auto resource: *note.resources()) {
+                    testData.m_userOwnModifiedResources
+                        << modifyResource(std::move(resource));
+                }
+            }
         }
 
-        if (itemSources.testFlag(ItemSource::LinkedNotebook) &&
-            itemGroups.testFlag(ItemGroup::Modified))
-        {
-            for (const auto & linkedNotebookGuid:
-                 qAsConst(modifiedLinkedNotebookGuids)) {
-                const QList<qevercloud::Guid> noteGuids = [&] {
-                    QList<qevercloud::Guid> result;
-                    for (const auto & note:
-                         qAsConst(testData.m_linkedNotebookModifiedNotes)) {
-                        Q_ASSERT(note.guid());
-                        Q_ASSERT(note.notebookGuid());
+        if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+            for (const auto & note:
+                 qAsConst(testData.m_linkedNotebookModifiedNotes)) {
+                if (!note.resources() || note.resources()->isEmpty()) {
+                    continue;
+                }
 
-                        const auto notebookIt = std::find_if(
-                            testData.m_linkedNotebookModifiedNotebooks
-                                .constBegin(),
-                            testData.m_linkedNotebookModifiedNotebooks
-                                .constEnd(),
-                            [&note](const qevercloud::Notebook & notebook) {
-                                return note.notebookGuid() == notebook.guid();
-                            });
-                        Q_ASSERT(
-                            notebookIt !=
-                            testData.m_linkedNotebookModifiedNotebooks
-                                .constEnd());
-                        if (notebookIt->linkedNotebookGuid() ==
-                            linkedNotebookGuid) {
-                            result << *note.guid();
-                        }
-                    }
-
-                    return result;
-                }();
-
-                putResources(
-                    *gModifiedItems, testData.m_linkedNotebookModifiedResources,
-                    noteGuids);
+                for (auto resource: *note.resources()) {
+                    testData.m_linkedNotebookModifiedResources
+                        << modifyResource(std::move(resource));
+                }
             }
         }
     }

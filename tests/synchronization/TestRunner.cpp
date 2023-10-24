@@ -320,11 +320,22 @@ struct ItemListsChecker
 
     if (!ItemListsChecker<qevercloud::Note>::check(
             [&noteStoreServer] {
+                // There are some tricks related to notes and resources in
+                // NoteStoreServer:
+                // 1. There are two places where resources are stored in
+                //    NoteStoreServer: resources which are embedded into notes
+                //    and resources which are stored in a separate container
+                //    within NoteStoreServer
+                // 2. Resources embedded into notes lack binary data which
+                //    is needed to perform the full comparison
+                // 3. Resources stored separately from notes might be "newer"
+                //    than resources stored within notes if, for example,
+                //    incremental sync conditions were set up and thus
+                //    modified resources were sent to the client separately
+                //    from notes owning these resources
                 auto notes = noteStoreServer.notes().values();
+                auto resources = noteStoreServer.resources();
 
-                // Resource binary data is not stored along with notes in
-                // NoteStoreServer so need to do an additional swipe to fetch
-                // resource binary data and put them to the returned notes
                 for (auto & note: notes) {
                     if (!note.resources() || note.resources()->isEmpty()) {
                         continue;
@@ -332,27 +343,9 @@ struct ItemListsChecker
 
                     for (auto & resource: *note.mutableResources()) {
                         Q_ASSERT(resource.guid());
-                        auto storedResource =
-                            noteStoreServer.findResource(*resource.guid());
-                        Q_ASSERT(storedResource);
-
-                        if (storedResource->data() &&
-                            storedResource->data()->body()) {
-                            resource.mutableData()->setBody(
-                                *storedResource->data()->body());
-                        }
-
-                        if (storedResource->recognition() &&
-                            storedResource->recognition()->body()) {
-                            resource.mutableRecognition()->setBody(
-                                *storedResource->recognition()->body());
-                        }
-
-                        if (storedResource->alternateData() &&
-                            storedResource->alternateData()->body()) {
-                            resource.mutableAlternateData()->setBody(
-                                *storedResource->alternateData()->body());
-                        }
+                        const auto it = resources.constFind(*resource.guid());
+                        Q_ASSERT(it != resources.constEnd());
+                        resource = it.value(); // NOLINT
                     }
                 }
 
