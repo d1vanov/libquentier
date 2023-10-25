@@ -205,6 +205,7 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         savedSearchPromise->start();
 
         Q_ASSERT(savedSearch.guid());
+        Q_ASSERT(savedSearch.name());
 
         auto findSavedSearchByGuidFuture =
             m_localStorage->findSavedSearchByGuid(*savedSearch.guid());
@@ -224,6 +225,13 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
                         return;
                     }
 
+                    QNDEBUG(
+                        "synchronization::SavedSearchesProcessor",
+                        "Haven't found local duplicate for guid "
+                            << *updatedSavedSearch.guid()
+                            << ", checking for duplicate by name "
+                            << *updatedSavedSearch.name());
+
                     tryToFindDuplicateByName(
                         savedSearchPromise, savedSearchCounters,
                         std::move(updatedSavedSearch));
@@ -241,7 +249,10 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
 
         auto thenFuture = threading::then(
             std::move(expungeSavedSearchFuture), m_threadPool.get(),
-            [savedSearchCounters] {
+            [savedSearchCounters, guid] {
+                QNDEBUG(
+                    "synchronization::SavedSearchesProcessor",
+                    "Expunged saved search with guid " << guid);
                 savedSearchCounters->onExpungedSavedSearch();
             });
 
@@ -279,6 +290,12 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
                     return;
                 }
 
+                QNDEBUG(
+                    "synchronization::SavedSearchesProcessor",
+                    "Haven't found local duplicate for name "
+                        << *updatedSavedSearch.name()
+                        << ", guid = " << *updatedSavedSearch.guid());
+
                 // No duplicate by either guid or name was found, just put
                 // the updated saved search into the local storage
                 auto putSavedSearchFuture = m_localStorage->putSavedSearch(
@@ -301,6 +318,13 @@ void SavedSearchesProcessor::onFoundDuplicate(
     qevercloud::SavedSearch updatedSavedSearch,
     qevercloud::SavedSearch localSavedSearch)
 {
+    QNDEBUG(
+        "synchronization::SavedSearchesProcessor",
+        "SavedSearchesProcessor::onFoundDuplicate: updated saved search guid = "
+            << updatedSavedSearch.guid().value_or(QStringLiteral("<none>"))
+            << ", local saved search local id = "
+            << localSavedSearch.localId());
+
     using ConflictResolution = ISyncConflictResolver::ConflictResolution;
     using SavedSearchConflictResolution =
         ISyncConflictResolver::SavedSearchConflictResolution;
@@ -331,6 +355,13 @@ void SavedSearchesProcessor::onFoundDuplicate(
                 {
                     if (std::holds_alternative<ConflictResolution::UseTheirs>(
                             resolution)) {
+                        QNDEBUG(
+                            "synchronization::SavedSearchesProcessor",
+                            "Will override local saved search with local id "
+                                << localSavedSearchLocalId
+                                << " with updated saved search with guid "
+                                << updatedSavedSearch.guid().value_or(
+                                       QStringLiteral("<none>")));
                         updatedSavedSearch.setLocalId(localSavedSearchLocalId);
 
                         updatedSavedSearch.setLocallyFavorited(
@@ -354,6 +385,14 @@ void SavedSearchesProcessor::onFoundDuplicate(
 
                 if (std::holds_alternative<ConflictResolution::UseMine>(
                         resolution)) {
+                    QNDEBUG(
+                        "synchronization::SavedSearchesProcessor",
+                        "Local saved search with local id "
+                            << localSavedSearchLocalId
+                            << " is newer than updated saved search with guid "
+                            << updatedSavedSearch.guid().value_or(
+                                   QStringLiteral("<none>"))
+                            << ", keeping the local saved search");
                     savedSearchPromise->finish();
                     return;
                 }
@@ -362,43 +401,87 @@ void SavedSearchesProcessor::onFoundDuplicate(
                         ConflictResolution::MoveMine<qevercloud::SavedSearch>>(
                         resolution))
                 {
-                    const auto & mineResolution = std::get<
+                    const auto & moveMineResolution = std::get<
                         ConflictResolution::MoveMine<qevercloud::SavedSearch>>(
                         resolution);
 
-                    auto updateLocalSavedSearchFuture =
-                        m_localStorage->putSavedSearch(mineResolution.mine);
-
-                    threading::thenOrFailed(
-                        std::move(updateLocalSavedSearchFuture),
-                        m_threadPool.get(), savedSearchPromise,
-                        threading::TrackedTask{
-                            selfWeak,
-                            [this, selfWeak, savedSearchPromise,
-                             savedSearchCounters,
-                             updatedSavedSearch =
-                                 std::move(updatedSavedSearch)]() mutable {
-                                auto putSavedSearchFuture =
-                                    m_localStorage->putSavedSearch(
-                                        std::move(updatedSavedSearch));
-
-                                auto thenFuture = threading::then(
-                                    std::move(putSavedSearchFuture),
-                                    m_threadPool.get(),
-                                    [savedSearchPromise, savedSearchCounters] {
-                                        savedSearchCounters
-                                            ->onAddedSavedSearch();
-                                        savedSearchPromise->finish();
-                                    });
-
-                                threading::onFailed(
-                                    std::move(thenFuture),
-                                    [savedSearchPromise](const QException & e) {
-                                        savedSearchPromise->setException(e);
-                                        savedSearchPromise->finish();
-                                    });
-                            }});
+                    renameLocalConflictingSavedSearch(
+                        savedSearchPromise, savedSearchCounters,
+                        std::move(updatedSavedSearch), moveMineResolution.mine,
+                        localSavedSearchLocalId);
                 }
+            }});
+}
+
+void SavedSearchesProcessor::renameLocalConflictingSavedSearch(
+    const std::shared_ptr<QPromise<void>> & savedSearchPromise,
+    const std::shared_ptr<SavedSearchCounters> & savedSearchCounters,
+    qevercloud::SavedSearch updatedSavedSearch,
+    qevercloud::SavedSearch renamedLocalSavedSearch,
+    const QString & localConflictingSavedSearchLocalId)
+{
+    QNDEBUG(
+        "synchronization::SavedSearchesProcessor",
+        "SavedSearchesProcessor::renameLocalConflictingSavedSearch: "
+        "local saved search with local id "
+            << localConflictingSavedSearchLocalId
+            << " conflicts with updated saved search with guid "
+            << updatedSavedSearch.guid().value_or(QStringLiteral("<none>"))
+            << ", will copy local saved search to make it "
+            << "appear as a new saved search; copy of local "
+            << "saved search's local id: "
+            << renamedLocalSavedSearch.localId());
+
+    QNTRACE(
+        "synchronization::SavedSearchesProcessor",
+        "Renamed local saved search: " << renamedLocalSavedSearch);
+
+    auto renamedSavedSearchLocalId = renamedLocalSavedSearch.localId();
+
+    auto updateLocalSavedSearchFuture =
+        m_localStorage->putSavedSearch(std::move(renamedLocalSavedSearch));
+
+    const auto selfWeak = weak_from_this();
+
+    threading::thenOrFailed(
+        std::move(updateLocalSavedSearchFuture), m_threadPool.get(),
+        savedSearchPromise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, selfWeak, savedSearchPromise, savedSearchCounters,
+             renamedSavedSearchLocalId = std::move(renamedSavedSearchLocalId),
+             updatedSavedSearch = std::move(updatedSavedSearch)]() mutable {
+                QNDEBUG(
+                    "synchronization::SavedSearchesProcessor",
+                    "Successfully renamed local conflicting "
+                        << "saved search: local id = "
+                        << renamedSavedSearchLocalId);
+
+                auto guid = updatedSavedSearch.guid();
+
+                auto putSavedSearchFuture = m_localStorage->putSavedSearch(
+                    std::move(updatedSavedSearch));
+
+                auto thenFuture = threading::then(
+                    std::move(putSavedSearchFuture), m_threadPool.get(),
+                    [savedSearchPromise, savedSearchCounters] {
+                        savedSearchCounters->onAddedSavedSearch();
+                        savedSearchPromise->finish();
+                    });
+
+                threading::onFailed(
+                    std::move(thenFuture),
+                    [savedSearchPromise,
+                     guid = std::move(guid)](const QException & e) {
+                        QNWARNING(
+                            "synchronization::SavedSearchesProcessor",
+                            "Failed to put updated saved search "
+                                << "into the local storage: " << e.what()
+                                << "; saved search guid = "
+                                << guid.value_or(QStringLiteral("<none>")));
+                        savedSearchPromise->setException(e);
+                        savedSearchPromise->finish();
+                    });
             }});
 }
 

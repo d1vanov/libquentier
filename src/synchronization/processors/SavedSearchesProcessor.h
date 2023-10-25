@@ -66,6 +66,13 @@ private:
         qevercloud::SavedSearch updatedSavedSearch,
         qevercloud::SavedSearch localSavedSearch);
 
+    void renameLocalConflictingSavedSearch(
+        const std::shared_ptr<QPromise<void>> & savedSearchPromise,
+        const std::shared_ptr<SavedSearchCounters> & savedSearchCounters,
+        qevercloud::SavedSearch updatedSavedSearch,
+        qevercloud::SavedSearch renamedLocalSavedSearch,
+        const QString & localConflictingSavedSearchLocalId);
+
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
