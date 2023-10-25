@@ -483,10 +483,30 @@ void TestRunner::runTestScenario()
         "tests::synchronization::TestRunner",
         "TestRunner::runTestScenario: " << testScenarioData.name.data());
 
+    const DataItemTypes mergedDataItemTypes = [&testScenarioData] {
+        DataItemTypes result;
+        result |= testScenarioData.serverDataItemTypes;
+        result |= testScenarioData.localDataItemTypes;
+        return result;
+    }();
+
+    const ItemGroups mergedItemGroups = [&testScenarioData] {
+        ItemGroups result;
+        result |= testScenarioData.serverItemGroups;
+        result |= testScenarioData.localItemGroups;
+        return result;
+    }();
+
+    const ItemSources mergedItemSources = [&testScenarioData] {
+        ItemSources result;
+        result |= testScenarioData.serverItemSources;
+        result |= testScenarioData.localItemSources;
+        return result;
+    }();
+
     TestData testData;
     setupTestData(
-        testScenarioData.serverDataItemTypes, testScenarioData.serverItemGroups,
-        testScenarioData.serverItemSources,
+        mergedDataItemTypes, mergedItemGroups, mergedItemSources,
         testScenarioData.serverExpungedDataItemTypes,
         testScenarioData.serverExpungedDataItemSources,
         m_noteStoreServer->port(), testData);

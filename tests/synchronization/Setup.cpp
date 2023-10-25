@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Setup.h"
 #include "NoteStoreServer.h"
+#include "Setup.h"
 
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -110,20 +110,22 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 }
 
 [[nodiscard]] qevercloud::Note generateNote(
-    const int index, qevercloud::Guid notebookGuid,
+    const int index, qevercloud::Guid notebookGuid, QString notebookLocalId,
     const QString & nameSuffix = {}, QList<qevercloud::Resource> resources = {},
-    QList<qevercloud::Guid> tagGuids = {})
+    QList<qevercloud::Guid> tagGuids = {}, QStringList tagLocalIds = {})
 {
     auto note =
         qevercloud::NoteBuilder{}
             .setGuid(UidGenerator::Generate())
             .setNotebookGuid(std::move(notebookGuid))
+            .setNotebookLocalId(std::move(notebookLocalId))
             .setLocalId(UidGenerator::Generate())
             .setLocalOnly(false)
             .setLocallyModified(false)
             .setLocallyFavorited(false)
             .setActive(true)
             .setTitle(composeName(index, QStringLiteral("Note"), nameSuffix))
+            .setTagLocalIds(std::move(tagLocalIds))
             .build();
 
     if (!resources.isEmpty()) {
@@ -269,6 +271,7 @@ void setupTestData(
                 for (int i = 0; i < itemCount; ++i) {
                     auto tag =
                         generateTag(tagIndex++, nameSuffix, linkedNotebookGuid);
+
                     tags << tag;
 
                     if (i % 2 == 0) {
@@ -307,10 +310,9 @@ void setupTestData(
                 if (itemGroups.testFlag(ItemGroup::Base)) {
                     putTags(
                         *gBaseItems +
-                        QString::fromUtf8(" linked notebook %1")
-                            .arg(linkedNotebookGuid),
-                        testData.m_linkedNotebookBaseTags,
-                        linkedNotebookGuid);
+                            QString::fromUtf8(" linked notebook %1")
+                                .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookBaseTags, linkedNotebookGuid);
                 }
             }
 
@@ -319,8 +321,8 @@ void setupTestData(
                 if (itemGroups.testFlag(ItemGroup::Modified)) {
                     putTags(
                         *gModifiedItems +
-                        QString::fromUtf8(" linked notebook %1")
-                            .arg(linkedNotebookGuid),
+                            QString::fromUtf8(" linked notebook %1")
+                                .arg(linkedNotebookGuid),
                         testData.m_linkedNotebookModifiedTags,
                         linkedNotebookGuid);
                 }
@@ -331,10 +333,9 @@ void setupTestData(
                 if (itemGroups.testFlag(ItemGroup::New)) {
                     putTags(
                         *gNewItems +
-                        QString::fromUtf8(" linked notebook %1")
-                            .arg(linkedNotebookGuid),
-                        testData.m_linkedNotebookNewTags,
-                        linkedNotebookGuid);
+                            QString::fromUtf8(" linked notebook %1")
+                                .arg(linkedNotebookGuid),
+                        testData.m_linkedNotebookNewTags, linkedNotebookGuid);
                 }
             }
         }
@@ -384,8 +385,8 @@ void setupTestData(
                 if (itemGroups.testFlag(ItemGroup::Base)) {
                     putNotebooks(
                         *gNewItems +
-                        QString::fromUtf8(" linked notebook %1")
-                            .arg(linkedNotebookGuid),
+                            QString::fromUtf8(" linked notebook %1")
+                                .arg(linkedNotebookGuid),
                         testData.m_linkedNotebookBaseNotebooks,
                         linkedNotebookGuid);
                 }
@@ -396,8 +397,8 @@ void setupTestData(
                 if (itemGroups.testFlag(ItemGroup::Modified)) {
                     putNotebooks(
                         *gModifiedItems +
-                        QString::fromUtf8(" linked notebook %1")
-                            .arg(linkedNotebookGuid),
+                            QString::fromUtf8(" linked notebook %1")
+                                .arg(linkedNotebookGuid),
                         testData.m_linkedNotebookModifiedNotebooks,
                         linkedNotebookGuid);
                 }
@@ -408,8 +409,8 @@ void setupTestData(
                 if (itemGroups.testFlag(ItemGroup::New)) {
                     putNotebooks(
                         *gNewItems +
-                        QString::fromUtf8(" linked notebook %1")
-                            .arg(linkedNotebookGuid),
+                            QString::fromUtf8(" linked notebook %1")
+                                .arg(linkedNotebookGuid),
                         testData.m_linkedNotebookNewNotebooks,
                         linkedNotebookGuid);
                 }
@@ -442,17 +443,24 @@ void setupTestData(
                     Q_ASSERT(notebook.guid());
 
                     QList<qevercloud::Guid> tagGuids;
+                    QStringList tagLocalIds;
                     if (i % 3 == 0) {
                         tagGuids.reserve(tags.size());
                         for (const auto & tag: qAsConst(tags)) {
                             Q_ASSERT(tag.guid());
                             tagGuids << *tag.guid();
                         }
+
+                        tagLocalIds.reserve(tags.size());
+                        for (const auto & tag: qAsConst(tags)) {
+                            tagLocalIds << tag.localId();
+                        }
                     }
 
                     auto note = generateNote(
-                        noteIndex++, *notebook.guid(), nameSuffix,
-                        std::move(resources), std::move(tagGuids));
+                        noteIndex++, *notebook.guid(), notebook.localId(),
+                        nameSuffix, std::move(resources), std::move(tagGuids),
+                        std::move(tagLocalIds));
                     notes << note;
 
                     ++notebookIt;
@@ -486,6 +494,7 @@ void setupTestData(
                         *notebook.linkedNotebookGuid();
 
                     QList<qevercloud::Guid> tagGuids;
+                    QStringList tagLocalIds;
                     if (i % 3 == 0) {
                         int tagCount = 0;
                         for (const auto & tag: qAsConst(tags)) {
@@ -496,6 +505,7 @@ void setupTestData(
                             }
 
                             tagGuids << *tag.guid();
+                            tagLocalIds << tag.localId();
 
                             ++tagCount;
                             if (tagCount == itemCount) {
@@ -505,8 +515,9 @@ void setupTestData(
                     }
 
                     auto note = generateNote(
-                        noteIndex++, *notebookIt->guid(), nameSuffix,
-                        std::move(resources), std::move(tagGuids));
+                        noteIndex++, *notebookIt->guid(), notebookIt->localId(),
+                        nameSuffix, std::move(resources), std::move(tagGuids),
+                        std::move(tagLocalIds));
                     notes << note;
 
                     ++notebookIt;
@@ -1110,7 +1121,17 @@ void setupLocalStorage(
                     auto n = note;
                     n.setGuid(std::nullopt);
                     n.setUpdateSequenceNum(std::nullopt);
+                    n.setNotebookGuid(std::nullopt);
+                    n.setTagGuids(std::nullopt);
                     n.setLocallyModified(true);
+                    if (n.resources() && !n.resources()->isEmpty()) {
+                        for (auto & resource: *n.mutableResources()) {
+                            resource.setGuid(std::nullopt);
+                            resource.setNoteGuid(std::nullopt);
+                            resource.setUpdateSequenceNum(std::nullopt);
+                            resource.setLocallyModified(true);
+                        }
+                    }
                     localStorage.putNote(std::move(n)).waitForFinished();
                 } break;
                 }
@@ -1308,8 +1329,7 @@ ISyncStatePtr setupSyncState(
     const ItemGroups itemGroups, const ItemSources itemSources,
     std::optional<qevercloud::Timestamp> lastUpdateTimestamp)
 {
-    QNINFO(
-        "tests::synchronization::Setup", "setupSyncState");
+    QNINFO("tests::synchronization::Setup", "setupSyncState");
 
     qint32 userOwnUpdateCount = 0;
     QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts;
