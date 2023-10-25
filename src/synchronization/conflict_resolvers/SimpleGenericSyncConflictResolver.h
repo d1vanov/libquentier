@@ -181,7 +181,7 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
 
     QNDEBUG(
         "synchronization::SimpleGenericSyncConflictResolver",
-        "Conflicting " << m_typeName << "items match by name but not by guid");
+        "Conflicting " << m_typeName << " items match by name but not by guid");
 
     if constexpr (detail::hasLinkedNoteookGuid<T>::value) {
         const auto & mineLinkedNotebookGuid = mine.linkedNotebookGuid();
