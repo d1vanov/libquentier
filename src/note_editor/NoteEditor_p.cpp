@@ -2946,8 +2946,6 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_pPluginFactory = nullptr;
 #endif
 
-    clearPrepareNoteImageResourcesProgressDialog();
-
     for (auto & pair: m_prepareResourceForOpeningProgressDialogs) {
         pair.second->accept();
         pair.second->deleteLater();
@@ -2978,22 +2976,6 @@ void NoteEditorPrivate::reloadCurrentNote()
     Notebook notebook = *m_pNotebook;
     clearCurrentNoteInfo();
     onFoundNoteAndNotebook(note, notebook);
-}
-
-void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
-{
-    QNDEBUG(
-        "note_editor",
-        "NoteEditorPrivate"
-            << "::clearPrepareNoteImageResourcesProgressDialog");
-
-    if (!m_pPrepareNoteImageResourcesProgressDialog) {
-        return;
-    }
-
-    m_pPrepareNoteImageResourcesProgressDialog->accept();
-    m_pPrepareNoteImageResourcesProgressDialog->deleteLater();
-    m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 }
 
 void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
@@ -3328,22 +3310,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(
         "NoteEditorPrivate"
             << "::onNoteResourceTemporaryFilesPreparationProgress: progress = "
             << progress << ", note local uid = " << noteLocalUid);
-
-    if (Q_UNLIKELY(!m_pPrepareNoteImageResourcesProgressDialog)) {
-        QNDEBUG(
-            "note_editor",
-            "Unexpectedly missing prepare note image "
-                << "resources progress dialog, won't do anything");
-        return;
-    }
-
-    int normalizedProgress =
-        static_cast<int>(std::floor(progress * 100.0 + 0.5));
-    if (normalizedProgress > 100) {
-        normalizedProgress = 100;
-    }
-
-    m_pPrepareNoteImageResourcesProgressDialog->setValue(normalizedProgress);
 }
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
@@ -3360,7 +3326,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
                "= "
             << noteLocalUid << ", error description: " << errorDescription);
 
-    clearPrepareNoteImageResourcesProgressDialog();
     Q_EMIT notifyError(errorDescription);
 }
 
@@ -3457,8 +3422,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
             m_lastSearchHighlightedText,
             m_lastSearchHighlightedTextCaseSensitivity);
     }
-
-    clearPrepareNoteImageResourcesProgressDialog();
 }
 
 void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(
@@ -3671,39 +3634,6 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
         }
     }
 #endif
-
-    clearPrepareNoteImageResourcesProgressDialog();
-
-    if (m_pNote->hasResources()) {
-        auto resources = m_pNote->resources();
-        int numImageResources = 0;
-        QString imageResourcePrefix = QStringLiteral("image");
-        for (const auto & resource: qAsConst(resources)) {
-            if (!resource.hasMime()) {
-                continue;
-            }
-
-            if (!resource.mime().startsWith(imageResourcePrefix)) {
-                continue;
-            }
-
-            ++numImageResources;
-        }
-
-        if (numImageResources > 0) {
-            m_pPrepareNoteImageResourcesProgressDialog = new QProgressDialog(
-                tr("Preparing attachment images") + QStringLiteral("..."),
-                QString(),
-                /* min = */ 0,
-                /* max = */ 100, this, Qt::Dialog);
-
-            m_pPrepareNoteImageResourcesProgressDialog->setWindowModality(
-                Qt::WindowModal);
-
-            m_pPrepareNoteImageResourcesProgressDialog->setMinimumDuration(
-                2000);
-        }
-    }
 
     Q_EMIT noteAndNotebookFoundInLocalStorage(*m_pNote, *m_pNotebook);
 
