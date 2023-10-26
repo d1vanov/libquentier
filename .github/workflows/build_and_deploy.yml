@@ -527,7 +527,7 @@ jobs:
           if [ ! -d "$RUNNER_WORKSPACE/qtkeychain" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qtkeychain)" ]; then
             git clone https://github.com/frankosterfeld/qtkeychain.git $RUNNER_WORKSPACE/qtkeychain_src
             cd $RUNNER_WORKSPACE/qtkeychain_src
-            git checkout v0.13.2
+            git checkout v0.14.1
             mkdir build
             cd build
             cmake -G Ninja -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
