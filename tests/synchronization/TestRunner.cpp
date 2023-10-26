@@ -524,9 +524,13 @@ void TestRunner::runTestScenario()
         "tests::synchronization::TestRunner",
         "Setting up local sync state");
 
+    // Will exclude local new items from computing the sync state as local new
+    // items don't actually have update sequence numbers from local storage's
+    // perspective
     auto localSyncState = setupSyncState(
         testData, testScenarioData.localDataItemTypes,
-        testScenarioData.localItemGroups, testScenarioData.localItemSources,
+        testScenarioData.localItemGroups & (~(ItemGroups{} | ItemGroup::New)),
+        testScenarioData.localItemSources,
         now);
     QVERIFY(localSyncState);
 
