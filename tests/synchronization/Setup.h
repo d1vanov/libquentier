@@ -28,6 +28,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class QDebug;
+class QTextStream;
+
+////////////////////////////////////////////////////////////////////////////////
+
 namespace quentier {
 
 class Account;
@@ -60,8 +65,14 @@ enum class DataItemType
     Resource = 1 << 4,
 };
 
+QTextStream & operator<<(QTextStream & strm, DataItemType type);
+QDebug & operator<<(QDebug & dbg, DataItemType type);
+
 Q_DECLARE_FLAGS(DataItemTypes, DataItemType);
 Q_DECLARE_OPERATORS_FOR_FLAGS(DataItemTypes);
+
+QTextStream & operator<<(QTextStream & strm, DataItemTypes types);
+QDebug & operator<<(QDebug & dbg, DataItemTypes types);
 
 enum class ItemGroup
 {
@@ -70,8 +81,14 @@ enum class ItemGroup
     Modified = 1 << 2,
 };
 
+QTextStream & operator<<(QTextStream & strm, ItemGroup group);
+QDebug & operator<<(QDebug & dbg, ItemGroup group);
+
 Q_DECLARE_FLAGS(ItemGroups, ItemGroup);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ItemGroups);
+
+QTextStream & operator<<(QTextStream & strm, ItemGroups groups);
+QDebug & operator<<(QDebug & dbg, ItemGroups groups);
 
 enum class ItemSource
 {
@@ -79,8 +96,14 @@ enum class ItemSource
     LinkedNotebook = 1 << 1,
 };
 
+QTextStream & operator<<(QTextStream & strm, ItemSource source);
+QDebug & operator<<(QDebug & dbg, ItemSource source);
+
 Q_DECLARE_FLAGS(ItemSources, ItemSource);
 Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
+
+QTextStream & operator<<(QTextStream & strm, ItemSources sources);
+QDebug & operator<<(QDebug & dbg, ItemSources sources);
 
 void setupTestData(
     DataItemTypes dataItemTypes, ItemGroups itemGroups, ItemSources itemSources,

@@ -54,6 +54,120 @@ Q_GLOBAL_STATIC_WITH_ARGS(
 
 Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+void printDataItemType(T & t, const DataItemType type)
+{
+    switch (type)
+    {
+    case DataItemType::SavedSearch:
+        t << "SavedSearch";
+        break;
+    case DataItemType::Tag:
+        t << "Tag";
+        break;
+    case DataItemType::Notebook:
+        t << "Notebook";
+        break;
+    case DataItemType::Note:
+        t << "Note";
+        break;
+    case DataItemType::Resource:
+        t << "Resource";
+        break;
+    }
+}
+
+template <class T>
+void printDataItemTypes(T & t, const DataItemTypes types)
+{
+    if (types.testFlag(DataItemType::SavedSearch)) {
+        t << "[SavedSearch]; ";
+    }
+
+    if (types.testFlag(DataItemType::Tag)) {
+        t << "[Tag]; ";
+    }
+
+    if (types.testFlag(DataItemType::Notebook)) {
+        t << "[Notebook]; ";
+    }
+
+    if (types.testFlag(DataItemType::Note)) {
+        t << "[Note]; ";
+    }
+
+    if (types.testFlag(DataItemType::Resource)) {
+        t << "[Resource]; ";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+void printItemGroup(T & t, const ItemGroup group)
+{
+    switch (group)
+    {
+    case ItemGroup::Base:
+        t << "Base";
+        break;
+    case ItemGroup::Modified:
+        t << "Modified";
+        break;
+    case ItemGroup::New:
+        t << "New";
+        break;
+    }
+}
+
+template <class T>
+void printItemGroups(T & t, const ItemGroups groups)
+{
+    if (groups.testFlag(ItemGroup::Base)) {
+        t << "[Base]; ";
+    }
+
+    if (groups.testFlag(ItemGroup::Modified)) {
+        t << "[Modified]; ";
+    }
+
+    if (groups.testFlag(ItemGroup::New)) {
+        t << "[New]; ";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+void printItemSource(T & t, const ItemSource source)
+{
+    switch (source)
+    {
+    case ItemSource::UserOwnAccount:
+        t << "UserOwnAccount";
+        break;
+    case ItemSource::LinkedNotebook:
+        t << "LinkedNotebook";
+        break;
+    }
+}
+
+template <class T>
+void printItemSources(T & t, const ItemSources sources)
+{
+    if (sources.testFlag(ItemSource::UserOwnAccount)) {
+        t << "[UserOwnAccount]; ";
+    }
+
+    if (sources.testFlag(ItemSource::LinkedNotebook)) {
+        t << "[LinkedNotebook]; ";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 [[nodiscard]] QString composeName(
     const int index, const QString & typeName, const QString & nameSuffix)
 {
@@ -190,6 +304,86 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 }
 
 } // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
+QTextStream & operator<<(QTextStream & strm, const DataItemType type)
+{
+    printDataItemType(strm, type);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const DataItemType type)
+{
+    printDataItemType(dbg, type);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const DataItemTypes types)
+{
+    printDataItemTypes(strm, types);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, DataItemTypes types)
+{
+    printDataItemTypes(dbg, types);
+    return dbg;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+QTextStream & operator<<(QTextStream & strm, const ItemGroup group)
+{
+    printItemGroup(strm, group);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const ItemGroup group)
+{
+    printItemGroup(dbg, group);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const ItemGroups groups)
+{
+    printItemGroups(strm, groups);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const ItemGroups groups)
+{
+    printItemGroups(dbg, groups);
+    return dbg;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+QTextStream & operator<<(QTextStream & strm, const ItemSource source)
+{
+    printItemSource(strm, source);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const ItemSource source)
+{
+    printItemSource(dbg, source);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const ItemSources sources)
+{
+    printItemSources(strm, sources);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const ItemSources sources)
+{
+    printItemSources(dbg, sources);
+    return dbg;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 void setupTestData(
     const DataItemTypes dataItemTypes, const ItemGroups itemGroups,
@@ -1329,7 +1523,11 @@ ISyncStatePtr setupSyncState(
     const ItemGroups itemGroups, const ItemSources itemSources,
     std::optional<qevercloud::Timestamp> lastUpdateTimestamp)
 {
-    QNINFO("tests::synchronization::Setup", "setupSyncState");
+    QNDEBUG(
+        "tests::synchronization::Setup",
+        "setupSyncState: dataItemTypes = " << dataItemTypes
+            << ", itemGroups = " << itemGroups
+            << ", itemSources = " << itemSources);
 
     qint32 userOwnUpdateCount = 0;
     QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts;
