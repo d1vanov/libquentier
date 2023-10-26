@@ -160,6 +160,10 @@ NoteStoreServer::NoteStoreServer(
                             .arg(m_tcpServer->errorString())}};
     }
 
+    QNDEBUG(
+        "synchronization::tests::NoteStoreServer",
+        "NoteStoreServer: listening on port " << m_tcpServer->serverPort());
+
     QObject::connect(m_tcpServer, &QTcpServer::newConnection, this, [this] {
         auto * socket = m_tcpServer->nextPendingConnection();
         Q_ASSERT(socket);
@@ -216,10 +220,23 @@ NoteStoreServer::NoteStoreServer(
         m_server->onRequest(std::move(requestData), requestId);
     });
 
+    QObject::connect(
+        m_tcpServer, &QTcpServer::acceptError, this,
+        [](const QAbstractSocket::SocketError error) {
+            QNWARNING(
+                "synchronization::tests::NoteStoreServer",
+                "Error accepting connection: " << error);
+        });
+
     connectToQEverCloudServer();
 }
 
-NoteStoreServer::~NoteStoreServer() = default;
+NoteStoreServer::~NoteStoreServer()
+{
+    QNDEBUG(
+        "synchronization::tests::NoteStoreServer",
+        "NoteStoreServer: dtor");
+}
 
 quint16 NoteStoreServer::port() const noexcept
 {
