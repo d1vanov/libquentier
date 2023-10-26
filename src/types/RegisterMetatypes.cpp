@@ -24,6 +24,7 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/RegisterMetatypes.h>
@@ -144,6 +145,9 @@ void registerMetatypes()
 
     qRegisterMetaType<local_storage::ILocalStorage::UpdateNoteOptions>(
         "ILocalStorage::UpdateNoteOptions");
+
+    using ISendStatusPtr = synchronization::ISendStatusPtr;
+    qRegisterMetaType<ISendStatusPtr>("ISendStatusPtr");
 }
 
 } // namespace quentier
