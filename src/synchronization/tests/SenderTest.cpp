@@ -677,7 +677,7 @@ void setupUserOwnNoteStoreMock(
     };
 
     if (!testData.m_newSavedSearches.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, createSearchAsync)
+        EXPECT_CALL(*mockNoteStore, createSearch)
             .Times(AtMost(testData.m_newSavedSearches.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newSavedSearches.size(),
@@ -698,51 +698,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentSavedSearches << createdSavedSearch;
-                    return threading::makeReadyFuture<qevercloud::SavedSearch>(
-                        std::move(createdSavedSearch));
+                    return createdSavedSearch;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
                         sentData.sentSavedSearches << createdSavedSearch;
-                        return threading::makeReadyFuture<
-                            qevercloud::SavedSearch>(
-                            std::move(createdSavedSearch));
+                        return createdSavedSearch;
                     }
                     sentData.failedToSendSavedSearches << createdSavedSearch;
-                    return threading::makeExceptionalFuture<
-                        qevercloud::SavedSearch>(RuntimeError{
-                        ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentSavedSearches << createdSavedSearch;
-                        return threading::makeReadyFuture<
-                            qevercloud::SavedSearch>(
-                            std::move(createdSavedSearch));
+                        return createdSavedSearch;
                     }
                     sentData.failedToSendSavedSearches << createdSavedSearch;
-                    return threading::makeExceptionalFuture<
-                        qevercloud::SavedSearch>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
                                 qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
                             .setMessage(QStringLiteral("Rate limit reached"))
                             .setRateLimitDuration(300)
-                            .build());
+                            .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentSavedSearches << createdSavedSearch;
-                        return threading::makeReadyFuture<
-                            qevercloud::SavedSearch>(
-                            std::move(createdSavedSearch));
+                        return createdSavedSearch;
                     }
                     sentData.failedToSendSavedSearches << createdSavedSearch;
-                    return threading::makeExceptionalFuture<
-                        qevercloud::SavedSearch>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
                                 qevercloud::EDAMErrorCode::AUTH_EXPIRED)
                             .setMessage(
                                 QStringLiteral("Authentication expired"))
-                            .build());
+                            .build();
                 }
 
                 UNREACHABLE;
@@ -750,7 +738,7 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_updatedSavedSearches.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, updateSearchAsync)
+        EXPECT_CALL(*mockNoteStore, updateSearch)
             .Times(AtMost(testData.m_updatedSavedSearches.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_updatedSavedSearches.size(),
@@ -773,42 +761,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentSavedSearches << updatedSavedSearch;
-                    return threading::makeReadyFuture<qint32>(newUsn);
+                    return newUsn;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
                         sentData.sentSavedSearches << updatedSavedSearch;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendSavedSearches << updatedSavedSearch;
-                    return threading::makeExceptionalFuture<qint32>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentSavedSearches << updatedSavedSearch;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendSavedSearches << updatedSavedSearch;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
                                 qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
                             .setMessage(QStringLiteral("Rate limit reached"))
                             .setRateLimitDuration(300)
-                            .build());
+                            .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentSavedSearches << updatedSavedSearch;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendSavedSearches << updatedSavedSearch;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
                                 qevercloud::EDAMErrorCode::AUTH_EXPIRED)
                             .setMessage(
                                 QStringLiteral("Authentication expired"))
-                            .build());
+                            .build();
                 }
 
                 UNREACHABLE;
@@ -816,7 +801,7 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_newUserOwnNotebooks.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, createNotebookAsync)
+        EXPECT_CALL(*mockNoteStore, createNotebook)
             .Times(AtMost(testData.m_newUserOwnNotebooks.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newUserOwnNotebooks.size(),
@@ -838,48 +823,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotebooks << createdNotebook;
-                    return threading::makeReadyFuture<qevercloud::Notebook>(
-                        std::move(createdNotebook));
+                    return createdNotebook;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
                         sentData.sentNotebooks << createdNotebook;
-                        return threading::makeReadyFuture<qevercloud::Notebook>(
-                            std::move(createdNotebook));
+                        return createdNotebook;
                     }
                     sentData.failedToSendNotebooks << createdNotebook;
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Notebook>(RuntimeError{
-                        ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentNotebooks << createdNotebook;
-                        return threading::makeReadyFuture<qevercloud::Notebook>(
-                            std::move(createdNotebook));
+                        return createdNotebook;
                     }
                     sentData.failedToSendNotebooks << createdNotebook;
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Notebook>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentNotebooks << createdNotebook;
-                        return threading::makeReadyFuture<qevercloud::Notebook>(
-                            std::move(createdNotebook));
+                        return createdNotebook;
                     }
                     sentData.failedToSendNotebooks << createdNotebook;
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Notebook>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -887,7 +863,7 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_updatedUserOwnNotebooks.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, updateNotebookAsync)
+        EXPECT_CALL(*mockNoteStore, updateNotebook)
             .Times(AtMost(testData.m_updatedUserOwnNotebooks.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount =
@@ -909,42 +885,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotebooks << updatedNotebook;
-                    return threading::makeReadyFuture<qint32>(newUsn);
+                    return newUsn;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
                         sentData.sentNotebooks << updatedNotebook;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendNotebooks << updatedNotebook;
-                    return threading::makeExceptionalFuture<qint32>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentNotebooks << updatedNotebook;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendNotebooks << updatedNotebook;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentNotebooks << updatedNotebook;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendNotebooks << updatedNotebook;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -952,7 +925,7 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_newUserOwnTags.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, createTagAsync)
+        EXPECT_CALL(*mockNoteStore, createTag)
             .Times(AtMost(testData.m_newUserOwnTags.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newUserOwnTags.size(),
@@ -983,46 +956,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentTags << createdTag;
-                    return threading::makeReadyFuture<qevercloud::Tag>(
-                        std::move(createdTag));
+                    return createdTag;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter < itemCount / 2) {
                         sentData.sentTags << createdTag;
-                        return threading::makeReadyFuture<qevercloud::Tag>(
-                            std::move(createdTag));
+                        return createdTag;
                     }
                     sentData.failedToSendTags << createdTag;
-                    return threading::makeExceptionalFuture<qevercloud::Tag>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentTags << createdTag;
-                        return threading::makeReadyFuture<qevercloud::Tag>(
-                            std::move(createdTag));
+                        return createdTag;
                     }
                     sentData.failedToSendTags << createdTag;
-                    return threading::makeExceptionalFuture<qevercloud::Tag>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
                             .setErrorCode(
                                 qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
                             .setMessage(QStringLiteral("Rate limit reached"))
                             .setRateLimitDuration(300)
-                            .build());
+                            .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentTags << createdTag;
-                        return threading::makeReadyFuture<qevercloud::Tag>(
-                            std::move(createdTag));
+                        return createdTag;
                     }
                     sentData.failedToSendTags << createdTag;
-                    return threading::makeExceptionalFuture<qevercloud::Tag>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -1030,7 +996,7 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_updatedUserOwnTags.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, updateTagAsync)
+        EXPECT_CALL(*mockNoteStore, updateTag)
             .Times(AtMost(testData.m_updatedUserOwnTags.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_updatedUserOwnTags.size(),
@@ -1051,42 +1017,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentTags << updatedTag;
-                    return threading::makeReadyFuture<qint32>(newUsn);
+                    return newUsn;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter < itemCount / 2) {
                         sentData.sentTags << updatedTag;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendTags << updatedTag;
-                    return threading::makeExceptionalFuture<qint32>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentTags << updatedTag;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendTags << updatedTag;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentTags << updatedTag;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendTags << updatedTag;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -1107,7 +1070,7 @@ void setupUserOwnNoteStoreMock(
     };
 
     if (!testData.m_newUserOwnNotes.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, createNoteAsync)
+        EXPECT_CALL(*mockNoteStore, createNote)
             .Times(AtMost(testData.m_newUserOwnNotes.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newUserOwnNotes.size(),
@@ -1133,41 +1096,35 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << createdNote;
-                    return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(createdNote));
+                    return createdNote;
                 case NoteStoreBehaviour::WithFailures:
                     sentData.failedToSendNotes << createdNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << createdNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(createdNote));
+                        return createdNote;
                     }
                     sentData.failedToSendNotes << createdNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << createdNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(createdNote));
+                        return createdNote;
                     }
                     sentData.failedToSendNotes << createdNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -1175,7 +1132,7 @@ void setupUserOwnNoteStoreMock(
     }
 
     if (!testData.m_updatedUserOwnNotes.isEmpty()) {
-        EXPECT_CALL(*mockNoteStore, updateNoteAsync)
+        EXPECT_CALL(*mockNoteStore, updateNote)
             .Times(AtMost(testData.m_updatedUserOwnNotes.size()))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_updatedUserOwnNotes.size(),
@@ -1200,46 +1157,39 @@ void setupUserOwnNoteStoreMock(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << updatedNote;
-                    return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(updatedNote));
+                    return updatedNote;
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
                         sentData.sentNotes << updatedNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                        return updatedNote;
                     }
                     sentData.failedToSendNotes << updatedNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << updatedNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                        return updatedNote;
                     }
                     sentData.failedToSendNotes << updatedNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << updatedNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                        return updatedNote;
                     }
                     sentData.failedToSendNotes << updatedNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -1282,7 +1232,7 @@ void setupLinkedNotebookNoteStoreMocks(
         mockNoteStore =
             std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 
-        EXPECT_CALL(*mockNoteStore, updateNotebookAsync)
+        EXPECT_CALL(*mockNoteStore, updateNotebook)
             .WillRepeatedly([&, i, noteStoreBehaviour, getNewLinkedNotebookUsn](
                                 const qevercloud::Notebook & notebook,
                                 const qevercloud::IRequestContextPtr &
@@ -1298,38 +1248,35 @@ void setupLinkedNotebookNoteStoreMocks(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotebooks << updatedNotebook;
-                    return threading::makeReadyFuture<qint32>(newUsn);
+                    return newUsn;
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
                         sentData.sentNotebooks << updatedNotebook;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
                     sentData.failedToSendNotebooks << updatedNotebook;
-                    return threading::makeExceptionalFuture<qint32>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     sentData.failedToSendNotebooks << updatedNotebook;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     sentData.failedToSendNotebooks << updatedNotebook;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -1355,7 +1302,7 @@ void setupLinkedNotebookNoteStoreMocks(
             note.setNotebookGuid(UidGenerator::Generate());
         };
 
-        EXPECT_CALL(*mockNoteStore, createTagAsync)
+        EXPECT_CALL(*mockNoteStore, createTag)
             .WillRepeatedly([&, i, noteStoreBehaviour, getNewLinkedNotebookUsn](
                                 const qevercloud::Tag & tag,
                                 const qevercloud::IRequestContextPtr &
@@ -1375,46 +1322,41 @@ void setupLinkedNotebookNoteStoreMocks(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentTags << createdTag;
-                    return threading::makeReadyFuture<qevercloud::Tag>(
-                        std::move(createdTag));
+                    return createdTag;
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
                         sentData.sentTags << createdTag;
-                        return threading::makeReadyFuture<qevercloud::Tag>(
-                            std::move(createdTag));
+                        return createdTag;
                     }
                     sentData.failedToSendTags << createdTag;
-                    return threading::makeExceptionalFuture<qevercloud::Tag>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     sentData.failedToSendTags << createdTag;
-                    return threading::makeExceptionalFuture<qevercloud::Tag>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     sentData.failedToSendTags << createdTag;
-                    return threading::makeExceptionalFuture<qevercloud::Tag>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
             });
 
-        EXPECT_CALL(*mockNoteStore, updateTagAsync)
+        EXPECT_CALL(*mockNoteStore, updateTag)
             .WillRepeatedly([&, i, noteStoreBehaviour, getNewLinkedNotebookUsn](
                                 const qevercloud::Tag & tag,
                                 const qevercloud::IRequestContextPtr &
@@ -1428,39 +1370,36 @@ void setupLinkedNotebookNoteStoreMocks(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentTags << updatedTag;
-                    return threading::makeReadyFuture<qint32>(newUsn);
+                    return newUsn;
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
                         sentData.sentTags << updatedTag;
-                        return threading::makeReadyFuture<qint32>(newUsn);
+                        return newUsn;
                     }
 
                     sentData.failedToSendTags << updatedTag;
-                    return threading::makeExceptionalFuture<qint32>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     sentData.failedToSendTags << updatedTag;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     sentData.failedToSendTags << updatedTag;
-                    return threading::makeExceptionalFuture<qint32>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -1486,7 +1425,7 @@ void setupLinkedNotebookNoteStoreMocks(
             findAndSetNoteTagGuids(note, updatedTags);
         };
 
-        EXPECT_CALL(*mockNoteStore, createNoteAsync)
+        EXPECT_CALL(*mockNoteStore, createNote)
             .WillRepeatedly([&, i, noteStoreBehaviour, setNoteNotebookGuid,
                              setNoteTagGuids, getNewLinkedNotebookUsn](
                                 const qevercloud::Note & note,
@@ -1504,45 +1443,40 @@ void setupLinkedNotebookNoteStoreMocks(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << createdNote;
-                    return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(createdNote));
+                    return createdNote;
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
                         sentData.sentNotes << createdNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(createdNote));
+                        return createdNote;
                     }
 
                     sentData.failedToSendNotes << createdNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     sentData.failedToSendNotes << createdNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     sentData.failedToSendNotes << createdNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
             });
 
-        EXPECT_CALL(*mockNoteStore, updateNoteAsync)
+        EXPECT_CALL(*mockNoteStore, updateNote)
             .WillRepeatedly([&, i, noteStoreBehaviour, setNoteNotebookGuid,
                              setNoteTagGuids, getNewLinkedNotebookUsn](
                                 const qevercloud::Note & note,
@@ -1559,41 +1493,36 @@ void setupLinkedNotebookNoteStoreMocks(
                 switch (noteStoreBehaviour) {
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << updatedNote;
-                    return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(updatedNote));
+                    return updatedNote;
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
                         i->fetch_add(1, std::memory_order_acq_rel);
                     if (counter % 2 == 0) {
                         sentData.sentNotes << updatedNote;
-                        return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                        return updatedNote;
                     }
 
                     sentData.failedToSendNotes << updatedNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{
-                            ErrorString{QStringLiteral("some error")}});
+                    throw RuntimeError{
+                        ErrorString{QStringLiteral("some error")}};
                 }
                 case NoteStoreBehaviour::WithRateLimitExceeding:
                     sentData.failedToSendNotes << updatedNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setMessage(QStringLiteral("Rate limit reached"))
-                            .setRateLimitDuration(300)
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setMessage(QStringLiteral("Rate limit reached"))
+                        .setRateLimitDuration(300)
+                        .build();
                 case NoteStoreBehaviour::WithAuthenticationExpiring:
                     sentData.failedToSendNotes << updatedNote;
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .setMessage(
-                                QStringLiteral("Authentication expired"))
-                            .build());
+                    throw qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .setMessage(
+                            QStringLiteral("Authentication expired"))
+                        .build();
                 }
 
                 UNREACHABLE;
@@ -2274,14 +2203,14 @@ TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createTagAsync)
-        .WillOnce([&](const qevercloud::Tag & tag,
-                      const qevercloud::IRequestContextPtr & ctx) mutable {
-            EXPECT_FALSE(ctx);
-            EXPECT_EQ(tag, parentTag);
-            return threading::makeExceptionalFuture<qevercloud::Tag>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
-        });
+    EXPECT_CALL(*mockUserOwnNoteStore, createTag)
+        .WillOnce(
+            [&](const qevercloud::Tag & tag,
+                const qevercloud::IRequestContextPtr & ctx) -> qevercloud::Tag {
+                EXPECT_FALSE(ctx);
+                EXPECT_EQ(tag, parentTag);
+                throw RuntimeError{ErrorString{QStringLiteral("some error")}};
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
         .WillOnce(Return(
@@ -2364,16 +2293,15 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*mockUserOwnNoteStore, updateTagAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, updateTag)
         .WillOnce([&](const qevercloud::Tag & tag,
-                      const qevercloud::IRequestContextPtr & ctx) mutable {
+                      const qevercloud::IRequestContextPtr & ctx) -> qint32 {
             EXPECT_FALSE(ctx);
             EXPECT_EQ(tag, parentTag);
-            return threading::makeExceptionalFuture<qint32>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
+            throw RuntimeError{ErrorString{QStringLiteral("some error")}};
         });
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createTagAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, createTag)
         .WillOnce([&](const qevercloud::Tag & tag,
                       const qevercloud::IRequestContextPtr & ctx) mutable {
             EXPECT_FALSE(ctx);
@@ -2381,8 +2309,7 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
             qevercloud::Tag createdTag = tag;
             createdTag.setGuid(UidGenerator::Generate());
             createdTag.setUpdateSequenceNum(usn++);
-            return threading::makeReadyFuture<qevercloud::Tag>(
-                std::move(createdTag));
+            return createdTag;
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
@@ -2474,14 +2401,15 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createNotebookAsync)
-        .WillOnce([&](const qevercloud::Notebook & n,
-                      const qevercloud::IRequestContextPtr & ctx) mutable {
-            EXPECT_FALSE(ctx);
-            EXPECT_EQ(n, notebook);
-            return threading::makeExceptionalFuture<qevercloud::Notebook>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
-        });
+    EXPECT_CALL(*mockUserOwnNoteStore, createNotebook)
+        .WillOnce(
+            [&](const qevercloud::Notebook & n,
+                const qevercloud::IRequestContextPtr & ctx)
+                -> qevercloud::Notebook {
+                EXPECT_FALSE(ctx);
+                EXPECT_EQ(n, notebook);
+                throw RuntimeError{ErrorString{QStringLiteral("some error")}};
+            });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
         .WillOnce(Return(
@@ -2570,16 +2498,15 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*mockUserOwnNoteStore, updateNotebookAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, updateNotebook)
         .WillOnce([&](const qevercloud::Notebook & n,
-                      const qevercloud::IRequestContextPtr & ctx) mutable {
+                      const qevercloud::IRequestContextPtr & ctx) -> qint32 {
             EXPECT_FALSE(ctx);
             EXPECT_EQ(n, notebook);
-            return threading::makeExceptionalFuture<qint32>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
+            throw RuntimeError{ErrorString{QStringLiteral("some error")}};
         });
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createNoteAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, createNote)
         .WillOnce([&](const qevercloud::Note & n,
                       const qevercloud::IRequestContextPtr & ctx) mutable {
             EXPECT_FALSE(ctx);
@@ -2587,8 +2514,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
             qevercloud::Note newNote{n};
             newNote.setUpdateSequenceNum(usn++);
             newNote.setGuid(UidGenerator::Generate());
-            return threading::makeReadyFuture<qevercloud::Note>(
-                std::move(newNote));
+            return newNote;
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
@@ -2693,16 +2619,16 @@ TEST_F(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createTagAsync)
-        .WillOnce([&](const qevercloud::Tag & t,
-                      const qevercloud::IRequestContextPtr & ctx) mutable {
-            EXPECT_FALSE(ctx);
-            EXPECT_EQ(t, tag);
-            return threading::makeExceptionalFuture<qevercloud::Tag>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
-        });
+    EXPECT_CALL(*mockUserOwnNoteStore, createTag)
+        .WillOnce(
+            [&](const qevercloud::Tag & t,
+                const qevercloud::IRequestContextPtr & ctx) -> qevercloud::Tag {
+                EXPECT_FALSE(ctx);
+                EXPECT_EQ(t, tag);
+                throw RuntimeError{ErrorString{QStringLiteral("some error")}};
+            });
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createNoteAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, createNote)
         .WillOnce([&](const qevercloud::Note & n,
                       const qevercloud::IRequestContextPtr & ctx) mutable {
             EXPECT_FALSE(ctx);
@@ -2710,8 +2636,7 @@ TEST_F(
             qevercloud::Note newNote{n};
             newNote.setUpdateSequenceNum(usn++);
             newNote.setGuid(UidGenerator::Generate());
-            return threading::makeReadyFuture<qevercloud::Note>(
-                std::move(newNote));
+            return newNote;
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
@@ -2819,16 +2744,15 @@ TEST_F(
             Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 mockUserOwnNoteStore)));
 
-    EXPECT_CALL(*mockUserOwnNoteStore, updateTagAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, updateTag)
         .WillOnce([&](const qevercloud::Tag & t,
-                      const qevercloud::IRequestContextPtr & ctx) mutable {
+                      const qevercloud::IRequestContextPtr & ctx) -> qint32 {
             EXPECT_FALSE(ctx);
             EXPECT_EQ(t, tag);
-            return threading::makeExceptionalFuture<qint32>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
+            throw RuntimeError{ErrorString{QStringLiteral("some error")}};
         });
 
-    EXPECT_CALL(*mockUserOwnNoteStore, createNoteAsync)
+    EXPECT_CALL(*mockUserOwnNoteStore, createNote)
         .WillOnce([&](const qevercloud::Note & n,
                       const qevercloud::IRequestContextPtr & ctx) mutable {
             EXPECT_FALSE(ctx);
@@ -2836,8 +2760,7 @@ TEST_F(
             qevercloud::Note newNote{n};
             newNote.setUpdateSequenceNum(usn++);
             newNote.setGuid(UidGenerator::Generate());
-            return threading::makeReadyFuture<qevercloud::Note>(
-                std::move(newNote));
+            return newNote;
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)

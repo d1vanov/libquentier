@@ -115,10 +115,10 @@ private:
         const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
 
     void sendNoteImpl(
-        SendContextPtr sendContext, qevercloud::Note note,
+        const SendContextPtr & sendContext, qevercloud::Note note,
         bool containsFailedToSendTags,
         const qevercloud::INoteStorePtr & noteStore,
-        std::shared_ptr<QPromise<qevercloud::Note>> notePromise) const;
+        const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const;
 
     void processNote(
         const SendContextPtr & sendContext, qevercloud::Note note,
@@ -141,9 +141,9 @@ private:
         const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const;
 
     void sendTagImpl(
-        SendContextPtr sendContext, qevercloud::Tag tag,
+        const SendContextPtr & sendContext, qevercloud::Tag tag,
         const qevercloud::INoteStorePtr & noteStore,
-        std::shared_ptr<QPromise<qevercloud::Tag>> tagPromise) const;
+        const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const;
 
     void processTag(
         const SendContextPtr & sendContext, qevercloud::Tag tag,
@@ -168,9 +168,10 @@ private:
         const;
 
     void sendNotebookImpl(
-        SendContextPtr sendContext, qevercloud::Notebook notebook,
+        const SendContextPtr & sendContext, qevercloud::Notebook notebook,
         const qevercloud::INoteStorePtr & noteStore,
-        std::shared_ptr<QPromise<qevercloud::Notebook>> notebookPromise) const;
+        const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
+        const;
 
     void processNotebook(
         const SendContextPtr & sendContext, qevercloud::Notebook notebook,
@@ -195,10 +196,10 @@ private:
             savedSearchPromise) const;
 
     void sendSavedSearchImpl(
-        SendContextPtr sendContext, qevercloud::SavedSearch savedSearch,
+        const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
         const qevercloud::INoteStorePtr & noteStore,
-        std::shared_ptr<QPromise<qevercloud::SavedSearch>> savedSearchPromise)
-        const;
+        const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
+            savedSearchPromise) const;
 
     void processSavedSearch(
         const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
