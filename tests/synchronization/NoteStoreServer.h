@@ -506,14 +506,14 @@ private:
 
     bool m_onceGetLinkedNotebookSyncChunkCalled = false;
 
-    quint32 m_maxNumSavedSearches;
-    quint32 m_maxNumTags;
-    quint32 m_maxNumNotebooks;
-    quint32 m_maxNumNotes;
-    quint64 m_maxNoteSize;
-    quint32 m_maxNumResourcesPerNote;
-    quint32 m_maxNumTagsPerNote;
-    quint64 m_maxResourceSize;
+    quint32 m_maxNumSavedSearches = 0;
+    quint32 m_maxNumTags = 0;
+    quint32 m_maxNumNotebooks = 0;
+    quint32 m_maxNumNotes = 0;
+    quint64 m_maxNoteSize = 0;
+    quint32 m_maxNumResourcesPerNote = 0;
+    quint32 m_maxNumTagsPerNote = 0;
+    quint64 m_maxResourceSize = 0;
 
     qevercloud::SyncState m_userOwnSyncState;
     QHash<qevercloud::Guid, qevercloud::SyncState> m_linkedNotebookSyncStates;

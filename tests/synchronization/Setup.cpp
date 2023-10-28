@@ -903,6 +903,15 @@ void setupNoteStoreServer(
 {
     QNINFO("tests::synchronization::Setup", "setupNoteStoreServer");
 
+    noteStoreServer.setMaxNumSavedSearches(1000);
+    noteStoreServer.setMaxNumTags(1000);
+    noteStoreServer.setMaxNumNotebooks(1000);
+    noteStoreServer.setMaxNumNotes(1000);
+    noteStoreServer.setMaxNoteSize(1000000);
+    noteStoreServer.setMaxNumResourcesPerNote(100);
+    noteStoreServer.setMaxNumTagsPerNote(100);
+    noteStoreServer.setMaxResourceSize(1000000);
+
     const auto putSavedSearches =
         [&](QList<qevercloud::SavedSearch> & savedSearches) {
             for (auto & savedSearch: savedSearches) {
