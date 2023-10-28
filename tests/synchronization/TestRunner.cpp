@@ -511,7 +511,10 @@ void TestRunner::runTestScenario()
         testScenarioData.serverExpungedDataItemSources,
         m_noteStoreServer->port(), testData);
 
-    setupNoteStoreServer(testData, *m_noteStoreServer);
+    setupNoteStoreServer(
+        testData, testScenarioData.serverDataItemTypes,
+        testScenarioData.serverItemGroups, testScenarioData.serverItemSources,
+        *m_noteStoreServer);
 
     setupLocalStorage(
         testData, testScenarioData.localDataItemTypes,

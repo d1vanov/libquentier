@@ -111,7 +111,9 @@ void setupTestData(
     quint16 port, TestData & testData);
 
 void setupNoteStoreServer(
-    TestData & testData, NoteStoreServer & noteStoreServer);
+    TestData & testData, DataItemTypes dataItemTypes,
+    ItemGroups itemGroups, ItemSources itemSources,
+    NoteStoreServer & noteStoreServer);
 
 void setupLocalStorage(
     const TestData & testData, DataItemTypes dataItemTypes,

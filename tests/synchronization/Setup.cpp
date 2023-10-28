@@ -59,8 +59,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QString, gNewItems, (QString::fromUtf8("new")));
 template <class T>
 void printDataItemType(T & t, const DataItemType type)
 {
-    switch (type)
-    {
+    switch (type) {
     case DataItemType::SavedSearch:
         t << "SavedSearch";
         break;
@@ -108,8 +107,7 @@ void printDataItemTypes(T & t, const DataItemTypes types)
 template <class T>
 void printItemGroup(T & t, const ItemGroup group)
 {
-    switch (group)
-    {
+    switch (group) {
     case ItemGroup::Base:
         t << "Base";
         break;
@@ -143,8 +141,7 @@ void printItemGroups(T & t, const ItemGroups groups)
 template <class T>
 void printItemSource(T & t, const ItemSource source)
 {
-    switch (source)
-    {
+    switch (source) {
     case ItemSource::UserOwnAccount:
         t << "UserOwnAccount";
         break;
@@ -901,7 +898,8 @@ void setupTestData(
 }
 
 void setupNoteStoreServer(
-    TestData & testData, NoteStoreServer & noteStoreServer)
+    TestData & testData, DataItemTypes dataItemTypes, ItemGroups itemGroups,
+    ItemSources itemSources, NoteStoreServer & noteStoreServer)
 {
     QNINFO("tests::synchronization::Setup", "setupNoteStoreServer");
 
@@ -1014,36 +1012,157 @@ void setupNoteStoreServer(
     // and modified and new items have higher USNs.
 
     // First put all items from the base set
-    putSavedSearches(testData.m_baseSavedSearches);
-    putLinkedNotebooks(testData.m_baseLinkedNotebooks);
-    putNotebooks(testData.m_userOwnBaseNotebooks);
-    putNotebooks(testData.m_linkedNotebookBaseNotebooks);
-    putTags(testData.m_userOwnBaseTags);
-    putTags(testData.m_linkedNotebookBaseTags);
-    putNotes(testData.m_userOwnBaseNotes);
-    putNotes(testData.m_linkedNotebookBaseNotes);
+    if (itemGroups.testFlag(ItemGroup::Base)) {
+        if (dataItemTypes.testFlag(DataItemType::SavedSearch) &&
+            itemSources.testFlag(ItemSource::UserOwnAccount))
+        {
+            putSavedSearches(testData.m_baseSavedSearches);
+        }
+
+        if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+            putLinkedNotebooks(testData.m_baseLinkedNotebooks);
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Notebook) ||
+            dataItemTypes.testFlag(DataItemType::Note) ||
+            dataItemTypes.testFlag(DataItemType::Resource))
+        {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putNotebooks(testData.m_userOwnBaseNotebooks);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putNotebooks(testData.m_linkedNotebookBaseNotebooks);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Tag)) {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putTags(testData.m_userOwnBaseTags);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putTags(testData.m_linkedNotebookBaseTags);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Note) ||
+            dataItemTypes.testFlag(DataItemType::Resource))
+        {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putNotes(testData.m_userOwnBaseNotes);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putNotes(testData.m_linkedNotebookBaseNotes);
+            }
+        }
+    }
 
     // Next put all items from the modified set
-    putSavedSearches(testData.m_modifiedSavedSearches);
-    putLinkedNotebooks(testData.m_modifiedLinkedNotebooks);
-    putNotebooks(testData.m_userOwnModifiedNotebooks);
-    putNotebooks(testData.m_linkedNotebookModifiedNotebooks);
-    putTags(testData.m_userOwnModifiedTags);
-    putTags(testData.m_linkedNotebookModifiedTags);
-    putNotes(testData.m_userOwnModifiedNotes);
-    putNotes(testData.m_linkedNotebookModifiedNotes);
-    putResources(testData.m_userOwnModifiedResources);
-    putResources(testData.m_linkedNotebookModifiedResources);
+    if (itemGroups.testFlag(ItemGroup::Modified)) {
+        if (dataItemTypes.testFlag(DataItemType::SavedSearch) &&
+            itemSources.testFlag(ItemSource::UserOwnAccount))
+        {
+            putSavedSearches(testData.m_modifiedSavedSearches);
+        }
+
+        if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+            putLinkedNotebooks(testData.m_modifiedLinkedNotebooks);
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Notebook) ||
+            dataItemTypes.testFlag(DataItemType::Note) ||
+            dataItemTypes.testFlag(DataItemType::Resource))
+        {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putNotebooks(testData.m_userOwnModifiedNotebooks);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putNotebooks(testData.m_linkedNotebookModifiedNotebooks);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Tag)) {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putTags(testData.m_userOwnModifiedTags);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putTags(testData.m_linkedNotebookModifiedTags);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Note) ||
+            dataItemTypes.testFlag(DataItemType::Resource))
+        {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putNotes(testData.m_userOwnModifiedNotes);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putNotes(testData.m_linkedNotebookModifiedNotes);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Resource)) {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putResources(testData.m_userOwnModifiedResources);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putResources(testData.m_linkedNotebookModifiedResources);
+            }
+        }
+    }
 
     // And at last put all items from the new set
-    putSavedSearches(testData.m_newSavedSearches);
-    putLinkedNotebooks(testData.m_newLinkedNotebooks);
-    putNotebooks(testData.m_userOwnNewNotebooks);
-    putNotebooks(testData.m_linkedNotebookNewNotebooks);
-    putTags(testData.m_userOwnNewTags);
-    putTags(testData.m_linkedNotebookNewTags);
-    putNotes(testData.m_userOwnNewNotes);
-    putNotes(testData.m_linkedNotebookNewNotes);
+    if (itemGroups.testFlag(ItemGroup::New)) {
+        if (dataItemTypes.testFlag(DataItemType::SavedSearch) &&
+            itemSources.testFlag(ItemSource::UserOwnAccount)) {
+            putSavedSearches(testData.m_newSavedSearches);
+        }
+
+        if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+            putLinkedNotebooks(testData.m_newLinkedNotebooks);
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Notebook) ||
+            dataItemTypes.testFlag(DataItemType::Note) ||
+            dataItemTypes.testFlag(DataItemType::Resource))
+        {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putNotebooks(testData.m_userOwnNewNotebooks);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putNotebooks(testData.m_linkedNotebookNewNotebooks);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Tag)) {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putTags(testData.m_userOwnNewTags);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putTags(testData.m_linkedNotebookNewTags);
+            }
+        }
+
+        if (dataItemTypes.testFlag(DataItemType::Note) ||
+            dataItemTypes.testFlag(DataItemType::Resource))
+        {
+            if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
+                putNotes(testData.m_userOwnNewNotes);
+            }
+
+            if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
+                putNotes(testData.m_linkedNotebookNewNotes);
+            }
+        }
+    }
 
     for (const auto & guid:
          qAsConst(testData.m_expungedUserOwnSavedSearchGuids)) {
@@ -1525,8 +1644,8 @@ ISyncStatePtr setupSyncState(
 {
     QNDEBUG(
         "tests::synchronization::Setup",
-        "setupSyncState: dataItemTypes = " << dataItemTypes
-            << ", itemGroups = " << itemGroups
+        "setupSyncState: dataItemTypes = "
+            << dataItemTypes << ", itemGroups = " << itemGroups
             << ", itemSources = " << itemSources);
 
     qint32 userOwnUpdateCount = 0;
