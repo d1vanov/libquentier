@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/LinkedNotebookFinder.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -87,7 +89,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     auto future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -98,7 +100,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -119,7 +121,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -130,7 +132,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -151,7 +153,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -161,7 +163,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -187,7 +189,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
 
     auto future = linkedNotebookFinder->findLinkedNotebookByGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -196,7 +198,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -221,7 +223,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -232,7 +234,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -253,7 +255,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -263,7 +265,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
     future =
         linkedNotebookFinder->findLinkedNotebookByGuid(*linkedNotebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -296,7 +298,7 @@ TEST_F(
     auto future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -306,7 +308,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -325,7 +327,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -335,7 +337,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -354,7 +356,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -364,7 +366,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -393,7 +395,7 @@ TEST_F(
     auto future =
         linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -402,7 +404,7 @@ TEST_F(
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -426,7 +428,7 @@ TEST_F(
 
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -435,7 +437,7 @@ TEST_F(
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -453,7 +455,7 @@ TEST_F(
 
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -462,7 +464,7 @@ TEST_F(
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -505,7 +507,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     auto future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -516,7 +518,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -536,7 +538,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -547,7 +549,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -567,7 +569,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -577,7 +579,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -597,7 +599,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -623,7 +625,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -633,7 +635,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
         notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -666,7 +668,7 @@ TEST_F(
     auto future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -676,7 +678,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -695,7 +697,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -705,7 +707,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -724,7 +726,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -734,7 +736,7 @@ TEST_F(
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -762,7 +764,7 @@ TEST_F(
 
     auto future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -771,7 +773,7 @@ TEST_F(
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -795,7 +797,7 @@ TEST_F(
 
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -804,7 +806,7 @@ TEST_F(
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -822,7 +824,7 @@ TEST_F(
 
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -831,7 +833,7 @@ TEST_F(
     // The next call should not go to local storage but use cached value instead
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(guid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -874,7 +876,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     auto future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -885,7 +887,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -905,7 +907,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -916,7 +918,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -936,7 +938,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -946,7 +948,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -966,7 +968,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -992,7 +994,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -1002,7 +1004,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     future = linkedNotebookFinder->findLinkedNotebookByNotebookGuid(
         *notebook.guid());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();

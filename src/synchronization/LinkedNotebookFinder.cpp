@@ -26,6 +26,8 @@
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/threading/TrackedTask.h>
 
+#include <QThread>
+
 namespace quentier::synchronization {
 
 namespace {
@@ -218,9 +220,10 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
         m_localStorage->findNotebookByLocalId(notebookLocalId);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(notebookFuture), promise,
+        std::move(notebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, promise, notebookLocalId](
@@ -229,8 +232,7 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
                     QNDEBUG(
                         "synchronization::LinkedNotebookFinder",
                         "Could not find notebook by local id in the local "
-                        "storage: "
-                            << notebookLocalId);
+                            << "storage: " << notebookLocalId);
                     promise->addResult(std::nullopt);
                     promise->finish();
                     return;
@@ -255,9 +257,10 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
     auto notebookFuture = m_localStorage->findNotebookByGuid(notebookGuid);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(notebookFuture), promise,
+        std::move(notebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, promise, notebookGuid](
@@ -314,9 +317,10 @@ void LinkedNotebookFinder::onNotebookFound(
         }();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(linkedNotebookFuture), promise,
+        std::move(linkedNotebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, promise, linkedNotebookGuid = std::move(linkedNotebookGuid)](
