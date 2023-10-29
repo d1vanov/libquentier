@@ -980,7 +980,6 @@ private:
     void clearCurrentNoteInfo();
     void reloadCurrentNote();
 
-    void clearPrepareNoteImageResourcesProgressDialog();
     void clearPrepareResourceForOpeningProgressDialog(
         const QString & resourceLocalUid);
 
@@ -1345,13 +1344,6 @@ private:
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     NoteEditorPluginFactory * m_pPluginFactory = nullptr;
 #endif
-
-    /**
-     * Dialog to display the progress of putting note's image resources into
-     * temporary files for the sake of being displayed within the note editor
-     * page
-     */
-    QProgressDialog * m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 
     // Progress dialogs for note resources requested to be opened
     std::vector<std::pair<QString, QProgressDialog *>>
