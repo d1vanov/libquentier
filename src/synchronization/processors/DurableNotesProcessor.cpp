@@ -31,6 +31,8 @@
 
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <QThread>
+
 #include <algorithm>
 
 namespace quentier::synchronization {
@@ -366,6 +368,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     ICallbackWeakPtr callbackWeak)
 {
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto promise = std::make_shared<QPromise<DownloadNotesStatusPtr>>();
     auto future = promise->future();
@@ -379,7 +382,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
             syncChunks, std::move(canceler), callback);
 
         threading::thenOrFailed(
-            std::move(processSyncChunksFuture), promise,
+            std::move(processSyncChunksFuture), currentThread, promise,
             [promise, callback = std::move(callback)](
                 DownloadNotesStatusPtr status) {
                 promise->addResult(std::move(status));
@@ -402,10 +405,11 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
             pseudoSyncChunks, canceler, callback);
 
         threading::thenOrFailed(
-            std::move(expungeNotesFuture), promise,
+            std::move(expungeNotesFuture), currentThread, promise,
             threading::TrackedTask{
                 selfWeak,
-                [this, selfWeak, promise, syncChunks = syncChunks,
+                [this, selfWeak, promise, currentThread,
+                 syncChunks = syncChunks,
                  previousNotes = std::move(previousNotes),
                  canceler = std::move(canceler),
                  callbackWeak = std::move(callbackWeak),
@@ -416,7 +420,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                         std::move(previousNotes), {}, std::move(callbackWeak));
 
                     threading::thenOrFailed(
-                        std::move(processNotesFuture), promise,
+                        std::move(processNotesFuture), currentThread, promise,
                         threading::TrackedTask{
                             selfWeak,
                             [selfWeak, promise,
@@ -447,11 +451,12 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
             pseudoSyncChunks, canceler, callback);
 
         threading::thenOrFailed(
-            std::move(notesFuture), promise,
+            std::move(notesFuture), currentThread, promise,
             threading::TrackedTask{
                 selfWeak,
-                [this, selfWeak, promise, canceler = std::move(canceler),
-                 syncChunks, callbackWeak = std::move(callbackWeak),
+                [this, selfWeak, promise, currentThread,
+                 canceler = std::move(canceler), syncChunks,
+                 callbackWeak = std::move(callbackWeak),
                  callback = std::move(callback)](
                     DownloadNotesStatusPtr status) mutable {
                     auto processNotesFuture =
@@ -460,7 +465,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                             std::move(callbackWeak));
 
                     threading::thenOrFailed(
-                        std::move(processNotesFuture), promise,
+                        std::move(processNotesFuture), currentThread, promise,
                         threading::TrackedTask{
                             selfWeak,
                             [selfWeak, promise,
@@ -484,7 +489,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
         syncChunks, canceler, callback);
 
     threading::thenOrFailed(
-        std::move(processSyncChunksFuture), promise,
+        std::move(processSyncChunksFuture), currentThread, promise,
         [promise, callback = std::move(callback)](
             DownloadNotesStatusPtr status) {
             promise->addResult(std::move(status));

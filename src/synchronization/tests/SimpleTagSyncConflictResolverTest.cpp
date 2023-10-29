@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/conflict_resolvers/SimpleTagSyncConflictResolver.h>
 
@@ -68,6 +70,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
+    waitForFuture(future);
     EXPECT_THROW(future.result(), InvalidArgument);
 }
 
@@ -85,6 +88,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWhenTheirsHasNoName)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
+    waitForFuture(future);
     EXPECT_THROW(future.result(), InvalidArgument);
 }
 
@@ -101,6 +105,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWhenMineHasNoNameOrGuid)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
+    waitForFuture(future);
     EXPECT_THROW(future.result(), InvalidArgument);
 }
 
@@ -119,7 +124,9 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWithSameNameAndGuid)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
+
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
         future.result()));
@@ -152,7 +159,8 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWithSameNameButDifferentGuid)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -205,7 +213,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -267,7 +276,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -301,7 +311,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     ASSERT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::IgnoreMine>(
@@ -339,7 +350,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -395,7 +407,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -459,7 +472,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -496,7 +510,8 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWithSameGuidButDifferentName)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     ASSERT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
@@ -544,7 +559,8 @@ TEST_F(
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using MoveMine =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Tag>;
@@ -649,10 +665,7 @@ TEST_F(
             QCoreApplication::processEvents();
         });
 
-    // Trigger the execution of lambda attached to findTagByName
-    // future inside SimpleGenericSyncConflictResolver::renameConflictingItem
-    QCoreApplication::processEvents();
-
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
 }
 
@@ -747,10 +760,7 @@ TEST_F(
             QCoreApplication::processEvents();
         });
 
-    // Trigger the execution of lambda attached to findTagByName
-    // future inside SimpleGenericSyncConflictResolver::renameConflictingItem
-    QCoreApplication::processEvents();
-
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
 }
 
@@ -781,6 +791,7 @@ TEST_F(
     auto resultFuture =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
 }
 
@@ -810,6 +821,7 @@ TEST_F(
     auto resultFuture =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
 }
 

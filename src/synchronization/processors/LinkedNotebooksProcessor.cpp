@@ -32,6 +32,7 @@
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <QThread>
 
 #include <algorithm>
 
@@ -88,18 +89,13 @@ private:
 } // namespace
 
 LinkedNotebooksProcessor::LinkedNotebooksProcessor(
-    local_storage::ILocalStoragePtr localStorage,
-    threading::QThreadPoolPtr threadPool) :
-    m_localStorage{std::move(localStorage)},
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
+    local_storage::ILocalStoragePtr localStorage) :
+    m_localStorage{std::move(localStorage)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "LinkedNotebooksProcessor ctor: local storage is null")}};
     }
-
-    Q_ASSERT(m_threadPool);
 }
 
 QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
@@ -145,6 +141,8 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             totalLinkedNotebooks, totalExpungedLinkedNotebooks,
             std::move(callbackWeak));
 
+    auto * currentThread = QThread::currentThread();
+
     for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
         auto linkedNotebookPromise = std::make_shared<QPromise<void>>();
         linkedNotebookFutures << linkedNotebookPromise->future();
@@ -159,13 +157,14 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             m_localStorage->putLinkedNotebook(linkedNotebook);
 
         auto thenFuture = threading::then(
-            std::move(putLinkedNotebookFuture), m_threadPool.get(),
+            std::move(putLinkedNotebookFuture), currentThread,
             [linkedNotebookCounters] {
                 linkedNotebookCounters->onProcessedLinkedNotebook();
             });
 
         threading::thenOrFailed(
-            std::move(thenFuture), std::move(linkedNotebookPromise));
+            std::move(thenFuture), currentThread,
+            std::move(linkedNotebookPromise));
     }
 
     for (const auto & guid: qAsConst(expungedLinkedNotebooks)) {
@@ -177,13 +176,14 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             m_localStorage->expungeLinkedNotebookByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeLinkedNotebookFuture), m_threadPool.get(),
+            std::move(expungeLinkedNotebookFuture), currentThread,
             [linkedNotebookCounters] {
                 linkedNotebookCounters->onExpungedLinkedNotebook();
             });
 
         threading::thenOrFailed(
-            std::move(thenFuture), std::move(linkedNotebookPromise));
+            std::move(thenFuture), currentThread,
+            std::move(linkedNotebookPromise));
     }
 
     return threading::whenAll(std::move(linkedNotebookFutures));

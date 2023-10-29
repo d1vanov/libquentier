@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/processors/NoteFullDataDownloader.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
@@ -136,7 +138,7 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
     auto future = noteFullDataDownloader->downloadFullNoteData(
         note.guid().value(), m_mockNoteStore, ctx);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_EQ(future.result(), note);
 }
@@ -216,11 +218,9 @@ TEST_P(
         promise->finish();
     }
 
-    QCoreApplication::processEvents();
-
     for (int i = 0; i < static_cast<int>(noteCount); ++i) {
         const auto & future = futures[i];
-        ASSERT_TRUE(future.isFinished()) << i;
+        waitForFuture(future);
         ASSERT_EQ(future.resultCount(), 1);
         EXPECT_EQ(future.result(), notes[i]);
     }
@@ -301,11 +301,9 @@ TEST_P(
         promise->finish();
     }
 
-    QCoreApplication::processEvents();
-
     for (int i = 0; i < static_cast<int>(noteCount / 2); ++i) {
         const auto & future = futures[i];
-        ASSERT_TRUE(future.isFinished()) << i;
+        waitForFuture(future);
         ASSERT_EQ(future.resultCount(), 1);
         EXPECT_EQ(future.result(), notes[i]);
     }
@@ -327,13 +325,11 @@ TEST_P(
         promise->finish();
     }
 
-    QCoreApplication::processEvents();
-
     for (int i = static_cast<int>(noteCount / 2) + 1;
          i < static_cast<int>(noteCount); ++i)
     {
         const auto & future = futures[i];
-        ASSERT_TRUE(future.isFinished()) << i;
+        waitForFuture(future);
         ASSERT_EQ(future.resultCount(), 1);
         EXPECT_EQ(future.result(), notes[i]);
     }

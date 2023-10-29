@@ -88,33 +88,21 @@ protected:
     const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
         m_mockLocalStorage = std::make_shared<
             StrictMock<local_storage::tests::mocks::MockILocalStorage>>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 TEST_F(LinkedNotebooksProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto linkedNotebooksProcessor =
-            std::make_shared<LinkedNotebooksProcessor>(
-                m_mockLocalStorage, m_threadPool));
+            std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage));
 }
 
 TEST_F(LinkedNotebooksProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto linkedNotebooksProcessor =
-            std::make_shared<LinkedNotebooksProcessor>(nullptr, m_threadPool),
+            std::make_shared<LinkedNotebooksProcessor>(nullptr),
         InvalidArgument);
-}
-
-TEST_F(LinkedNotebooksProcessorTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto linkedNotebooksProcessor =
-            std::make_shared<LinkedNotebooksProcessor>(
-                m_mockLocalStorage, nullptr));
 }
 
 TEST_F(
@@ -125,15 +113,14 @@ TEST_F(
         << qevercloud::SyncChunkBuilder{}.build();
 
     const auto linkedNotebooksProcessor =
-        std::make_shared<LinkedNotebooksProcessor>(
-            m_mockLocalStorage, m_threadPool);
+        std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
 }
 
@@ -181,8 +168,7 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
                .build();
 
     const auto linkedNotebooksProcessor =
-        std::make_shared<LinkedNotebooksProcessor>(
-            m_mockLocalStorage, m_threadPool);
+        std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -211,10 +197,7 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareLinkedNotebookLists(
@@ -238,8 +221,7 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessExpungedLinkedNotebooks)
                .build();
 
     const auto linkedNotebooksProcessor =
-        std::make_shared<LinkedNotebooksProcessor>(
-            m_mockLocalStorage, m_threadPool);
+        std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedLinkedNotebookGuids;
@@ -277,10 +259,7 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessExpungedLinkedNotebooks)
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedLinkedNotebookGuids, expungedLinkedNotebookGuids);
@@ -333,8 +312,7 @@ TEST_F(
                .build();
 
     const auto linkedNotebooksProcessor =
-        std::make_shared<LinkedNotebooksProcessor>(
-            m_mockLocalStorage, m_threadPool);
+        std::make_shared<LinkedNotebooksProcessor>(m_mockLocalStorage);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedLinkedNotebookGuids;
@@ -372,10 +350,7 @@ TEST_F(
     auto future = linkedNotebooksProcessor->processLinkedNotebooks(
         syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedLinkedNotebookGuids, expungedLinkedNotebookGuids);

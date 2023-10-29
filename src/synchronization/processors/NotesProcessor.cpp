@@ -50,6 +50,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QPointer>
+#include <QThread>
 
 #include <algorithm>
 
@@ -87,8 +88,7 @@ NotesProcessor::NotesProcessor(
     IInkNoteImageDownloaderFactoryPtr inkNoteImageDownloaderFactory,
     INoteThumbnailDownloaderFactoryPtr noteThumbnailDownloaderFactory,
     ISyncOptionsPtr syncOptions, qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy,
-    threading::QThreadPoolPtr threadPool) :
+    qevercloud::IRetryPolicyPtr retryPolicy) :
     m_localStorage{std::move(localStorage)},
     m_syncConflictResolver{std::move(syncConflictResolver)},
     m_noteFullDataDownloader{std::move(noteFullDataDownloader)},
@@ -96,9 +96,7 @@ NotesProcessor::NotesProcessor(
     m_inkNoteImageDownloaderFactory{std::move(inkNoteImageDownloaderFactory)},
     m_noteThumbnailDownloaderFactory{std::move(noteThumbnailDownloaderFactory)},
     m_syncOptions{std::move(syncOptions)}, m_ctx{std::move(ctx)},
-    m_retryPolicy{std::move(retryPolicy)},
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
+    m_retryPolicy{std::move(retryPolicy)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{
@@ -134,8 +132,6 @@ NotesProcessor::NotesProcessor(
         throw InvalidArgument{ErrorString{
             QStringLiteral("NotesProcessor ctor: sync options are null")}};
     }
-
-    Q_ASSERT(m_threadPool);
 }
 
 QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
@@ -172,6 +168,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     Q_ASSERT(totalItemCount > 0);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     QList<QFuture<ProcessNoteStatus>> noteFutures;
     noteFutures.reserve(noteCount + expungedNoteCount);
@@ -222,7 +219,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
             FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
 
         auto thenFuture = threading::then(
-            std::move(findNoteByGuidFuture),
+            std::move(findNoteByGuidFuture), currentThread,
             threading::TrackedTask{
                 selfWeak,
                 [this, selfWeak, updatedNote = note, notePromise, context](
@@ -257,7 +254,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
                 }});
 
         threading::onFailed(
-            std::move(thenFuture),
+            std::move(thenFuture), currentThread,
             [notePromise, context, note](const QException & e) mutable {
                 if (const auto callback = context->callbackWeak.lock()) {
                     callback->onNoteFailedToProcess(note, e);
@@ -285,7 +282,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
         auto expungeNoteByGuidFuture = m_localStorage->expungeNoteByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeNoteByGuidFuture), m_threadPool.get(),
+            std::move(expungeNoteByGuidFuture), currentThread,
             [guid, context, promise] {
                 if (const auto callback = context->callbackWeak.lock()) {
                     callback->onExpungedNote(guid);
@@ -301,7 +298,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
             });
 
         threading::onFailed(
-            std::move(thenFuture),
+            std::move(thenFuture), currentThread,
             [guid, context, promise](const QException & e) {
                 if (const auto callback = context->callbackWeak.lock()) {
                     callback->onFailedToExpungeNote(guid, e);
@@ -329,7 +326,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     promise->start();
 
     threading::thenOrFailed(
-        std::move(allNotesFuture), promise,
+        std::move(allNotesFuture), currentThread, promise,
         [promise, context](const QList<ProcessNoteStatus> & statuses) mutable {
             Q_UNUSED(statuses)
 
@@ -358,15 +355,16 @@ void NotesProcessor::onFoundDuplicate(
         updatedNote, std::move(localNote));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     Q_ASSERT(updatedNote.guid());
     Q_ASSERT(updatedNote.updateSequenceNum());
 
     auto thenFuture = threading::then(
-        std::move(statusFuture),
+        std::move(statusFuture), currentThread,
         [this, selfWeak, promise, context, updatedNote, localNoteLocalId,
          localNoteLocallyFavorited, updatedNoteGuid = *updatedNote.guid(),
-         updatedNoteUsn = *updatedNote.updateSequenceNum()](
+         updatedNoteUsn = *updatedNote.updateSequenceNum(), currentThread](
             const NoteConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
@@ -424,7 +422,7 @@ void NotesProcessor::onFoundDuplicate(
                     m_localStorage->putNote(mineResolution.mine);
 
                 auto thenFuture = threading::then(
-                    std::move(updateLocalNoteFuture), m_threadPool.get(),
+                    std::move(updateLocalNoteFuture), currentThread,
                     threading::TrackedTask{
                         selfWeak,
                         [this, promise, context,
@@ -458,7 +456,7 @@ void NotesProcessor::onFoundDuplicate(
                         }});
 
                 threading::onFailed(
-                    std::move(thenFuture),
+                    std::move(thenFuture), currentThread,
                     [promise, context,
                      note = mineResolution.mine](const QException & e) mutable {
                         if (const auto callback = context->callbackWeak.lock())
@@ -485,7 +483,7 @@ void NotesProcessor::onFoundDuplicate(
         });
 
     threading::onFailed(
-        std::move(thenFuture),
+        std::move(thenFuture), currentThread,
         [promise, context,
          note = std::move(updatedNote)](const QException & e) mutable {
             if (const auto callback = context->callbackWeak.lock()) {
@@ -519,9 +517,10 @@ void NotesProcessor::downloadFullNoteData(
         *note.notebookGuid(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto thenFuture = threading::then(
-        std::move(noteStoreFuture),
+        std::move(noteStoreFuture), currentThread,
         threading::TrackedTask{
             selfWeak,
             [this, context, promise, note, noteKind,
@@ -532,7 +531,7 @@ void NotesProcessor::downloadFullNoteData(
             }});
 
     threading::onFailed(
-        std::move(thenFuture),
+        std::move(thenFuture), currentThread,
         [promise, context, note = std::move(note)](const QException & e) {
             NotesProcessor::processNoteDownloadingError(
                 context, promise, note, e);
@@ -608,7 +607,8 @@ void NotesProcessor::downloadFullNoteDataImpl(
             }});
 
     threading::onFailed(
-        std::move(thenFuture), [promise, context, note](const QException & e) {
+        std::move(thenFuture),
+        [promise, context, note](const QException & e) {
             NotesProcessor::processNoteDownloadingError(
                 context, promise, note, e);
         });
@@ -619,6 +619,8 @@ void NotesProcessor::processDownloadedFullNoteData(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
     qevercloud::Note note, NoteKind noteKind)
 {
+    auto * currentThread = QThread::currentThread();
+
     QFuture<qevercloud::Note> noteFuture = [&] {
         if (!m_syncOptions->downloadNoteThumbnails() || !note.resources() ||
             note.resources()->isEmpty())
@@ -633,7 +635,7 @@ void NotesProcessor::processDownloadedFullNoteData(
 
         auto noteFuture = downloadNoteThumbnail(note);
         auto thenFuture = threading::then(
-            std::move(noteFuture),
+            std::move(noteFuture), currentThread,
             [notePromise](qevercloud::Note noteWithThumbnail) {
                 notePromise->addResult(std::move(noteWithThumbnail));
                 notePromise->finish();
@@ -642,7 +644,7 @@ void NotesProcessor::processDownloadedFullNoteData(
         // Even if note thumbnail downloading fails, we tolerate
         // this error and just have this note without thumbnail
         threading::onFailed(
-            std::move(thenFuture),
+            std::move(thenFuture), currentThread,
             [notePromise,
              note = std::move(note)](const QException & e) mutable {
                 QNWARNING(
@@ -659,10 +661,10 @@ void NotesProcessor::processDownloadedFullNoteData(
 
     const auto selfWeak = weak_from_this();
     threading::thenOrFailed(
-        std::move(noteFuture), promise,
+        std::move(noteFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, context, promise,
+            [this, selfWeak, context, promise, currentThread,
              noteKind](qevercloud::Note note) mutable {
                 const std::optional<QDir> & inkNoteImagesStorageDir =
                     m_syncOptions->inkNoteImagesStorageDir();
@@ -674,7 +676,7 @@ void NotesProcessor::processDownloadedFullNoteData(
                             std::move(*inkResource), *inkNoteImagesStorageDir);
 
                         auto thenFuture = threading::then(
-                            std::move(future),
+                            std::move(future), currentThread,
                             threading::TrackedTask{
                                 selfWeak,
                                 [this, context, promise, note,
@@ -685,7 +687,7 @@ void NotesProcessor::processDownloadedFullNoteData(
                                 }});
 
                         threading::onFailed(
-                            std::move(thenFuture),
+                            std::move(thenFuture), currentThread,
                             [this, selfWeak, context, promise, note,
                              noteKind](const QException & e) mutable {
                                 const auto self = selfWeak.lock();
@@ -812,11 +814,12 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
             notebookLocalId, m_ctx);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(downloaderFuture), promise,
+        std::move(downloaderFuture), currentThread, promise,
         [this, selfWeak, promise, context, inkNoteImagesStorageDir,
-         resource = std::move(resource)](
+         currentThread, resource = std::move(resource)](
             const qevercloud::IInkNoteImageDownloaderPtr & downloader) {
             if (context->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
@@ -835,7 +838,7 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
                 m_ctx);
 
             threading::thenOrFailed(
-                std::move(imageDataFuture), promise,
+                std::move(imageDataFuture), currentThread, promise,
                 [selfWeak, promise, resourceGuid = *resource.guid(), context,
                  inkNoteImagesStorageDir](const QByteArray & imageData) {
                     if (context->canceler->isCanceled()) {
@@ -876,9 +879,11 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
         m_noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
             note.notebookLocalId(), m_ctx);
 
+    auto * currentThread = QThread::currentThread();
+
     threading::thenOrFailed(
-        std::move(noteThumbnailDownloaderFuture), promise,
-        [note, promise,
+        std::move(noteThumbnailDownloaderFuture), currentThread, promise,
+        [note, promise, currentThread,
          ctx = m_ctx](const qevercloud::INoteThumbnailDownloaderPtr &
                           noteThumbnailDownloader) mutable {
             Q_ASSERT(noteThumbnailDownloader);
@@ -889,7 +894,7 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
                     qevercloud::INoteThumbnailDownloader::ImageType::PNG, ctx);
 
             threading::thenOrFailed(
-                std::move(noteThumbnailFuture), promise,
+                std::move(noteThumbnailFuture), currentThread, promise,
                 [note = std::move(note), promise](QByteArray data) mutable {
                     note.setThumbnailData(std::move(data));
                     promise->addResult(std::move(note));
@@ -909,8 +914,9 @@ void NotesProcessor::putNoteToLocalStorage(
 
     auto putNoteFuture = m_localStorage->putNote(note);
 
+    auto * currentThread = QThread::currentThread();
     auto thenFuture = threading::then(
-        std::move(putNoteFuture), m_threadPool.get(),
+        std::move(putNoteFuture), currentThread,
         [promise, context, putNoteKind, noteGuid = note.guid(),
          noteUsn = note.updateSequenceNum()] {
             if (noteGuid.has_value() && noteUsn.has_value()) {
@@ -934,7 +940,7 @@ void NotesProcessor::putNoteToLocalStorage(
         });
 
     threading::onFailed(
-        std::move(thenFuture),
+        std::move(thenFuture), currentThread,
         [promise, context,
          note = std::move(note)](const QException & e) mutable {
             if (const auto callback = context->callbackWeak.lock()) {

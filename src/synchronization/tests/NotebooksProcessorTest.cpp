@@ -95,23 +95,20 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 TEST_F(NotebooksProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool));
+            m_mockLocalStorage, m_mockSyncConflictResolver));
 }
 
 TEST_F(NotebooksProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            nullptr, m_mockSyncConflictResolver, m_threadPool),
+            nullptr, m_mockSyncConflictResolver),
         InvalidArgument);
 }
 
@@ -119,15 +116,8 @@ TEST_F(NotebooksProcessorTest, CtorNullSyncConflictResolver)
 {
     EXPECT_THROW(
         const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, nullptr, m_threadPool),
+            m_mockLocalStorage, nullptr),
         InvalidArgument);
-}
-
-TEST_F(NotebooksProcessorTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, nullptr));
 }
 
 TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
@@ -138,12 +128,12 @@ TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver,  m_threadPool);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     auto future =
         notebooksProcessor->processNotebooks(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
 }
 
@@ -263,7 +253,7 @@ TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setNotebooks(notebooks).build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     qint32 totalNotebooks = 0;
     qint32 totalExpungedNotebooks = 0;
@@ -290,10 +280,7 @@ TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
     auto future =
         notebooksProcessor->processNotebooks(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNotebookLists(notebooksPutIntoLocalStorage, notebooks);
@@ -318,7 +305,7 @@ TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
                .build();
 
     const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedNotebookGuids;
@@ -354,10 +341,7 @@ TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
     auto future =
         notebooksProcessor->processNotebooks(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedNotebookGuids, expungedNotebookGuids);
@@ -449,10 +433,7 @@ TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
     auto future =
         notebooksProcessor->processNotebooks(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedNotebookGuids, expungedNotebookGuids);
@@ -684,10 +665,7 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
     auto future =
         notebooksProcessor->processNotebooks(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
@@ -921,10 +899,7 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
     auto future =
         notebooksProcessor->processNotebooks(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<

@@ -157,9 +157,6 @@ protected:
 
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 struct NotesProcessorCallback final : public INotesProcessor::ICallback
@@ -234,8 +231,7 @@ TEST_F(NotesProcessorTest, Ctor)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool));
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()));
 }
 
 TEST_F(NotesProcessorTest, CtorNullLocalStorage)
@@ -245,8 +241,7 @@ TEST_F(NotesProcessorTest, CtorNullLocalStorage)
             nullptr, m_mockSyncConflictResolver, m_mockNoteFullDataDownloader,
             m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -257,8 +252,7 @@ TEST_F(NotesProcessorTest, CtorNullSyncConflictResolver)
             m_mockLocalStorage, nullptr, m_mockNoteFullDataDownloader,
             m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -269,8 +263,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteFullDataDownloader)
             m_mockLocalStorage, m_mockSyncConflictResolver, nullptr,
             m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -282,8 +275,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteStoreProvider)
             m_mockNoteFullDataDownloader, nullptr,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -294,8 +286,7 @@ TEST_F(NotesProcessorTest, CtorNullInkNoteImageDownloaderFactory)
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider, nullptr,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -306,8 +297,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteThumbnailDownloaderFactory)
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory, nullptr, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -319,8 +309,7 @@ TEST_F(NotesProcessorTest, CtorNullSyncOptions)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, nullptr,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -332,7 +321,7 @@ TEST_F(NotesProcessorTest, CtorNullRequestContext)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions, nullptr,
-            qevercloud::newRetryPolicy(), m_threadPool));
+            qevercloud::newRetryPolicy()));
 }
 
 TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
@@ -343,19 +332,7 @@ TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), nullptr, m_threadPool));
-}
-
-TEST_F(NotesProcessorTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto notesProcessor = std::make_shared<NotesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
-            m_mockInkNoteImageDownloaderFactory,
-            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            nullptr));
+            qevercloud::newRequestContext(), nullptr));
 }
 
 TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
@@ -374,7 +351,7 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -547,10 +524,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNoteLists(notesPutIntoLocalStorage, notes);
@@ -738,10 +712,7 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
@@ -955,10 +926,7 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
@@ -1174,10 +1142,7 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
@@ -1411,10 +1376,7 @@ TEST_P(
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Note> expectedProcessedNotes = [&] {
@@ -1665,10 +1627,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
         findNoteByGuidPromises[i]->finish();
     }
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -1954,10 +1913,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
         findNoteByGuidPromises[i]->finish();
     }
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(downloadFullNoteDataCallCount, 2);
@@ -2096,10 +2052,7 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
@@ -2169,10 +2122,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
@@ -2293,10 +2243,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
@@ -2540,10 +2487,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
@@ -2815,10 +2759,7 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     notes[1].setThumbnailData(sampleNoteThumbnailData);
@@ -3011,10 +2952,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNoteLists(notesPutIntoLocalStorage, notes);
@@ -3198,10 +3136,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNoteLists(notesPutIntoLocalStorage, notes);
@@ -3407,10 +3342,7 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNoteLists(notesPutIntoLocalStorage, notes);
@@ -3617,10 +3549,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNoteLists(notesPutIntoLocalStorage, notes);
@@ -3816,10 +3745,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
     auto future =
         notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareNoteLists(notesPutIntoLocalStorage, notes);

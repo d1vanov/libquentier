@@ -495,14 +495,14 @@ void thenOrFailed(
 
 template <class T, class U, class Function>
 void thenOrFailed(
-    QFuture<T> && future, QThreadPool * pool,
+    QFuture<T> && future, QThread * thread,
     std::shared_ptr<QPromise<U>> promise,
     Function && function)
 {
     auto thenFuture = then(
-        std::move(future), pool, std::forward<decltype(function)>(function));
+        std::move(future), thread, std::forward<Function>(function));
 
-    onFailed(std::move(thenFuture), [promise](const QException & e) {
+    onFailed(std::move(thenFuture), thread, [promise](const QException & e) {
         promise->setException(e);
         promise->finish();
     });
@@ -516,11 +516,11 @@ void thenOrFailed(QFuture<T> && future, std::shared_ptr<QPromise<U>> promise)
 
 template <class T, class U>
 void thenOrFailed(
-    QFuture<T> && future, QThreadPool * pool,
+    QFuture<T> && future, QThread * thread,
     std::shared_ptr<QPromise<U>> promise)
 {
     thenOrFailed(
-        std::move(future), pool, promise, [promise] { promise->finish(); });
+        std::move(future), thread, promise, [promise] { promise->finish(); });
 }
 
 } // namespace quentier::threading

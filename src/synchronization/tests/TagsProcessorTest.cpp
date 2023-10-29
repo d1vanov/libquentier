@@ -95,23 +95,20 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 TEST_F(TagsProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool));
+            m_mockLocalStorage, m_mockSyncConflictResolver));
 }
 
 TEST_F(TagsProcessorTest, CtorNullLocalStorage)
 {
     EXPECT_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            nullptr, m_mockSyncConflictResolver, m_threadPool),
+            nullptr, m_mockSyncConflictResolver),
         InvalidArgument);
 }
 
@@ -119,15 +116,8 @@ TEST_F(TagsProcessorTest, CtorNullSyncConflictResolver)
 {
     EXPECT_THROW(
         const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, nullptr, m_threadPool),
+            m_mockLocalStorage, nullptr),
         InvalidArgument);
-}
-
-TEST_F(TagsProcessorTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto tagsProcessor = std::make_shared<TagsProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, nullptr));
 }
 
 TEST_F(TagsProcessorTest, ProcessSyncChunksWithoutTagsToProcess)
@@ -136,12 +126,13 @@ TEST_F(TagsProcessorTest, ProcessSyncChunksWithoutTagsToProcess)
         << qevercloud::SyncChunkBuilder{}.build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
-    ASSERT_TRUE(future.isFinished());
+
+    waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
 }
 
@@ -300,7 +291,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
         << qevercloud::SyncChunkBuilder{}.setTags(tags).build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
@@ -327,10 +318,7 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareTagLists(tagsPutIntoLocalStorage, tags);
@@ -354,7 +342,7 @@ TEST_F(TagsProcessorTest, ProcessExpungedTags)
                .build();
 
     const auto tagsProcessor = std::make_shared<TagsProcessor>(
-        m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
+        m_mockLocalStorage, m_mockSyncConflictResolver);
 
     QMutex mutex;
     QList<qevercloud::Guid> processedTagGuids;
@@ -390,10 +378,7 @@ TEST_F(TagsProcessorTest, ProcessExpungedTags)
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedTagGuids, expungedTagGuids);
@@ -485,10 +470,7 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedTagGuids, expungedTagGuids);
@@ -718,10 +700,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
@@ -954,10 +933,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
 
     auto future = tagsProcessor->processTags(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<

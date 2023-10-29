@@ -31,6 +31,7 @@
 
 #include <QCoreApplication>
 #include <QTextStream>
+#include <QThread>
 
 #include <functional>
 #include <memory>
@@ -238,9 +239,11 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
 
     promise->start();
 
+    auto * currentThread = QThread::currentThread();
+
     auto thenFuture = threading::then(
-        std::move(findItemFuture),
-        [promise, theirs = std::move(theirs),
+        std::move(findItemFuture), currentThread,
+        [promise, currentThread, theirs = std::move(theirs),
          self_weak = SimpleGenericSyncConflictResolver<
              T, Resolution, FindByNameMemFn>::weak_from_this()](
             std::optional<T> item) mutable {
@@ -268,20 +271,22 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
             auto future = self->processConflictByName(theirs, std::move(*item));
 
             auto thenFuture = threading::then(
-                std::move(future), [promise](Resolution resolution) {
+                std::move(future), currentThread,
+                [promise](Resolution resolution) {
                     promise->addResult(resolution);
                     promise->finish();
                 });
 
             threading::onFailed(
-                std::move(thenFuture), [promise](const QException & e) {
+                std::move(thenFuture), currentThread,
+                [promise](const QException & e) {
                     promise->setException(e);
                     promise->finish();
                 });
         });
 
     threading::onFailed(
-        std::move(thenFuture), [promise](const QException & e) {
+        std::move(thenFuture), currentThread, [promise](const QException & e) {
             promise->setException(e);
             promise->finish();
         });
@@ -346,18 +351,15 @@ QFuture<T> SimpleGenericSyncConflictResolver<
 
     promise->start();
 
-    auto watcher = std::make_unique<QFutureWatcher<std::optional<T>>>();
-    auto * rawWatcher = watcher.get();
-    QObject::connect(
-        rawWatcher, &QFutureWatcher<qevercloud::Notebook>::finished, rawWatcher,
+    auto * currentThread = QThread::currentThread();
+
+    auto thenFuture = threading::then(
+        std::move(findItemFuture), currentThread,
         [selfWeak = SimpleGenericSyncConflictResolver<
              T, Resolution, FindByNameMemFn>::weak_from_this(),
-         promise = std::move(promise), rawWatcher,
+         promise, currentThread,
          item = std::move(item), newItemName = std::move(newItemName),
-         counter = counter]() mutable {
-            auto future = rawWatcher->future();
-            rawWatcher->deleteLater();
-
+         counter = counter](const std::optional<T> & result) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 promise->setException(
@@ -369,18 +371,6 @@ QFuture<T> SimpleGenericSyncConflictResolver<
                 return;
             }
 
-            try {
-                future.waitForFinished();
-            }
-            catch (const QException & e) {
-                // Failed to check whether item with conflicting name exists
-                // in the local storage
-                promise->setException(e);
-                promise->finish();
-                return;
-            }
-
-            const auto result = future.result();
             if (!result) {
                 // No conflict by name was found in the local storage, can use
                 // the suggested new name
@@ -395,25 +385,26 @@ QFuture<T> SimpleGenericSyncConflictResolver<
             auto newFuture = self->renameConflictingItem(item, ++counter);
 
             auto thenFuture = threading::then(
-                std::move(newFuture), [promise](T item) mutable {
+                std::move(newFuture), currentThread, [promise](T item) mutable {
                     promise->addResult(std::move(item));
                     promise->finish();
                 });
 
             threading::onFailed(
-                std::move(thenFuture), [promise](const QException & e) mutable {
+                std::move(thenFuture), currentThread,
+                [promise](const QException & e) mutable {
                     promise->setException(e);
                     promise->finish();
                 });
         });
 
-    QObject::connect(
-        rawWatcher, &QFutureWatcher<qevercloud::Notebook>::canceled, rawWatcher,
-        [rawWatcher] { rawWatcher->deleteLater(); });
+    threading::onFailed(
+        std::move(thenFuture), currentThread,
+        [promise](const QException & e) {
+            promise->setException(e);
+            promise->finish();
+        });
 
-    watcher->setFuture(findItemFuture);
-
-    Q_UNUSED(watcher.release())
     return future;
 }
 

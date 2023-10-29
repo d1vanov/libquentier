@@ -31,6 +31,8 @@
 
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <QThread>
+
 #include <algorithm>
 
 namespace quentier::synchronization {
@@ -285,6 +287,7 @@ QFuture<DownloadResourcesStatusPtr>
         ICallbackWeakPtr callbackWeak)
 {
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto promise = std::make_shared<QPromise<DownloadResourcesStatusPtr>>();
     auto future = promise->future();
@@ -298,7 +301,7 @@ QFuture<DownloadResourcesStatusPtr>
             syncChunks, std::move(canceler), callback);
 
         threading::thenOrFailed(
-            std::move(processSyncChunksFuture), promise,
+            std::move(processSyncChunksFuture), currentThread, promise,
             [promise, callback = std::move(callback)](
                 DownloadResourcesStatusPtr status) {
                 promise->addResult(std::move(status));
@@ -320,18 +323,19 @@ QFuture<DownloadResourcesStatusPtr>
         pseudoSyncChunks, canceler, callback);
 
     threading::thenOrFailed(
-        std::move(resourcesFuture), promise,
+        std::move(resourcesFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, promise, canceler = std::move(canceler),
-             syncChunks, callbackWeak = std::move(callbackWeak)](
+             syncChunks, callbackWeak = std::move(callbackWeak),
+             currentThread](
                 DownloadResourcesStatusPtr status) mutable {
                 auto processResourcesFuture = processResourcesImpl(
                     syncChunks, std::move(canceler), {},
                     std::move(callbackWeak));
 
                 threading::thenOrFailed(
-                    std::move(processResourcesFuture), promise,
+                    std::move(processResourcesFuture), currentThread, promise,
                     threading::TrackedTask{
                         selfWeak,
                         [selfWeak, promise,

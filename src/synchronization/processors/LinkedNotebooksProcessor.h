@@ -42,9 +42,8 @@ class LinkedNotebooksProcessor final :
     public std::enable_shared_from_this<LinkedNotebooksProcessor>
 {
 public:
-    LinkedNotebooksProcessor(
-        local_storage::ILocalStoragePtr localStorage,
-        threading::QThreadPoolPtr threadPool = {});
+    explicit LinkedNotebooksProcessor(
+        local_storage::ILocalStoragePtr localStorage);
 
     [[nodiscard]] QFuture<void> processLinkedNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -52,7 +51,6 @@ public:
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
-    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization

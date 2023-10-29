@@ -43,6 +43,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QPointer>
+#include <QThread>
 
 #include <algorithm>
 #include <type_traits>
@@ -53,14 +54,11 @@ ResourcesProcessor::ResourcesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     IResourceFullDataDownloaderPtr resourceFullDataDownloader,
     INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy,
-    threading::QThreadPoolPtr threadPool) :
+    qevercloud::IRetryPolicyPtr retryPolicy) :
     m_localStorage{std::move(localStorage)},
     m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)},
     m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
-    m_retryPolicy{std::move(retryPolicy)},
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
+    m_retryPolicy{std::move(retryPolicy)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{
@@ -76,8 +74,6 @@ ResourcesProcessor::ResourcesProcessor(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesProcessor ctor: note store provider is null")}};
     }
-
-    Q_ASSERT(m_threadPool);
 }
 
 QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
@@ -106,6 +102,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     const int resourceCount = resources.size();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     QList<QFuture<ProcessResourceStatus>> resourceFutures;
     resourceFutures.reserve(resourceCount);
@@ -154,7 +151,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
             *resource.guid(), FetchResourceOptions{});
 
         auto thenFuture = threading::then(
-            std::move(findResourceByGuidFuture),
+            std::move(findResourceByGuidFuture), currentThread,
             threading::TrackedTask{
                 selfWeak,
                 [this, updatedResource = resource,
@@ -211,7 +208,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
                 }});
 
         threading::onFailed(
-            std::move(thenFuture),
+            std::move(thenFuture), currentThread,
             [resourcePromise, context, resource](const QException & e) {
                 QNWARNING(
                     "synchronization::ResourcesProcessor",
@@ -248,7 +245,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     promise->start();
 
     threading::thenOrFailed(
-        std::move(allResourcesFuture), promise,
+        std::move(allResourcesFuture), currentThread, promise,
         [promise, context,
          resourceCount](const QList<ProcessResourceStatus> & statuses) {
             Q_ASSERT(statuses.size() == resourceCount);
@@ -386,9 +383,10 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     auto putLocalNoteFuture = m_localStorage->putNote(std::move(localNote));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto thenFuture = threading::then(
-        std::move(putLocalNoteFuture), m_threadPool.get(),
+        std::move(putLocalNoteFuture), currentThread,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, context = context, promise = promise,
@@ -417,7 +415,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
             }});
 
     threading::onFailed(
-        std::move(thenFuture),
+        std::move(thenFuture), currentThread,
         [context, promise, updatedResource = std::move(updatedResource)](
             const QException & e) mutable {
             QNWARNING(
@@ -471,6 +469,7 @@ void ResourcesProcessor::handleResourceConflict(
                 WithResourceMetadata);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto thenFuture = threading::then(
         std::move(findNoteByGuidFuture),
@@ -520,7 +519,7 @@ void ResourcesProcessor::handleResourceConflict(
             }});
 
     threading::onFailed(
-        std::move(thenFuture),
+        std::move(thenFuture), currentThread,
         [context, promise, updatedResource = std::move(updatedResource)](
             const QException & e) mutable {
             QNWARNING(
@@ -569,9 +568,10 @@ void ResourcesProcessor::downloadFullResourceData(
         *resource.noteGuid(), m_ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto noteStoreThenFuture = threading::then(
-        std::move(noteStoreFuture),
+        std::move(noteStoreFuture), currentThread,
         threading::TrackedTask{
             selfWeak,
             [this, context = context, promise = promise, resource = resource,
@@ -585,7 +585,7 @@ void ResourcesProcessor::downloadFullResourceData(
             }});
 
     threading::onFailed(
-        std::move(noteStoreThenFuture),
+        std::move(noteStoreThenFuture), currentThread,
         [context = std::move(context), promise = std::move(promise),
          resource = std::move(resource)](const QException & e) {
             QNWARNING(
@@ -716,10 +716,11 @@ void ResourcesProcessor::putResourceToLocalStorage(
                 ? "new"
                 : "updated"));
 
-    auto putResourceFuture = m_localStorage->putResource(resource);
+    auto * currentThread = QThread::currentThread();
 
+    auto putResourceFuture = m_localStorage->putResource(resource);
     auto thenFuture = threading::then(
-        std::move(putResourceFuture), m_threadPool.get(),
+        std::move(putResourceFuture), currentThread,
         [promise, context, putResourceKind, resourceGuid = *resource.guid(),
          resourceUsn = *resource.updateSequenceNum()] {
             QNDEBUG(
@@ -746,7 +747,7 @@ void ResourcesProcessor::putResourceToLocalStorage(
         });
 
     threading::onFailed(
-        std::move(thenFuture),
+        std::move(thenFuture), currentThread,
         [context, promise,
          resource = std::move(resource)](const QException & e) mutable {
             QNWARNING(

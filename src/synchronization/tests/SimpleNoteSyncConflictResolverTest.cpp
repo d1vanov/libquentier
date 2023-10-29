@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/conflict_resolvers/SimpleNoteSyncConflictResolver.h>
 
@@ -41,7 +43,7 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.result(), InvalidArgument);
 }
 
@@ -63,7 +65,7 @@ TEST(
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.result(), InvalidArgument);
 }
 
@@ -81,7 +83,7 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenMineHasNoGuid)
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.result(), InvalidArgument);
 }
 
@@ -100,7 +102,8 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenGuidsDontMatch)
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::IgnoreMine>(
                     future.result()));
@@ -125,7 +128,8 @@ TEST(
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(
                     future.result()));
@@ -150,7 +154,8 @@ TEST(
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(
                     future.result()));
@@ -176,7 +181,8 @@ TEST(
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
                     future.result()));
@@ -226,7 +232,8 @@ TEST(
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
 
     using Resolution =
         ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Note>;

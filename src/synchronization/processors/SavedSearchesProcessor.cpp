@@ -31,6 +31,7 @@
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <QThread>
 
 namespace quentier::synchronization {
 
@@ -141,12 +142,9 @@ private:
 
 SavedSearchesProcessor::SavedSearchesProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver,
-    threading::QThreadPoolPtr threadPool) :
+    ISyncConflictResolverPtr syncConflictResolver) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)},
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
+    m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -157,8 +155,6 @@ SavedSearchesProcessor::SavedSearchesProcessor(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "SavedSearchesProcessor ctor: sync conflict resolver is null")}};
     }
-
-    Q_ASSERT(m_threadPool);
 }
 
 QFuture<void> SavedSearchesProcessor::processSavedSearches(
@@ -192,6 +188,7 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         totalSavedSearches + totalSavedSearchesToExpunge;
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
     QList<QFuture<void>> savedSearchFutures;
     savedSearchFutures.reserve(totalItemCount);
 
@@ -211,7 +208,8 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
             m_localStorage->findSavedSearchByGuid(*savedSearch.guid());
 
         threading::thenOrFailed(
-            std::move(findSavedSearchByGuidFuture), savedSearchPromise,
+            std::move(findSavedSearchByGuidFuture), currentThread,
+            savedSearchPromise,
             threading::TrackedTask{
                 selfWeak,
                 [this, updatedSavedSearch = savedSearch, savedSearchPromise,
@@ -248,7 +246,7 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
             m_localStorage->expungeSavedSearchByGuid(guid);
 
         auto thenFuture = threading::then(
-            std::move(expungeSavedSearchFuture), m_threadPool.get(),
+            std::move(expungeSavedSearchFuture), currentThread,
             [savedSearchCounters, guid] {
                 QNDEBUG(
                     "synchronization::SavedSearchesProcessor",
@@ -257,7 +255,8 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
             });
 
         threading::thenOrFailed(
-            std::move(thenFuture), std::move(savedSearchPromise));
+            std::move(thenFuture), currentThread,
+            std::move(savedSearchPromise));
     }
 
     return threading::whenAll(std::move(savedSearchFutures));
@@ -271,16 +270,18 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
     Q_ASSERT(updatedSavedSearch.name());
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto findSavedSearchByNameFuture =
         m_localStorage->findSavedSearchByName(*updatedSavedSearch.name());
 
     threading::thenOrFailed(
-        std::move(findSavedSearchByNameFuture), savedSearchPromise,
+        std::move(findSavedSearchByNameFuture), currentThread,
+        savedSearchPromise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, updatedSavedSearch = std::move(updatedSavedSearch),
-             savedSearchPromise = savedSearchPromise,
+             savedSearchPromise = savedSearchPromise, currentThread,
              savedSearchCounters](const std::optional<qevercloud::SavedSearch> &
                                       savedSearch) mutable {
                 if (savedSearch) {
@@ -302,13 +303,14 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
                     std::move(updatedSavedSearch));
 
                 auto thenFuture = threading::then(
-                    std::move(putSavedSearchFuture), m_threadPool.get(),
+                    std::move(putSavedSearchFuture), currentThread,
                     [savedSearchCounters] {
                         savedSearchCounters->onAddedSavedSearch();
                     });
 
                 threading::thenOrFailed(
-                    std::move(thenFuture), std::move(savedSearchPromise));
+                    std::move(thenFuture), currentThread,
+                    std::move(savedSearchPromise));
             }});
 }
 
@@ -338,15 +340,16 @@ void SavedSearchesProcessor::onFoundDuplicate(
         updatedSavedSearch, std::move(localSavedSearch));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(statusFuture), savedSearchPromise,
+        std::move(statusFuture), currentThread, savedSearchPromise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, savedSearchPromise, savedSearchCounters,
              updatedSavedSearch = std::move(updatedSavedSearch),
              localSavedSearchLocalId = std::move(localSavedSearchLocalId),
-             localSavedSearchLocallyFavorited](
+             localSavedSearchLocallyFavorited, currentThread](
                 const SavedSearchConflictResolution & resolution) mutable {
                 if (std::holds_alternative<ConflictResolution::UseTheirs>(
                         resolution) ||
@@ -372,13 +375,14 @@ void SavedSearchesProcessor::onFoundDuplicate(
                         std::move(updatedSavedSearch));
 
                     auto thenFuture = threading::then(
-                        std::move(putSavedSearchFuture), m_threadPool.get(),
+                        std::move(putSavedSearchFuture), currentThread,
                         [savedSearchCounters] {
                             savedSearchCounters->onUpdatedSavedSearch();
                         });
 
                     threading::thenOrFailed(
-                        std::move(thenFuture), savedSearchPromise);
+                        std::move(thenFuture), currentThread,
+                        savedSearchPromise);
 
                     return;
                 }
@@ -442,15 +446,17 @@ void SavedSearchesProcessor::renameLocalConflictingSavedSearch(
         m_localStorage->putSavedSearch(std::move(renamedLocalSavedSearch));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(updateLocalSavedSearchFuture), m_threadPool.get(),
+        std::move(updateLocalSavedSearchFuture), currentThread,
         savedSearchPromise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, savedSearchPromise, savedSearchCounters,
              renamedSavedSearchLocalId = std::move(renamedSavedSearchLocalId),
-             updatedSavedSearch = std::move(updatedSavedSearch)]() mutable {
+             updatedSavedSearch = std::move(updatedSavedSearch),
+             currentThread]() mutable {
                 QNDEBUG(
                     "synchronization::SavedSearchesProcessor",
                     "Successfully renamed local conflicting "
@@ -463,14 +469,14 @@ void SavedSearchesProcessor::renameLocalConflictingSavedSearch(
                     std::move(updatedSavedSearch));
 
                 auto thenFuture = threading::then(
-                    std::move(putSavedSearchFuture), m_threadPool.get(),
+                    std::move(putSavedSearchFuture), currentThread,
                     [savedSearchPromise, savedSearchCounters] {
                         savedSearchCounters->onAddedSavedSearch();
                         savedSearchPromise->finish();
                     });
 
                 threading::onFailed(
-                    std::move(thenFuture),
+                    std::move(thenFuture), currentThread,
                     [savedSearchPromise,
                      guid = std::move(guid)](const QException & e) {
                         QNWARNING(

@@ -18,11 +18,22 @@
 
 #include <qevercloud/types/TypeAliases.h>
 
+#include <QCoreApplication>
+#include <QFuture>
 #include <QList>
 
 namespace quentier::synchronization::tests {
 
 void compareGuidLists(
     const QList<qevercloud::Guid> & lhs, const QList<qevercloud::Guid> & rhs);
+
+template <class T>
+void waitForFuture(const QFuture<T> & future)
+{
+    while (!future.isFinished()) {
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+    }
+}
 
 } // namespace quentier::synchronization::tests

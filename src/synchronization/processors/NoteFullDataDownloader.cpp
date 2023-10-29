@@ -26,6 +26,7 @@
 #include <qevercloud/types/builders/NoteResultSpecBuilder.h>
 
 #include <QMutexLocker>
+#include <QThread>
 
 namespace quentier::synchronization {
 
@@ -98,9 +99,10 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
         std::move(ctx));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto processedNoteFuture = threading::then(
-        std::move(getNoteFuture),
+        std::move(getNoteFuture), currentThread,
         [promise, selfWeak](const qevercloud::Note & note) {
             promise->addResult(note);
             promise->finish();
@@ -112,7 +114,7 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
         });
 
     threading::onFailed(
-        std::move(processedNoteFuture),
+        std::move(processedNoteFuture), currentThread,
         [promise, selfWeak](const QException & e) {
             promise->setException(e);
             promise->finish();

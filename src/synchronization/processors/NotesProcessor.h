@@ -54,8 +54,7 @@ public:
         IInkNoteImageDownloaderFactoryPtr inkNoteImageDownloaderFactory,
         INoteThumbnailDownloaderFactoryPtr noteThumbnailDownloaderFactory,
         ISyncOptionsPtr syncOptions, qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {},
-        threading::QThreadPoolPtr threadPool = {});
+        qevercloud::IRetryPolicyPtr retryPolicy = {});
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -148,7 +147,6 @@ private:
     const ISyncOptionsPtr m_syncOptions;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;
-    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization

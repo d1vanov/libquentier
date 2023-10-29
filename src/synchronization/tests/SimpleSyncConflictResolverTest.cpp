@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/conflict_resolvers/SimpleSyncConflictResolver.h>
 
@@ -120,7 +122,9 @@ TEST_F(SimpleSyncConflictResolverTest, DelegateToNotebookConflictResolver)
     auto future =
         resolver.resolveNotebookConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
+
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
         future.result()));
@@ -147,7 +151,9 @@ TEST_F(SimpleSyncConflictResolverTest, DelegateToNoteConflictResolver)
     auto future =
         resolver.resolveNoteConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
+
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
         future.result()));
@@ -177,7 +183,9 @@ TEST_F(SimpleSyncConflictResolverTest, DelegateToSavedSearchConflictResolver)
     auto future =
         resolver.resolveSavedSearchConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
+
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
         future.result()));
@@ -205,7 +213,9 @@ TEST_F(SimpleSyncConflictResolverTest, DelegateToTagConflictResolver)
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
+    ASSERT_EQ(future.resultCount(), 1);
+
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
         future.result()));

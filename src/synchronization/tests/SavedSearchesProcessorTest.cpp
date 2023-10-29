@@ -95,9 +95,6 @@ protected:
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 TEST_F(SavedSearchesProcessorTest, Ctor)
@@ -105,7 +102,7 @@ TEST_F(SavedSearchesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool));
+                m_mockLocalStorage, m_mockSyncConflictResolver));
 }
 
 TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
@@ -113,7 +110,7 @@ TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                nullptr, m_mockSyncConflictResolver, m_threadPool),
+                nullptr, m_mockSyncConflictResolver),
         InvalidArgument);
 }
 
@@ -122,16 +119,8 @@ TEST_F(SavedSearchesProcessorTest, CtorNullSyncConflictResolver)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, nullptr, m_threadPool),
+                m_mockLocalStorage, nullptr),
         InvalidArgument);
-}
-
-TEST_F(SavedSearchesProcessorTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto savedSearchesProcessor =
-            std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver, nullptr));
 }
 
 TEST_F(
@@ -142,14 +131,14 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver, m_threadPool);
+            m_mockLocalStorage, m_mockSyncConflictResolver);
 
     const auto mockCallback = std::make_shared<StrictMock<MockICallback>>();
 
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
 }
 
@@ -289,10 +278,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareSavedSearchLists(savedSearchesPutIntoLocalStorage, savedSearches);
@@ -362,10 +348,7 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedSavedSearchGuids, expungedSavedSearchGuids);
@@ -469,10 +452,7 @@ TEST_F(
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareGuidLists(processedSavedSearchGuids, expungedSavedSearchGuids);
@@ -703,10 +683,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<
@@ -938,10 +915,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     auto future =
         savedSearchesProcessor->processSavedSearches(syncChunks, mockCallback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     if (std::holds_alternative<

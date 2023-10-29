@@ -45,8 +45,7 @@ class NotebooksProcessor final :
 public:
     explicit NotebooksProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver,
-        threading::QThreadPoolPtr threadPool = {});
+        ISyncConflictResolverPtr syncConflictResolver);
 
     [[nodiscard]] QFuture<void> processNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -69,7 +68,6 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
-    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization

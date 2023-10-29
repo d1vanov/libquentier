@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/processors/DurableNotesProcessor.h>
 #include <synchronization/processors/Utils.h>
@@ -273,8 +275,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
     auto future =
         durableNotesProcessor->processNotes(syncChunks, m_manualCanceler);
 
-    ASSERT_TRUE(future.isFinished());
-
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
@@ -458,8 +459,7 @@ TEST_F(
     auto future =
         durableNotesProcessor->processNotes(syncChunks, m_manualCanceler);
 
-    ASSERT_TRUE(future.isFinished());
-
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
@@ -948,7 +948,7 @@ TEST_P(
     auto future =
         durableNotesProcessor->processNotes(syncChunks, m_manualCanceler);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     const auto status = future.result();

@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/processors/ResourcesProcessor.h>
 #include <synchronization/tests/mocks/MockINoteStoreProvider.h>
 #include <synchronization/tests/mocks/MockIResourceFullDataDownloader.h>
@@ -119,9 +121,6 @@ protected:
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
-
     const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
 };
@@ -178,7 +177,7 @@ TEST_F(ResourcesProcessorTest, Ctor)
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool));
+            qevercloud::newRetryPolicy()));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullLocalStorage)
@@ -186,8 +185,7 @@ TEST_F(ResourcesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             nullptr, m_mockResourceFullDataDownloader, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -196,8 +194,7 @@ TEST_F(ResourcesProcessorTest, CtorNullResourceFullDataDownloader)
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, nullptr, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -206,8 +203,7 @@ TEST_F(ResourcesProcessorTest, CtorNullNoteStoreProvider)
     EXPECT_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader, nullptr,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -216,8 +212,7 @@ TEST_F(ResourcesProcessorTest, CtorNullRequestContext)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy(),
-            m_threadPool));
+            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy()));
 }
 
 TEST_F(ResourcesProcessorTest, CtorNullRetryPolicy)
@@ -225,17 +220,7 @@ TEST_F(ResourcesProcessorTest, CtorNullRetryPolicy)
     EXPECT_NO_THROW(
         const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
             m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr,
-            m_threadPool));
-}
-
-TEST_F(ResourcesProcessorTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
-            m_mockLocalStorage, m_mockResourceFullDataDownloader,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), nullptr));
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr));
 }
 
 TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
@@ -246,17 +231,14 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -393,17 +375,14 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareResourceLists(resourcesPutIntoLocalStorage, resources);
@@ -568,17 +547,14 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
@@ -774,17 +750,14 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
@@ -978,17 +951,14 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
@@ -1198,17 +1168,14 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareResourceLists(resourcesPutIntoLocalStorage, resources);
@@ -1427,17 +1394,14 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     compareResourceLists(resourcesPutIntoLocalStorage, resources);
@@ -1623,17 +1587,14 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
@@ -1845,17 +1806,14 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
     auto future = resourcesProcessor->processResources(
         syncChunks, m_manualCanceler, callback);
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
@@ -2067,7 +2025,7 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -2093,10 +2051,7 @@ TEST_F(
         findResourceByGuidPromises[i]->finish();
     }
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(downloadFullResourceDataCallCount, 2);
@@ -2351,7 +2306,7 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
@@ -2377,10 +2332,7 @@ TEST_F(
         findResourceByGuidPromises[i]->finish();
     }
 
-    while (!future.isFinished()) {
-        QCoreApplication::processEvents();
-    }
-
+    waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(downloadFullResourceDataCallCount, 2);

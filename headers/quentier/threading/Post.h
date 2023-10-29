@@ -33,18 +33,18 @@
 namespace quentier::threading {
 
 template <typename Function>
-void postToObject(QObject * pObject, Function && function)
+void postToObject(QObject * object, Function && function)
 {
-    Q_ASSERT(pObject);
+    Q_ASSERT(object);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     QMetaObject::invokeMethod(
-        pObject, std::forward<Function>(function),
+        object, std::forward<Function>(function),
         Qt::QueuedConnection);
 #else
     QObject src;
     QObject::connect(
-        &src, &QObject::destroyed, pObject, std::forward<Function>(function),
+        &src, &QObject::destroyed, object, std::forward<Function>(function),
         Qt::QueuedConnection);
 #endif
 }
@@ -53,6 +53,7 @@ template <typename Function>
 void postToThread(QThread * pThread, Function && function)
 {
     Q_ASSERT(pThread);
+    Q_ASSERT(!pThread->isFinished());
 
     QObject * pObject = QAbstractEventDispatcher::instance(pThread);
     if (!pObject) {

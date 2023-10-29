@@ -45,8 +45,7 @@ class SavedSearchesProcessor final :
 public:
     explicit SavedSearchesProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver,
-        threading::QThreadPoolPtr threadPool = {});
+        ISyncConflictResolverPtr syncConflictResolver);
 
     [[nodiscard]] QFuture<void> processSavedSearches(
         const QList<qevercloud::SyncChunk> & syncChunks,
@@ -76,7 +75,6 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
-    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization
