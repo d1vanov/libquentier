@@ -429,9 +429,8 @@ void TagsProcessor::onFoundDuplicate(
         std::move(statusFuture), currentThread, tagPromise,
         [this, selfWeak, tagPromise, tagCounters,
          updatedTag = std::move(updatedTag),
-         localTagLocalId = std::move(localTagLocalId),
-         localTagLocallyFavorited, currentThread](
-            const TagConflictResolution & resolution) mutable {
+         localTagLocalId = std::move(localTagLocalId), localTagLocallyFavorited,
+         currentThread](const TagConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -477,8 +476,7 @@ void TagsProcessor::onFoundDuplicate(
                     m_localStorage->putTag(mineResolution.mine);
 
                 threading::thenOrFailed(
-                    std::move(updateLocalTagFuture), currentThread,
-                    tagPromise,
+                    std::move(updateLocalTagFuture), currentThread, tagPromise,
                     threading::TrackedTask{
                         selfWeak,
                         [this, selfWeak, tagPromise, tagCounters, currentThread,

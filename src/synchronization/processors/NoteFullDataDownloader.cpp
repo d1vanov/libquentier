@@ -46,8 +46,8 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
 {
     if (Q_UNLIKELY(!noteStore)) {
         return threading::makeExceptionalFuture<qevercloud::Note>(
-            InvalidArgument{ErrorString{QStringLiteral(
-                "NoteFullDataDownloader: note store is null")}});
+            InvalidArgument{ErrorString{
+                QStringLiteral("NoteFullDataDownloader: note store is null")}});
     }
 
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();

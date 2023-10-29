@@ -364,8 +364,8 @@ void NotesProcessor::onFoundDuplicate(
         std::move(statusFuture), currentThread,
         [this, selfWeak, promise, context, updatedNote, localNoteLocalId,
          localNoteLocallyFavorited, updatedNoteGuid = *updatedNote.guid(),
-         updatedNoteUsn = *updatedNote.updateSequenceNum(), currentThread](
-            const NoteConflictResolution & resolution) mutable {
+         updatedNoteUsn = *updatedNote.updateSequenceNum(),
+         currentThread](const NoteConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -579,8 +579,8 @@ void NotesProcessor::downloadFullNoteDataImpl(
         std::move(noteFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, promise, context,
-             noteKind, noteLocalId = std::move(noteLocalId),
+            [this, selfWeak, promise, context, noteKind,
+             noteLocalId = std::move(noteLocalId),
              resourceLocalIdsByGuids = std::move(resourceLocalIdsByGuids)](
                 qevercloud::Note note) mutable {
                 note.setLocalId(std::move(noteLocalId));
@@ -588,8 +588,8 @@ void NotesProcessor::downloadFullNoteDataImpl(
                     for (auto & resource: *note.mutableResources()) {
                         resource.setNoteLocalId(note.localId());
                         Q_ASSERT(resource.guid());
-                        const auto it = resourceLocalIdsByGuids.constFind(
-                            *resource.guid());
+                        const auto it =
+                            resourceLocalIdsByGuids.constFind(*resource.guid());
                         if (it != resourceLocalIdsByGuids.constEnd()) {
                             resource.setLocalId(it.value());
                         }
@@ -607,8 +607,7 @@ void NotesProcessor::downloadFullNoteDataImpl(
             }});
 
     threading::onFailed(
-        std::move(thenFuture),
-        [promise, context, note](const QException & e) {
+        std::move(thenFuture), [promise, context, note](const QException & e) {
             NotesProcessor::processNoteDownloadingError(
                 context, promise, note, e);
         });

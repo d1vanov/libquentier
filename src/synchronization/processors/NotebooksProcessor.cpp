@@ -44,7 +44,8 @@ class NotebooksProcessor::NotebookCounters
 {
 public:
     NotebookCounters(
-        const qint32 totalNotebooks, const qint32 totalNotebooksToExpunge, // NOLINT
+        const qint32 totalNotebooks,
+        const qint32 totalNotebooksToExpunge, // NOLINT
         INotebooksProcessor::ICallbackWeakPtr callbackWeak) :
         m_totalNotebooks{totalNotebooks},
         m_totalNotebooksToExpunge{totalNotebooksToExpunge},
@@ -77,8 +78,8 @@ private:
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onNotebooksProcessingProgress(
-                m_totalNotebooks, m_totalNotebooksToExpunge,
-                m_addedNotebooks, m_updatedNotebooks, m_expungedNotebooks);
+                m_totalNotebooks, m_totalNotebooksToExpunge, m_addedNotebooks,
+                m_updatedNotebooks, m_expungedNotebooks);
         }
     }
 
@@ -100,8 +101,8 @@ NotebooksProcessor::NotebooksProcessor(
     m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "NotebooksProcessor ctor: local storage is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("NotebooksProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncConflictResolver)) {
@@ -269,8 +270,8 @@ void NotebooksProcessor::onFoundDuplicate(
         [this, selfWeak, notebookPromise,
          updatedNotebook = std::move(updatedNotebook),
          localNotebookLocalId = std::move(localNotebookLocalId),
-         localNotebookLocallyFavorited, notebookCounters, currentThread](
-            const NotebookConflictResolution & resolution) mutable {
+         localNotebookLocallyFavorited, notebookCounters,
+         currentThread](const NotebookConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -322,8 +323,8 @@ void NotebooksProcessor::onFoundDuplicate(
                     m_localStorage->putNotebook(mineResolution.mine);
 
                 threading::thenOrFailed(
-                    std::move(updateLocalNotebookFuture),
-                    currentThread, notebookPromise,
+                    std::move(updateLocalNotebookFuture), currentThread,
+                    notebookPromise,
                     threading::TrackedTask{
                         selfWeak,
                         [this, selfWeak, notebookPromise, notebookCounters,
@@ -335,8 +336,7 @@ void NotebooksProcessor::onFoundDuplicate(
                                     std::move(updatedNotebook));
 
                             auto thenFuture = threading::then(
-                                std::move(putNotebookFuture),
-                                currentThread,
+                                std::move(putNotebookFuture), currentThread,
                                 [notebookPromise, notebookCounters]() mutable {
                                     notebookCounters->onAddedNotebook();
                                     notebookPromise->finish();

@@ -328,8 +328,7 @@ QFuture<DownloadResourcesStatusPtr>
             selfWeak,
             [this, selfWeak, promise, canceler = std::move(canceler),
              syncChunks, callbackWeak = std::move(callbackWeak),
-             currentThread](
-                DownloadResourcesStatusPtr status) mutable {
+             currentThread](DownloadResourcesStatusPtr status) mutable {
                 auto processResourcesFuture = processResourcesImpl(
                     syncChunks, std::move(canceler), {},
                     std::move(callbackWeak));
