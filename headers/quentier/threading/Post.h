@@ -23,9 +23,9 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #include <QMetaObject>
-#else
-#include <QThread>
 #endif
+
+#include <QThread>
 
 #include <memory>
 #include <utility>
@@ -69,6 +69,12 @@ void postToThread(QThread * pThread, Function && function)
                 function();
             });
         Q_UNUSED(pDummyObj.release())
+        return;
+    }
+
+    if (pThread == QThread::currentThread()) {
+        // Already on the target thread, executing the function right away
+        function();
         return;
     }
 
