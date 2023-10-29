@@ -503,6 +503,20 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
             "Cannot create Notes table in the local storage database"));
 
     res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS Notes_AfterInsertNotebookTrigger "
+        "AFTER INSERT ON Notebooks "
+        "BEGIN "
+        "UPDATE Notes SET notebookGuid = new.guid "
+        "WHERE notebookLocalUid=new.localUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Notes after insert notebook trigger"
+            "in the local storage database"));
+
+    res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS SharedNotes("
         "  sharedNoteNoteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
         "  sharedNoteSharerUserId               INTEGER DEFAULT NULL, "
