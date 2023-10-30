@@ -163,7 +163,7 @@ private:
         DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void finalize(DownloadContextPtr & downloadContext);
-    void cancel(QPromise<Result> & promise);
+    static void cancel(QPromise<Result> & promise);
 
 private:
     const Account m_account;

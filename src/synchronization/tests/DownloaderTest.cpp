@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/Downloader.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -2018,7 +2020,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
     auto result =
         downloader->download(m_manualCanceler, mockDownloaderCallback);
-    ASSERT_TRUE(result.isFinished());
+
+    waitForFuture(result);
 
     // Checking the state of the last reported sync chunks data counters
     ASSERT_TRUE(lastSyncChunksDataCounters);
