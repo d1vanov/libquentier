@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/AuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <synchronization/tests/mocks/MockIUserInfoProvider.h>
@@ -468,7 +470,8 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
         });
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
-    ASSERT_TRUE(future.isFinished());
+
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -502,7 +505,7 @@ TEST_F(AuthenticationInfoProviderTest, PropagateErrorWhenAuthNewAccount)
                 RuntimeError{exceptionMessage})));
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
 
     bool caughtException = false;
     try {
@@ -543,7 +546,7 @@ TEST_F(
         });
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -620,7 +623,7 @@ TEST_F(
         });
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -716,7 +719,7 @@ TEST_F(
         });
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -801,7 +804,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::NoCache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -870,7 +873,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -933,7 +936,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateAccountWithCache)
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -949,7 +952,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateAccountWithCache)
     future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -1077,7 +1080,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -1181,7 +1184,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -1263,7 +1266,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::NoCache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -1348,7 +1351,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::NoCache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     const auto authenticationInfo = future.result();
@@ -1507,7 +1510,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::NoCache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -1661,7 +1664,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -1732,7 +1735,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToLinkedNotebookWithCache)
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -1752,7 +1755,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToLinkedNotebookWithCache)
     future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -1927,7 +1930,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -2094,7 +2097,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -2189,7 +2192,7 @@ TEST_P(
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -2291,7 +2294,7 @@ TEST_P(
     future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
@@ -2381,7 +2384,7 @@ TEST_P(
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());
@@ -2538,7 +2541,7 @@ TEST_P(
     future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::Cache);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     EXPECT_NE(future.result().get(), m_authenticationInfo.get());

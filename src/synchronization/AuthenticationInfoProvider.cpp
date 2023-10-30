@@ -42,6 +42,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QReadLocker>
+#include <QThread>
 #include <QTimeZone>
 #include <QWriteLocker>
 #include <QtGlobal>
@@ -189,12 +190,13 @@ QFuture<IAuthenticationInfoPtr>
     auto authResultFuture = m_authenticator->authenticateNewAccount();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(authResultFuture), promise,
+        std::move(authResultFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
-            [this, promise,
+            [this, promise, currentThread,
              selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
                 auto accountFuture = findAccountForUserId(
@@ -204,10 +206,10 @@ QFuture<IAuthenticationInfoPtr>
                     authenticationInfo->userStoreCookies());
 
                 auto accountThenFuture = threading::then(
-                    std::move(accountFuture),
+                    std::move(accountFuture), currentThread,
                     threading::TrackedTask{
                         selfWeak,
-                        [this, promise,
+                        [this, promise, currentThread,
                          authenticationInfo](Account account) mutable {
                             {
                                 const QWriteLocker locker{
@@ -222,7 +224,7 @@ QFuture<IAuthenticationInfoPtr>
                                 authenticationInfo, std::move(account));
 
                             auto storeAuthInfoThenFuture = threading::then(
-                                std::move(storeAuthInfoFuture),
+                                std::move(storeAuthInfoFuture), currentThread,
                                 [promise, authenticationInfo]() mutable {
                                     promise->addResult(
                                         std::move(authenticationInfo));
@@ -231,6 +233,7 @@ QFuture<IAuthenticationInfoPtr>
 
                             threading::onFailed(
                                 std::move(storeAuthInfoThenFuture),
+                                currentThread,
                                 [promise,
                                  authenticationInfo =
                                      std::move(authenticationInfo)](
@@ -252,7 +255,7 @@ QFuture<IAuthenticationInfoPtr>
                         }});
 
                 threading::onFailed(
-                    std::move(accountThenFuture),
+                    std::move(accountThenFuture), currentThread,
                     [promise = std::move(promise),
                      authenticationInfo = std::move(authenticationInfo)](
                         const QException & e) mutable {
@@ -342,9 +345,10 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         QList<QFuture<QString>>{} << readAuthTokenFuture << readShardIdFuture);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto readAllThenFuture = threading::then(
-        std::move(readAllFuture),
+        std::move(readAllFuture), currentThread,
         [promise, selfWeak, authenticationInfo = std::move(authenticationInfo),
          account](QList<QString> tokenAndShardId) mutable {
             Q_ASSERT(tokenAndShardId.size() == 2);
@@ -362,7 +366,7 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         });
 
     threading::onFailed(
-        std::move(readAllThenFuture),
+        std::move(readAllThenFuture), currentThread,
         [promise, selfWeak,
          account = std::move(account)](const QException & e) mutable {
             QNINFO(
@@ -489,9 +493,10 @@ QFuture<IAuthenticationInfoPtr>
             m_host, userIdStr, *linkedNotebook.guid()));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto readAuthTokenThenFuture = threading::then(
-        std::move(readAuthTokenFuture),
+        std::move(readAuthTokenFuture), currentThread,
         [promise, selfWeak, account = account,
          expirationTimestamp = linkedNotebookTimestamps->expirationTimestamp,
          authenticationTimestamp =
@@ -527,7 +532,7 @@ QFuture<IAuthenticationInfoPtr>
         });
 
     threading::onFailed(
-        std::move(readAuthTokenThenFuture),
+        std::move(readAuthTokenThenFuture), currentThread,
         [promise, selfWeak, linkedNotebook = std::move(linkedNotebook),
          account = std::move(account)](const QException & e) mutable {
             QNINFO(
@@ -585,14 +590,15 @@ void AuthenticationInfoProvider::authenticateAccountWithoutCache(
     const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise)
 {
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto authResultFuture = m_authenticator->authenticateAccount(account);
 
     threading::thenOrFailed(
-        std::move(authResultFuture), promise,
+        std::move(authResultFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
-            [this, promise, account = std::move(account),
+            [this, promise, currentThread, account = std::move(account),
              selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
                 Q_ASSERT(account.id() == authenticationInfo->userId());
@@ -601,14 +607,14 @@ void AuthenticationInfoProvider::authenticateAccountWithoutCache(
                     authenticationInfo, std::move(account));
 
                 auto storeAuthInfoThenFuture = threading::then(
-                    std::move(storeAuthInfoFuture),
+                    std::move(storeAuthInfoFuture), currentThread,
                     [promise, authenticationInfo]() mutable {
                         promise->addResult(std::move(authenticationInfo));
                         promise->finish();
                     });
 
                 threading::onFailed(
-                    std::move(storeAuthInfoThenFuture),
+                    std::move(storeAuthInfoThenFuture), currentThread,
                     [promise,
                      authenticationInfo = std::move(authenticationInfo)](
                         const QException & e) mutable {
@@ -671,6 +677,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
     }
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     // We need authentication token from main account in order to create
     // request context with valid authentication token for the call
@@ -678,10 +685,11 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
         authenticateAccount(account, Mode::Cache);
 
     threading::thenOrFailed(
-        std::move(userOwnAccountAuthInfoFuture), promise,
+        std::move(userOwnAccountAuthInfoFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, promise, account = std::move(account),
+            [this, selfWeak, promise, currentThread,
+             account = std::move(account),
              linkedNotebook = std::move(linkedNotebook),
              noteStore = std::move(noteStore)](
                 const IAuthenticationInfoPtr & authenticationInfo) mutable {
@@ -706,7 +714,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
                     *linkedNotebook.sharedNotebookGlobalId(), ctx);
 
                 threading::thenOrFailed(
-                    std::move(authFuture), promise,
+                    std::move(authFuture), currentThread, promise,
                     threading::TrackedTask{
                         selfWeak,
                         [this, promise, account = std::move(account),
@@ -805,15 +813,17 @@ void AuthenticationInfoProvider::onAuthenticatedToLinkedNotebook(
     auto storeAuthInfoFuture = storeLinkedNotebookAuthenticationInfo(
         authenticationInfo, linkedNotebookGuid, std::move(account));
 
+    auto * currentThread = QThread::currentThread();
+
     auto storeAuthInfoThenFuture = threading::then(
-        std::move(storeAuthInfoFuture),
+        std::move(storeAuthInfoFuture), currentThread,
         [promise, authenticationInfo]() mutable {
             promise->addResult(std::move(authenticationInfo));
             promise->finish();
         });
 
     threading::onFailed(
-        std::move(storeAuthInfoThenFuture),
+        std::move(storeAuthInfoThenFuture), currentThread,
         [promise, authenticationInfo = std::move(authenticationInfo),
          linkedNotebookGuid =
              std::move(linkedNotebookGuid)](const QException & e) mutable {
@@ -1034,9 +1044,10 @@ QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
                    .build();
 
     auto userFuture = m_userInfoProvider->userInfo(std::move(ctx));
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(userFuture), promise,
+        std::move(userFuture), currentThread, promise,
         [promise, userId, host = m_host,
          shardId = std::move(shardId)](const qevercloud::User & user) mutable {
             QNDEBUG(
@@ -1105,8 +1116,10 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
     auto writeAuthTokenAndShardIdFuture = threading::whenAll(
         QList<QFuture<void>>{} << writeAuthTokenFuture << writeShardIdFuture);
 
+    auto * currentThread = QThread::currentThread();
+
     threading::thenOrFailed(
-        std::move(writeAuthTokenAndShardIdFuture), promise,
+        std::move(writeAuthTokenAndShardIdFuture), currentThread, promise,
         threading::TrackedTask{
             weak_from_this(),
             [this, promise, authenticationInfo = std::move(authenticationInfo),
@@ -1209,8 +1222,10 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
             m_host, userIdStr, linkedNotebookGuid),
         authenticationInfo->authToken());
 
+    auto * currentThread = QThread::currentThread();
+
     threading::thenOrFailed(
-        std::move(writeAuthTokenFuture), promise,
+        std::move(writeAuthTokenFuture), currentThread, promise,
         threading::TrackedTask{
             weak_from_this(),
             [this, promise, authenticationInfo = std::move(authenticationInfo),
