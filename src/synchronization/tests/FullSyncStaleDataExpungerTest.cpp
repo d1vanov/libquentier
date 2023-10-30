@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/FullSyncStaleDataExpunger.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -1034,7 +1036,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             testData.m_preservedNoteGuids,
             testData.m_preservedSavedSearchGuids},
         m_manualCanceler, testData.m_linkedNotebookGuid);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
 
     // === Check expunge expectations ===
