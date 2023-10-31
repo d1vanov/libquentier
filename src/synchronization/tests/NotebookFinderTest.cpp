@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/NotebookFinder.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -84,7 +86,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
 
     auto future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -94,7 +96,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -112,7 +114,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
                 notebook)));
 
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -122,7 +124,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -141,7 +143,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
 
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -150,7 +152,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -176,7 +178,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
 
     auto future = notebookFinder->findNotebookByLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -185,7 +187,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByLocalId(localId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -208,7 +210,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
 
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -218,7 +220,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -237,7 +239,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
 
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -246,7 +248,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByLocalId(notebook.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -275,7 +277,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
 
     auto future = notebookFinder->findNotebookByNoteLocalId(noteLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -284,7 +286,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(noteLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -321,7 +323,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
 
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -331,7 +333,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -353,7 +355,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
 
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -362,7 +364,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -405,7 +407,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
 
     auto future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -415,7 +417,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -436,7 +438,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
 
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -446,7 +448,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -468,7 +470,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
 
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -477,7 +479,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -503,7 +505,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
 
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -529,7 +531,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
 
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -538,7 +540,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteLocalId(note.localId());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -567,7 +569,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
 
     auto future = notebookFinder->findNotebookByNoteGuid(noteGuid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -576,7 +578,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(noteGuid);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -613,7 +615,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
 
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -623,7 +625,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -646,7 +648,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
 
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -655,7 +657,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -699,7 +701,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
 
     auto future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto res = future.result();
@@ -709,7 +711,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -731,7 +733,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
 
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -741,7 +743,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -764,7 +766,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
 
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -773,7 +775,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -800,7 +802,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
 
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -827,7 +829,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
 
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
@@ -836,7 +838,7 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
     // The next call should not go to local storage but use cached value instead
     future = notebookFinder->findNotebookByNoteGuid(note.guid().value());
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     res = future.result();
