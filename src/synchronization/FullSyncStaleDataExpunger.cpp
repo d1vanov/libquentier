@@ -28,8 +28,6 @@
 
 #include <QThread>
 
-#include <utility>
-
 namespace quentier::synchronization {
 
 FullSyncStaleDataExpunger::FullSyncStaleDataExpunger(
@@ -306,8 +304,6 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
 
-    using GuidWithLocalId = std::pair<qevercloud::Guid, QString>;
-
     QList<QFuture<GuidWithLocalId>> processNotebookFutures;
     processNotebookFutures.reserve(std::max(0, notebookGuids.size()));
     for (const auto & guid: qAsConst(notebookGuids)) {
@@ -323,65 +319,12 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
             std::move(notebookFuture), currentThread, processNotebookPromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, guid, canceler, linkedNotebookGuid, currentThread,
-                 selfWeak, processNotebookPromise](
+                [this, guid, canceler, linkedNotebookGuid,
+                 processNotebookPromise](
                     std::optional<qevercloud::Notebook> notebook) {
-                    if (Q_UNLIKELY(!notebook)) {
-                        QNWARNING(
-                            "synchronization::FullSyncStaleDataExpunger",
-                            "Could not find the supposedly existing notebook "
-                                << "in the local storage by guid: " << guid);
-
-                        processNotebookPromise->addResult(GuidWithLocalId{});
-                        processNotebookPromise->finish();
-                        return;
-                    }
-
-                    if (canceler->isCanceled()) {
-                        return;
-                    }
-
-                    notebook->setGuid(std::nullopt);
-                    notebook->setLinkedNotebookGuid(linkedNotebookGuid);
-                    notebook->setUpdateSequenceNum(std::nullopt);
-                    notebook->setRestrictions(std::nullopt);
-                    notebook->setContact(std::nullopt);
-                    notebook->setPublished(std::nullopt);
-                    notebook->setPublishing(std::nullopt);
-                    notebook->setDefaultNotebook(std::nullopt);
-                    notebook->setLocallyModified(true);
-
-                    const auto newLocalId = UidGenerator::Generate();
-                    notebook->setLocalId(newLocalId);
-
-                    auto expungeNotebookFuture =
-                        m_localStorage->expungeNotebookByGuid(guid);
-
-                    threading::thenOrFailed(
-                        std::move(expungeNotebookFuture), currentThread,
-                        processNotebookPromise,
-                        threading::TrackedTask{
-                            selfWeak,
-                            [this, processNotebookPromise, canceler, guid,
-                             newLocalId, selfWeak, currentThread,
-                             notebook = std::move(*notebook)]() mutable {
-                                if (canceler->isCanceled()) {
-                                    return;
-                                }
-
-                                auto putNotebookFuture =
-                                    m_localStorage->putNotebook(
-                                        std::move(notebook));
-
-                                threading::thenOrFailed(
-                                    std::move(putNotebookFuture), currentThread,
-                                    processNotebookPromise,
-                                    [processNotebookPromise, guid, newLocalId] {
-                                        processNotebookPromise->addResult(
-                                            GuidWithLocalId{guid, newLocalId});
-                                        processNotebookPromise->finish();
-                                    });
-                            }});
+                    processModifiedNotebook(
+                        std::move(notebook), linkedNotebookGuid, guid,
+                        processNotebookPromise, canceler);
                 }});
 
         processNotebookFutures << processNotebookFuture;
@@ -431,7 +374,6 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
     auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
 
-    using GuidWithTagData = std::pair<qevercloud::Guid, TagData>;
     QList<QFuture<GuidWithTagData>> processTagFutures;
     processTagFutures.reserve(std::max(0, tagGuids.size()));
     for (const auto & guid: qAsConst(tagGuids)) {
@@ -446,92 +388,11 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
             std::move(tagFuture), currentThread, processTagPromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, guid, canceler, linkedNotebookGuid, currentThread,
-                 selfWeak,
+                [this, guid, canceler, linkedNotebookGuid,
                  processTagPromise](std::optional<qevercloud::Tag> tag) {
-                    if (Q_UNLIKELY(!tag)) {
-                        QNWARNING(
-                            "synchronization::FullSyncStaleDataExpunger",
-                            "Could not find the supposedly existing tag "
-                                << "in the local storage by guid: " << guid);
-
-                        processTagPromise->addResult(GuidWithTagData{});
-                        processTagPromise->finish();
-                        return;
-                    }
-
-                    if (canceler->isCanceled()) {
-                        return;
-                    }
-
-                    tag->setGuid(std::nullopt);
-                    tag->setLinkedNotebookGuid(linkedNotebookGuid);
-                    tag->setUpdateSequenceNum(std::nullopt);
-                    tag->setParentGuid(std::nullopt);
-                    tag->setParentTagLocalId(QString{});
-                    tag->setLocallyModified(true);
-
-                    auto oldLocalId = tag->localId();
-                    auto newLocalId = UidGenerator::Generate();
-                    tag->setLocalId(newLocalId);
-
-                    auto expungeTagFuture =
-                        m_localStorage->expungeTagByGuid(guid);
-
-                    auto expungeTagThenFuture = threading::then(
-                        std::move(expungeTagFuture), currentThread,
-                        threading::TrackedTask{
-                            selfWeak,
-                            [this, processTagPromise, guid, selfWeak, canceler,
-                             currentThread, oldLocalId = std::move(oldLocalId),
-                             newLocalId = std::move(newLocalId),
-                             tag = std::move(*tag)]() mutable {
-                                if (canceler->isCanceled()) {
-                                    return;
-                                }
-
-                                auto putTagFuture =
-                                    m_localStorage->putTag(std::move(tag));
-
-                                auto putTagThenFuture = threading::then(
-                                    std::move(putTagFuture), currentThread,
-                                    [processTagPromise, guid,
-                                     oldLocalId = std::move(oldLocalId),
-                                     newLocalId =
-                                         std::move(newLocalId)]() mutable {
-                                        processTagPromise->addResult(
-                                            GuidWithTagData{
-                                                guid,
-                                                TagData{
-                                                    std::move(oldLocalId),
-                                                    std::move(newLocalId)}});
-                                        processTagPromise->finish();
-                                    });
-
-                                threading::onFailed(
-                                    std::move(putTagThenFuture), currentThread,
-                                    [processTagPromise](const QException & e) {
-                                        QNWARNING(
-                                            "synchronization::"
-                                            "FullSyncStaleDataExpunger",
-                                            "Failed to put recreated locally "
-                                                << "modified tag to the "
-                                                << "local storage: "
-                                                << e.what());
-
-                                        processTagPromise->addResult(
-                                            GuidWithTagData{});
-                                        processTagPromise->finish();
-                                    });
-                            }});
-
-                    threading::onFailed(
-                        std::move(expungeTagThenFuture), currentThread,
-                        [processTagPromise](
-                            [[maybe_unused]] const QException & e) {
-                            processTagPromise->addResult(GuidWithTagData{});
-                            processTagPromise->finish();
-                        });
+                    processModifiedTag(
+                        std::move(tag), linkedNotebookGuid, guid,
+                        processTagPromise, canceler);
                 }});
 
         processTagFutures << processTagFuture;
@@ -595,52 +456,11 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
             processSavedSearchPromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, guid, canceler, selfWeak, currentThread,
-                 processSavedSearchPromise](
+                [this, guid, canceler, processSavedSearchPromise](
                     std::optional<qevercloud::SavedSearch> savedSearch) {
-                    if (Q_UNLIKELY(!savedSearch)) {
-                        QNWARNING(
-                            "synchronization::FullSyncStaleDataExpunger",
-                            "Could not find the supposedly existing saved "
-                                << "search in the local storage by guid: "
-                                << guid);
-
-                        processSavedSearchPromise->finish();
-                        return;
-                    }
-
-                    if (canceler->isCanceled()) {
-                        return;
-                    }
-
-                    savedSearch->setGuid(std::nullopt);
-                    savedSearch->setUpdateSequenceNum(std::nullopt);
-                    savedSearch->setLocalId(UidGenerator::Generate());
-                    savedSearch->setLocallyModified(true);
-
-                    auto expungeSavedSearchFuture =
-                        m_localStorage->expungeSavedSearchByGuid(guid);
-
-                    threading::thenOrFailed(
-                        std::move(expungeSavedSearchFuture), currentThread,
-                        processSavedSearchPromise,
-                        threading::TrackedTask{
-                            selfWeak,
-                            [this, processSavedSearchPromise, guid, selfWeak,
-                             canceler, currentThread,
-                             savedSearch = std::move(*savedSearch)]() mutable {
-                                if (canceler->isCanceled()) {
-                                    return;
-                                }
-
-                                auto putSavedSearchFuture =
-                                    m_localStorage->putSavedSearch(
-                                        std::move(savedSearch));
-
-                                threading::thenOrFailed(
-                                    std::move(putSavedSearchFuture),
-                                    currentThread, processSavedSearchPromise);
-                            }});
+                    processModifiedSavedSearch(
+                        std::move(savedSearch), guid, processSavedSearchPromise,
+                        canceler);
                 }});
 
         processSavedSearchFutures << processSavedSearchFuture;
@@ -681,103 +501,318 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
             std::move(noteFuture), currentThread, processNotePromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, guid, selfWeak, newNotebooksMap, canceler, currentThread,
-                 newTagsMap,
+                [this, guid, newNotebooksMap, canceler, newTagsMap,
                  processNotePromise](std::optional<qevercloud::Note> note) {
-                    if (Q_UNLIKELY(!note)) {
-                        QNWARNING(
-                            "synchronization::FullSyncStaleDataExpunger",
-                            "Could not find the supposedly existing note in "
-                            "the "
-                                << "local storage by guid: " << guid);
-                        processNotePromise->finish();
-                        return;
-                    }
-
-                    if (Q_UNLIKELY(!note->notebookGuid())) {
-                        QNWARNING(
-                            "synchronization::FullSyncStaleDataExpunger",
-                            "Found note with guid which somehow doesn't have "
-                                << "notebook guid: " << *note);
-                        processNotePromise->finish();
-                        return;
-                    }
-
-                    if (canceler->isCanceled()) {
-                        return;
-                    }
-
-                    note->setGuid(std::nullopt);
-                    note->setUpdateSequenceNum(std::nullopt);
-                    note->setLocalId(UidGenerator::Generate());
-                    note->setLocallyModified(true);
-
-                    if (const auto it =
-                            newNotebooksMap->constFind(*note->notebookGuid());
-                        it != newNotebooksMap->constEnd())
-                    {
-                        note->setNotebookLocalId(it.value());
-                    }
-
-                    note->setNotebookGuid(std::nullopt);
-
-                    if (note->resources()) {
-                        for (auto & resource: *note->mutableResources()) {
-                            resource.setNoteLocalId(note->localId());
-                            resource.setNoteGuid(std::nullopt);
-                            resource.setGuid(std::nullopt);
-                            resource.setUpdateSequenceNum(std::nullopt);
-                            resource.setLocallyModified(true);
-                            resource.setLocalId(UidGenerator::Generate());
-                        }
-                    }
-
-                    if (note->tagGuids()) {
-                        QStringList tagLocalIds = note->tagLocalIds();
-                        for (const auto & tagGuid: qAsConst(*note->tagGuids()))
-                        {
-                            const auto it = newTagsMap->constFind(tagGuid);
-                            if (it != newTagsMap->constEnd()) {
-                                const auto & tagData = it.value();
-                                if (const auto index =
-                                        tagLocalIds.indexOf(tagData.oldLocalId);
-                                    index != -1)
-                                {
-                                    tagLocalIds[index] = tagData.newLocalId;
-                                }
-                            }
-                        }
-                        note->setTagLocalIds(std::move(tagLocalIds));
-                        note->setTagGuids(std::nullopt);
-                    }
-
-                    auto expungeNoteFuture =
-                        m_localStorage->expungeNoteByGuid(guid);
-
-                    threading::thenOrFailed(
-                        std::move(expungeNoteFuture), currentThread,
-                        processNotePromise,
-                        threading::TrackedTask{
-                            selfWeak,
-                            [this, processNotePromise, guid, selfWeak, canceler,
-                             currentThread, note = std::move(*note)]() mutable {
-                                if (canceler->isCanceled()) {
-                                    return;
-                                }
-
-                                auto putNoteFuture =
-                                    m_localStorage->putNote(std::move(note));
-
-                                threading::thenOrFailed(
-                                    std::move(putNoteFuture), currentThread,
-                                    processNotePromise);
-                            }});
+                    processModifiedNote(
+                        std::move(note), guid, newNotebooksMap, newTagsMap,
+                        processNotePromise, canceler);
                 }});
 
         processNoteFutures << processNoteFuture;
     }
 
     return threading::whenAll(std::move(processNoteFutures));
+}
+
+void FullSyncStaleDataExpunger::processModifiedNotebook(
+    std::optional<qevercloud::Notebook> notebook,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+    const qevercloud::Guid & guid,
+    const std::shared_ptr<QPromise<GuidWithLocalId>> & promise,
+    const utility::cancelers::ICancelerPtr & canceler)
+{
+    Q_ASSERT(promise);
+    Q_ASSERT(canceler);
+
+    if (Q_UNLIKELY(!notebook)) {
+        QNWARNING(
+            "synchronization::FullSyncStaleDataExpunger",
+            "Could not find supposedly existing notebook "
+                << "in the local storage by guid: " << guid);
+
+        promise->addResult(GuidWithLocalId{});
+        promise->finish();
+        return;
+    }
+
+    if (canceler->isCanceled()) {
+        return;
+    }
+
+    notebook->setGuid(std::nullopt);
+    notebook->setLinkedNotebookGuid(linkedNotebookGuid);
+    notebook->setUpdateSequenceNum(std::nullopt);
+    notebook->setRestrictions(std::nullopt);
+    notebook->setContact(std::nullopt);
+    notebook->setPublished(std::nullopt);
+    notebook->setPublishing(std::nullopt);
+    notebook->setDefaultNotebook(std::nullopt);
+    notebook->setLocallyModified(true);
+
+    const auto newLocalId = UidGenerator::Generate();
+    notebook->setLocalId(newLocalId);
+
+    auto expungeNotebookFuture = m_localStorage->expungeNotebookByGuid(guid);
+
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
+
+    threading::thenOrFailed(
+        std::move(expungeNotebookFuture), currentThread, promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, canceler, guid, newLocalId, selfWeak, currentThread,
+             notebook = std::move(*notebook)]() mutable {
+                if (canceler->isCanceled()) {
+                    return;
+                }
+
+                auto putNotebookFuture =
+                    m_localStorage->putNotebook(std::move(notebook));
+
+                threading::thenOrFailed(
+                    std::move(putNotebookFuture), currentThread, promise,
+                    [promise, guid, newLocalId] {
+                        promise->addResult(GuidWithLocalId{guid, newLocalId});
+                        promise->finish();
+                    });
+            }});
+}
+
+void FullSyncStaleDataExpunger::processModifiedTag(
+    std::optional<qevercloud::Tag> tag,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+    const qevercloud::Guid & guid,
+    const std::shared_ptr<QPromise<GuidWithTagData>> & promise,
+    const utility::cancelers::ICancelerPtr & canceler)
+{
+    Q_ASSERT(promise);
+    Q_ASSERT(canceler);
+
+    if (Q_UNLIKELY(!tag)) {
+        QNWARNING(
+            "synchronization::FullSyncStaleDataExpunger",
+            "Could not find supposedly existing tag "
+                << "in the local storage by guid: " << guid);
+
+        promise->addResult(GuidWithTagData{});
+        promise->finish();
+        return;
+    }
+
+    if (canceler->isCanceled()) {
+        return;
+    }
+
+    tag->setGuid(std::nullopt);
+    tag->setLinkedNotebookGuid(linkedNotebookGuid);
+    tag->setUpdateSequenceNum(std::nullopt);
+    tag->setParentGuid(std::nullopt);
+    tag->setParentTagLocalId(QString{});
+    tag->setLocallyModified(true);
+
+    auto oldLocalId = tag->localId();
+    auto newLocalId = UidGenerator::Generate();
+    tag->setLocalId(newLocalId);
+
+    auto expungeTagFuture = m_localStorage->expungeTagByGuid(guid);
+
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
+
+    auto expungeTagThenFuture = threading::then(
+        std::move(expungeTagFuture), currentThread,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, guid, selfWeak, canceler, currentThread,
+             oldLocalId = std::move(oldLocalId),
+             newLocalId = std::move(newLocalId),
+             tag = std::move(*tag)]() mutable {
+                if (canceler->isCanceled()) {
+                    return;
+                }
+
+                auto putTagFuture = m_localStorage->putTag(std::move(tag));
+                auto putTagThenFuture = threading::then(
+                    std::move(putTagFuture), currentThread,
+                    [promise, guid, oldLocalId = std::move(oldLocalId),
+                     newLocalId = std::move(newLocalId)]() mutable {
+                        promise->addResult(GuidWithTagData{
+                            guid,
+                            TagData{
+                                std::move(oldLocalId), std::move(newLocalId)}});
+                        promise->finish();
+                    });
+
+                threading::onFailed(
+                    std::move(putTagThenFuture), currentThread,
+                    [promise](const QException & e) {
+                        QNWARNING(
+                            "synchronization::"
+                            "FullSyncStaleDataExpunger",
+                            "Failed to put recreated locally modified tag to "
+                                << "the local storage: " << e.what());
+
+                        promise->addResult(GuidWithTagData{});
+                        promise->finish();
+                    });
+            }});
+
+    threading::onFailed(
+        std::move(expungeTagThenFuture), currentThread,
+        [promise]([[maybe_unused]] const QException & e) {
+            promise->addResult(GuidWithTagData{});
+            promise->finish();
+        });
+}
+
+void FullSyncStaleDataExpunger::processModifiedSavedSearch(
+    std::optional<qevercloud::SavedSearch> savedSearch,
+    const qevercloud::Guid & guid,
+    const std::shared_ptr<QPromise<void>> & promise,
+    const utility::cancelers::ICancelerPtr & canceler)
+{
+    Q_ASSERT(promise);
+    Q_ASSERT(canceler);
+
+    if (Q_UNLIKELY(!savedSearch)) {
+        QNWARNING(
+            "synchronization::FullSyncStaleDataExpunger",
+            "Could not find the supposedly existing saved "
+                << "search in the local storage by guid: " << guid);
+
+        promise->finish();
+        return;
+    }
+
+    if (canceler->isCanceled()) {
+        return;
+    }
+
+    savedSearch->setGuid(std::nullopt);
+    savedSearch->setUpdateSequenceNum(std::nullopt);
+    savedSearch->setLocalId(UidGenerator::Generate());
+    savedSearch->setLocallyModified(true);
+
+    auto expungeSavedSearchFuture =
+        m_localStorage->expungeSavedSearchByGuid(guid);
+
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
+
+    threading::thenOrFailed(
+        std::move(expungeSavedSearchFuture), currentThread, promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, guid, selfWeak, canceler, currentThread,
+             savedSearch = std::move(*savedSearch)]() mutable {
+                if (canceler->isCanceled()) {
+                    return;
+                }
+
+                auto putSavedSearchFuture =
+                    m_localStorage->putSavedSearch(std::move(savedSearch));
+
+                threading::thenOrFailed(
+                    std::move(putSavedSearchFuture), currentThread, promise);
+            }});
+}
+
+void FullSyncStaleDataExpunger::processModifiedNote(
+    std::optional<qevercloud::Note> note, const qevercloud::Guid & guid,
+    const std::shared_ptr<const GuidToLocalIdHash> & newNotebooksMap,
+    const std::shared_ptr<const GuidToTagDataHash> & newTagsMap,
+    const std::shared_ptr<QPromise<void>> & promise,
+    const utility::cancelers::ICancelerPtr & canceler)
+{
+    Q_ASSERT(newNotebooksMap);
+    Q_ASSERT(newTagsMap);
+    Q_ASSERT(promise);
+    Q_ASSERT(canceler);
+
+    if (Q_UNLIKELY(!note)) {
+        QNWARNING(
+            "synchronization::FullSyncStaleDataExpunger",
+            "Could not find the supposedly existing note in the local storage "
+                << "by guid: " << guid);
+        promise->finish();
+        return;
+    }
+
+    if (Q_UNLIKELY(!note->notebookGuid())) {
+        QNWARNING(
+            "synchronization::FullSyncStaleDataExpunger",
+            "Found note with guid which somehow doesn't have "
+                << "notebook guid: " << *note);
+        promise->finish();
+        return;
+    }
+
+    if (canceler->isCanceled()) {
+        return;
+    }
+
+    note->setGuid(std::nullopt);
+    note->setUpdateSequenceNum(std::nullopt);
+    note->setLocalId(UidGenerator::Generate());
+    note->setLocallyModified(true);
+
+    if (const auto it = newNotebooksMap->constFind(*note->notebookGuid());
+        it != newNotebooksMap->constEnd())
+    {
+        note->setNotebookLocalId(it.value());
+    }
+
+    note->setNotebookGuid(std::nullopt);
+
+    if (note->resources()) {
+        for (auto & resource: *note->mutableResources()) {
+            resource.setNoteLocalId(note->localId());
+            resource.setNoteGuid(std::nullopt);
+            resource.setGuid(std::nullopt);
+            resource.setUpdateSequenceNum(std::nullopt);
+            resource.setLocallyModified(true);
+            resource.setLocalId(UidGenerator::Generate());
+        }
+    }
+
+    if (note->tagGuids()) {
+        QStringList tagLocalIds = note->tagLocalIds();
+        for (const auto & tagGuid: qAsConst(*note->tagGuids())) {
+            const auto it = newTagsMap->constFind(tagGuid);
+            if (it != newTagsMap->constEnd()) {
+                const auto & tagData = it.value();
+                if (const auto index = tagLocalIds.indexOf(tagData.oldLocalId);
+                    index != -1)
+                {
+                    tagLocalIds[index] = tagData.newLocalId;
+                }
+            }
+        }
+        note->setTagLocalIds(std::move(tagLocalIds));
+        note->setTagGuids(std::nullopt);
+    }
+
+    auto expungeNoteFuture = m_localStorage->expungeNoteByGuid(guid);
+
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
+
+    threading::thenOrFailed(
+        std::move(expungeNoteFuture), currentThread, promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, guid, selfWeak, canceler, currentThread,
+             note = std::move(*note)]() mutable {
+                if (canceler->isCanceled()) {
+                    return;
+                }
+
+                auto putNoteFuture = m_localStorage->putNote(std::move(note));
+
+                threading::thenOrFailed(
+                    std::move(putNoteFuture), currentThread, promise);
+            }});
 }
 
 } // namespace quentier::synchronization
