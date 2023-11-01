@@ -59,6 +59,7 @@ ILocalStoragePtr createSqliteLocalStorage(
     {
         auto deleter = [](QThread * thread) {
             thread->quit();
+            thread->wait();
             thread->deleteLater();
         };
         auto writerThreadUnique = std::make_unique<QThread>();
