@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/sync_chunks/SyncChunksDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
@@ -312,8 +314,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
         afterUsnInitial, testData.m_syncMode, ctx, m_manualCanceler,
         m_mockCallback);
 
-    ASSERT_TRUE(syncChunksFuture.isFinished())
-        << testData.m_testName.toStdString();
+    waitForFuture(syncChunksFuture);
 
     ASSERT_EQ(syncChunksFuture.resultCount(), 1)
         << testData.m_testName.toStdString();
@@ -443,8 +444,7 @@ TEST_P(
         linkedNotebook, afterUsnInitial, testData.m_syncMode, ctx,
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(syncChunksFuture.isFinished())
-        << testData.m_testName.toStdString();
+    waitForFuture(syncChunksFuture);
 
     ASSERT_EQ(syncChunksFuture.resultCount(), 1)
         << testData.m_testName.toStdString();
@@ -534,7 +534,7 @@ TEST_F(
         afterUsnInitial, SynchronizationMode::Full, ctx, m_manualCanceler,
         m_mockCallback);
 
-    ASSERT_TRUE(syncChunksFuture.isFinished());
+    waitForFuture(syncChunksFuture);
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
 
     const auto syncChunksResult = syncChunksFuture.result();
@@ -625,7 +625,7 @@ TEST_F(
         afterUsnInitial, SynchronizationMode::Full, ctx, m_manualCanceler,
         m_mockCallback);
 
-    ASSERT_TRUE(syncChunksFuture.isFinished());
+    waitForFuture(syncChunksFuture);
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
 
     const auto syncChunksResult = syncChunksFuture.result();
@@ -674,6 +674,7 @@ TEST_F(
     QPromise<qevercloud::SyncChunk> promise;
     promise.start();
 
+    bool pendingLastSyncChunk = false;
     int i = 0;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
         ++i;
@@ -697,6 +698,7 @@ TEST_F(
                 EXPECT_EQ(ctxParam, ctx);
 
                 if (i == 2) {
+                    pendingLastSyncChunk = true;
                     return promise.future();
                 }
 
@@ -723,15 +725,17 @@ TEST_F(
 
     ASSERT_FALSE(syncChunksFuture.isFinished());
 
+    while (!pendingLastSyncChunk) {
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+    }
+
     m_manualCanceler->cancel();
 
     promise.addResult(syncChunks.at(1));
     promise.finish();
 
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
-
-    syncChunksFuture.waitForFinished();
+    waitForFuture(syncChunksFuture);
 
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
     const auto syncChunksResult = syncChunksFuture.result();
@@ -821,7 +825,7 @@ TEST_F(
         linkedNotebook, afterUsnInitial, SynchronizationMode::Full, ctx,
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(syncChunksFuture.isFinished());
+    waitForFuture(syncChunksFuture);
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
 
     const auto syncChunksResult = syncChunksFuture.result();
@@ -925,7 +929,7 @@ TEST_F(
         linkedNotebook, afterUsnInitial, SynchronizationMode::Full, ctx,
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(syncChunksFuture.isFinished());
+    waitForFuture(syncChunksFuture);
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
 
     const auto syncChunksResult = syncChunksFuture.result();
@@ -984,6 +988,7 @@ TEST_F(
     QPromise<qevercloud::SyncChunk> promise;
     promise.start();
 
+    bool pendingLastSyncChunk = false;
     int i = 0;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
         ++i;
@@ -1009,6 +1014,7 @@ TEST_F(
                     EXPECT_EQ(ctxParam, ctx);
 
                     if (i == 2) {
+                        pendingLastSyncChunk = true;
                         return promise.future();
                     }
 
@@ -1036,15 +1042,17 @@ TEST_F(
 
     ASSERT_FALSE(syncChunksFuture.isFinished());
 
+    while (!pendingLastSyncChunk) {
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+    }
+
     m_manualCanceler->cancel();
 
     promise.addResult(syncChunks.at(1));
     promise.finish();
 
-    QCoreApplication::processEvents();
-    QCoreApplication::processEvents();
-
-    syncChunksFuture.waitForFinished();
+    waitForFuture(syncChunksFuture);
 
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
     const auto syncChunksResult = syncChunksFuture.result();
