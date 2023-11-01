@@ -100,6 +100,8 @@ LocalStorage::LocalStorage(
     }
 }
 
+LocalStorage::~LocalStorage() noexcept = default;
+
 QFuture<bool> LocalStorage::isVersionTooHigh() const
 {
     return m_versionHandler->isVersionTooHigh();

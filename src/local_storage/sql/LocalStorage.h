@@ -36,6 +36,8 @@ public:
         ITagsHandlerPtr tagsHandler, IVersionHandlerPtr versionHandler,
         IUsersHandlerPtr usersHandler, ILocalStorageNotifier * notifier);
 
+    ~LocalStorage() noexcept override;
+
     // Versions/upgrade API
     [[nodiscard]] QFuture<bool> isVersionTooHigh() const override;
     [[nodiscard]] QFuture<bool> requiresUpgrade() const override;
