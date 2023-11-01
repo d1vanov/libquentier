@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/NoteStoreProvider.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -187,7 +189,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -196,7 +198,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     // The second call should use cached information
     resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -240,7 +242,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
 
     resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -277,7 +279,7 @@ TEST_F(
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -345,7 +347,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -354,7 +356,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
     // The second call should use cached information
     resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -397,7 +399,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
 
     resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -441,7 +443,7 @@ TEST_F(
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
         notebookLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -509,7 +511,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookGuid(
         notebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -518,7 +520,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
     // The second call should use cached information
     resultFuture = noteStoreProvider->noteStoreForNotebookGuid(
         notebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -561,7 +563,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
 
     resultFuture = noteStoreProvider->noteStoreForNotebookGuid(
         notebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -605,7 +607,7 @@ TEST_F(
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookGuid(
         notebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -672,7 +674,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
 
     auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
         linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -681,7 +683,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
     // The second call should use cached information
     resultFuture = noteStoreProvider->linkedNotebookNoteStore(
         linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -724,7 +726,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
 
     resultFuture = noteStoreProvider->linkedNotebookNoteStore(
         linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -752,7 +754,7 @@ TEST_F(
 
     auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
         linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -793,7 +795,7 @@ TEST_F(
 
     auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
         linkedNotebookGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -846,7 +848,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
 
     auto resultFuture =
         noteStoreProvider->userOwnNoteStore(defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -855,7 +857,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
     // The second call should use cached information
     resultFuture =
         noteStoreProvider->userOwnNoteStore(defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -892,7 +894,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
 
     resultFuture =
         noteStoreProvider->userOwnNoteStore(defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -918,7 +920,7 @@ TEST_F(NoteStoreProviderTest, NoUserOwnNoteStoreIfCannotGetAuthenticationInfo)
 
     auto resultFuture =
         noteStoreProvider->userOwnNoteStore(defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -985,7 +987,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
     auto resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
 
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -994,7 +996,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
     // The second call should use cached information
     resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1031,7 +1033,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
 
     resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1114,7 +1116,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
 
     auto resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -1124,7 +1126,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
     resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
 
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1167,7 +1169,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
 
     resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1194,7 +1196,7 @@ TEST_F(
     auto resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
         noteLocalId, defaultCtx, defaultRetryPolicy);
 
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 
@@ -1261,7 +1263,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
     auto resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
 
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -1270,7 +1272,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
     // The second call should use cached information
     resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1307,7 +1309,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
 
     resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1390,7 +1392,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
 
     auto resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     auto result = resultFuture.result();
@@ -1400,7 +1402,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
     resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
 
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1443,7 +1445,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
 
     resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     ASSERT_EQ(resultFuture.resultCount(), 1);
 
     result = resultFuture.result();
@@ -1469,7 +1471,7 @@ TEST_F(NoteStoreProviderTest, NoNoteStoreForNoteGuidIfCannotFindNotebookForNote)
     auto resultFuture = noteStoreProvider->noteStoreForNoteGuid(
         noteGuid, defaultCtx, defaultRetryPolicy);
 
-    ASSERT_TRUE(resultFuture.isFinished());
+    waitForFuture(resultFuture);
     EXPECT_THROW(resultFuture.result(), RuntimeError);
 }
 

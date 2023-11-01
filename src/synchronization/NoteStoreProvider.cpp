@@ -37,12 +37,13 @@
 #include <qevercloud/types/Notebook.h>
 
 #include <QMutexLocker>
+#include <QThread>
 
 namespace quentier::synchronization {
 
 namespace {
 
-[[nodiscard]] bool checkNoteStoreRequestContex(
+[[nodiscard]] bool checkNoteStoreRequestContext(
     const qevercloud::IRequestContext & noteStoreCtx,
     const qevercloud::IRequestContext & ctx)
 {
@@ -109,13 +110,14 @@ QFuture<qevercloud::INoteStorePtr>
     promise->start();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto linkedNotebookFuture =
         m_linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
             notebookLocalId);
 
     threading::thenOrFailed(
-        std::move(linkedNotebookFuture), promise,
+        std::move(linkedNotebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
@@ -143,12 +145,13 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNotebookGuid(
     promise->start();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto linkedNotebookFuture =
         m_linkedNotebookFinder->findLinkedNotebookByNotebookGuid(notebookGuid);
 
     threading::thenOrFailed(
-        std::move(linkedNotebookFuture), promise,
+        std::move(linkedNotebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
@@ -176,12 +179,13 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNoteLocalId(
     promise->start();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto notebookFuture =
         m_notebookFinder->findNotebookByNoteLocalId(noteLocalId);
 
     threading::thenOrFailed(
-        std::move(notebookFuture), promise,
+        std::move(notebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
@@ -208,12 +212,13 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::noteStoreForNoteGuid(
     promise->start();
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto notebookFuture =
         m_notebookFinder->findNotebookByNoteGuid(noteGuid);
 
     threading::thenOrFailed(
-        std::move(notebookFuture), promise,
+        std::move(notebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, ctx = std::move(ctx), retryPolicy = std::move(retryPolicy),
@@ -251,9 +256,10 @@ QFuture<qevercloud::INoteStorePtr> NoteStoreProvider::linkedNotebookNoteStore(
         m_linkedNotebookFinder->findLinkedNotebookByGuid(linkedNotebookGuid);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(linkedNotebookFuture), promise,
+        std::move(linkedNotebookFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, promise, linkedNotebookGuid = std::move(linkedNotebookGuid),
@@ -305,7 +311,7 @@ qevercloud::INoteStorePtr NoteStoreProvider::cachedUserOwnNoteStore(
 
     Q_ASSERT(noteStoreCtx);
 
-    if (checkNoteStoreRequestContex(*noteStoreCtx, *ctx)) {
+    if (checkNoteStoreRequestContext(*noteStoreCtx, *ctx)) {
         return m_userOwnNoteStoreData.m_noteStore;
     }
 
@@ -337,7 +343,7 @@ qevercloud::INoteStorePtr NoteStoreProvider::cachedLinkedNotebookNoteStore(
     const auto noteStoreCtx = it->m_noteStore->defaultRequestContext();
     Q_ASSERT(noteStoreCtx);
 
-    if (checkNoteStoreRequestContex(*noteStoreCtx, *ctx)) {
+    if (checkNoteStoreRequestContext(*noteStoreCtx, *ctx)) {
         return it->m_noteStore;
     }
 
@@ -374,9 +380,10 @@ void NoteStoreProvider::createNoteStore(
                    m_account, IAuthenticationInfoProvider::Mode::Cache));
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
-        std::move(authInfoFuture), promise,
+        std::move(authInfoFuture), currentThread, promise,
         [selfWeak, this, ctx = std::move(ctx),
          retryPolicy = std::move(retryPolicy),
          linkedNotebookGuid =
