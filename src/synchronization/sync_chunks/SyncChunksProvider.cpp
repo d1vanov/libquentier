@@ -35,6 +35,7 @@
 #endif
 
 #include <QTextStream>
+#include <QThread>
 
 #include <algorithm>
 #include <functional>
@@ -130,9 +131,11 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     Q_ASSERT(syncChunksStorer);
     Q_ASSERT(canceler);
 
+    auto * currentThread = QThread::currentThread();
+
     auto downloadSyncChunks =
         [syncChunksDownloader = std::move(syncChunksDownloader),
-         syncChunksStorer = std::move(syncChunksStorer)](
+         syncChunksStorer = std::move(syncChunksStorer), currentThread](
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ISyncChunksProvider::ICallbackWeakPtr callbackWeak) mutable {
@@ -147,7 +150,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
                 std::move(callbackWeak));
 
             auto thenFuture = threading::then(
-                std::move(syncChunksDownloaderFuture),
+                std::move(syncChunksDownloaderFuture), currentThread,
                 [promise, syncChunksStorer = std::move(syncChunksStorer)](
                     ISyncChunksDownloader::SyncChunksResult result) mutable {
                     QNDEBUG(
@@ -169,7 +172,8 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
                 });
 
             threading::onFailed(
-                std::move(thenFuture), [promise](const QException & e) {
+                std::move(thenFuture), currentThread,
+                [promise](const QException & e) {
                     promise->setException(e);
                     promise->finish();
                 });
@@ -180,12 +184,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     const QList<std::pair<qint32, qint32>> storedSyncChunksUsnRange =
         storedSyncChunksUsnRangeFetcher();
 
-    if (QuentierIsLogLevelActive(LogLevel::Debug)) {
-        QNDEBUG(
-            "synchronization::SyncChunksProvider",
-            "Stored sync chunks usn ranges: "
-                << printSyncChunksUsnRange(storedSyncChunksUsnRange));
-    }
+    QNDEBUG(
+        "synchronization::SyncChunksProvider",
+        "Stored sync chunks usn ranges: "
+            << printSyncChunksUsnRange(storedSyncChunksUsnRange));
 
     const auto nextSyncChunkLowUsnIt = std::upper_bound(
         storedSyncChunksUsnRange.begin(), storedSyncChunksUsnRange.end(),
@@ -273,7 +275,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 
     QNDEBUG(
         "synchronization::SyncChunksProvider",
-        "Downloading sync chunks after highest USN from stores sync chunks: "
+        "Downloading sync chunks after highest USN from stored sync chunks: "
             << *chunksHighUsn);
 
     auto downloaderFuture = downloadSyncChunks(
@@ -283,7 +285,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     promise->start();
 
     auto thenFuture = threading::then(
-        std::move(downloaderFuture),
+        std::move(downloaderFuture), currentThread,
         [promise, storedSyncChunks = std::move(storedSyncChunks)](
             QList<qevercloud::SyncChunk>
                 downloadedSyncChunks) mutable { // NOLINT
@@ -296,7 +298,8 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
             promise->finish();
         });
 
-    threading::onFailed(std::move(thenFuture), [promise](const QException & e) {
+    threading::onFailed(
+        std::move(thenFuture), currentThread, [promise](const QException & e) {
         promise->setException(e);
         promise->finish();
     });
@@ -338,7 +341,8 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
         [this] {
             return m_syncChunksStorage->fetchUserOwnSyncChunksLowAndHighUsns();
         },
-        [this, syncMode, actualAfterUsn = afterUsn](
+        [this, syncMode, actualAfterUsn = afterUsn,
+         currentThread = QThread::currentThread()](
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) {
@@ -351,7 +355,7 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
                 afterUsn, syncMode, std::move(ctx), std::move(canceler),
                 callback);
             auto resultFuture = threading::then(
-                std::move(downloadFuture),
+                std::move(downloadFuture), currentThread,
                 [callback = std::move(callback)](
                     ISyncChunksDownloader::SyncChunksResult result) {
                     return result;
@@ -391,7 +395,7 @@ QFuture<QList<qevercloud::SyncChunk>>
                     linkedNotebookGuid);
         },
         [this, syncMode, linkedNotebook = std::move(linkedNotebook),
-         actualAfterUsn = afterUsn](
+         actualAfterUsn = afterUsn, currentThread = QThread::currentThread()](
             qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) mutable {
@@ -405,7 +409,7 @@ QFuture<QList<qevercloud::SyncChunk>>
                     std::move(linkedNotebook), afterUsn, syncMode,
                     std::move(ctx), std::move(canceler), callback);
             auto resultFuture = threading::then(
-                std::move(downloadFuture),
+                std::move(downloadFuture), currentThread,
                 [callback = std::move(callback)](
                     ISyncChunksDownloader::SyncChunksResult result) {
                     return result;

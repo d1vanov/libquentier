@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/sync_chunks/SyncChunksProvider.h>
 #include <synchronization/tests/mocks/MockISyncChunksDownloader.h>
@@ -173,7 +175,7 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
         0, SynchronizationMode::Full, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), syncChunks);
 }
@@ -281,7 +283,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
         0, SynchronizationMode::Full, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), fullSyncChunks);
 }
@@ -378,7 +380,7 @@ TEST_F(
         0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), syncChunks);
 }
@@ -489,7 +491,7 @@ TEST_F(
         0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), fullSyncChunks);
 }
@@ -592,6 +594,7 @@ TEST_F(
         0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
+    waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
 
@@ -706,6 +709,7 @@ TEST_F(
         0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
+    waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
 
@@ -796,7 +800,7 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
         linkedNotebook, 0, SynchronizationMode::Full,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), syncChunks);
 }
@@ -921,7 +925,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
         linkedNotebook, 0, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), fullSyncChunks);
 }
@@ -1032,7 +1036,7 @@ TEST_F(
         linkedNotebook, 0, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), syncChunks);
 }
@@ -1159,7 +1163,7 @@ TEST_F(
         linkedNotebook, 0, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), fullSyncChunks);
 }
@@ -1277,6 +1281,7 @@ TEST_F(
         linkedNotebook, 0, SynchronizationMode::Full,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
+    waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
 
@@ -1407,6 +1412,7 @@ TEST_F(
         linkedNotebook, 0, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
+    waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
 }
 
