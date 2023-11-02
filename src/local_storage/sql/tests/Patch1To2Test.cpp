@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -53,11 +53,7 @@ TEST(Patch1To2Test, Ctor)
 {
     Account account{gTestAccountName, Account::Type::Local};
 
-    auto connectionPool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral(":memory:"),
-        QStringLiteral("QSQLITE"));
-
+    auto connectionPool = utils::createConnectionPool();
     auto pWriterThread = std::make_shared<QThread>();
 
     EXPECT_NO_THROW(const auto patch = std::make_shared<Patch1To2>(
@@ -67,11 +63,7 @@ TEST(Patch1To2Test, Ctor)
 
 TEST(Patch1To2Test, CtorEmptyAccount)
 {
-    auto connectionPool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral(":memory:"),
-        QStringLiteral("QSQLITE"));
-
+    auto connectionPool = utils::createConnectionPool();
     auto pWriterThread = std::make_shared<QThread>();
 
     EXPECT_THROW(
@@ -96,11 +88,7 @@ TEST(Patch1To2Test, CtorNullWriterThread)
 {
     Account account{gTestAccountName, Account::Type::Local};
 
-    auto connectionPool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral(":memory:"),
-        QStringLiteral("QSQLITE"));
-
+    auto connectionPool = utils::createConnectionPool();
     EXPECT_THROW(
         const auto patch = std::make_shared<Patch1To2>(
             std::move(account), std::move(connectionPool), nullptr),

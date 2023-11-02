@@ -66,4 +66,15 @@ void ensureFile(const QDir & dir, const QString & fileName)
     file.resize(0);
 }
 
+ConnectionPoolPtr createConnectionPool()
+{
+    static int counter = 1;
+    return std::make_shared<ConnectionPool>(
+        QStringLiteral("localhost"), QStringLiteral("user"),
+        QStringLiteral("password"),
+        QString::fromUtf8("file::memdb%1?mode=memory&cache=shared")
+            .arg(counter++),
+        QStringLiteral("QSQLITE"), QStringLiteral("QSQLITE_OPEN_URI"));
+}
+
 } // namespace quentier::local_storage::sql::tests::utils

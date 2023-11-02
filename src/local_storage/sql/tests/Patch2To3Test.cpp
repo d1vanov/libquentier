@@ -114,11 +114,7 @@ class Patch2To3Test : public testing::Test
 protected:
     void SetUp() override
     {
-        m_connectionPool = std::make_shared<ConnectionPool>(
-            QStringLiteral("localhost"), QStringLiteral("user"),
-            QStringLiteral("password"), QStringLiteral("file::memory:"),
-            QStringLiteral("QSQLITE"),
-            QStringLiteral("QSQLITE_OPEN_URI;QSQLITE_ENABLE_SHARED_CACHE"));
+        m_connectionPool = utils::createConnectionPool();
 
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);

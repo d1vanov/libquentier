@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include "../ConnectionPool.h"
 #include "../TablesInitializer.h"
@@ -41,11 +43,7 @@ class VersionHandlerTest : public testing::Test
 protected:
     void SetUp() override
     {
-        m_connectionPool = std::make_shared<ConnectionPool>(
-            QStringLiteral("localhost"), QStringLiteral("user"),
-            QStringLiteral("password"), QStringLiteral("file::memory:"),
-            QStringLiteral("QSQLITE"),
-            QStringLiteral("QSQLITE_OPEN_URI;QSQLITE_ENABLE_SHARED_CACHE"));
+        m_connectionPool = utils::createConnectionPool();
 
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);

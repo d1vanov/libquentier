@@ -29,4 +29,6 @@ void prepareLocalStorage(
 
 void ensureFile(const QDir & dir, const QString & fileName);
 
+[[nodiscard]] ConnectionPoolPtr createConnectionPool();
+
 } // namespace quentier::local_storage::sql::tests::utils
