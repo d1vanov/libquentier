@@ -1474,6 +1474,8 @@ void setupLinkedNotebookNoteStoreMocks(
                             QStringLiteral("Authentication expired"))
                         .build();
                 }
+
+                UNREACHABLE;
             });
 
         EXPECT_CALL(*mockNoteStore, updateNote)
