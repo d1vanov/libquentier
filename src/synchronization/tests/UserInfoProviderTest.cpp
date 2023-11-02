@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/UserInfoProvider.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockIUserStore.h>
@@ -66,7 +68,7 @@ TEST_F(UserInfoProviderTest, GetUserNullRequestContext)
         m_mockUserStore);
 
     auto future = userInfoProvider->userInfo(nullptr);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), InvalidArgument);
 }
 
@@ -89,7 +91,7 @@ TEST_F(UserInfoProviderTest, GetUser)
         });
 
     auto future = userInfoProvider->userInfo(m_ctx);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
 
     ASSERT_EQ(future.resultCount(), 1);
     auto result = future.result();
@@ -98,7 +100,7 @@ TEST_F(UserInfoProviderTest, GetUser)
     // The second call should not trigger the call of IUserStore as the result
     // of the first call should be cached
     future = userInfoProvider->userInfo(m_ctx);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
 
     ASSERT_EQ(future.resultCount(), 1);
     result = future.result();

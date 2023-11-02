@@ -24,14 +24,15 @@
 #include <qevercloud/IRequestContext.h>
 #include <qevercloud/services/IUserStore.h>
 
-#include <QReadLocker>
-#include <QWriteLocker>
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
 #include <quentier/threading/Qt5Promise.h>
 #endif
+
+#include <QReadLocker>
+#include <QWriteLocker>
+#include <QThread>
 
 namespace quentier::synchronization {
 
@@ -67,11 +68,12 @@ QFuture<qevercloud::User> UserInfoProvider::userInfo(
     auto future = promise->future();
     promise->start();
 
-    auto selfWeak = weak_from_this();
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto userFuture = m_userStore->getUserAsync(std::move(ctx));
     threading::thenOrFailed(
-        std::move(userFuture), promise,
+        std::move(userFuture), currentThread, promise,
         [promise, selfWeak, authToken = std::move(authToken)](
             qevercloud::User user)
         {
