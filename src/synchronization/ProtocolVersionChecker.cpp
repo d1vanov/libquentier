@@ -36,6 +36,7 @@
 
 #include <QCoreApplication>
 #include <QMutexLocker>
+#include <QThread>
 
 #include <memory>
 
@@ -104,8 +105,10 @@ QFuture<void> ProtocolVersionChecker::checkProtocolVersion(
         std::move(clientName), qevercloud::EDAM_VERSION_MAJOR,
         qevercloud::EDAM_VERSION_MINOR, std::move(ctx));
 
+    auto * currentThread = QThread::currentThread();
+
     threading::thenOrFailed(
-        std::move(protocolVersionFuture), promise,
+        std::move(protocolVersionFuture), currentThread, promise,
         [promise](bool res)
         {
             QNDEBUG(

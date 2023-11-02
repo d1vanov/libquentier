@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/ProtocolVersionChecker.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockIUserStore.h>
@@ -89,7 +91,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionSuccess)
         });
 
     auto future = checker.checkProtocolVersion(authenticationInfo);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
 
     EXPECT_NO_THROW(future.waitForFinished());
 }
@@ -130,7 +132,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionImplicitFailure)
         });
 
     auto future = checker.checkProtocolVersion(authenticationInfo);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
 
     bool caughtException = false;
     try {
@@ -177,7 +179,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionExplicitFailure)
         });
 
     auto future = checker.checkProtocolVersion(authenticationInfo);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
 
     bool caughtException = false;
     try {
