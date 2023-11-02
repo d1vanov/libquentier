@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/NoteThumbnailDownloaderFactory.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -118,7 +120,7 @@ TEST_F(
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
         notebookLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.result(), RuntimeError);
 }
 
@@ -151,7 +153,7 @@ TEST_F(
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
         notebookLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.result(), RuntimeError);
 }
 
@@ -181,7 +183,7 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, UserOwnNoteThumbnailDownloader)
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
         notebookLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto result = future.result();
@@ -225,7 +227,7 @@ TEST_F(
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
         notebookLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     EXPECT_THROW(future.result(), RuntimeError);
 }
 
@@ -263,7 +265,7 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
         notebookLocalId);
 
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
     auto result = future.result();
