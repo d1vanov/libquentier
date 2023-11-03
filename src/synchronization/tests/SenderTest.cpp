@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/Sender.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -1117,7 +1119,12 @@ void setupUserOwnNoteStoreMock(
                                 const qevercloud::IRequestContextPtr &
                                     ctx) mutable {
                 EXPECT_FALSE(ctx);
-                EXPECT_TRUE(testData.m_newUserOwnNotes.contains(note));
+
+                auto noteWithoutTagGuids = note;
+                noteWithoutTagGuids.setTagGuids(std::nullopt);
+                EXPECT_TRUE(
+                    testData.m_newUserOwnNotes.contains(noteWithoutTagGuids));
+
                 qevercloud::Note createdNote = note;
                 createdNote.setGuid(UidGenerator::Generate());
                 const auto newUsn = getNewUserOwnUsn();
@@ -1185,7 +1192,13 @@ void setupUserOwnNoteStoreMock(
                                 const qevercloud::IRequestContextPtr &
                                     ctx) mutable {
                 EXPECT_FALSE(ctx);
-                EXPECT_TRUE(testData.m_updatedUserOwnNotes.contains(note));
+
+                auto noteWithoutTagGuids = note;
+                noteWithoutTagGuids.setTagGuids(std::nullopt);
+                EXPECT_TRUE(
+                    testData.m_updatedUserOwnNotes.contains(
+                        noteWithoutTagGuids));
+
                 qevercloud::Note updatedNote = note;
                 const auto newUsn = getNewUserOwnUsn();
                 updatedNote.setUpdateSequenceNum(newUsn);
@@ -2307,9 +2320,7 @@ TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2416,9 +2427,7 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2508,9 +2517,7 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2628,9 +2635,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2753,9 +2758,7 @@ TEST_F(
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2879,9 +2882,7 @@ TEST_F(
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -2995,9 +2996,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -3310,9 +3309,7 @@ TEST_P(SenderDataTest, SenderDataTest)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -3506,9 +3503,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -3723,9 +3718,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
@@ -4076,9 +4069,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     const auto callback = std::make_shared<Callback>();
 
     auto resultFuture = sender->send(canceler, callback);
-    while (!resultFuture.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(resultFuture);
 
     ASSERT_EQ(resultFuture.resultCount(), 1);
     const auto result = resultFuture.result();
