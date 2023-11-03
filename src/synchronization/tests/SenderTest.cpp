@@ -590,7 +590,8 @@ void checkDataPutToLocalStorage(
     ASSERT_EQ(dataPutToLocalStorage.notes.size(), sentData.sentNotes.size());
 
     for (const auto & savedSearch:
-         qAsConst(dataPutToLocalStorage.savedSearches)) {
+         qAsConst(dataPutToLocalStorage.savedSearches))
+    {
         const auto it = std::find_if(
             sentData.sentSavedSearches.constBegin(),
             sentData.sentSavedSearches.constEnd(),
@@ -1101,7 +1102,8 @@ void setupUserOwnNoteStoreMock(
         }
 
         if (findAndSetNoteNotebookGuid(
-                note, testData.m_updatedUserOwnNotebooks)) {
+                note, testData.m_updatedUserOwnNotebooks))
+        {
             return;
         }
 
@@ -1195,9 +1197,8 @@ void setupUserOwnNoteStoreMock(
 
                 auto noteWithoutTagGuids = note;
                 noteWithoutTagGuids.setTagGuids(std::nullopt);
-                EXPECT_TRUE(
-                    testData.m_updatedUserOwnNotes.contains(
-                        noteWithoutTagGuids));
+                EXPECT_TRUE(testData.m_updatedUserOwnNotes.contains(
+                    noteWithoutTagGuids));
 
                 qevercloud::Note updatedNote = note;
                 const auto newUsn = getNewUserOwnUsn();
@@ -1352,7 +1353,8 @@ void setupLinkedNotebookNoteStoreMocks(
             const QList<qevercloud::Notebook> updatedNotebooks = [&] {
                 QList<qevercloud::Notebook> notebooks;
                 for (const auto & notebook:
-                     qAsConst(testData.m_updatedLinkedNotebooks)) {
+                     qAsConst(testData.m_updatedLinkedNotebooks))
+                {
                     if (notebook.linkedNotebookGuid() == linkedNotebook.guid())
                     {
                         notebooks << notebook;
@@ -1380,7 +1382,8 @@ void setupLinkedNotebookNoteStoreMocks(
                     getNewLinkedNotebookUsn(*linkedNotebook.guid());
                 createdTag.setUpdateSequenceNum(newUsn);
                 if (!findAndSetParentTagGuid(
-                        createdTag, testData.m_newLinkedNotebooksTags)) {
+                        createdTag, testData.m_newLinkedNotebooksTags))
+                {
                     Q_UNUSED(findAndSetParentTagGuid(
                         createdTag, testData.m_updatedLinkedNotebooksTags))
                 }
@@ -1926,7 +1929,8 @@ void setupLocalStorageMock(
             });
         EXPECT_NE(notebookIt, testData.m_updatedLinkedNotebooks.constEnd());
         if (Q_UNLIKELY(
-                notebookIt == testData.m_updatedLinkedNotebooks.constEnd())) {
+                notebookIt == testData.m_updatedLinkedNotebooks.constEnd()))
+        {
             continue;
         }
 
@@ -2173,9 +2177,6 @@ protected:
     const std::shared_ptr<mocks::MockINoteStoreProvider>
         m_mockNoteStoreProvider =
             std::make_shared<StrictMock<mocks::MockINoteStoreProvider>>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 TEST_F(SenderTest, Ctor)
@@ -2184,7 +2185,7 @@ TEST_F(SenderTest, Ctor)
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool));
+            qevercloud::newRetryPolicy()));
 }
 
 TEST_F(SenderTest, CtorEmptyAccount)
@@ -2193,7 +2194,7 @@ TEST_F(SenderTest, CtorEmptyAccount)
         const auto sender = std::make_shared<Sender>(
             Account{}, m_mockLocalStorage, m_mockSyncStateStorage,
             m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), m_threadPool),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -2202,8 +2203,7 @@ TEST_F(SenderTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, nullptr, m_mockSyncStateStorage, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -2212,8 +2212,7 @@ TEST_F(SenderTest, CtorNullSyncStateStorage)
     EXPECT_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, nullptr, m_mockNoteStoreProvider,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -2222,8 +2221,7 @@ TEST_F(SenderTest, CtorNullNoteStoreProvider)
     EXPECT_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage, nullptr,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy(),
-            m_threadPool),
+            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -2232,8 +2230,7 @@ TEST_F(SenderTest, CtorNullRequestContext)
     EXPECT_NO_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
-            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy(),
-            m_threadPool));
+            m_mockNoteStoreProvider, nullptr, qevercloud::newRetryPolicy()));
 }
 
 TEST_F(SenderTest, CtorNullRetryPolicy)
@@ -2241,17 +2238,7 @@ TEST_F(SenderTest, CtorNullRetryPolicy)
     EXPECT_NO_THROW(
         const auto sender = std::make_shared<Sender>(
             m_account, m_mockLocalStorage, m_mockSyncStateStorage,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr,
-            m_threadPool));
-}
-
-TEST_F(SenderTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto sender = std::make_shared<Sender>(
-            m_account, m_mockLocalStorage, m_mockSyncStateStorage,
-            m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-            qevercloud::newRetryPolicy(), nullptr));
+            m_mockNoteStoreProvider, qevercloud::newRequestContext(), nullptr));
 }
 
 TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
@@ -2259,7 +2246,7 @@ TEST_F(SenderTest, DontAttemptToSendTagIfItsNewParentTagWasNotSentSuccessfully)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     qint32 usn = 42;
     const auto parentTag = generateTag(
@@ -2347,7 +2334,7 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     qint32 usn = 42;
     const auto parentTag = generateTag(
@@ -2452,7 +2439,7 @@ TEST_F(SenderTest, DontAttemptToSendNoteIfFailedToSendItsNewNotebook)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     qint32 usn = 42;
     const auto notebook = generateNotebook(1, WithEvernoteFields::No, usn);
@@ -2545,7 +2532,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     qint32 usn = 42;
     const auto notebook = generateNotebook(1, WithEvernoteFields::Yes, usn);
@@ -2665,7 +2652,7 @@ TEST_F(
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     qint32 usn = 42;
 
@@ -2788,7 +2775,7 @@ TEST_F(
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     qint32 usn = 42;
 
@@ -2935,7 +2922,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto testFlag = GetParam();
 
@@ -3087,7 +3074,8 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+        {
             count += it.value()->totalAttemptedToSendNotes();
         }
         return count;
@@ -3113,7 +3101,8 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     }();
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+    {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
         EXPECT_TRUE(sendStatus);
@@ -3147,7 +3136,8 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks)) {
+                 qAsConst(testData.m_updatedLinkedNotebooks))
+            {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
                 }
@@ -3177,7 +3167,8 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+    {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
         EXPECT_EQ(it.value(), uit.value() - 2);
@@ -3273,7 +3264,7 @@ TEST_P(SenderDataTest, SenderDataTest)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto & testData = GetParam();
     SentData sentData;
@@ -3380,7 +3371,8 @@ TEST_P(SenderDataTest, SenderDataTest)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+        {
             count += it.value()->totalAttemptedToSendNotes();
         }
         return count;
@@ -3391,7 +3383,8 @@ TEST_P(SenderDataTest, SenderDataTest)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+    {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
         EXPECT_TRUE(sendStatus);
@@ -3425,7 +3418,8 @@ TEST_P(SenderDataTest, SenderDataTest)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks)) {
+                 qAsConst(testData.m_updatedLinkedNotebooks))
+            {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
                 }
@@ -3452,7 +3446,8 @@ TEST_P(SenderDataTest, SenderDataTest)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+    {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
         EXPECT_EQ(it.value(), uit.value() - 1);
@@ -3464,7 +3459,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto & testData = GetParam();
     SentData sentData;
@@ -3597,7 +3592,8 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+        {
             count += it.value()->totalAttemptedToSendNotes();
         }
         return count;
@@ -3608,7 +3604,8 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+    {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
         EXPECT_TRUE(sendStatus);
@@ -3642,7 +3639,8 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks)) {
+                 qAsConst(testData.m_updatedLinkedNotebooks))
+            {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
                 }
@@ -3666,7 +3664,8 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+    {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
     }
@@ -3677,7 +3676,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     const auto & testData = GetParam();
     SentData sentData;
@@ -3812,7 +3811,8 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+        {
             count += it.value()->totalAttemptedToSendNotes();
         }
         return count;
@@ -3823,7 +3823,8 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+    {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
         EXPECT_TRUE(sendStatus);
@@ -3857,7 +3858,8 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks)) {
+                 qAsConst(testData.m_updatedLinkedNotebooks))
+            {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
                 }
@@ -3881,7 +3883,8 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+    {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
     }
@@ -3994,7 +3997,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     const auto sender = std::make_shared<Sender>(
         m_account, m_mockLocalStorage, m_mockSyncStateStorage,
         m_mockNoteStoreProvider, qevercloud::newRequestContext(),
-        qevercloud::newRetryPolicy(), m_threadPool);
+        qevercloud::newRetryPolicy());
 
     SentData sentData;
     DataPutToLocalStorage dataPutToLocalStorage;
@@ -4155,7 +4158,8 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
             result.userOwnResult->failedToSendNotebooks();
 
         for (const auto & notebookWithException:
-             qAsConst(failedToSendNotebooks)) {
+             qAsConst(failedToSendNotebooks))
+        {
             ASSERT_TRUE(notebookWithException.second);
             processException(*notebookWithException.second);
         }
@@ -4209,7 +4213,8 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
             result.userOwnResult->failedToSendSavedSearches();
 
         for (const auto & savedSearchWithException:
-             qAsConst(failedToSendSavedSearches)) {
+             qAsConst(failedToSendSavedSearches))
+        {
             ASSERT_TRUE(savedSearchWithException.second);
             processException(*savedSearchWithException.second);
         }
@@ -4252,7 +4257,8 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+        {
             count += it.value()->totalAttemptedToSendNotes();
         }
         return count;
@@ -4263,7 +4269,8 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults))) {
+         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+    {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
         EXPECT_TRUE(sendStatus);
@@ -4324,7 +4331,8 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
         const auto failedToSendNotebooks = sendStatus->failedToSendNotebooks();
         for (const auto & notebookWithException:
-             qAsConst(failedToSendNotebooks)) {
+             qAsConst(failedToSendNotebooks))
+        {
             ASSERT_TRUE(notebookWithException.second);
             processException(*notebookWithException.second);
         }
@@ -4359,7 +4367,8 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+    {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
     }

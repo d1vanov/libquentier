@@ -54,16 +54,13 @@ Sender::Sender(
     Account account, local_storage::ILocalStoragePtr localStorage,
     ISyncStateStoragePtr syncStateStorage,
     INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy,
-    threading::QThreadPoolPtr threadPool) :
+    qevercloud::IRetryPolicyPtr retryPolicy) :
     m_account{std::move(account)},
     m_localStorage{std::move(localStorage)},
     // clang-format off
     m_syncStateStorage{std::move(syncStateStorage)},
     m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
-    m_retryPolicy{std::move(retryPolicy)},
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
+    m_retryPolicy{std::move(retryPolicy)}
 // clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
@@ -85,8 +82,6 @@ Sender::Sender(
         throw InvalidArgument{ErrorString{
             QStringLiteral("Sender ctor: note store provider is null")}};
     }
-
-    Q_ASSERT(m_threadPool);
 }
 
 QFuture<ISender::Result> Sender::send(
@@ -117,8 +112,7 @@ QFuture<ISender::Result> Sender::send(
     sendContext->callbackWeak = std::move(callbackWeak);
     sendContext->userOwnSendStatus = std::make_shared<SendStatus>();
 
-    const auto waitForFuture = [](const QFuture<void> & future)
-    {
+    const auto waitForFuture = [](const QFuture<void> & future) {
         while (!future.isFinished()) {
             QCoreApplication::sendPostedEvents();
             QCoreApplication::processEvents();
@@ -147,8 +141,8 @@ QFuture<ISender::Result> Sender::send(
     result.userOwnResult = sendContext->userOwnSendStatus;
     result.linkedNotebookResults.reserve(
         sendContext->linkedNotebookSendStatuses.size());
-    for (const auto it: qevercloud::toRange(
-            qAsConst(sendContext->linkedNotebookSendStatuses)))
+    for (const auto it:
+         qevercloud::toRange(qAsConst(sendContext->linkedNotebookSendStatuses)))
     {
         result.linkedNotebookResults[it.key()] = it.value();
     }
@@ -156,7 +150,7 @@ QFuture<ISender::Result> Sender::send(
     const auto now = QDateTime::currentMSecsSinceEpoch();
     sendContext->lastSyncState->m_userDataLastSyncTime = now;
     for (const auto it: qevercloud::toRange(
-            sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
+             sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
     {
         it.value() = now;
     }
@@ -1091,7 +1085,8 @@ void Sender::processTag(
     auto putTagFuture = m_localStorage->putTag(tag);
     auto putTagThenFuture = threading::then(
         std::move(putTagFuture), currentThread,
-        [sendContext, tag, promise, linkedNotebookGuid = tag.linkedNotebookGuid()] {
+        [sendContext, tag, promise,
+         linkedNotebookGuid = tag.linkedNotebookGuid()] {
             if (sendContext->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
                 promise->finish();
