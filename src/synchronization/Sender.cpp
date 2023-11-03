@@ -48,15 +48,6 @@
 
 namespace quentier::synchronization {
 
-// NOTE: this class uses QFuture::waitForFinished and synchronous QEverCloud API
-// unlike all other synchronization code for two reasons:
-// 1. It is logical to perform asynchronous actions one after another, not in
-//    parallel
-// 2. Attempts to perform asynchronous actions truly asynchronously, without
-//    blocking waiting fail presumably due to some internal bug of Qt: for some
-//    reason in several cases QFuture becoming finished doesn't trigger the
-//    emittance of corresponding signal from QFutureWatcher.
-
 Sender::Sender(
     Account account, local_storage::ILocalStoragePtr localStorage,
     ISyncStateStoragePtr syncStateStorage,
@@ -169,7 +160,7 @@ QFuture<ISender::Result> Sender::send(
                     QNDEBUG(
                         "synchronization::Sender",
                         "Finished processing notebooks, processing saved "
-                            << "searches");
+                        << "searches");
 
                     auto f = processSavedSearches(sendContext);
                     threading::thenOrFailed(
@@ -213,7 +204,7 @@ QFuture<ISender::Result> Sender::send(
             result.linkedNotebookResults.reserve(
                 sendContext->linkedNotebookSendStatuses.size());
             for (const auto it: qevercloud::toRange(
-                     qAsConst(sendContext->linkedNotebookSendStatuses)))
+                    qAsConst(sendContext->linkedNotebookSendStatuses)))
             {
                 result.linkedNotebookResults[it.key()] = it.value();
             }
@@ -221,7 +212,7 @@ QFuture<ISender::Result> Sender::send(
             const auto now = QDateTime::currentMSecsSinceEpoch();
             sendContext->lastSyncState->m_userDataLastSyncTime = now;
             for (const auto it: qevercloud::toRange(
-                     sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
+                    sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
             {
                 it.value() = now;
             }
@@ -259,6 +250,12 @@ QFuture<void> Sender::processNotes(SendContextPtr sendContext) const
     auto listLocallyModifiedNotesFuture =
         m_localStorage->listNotes(fetchNoteOptions, listNotesOptions);
 
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedNotesFuture's watcher doesn't reach the continuation
+    // code. I could not debug the reason of this behaviour, for some reason
+    // it only seems to be happening in Sender when interacting with local
+    // storage.
     try {
         listLocallyModifiedNotesFuture.waitForFinished();
 
@@ -461,17 +458,18 @@ void Sender::sendNote(
                         }
 
                         sendNoteImpl(
-                            sendContext, std::move(note),
-                            containsFailedToSendTags, noteStore, notePromise);
+                            std::move(sendContext), std::move(note),
+                            containsFailedToSendTags, noteStore,
+                            std::move(notePromise));
                     });
             }});
 }
 
 void Sender::sendNoteImpl(
-    const SendContextPtr & sendContext, qevercloud::Note note,
+    SendContextPtr sendContext, qevercloud::Note note,
     const bool containsFailedToSendTags,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::Note>> & notePromise) const
+    std::shared_ptr<QPromise<qevercloud::Note>> notePromise) const
 {
     Q_ASSERT(noteStore);
 
@@ -479,53 +477,61 @@ void Sender::sendNoteImpl(
     std::optional<qevercloud::Guid> linkedNotebookGuid =
         noteStore->linkedNotebookGuid();
 
-    qevercloud::Note n;
-    try {
-        n =
-            (newNote ? noteStore->createNote(note)
-                     : noteStore->updateNote(note));
-    }
-    catch (const QException & e) {
-        Sender::checkForStopSynchronizationException(
-            sendContext, linkedNotebookGuid, e);
-        notePromise->setException(e);
-        notePromise->finish();
-        return;
-    }
+    auto noteFuture =
+        (newNote ? noteStore->createNoteAsync(note)
+                 : noteStore->updateNoteAsync(note));
 
-    n.setLocalId(note.localId());
-    n.setLocallyFavorited(note.isLocallyFavorited());
-    n.setLocalData(std::move(note.mutableLocalData()));
-    n.setTagLocalIds(std::move(note.mutableTagLocalIds()));
-    n.setLocallyModified(containsFailedToSendTags);
-    if (n.resources()) {
-        Q_ASSERT(note.resources());
-        Q_ASSERT(note.resources()->size() == n.resources()->size());
-        for (int i = 0; i < n.resources()->size(); ++i) {
-            auto & resource = (*n.mutableResources())[i];
-            Q_ASSERT(resource.guid());
-            if (Q_UNLIKELY(!resource.guid())) {
-                continue;
+    auto thenFuture = threading::then(
+        std::move(noteFuture),
+        [notePromise, containsFailedToSendTags,
+         note = std::move(note)](qevercloud::Note n) mutable {
+            n.setLocalId(note.localId());
+            n.setLocallyFavorited(note.isLocallyFavorited());
+            n.setLocalData(std::move(note.mutableLocalData()));
+            n.setTagLocalIds(std::move(note.mutableTagLocalIds()));
+            n.setLocallyModified(containsFailedToSendTags);
+            if (n.resources()) {
+                Q_ASSERT(note.resources());
+                Q_ASSERT(note.resources()->size() == n.resources()->size());
+                for (int i = 0; i < n.resources()->size(); ++i) {
+                    auto & resource = (*n.mutableResources())[i];
+                    Q_ASSERT(resource.guid());
+                    if (Q_UNLIKELY(!resource.guid())) {
+                        continue;
+                    }
+
+                    resource.setNoteLocalId(n.localId());
+
+                    auto & originalResource = (*note.mutableResources())[i];
+
+                    Q_ASSERT(
+                        !originalResource.guid() ||
+                        originalResource.guid() == resource.guid());
+
+                    resource.setLocalId(originalResource.localId());
+
+                    resource.setLocallyFavorited(
+                        originalResource.isLocallyFavorited());
+
+                    resource.setLocalData(
+                        std::move(originalResource.mutableLocalData()));
+                }
             }
+            notePromise->addResult(std::move(n));
+            notePromise->finish();
+        });
 
-            resource.setNoteLocalId(n.localId());
-
-            auto & originalResource = (*note.mutableResources())[i];
-
-            Q_ASSERT(
-                !originalResource.guid() ||
-                originalResource.guid() == resource.guid());
-
-            resource.setLocalId(originalResource.localId());
-
-            resource.setLocallyFavorited(originalResource.isLocallyFavorited());
-
-            resource.setLocalData(
-                std::move(originalResource.mutableLocalData()));
-        }
-    }
-    notePromise->addResult(std::move(n));
-    notePromise->finish();
+    threading::onFailed(
+        std::move(thenFuture),
+        [notePromise = std::move(notePromise),
+         sendContext = std::move(sendContext),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) {
+            Sender::checkForStopSynchronizationException(
+                sendContext, linkedNotebookGuid, e);
+            notePromise->setException(e);
+            notePromise->finish();
+        });
 }
 
 void Sender::processNote(
@@ -791,6 +797,12 @@ QFuture<void> Sender::processTags(SendContextPtr sendContext) const
     auto listLocallyModifiedTagsFuture =
         m_localStorage->listTags(listTagsOptions);
 
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedTagsFuture's watcher doesn't reach the continuation
+    // code. I could not debug the reason of this behaviour, for some reason
+    // it only seems to be happening in Sender when interacting with local
+    // storage.
     try {
         listLocallyModifiedTagsFuture.waitForFinished();
 
@@ -996,73 +1008,76 @@ void Sender::sendTag(
                         }
 
                         sendTagImpl(
-                            sendContext, std::move(tag), noteStore, tagPromise);
+                            std::move(sendContext), std::move(tag), noteStore,
+                            std::move(tagPromise));
                     });
             }});
 }
 
 void Sender::sendTagImpl(
-    const SendContextPtr & sendContext, qevercloud::Tag tag,
+    SendContextPtr sendContext, qevercloud::Tag tag,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::Tag>> & tagPromise) const
+    std::shared_ptr<QPromise<qevercloud::Tag>> tagPromise) const
 {
     const bool newTag = !tag.updateSequenceNum().has_value();
     std::optional<qevercloud::Guid> linkedNotebookGuid =
         tag.linkedNotebookGuid();
 
+    QFuture<void> thenFuture;
     if (newTag) {
-        qevercloud::Tag t;
-        try {
-            t = noteStore->createTag(tag);
-        }
-        catch (const QException & e) {
+        auto createTagFuture = noteStore->createTagAsync(tag);
+        thenFuture = threading::then(
+            std::move(createTagFuture),
+            [tagPromise, sendContext,
+             tag = std::move(tag)](qevercloud::Tag t) mutable {
+                {
+                    // This tag was sent to Evernote
+                    // for the first time so it has
+                    // acquired guid for the first
+                    // time. Will cache this local
+                    // id to guid mapping in order
+                    // to be able to set parent guid
+                    // to its child tags (if there
+                    // are any).
+                    Q_ASSERT(t.guid());
+                    const QMutexLocker locker{
+                        sendContext->sendStatusMutex.get()};
+                    sendContext->newTagLocalIdsToGuids[tag.localId()] =
+                        *t.guid();
+                }
+                t.setLocalId(tag.localId());
+                t.setLocallyFavorited(tag.isLocallyFavorited());
+                t.setLocalData(std::move(tag.mutableLocalData()));
+                t.setParentTagLocalId(tag.parentTagLocalId());
+                t.setLocallyModified(false);
+                tagPromise->addResult(std::move(t));
+                tagPromise->finish();
+            });
+    }
+    else {
+        auto updateTagFuture = noteStore->updateTagAsync(tag);
+        thenFuture = threading::then(
+            std::move(updateTagFuture),
+            [tagPromise,
+             tag = std::move(tag)](const qint32 newUpdateSequenceNum) mutable {
+                tag.setUpdateSequenceNum(newUpdateSequenceNum);
+                tag.setLocallyModified(false);
+                tagPromise->addResult(std::move(tag));
+                tagPromise->finish();
+            });
+    }
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [tagPromise = std::move(tagPromise),
+         sendContext = std::move(sendContext),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) {
             Sender::checkForStopSynchronizationException(
                 sendContext, linkedNotebookGuid, e);
             tagPromise->setException(e);
             tagPromise->finish();
-            return;
-        }
-
-        {
-            // This tag was sent to Evernote
-            // for the first time so it has
-            // acquired guid for the first
-            // time. Will cache this local
-            // id to guid mapping in order
-            // to be able to set parent guid
-            // to its child tags (if there
-            // are any).
-            Q_ASSERT(t.guid());
-            const QMutexLocker locker{sendContext->sendStatusMutex.get()};
-            sendContext->newTagLocalIdsToGuids[tag.localId()] = *t.guid();
-        }
-
-        t.setLocalId(tag.localId());
-        t.setLocallyFavorited(tag.isLocallyFavorited());
-        t.setLocalData(std::move(tag.mutableLocalData()));
-        t.setParentTagLocalId(tag.parentTagLocalId());
-        t.setLocallyModified(false);
-        tagPromise->addResult(std::move(t));
-        tagPromise->finish();
-        return;
-    }
-
-    qint32 updateSequenceNum = 0;
-    try {
-        updateSequenceNum = noteStore->updateTag(tag);
-    }
-    catch (const QException & e) {
-        Sender::checkForStopSynchronizationException(
-            sendContext, linkedNotebookGuid, e);
-        tagPromise->setException(e);
-        tagPromise->finish();
-        return;
-    }
-
-    tag.setUpdateSequenceNum(updateSequenceNum);
-    tag.setLocallyModified(false);
-    tagPromise->addResult(std::move(tag));
-    tagPromise->finish();
+        });
 }
 
 void Sender::processTag(
@@ -1158,6 +1173,12 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
     auto listLocallyModifiedNotebooksFuture =
         m_localStorage->listNotebooks(listNotebooksOptions);
 
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedNotebooksFuture's watcher doesn't reach the
+    // continuation code. I could not debug the reason of this behaviour, for
+    // some reason it only seems to be happening in Sender when interacting with
+    // local storage.
     try {
         listLocallyModifiedNotebooksFuture.waitForFinished();
 
@@ -1327,60 +1348,60 @@ void Sender::sendNotebook(
                         }
 
                         sendNotebookImpl(
-                            sendContext, std::move(notebook), noteStore,
-                            notebookPromise);
+                            std::move(sendContext), std::move(notebook),
+                            noteStore, std::move(notebookPromise));
                     });
             }});
 }
 
 void Sender::sendNotebookImpl(
-    const SendContextPtr & sendContext, qevercloud::Notebook notebook,
+    SendContextPtr sendContext, qevercloud::Notebook notebook,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::Notebook>> & notebookPromise)
-    const
+    std::shared_ptr<QPromise<qevercloud::Notebook>> notebookPromise) const
 {
     const bool newNotebook = !notebook.updateSequenceNum().has_value();
     std::optional<qevercloud::Guid> linkedNotebookGuid =
         notebook.linkedNotebookGuid();
 
+    QFuture<void> thenFuture;
     if (newNotebook) {
-        qevercloud::Notebook n;
-        try {
-            n = noteStore->createNotebook(notebook);
-        }
-        catch (const QException & e) {
+        auto createNotebookFuture = noteStore->createNotebookAsync(notebook);
+        thenFuture = threading::then(
+            std::move(createNotebookFuture),
+            [notebookPromise,
+             notebook = std::move(notebook)](qevercloud::Notebook n) mutable {
+                n.setLocalId(notebook.localId());
+                n.setLocallyFavorited(notebook.isLocallyFavorited());
+                n.setLocalData(std::move(notebook.mutableLocalData()));
+                n.setLocallyModified(false);
+                notebookPromise->addResult(std::move(n));
+                notebookPromise->finish();
+            });
+    }
+    else {
+        auto updateNotebookFuture = noteStore->updateNotebookAsync(notebook);
+        thenFuture = threading::then(
+            std::move(updateNotebookFuture),
+            [notebookPromise, notebook = std::move(notebook)](
+                const qint32 newUpdateSequenceNum) mutable {
+                notebook.setUpdateSequenceNum(newUpdateSequenceNum);
+                notebook.setLocallyModified(false);
+                notebookPromise->addResult(std::move(notebook));
+                notebookPromise->finish();
+            });
+    }
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [notebookPromise = std::move(notebookPromise),
+         sendContext = std::move(sendContext),
+         linkedNotebookGuid =
+             std::move(linkedNotebookGuid)](const QException & e) {
             Sender::checkForStopSynchronizationException(
                 sendContext, linkedNotebookGuid, e);
             notebookPromise->setException(e);
             notebookPromise->finish();
-            return;
-        }
-
-        n.setLocalId(notebook.localId());
-        n.setLocallyFavorited(notebook.isLocallyFavorited());
-        n.setLocalData(std::move(notebook.mutableLocalData()));
-        n.setLocallyModified(false);
-        notebookPromise->addResult(std::move(n));
-        notebookPromise->finish();
-        return;
-    }
-
-    qint32 updateSequenceNum = 0;
-    try {
-        updateSequenceNum = noteStore->updateNotebook(notebook);
-    }
-    catch (const QException & e) {
-        Sender::checkForStopSynchronizationException(
-            sendContext, linkedNotebookGuid, e);
-        notebookPromise->setException(e);
-        notebookPromise->finish();
-        return;
-    }
-
-    notebook.setUpdateSequenceNum(updateSequenceNum);
-    notebook.setLocallyModified(false);
-    notebookPromise->addResult(std::move(notebook));
-    notebookPromise->finish();
+        });
 }
 
 void Sender::processNotebook(
@@ -1488,6 +1509,12 @@ QFuture<void> Sender::processSavedSearches(SendContextPtr sendContext) const
     auto listLocallyModifiedSavedSearchesFuture =
         m_localStorage->listSavedSearches(listSavedSearchesOptions);
 
+    // NOTE: using synchronous waiting here because for some unidentified reason
+    // asynchronous code doesn't work: the finished signal from
+    // listLocallyModifiedSavedSearchesFuture's watcher doesn't reach the
+    // continuation code. I could not debug the reason of this behaviour, for
+    // some reason it only seems to be happening in Sender when interacting with
+    // local storage.
     try {
         listLocallyModifiedSavedSearchesFuture.waitForFinished();
 
@@ -1654,58 +1681,60 @@ void Sender::sendSavedSearch(
                         }
 
                         sendSavedSearchImpl(
-                            sendContext, std::move(savedSearch), noteStore,
-                            savedSearchPromise);
+                            std::move(sendContext), std::move(savedSearch),
+                            noteStore, std::move(savedSearchPromise));
                     });
             }});
 }
 
 void Sender::sendSavedSearchImpl(
-    const SendContextPtr & sendContext, qevercloud::SavedSearch savedSearch,
+    SendContextPtr sendContext, qevercloud::SavedSearch savedSearch,
     const qevercloud::INoteStorePtr & noteStore,
-    const std::shared_ptr<QPromise<qevercloud::SavedSearch>> &
-        savedSearchPromise) const
+    std::shared_ptr<QPromise<qevercloud::SavedSearch>> savedSearchPromise) const
 {
     const bool newSavedSearch = !savedSearch.updateSequenceNum().has_value();
+    QFuture<void> thenFuture;
 
     if (newSavedSearch) {
-        qevercloud::SavedSearch s;
-        try {
-            s = noteStore->createSearch(savedSearch);
-        }
-        catch (const QException & e) {
+        auto createSavedSearchFuture =
+            noteStore->createSearchAsync(savedSearch);
+
+        thenFuture = threading::then(
+            std::move(createSavedSearchFuture),
+            [savedSearchPromise, savedSearch = std::move(savedSearch)](
+                qevercloud::SavedSearch s) mutable {
+                s.setLocalId(savedSearch.localId());
+                s.setLocallyFavorited(savedSearch.isLocallyFavorited());
+                s.setLocalData(std::move(savedSearch.mutableLocalData()));
+                s.setLocallyModified(false);
+                savedSearchPromise->addResult(std::move(s));
+                savedSearchPromise->finish();
+            });
+    }
+    else {
+        auto updateSavedSearchFuture =
+            noteStore->updateSearchAsync(savedSearch);
+
+        thenFuture = threading::then(
+            std::move(updateSavedSearchFuture),
+            [savedSearchPromise, savedSearch = std::move(savedSearch)](
+                const qint32 newUpdateSequenceNum) mutable {
+                savedSearch.setUpdateSequenceNum(newUpdateSequenceNum);
+                savedSearch.setLocallyModified(false);
+                savedSearchPromise->addResult(std::move(savedSearch));
+                savedSearchPromise->finish();
+            });
+    }
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [savedSearchPromise = std::move(savedSearchPromise),
+         sendContext = std::move(sendContext)](const QException & e) {
             Sender::checkForStopSynchronizationException(
                 sendContext, std::nullopt, e);
             savedSearchPromise->setException(e);
             savedSearchPromise->finish();
-            return;
-        }
-
-        s.setLocalId(savedSearch.localId());
-        s.setLocallyFavorited(savedSearch.isLocallyFavorited());
-        s.setLocalData(std::move(savedSearch.mutableLocalData()));
-        s.setLocallyModified(false);
-        savedSearchPromise->addResult(std::move(s));
-        savedSearchPromise->finish();
-        return;
-    }
-
-    qint32 updateSequenceNum = 0;
-    try {
-        updateSequenceNum = noteStore->updateSearch(savedSearch);
-    }
-    catch (const QException & e) {
-        Sender::checkForStopSynchronizationException(
-            sendContext, std::nullopt, e);
-        savedSearchPromise->setException(e);
-        savedSearchPromise->finish();
-        return;
-    }
-
-    savedSearch.setUpdateSequenceNum(updateSequenceNum);
-    savedSearch.setLocallyModified(false);
-    savedSearchPromise->addResult(std::move(savedSearch));
-    savedSearchPromise->finish();
+        });
 }
 
 void Sender::processSavedSearch(
