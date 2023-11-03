@@ -1772,8 +1772,6 @@ void NoteStoreServer::onCreateNoteRequest(
         return;
     }
 
-    note.setGuid(UidGenerator::Generate());
-
     std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
         ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
         : std::make_optional(currentUserOwnMaxUsn());
@@ -1795,7 +1793,24 @@ void NoteStoreServer::onCreateNoteRequest(
     note.setUpdateSequenceNum(maxUsn);
     setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
+    note.setGuid(UidGenerator::Generate());
+    if (note.resources() && !note.resources()->isEmpty()) {
+        for (auto & resource: *note.mutableResources()) {
+            resource.setGuid(UidGenerator::Generate());
+            resource.setNoteGuid(note.guid());
+            ++(*maxUsn);
+            resource.setUpdateSequenceNum(maxUsn);
+            setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+        }
+    }
+
     m_notes.insert(note);
+    if (note.resources() && !note.resources()->isEmpty()) {
+        for (const auto & resource: qAsConst(*note.resources())) {
+            m_resources.insert(resource);
+        }
+    }
+
     Q_EMIT createNoteRequestReady(std::move(note), nullptr, ctx->requestId());
 }
 
