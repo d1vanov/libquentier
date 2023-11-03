@@ -166,6 +166,40 @@ void copyLocalFields(const T & source, T & dest)
 }
 
 template <class T>
+bool compareItems(const T & lhs, const T & rhs)
+{
+    if constexpr (std::is_same_v<std::decay_t<T>, qevercloud::Note>) {
+        const auto createSortedNote = [](const qevercloud::Note & note) {
+            auto noteCopy = note;
+            if (noteCopy.tagGuids() && !noteCopy.tagGuids()->isEmpty()) {
+                QList<qevercloud::Guid> tagGuids = *noteCopy.tagGuids();
+                std::sort(tagGuids.begin(), tagGuids.end());
+                noteCopy.setTagGuids(std::move(tagGuids));
+            }
+
+            if (noteCopy.resources() && !noteCopy.resources()->isEmpty()) {
+                QList<qevercloud::Resource> resources = *note.resources();
+                std::sort(
+                    resources.begin(), resources.end(),
+                    [](const qevercloud::Resource & lhs,
+                       const qevercloud::Resource & rhs) {
+                        return lhs.guid() < rhs.guid();
+                    });
+                noteCopy.setResources(std::move(resources));
+            }
+
+            return noteCopy;
+        };
+
+        const auto lhsCopy = createSortedNote(lhs);
+        const auto rhsCopy = createSortedNote(rhs);
+        return lhsCopy == rhsCopy;
+    }
+
+    return lhs == rhs;
+}
+
+template <class T>
 [[nodiscard]] bool compareLists(
     const QList<T> & lhs, const QList<T> & rhs, QList<T> & onlyLhs,
     QList<T> & onlyRhs, QList<std::pair<T, T>> & diffs)
@@ -188,7 +222,7 @@ template <class T>
         auto rhsItemCopy = *it;
         copyLocalFields(lhsItem, rhsItemCopy);
 
-        if (lhsItem != rhsItemCopy) {
+        if (!compareItems(lhsItem, rhsItemCopy)) {
             diffs << std::make_pair(lhsItem, rhsItemCopy);
         }
     }
@@ -523,9 +557,7 @@ void TestRunner::runTestScenario()
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
-    QNINFO(
-        "tests::synchronization::TestRunner",
-        "Setting up local sync state");
+    QNINFO("tests::synchronization::TestRunner", "Setting up local sync state");
 
     // Will exclude local new items from computing the sync state as local new
     // items don't actually have update sequence numbers from local storage's
@@ -533,8 +565,7 @@ void TestRunner::runTestScenario()
     auto localSyncState = setupSyncState(
         testData, testScenarioData.localDataItemTypes,
         testScenarioData.localItemGroups & (~(ItemGroups{} | ItemGroup::New)),
-        testScenarioData.localItemSources,
-        now);
+        testScenarioData.localItemSources, now);
     QVERIFY(localSyncState);
 
     QNINFO(
@@ -545,8 +576,7 @@ void TestRunner::runTestScenario()
         m_testAccount, std::move(localSyncState));
 
     QNINFO(
-        "tests::synchronization::TestRunner",
-        "Setting up server sync state");
+        "tests::synchronization::TestRunner", "Setting up server sync state");
 
     auto serverSyncState = setupSyncState(
         testData, testScenarioData.serverDataItemTypes,
@@ -576,7 +606,8 @@ void TestRunner::runTestScenario()
         serverSyncState->linkedNotebookLastSyncTimes();
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+    {
         const auto lastSyncTime = linkedNotebookLastSyncTimes.value(it.key());
         m_noteStoreServer->putLinkedNotebookSyncState(
             it.key(),
@@ -725,7 +756,8 @@ void TestRunner::runTestScenario()
             syncState->linkedNotebookUpdateCounts();
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+             qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+        {
             const auto serverMaxUsn =
                 m_noteStoreServer->currentLinkedNotebookMaxUsn(it.key());
 
@@ -748,7 +780,8 @@ void TestRunner::runTestScenario()
             linkedNotebookUpdateCounts.size());
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(linkedNotebookLastSyncTimes))) {
+             qevercloud::toRange(qAsConst(linkedNotebookLastSyncTimes)))
+        {
             QVERIFY2(
                 it.value() > 0,
                 "Detected zero last sync time in sync state for some linked "
