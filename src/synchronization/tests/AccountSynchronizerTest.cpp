@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/AccountSynchronizer.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -624,9 +626,6 @@ protected:
 
     const std::shared_ptr<mocks::MockISyncStateStorage> m_mockSyncStateStorage =
         std::make_shared<StrictMock<mocks::MockISyncStateStorage>>();
-
-    const threading::QThreadPoolPtr m_threadPool =
-        threading::globalThreadPool();
 };
 
 TEST_F(AccountSynchronizerTest, Ctor)
@@ -634,8 +633,7 @@ TEST_F(AccountSynchronizerTest, Ctor)
     EXPECT_NO_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
-            m_threadPool));
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage));
 }
 
 TEST_F(AccountSynchronizerTest, CtorEmptyAccount)
@@ -643,8 +641,7 @@ TEST_F(AccountSynchronizerTest, CtorEmptyAccount)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             Account{}, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
-            m_threadPool),
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage),
         InvalidArgument);
 }
 
@@ -653,7 +650,7 @@ TEST_F(AccountSynchronizerTest, CtorNullDownloader)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, nullptr, m_mockSender, m_mockAuthenticationInfoProvider,
-            m_mockSyncStateStorage, m_threadPool),
+            m_mockSyncStateStorage),
         InvalidArgument);
 }
 
@@ -662,8 +659,7 @@ TEST_F(AccountSynchronizerTest, CtorNullSender)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, nullptr,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
-            m_threadPool),
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage),
         InvalidArgument);
 }
 
@@ -672,7 +668,7 @@ TEST_F(AccountSynchronizerTest, CtorNullAuthenticationInfoProvider)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender, nullptr,
-            m_mockSyncStateStorage, m_threadPool),
+            m_mockSyncStateStorage),
         InvalidArgument);
 }
 
@@ -681,23 +677,15 @@ TEST_F(AccountSynchronizerTest, CtorNullSyncStateStorage)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, nullptr, m_threadPool),
+            m_mockAuthenticationInfoProvider, nullptr),
         InvalidArgument);
-}
-
-TEST_F(AccountSynchronizerTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
-            m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, nullptr));
 }
 
 TEST_F(AccountSynchronizerTest, NothingToDownloadOrSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
@@ -713,9 +701,7 @@ TEST_F(AccountSynchronizerTest, NothingToDownloadOrSend)
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -738,7 +724,7 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -763,9 +749,7 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -787,7 +771,7 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
@@ -810,9 +794,7 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -838,7 +820,7 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -867,9 +849,7 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -892,7 +872,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -944,9 +924,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -973,7 +951,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1038,9 +1016,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1089,7 +1065,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1126,9 +1102,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1153,7 +1127,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1204,9 +1178,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1235,7 +1207,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1286,9 +1258,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1317,7 +1287,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1378,9 +1348,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1414,7 +1382,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1478,9 +1446,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1513,7 +1479,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1563,9 +1529,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1596,7 +1560,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1660,9 +1624,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1698,7 +1660,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const qint32 rateLimitDuration = 1000;
 
@@ -1720,9 +1682,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1754,7 +1714,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const qint32 rateLimitDuration = 1000;
@@ -1776,9 +1736,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1806,7 +1764,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const qint32 rateLimitDuration = 1000;
@@ -1828,9 +1786,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1858,7 +1814,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1887,9 +1843,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1917,7 +1871,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1947,9 +1901,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -1977,7 +1929,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const qint32 rateLimitDuration = 1000;
@@ -2000,9 +1952,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -2034,7 +1984,7 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -2065,9 +2015,7 @@ TEST_F(
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -2097,7 +2045,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -2273,9 +2221,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
     downloaderPromise->addResult(downloadResult);
     downloaderPromise->finish();
 
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();
@@ -2297,7 +2243,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, m_threadPool);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -2307,8 +2253,6 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
-
-    InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
@@ -2346,9 +2290,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
         std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto syncResult = accountSynchronizer->synchronize(mockCallback, canceler);
-    while (!syncResult.isFinished()) {
-        QCoreApplication::processEvents();
-    }
+    waitForFuture(syncResult);
 
     ASSERT_EQ(syncResult.resultCount(), 1);
     auto result = syncResult.result();

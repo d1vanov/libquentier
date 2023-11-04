@@ -43,8 +43,7 @@ public:
     AccountSynchronizer(
         Account account, IDownloaderPtr downloader, ISenderPtr sender,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        ISyncStateStoragePtr syncStateStorage,
-        threading::QThreadPoolPtr threadPool = {});
+        ISyncStateStoragePtr syncStateStorage);
 
 public: // IAccountSynchronizer
     [[nodiscard]] QFuture<ISyncResultPtr> synchronize(
@@ -111,7 +110,6 @@ private:
     const ISenderPtr m_sender;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
-    const threading::QThreadPoolPtr m_threadPool;
 };
 
 } // namespace quentier::synchronization

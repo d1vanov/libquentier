@@ -45,6 +45,7 @@
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <QThread>
 
 #include <algorithm>
 #include <exception>
@@ -362,17 +363,14 @@ private:
 AccountSynchronizer::AccountSynchronizer(
     Account account, IDownloaderPtr downloader, ISenderPtr sender,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
-    ISyncStateStoragePtr syncStateStorage,
-    threading::QThreadPoolPtr threadPool) :
+    ISyncStateStoragePtr syncStateStorage) :
     m_account{std::move(account)},
     m_downloader{std::move(downloader)},
     // clang-format off
     m_sender{std::move(sender)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
-    m_syncStateStorage{std::move(syncStateStorage)},
+    m_syncStateStorage{std::move(syncStateStorage)}
     // clang-format on
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{
@@ -398,8 +396,6 @@ AccountSynchronizer::AccountSynchronizer(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountSynchronizer ctor: sync state storage is null")}};
     }
-
-    Q_ASSERT(m_threadPool);
 }
 
 QFuture<ISyncResultPtr> AccountSynchronizer::synchronize(
@@ -432,12 +428,13 @@ void AccountSynchronizer::synchronizeImpl(
     Q_ASSERT(context);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto downloadFuture =
         m_downloader->download(context->canceler, context->callbackWrapper);
 
     auto downloadThenFuture = threading::then(
-        std::move(downloadFuture), m_threadPool.get(),
+        std::move(downloadFuture), currentThread,
         threading::TrackedTask{
             selfWeak,
             [this, sendAfterDownload, context = context](
@@ -447,7 +444,7 @@ void AccountSynchronizer::synchronizeImpl(
             }});
 
     threading::onFailed(
-        std::move(downloadThenFuture),
+        std::move(downloadThenFuture), currentThread,
         [this, selfWeak,
          context = std::move(context)](const QException & e) mutable {
             // This exception should only be possible to come from sync
@@ -933,12 +930,13 @@ void AccountSynchronizer::send(ContextPtr context)
     Q_ASSERT(context);
 
     const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     auto sendFuture =
         m_sender->send(context->canceler, context->callbackWrapper);
 
     auto sendThenFuture = threading::then(
-        std::move(sendFuture), m_threadPool.get(),
+        std::move(sendFuture), currentThread,
         threading::TrackedTask{
             selfWeak,
             [this,
@@ -947,7 +945,7 @@ void AccountSynchronizer::send(ContextPtr context)
             }});
 
     threading::onFailed(
-        std::move(sendThenFuture),
+        std::move(sendThenFuture), currentThread,
         [context = std::move(context)](const QException & e) mutable {
             // If sending fails, it fails for some really good reason so there's
             // not much that can be done, will just forward this error to the
@@ -995,8 +993,7 @@ void AccountSynchronizer::onSendFinished(
                 QNINFO(
                     "synchronization::AccountSynchronizer",
                     "Detected the need to repeat incremental sync after "
-                    "sending "
-                        << "linked notebook data for account "
+                        << "sending linked notebook data for account "
                         << m_account.name() << " (" << m_account.id() << ")"
                         << ", linked notebook guid = " << it.key());
                 return true;
