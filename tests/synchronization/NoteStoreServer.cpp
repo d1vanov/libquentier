@@ -1943,6 +1943,14 @@ void NoteStoreServer::onUpdateNoteRequest(
     note.setUpdateSequenceNum(maxUsn);
     setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
+    if (note.resources() && !note.resources()->isEmpty()) {
+        for (auto & resource: *note.mutableResources()) {
+            ++(*maxUsn);
+            resource.setUpdateSequenceNum(maxUsn);
+            setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+        }
+    }
+
     m_notes.insert(note);
     Q_EMIT updateNoteRequestReady(std::move(note), nullptr, ctx->requestId());
 }
