@@ -112,52 +112,103 @@ QFuture<ISender::Result> Sender::send(
     sendContext->callbackWeak = std::move(callbackWeak);
     sendContext->userOwnSendStatus = std::make_shared<SendStatus>();
 
-    const auto waitForFuture = [](const QFuture<void> & future) {
-        while (!future.isFinished()) {
-            QCoreApplication::sendPostedEvents();
-            QCoreApplication::processEvents();
-        }
-    };
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
 
     QFuture<void> tagsFuture = processTags(sendContext);
-    waitForFuture(tagsFuture);
 
-    if (!sendContext->manualCanceler->isCanceled()) {
-        QFuture<void> notebooksFuture = processNotebooks(sendContext);
-        waitForFuture(notebooksFuture);
-    }
+    QFuture<void> notebooksFuture = [&] {
+        if (sendContext->manualCanceler->isCanceled()) {
+            return threading::makeReadyFuture();
+        }
 
-    if (!sendContext->manualCanceler->isCanceled()) {
-        QFuture<void> savedSearchesFuture = processSavedSearches(sendContext);
-        waitForFuture(savedSearchesFuture);
-    }
+        auto notebooksPromise = std::make_shared<QPromise<void>>();
+        auto notebooksFuture = notebooksPromise->future();
+        notebooksPromise->start();
 
-    if (!sendContext->manualCanceler->isCanceled()) {
-        QFuture<void> notesFuture = processNotes(sendContext);
-        waitForFuture(notesFuture);
-    }
+        threading::thenOrFailed(
+            std::move(tagsFuture), currentThread, notebooksPromise,
+            threading::TrackedTask{
+                selfWeak,
+                [this, sendContext, notebooksPromise, currentThread]() mutable {
+                    auto f = processNotebooks(sendContext);
+                    threading::thenOrFailed(
+                        std::move(f), currentThread,
+                        std::move(notebooksPromise));
+                }});
 
-    ISender::Result result;
-    result.userOwnResult = sendContext->userOwnSendStatus;
-    result.linkedNotebookResults.reserve(
-        sendContext->linkedNotebookSendStatuses.size());
-    for (const auto it:
-         qevercloud::toRange(qAsConst(sendContext->linkedNotebookSendStatuses)))
-    {
-        result.linkedNotebookResults[it.key()] = it.value();
-    }
+        return notebooksFuture;
+    }();
 
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-    sendContext->lastSyncState->m_userDataLastSyncTime = now;
-    for (const auto it: qevercloud::toRange(
-             sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
-    {
-        it.value() = now;
-    }
-    result.syncState = sendContext->lastSyncState;
+    QFuture<void> savedSearchesFuture = [&] {
+        if (sendContext->manualCanceler->isCanceled()) {
+            return threading::makeReadyFuture();
+        }
 
-    promise->addResult(std::move(result));
-    promise->finish();
+        auto savedSearchesPromise = std::make_shared<QPromise<void>>();
+        auto savedSearchesFuture = savedSearchesPromise->future();
+        savedSearchesPromise->start();
+
+        threading::thenOrFailed(
+            std::move(notebooksFuture), currentThread, savedSearchesPromise,
+            threading::TrackedTask{
+                selfWeak,
+                [this, sendContext, savedSearchesPromise,
+                 currentThread]() mutable {
+                    auto f = processSavedSearches(sendContext);
+                    threading::thenOrFailed(
+                        std::move(f), currentThread,
+                        std::move(savedSearchesPromise));
+                }});
+
+        return savedSearchesFuture;
+    }();
+
+    QFuture<void> notesFuture = [&] {
+        if (sendContext->manualCanceler->isCanceled()) {
+            return threading::makeReadyFuture();
+        }
+
+        auto notesPromise = std::make_shared<QPromise<void>>();
+        auto notesFuture = notesPromise->future();
+        notesPromise->start();
+
+        threading::thenOrFailed(
+            std::move(savedSearchesFuture), currentThread, notesPromise,
+            threading::TrackedTask{
+                selfWeak,
+                [this, sendContext, notesPromise, currentThread]() mutable {
+                    auto f = processNotes(sendContext);
+                    threading::thenOrFailed(
+                        std::move(f), currentThread, std::move(notesPromise));
+                }});
+        return notesFuture;
+    }();
+
+    threading::thenOrFailed(
+        std::move(notesFuture), currentThread, promise, [promise, sendContext] {
+            const QMutexLocker locker{sendContext->sendStatusMutex.get()};
+            ISender::Result result;
+            result.userOwnResult = sendContext->userOwnSendStatus;
+            result.linkedNotebookResults.reserve(
+                sendContext->linkedNotebookSendStatuses.size());
+            for (const auto it: qevercloud::toRange(
+                     qAsConst(sendContext->linkedNotebookSendStatuses)))
+            {
+                result.linkedNotebookResults[it.key()] = it.value();
+            }
+            const auto now = QDateTime::currentMSecsSinceEpoch();
+            sendContext->lastSyncState->m_userDataLastSyncTime = now;
+            for (const auto it: qevercloud::toRange(
+                     sendContext->lastSyncState->m_linkedNotebookLastSyncTimes))
+            {
+                it.value() = now;
+            }
+            result.syncState = sendContext->lastSyncState;
+            promise->addResult(std::move(result));
+            promise->finish();
+        });
+
     return future;
 }
 
@@ -273,8 +324,7 @@ void Sender::sendNotes(
             const QStringList & tagLocalIds = note.tagLocalIds();
             for (const QString & tagLocalId: qAsConst(tagLocalIds)) {
                 if (sendContext->failedToSendNewTagLocalIds.contains(
-                        tagLocalId))
-                {
+                        tagLocalId)) {
                     containsFailedToSendTags = true;
                     break;
                 }
@@ -820,8 +870,7 @@ void Sender::sendTags(
         if (!tagParentLocalId.isEmpty()) {
             const QMutexLocker locker{sendContext->sendStatusMutex.get()};
             if (sendContext->failedToSendNewTagLocalIds.contains(
-                    tagParentLocalId))
-            {
+                    tagParentLocalId)) {
                 sendContext->failedToSendNewTagLocalIds.insert(tag.localId());
                 auto status = sendStatus(sendContext, tag.linkedNotebookGuid());
 
@@ -841,8 +890,7 @@ void Sender::sendTags(
                 sendContext->newTagLocalIdsToGuids.constFind(
                     tag.parentTagLocalId());
             if (parentTagGuidIt !=
-                sendContext->newTagLocalIdsToGuids.constEnd())
-            {
+                sendContext->newTagLocalIdsToGuids.constEnd()) {
                 tag.setParentGuid(parentTagGuidIt.value());
             }
         }
@@ -935,8 +983,7 @@ void Sender::sendTag(
                 if (!tagParentLocalId.isEmpty()) {
                     QMutexLocker locker{sendContext->sendStatusMutex.get()};
                     if (sendContext->failedToSendNewTagLocalIds.contains(
-                            tagParentLocalId))
-                    {
+                            tagParentLocalId)) {
                         locker.unlock();
 
                         tagPromise->setException(RuntimeError{ErrorString{
@@ -950,8 +997,7 @@ void Sender::sendTag(
                         sendContext->newTagLocalIdsToGuids.constFind(
                             tag.parentTagLocalId());
                     if (parentTagGuidIt !=
-                        sendContext->newTagLocalIdsToGuids.constEnd())
-                    {
+                        sendContext->newTagLocalIdsToGuids.constEnd()) {
                         tag.setParentGuid(parentTagGuidIt.value());
                     }
                 }
@@ -1931,8 +1977,7 @@ void Sender::checkUpdateSequenceNumber(
             lastUpdateCount(*sendContext, linkedNotebookGuid);
 
         if (previousUpdateCount &&
-            (updateSequenceNumber != *previousUpdateCount + 1))
-        {
+            (updateSequenceNumber != *previousUpdateCount + 1)) {
             status->m_needToRepeatIncrementalSync = true;
         }
     }
