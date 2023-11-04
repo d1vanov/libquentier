@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "Utils.h"
+
 #include <synchronization/Synchronizer.h>
 
 #include <synchronization/tests/mocks/MockIAccountSynchronizer.h>
@@ -140,7 +142,7 @@ TEST_F(SynchronizerTest, AuthenticateNewAccount)
             authenticationInfo)));
 
     auto future = synchronizer->authenticateNewAccount();
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_EQ(future.result(), authenticationInfo);
 }
@@ -161,7 +163,7 @@ TEST_F(SynchronizerTest, AuthenticateAccount)
             authenticationInfo)));
 
     auto future = synchronizer->authenticateAccount(m_account);
-    ASSERT_TRUE(future.isFinished());
+    waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_EQ(future.result(), authenticationInfo);
 }
@@ -238,8 +240,6 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
     auto result = synchronizer->synchronizeAccount(
         m_account, m_mockLocalStorage, m_canceler, syncOptions,
         m_mockSyncConflictResolver);
-
-    ASSERT_TRUE(callback);
 
     const auto * notifier = result.second;
 
@@ -348,6 +348,11 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
             onLinkedNotebookSendStatusUpdateCalled = true;
         });
 
+    while (!callback) {
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+    }
+
     callback->onSyncChunksDownloadProgress(42, 42, 42);
     callback->onSyncChunksDownloaded();
     callback->onSyncChunksDataProcessingProgress(nullptr);
@@ -374,7 +379,13 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
     callback->onUserOwnSendStatusUpdate(nullptr);
     callback->onLinkedNotebookSendStatusUpdate(qevercloud::Guid{}, nullptr);
 
-    QCoreApplication::processEvents();
+    auto syncResult = std::make_shared<SyncResult>();
+    promise->addResult(syncResult);
+    promise->finish();
+
+    waitForFuture(result.first);
+    ASSERT_EQ(result.first.resultCount(), 1);
+    EXPECT_EQ(result.first.result(), syncResult);
 
     EXPECT_TRUE(onSyncChunksDownloadProgressCalled);
     EXPECT_TRUE(onSyncChunksDownloadedCalled);
@@ -389,16 +400,6 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
     EXPECT_TRUE(onLinkedNotebookResourcesDownloadProgressCalled);
     EXPECT_TRUE(onUserOwnSendStatusUpdateCalled);
     EXPECT_TRUE(onLinkedNotebookSendStatusUpdateCalled);
-
-    auto syncResult = std::make_shared<SyncResult>();
-    promise->addResult(syncResult);
-    promise->finish();
-
-    QCoreApplication::processEvents();
-
-    ASSERT_TRUE(result.first.isFinished());
-    ASSERT_EQ(result.first.resultCount(), 1);
-    EXPECT_EQ(result.first.result(), syncResult);
 }
 
 } // namespace quentier::synchronization::tests

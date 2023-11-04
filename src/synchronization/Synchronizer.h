@@ -22,6 +22,12 @@
 
 #include <synchronization/Fwd.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
 #include <memory>
 
 namespace quentier::synchronization {
@@ -52,6 +58,12 @@ public: // ISynchronizer
     void revokeAuthentication(qevercloud::UserID userId) override;
 
 private:
+    void doSynchronizeAccount(
+        Account account, local_storage::ILocalStoragePtr localStorage,
+        utility::cancelers::ICancelerPtr canceler, ISyncOptionsPtr options,
+        ISyncConflictResolverPtr syncConflictResolver,
+        SyncEventsNotifierPtr syncEventsNotifier,
+        const std::shared_ptr<QPromise<ISyncResultPtr>> & promise);
 
 private:
     const IAccountSynchronizerFactoryPtr m_accountSynchronizerFactory;

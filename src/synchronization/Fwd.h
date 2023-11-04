@@ -143,6 +143,7 @@ struct SendStatus;
 using SendStatusPtr = std::shared_ptr<SendStatus>;
 
 class SyncEventsNotifier;
+using SyncEventsNotifierPtr = std::shared_ptr<SyncEventsNotifier>;
 
 } // namespace quentier::synchronization
 
