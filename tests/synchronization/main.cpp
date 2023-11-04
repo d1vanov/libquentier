@@ -22,10 +22,8 @@
 #include <quentier/utility/Initialize.h>
 #include <quentier/utility/QuentierApplication.h>
 
-#include <QCoreApplication>
 #include <QDebug>
 #include <QtTest>
-#include <QTimer>
 
 int main(int argc, char * argv[])
 {
@@ -41,15 +39,6 @@ int main(int argc, char * argv[])
 
     quentier::initializeLibquentier();
 
-    // clang-format off
-    QTimer::singleShot(0, [&]() // clazy:exclude=connect-3arg-lambda
-    {
-        auto testResult = QTest::qExec(
-            new quentier::synchronization::tests::TestRunner,
-            argc, argv); // NOLINT
-        QCoreApplication::exit(testResult);
-    });
-    // clang-format on
-
-    return app.exec(); // NOLINT
+    return QTest::qExec(
+        new quentier::synchronization::tests::TestRunner, argc, argv);
 }
