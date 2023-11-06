@@ -87,58 +87,79 @@ Patch2To3::Patch2To3(
 QString Patch2To3::patchShortDescription() const
 {
     return tr(
-        "Proper support for transactional updates of resource data files");
+        "Proper support for transactional updates of resource data files and "
+        "fixes for possibly missing related item guid fields for tags, notes "
+        "and resources (attachments)");
 }
 
 QString Patch2To3::patchLongDescription() const
 {
     QString result;
+    QTextStream strm{&result};
 
-    result +=
-        tr("This patch slightly changes the placement of attachment data "
-           "files within the local storage directory: it adds one more "
-           "intermediate dir which has the meaning of unique version id "
-           "of the attachment file.");
+    strm << tr("This patch performs two distinct changes");
+    strm << ":\n";
 
-    result += QStringLiteral("\n");
+    // First part of patch description
 
-    result +=
-        tr("Prior to this patch resource data files were stored "
-           "according to the following scheme:");
+    strm << "1. ";
 
-    result += QStringLiteral("\n\n");
+    strm << tr(
+        "This patch updates several fields in notes, tags and resources tables "
+        "which might be missing. These fields refer to Evernote assigned ids "
+        "for related items i.e. notebook guid field stored in notes table, "
+        "tag parent guid field, note guid field stored in resources table. "
+        "In previous version of the app these fields might not have been "
+        "updated properly so this patch would ensure their consistency");
+    strm << "\n\n";
 
-    result += QStringLiteral(
-        "Resources/data/<note local id>/<resource local id>.dat");
+    // Second part of patch description
 
-    result += QStringLiteral("\n\n");
+    strm << "2. ";
+    strm << tr(
+        "This patch slightly changes the placement of attachment data files "
+        "within the local storage directory: it adds one more intermediate dir "
+        "which has the meaning of unique version id of the attachment file.");
 
-    result +=
-        tr("After this patch there would be one additional element "
-           "in the path:");
+    strm << "\n";
 
-    result += QStringLiteral("\n\n");
+    strm << tr(
+        "Prior to this patch resource data files were stored according to the "
+        "following scheme:");
 
-    result += QStringLiteral(
-        "Resources/data/<note local id>/<version id>/<resource local id>.dat");
+    strm << "\n";
+    strm << "Resources/data/<note local id>/<resource local id>.dat";
+    strm << "\n";
 
-    result += QStringLiteral("\n\n");
+    strm << tr(
+        "After this patch there would be one additional element in the path");
+    strm << ":\n";
 
-    result +=
-        tr("The change is required in order to implement full support "
-           "for transactional updates and removals of resource data "
-           "files. Without this change interruptions of local storage "
-           "operations (such as application crashes, computer switching "
-           "off due to power failure etc.) could leave it in "
-           "inconsistent state.");
+    strm << "Resources/data/<note local id>/<version id>/"
+        << "<resource local id>.dat\n";
 
-    result += QStringLiteral("\n\n");
+    strm << tr(
+        "This change is required in order to implement full support for "
+        "transactional updates and removals of resource data files. Without "
+        "this change interruptions of local storage operations (such as "
+        "application crashes, computer switching off due to power failure etc."
+        ") could leave it in inconsistent state.");
+    strm << "\n\n";
 
-    result +=
-        tr("The patch should not take long to apply as it just "
-           "creates a couple more helper tables in the database and "
-           "creates subdirs for existing resource data files");
+    // Final note
 
+    strm << tr(
+        "The first part of the patch might take a while as it would need to "
+        "scan through notes, resources and tags tables, detect missing fields "
+        "and fill them. The time it would take depends on the amount of stored "
+        "data in the account");
+    strm << "\n";
+    strm << tr(
+        "The second part of the patch should not take long to apply as it just "
+        "creates a couple more helper tables in the database and creates "
+        "subdirs for existing resource data files");
+
+    strm.flush();
     return result;
 }
 
@@ -183,12 +204,41 @@ bool Patch2To3::applySync(
 
     ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade2To3Persistence};
 
-    ErrorString errorPrefix{QStringLiteral(
-        "failed to upgrade local storage from version 2 to version 3")};
+    if (!fixMissingGuidFields(
+            databaseUpgradeInfo, promise, errorDescription))
+    {
+        return false;
+    }
 
+    if (!updateResourcesStorage(
+        databaseUpgradeInfo, promise, errorDescription))
+    {
+        return false;
+    }
+
+    return updateAuxiliaryTableVersion(errorDescription);
+}
+
+bool Patch2To3::fixMissingGuidFields(
+    ApplicationSettings & databaseUpgradeInfo,
+    QPromise<void> & promise, // for progress updates
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(databaseUpgradeInfo)
+    Q_UNUSED(promise)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool Patch2To3::updateResourcesStorage(
+    ApplicationSettings & databaseUpgradeInfo,
+    QPromise<void> & promise, // for progress updates
+    ErrorString & errorDescription)
+{
     errorDescription.clear();
 
-    int lastProgress = 0;
+    int lastProgress = 50;
     const bool resourceBodyVersionIdTablesCreated =
         databaseUpgradeInfo
             .value(gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey)
@@ -242,7 +292,7 @@ bool Patch2To3::applySync(
             "in the local storage database");
     }
 
-    lastProgress = 5;
+    lastProgress = 55;
     promise.setProgressValue(lastProgress);
 
     const bool committedResourceBodyVersionIdsToDatabase =
@@ -276,7 +326,7 @@ bool Patch2To3::applySync(
         resourceVersionIds = std::move(*versionIds);
     }
 
-    lastProgress = 15;
+    lastProgress = 65;
     promise.setProgressValue(lastProgress);
 
     const bool movedResourceBodyFilesToVersionFolders =
@@ -438,7 +488,11 @@ bool Patch2To3::applySync(
     lastProgress = 95;
     promise.setProgressValue(lastProgress);
 
-    // Update version in the Auxiliary table
+    return true;
+}
+
+bool Patch2To3::updateAuxiliaryTableVersion(ErrorString & errorDescription)
+{
     auto database = m_connectionPool->database();
     QSqlQuery query{database};
     const bool res = query.exec(

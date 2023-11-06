@@ -24,6 +24,12 @@
 
 #include <QPointer>
 
+namespace quentier {
+
+class ApplicationSettings;
+
+} // namespace quentier
+
 namespace quentier::local_storage::sql {
 
 class Q_DECL_HIDDEN Patch2To3 final : public PatchBase
@@ -49,7 +55,7 @@ public:
     [[nodiscard]] QString patchShortDescription() const override;
     [[nodiscard]] QString patchLongDescription() const override;
 
-private:
+private: // PatchBase
     [[nodiscard]] bool backupLocalStorageSync(
         QPromise<void> & promise, // for progress updates and cancel tracking
         ErrorString & errorDescription) override;
@@ -64,6 +70,20 @@ private:
     [[nodiscard]] bool applySync(
         QPromise<void> & promise, // for progress updates
         ErrorString & errorDescription) override;
+
+private:
+    [[nodiscard]] bool fixMissingGuidFields(
+        ApplicationSettings & databaseUpgradeInfo,
+        QPromise<void> & promise, // for progress updates
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool updateResourcesStorage(
+        ApplicationSettings & databaseUpgradeInfo,
+        QPromise<void> & promise, // for progress updates
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool updateAuxiliaryTableVersion(
+        ErrorString & errorDescription);
 
     struct ResourceVersionIds
     {
