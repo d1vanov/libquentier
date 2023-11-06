@@ -49,6 +49,9 @@ void TablesInitializer::initializeTables(QSqlDatabase & databaseConnection)
 void TablesInitializer::initializeAuxiliaryTable(
     QSqlDatabase & databaseConnection)
 {
+    // First checking the existence of Auxiliary table as the very first version
+    // of libquentier shipped without it
+
     QSqlQuery query{databaseConnection};
     bool res = query.exec(QStringLiteral(
         "SELECT name FROM sqlite_master WHERE name='Auxiliary'"));
@@ -120,6 +123,16 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
             "Cannot create Users table in the local storage database"));
 
     res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS UsersDeletionTimestampIndex ON "
+        "Users(userDeletionTimestamp)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create UsersDeletionTimestampIndex in the local storage "
+            "database"));
+
+    res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS UserAttributes("
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
         "  defaultLocationName        TEXT                  DEFAULT NULL, "
@@ -161,6 +174,16 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
             "Cannot create UserAttributes table in the local storage "
             "database"));
 
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS UserAttributesByIdIndex "
+                       "ON UserAttributes(id)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create UserAttributesByIdIndex index in the local storage "
+            "database"));
+
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS UserAttributesViewedPromotions("
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
@@ -173,6 +196,15 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
             "storage database"));
 
     res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS UserAttributesViewedPromotionsByIdIndex "
+        "ON UserAttributesViewedPromotions(id)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral("Cannot create UserAttributesViewedPromotionsByIdIndex "
+                       "in the local storage database"));
+
+    res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS UserAttributesRecentMailedAddresses("
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
         "  address                 TEXT                    DEFAULT NULL)"));
@@ -182,6 +214,17 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create UserAttributesRecentMailedAddresses table in "
             "the local storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS "
+                       "UserAttributesRecentMailedAddressesByIdIndex ON "
+                       "UserAttributesRecentMailedAddresses(id)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create UserAttributesRecentMailedAddressesByIdIndex "
+            "in the local storage database"));
 
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS Accounting("
@@ -213,6 +256,14 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
             "Cannot create Accounting table in the local storage database"));
 
     res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS AccountingByIdIndex ON Accounting(id)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create AccountingByIdIndex in the local storage database"));
+
+    res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS AccountLimits("
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
         "  userMailLimitDaily          INTEGER             DEFAULT NULL, "
@@ -232,6 +283,16 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create AccountLimits table in the local storage database"));
 
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS AccountLimitsByIdIndex "
+                       "ON AccountLimits(id)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create AccountLimitsByIdIndex in the local storage "
+            "database"));
+
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS BusinessUserInfo("
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
@@ -244,6 +305,16 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         res, query, "local_storage::sql::tables_initializer",
         QStringLiteral(
             "Cannot create BusinessUserInfo table in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS BusinessUserInfoByIdIndex "
+                       "ON BusinessUserInfo(id)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create BusinessUserInfoByIdIndex in the local storage "
             "database"));
 
     res = query.exec(QStringLiteral(
@@ -334,6 +405,8 @@ void TablesInitializer::initializeNotebookTables(
         QStringLiteral(
             "Cannot create Notebooks table in the local storage database"));
 
+    // FTS virtual table
+
     res = query.exec(
         QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS NotebookFTS "
                        "USING FTS4(content=\"Notebooks\", "
@@ -372,6 +445,44 @@ void TablesInitializer::initializeNotebookTables(
             "Cannot create NotebookFTS after insert trigger in the local "
             "storage database"));
 
+    // Index by linked notebook guid
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NotebookByLinkedNotebookGuidIndex ON "
+        "Notebooks(linkedNotebookGuid)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NotebookByLinkedNotebookGuidIndex in the local "
+            "storage database"));
+
+    // Index by is dirty
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS NotebookByIsDirtyIndex "
+                       "ON Notebooks(isDirty)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NotebookByIsDirtyIndex in the local storage "
+            "database"));
+
+    // Index by is favorited
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS NotebookByIsFavoritedIndex "
+                       "ON Notebooks(isFavorited)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NotebookByIsFavoritedIndex in the local storage "
+            "database"));
+
+    // Supplementary notebook tables
+
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS NotebookRestrictions("
         "  localUid REFERENCES Notebooks(localUid) ON UPDATE CASCADE, "
@@ -404,6 +515,16 @@ void TablesInitializer::initializeNotebookTables(
         QStringLiteral(
             "Cannot create NotebookRestrictions table in the local storage "
             "database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NotebookRestrictionsByLocalUidIndex ON "
+        "NotebookRestrictions(localUid)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NotebookRestrictionsByLocalUidIndex in the local "
+            "storage database"));
 
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS SharedNotebooks("
@@ -502,6 +623,8 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create Notes table in the local storage database"));
 
+    // Triggers
+
     res = query.exec(QStringLiteral(
         "CREATE TRIGGER IF NOT EXISTS Notes_AfterInsertNotebookTrigger "
         "AFTER INSERT ON Notebooks "
@@ -512,9 +635,10 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
-        QStringLiteral(
-            "Cannot create Notes after insert notebook trigger"
-            "in the local storage database"));
+        QStringLiteral("Cannot create Notes_AfterInsertNotebookTrigger "
+                       "in the local storage database"));
+
+    // Supplementary tables
 
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS SharedNotes("
@@ -563,11 +687,9 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
             "Cannot create NoteRestrictions table in the local storage "
             "database"));
 
-    // clang-format off
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS "
-                                  "NoteRestrictionsByNoteLocalUid ON "
-                                  "NoteRestrictions(noteLocalUid)"));
-    // clang-format on
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NoteRestrictionsByNoteLocalUid "
+        "ON NoteRestrictions(noteLocalUid)"));
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
@@ -589,16 +711,53 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create NoteLimits table in the local storage database"));
 
-    // clang-format off
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NotesNotebooks "
-                                    "ON Notes(notebookLocalUid)"));
-    // clang-format on
+    // Index by notebook local uid
+
+    res =
+        query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NotesNotebooks "
+                                  "ON Notes(notebookLocalUid)"));
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QStringLiteral(
             "Cannot create NotesNotebooks index in the local storage "
             "database"));
+
+    // Index by notebook guid
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS NotesNotebookGuidIndex "
+                       "ON Notes(notebookGuid)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NotesNotebookGuidIndex in the local storage "
+            "database"));
+
+    // Index by is dirty
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NotesIsDirtyIndex ON Notes(isDirty)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral("Cannot create NotesIsDirtyIndex in the local storage "
+                       "database"));
+
+    // Index by is favorited
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS NotesIsFavoritedIndex "
+                       "ON Notes(isFavorited)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NotesIsFavoritedIndex in the local storage "
+            "database"));
+
+    // FTS virtual table
 
     res = query.exec(
         QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS NoteFTS "
@@ -700,6 +859,20 @@ void TablesInitializer::initializeResourceTables(
         QStringLiteral(
             "Cannot create Resources table in the local storage database"));
 
+    // Index by note guid
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS ResourceNoteGuidIndex "
+                       "ON Resources(noteGuid)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create ResourceNoteGuidIndex in the local storage "
+            "database"));
+
+    // Index on mime
+
     res = query.exec(QStringLiteral(
         "CREATE INDEX IF NOT EXISTS ResourceMimeIndex ON Resources(mime)"));
 
@@ -708,6 +881,24 @@ void TablesInitializer::initializeResourceTables(
         QStringLiteral(
             "Cannot create ResourcesMimeIndex index in the local storage "
             "database"));
+
+    // Update note guid trigger
+
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS Notes_AfterInsertResourcesTrigger "
+        "AFTER INSERT ON Notes "
+        "BEGIN "
+        "UPDATE Resources SET noteGuid = new.guid "
+        "WHERE noteLocalUid = new.localUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Notes_AfterInsertResourcesTrigger in the local "
+            "storage database"));
+
+    // Supplementary tables
 
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS ResourceDataBodyVersionIds("
@@ -925,6 +1116,45 @@ void TablesInitializer::initializeResourceTables(
         QStringLiteral(
             "Cannot create NoteResourcesNote index in the local storage "
             "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS NoteResourcesResource ON "
+                       "NoteResources(localResource)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NoteResourcesResource index in the local storage "
+            "database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS Notes_AfterInsertNoteResourcesTrigger "
+        "AFTER INSERT ON Notes "
+        "BEGIN "
+        "UPDATE NoteResources SET note = new.guid "
+        "WHERE localNote = new.localUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Notes_AfterInsertNoteResourcesTrigger in the local "
+            "storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "Resources_AfterInsertNoteResourcesTrigger "
+                       "AFTER INSERT ON Resources "
+                       "BEGIN "
+                       "UPDATE NoteResources SET resource = new.resourceGuid "
+                       "WHERE localResource = new.resourceLocalUid; "
+                       "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Resources_AfterInsertNoteResourcesTrigger "
+            "in the local storage database"));
 }
 
 void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
@@ -956,6 +1186,8 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create Tags table in the local storage database"));
 
+    // Index by nameLower
+
     res = query.exec(QStringLiteral(
         "CREATE INDEX IF NOT EXISTS TagNameUpperIndex ON Tags(nameLower)"));
 
@@ -964,6 +1196,68 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create TagNameUpperIndex index in the local storage "
             "database"));
+
+    // Index by linked notebook guid
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS TagLinkedNotebookGuidIndex ON "
+        "Tags(linkedNotebookGuid)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create TagLinkedNotebookGuidIndex index in the local "
+            "storage database"));
+
+    // Index by parent tag local uid
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS TagParentLocalUidIndex ON "
+                       "Tags(parentLocalUid)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create TagParentLocalUidIndex index in the local "
+            "storage database"));
+
+    // Index by is dirty
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS TagIsDirtyIndex ON Tags(isDirty)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create TagIsDirtyIndex in the local storage database"));
+
+    // Index by is favorited
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS TagIsFavoritedIndex ON Tags(isFavorited)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create TagIsFavoritedIndex in the local storage database"));
+
+    // Trigger to update parent tag guid on tag insertions
+
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS Tags_AfterInsertParentGuidTrigger "
+        "AFTER INSERT ON Tags "
+        "BEGIN "
+        "UPDATE Tags SET parentGuid = new.guid "
+        "WHERE parentLocalUid = new.localUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Tags_AfterInsertParentGuidTrigger in the local "
+            "storage database"));
+
+    // FTS virtual table
 
     res = query.exec(QStringLiteral(
         "CREATE VIRTUAL TABLE IF NOT EXISTS TagFTS "
@@ -1002,15 +1296,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
             "Cannot create TagFTS after insert trigger in the local storage "
             "database"));
 
-    // clang-format off
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS TagsSearchName "
-                                    "ON Tags(nameLower)"));
-    // clang-format on
-
-    ENSURE_DB_REQUEST_THROW(
-        res, query, "local_storage::sql::tables_initializer",
-        QStringLiteral(
-            "Cannot create TagSearchName index in the local storage database"));
+    // NoteTags table
 
     res = query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS NoteTags("
@@ -1027,6 +1313,8 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         QStringLiteral(
             "Cannot create NoteTags table in the local storage database"));
 
+    // Index by localNote
+
     // clang-format off
     res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NoteTagsNote "
                                     "ON NoteTags(localNote)"));
@@ -1036,6 +1324,46 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         res, query, "local_storage::sql::tables_initializer",
         QStringLiteral(
             "Cannot create NoteTagsNote index in the local storage database"));
+
+    // Index by localTag
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NoteTagsTag ON NoteTags(localTag)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create NoteTagsTag index in the local storage database"));
+
+    // NoteTags triggers updating note and tag guids
+
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS Notes_AfterInsertNoteTagsTrigger "
+        "AFTER INSERT ON Notes "
+        "BEGIN "
+        "UPDATE NoteTags SET note = new.guid "
+        "WHERE localNote = new.localUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Notes_AfterInsertNoteTagsTrigger in the local "
+            "storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS Tags_AfterInsertNoteTagsTrigger "
+        "AFTER INSERT ON Tags "
+        "BEGIN "
+        "UPDATE NoteTags SET tag = new.guid "
+        "WHERE localTag = new.localUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create Tags_AfterInsertNoteTagsTrigger in the local "
+            "storage database"));
 }
 
 void TablesInitializer::initializeSavedSearchTables(
@@ -1067,6 +1395,30 @@ void TablesInitializer::initializeSavedSearchTables(
         res, query, "local_storage::sql::tables_initializer",
         QStringLiteral(
             "Cannot create SavedSearches table in the local storage database"));
+
+    // Index by is dirty
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS SavedSearchesIsDirtyIndex "
+                       "ON SavedSearches(isDirty)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create SavedSearchesIsDirtyIndex in the local storage "
+            "database"));
+
+    // Index by is favorited
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS SavedSearchesIsFavoritedIndex "
+        "ON SavedSearches(isFavorited)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QStringLiteral(
+            "Cannot create SavedSearchesIsFavoritedIndex in the local storage "
+            "database"));
 }
 
 void TablesInitializer::initializeExtraTriggers(
