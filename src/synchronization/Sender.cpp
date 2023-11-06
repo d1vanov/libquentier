@@ -337,7 +337,8 @@ void Sender::sendNotes(
                 if (const auto it =
                         sendContext->newTagLocalIdsToGuids.constFind(
                             tagLocalId);
-                    it != sendContext->newTagLocalIdsToGuids.constEnd())
+                    it != sendContext->newTagLocalIdsToGuids.constEnd() &&
+                    !tagGuids.contains(it.value()))
                 {
                     tagGuids << it.value();
                     foundSomeNewTagGuid = true;
