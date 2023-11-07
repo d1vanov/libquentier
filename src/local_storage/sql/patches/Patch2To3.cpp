@@ -49,24 +49,6 @@
 
 namespace quentier::local_storage::sql {
 
-namespace {
-
-const QString gUpgrade2To3Persistence =
-    QStringLiteral("LocalStorageDatabaseUpgradeFromVersion2ToVersion3");
-
-const QString gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey =
-    QStringLiteral("ResourceBodyVersionIdTablesCreated");
-
-const QString gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey =
-    QStringLiteral("ResourceBodyVersionIdsCommittedToDatabase");
-
-const QString gUpgrade2To3MovedResourceBodyFilesKey =
-    QStringLiteral("ResourceBodyFilesMovedToVersionIdFolders");
-
-const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
-
-} // namespace
-
 Patch2To3::Patch2To3(
     Account account, ConnectionPoolPtr connectionPool,
     threading::QThreadPtr writerThread) :
@@ -136,7 +118,7 @@ QString Patch2To3::patchLongDescription() const
     strm << ":\n";
 
     strm << "Resources/data/<note local id>/<version id>/"
-        << "<resource local id>.dat\n";
+         << "<resource local id>.dat\n";
 
     strm << tr(
         "This change is required in order to implement full support for "
@@ -202,16 +184,15 @@ bool Patch2To3::applySync(
 {
     QNDEBUG("local_storage::sql::patches::2_to_3", "Patch2To3::applySync");
 
-    ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade2To3Persistence};
+    ApplicationSettings databaseUpgradeInfo{
+        m_account,
+        QStringLiteral("LocalStorageDatabaseUpgradeFromVersion2ToVersion3")};
 
-    if (!fixMissingGuidFields(
-            databaseUpgradeInfo, promise, errorDescription))
-    {
+    if (!fixMissingGuidFields(databaseUpgradeInfo, promise, errorDescription)) {
         return false;
     }
 
-    if (!updateResourcesStorage(
-        databaseUpgradeInfo, promise, errorDescription))
+    if (!updateResourcesStorage(databaseUpgradeInfo, promise, errorDescription))
     {
         return false;
     }
@@ -224,10 +205,291 @@ bool Patch2To3::fixMissingGuidFields(
     QPromise<void> & promise, // for progress updates
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(databaseUpgradeInfo)
-    Q_UNUSED(promise)
-    Q_UNUSED(errorDescription)
+    int lastProgress = 0;
+
+    // 1. Fill notebookGuid in Notes table where it is incorrectly null
+    const QString notesTableNotebookGuidsFixedUpKey =
+        QStringLiteral("NotesTableNotebookGuidsFixedUp");
+
+    const bool notesTableNotebookGuidsFixedUp =
+        databaseUpgradeInfo.value(notesTableNotebookGuidsFixedUpKey).toBool();
+
+    if (!notesTableNotebookGuidsFixedUp) {
+        auto database = m_connectionPool->database();
+        Transaction transaction{database, Transaction::Type::Exclusive};
+
+        QHash<QString, qevercloud::Guid> notebookGuidsByNotebookLocalIds;
+        {
+            QSqlQuery query{database};
+            bool res = query.exec(
+                QStringLiteral("SELECT localUid, guid FROM Notebooks WHERE "
+                               "updateSequenceNumber IS NOT NULL AND "
+                               "localUid IN "
+                               "(SELECT DISTINCT notebookLocalUid FROM Notes "
+                               "WHERE notebookGuid IS NULL)"));
+
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot select notebook local ids and guids "
+                               "from Notes table"),
+                false);
+
+            notebookGuidsByNotebookLocalIds.reserve(query.size());
+            while (query.next()) {
+                const QString notebookLocalId = query.value(0).toString();
+                if (Q_UNLIKELY(notebookLocalId.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Encountered empty notebook local id on attempt "
+                        "to list notebook local ids and guids where guids "
+                        "are missing in Notes table");
+                    continue;
+                }
+
+                qevercloud::Guid notebookGuid = query.value(1).toString();
+                if (Q_UNLIKELY(notebookGuid.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Encountered empty notebook guid on attempt to list "
+                        "notebook local ids and guids where guids are missing "
+                        "in Notes table");
+                    continue;
+                }
+
+                notebookGuidsByNotebookLocalIds[notebookLocalId] =
+                    std::move(notebookGuid);
+            }
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(notebookGuidsByNotebookLocalIds)))
+        {
+            const auto & notebookLocalId = it.key();
+            const auto & notebookGuid = it.value();
+
+            QSqlQuery query{database};
+            bool res = query.prepare(
+                QStringLiteral("UPDATE Notes SET notebookGuid = :notebookGuid "
+                               "WHERE notebookLocalUid = :notebookLocalUid"));
+
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot prepare query to update notebookGuid "
+                               "in Notes table"),
+                false);
+
+            query.bindValue(QStringLiteral(":notebookGuid"), notebookGuid);
+            query.bindValue(
+                QStringLiteral(":notebookLocalUid"), notebookLocalId);
+
+            res = query.exec();
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot update notebookGuid in Notes table"),
+                false);
+        }
+
+        bool res = transaction.commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, QSqlQuery{}, "local_storage::sql::tables_initializer",
+            QStringLiteral(
+                "Cannot update notebookGuid in Notes table: failed to "
+                "commit transaction"),
+            false);
+
+        databaseUpgradeInfo.setValue(notesTableNotebookGuidsFixedUpKey, true);
+        databaseUpgradeInfo.sync();
+    }
+
+    lastProgress = 15;
+    promise.setProgressValue(lastProgress);
+
+    // 2. Fill parentGuid in Tags table where it is incorrectly null
+    const QString tagsTableParentGuidsFixedUpKey =
+        QStringLiteral("TagsTableParentGuidsFixedUp");
+
+    const bool tagsTableParentGuidsFixedUp =
+        databaseUpgradeInfo.value(tagsTableParentGuidsFixedUpKey).toBool();
+
+    if (!tagsTableParentGuidsFixedUp) {
+        auto database = m_connectionPool->database();
+        Transaction transaction{database, Transaction::Type::Exclusive};
+
+        QHash<QString, qevercloud::Guid> tagGuidsByLocalId;
+        {
+            QSqlQuery query{database};
+            bool res = query.exec(QStringLiteral(
+                "SELECT localUid, guid FROM Tags WHERE localUid IN "
+                "(SELECT DISTINCT parentLocalUid FROM Tags "
+                "WHERE updateSequenceNumber IS NOT NULL "
+                "AND parentGuid IS NULL)"));
+
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot select tag local ids and guids from "
+                               "Tags table"),
+                false);
+
+            tagGuidsByLocalId.reserve(query.size());
+            while (query.next()) {
+                const QString tagLocalId = query.value(0).toString();
+                if (Q_UNLIKELY(tagLocalId.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Encountered empty tag local id on attempt to list tag "
+                        "local ids and guids where parent guids are missing in "
+                        "Tags table");
+                    continue;
+                }
+
+                qevercloud::Guid tagGuid = query.value(1).toString();
+                if (Q_UNLIKELY(tagGuid.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Encountered empty tag guid on attempt to list tag "
+                        "local ids and guids where parent guids are missing in "
+                        "Tags table");
+                    continue;
+                }
+
+                tagGuidsByLocalId[tagLocalId] = std::move(tagGuid);
+            }
+        }
+
+        for (const auto it: qevercloud::toRange(qAsConst(tagGuidsByLocalId))) {
+            const auto & tagLocalId = it.key();
+            const auto & tagGuid = it.value();
+
+            QSqlQuery query{database};
+            bool res = query.prepare(
+                "UPDATE Tags SET parentGuid = :parentGuid "
+                "WHERE parentLocalUid = :parentLocalUid");
+
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot prepare query to update parentGuid "
+                               "in Tags table"),
+                false);
+
+            query.bindValue(QStringLiteral(":parentGuid"), tagGuid);
+            query.bindValue(QStringLiteral(":parentLocalUid"), tagLocalId);
+
+            res = query.exec();
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot update tagGuid in Tags table"), false);
+        }
+
+        bool res = transaction.commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, QSqlQuery{}, "local_storage::sql::tables_initializer",
+            QStringLiteral(
+                "Cannot update tagGuid in Tags table: failed to commit "
+                "transaction"),
+            false);
+
+        databaseUpgradeInfo.setValue(tagsTableParentGuidsFixedUpKey, true);
+        databaseUpgradeInfo.sync();
+    }
+
+    lastProgress = 35;
+    promise.setProgressValue(lastProgress);
+
+    // 3. Fill noteGuid in Resources table where it is incorrectly null
+    const QString resourcesTableNoteGuidsFixedUpKey =
+        QStringLiteral("ResourcesTableTagGuidsFixedUp");
+
+    const bool resourcesTableNoteGuidsFixedUp =
+        databaseUpgradeInfo.value(resourcesTableNoteGuidsFixedUpKey).toBool();
+
+    if (!resourcesTableNoteGuidsFixedUp) {
+        auto database = m_connectionPool->database();
+        Transaction transaction{database, Transaction::Type::Exclusive};
+
+        QHash<QString, qevercloud::Guid> noteGuidsByNoteLocalIds;
+        {
+            QSqlQuery query{database};
+            bool res = query.exec(
+                QStringLiteral("SELECT localUid, guid FROM Notes WHERE "
+                               "updateSequenceNumber IS NOT NULL AND "
+                               "localUid IN "
+                               "(SELECT DISTINCT noteLocalUid FROM Resources "
+                               "WHERE noteGuid IS NULL)"));
+
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot select note local ids and guids "
+                               "from Resources table"),
+                false);
+
+            noteGuidsByNoteLocalIds.reserve(query.size());
+            while (query.next()) {
+                const QString noteLocalId = query.value(0).toString();
+                if (Q_UNLIKELY(noteLocalId.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Encountered empty note local id on attempt "
+                        "to list note local ids and guids where guids "
+                        "are missing in Resources table");
+                    continue;
+                }
+
+                qevercloud::Guid noteGuid = query.value(1).toString();
+                if (Q_UNLIKELY(noteGuid.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Encountered empty note guid on attempt "
+                        "to list note local ids and guids where guids "
+                        "are missing in Resources table");
+                    continue;
+                }
+
+                noteGuidsByNoteLocalIds[noteLocalId] = std::move(noteGuid);
+            }
+        }
+
+        for (const auto it:
+             qevercloud::toRange(qAsConst(noteGuidsByNoteLocalIds)))
+        {
+            const auto & noteLocalId = it.key();
+            const auto & noteGuid = it.value();
+
+            QSqlQuery query{database};
+            bool res = query.prepare(
+                QStringLiteral("UPDATE Resources SET noteGuid = :noteGuid "
+                               "WHERE noteLocalUid = :noteLocalUid"));
+
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot prepare query to update noteGuid "
+                               "in Resources table"),
+                false);
+
+            query.bindValue(QStringLiteral(":noteGuid"), noteGuid);
+            query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+            res = query.exec();
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches::2_to_3",
+                QStringLiteral("Cannot update noteGuid in Resources table"),
+                false);
+        }
+
+        bool res = transaction.commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, QSqlQuery{}, "local_storage::sql::tables_initializer",
+            QStringLiteral(
+                "Cannot update noteGuid in Resources table: failed to "
+                "commit transaction"),
+            false);
+
+        databaseUpgradeInfo.setValue(resourcesTableNoteGuidsFixedUpKey, true);
+        databaseUpgradeInfo.sync();
+    }
+
+    lastProgress = 50;
+    promise.setProgressValue(lastProgress);
+
     return true;
 }
 
@@ -238,10 +500,12 @@ bool Patch2To3::updateResourcesStorage(
 {
     errorDescription.clear();
 
+    const QString resourceBodyVersionIdTablesCreatedKey =
+        QStringLiteral("ResourceBodyVersionIdTablesCreated");
+
     int lastProgress = 50;
     const bool resourceBodyVersionIdTablesCreated =
-        databaseUpgradeInfo
-            .value(gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey)
+        databaseUpgradeInfo.value(resourceBodyVersionIdTablesCreatedKey)
             .toBool();
 
     if (!resourceBodyVersionIdTablesCreated) {
@@ -282,7 +546,7 @@ bool Patch2To3::updateResourcesStorage(
             false);
 
         databaseUpgradeInfo.setValue(
-            gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey, true);
+            resourceBodyVersionIdTablesCreatedKey, true);
 
         databaseUpgradeInfo.sync();
 
@@ -295,9 +559,11 @@ bool Patch2To3::updateResourcesStorage(
     lastProgress = 55;
     promise.setProgressValue(lastProgress);
 
+    const QString committedResourceBodyVersionIdsToDatabaseKey =
+        QStringLiteral("ResourceBodyVersionIdsCommittedToDatabase");
+
     const bool committedResourceBodyVersionIdsToDatabase =
-        databaseUpgradeInfo
-            .value(gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey)
+        databaseUpgradeInfo.value(committedResourceBodyVersionIdsToDatabaseKey)
             .toBool();
 
     QHash<QString, ResourceVersionIds> resourceVersionIds;
@@ -308,7 +574,7 @@ bool Patch2To3::updateResourcesStorage(
         }
 
         databaseUpgradeInfo.setValue(
-            gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey, true);
+            committedResourceBodyVersionIdsToDatabaseKey, true);
 
         databaseUpgradeInfo.sync();
 
@@ -329,9 +595,11 @@ bool Patch2To3::updateResourcesStorage(
     lastProgress = 65;
     promise.setProgressValue(lastProgress);
 
+    const QString movedResourceBodyFilesKey =
+        QStringLiteral("ResourceBodyFilesMovedToVersionIdFolders");
+
     const bool movedResourceBodyFilesToVersionFolders =
-        databaseUpgradeInfo.value(gUpgrade2To3MovedResourceBodyFilesKey)
-            .toBool();
+        databaseUpgradeInfo.value(movedResourceBodyFilesKey).toBool();
 
     if (!movedResourceBodyFilesToVersionFolders) {
         const QString localStorageDirPath = m_localStorageDir.absolutePath();
@@ -430,7 +698,8 @@ bool Patch2To3::updateResourcesStorage(
                     QDir::Dirs | QDir::NoDotAndDotDot);
 
             for (const auto & noteLocalIdSubdirInfo:
-                 qAsConst(resourceDataBodiesDirSubdirs)) {
+                 qAsConst(resourceDataBodiesDirSubdirs))
+            {
                 QDir noteLocalIdSubdir{
                     noteLocalIdSubdirInfo.absoluteFilePath()};
                 const auto resourceFiles =
@@ -439,7 +708,8 @@ bool Patch2To3::updateResourcesStorage(
                 for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
                 {
                     if (!moveResourceBodyFile(
-                            resourceDataBodyFile, ResourceBodyFileKind::Data)) {
+                            resourceDataBodyFile, ResourceBodyFileKind::Data))
+                    {
                         return false;
                     }
                 }
@@ -475,9 +745,7 @@ bool Patch2To3::updateResourcesStorage(
             }
         }
 
-        databaseUpgradeInfo.setValue(
-            gUpgrade2To3MovedResourceBodyFilesKey, true);
-
+        databaseUpgradeInfo.setValue(movedResourceBodyFilesKey, true);
         databaseUpgradeInfo.sync();
 
         QNINFO(
@@ -524,7 +792,8 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
         resourceDataBodiesDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
 
     for (const auto & noteLocalIdSubdirInfo:
-         qAsConst(resourceDataBodiesDirSubdirs)) {
+         qAsConst(resourceDataBodiesDirSubdirs))
+    {
         QDir noteLocalIdSubdir{noteLocalIdSubdirInfo.absoluteFilePath()};
         const auto resourceFiles = noteLocalIdSubdir.entryInfoList(QDir::Files);
         for (const auto & resourceDataBodyFile: qAsConst(resourceFiles)) {
@@ -552,9 +821,11 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
         QDir noteLocalIdSubdir{noteLocalIdSubdirInfo.absoluteFilePath()};
         const auto resourceFiles = noteLocalIdSubdir.entryInfoList(QDir::Files);
         for (const auto & resourceAlternateDataBodyFile:
-             qAsConst(resourceFiles)) {
+             qAsConst(resourceFiles))
+        {
             if (resourceAlternateDataBodyFile.completeSuffix() !=
-                QStringLiteral("dat")) {
+                QStringLiteral("dat"))
+            {
                 continue;
             }
 
