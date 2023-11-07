@@ -232,7 +232,7 @@ ISynchronizer::SyncResult Synchronizer::synchronizeAccount(
                     promise,
                     threading::TrackedTask{
                         selfWeak,
-                        [this, promise, currentThread,
+                        [this, promise,
                          notifier = std::move(notifier),
                          syncConflictResolver = std::move(syncConflictResolver),
                          localStorage = std::move(localStorage),
