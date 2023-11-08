@@ -713,4 +713,19 @@ TEST_P(Patch2To3ResourcesTest, ApplyResourcesPatch)
     EXPECT_EQ(versionFuture.result(), 3);
 }
 
+struct SetNoteNotebookGuidsTestData
+{
+    // Local notebooks and notes - they would have no guids. The patch should
+    // not touch them.
+    QList<qevercloud::Notebook> m_localNotebooks;
+    QList<qevercloud::Note> m_localNotes;
+
+    // Notebooks with guids and two groups of notes - one already has notebook
+    // guids, the other doesn't. The patch should update notebook guids for
+    // notes from the second group.
+    QList<qevercloud::Notebook> m_notebooksWithGuids;
+    QList<qevercloud::Note> m_notesWithNotebookGuids;
+    QList<qevercloud::Note> m_notesWithoutNotebookGuids;
+};
+
 } // namespace quentier::local_storage::sql::tests
