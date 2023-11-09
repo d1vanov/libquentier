@@ -26,6 +26,7 @@
 #include "../Notifier.h"
 #include "../ResourcesHandler.h"
 #include "../TablesInitializer.h"
+#include "../TagsHandler.h"
 #include "../VersionHandler.h"
 #include "../patches/Patch2To3.h"
 #include "../utils/ResourceDataFilesUtils.h"
@@ -37,7 +38,9 @@
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <gtest/gtest.h>
+#include <qevercloud/types/builders/NoteBuilder.h>
+#include <qevercloud/types/builders/NotebookBuilder.h>
+#include <qevercloud/types/builders/TagBuilder.h>
 
 #include <QDir>
 #include <QFile>
@@ -50,9 +53,13 @@
 #include <QThreadPool>
 #include <QtGlobal>
 
+#include <gtest/gtest.h>
+
+#include <algorithm>
 #include <array>
 #include <functional>
 #include <string>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -207,7 +214,6 @@ struct ResourcesTestData
     qevercloud::Resource m_firstResource;
     qevercloud::Resource m_secondResource;
     qevercloud::Resource m_thirdResource;
-    QString m_localStorageDirPath;
 };
 
 enum PrepareLocalStorageForUpgradeFlag
@@ -219,39 +225,32 @@ enum PrepareLocalStorageForUpgradeFlag
 Q_DECLARE_FLAGS(
     PrepareLocalStorageForUpgradeFlags, PrepareLocalStorageForUpgradeFlag);
 
+[[nodiscard]] QString prepareAccountLocalStorageDir(
+    const QString & localStorageDirPath, ConnectionPool & connectionPool)
+{
+    QString path;
+    {
+        QTextStream strm{&path};
+        strm << localStorageDirPath << "/LocalAccounts/" << gTestAccountName;
+        strm.flush();
+    }
+
+    utils::prepareLocalStorage(path, connectionPool);
+    return path;
+}
+
 // Prepares local storage database corresponding to version 2 in a temporary
 // dir so that it can be upgraded from version 2 to version 3
-[[nodiscard]] ResourcesTestData prepareResourcesForUpgrade(
+[[nodiscard]] ResourcesTestData prepareResourcesForVersionsUpgrade(
     const QString & localStorageDirPath,
     const PrepareLocalStorageForUpgradeFlags flags,
     const ConnectionPoolPtr & connectionPool,
-    const threading::QThreadPoolPtr & threadPool,
-    const threading::QThreadPtr & writerThread,
-    const QReadWriteLockPtr & resourceDataFilesLock, Notifier * notifier)
+    INotebooksHandler & notebooksHandler, INotesHandler & notesHandler,
+    IResourcesHandler & resourcesHandler)
 {
-    // Prepare tables within the database
-    utils::prepareLocalStorage(localStorageDirPath, *connectionPool);
-
     // Put some data into the local storage database
     const auto now = QDateTime::currentMSecsSinceEpoch();
     ResourcesTestData testData;
-
-    testData.m_localStorageDirPath = [&] {
-        QString path;
-        QTextStream strm{&path};
-
-        strm << localStorageDirPath << "/LocalAccounts/" << gTestAccountName;
-        return path;
-    }();
-
-    QDir localStorageDir{testData.m_localStorageDirPath};
-    if (!localStorageDir.exists()) {
-        EXPECT_TRUE(localStorageDir.mkpath(testData.m_localStorageDirPath));
-    }
-
-    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        connectionPool, threadPool, notifier, writerThread,
-        testData.m_localStorageDirPath, resourceDataFilesLock);
 
     testData.m_notebook.setGuid(UidGenerator::Generate());
     testData.m_notebook.setName(QStringLiteral("name"));
@@ -259,7 +258,7 @@ Q_DECLARE_FLAGS(
     testData.m_notebook.setServiceCreated(now);
     testData.m_notebook.setServiceUpdated(now);
 
-    auto putNotebookFuture = notebooksHandler->putNotebook(testData.m_notebook);
+    auto putNotebookFuture = notebooksHandler.putNotebook(testData.m_notebook);
     putNotebookFuture.waitForFinished();
 
     testData.m_note.setLocallyModified(true);
@@ -280,11 +279,7 @@ Q_DECLARE_FLAGS(
     testData.m_note.setCreated(now);
     testData.m_note.setUpdated(now);
 
-    const auto notesHandler = std::make_shared<NotesHandler>(
-        connectionPool, threadPool, notifier, writerThread,
-        testData.m_localStorageDirPath, resourceDataFilesLock);
-
-    auto putNoteFuture = notesHandler->putNote(testData.m_note);
+    auto putNoteFuture = notesHandler.putNote(testData.m_note);
     putNoteFuture.waitForFinished();
 
     testData.m_firstResource.setLocallyModified(true);
@@ -359,15 +354,18 @@ Q_DECLARE_FLAGS(
         auto & data = *testData.m_thirdResource.mutableRecognition();
         data.setBody(QByteArray::fromStdString(
             R"___(<?xml version="1.0" encoding="UTF-8"?>
-<recoIndex docType="picture" objType="ink" objID="a284273e482578224145f2560b67bf45"
-        engineVersion="3.0.17.14" recoType="client" lang="en" objWidth="1936" objHeight="2592">
+<recoIndex docType="picture" objType="ink"
+        objID="a284273e482578224145f2560b67bf45"
+        engineVersion="3.0.17.14" recoType="client" lang="en"
+        objWidth="1936" objHeight="2592">
     <item x="853" y="1278" w="14" h="17">
         <t w="31">II</t>
         <t w="31">11</t>
         <t w="31">ll</t>
         <t w="31">Il</t>
     </item>
-    <item x="501" y="635" w="770" h="254" offset="12" duration="17" strokeList="14,28,19,41,54">
+    <item x="501" y="635" w="770" h="254" offset="12" duration="17"
+        strokeList="14,28,19,41,54">
         <t w="32">LONG</t>
         <t w="25">LONG</t>
         <t w="23">GOV</t>
@@ -398,22 +396,18 @@ Q_DECLARE_FLAGS(
             QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
     }
 
-    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        connectionPool, threadPool, notifier, writerThread,
-        testData.m_localStorageDirPath, resourceDataFilesLock);
-
     auto putFirstResourceFuture =
-        resourcesHandler->putResource(testData.m_firstResource);
+        resourcesHandler.putResource(testData.m_firstResource);
 
     putFirstResourceFuture.waitForFinished();
 
     auto putSecondResourceFuture =
-        resourcesHandler->putResource(testData.m_secondResource);
+        resourcesHandler.putResource(testData.m_secondResource);
 
     putSecondResourceFuture.waitForFinished();
 
     auto putThirdResourceFuture =
-        resourcesHandler->putResource(testData.m_thirdResource);
+        resourcesHandler.putResource(testData.m_thirdResource);
 
     putThirdResourceFuture.waitForFinished();
 
@@ -471,8 +465,8 @@ Q_DECLARE_FLAGS(
             const QString pathFrom = [&] {
                 QString result;
                 QTextStream strm{&result};
-                strm << testData.m_localStorageDirPath << "/Resources/"
-                     << dataPathPart << "/" << testData.m_note.localId() << "/"
+                strm << localStorageDirPath << "/Resources/" << dataPathPart
+                     << "/" << testData.m_note.localId() << "/"
                      << resource.localId() << "/" << versionId << ".dat";
                 return result;
             }();
@@ -480,8 +474,8 @@ Q_DECLARE_FLAGS(
             const QString pathTo = [&] {
                 QString result;
                 QTextStream strm{&result};
-                strm << testData.m_localStorageDirPath << "/Resources/"
-                     << dataPathPart << "/" << testData.m_note.localId() << "/"
+                strm << localStorageDirPath << "/Resources/" << dataPathPart
+                     << "/" << testData.m_note.localId() << "/"
                      << resource.localId() << ".dat";
                 return result;
             }();
@@ -495,8 +489,8 @@ Q_DECLARE_FLAGS(
             const QString dirPathToRemove = [&] {
                 QString result;
                 QTextStream strm{&result};
-                strm << testData.m_localStorageDirPath << "/Resources/"
-                     << dataPathPart << "/" << testData.m_note.localId() << "/"
+                strm << localStorageDirPath << "/Resources/" << dataPathPart
+                     << "/" << testData.m_note.localId() << "/"
                      << resource.localId();
                 return result;
             }();
@@ -514,7 +508,8 @@ Q_DECLARE_FLAGS(
     };
 
     if (flags.testFlag(
-            PrepareLocalStorageForUpgradeFlag::MoveResourceBodyFiles)) {
+            PrepareLocalStorageForUpgradeFlag::MoveResourceBodyFiles))
+    {
         moveResourceFiles(testData.m_firstResource);
         moveResourceFiles(testData.m_secondResource);
         moveResourceFiles(testData.m_thirdResource);
@@ -597,14 +592,30 @@ INSTANTIATE_TEST_SUITE_P(
     Patch2To3DataTestInstance, Patch2To3ResourcesTest,
     testing::ValuesIn(gPatch2To3ResourcesTestData));
 
-TEST_P(Patch2To3ResourcesTest, ApplyResourcesPatch)
+TEST_P(Patch2To3ResourcesTest, CheckResourceVersionIdsUpgrade)
 {
     Account account{gTestAccountName, Account::Type::Local};
 
     const auto data = GetParam();
-    const auto testData = prepareResourcesForUpgrade(
-        m_temporaryDir.path(), data.flags, m_connectionPool, m_threadPool,
-        m_writerThread, m_resourceDataFilesLock, m_notifier);
+
+    const QString localStorageDirPath =
+        prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool);
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    const auto testData = prepareResourcesForVersionsUpgrade(
+        localStorageDirPath, data.flags, m_connectionPool, *notebooksHandler,
+        *notesHandler, *resourcesHandler);
     if (data.prepareFunc) {
         data.prepareFunc();
     }
@@ -620,11 +631,7 @@ TEST_P(Patch2To3ResourcesTest, ApplyResourcesPatch)
         std::move(account), m_connectionPool, m_writerThread);
 
     auto applyFuture = patch->apply();
-    EXPECT_NO_THROW(applyFuture.waitForFinished());
-
-    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        testData.m_localStorageDirPath, m_resourceDataFilesLock);
+    ASSERT_NO_THROW(applyFuture.waitForFinished());
 
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
@@ -636,10 +643,6 @@ TEST_P(Patch2To3ResourcesTest, ApplyResourcesPatch)
     findNotebookFuture.waitForFinished();
     ASSERT_EQ(findNotebookFuture.resultCount(), 1);
     EXPECT_EQ(findNotebookFuture.result(), testData.m_notebook);
-
-    const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -670,10 +673,6 @@ TEST_P(Patch2To3ResourcesTest, ApplyResourcesPatch)
     findNoteFuture.waitForFinished();
     ASSERT_EQ(findNoteFuture.resultCount(), 1);
     EXPECT_EQ(findNoteFuture.result(), testNoteCopy);
-
-    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        testData.m_localStorageDirPath, m_resourceDataFilesLock);
 
     auto resourceCountFuture = resourcesHandler->resourceCount(
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
@@ -713,19 +712,473 @@ TEST_P(Patch2To3ResourcesTest, ApplyResourcesPatch)
     EXPECT_EQ(versionFuture.result(), 3);
 }
 
-struct SetNoteNotebookGuidsTestData
+TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
 {
     // Local notebooks and notes - they would have no guids. The patch should
     // not touch them.
-    QList<qevercloud::Notebook> m_localNotebooks;
-    QList<qevercloud::Note> m_localNotes;
+    const QList<qevercloud::Notebook> localNotebooks = [] {
+        constexpr int localNotebookCount = 5;
+        QList<qevercloud::Notebook> result;
+        result.reserve(localNotebookCount);
+        for (int i = 0; i < localNotebookCount; ++i) {
+            result << qevercloud::NotebookBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setName(QString::fromUtf8("Local notebook #%1")
+                                       .arg(i + 1))
+                          .build();
+        }
 
-    // Notebooks with guids and two groups of notes - one already has notebook
-    // guids, the other doesn't. The patch should update notebook guids for
-    // notes from the second group.
-    QList<qevercloud::Notebook> m_notebooksWithGuids;
-    QList<qevercloud::Note> m_notesWithNotebookGuids;
-    QList<qevercloud::Note> m_notesWithoutNotebookGuids;
-};
+        return result;
+    }();
+
+    const QList<qevercloud::Note> localNotes = [&localNotebooks] {
+        constexpr int localNotePerNotebookCount = 5;
+        QList<qevercloud::Note> result;
+        result.reserve(localNotePerNotebookCount * localNotebooks.size());
+        int localNoteCounter = 1;
+        for (const auto & localNotebook: std::as_const(localNotebooks)) {
+            for (int i = 0; i < localNotePerNotebookCount; ++i) {
+                result << qevercloud::NoteBuilder{}
+                              .setLocalId(UidGenerator::Generate())
+                              .setTitle(QString::fromUtf8("Local note #%1")
+                                            .arg(localNoteCounter++))
+                              .setNotebookLocalId(localNotebook.localId())
+                              .build();
+            }
+        }
+
+        return result;
+    }();
+
+    qint32 updateSequenceNum = 1;
+
+    // Notebooks with guids and update sequence numbers
+    const QList<qevercloud::Notebook> notebooks = [&updateSequenceNum] {
+        constexpr int notebookCount = 5;
+        QList<qevercloud::Notebook> result;
+        result.reserve(notebookCount);
+        for (int i = 0; i < notebookCount; ++i) {
+            result << qevercloud::NotebookBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setGuid(UidGenerator::Generate())
+                          .setUpdateSequenceNum(updateSequenceNum++)
+                          .setName(QString::fromUtf8("Non-local notebook #%1")
+                                       .arg(i + 1))
+                          .build();
+        }
+
+        return result;
+    }();
+
+    // Notes with guids and update sequence numbers and with non-empty notebook
+    // guids - patch should not change them in any way.
+    const QList<qevercloud::Note> notesWithNotebookGuids = [&updateSequenceNum,
+                                                            &notebooks] {
+        constexpr int notePerNotebookCount = 5;
+        QList<qevercloud::Note> result;
+        result.reserve(notePerNotebookCount);
+        int noteCounter = 1;
+        for (const auto & notebook: std::as_const(notebooks)) {
+            for (int i = 0; i < notePerNotebookCount; ++i) {
+                result << qevercloud::NoteBuilder{}
+                              .setLocalId(UidGenerator::Generate())
+                              .setGuid(UidGenerator::Generate())
+                              .setUpdateSequenceNum(updateSequenceNum++)
+                              .setTitle(QString::fromUtf8(
+                                            "Note with notebook guid #%1")
+                                            .arg(noteCounter++))
+                              .setNotebookLocalId(notebook.localId())
+                              .setNotebookGuid(notebook.guid())
+                              .build();
+            }
+        }
+
+        return result;
+    }();
+
+    // Notes with guids and update sequence numbers and with empty notebook
+    // guids - patch should set notebook guids for these notes.
+    const QList<qevercloud::Note> notesWithoutNotebookGuids =
+        [&updateSequenceNum, &notebooks] {
+            constexpr int notePerNotebookCount = 5;
+            QList<qevercloud::Note> result;
+            result.reserve(notePerNotebookCount);
+            int noteCounter = 1;
+            for (const auto & notebook: std::as_const(notebooks)) {
+                for (int i = 0; i < notePerNotebookCount; ++i) {
+                    result << qevercloud::NoteBuilder{}
+                                  .setLocalId(UidGenerator::Generate())
+                                  .setGuid(UidGenerator::Generate())
+                                  .setUpdateSequenceNum(updateSequenceNum++)
+                                  .setTitle(
+                                      QString::fromUtf8(
+                                          "Note without notebook guid #%1")
+                                          .arg(noteCounter++))
+                                  .setNotebookLocalId(notebook.localId())
+                                  .build();
+                }
+            }
+
+            return result;
+        }();
+
+    Account account{gTestAccountName, Account::Type::Local};
+
+    const QString localStorageDirPath =
+        prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool);
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    for (const auto & notebook: std::as_const(localNotebooks)) {
+        auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+        putNotebookFuture.waitForFinished();
+    }
+
+    for (const auto & note: std::as_const(localNotes)) {
+        auto putNoteFuture = notesHandler->putNote(note);
+        putNoteFuture.waitForFinished();
+    }
+
+    for (const auto & notebook: std::as_const(notebooks)) {
+        auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+        putNotebookFuture.waitForFinished();
+    }
+
+    for (const auto & note: std::as_const(notesWithNotebookGuids)) {
+        auto putNoteFuture = notesHandler->putNote(note);
+        putNoteFuture.waitForFinished();
+    }
+
+    for (const auto & note: std::as_const(notesWithoutNotebookGuids)) {
+        auto putNoteFuture = notesHandler->putNote(note);
+        putNoteFuture.waitForFinished();
+    }
+
+    // Make sure that notes which are meant to not have notebook guids indeed
+    // do not have them - after the fixes applied in local storage of version 3
+    // they should have notebook guids even if these were missing before putting
+    // the note to local storage.
+    auto database = m_connectionPool->database();
+    for (const auto & note: std::as_const(notesWithoutNotebookGuids)) {
+        QSqlQuery query{database};
+        bool res = query.prepare(QStringLiteral(
+            "UPDATE Notes SET notebookGuid = NULL WHERE localUid = :localUid"));
+        ASSERT_TRUE(res);
+
+        query.bindValue(QStringLiteral(":localUid"), note.localId());
+        res = query.exec();
+        ASSERT_TRUE(res);
+    }
+
+    changeDatabaseVersionTo2(database);
+
+    const auto versionHandler = std::make_shared<VersionHandler>(
+        account, m_connectionPool, m_threadPool, m_writerThread);
+
+    auto versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 2);
+
+    const auto patch = std::make_shared<Patch2To3>(
+        std::move(account), m_connectionPool, m_writerThread);
+
+    auto applyFuture = patch->apply();
+    ASSERT_NO_THROW(applyFuture.waitForFinished());
+
+    const auto sortNotes = [](QList<qevercloud::Note> & notes) {
+        std::sort(
+            notes.begin(), notes.end(),
+            [](const qevercloud::Note & lhs, const qevercloud::Note & rhs) {
+                return lhs.localId() < rhs.localId();
+            });
+    };
+
+    const QList<qevercloud::Note> expectedNotes = [&] {
+        QList<qevercloud::Note> result;
+        result.reserve(
+            localNotes.size() + notesWithNotebookGuids.size() +
+            notesWithoutNotebookGuids.size());
+
+        for (const auto & note: std::as_const(localNotes)) {
+            result << note;
+        }
+
+        for (const auto & note: std::as_const(notesWithNotebookGuids)) {
+            result << note;
+        }
+
+        for (auto note: std::as_const(notesWithoutNotebookGuids)) {
+            const auto notebookIt = std::find_if(
+                notebooks.constBegin(), notebooks.constEnd(),
+                [&note](const qevercloud::Notebook & notebook) {
+                    return notebook.localId() == note.notebookLocalId();
+                });
+            EXPECT_NE(notebookIt, notebooks.constEnd());
+            if (notebookIt != notebooks.constEnd()) {
+                note.setNotebookGuid(notebookIt->guid());
+                result << note;
+            }
+        }
+
+        sortNotes(result);
+        return result;
+    }();
+
+    auto notesFromLocalStorageFuture = notesHandler->listNotes(
+        NotesHandler::FetchNoteOptions{}, NotesHandler::ListNotesOptions{});
+
+    notesFromLocalStorageFuture.waitForFinished();
+    ASSERT_EQ(notesFromLocalStorageFuture.resultCount(), 1);
+
+    auto notesFromLocalStorage = notesFromLocalStorageFuture.result();
+    sortNotes(notesFromLocalStorage);
+    EXPECT_EQ(notesFromLocalStorage, expectedNotes);
+
+    versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 3);
+}
+
+TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
+{
+    // Local tags - they would have no parent guids. The patch should not touch
+    // them.
+    const QList<qevercloud::Tag> localParentTags = [] {
+        constexpr int localParentTagCount = 5;
+        QList<qevercloud::Tag> result;
+        result.reserve(localParentTagCount);
+        for (int i = 0; i < localParentTagCount; ++i) {
+            result << qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setName(QString::fromUtf8("Local parent tag #%1")
+                                       .arg(i + 1))
+                          .build();
+        }
+
+        return result;
+    }();
+
+    // Local child tags. Again, the patch should not touch them.
+    const QList<qevercloud::Tag> localChildTags = [&localParentTags] {
+        constexpr int localChildTagPerParentTagCount = 5;
+        QList<qevercloud::Tag> result;
+        result.reserve(localChildTagPerParentTagCount * localParentTags.size());
+        int tagCounter = 1;
+        for (const auto & parentTag: std::as_const(localParentTags)) {
+            for (int i = 0; i < localChildTagPerParentTagCount; ++i) {
+                result << qevercloud::TagBuilder{}
+                              .setLocalId(UidGenerator::Generate())
+                              .setName(QString::fromUtf8("Local child tag #%1")
+                                           .arg(tagCounter++))
+                              .setParentTagLocalId(parentTag.localId())
+                              .build();
+            }
+        }
+
+        return result;
+    }();
+
+    qint32 updateSequenceNum = 1;
+
+    // Parent tags with guids and update sequence numbers
+    const QList<qevercloud::Tag> parentTags = [&updateSequenceNum] {
+        constexpr int tagCount = 5;
+        QList<qevercloud::Tag> result;
+        result.reserve(tagCount);
+        for (int i = 0; i < tagCount; ++i) {
+            result << qevercloud::TagBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setGuid(UidGenerator::Generate())
+                          .setUpdateSequenceNum(updateSequenceNum++)
+                          .setName(QString::fromUtf8("Non-local parent tag #%1")
+                                       .arg(i + 1))
+                          .build();
+        }
+
+        return result;
+    }();
+
+    // Child tags with guids and parent tag guids
+    const QList<qevercloud::Tag> childTagsWithParentTagGuids =
+        [&updateSequenceNum, &parentTags] {
+            constexpr int childTagPerParentTagCount = 5;
+            QList<qevercloud::Tag> result;
+            result.reserve(childTagPerParentTagCount * parentTags.size());
+            int tagCounter = 1;
+            for (const auto & parentTag: std::as_const(parentTags)) {
+                for (int i = 0; i < childTagPerParentTagCount; ++i) {
+                    result << qevercloud::TagBuilder{}
+                                  .setLocalId(UidGenerator::Generate())
+                                  .setGuid(UidGenerator::Generate())
+                                  .setUpdateSequenceNum(updateSequenceNum++)
+                                  .setName(
+                                      QString::fromUtf8("Non-local child tag "
+                                                        "with parent guid #%1")
+                                          .arg(tagCounter++))
+                                  .setParentTagLocalId(parentTag.localId())
+                                  .setParentGuid(parentTag.guid())
+                                  .build();
+                }
+            }
+
+            return result;
+        }();
+
+    // Child tags with guids and parent tag local ids but without parent tag
+    // guids
+    const QList<qevercloud::Tag> childTagsWithoutParentTagGuids =
+        [&updateSequenceNum, &parentTags] {
+            constexpr int childTagPerParentTagCount = 5;
+            QList<qevercloud::Tag> result;
+            result.reserve(childTagPerParentTagCount * parentTags.size());
+            int tagCounter = 1;
+            for (const auto & parentTag: std::as_const(parentTags)) {
+                for (int i = 0; i < childTagPerParentTagCount; ++i) {
+                    result << qevercloud::TagBuilder{}
+                                  .setLocalId(UidGenerator::Generate())
+                                  .setGuid(UidGenerator::Generate())
+                                  .setUpdateSequenceNum(updateSequenceNum++)
+                                  .setName(QString::fromUtf8(
+                                               "Non-local child tag without "
+                                               "parent guid #%1")
+                                               .arg(tagCounter++))
+                                  .setParentTagLocalId(parentTag.localId())
+                                  .build();
+                }
+            }
+
+            return result;
+        }();
+
+    Account account{gTestAccountName, Account::Type::Local};
+
+    Q_UNUSED(
+        prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool))
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread);
+
+    for (const auto & tag: std::as_const(localParentTags)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    for (const auto & tag: std::as_const(localChildTags)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    for (const auto & tag: std::as_const(parentTags)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    for (const auto & tag: std::as_const(childTagsWithParentTagGuids)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    for (const auto & tag: std::as_const(childTagsWithoutParentTagGuids)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    // Make sure that tags which are meant to not have parent tag guids indeed
+    // do not have them - after the fixes applied in local storage of version 3
+    // they should have parent tag guids even if these were missing before
+    // putting the tag to local storage.
+    auto database = m_connectionPool->database();
+    for (const auto & tag: std::as_const(childTagsWithoutParentTagGuids)) {
+        QSqlQuery query{database};
+        bool res = query.prepare(QStringLiteral(
+            "UPDATE Tags SET parentGuid = NULL WHERE localUid = :localUid"));
+        ASSERT_TRUE(res);
+
+        query.bindValue(QStringLiteral(":localUid"), tag.localId());
+        res = query.exec();
+        ASSERT_TRUE(res);
+    }
+
+    changeDatabaseVersionTo2(database);
+
+    const auto versionHandler = std::make_shared<VersionHandler>(
+        account, m_connectionPool, m_threadPool, m_writerThread);
+
+    auto versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 2);
+
+    const auto patch = std::make_shared<Patch2To3>(
+        std::move(account), m_connectionPool, m_writerThread);
+
+    auto applyFuture = patch->apply();
+    ASSERT_NO_THROW(applyFuture.waitForFinished());
+
+    const auto sortTags = [](QList<qevercloud::Tag> & tags) {
+        std::sort(
+            tags.begin(), tags.end(),
+            [](const qevercloud::Tag & lhs, const qevercloud::Tag & rhs) {
+                return lhs.localId() < rhs.localId();
+            });
+    };
+
+    const QList<qevercloud::Tag> expectedTags = [&] {
+        QList<qevercloud::Tag> result;
+        result.reserve(
+            localParentTags.size() + localChildTags.size() + parentTags.size() +
+            childTagsWithParentTagGuids.size() +
+            childTagsWithoutParentTagGuids.size());
+
+        for (const auto & tag: std::as_const(localParentTags)) {
+            result << tag;
+        }
+
+        for (const auto & tag: std::as_const(localChildTags)) {
+            result << tag;
+        }
+
+        for (const auto & tag: std::as_const(parentTags)) {
+            result << tag;
+        }
+
+        for (const auto & tag: std::as_const(childTagsWithParentTagGuids)) {
+            result << tag;
+        }
+
+        for (auto tag: std::as_const(childTagsWithoutParentTagGuids)) {
+            const auto parentTagIt = std::find_if(
+                parentTags.constBegin(), parentTags.constEnd(),
+                [&tag](const qevercloud::Tag & parentTag) {
+                    return tag.parentTagLocalId() == parentTag.localId();
+                });
+            EXPECT_NE(parentTagIt, parentTags.constEnd());
+            if (parentTagIt != parentTags.constEnd()) {
+                tag.setParentGuid(parentTagIt->guid());
+                result << tag;
+            }
+        }
+
+        sortTags(result);
+        return result;
+    }();
+
+    auto tagsFromLocalStorageFuture = tagsHandler->listTags();
+    tagsFromLocalStorageFuture.waitForFinished();
+    ASSERT_EQ(tagsFromLocalStorageFuture.resultCount(), 1);
+
+    auto tagsFromLocalStorage = tagsFromLocalStorageFuture.result();
+    sortTags(tagsFromLocalStorage);
+    EXPECT_EQ(tagsFromLocalStorage, expectedTags);
+
+    versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 3);
+}
 
 } // namespace quentier::local_storage::sql::tests
