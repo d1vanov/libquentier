@@ -40,6 +40,7 @@
 
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
+#include <qevercloud/types/builders/ResourceBuilder.h>
 #include <qevercloud/types/builders/TagBuilder.h>
 
 #include <QDir>
@@ -1175,6 +1176,328 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
     auto tagsFromLocalStorage = tagsFromLocalStorageFuture.result();
     sortTags(tagsFromLocalStorage);
     EXPECT_EQ(tagsFromLocalStorage, expectedTags);
+
+    versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 3);
+}
+
+TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
+{
+    // Local notebook
+    const auto localNotebook = qevercloud::NotebookBuilder{}
+        .setLocalId(UidGenerator::Generate())
+        .setName(
+            QStringLiteral("Local notebook for resource note guids upgrade"))
+        .build();
+
+    // Local notes and resources - they would have no guids. The patch should
+    // not touch them.
+    QList<qevercloud::Note> localNotes = [&] {
+        constexpr int localNoteCount = 5;
+        QList<qevercloud::Note> result;
+        result.reserve(localNoteCount);
+        for (int i = 0; i < localNoteCount; ++i) {
+            result << qevercloud::NoteBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setNotebookLocalId(localNotebook.localId())
+                          .setTitle(
+                              QString::fromUtf8("Local note #%1").arg(i + 1))
+                          .build();
+        }
+
+        return result;
+    }();
+
+    const QList<qevercloud::Resource> localResources = [&] {
+        constexpr int resourcesPerNoteCount = 5;
+        QList<qevercloud::Resource> result;
+        result.reserve(localNotes.size() * resourcesPerNoteCount);
+        for (auto & note: localNotes) {
+            for (int i = 0; i < resourcesPerNoteCount; ++i) {
+                result << qevercloud::ResourceBuilder{}
+                              .setLocalId(UidGenerator::Generate())
+                              .setNoteLocalId(note.localId())
+                              .build();
+                if (!note.resources()) {
+                    note.mutableResources().emplace(QList{result.constLast()});
+                }
+                else {
+                    note.mutableResources()->append(result.constLast());
+                }
+            }
+        }
+
+        return result;
+    }();
+
+    qint32 updateSequenceNum = 1;
+
+    // Non-local notebook
+    const auto notebook = qevercloud::NotebookBuilder{}
+        .setLocalId(UidGenerator::Generate())
+        .setGuid(UidGenerator::Generate())
+        .setUpdateSequenceNum(updateSequenceNum++)
+        .setName("Notebook for resource note guids upgrade")
+        .build();
+
+    // Notes with guids and update sequence numbers
+    QList<qevercloud::Note> notes = [&] {
+        constexpr int noteCount = 5;
+        QList<qevercloud::Note> result;
+        result.reserve(noteCount);
+        for (int i = 0; i < noteCount; ++i) {
+            result << qevercloud::NoteBuilder{}
+                          .setLocalId(UidGenerator::Generate())
+                          .setGuid(UidGenerator::Generate())
+                          .setUpdateSequenceNum(updateSequenceNum++)
+                          .setNotebookLocalId(notebook.localId())
+                          .setNotebookGuid(notebook.guid())
+                          .setTitle(QString::fromUtf8("Note #%1").arg(i + 1))
+                          .build();
+        }
+
+        return result;
+    }();
+
+    // Resources with guids and update sequence numbers and with note guids
+    QList<qevercloud::Resource> resourcesWithNoteGuids = [&] {
+        constexpr int resourcesPerNoteCount = 5;
+        QList<qevercloud::Resource> result;
+        result.reserve(notes.size() * resourcesPerNoteCount);
+        for (auto & note: notes) {
+            for (int i = 0; i < resourcesPerNoteCount; ++i) {
+                result << qevercloud::ResourceBuilder{}
+                              .setLocalId(UidGenerator::Generate())
+                              .setGuid(UidGenerator::Generate())
+                              .setNoteLocalId(note.localId())
+                              .setNoteGuid(note.guid())
+                              .setUpdateSequenceNum(updateSequenceNum++)
+                              .build();
+                if (!note.resources()) {
+                    note.mutableResources().emplace(QList{result.constLast()});
+                }
+                else {
+                    note.mutableResources()->append(result.constLast());
+                }
+            }
+        }
+
+        return result;
+    }();
+
+    // Resources with guids and update sequence numbers but without note guids
+    QList<qevercloud::Resource> resourcesWithoutNoteGuids = [&] {
+        constexpr int resourcesPerNoteCount = 5;
+        QList<qevercloud::Resource> result;
+        result.reserve(notes.size() * resourcesPerNoteCount);
+        for (auto & note: notes) {
+            for (int i = 0; i < resourcesPerNoteCount; ++i) {
+                result << qevercloud::ResourceBuilder{}
+                              .setLocalId(UidGenerator::Generate())
+                              .setGuid(UidGenerator::Generate())
+                              .setNoteLocalId(note.localId())
+                              .setUpdateSequenceNum(updateSequenceNum++)
+                              .build();
+                if (!note.resources()) {
+                    note.mutableResources().emplace(QList{result.constLast()});
+                }
+                else {
+                    note.mutableResources()->append(result.constLast());
+                }
+            }
+        }
+
+        return result;
+    }();
+
+    Account account{gTestAccountName, Account::Type::Local};
+
+    const QString localStorageDirPath =
+        prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool);
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
+        localStorageDirPath, m_resourceDataFilesLock);
+
+    {
+        auto putNotebookFuture = notebooksHandler->putNotebook(localNotebook);
+        putNotebookFuture.waitForFinished();
+    }
+
+    {
+        auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+        putNotebookFuture.waitForFinished();
+    }
+
+    for (const auto & note: std::as_const(localNotes)) {
+        auto putNoteFuture = notesHandler->putNote(note);
+        putNoteFuture.waitForFinished();
+    }
+
+    for (const auto & note: std::as_const(notes)) {
+        auto putNoteFuture = notesHandler->putNote(note);
+        putNoteFuture.waitForFinished();
+    }
+
+    // Make sure that resources which are meant to not have note guids indeed
+    // do not have them - after the fixes applied in local storage of version 3
+    // they should have note guids even if these were missing before putting
+    // the resource to local storage.
+    auto database = m_connectionPool->database();
+    for (const auto & resource: std::as_const(resourcesWithoutNoteGuids)) {
+        QSqlQuery query{database};
+        bool res = query.prepare(
+            QStringLiteral("UPDATE Resources SET noteGuid = NULL "
+                           "WHERE resourceLocalUid = :resourceLocalUid"));
+        ASSERT_TRUE(res);
+
+        query.bindValue(
+            QStringLiteral(":resourceLocalUid"), resource.localId());
+        res = query.exec();
+        ASSERT_TRUE(res);
+    }
+
+    changeDatabaseVersionTo2(database);
+
+    const auto versionHandler = std::make_shared<VersionHandler>(
+        account, m_connectionPool, m_threadPool, m_writerThread);
+
+    auto versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 2);
+
+    const auto patch = std::make_shared<Patch2To3>(
+        std::move(account), m_connectionPool, m_writerThread);
+
+    auto applyFuture = patch->apply();
+    ASSERT_NO_THROW(applyFuture.waitForFinished());
+
+    const auto sortItems = [](auto & items) {
+        std::sort(
+            items.begin(), items.end(), [](const auto & lhs, const auto & rhs) {
+                return lhs.localId() < rhs.localId();
+            });
+    };
+
+    const QList<qevercloud::Note> expectedNotes = [&] {
+        QList<qevercloud::Note> result;
+        result.reserve(localNotes.size() + notes.size());
+        for (const auto & note: std::as_const(localNotes)) {
+            result << note;
+        }
+
+        for (auto note: std::as_const(notes)) {
+            if (note.resources()) {
+                for (auto & resource: *note.mutableResources()) {
+                    if (!resource.noteGuid()) {
+                        resource.setNoteGuid(note.guid());
+                    }
+                }
+            }
+            result << note;
+        }
+
+        sortItems(result);
+        return result;
+    }();
+
+    const QList<qevercloud::Resource> expectedResources = [&] {
+        QList<qevercloud::Resource> result;
+        result.reserve(
+            localResources.size() + resourcesWithNoteGuids.size() +
+            resourcesWithoutNoteGuids.size());
+
+        for (const auto & resource: std::as_const(localResources)) {
+            result << resource;
+        }
+
+        for (const auto & resource: std::as_const(resourcesWithNoteGuids)) {
+            result << resource;
+        }
+
+        for (auto resource: std::as_const(resourcesWithoutNoteGuids)) {
+            const auto noteIt = std::find_if(
+                notes.constBegin(), notes.constEnd(),
+                [&resource](const qevercloud::Note & note) {
+                    return resource.noteLocalId() == note.localId();
+                });
+            EXPECT_NE(noteIt, notes.constEnd());
+            if (noteIt != notes.constEnd()) {
+                resource.setNoteGuid(noteIt->guid());
+                result << resource;
+            }
+        }
+
+        sortItems(result);
+        return result;
+    }();
+
+    auto notesFromLocalStorageFuture = notesHandler->listNotes(
+        INotesHandler::FetchNoteOptions{} |
+            INotesHandler::FetchNoteOption::WithResourceMetadata,
+        INotesHandler::ListNotesOptions{});
+
+    notesFromLocalStorageFuture.waitForFinished();
+    ASSERT_EQ(notesFromLocalStorageFuture.resultCount(), 1);
+
+    auto notesFromLocalStorage = notesFromLocalStorageFuture.result();
+    sortItems(notesFromLocalStorage);
+    EXPECT_EQ(notesFromLocalStorage, expectedNotes);
+
+    const QList<qevercloud::Resource> resourcesFromLocalStorage = [&] {
+        QList<qevercloud::Resource> result;
+        result.reserve(
+            localResources.size() + resourcesWithNoteGuids.size() +
+            resourcesWithoutNoteGuids.size());
+
+        QStringList resourceLocalIds;
+        resourceLocalIds.reserve(
+            localResources.size() + resourcesWithNoteGuids.size() +
+            resourcesWithoutNoteGuids.size());
+
+        for (const auto & resource: std::as_const(localResources)) {
+            resourceLocalIds << resource.localId();
+        }
+
+        for (const auto & resource: std::as_const(resourcesWithNoteGuids)) {
+            resourceLocalIds << resource.localId();
+        }
+
+        for (const auto & resource: std::as_const(resourcesWithoutNoteGuids)) {
+            resourceLocalIds << resource.localId();
+        }
+
+        for (const auto & localId: std::as_const(resourceLocalIds)) {
+            auto findResourceFuture =
+                resourcesHandler->findResourceByLocalId(localId);
+            findResourceFuture.waitForFinished();
+            EXPECT_EQ(findResourceFuture.resultCount(), 1);
+            if (findResourceFuture.resultCount() != 1) {
+                continue;
+            }
+
+            EXPECT_TRUE(findResourceFuture.result());
+            if (!findResourceFuture.result()) {
+                continue;
+            }
+
+            result << *findResourceFuture.result();
+        }
+
+        sortItems(result);
+        return result;
+    }();
+
+    EXPECT_EQ(resourcesFromLocalStorage, expectedResources);
 
     versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
