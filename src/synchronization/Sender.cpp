@@ -227,6 +227,8 @@ QFuture<void> Sender::processNotes(SendContextPtr sendContext) const
         local_storage::ILocalStorage::ListNotesOptions options;
         options.m_filters.m_locallyModifiedFilter =
             local_storage::ILocalStorage::ListObjectsFilter::Include;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
         return options;
     }();
 
@@ -801,6 +803,8 @@ QFuture<void> Sender::processTags(SendContextPtr sendContext) const
         local_storage::ILocalStorage::ListTagsOptions options;
         options.m_filters.m_locallyModifiedFilter =
             local_storage::ILocalStorage::ListObjectsFilter::Include;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
         return options;
     }();
 
@@ -1207,6 +1211,8 @@ QFuture<void> Sender::processNotebooks(SendContextPtr sendContext) const
         local_storage::ILocalStorage::ListNotebooksOptions options;
         options.m_filters.m_locallyModifiedFilter =
             local_storage::ILocalStorage::ListObjectsFilter::Include;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
         return options;
     }();
 
@@ -1545,6 +1551,8 @@ QFuture<void> Sender::processSavedSearches(SendContextPtr sendContext) const
         local_storage::ILocalStorage::ListSavedSearchesOptions options;
         options.m_filters.m_locallyModifiedFilter =
             local_storage::ILocalStorage::ListObjectsFilter::Include;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
         return options;
     }();
 
