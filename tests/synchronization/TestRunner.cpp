@@ -58,6 +58,7 @@
 #include <cstdio>
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 namespace quentier::synchronization::tests {
 
@@ -401,6 +402,148 @@ struct ItemListsChecker
     return true;
 }
 
+[[nodiscard]] bool checkNoLocallyModifiedObjectsInLocalStorageAfterSync(
+    const local_storage::ILocalStorage & localStorage,
+    QString & errorDescription)
+{
+    const auto listSavedSearchesOptions = [] {
+        local_storage::ILocalStorage::ListSavedSearchesOptions options;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
+        return options;
+    }();
+
+    auto listSavedSearchesFuture =
+        localStorage.listSavedSearches(listSavedSearchesOptions);
+    listSavedSearchesFuture.waitForFinished();
+    if (Q_UNLIKELY(listSavedSearchesFuture.resultCount() != 1)) {
+        errorDescription = QString::fromUtf8(
+                               "Failed to list saved searches from local "
+                               "storage, future result count = %1")
+                               .arg(listSavedSearchesFuture.resultCount());
+        return false;
+    }
+
+    const auto savedSearches = listSavedSearchesFuture.result();
+    for (const auto & savedSearch: std::as_const(savedSearches)) {
+        if (Q_UNLIKELY(savedSearch.isLocallyModified())) {
+            errorDescription =
+                QString::fromUtf8(
+                    "Found locally modified saved search after sync: %1")
+                    .arg(savedSearch.toString());
+            return false;
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    const auto listNotebooksOptions = [] {
+        local_storage::ILocalStorage::ListNotebooksOptions options;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
+        return options;
+    }();
+
+    auto listNotebooksFuture = localStorage.listNotebooks(listNotebooksOptions);
+    listNotebooksFuture.waitForFinished();
+    if (Q_UNLIKELY(listNotebooksFuture.resultCount() != 1)) {
+        errorDescription = QString::fromUtf8(
+                               "Failed to list notebooks from local storage, "
+                               "future result count = %1")
+                               .arg(listNotebooksFuture.resultCount());
+        return false;
+    }
+
+    const auto notebooks = listNotebooksFuture.result();
+    for (const auto & notebook: std::as_const(notebooks)) {
+        if (Q_UNLIKELY(notebook.isLocallyModified())) {
+            errorDescription =
+                QString::fromUtf8(
+                    "Found locally modified notebook after sync: %1")
+                    .arg(notebook.toString());
+            return false;
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    const auto listNotesOptions = [] {
+        local_storage::ILocalStorage::ListNotesOptions options;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
+        return options;
+    }();
+
+    const auto fetchNoteOptions =
+        local_storage::ILocalStorage::FetchNoteOptions{} |
+        local_storage::ILocalStorage::FetchNoteOption::WithResourceMetadata |
+        local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    auto listNotesFuture =
+        localStorage.listNotes(fetchNoteOptions, listNotesOptions);
+    listNotesFuture.waitForFinished();
+    if (Q_UNLIKELY(listNotesFuture.resultCount() != 1)) {
+        errorDescription = QString::fromUtf8(
+                               "Failed to list notes from local storage, "
+                               "future result count = %1")
+                               .arg(listNotesFuture.resultCount());
+        return false;
+    }
+
+    const auto notes = listNotesFuture.result();
+    for (const auto & note: std::as_const(notes)) {
+        if (Q_UNLIKELY(note.isLocallyModified())) {
+            errorDescription =
+                QString::fromUtf8("Found locally modified note after sync: %1")
+                    .arg(note.toString());
+            return false;
+        }
+
+        if (note.resources()) {
+            for (const auto & resource: std::as_const(*note.resources())) {
+                if (Q_UNLIKELY(resource.isLocallyModified())) {
+                    errorDescription =
+                        QString::fromUtf8(
+                            "Found locally modified resource after sync: %1")
+                            .arg(resource.toString());
+                    return false;
+                }
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    const auto listTagsOptions = [] {
+        local_storage::ILocalStorage::ListTagsOptions options;
+        options.m_filters.m_localOnlyFilter =
+            local_storage::ILocalStorage::ListObjectsFilter::Exclude;
+        return options;
+    }();
+
+    auto listTagsFuture = localStorage.listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+    if (Q_UNLIKELY(listTagsFuture.resultCount() != 1)) {
+        errorDescription = QString::fromUtf8(
+                               "Failed to list tags from local storage, future "
+                               "result count = %1")
+                               .arg(listTagsFuture.resultCount());
+        return false;
+    }
+
+    const auto tags = listTagsFuture.result();
+    for (const auto & tag: std::as_const(tags)) {
+        if (Q_UNLIKELY(tag.isLocallyModified())) {
+            errorDescription =
+                QString::fromUtf8("Found locally modified tag after sync: %1")
+                    .arg(tag.toString());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 } // namespace
 
 TestRunner::TestRunner(QObject * parent, threading::QThreadPoolPtr threadPool) :
@@ -606,8 +749,7 @@ void TestRunner::runTestScenario()
         serverSyncState->linkedNotebookLastSyncTimes();
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
-    {
+         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
         const auto lastSyncTime = linkedNotebookLastSyncTimes.value(it.key());
         m_noteStoreServer->putLinkedNotebookSyncState(
             it.key(),
@@ -756,8 +898,7 @@ void TestRunner::runTestScenario()
             syncState->linkedNotebookUpdateCounts();
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
-        {
+             qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
             const auto serverMaxUsn =
                 m_noteStoreServer->currentLinkedNotebookMaxUsn(it.key());
 
@@ -780,8 +921,7 @@ void TestRunner::runTestScenario()
             linkedNotebookUpdateCounts.size());
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(linkedNotebookLastSyncTimes)))
-        {
+             qevercloud::toRange(qAsConst(linkedNotebookLastSyncTimes))) {
             QVERIFY2(
                 it.value() > 0,
                 "Detected zero last sync time in sync state for some linked "
@@ -826,6 +966,14 @@ void TestRunner::runTestScenario()
         QString errorMessage;
         const bool res = checkNoteStoreServerAndLocalStorageContentsEquality(
             *m_noteStoreServer, *m_localStorage, errorMessage);
+        const QByteArray errorMessageData = errorMessage.toLatin1();
+        QVERIFY2(res, errorMessageData.data());
+    }
+
+    {
+        QString errorMessage;
+        const bool res = checkNoLocallyModifiedObjectsInLocalStorageAfterSync(
+            *m_localStorage, errorMessage);
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
     }
