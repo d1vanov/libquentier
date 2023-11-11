@@ -54,6 +54,7 @@
 #include <QWriteLocker>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::local_storage::sql {
 
@@ -120,7 +121,7 @@ NotesHandler::NotesHandler(
             "NotesHandler ctor: local storage dir is not readable")}};
     }
 
-    if (Q_UNLIKELY(
+    if (Q_UNLIKELY( // NOLINT
             !m_localStorageDir.exists() &&
             !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
     {
@@ -643,7 +644,7 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
              << "ON NoteTags.localNote = Notes.localUid WHERE (localTag IN ";
 
         int counter = 0;
-        for (const qevercloud::Tag & tag: qAsConst(tags)) {
+        for (const qevercloud::Tag & tag: std::as_const(tags)) {
             strm << ":localTag" << counter;
             ++counter;
 
@@ -673,7 +674,7 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
         std::nullopt);
 
     int counter = 0;
-    for (const qevercloud::Tag & tag: qAsConst(tags)) {
+    for (const qevercloud::Tag & tag: std::as_const(tags)) {
         query.bindValue(
             QStringLiteral(":localTag") + QString::number(counter),
             tag.localId());
@@ -766,7 +767,8 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
             strm << " (notebookLocalUid IN (";
 
             int notebookCounter = 0;
-            for (const auto & notebookLocalId: qAsConst(notebookLocalIds)) {
+            for (const auto & notebookLocalId: std::as_const(notebookLocalIds))
+            {
                 strm << ":notebookLocalUid" << notebookCounter;
                 ++notebookCounter;
                 if (&notebookLocalId != &notebookLocalIds.constLast()) {
@@ -822,7 +824,7 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
         std::nullopt);
 
     int notebookCounter = 0;
-    for (const QString & notebookLocalId: qAsConst(notebookLocalIds)) {
+    for (const QString & notebookLocalId: std::as_const(notebookLocalIds)) {
         query.bindValue(
             QStringLiteral(":notebookLocalUid") +
                 QString::number(notebookCounter),
@@ -831,7 +833,7 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
     }
 
     int tagCounter = 0;
-    for (const QString & tagLocalId: qAsConst(tagLocalIds)) {
+    for (const QString & tagLocalId: std::as_const(tagLocalIds)) {
         query.bindValue(
             QStringLiteral(":tagLocalUid") + QString::number(tagCounter),
             tagLocalId);
@@ -1294,7 +1296,7 @@ bool NotesHandler::fillResources(
     }
 
     QMap<int, qevercloud::Resource> resourcesByIndex;
-    for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
+    for (const auto & resourceLocalId: std::as_const(resourceLocalIds)) {
         error.clear();
         int indexInNote = -1;
         auto resource = utils::findResourceByLocalId(

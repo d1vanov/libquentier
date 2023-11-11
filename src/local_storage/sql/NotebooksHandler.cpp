@@ -50,6 +50,7 @@
 #include <QWriteLocker>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::local_storage::sql {
 
@@ -92,7 +93,7 @@ NotebooksHandler::NotebooksHandler(
             "NotebooksHandler ctor: local storage dir is not readable")}};
     }
 
-    if (Q_UNLIKELY(
+    if (Q_UNLIKELY( // NOLINT
             !m_localStorageDir.exists() &&
             !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
     {
@@ -645,7 +646,7 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
             "database: failed to commit transaction"),
         false);
 
-    for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
+    for (const auto & noteLocalId: std::as_const(noteLocalIds)) {
         if (!utils::removeResourceDataFilesForNote(
                 m_localStorageDir, noteLocalId, errorDescription))
         {

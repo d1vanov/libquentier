@@ -43,6 +43,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -753,7 +754,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
     auto fetchResourceOptions =
         FetchResourceOptions{} | FetchResourceOption::WithBinaryData;
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         auto foundByLocalIdResourceFuture =
             resourcesHandler->findResourceByLocalId(
                 resource.localId(), fetchResourceOptions);
@@ -774,7 +775,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 
     fetchResourceOptions = FetchResourceOptions{};
 
-    for (auto resource: qAsConst(resources)) {
+    for (auto resource: std::as_const(resources)) {
         if (resource.data()) {
             resource.mutableData()->setBody(std::nullopt);
         }
@@ -802,7 +803,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
     }
 
     QFutureSynchronizer<void> expungeResourcesSynchronizer;
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         auto expungeResourceByLocalIdFuture =
             resourcesHandler->expungeResourceByLocalId(resource.localId());
         expungeResourcesSynchronizer.addFuture(expungeResourceByLocalIdFuture);

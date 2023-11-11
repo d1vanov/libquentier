@@ -51,6 +51,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <utility>
 
 // clazy:excludeall=returning-void-expression
 
@@ -986,7 +987,7 @@ TEST_F(
     highUsn.waitForFinished();
     EXPECT_EQ(highUsn.result(), smallestUsn - 1);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
             linkedNotebookGuid);
 
@@ -1043,7 +1044,7 @@ TEST_F(
     const int resourcePerNoteCount = 3;
     const int tagCount = 3;
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids))
     {
         auto notebooks =
             createNotebooks(notebookCount, smallestUsn, linkedNotebookGuid);

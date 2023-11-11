@@ -46,6 +46,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace quentier::local_storage::sql {
 
@@ -245,7 +246,7 @@ bool Patch1To2::applySync(
             std::max(1.0, static_cast<double>(numResources));
 
         int processedResourceCounter = 0;
-        for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
+        for (const auto & resourceLocalId: std::as_const(resourceLocalIds)) {
             QSqlQuery query{database};
 
             const bool res =

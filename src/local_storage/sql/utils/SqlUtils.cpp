@@ -80,7 +80,7 @@ QString toQuotedSqlList(const QStringList & items)
     QString result;
     QTextStream strm{&result};
 
-    for (const QString & item: qAsConst(items)) {
+    for (const QString & item: std::as_const(items)) {
         strm << "'" << sqlEscape(item) << "'";
         if (&item != items.constLast()) {
             strm << ", ";

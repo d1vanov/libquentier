@@ -47,6 +47,7 @@
 #include <QThreadPool>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::local_storage::sql {
 
@@ -525,7 +526,7 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
 
     ExpungeTagResult result;
 
-    for (const auto & childTagLocalId: qAsConst(childTagLocalIds)) {
+    for (const auto & childTagLocalId: std::as_const(childTagLocalIds)) {
         ErrorString error;
         const auto res = expungeTagByLocalIdImpl(
             childTagLocalId, database, error, std::nullopt,

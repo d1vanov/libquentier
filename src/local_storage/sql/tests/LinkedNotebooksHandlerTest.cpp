@@ -37,6 +37,8 @@
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
@@ -371,7 +373,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
     }
 
     QFutureSynchronizer<void> putLinkedNotebooksSynchronizer;
-    for (auto linkedNotebook: qAsConst(linkedNotebooks)) {
+    for (auto linkedNotebook: std::as_const(linkedNotebooks)) {
         auto putLinkedNotebookFuture =
             linkedNotebooksHandler->putLinkedNotebook(
                 std::move(linkedNotebook));
@@ -395,7 +397,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
         static_cast<int>(linkedNotebookCountFuture.result()),
         linkedNotebookCount);
 
-    for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
         auto foundByGuidLinkedNotebookFuture =
             linkedNotebooksHandler->findLinkedNotebookByGuid(
                 linkedNotebook.guid().value());
@@ -405,7 +407,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
         EXPECT_EQ(foundByGuidLinkedNotebookFuture.result(), linkedNotebook);
     }
 
-    for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
         auto expungeLinkedNotebookByGuidFuture =
             linkedNotebooksHandler->expungeLinkedNotebookByGuid(
                 linkedNotebook.guid().value());
@@ -424,7 +426,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
     linkedNotebookCountFuture.waitForFinished();
     EXPECT_EQ(linkedNotebookCountFuture.result(), 0U);
 
-    for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
         auto foundByGuidLinkedNotebookFuture =
             linkedNotebooksHandler->findLinkedNotebookByGuid(
                 linkedNotebook.guid().value());

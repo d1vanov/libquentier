@@ -36,6 +36,7 @@
 
 #include <sstream>
 #include <thread>
+#include <utility>
 
 namespace quentier::local_storage::sql {
 
@@ -62,7 +63,7 @@ ConnectionPool::ConnectionPool(
         error.details() += QStringLiteral("; available SQL drivers: ");
 
         const QStringList drivers = QSqlDatabase::drivers();
-        for (const auto & driver: qAsConst(drivers)) {
+        for (const auto & driver: std::as_const(drivers)) {
             error.details() += driver;
             if (&driver != &drivers.back()) {
                 error.details() += QStringLiteral(", ");

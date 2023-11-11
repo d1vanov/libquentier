@@ -43,6 +43,8 @@
 #include <QSqlRecord>
 #include <QThreadPool>
 
+#include <utility>
+
 namespace quentier::local_storage::sql {
 
 LinkedNotebooksHandler::LinkedNotebooksHandler(
@@ -341,7 +343,7 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
             "database: failed to commit transaction"),
         false);
 
-    for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
+    for (const auto & noteLocalId: std::as_const(noteLocalIds)) {
         if (!utils::removeResourceDataFilesForNote(
                 m_localStorageDir, noteLocalId, errorDescription))
         {

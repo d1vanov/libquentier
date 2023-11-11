@@ -23,6 +23,8 @@
 #include <QString>
 #include <QTextStream>
 
+#include <utility>
+
 class QSqlDatabase;
 class QStringList;
 class QVariant;
@@ -76,7 +78,7 @@ template <class T>
             QTextStream strm{&condition};
             strm << "linkedNotebookGuid IN (";
             for (const qevercloud::Guid & linkedNotebookGuid:
-                 qAsConst(options.m_linkedNotebookGuids))
+                 std::as_const(options.m_linkedNotebookGuids))
             {
                 strm << "'" << utils::sqlEscape(linkedNotebookGuid) << "'";
                 if (&linkedNotebookGuid !=

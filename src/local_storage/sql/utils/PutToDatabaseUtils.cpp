@@ -51,6 +51,7 @@
 #include <QStringList>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -82,7 +83,7 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
         putNoteOptions.testFlag(PutNoteOption::PutResourceMetadata))
     {
         const auto & resources = *note.resources();
-        for (const auto & resource: qAsConst(resources)) {
+        for (const auto & resource: std::as_const(resources)) {
             if (Q_UNLIKELY(resource.noteGuid())) {
                 errorDescription.setBase(
                     QStringLiteral("note's guid is being cleared but one of "
@@ -185,7 +186,7 @@ struct NoteTagIds
     if (hasTagLocalIds) {
         result.tagLocalIds = std::move(tagLocalIds);
         ErrorString error;
-        for (const QString & localId: qAsConst(result.tagLocalIds)) {
+        for (const QString & localId: std::as_const(result.tagLocalIds)) {
             qevercloud::Tag tag;
             tag.setLocalId(localId);
             auto guid = tagGuid(tag, database, error);
@@ -200,7 +201,7 @@ struct NoteTagIds
     else {
         result.tagGuids = note.tagGuids().value();
         ErrorString error;
-        for (const auto & guid: qAsConst(result.tagGuids)) {
+        for (const auto & guid: std::as_const(result.tagGuids)) {
             QString localId = tagLocalIdByGuid(guid, database, error);
             if (localId.isEmpty() && !error.isEmpty()) {
                 errorDescription = std::move(error);
@@ -246,7 +247,7 @@ struct NoteTagIds
 {
     QStringList resourceLocalIds;
     resourceLocalIds.reserve(resources.size());
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         resourceLocalIds << resource.localId();
     }
 
@@ -259,7 +260,7 @@ void removeStaleNoteResourceDataFiles(
 {
     ErrorString error;
     QString actualVersionId;
-    for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
+    for (const auto & resourceLocalId: std::as_const(resourceLocalIds)) {
         actualVersionId.resize(0);
         error.clear();
         if (findResourceDataBodyVersionId(
@@ -310,7 +311,7 @@ void removeStaleNoteResourceDataFiles(
 
     int index = 0;
     const auto & noteLocalId = note.localId();
-    for (const auto & tagLocalId: qAsConst(noteTagIds.tagLocalIds)) {
+    for (const auto & tagLocalId: std::as_const(noteTagIds.tagLocalIds)) {
         query.bindValue(QStringLiteral(":localNote"), noteLocalId);
 
         query.bindValue(
@@ -387,7 +388,7 @@ void removeStaleNoteResourceDataFiles(
             "Can't bind resource ids to note: failed to prepare query"),
         false);
 
-    for (const auto & resource: qAsConst(*note.resources())) {
+    for (const auto & resource: std::as_const(*note.resources())) {
         query.bindValue(QStringLiteral(":localNote"), resource.noteLocalId());
 
         query.bindValue(
@@ -1519,7 +1520,7 @@ bool putNotebook(
             !notebook.sharedNotebooks()->isEmpty()) {
             int indexInNotebook = 0;
             for (const auto & sharedNotebook:
-                 qAsConst(*notebook.sharedNotebooks())) {
+                 std::as_const(*notebook.sharedNotebooks())) {
                 if (!sharedNotebook.id()) {
                     QNWARNING(
                         "local_storage::sql::utils",
@@ -2911,10 +2912,10 @@ bool putResourceRecognitionData(
     const auto items = recoIndices.items();
     const int numItems = items.size();
     for (int i = 0; i < numItems; ++i) {
-        const ResourceRecognitionIndexItem & item = qAsConst(items)[i];
+        const ResourceRecognitionIndexItem & item = std::as_const(items)[i];
 
         auto textItems = item.textItems();
-        for (const auto & textItem: qAsConst(textItems)) {
+        for (const auto & textItem: std::as_const(textItems)) {
             recognitionData += textItem.m_text + QStringLiteral(" ");
         }
     }
@@ -3491,7 +3492,7 @@ bool putSharedNotes(
         false);
 
     int indexInNote = 0;
-    for (const auto & sharedNote: qAsConst(sharedNotes)) {
+    for (const auto & sharedNote: std::as_const(sharedNotes)) {
         query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
 
         query.bindValue(
@@ -3887,7 +3888,7 @@ bool putNote(
         const QString & noteLocalId = note.localId();
         if (needToRemoveResourceDataFiles) {
             for (const auto & resourceLocalId:
-                 qAsConst(originalNoteResourceLocalIds)) {
+                 std::as_const(originalNoteResourceLocalIds)) {
                 error.clear();
                 if (!removeResourceDataFiles(
                         localStorageDir, noteLocalId, resourceLocalId, error))

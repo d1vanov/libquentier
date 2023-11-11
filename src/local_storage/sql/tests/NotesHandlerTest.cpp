@@ -54,6 +54,7 @@
 #include <array>
 #include <iterator>
 #include <string>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -972,7 +973,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
         if (!note.tagLocalIds().isEmpty()) {
             int index = 0;
-            for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+            for (const auto & tagLocalId: std::as_const(note.tagLocalIds())) {
                 qevercloud::Tag tag;
                 tag.setLocalId(tagLocalId);
                 if (note.tagGuids() && !note.tagGuids()->isEmpty()) {
@@ -986,7 +987,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
             }
         }
         else if (note.tagGuids() && !note.tagGuids()->isEmpty()) {
-            for (const auto & tagGuid: qAsConst(*note.tagGuids())) {
+            for (const auto & tagGuid: std::as_const(*note.tagGuids())) {
                 qevercloud::Tag tag;
                 tag.setGuid(tagGuid);
 
@@ -1023,7 +1024,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 1U);
 
-    for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+    for (const auto & tagLocalId: std::as_const(note.tagLocalIds())) {
         noteCountFuture =
             notesHandler->noteCountPerTagLocalId(tagLocalId, noteCountOptions);
 
@@ -1165,7 +1166,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         noteCountFuture.waitForFinished();
         EXPECT_EQ(noteCountFuture.result(), 0U);
 
-        for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+        for (const auto & tagLocalId: std::as_const(note.tagLocalIds())) {
             noteCountFuture = notesHandler->noteCountPerTagLocalId(
                 tagLocalId, noteCountOptions);
 
@@ -1373,7 +1374,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         {
             if (!note.tagLocalIds().isEmpty()) {
                 int index = 0;
-                for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+                for (const auto & tagLocalId: std::as_const(note.tagLocalIds()))
+                {
                     qevercloud::Tag tag;
                     tag.setLocalId(tagLocalId);
                     if (note.tagGuids() && !note.tagGuids()->isEmpty()) {
@@ -1392,7 +1394,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
                 }
             }
             else if (note.tagGuids() && !note.tagGuids()->isEmpty()) {
-                for (const auto & tagGuid: qAsConst(*note.tagGuids())) {
+                for (const auto & tagGuid: std::as_const(*note.tagGuids())) {
                     qevercloud::Tag tag;
                     tag.setGuid(tagGuid);
 
@@ -1432,14 +1434,14 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
 
     QStringList allTagLocalIds;
     int notesWithTagLocalIds = 0;
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         allTagLocalIds << note.tagLocalIds();
         if (!note.tagLocalIds().isEmpty()) {
             ++notesWithTagLocalIds;
         }
     }
 
-    for (const auto & tagLocalId: qAsConst(allTagLocalIds)) {
+    for (const auto & tagLocalId: std::as_const(allTagLocalIds)) {
         noteCountFuture =
             notesHandler->noteCountPerTagLocalId(tagLocalId, noteCountOptions);
 
@@ -1467,7 +1469,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         FetchNoteOption::WithResourceMetadata |
         FetchNoteOption::WithResourceBinaryData;
 
-    for (auto note: qAsConst(notes)) {
+    for (auto note: std::as_const(notes)) {
         auto foundByLocalIdNoteFuture =
             notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
@@ -1496,7 +1498,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         EXPECT_EQ(foundByGuidNoteFuture.result(), note);
     }
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         auto expungeNoteByLocalIdFuture =
             notesHandler->expungeNoteByLocalId(note.localId());
         expungeNoteByLocalIdFuture.waitForFinished();
@@ -1509,7 +1511,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 0U);
 
-    for (const auto & tagLocalId: qAsConst(allTagLocalIds)) {
+    for (const auto & tagLocalId: std::as_const(allTagLocalIds)) {
         noteCountFuture =
             notesHandler->noteCountPerTagLocalId(tagLocalId, noteCountOptions);
 
@@ -1530,7 +1532,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 0U);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         auto foundByLocalIdNoteFuture =
             notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
@@ -2254,7 +2256,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
         m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    for (const auto & notebook: qAsConst(*gNotebooksForListGuidsTest)) {
+    for (const auto & notebook: std::as_const(*gNotebooksForListGuidsTest)) {
         auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
         putNotebookFuture.waitForFinished();
     }
@@ -2263,7 +2265,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
         m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    for (const auto & note: qAsConst(gNotesForListGuidsTest)) {
+    for (const auto & note: std::as_const(gNotesForListGuidsTest)) {
         auto putNoteFuture = notesHandler->putNote(note);
         putNoteFuture.waitForFinished();
     }
@@ -3086,7 +3088,7 @@ class NotesHandlerNoteSearchQueryTest :
             m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-        for (const auto & notebook: qAsConst(m_notebooks)) {
+        for (const auto & notebook: std::as_const(m_notebooks)) {
             auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
             putNotebookFuture.waitForFinished();
         }
@@ -3100,7 +3102,7 @@ class NotesHandlerNoteSearchQueryTest :
             m_connectionPool, m_threadPool, m_notifier,
             m_writerThread);
 
-        for (const auto & tag: qAsConst(m_tags)) {
+        for (const auto & tag: std::as_const(m_tags)) {
             auto putTagFuture = tagsHandler->putTag(tag);
             putTagFuture.waitForFinished();
         }
@@ -3114,7 +3116,7 @@ class NotesHandlerNoteSearchQueryTest :
             m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-        for (const auto & note: qAsConst(m_notes)) {
+        for (const auto & note: std::as_const(m_notes)) {
             auto putNoteFuture = notesHandler->putNote(note);
             putNoteFuture.waitForFinished();
         }
@@ -3468,11 +3470,11 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
                        << "unexpected result of note search query processing: ";
                    strm << "Expected note indices: ";
                    for (const int i:
-                        qAsConst(testData.expectedContainedNotesIndices)) {
+                        std::as_const(testData.expectedContainedNotesIndices)) {
                        strm << i << "; ";
                    }
                    strm << "received note indices: ";
-                   for (const int i: qAsConst(containedNoteIndices)) {
+                   for (const int i: std::as_const(containedNoteIndices)) {
                        strm << i << "; ";
                    }
 
@@ -3487,7 +3489,7 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
                    }
 
                    strm << "\nActual found notes: ";
-                   for (const auto & note: qAsConst(notes)) {
+                   for (const auto & note: std::as_const(notes)) {
                        strm << note << "\n";
                    }
 

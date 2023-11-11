@@ -46,6 +46,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace quentier::local_storage::sql {
 
@@ -261,8 +262,8 @@ bool Patch2To3::fixMissingGuidFields(
             }
         }
 
-        for (const auto it:
-             qevercloud::toRange(qAsConst(notebookGuidsByNotebookLocalIds)))
+        for (const auto it: qevercloud::toRange(
+                 std::as_const(notebookGuidsByNotebookLocalIds)))
         {
             const auto & notebookLocalId = it.key();
             const auto & notebookGuid = it.value();
@@ -356,7 +357,9 @@ bool Patch2To3::fixMissingGuidFields(
             }
         }
 
-        for (const auto it: qevercloud::toRange(qAsConst(tagGuidsByLocalId))) {
+        for (const auto it:
+             qevercloud::toRange(std::as_const(tagGuidsByLocalId)))
+        {
             const auto & tagLocalId = it.key();
             const auto & tagGuid = it.value();
 
@@ -449,7 +452,7 @@ bool Patch2To3::fixMissingGuidFields(
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(noteGuidsByNoteLocalIds)))
+             qevercloud::toRange(std::as_const(noteGuidsByNoteLocalIds)))
         {
             const auto & noteLocalId = it.key();
             const auto & noteGuid = it.value();
@@ -698,14 +701,15 @@ bool Patch2To3::updateResourcesStorage(
                     QDir::Dirs | QDir::NoDotAndDotDot);
 
             for (const auto & noteLocalIdSubdirInfo:
-                 qAsConst(resourceDataBodiesDirSubdirs))
+                 std::as_const(resourceDataBodiesDirSubdirs))
             {
                 QDir noteLocalIdSubdir{
                     noteLocalIdSubdirInfo.absoluteFilePath()};
                 const auto resourceFiles =
                     noteLocalIdSubdir.entryInfoList(QDir::Files);
 
-                for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
+                for (const auto & resourceDataBodyFile:
+                     std::as_const(resourceFiles))
                 {
                     if (!moveResourceBodyFile(
                             resourceDataBodyFile, ResourceBodyFileKind::Data))
@@ -726,14 +730,15 @@ bool Patch2To3::updateResourcesStorage(
                     QDir::Dirs | QDir::NoDotAndDotDot);
 
             for (const auto & noteLocalIdSubdirInfo:
-                 qAsConst(resourceAlternateDataBodiesDirSubdirs))
+                 std::as_const(resourceAlternateDataBodiesDirSubdirs))
             {
                 QDir noteLocalIdSubdir{
                     noteLocalIdSubdirInfo.absoluteFilePath()};
                 const auto resourceFiles =
                     noteLocalIdSubdir.entryInfoList(QDir::Files);
 
-                for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
+                for (const auto & resourceDataBodyFile:
+                     std::as_const(resourceFiles))
                 {
                     if (!moveResourceBodyFile(
                             resourceDataBodyFile,
@@ -792,11 +797,11 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
         resourceDataBodiesDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
 
     for (const auto & noteLocalIdSubdirInfo:
-         qAsConst(resourceDataBodiesDirSubdirs))
+         std::as_const(resourceDataBodiesDirSubdirs))
     {
         QDir noteLocalIdSubdir{noteLocalIdSubdirInfo.absoluteFilePath()};
         const auto resourceFiles = noteLocalIdSubdir.entryInfoList(QDir::Files);
-        for (const auto & resourceDataBodyFile: qAsConst(resourceFiles)) {
+        for (const auto & resourceDataBodyFile: std::as_const(resourceFiles)) {
             if (resourceDataBodyFile.completeSuffix() != QStringLiteral("dat"))
             {
                 continue;
@@ -816,12 +821,12 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
             QDir::Dirs | QDir::NoDotAndDotDot);
 
     for (const auto & noteLocalIdSubdirInfo:
-         qAsConst(resourceAlternateDataBodiesDirSubdirs))
+         std::as_const(resourceAlternateDataBodiesDirSubdirs))
     {
         QDir noteLocalIdSubdir{noteLocalIdSubdirInfo.absoluteFilePath()};
         const auto resourceFiles = noteLocalIdSubdir.entryInfoList(QDir::Files);
         for (const auto & resourceAlternateDataBodyFile:
-             qAsConst(resourceFiles))
+             std::as_const(resourceFiles))
         {
             if (resourceAlternateDataBodyFile.completeSuffix() !=
                 QStringLiteral("dat"))
@@ -928,7 +933,8 @@ bool Patch2To3::putVersionIdsToDatabase(
     auto database = m_connectionPool->database();
     Transaction transaction{database, Transaction::Type::Exclusive};
 
-    for (const auto it: qevercloud::toRange(qAsConst(resourceVersionIds))) {
+    for (const auto it: qevercloud::toRange(std::as_const(resourceVersionIds)))
+    {
         const auto & resourceLocalId = it.key();
         const auto & resourceBodyVersionIds = it.value();
 

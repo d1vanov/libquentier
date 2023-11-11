@@ -41,6 +41,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -578,7 +579,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
     savedSearchCountFuture.waitForFinished();
     EXPECT_EQ(savedSearchCountFuture.result(), savedSearches.size());
 
-    for (const auto & savedSearch: qAsConst(savedSearches)) {
+    for (const auto & savedSearch: std::as_const(savedSearches)) {
         auto foundByLocalIdSavedSearchFuture =
             savedSearchesHandler->findSavedSearchByLocalId(
                 savedSearch.localId());
@@ -604,7 +605,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
         EXPECT_EQ(foundByNameSavedSearchFuture.result(), savedSearch);
     }
 
-    for (const auto & savedSearch: qAsConst(savedSearches)) {
+    for (const auto & savedSearch: std::as_const(savedSearches)) {
         auto expungeSavedSearchByLocalIdFuture =
             savedSearchesHandler->expungeSavedSearchByLocalId(
                 savedSearch.localId());
@@ -621,7 +622,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
     savedSearchCountFuture.waitForFinished();
     EXPECT_EQ(savedSearchCountFuture.result(), 0U);
 
-    for (const auto & savedSearch: qAsConst(savedSearches)) {
+    for (const auto & savedSearch: std::as_const(savedSearches)) {
         auto foundByLocalIdSavedSearchFuture =
             savedSearchesHandler->findSavedSearchByLocalId(
                 savedSearch.localId());
@@ -806,7 +807,9 @@ TEST_P(SavedSearchesHandlerListGuidsTest, ListSavedSearchGuids)
         m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
-    for (const auto & savedSearch: qAsConst(gSavedSearchesForListGuidsTest)) {
+    for (const auto & savedSearch:
+         std::as_const(gSavedSearchesForListGuidsTest))
+    {
         auto putSavedSearchFuture =
             savedSearchesHandler->putSavedSearch(savedSearch);
 

@@ -46,6 +46,7 @@
 
 #include <array>
 #include <iterator>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -580,7 +581,7 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
 
     QStringList linkedNotebookGuids;
     auto tags = gTagTestValues;
-    for (const auto & tag: qAsConst(tags)) {
+    for (const auto & tag: std::as_const(tags)) {
         if (tag.linkedNotebookGuid()) {
             linkedNotebookGuids << *tag.linkedNotebookGuid();
         }
@@ -591,7 +592,7 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
             m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         qevercloud::LinkedNotebook linkedNotebook;
         linkedNotebook.setGuid(linkedNotebookGuid);
 
@@ -1063,7 +1064,7 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
     tag4.setName(QStringLiteral("Tag 4"));
 
     auto tags = QList<qevercloud::Tag>{} << tag1 << tag2 << tag3 << tag4;
-    for (const auto & tag: qAsConst(tags)) {
+    for (const auto & tag: std::as_const(tags)) {
         auto putTagFuture = tagsHandler->putTag(tag);
         putTagFuture.waitForFinished();
     }
@@ -1208,7 +1209,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
     tag4.setLinkedNotebookGuid(linkedNotebook1.guid());
 
     auto tags = QList<qevercloud::Tag>{} << tag1 << tag2 << tag3 << tag4;
-    for (const auto & tag: qAsConst(tags)) {
+    for (const auto & tag: std::as_const(tags)) {
         auto putTagFuture = tagsHandler->putTag(tag);
         putTagFuture.waitForFinished();
     }
@@ -1738,7 +1739,7 @@ TEST_P(TagsHandlerListGuidsTest, ListTagGuids)
         m_connectionPool, m_threadPool, m_notifier,
         m_writerThread);
 
-    for (const auto & tag: qAsConst(gTagsForListGuidsTest)) {
+    for (const auto & tag: std::as_const(gTagsForListGuidsTest)) {
         auto putTagFuture = tagsHandler->putTag(tag);
         putTagFuture.waitForFinished();
     }

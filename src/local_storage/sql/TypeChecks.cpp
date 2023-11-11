@@ -33,6 +33,8 @@
 
 #include <QRegularExpression>
 
+#include <utility>
+
 namespace quentier::local_storage::sql {
 
 bool checkLinkedNotebook(
@@ -221,7 +223,9 @@ bool checkNote(
             const auto & applicationData = *attributes.applicationData();
 
             if (applicationData.keysOnly()) {
-                for (const auto & key: qAsConst(*applicationData.keysOnly())) {
+                for (const auto & key:
+                     std::as_const(*applicationData.keysOnly()))
+                {
                     int keySize = key.size();
                     if ((keySize <
                          qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) ||
@@ -347,7 +351,8 @@ bool checkNotebook(
 
     if (notebook.sharedNotebooks()) {
         for (const auto & sharedNotebook:
-             ::qAsConst(*notebook.sharedNotebooks())) {
+             std::as_const(*notebook.sharedNotebooks()))
+        {
             if (!sharedNotebook.id()) {
                 errorDescription.setBase(QStringLiteral(
                     "Notebook has shared notebook without share id set"));
@@ -766,7 +771,8 @@ bool checkUser(
             const QStringList & viewedPromotions =
                 *attributes.viewedPromotions();
 
-            for (const auto & viewedPromotion: qAsConst(viewedPromotions)) {
+            for (const auto & viewedPromotion: std::as_const(viewedPromotions))
+            {
                 int viewedPromotionSize = viewedPromotion.size();
                 if ((viewedPromotionSize >
                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
@@ -818,7 +824,7 @@ bool checkUser(
             }
 
             for (const auto & recentMailedAddress:
-                 qAsConst(recentMailedAddresses)) {
+                 std::as_const(recentMailedAddresses)) {
                 int recentMailedAddressSize = recentMailedAddress.size();
                 if ((recentMailedAddressSize >
                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||

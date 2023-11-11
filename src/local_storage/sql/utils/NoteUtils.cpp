@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <utility>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -95,7 +96,7 @@ namespace {
 
         QStringList result;
         result.reserve(std::max(tagNames.size(), 0));
-        for (const auto & tagName: qAsConst(tagNames)) {
+        for (const auto & tagName: std::as_const(tagNames)) {
             errorDescription.clear();
             auto tagLocalId = tagLocalIdByName(
                 tagName, std::nullopt, database, errorDescription);
@@ -682,7 +683,7 @@ void contentSearchTermToSqlQueryParts(
         }
 
         strm << "(";
-        for (const auto & item: qAsConst(items)) {
+        for (const auto & item: std::as_const(items)) {
             if (negated == Negated::Yes) {
                 strm << "(localUid NOT IN ";
             }

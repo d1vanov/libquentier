@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,6 +38,8 @@
 #endif
 
 #include <QTemporaryDir>
+
+#include <utility>
 
 namespace quentier::local_storage::sql::tests {
 
@@ -94,7 +96,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     QDir dir{localStorageDirPath};
     auto dirInfos = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     EXPECT_FALSE(dirInfos.isEmpty());
-    for (const auto & dirInfo: qAsConst(dirInfos)) {
+    for (const auto & dirInfo: std::as_const(dirInfos)) {
         if (dirInfo.fileName().startsWith(backupDirPrefix)) {
             QDir backupDir{dir.absoluteFilePath(dirInfo.fileName())};
 
@@ -102,7 +104,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
                 backupDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
             EXPECT_FALSE(files.isEmpty());
 
-            for (const auto & file: qAsConst(files)) {
+            for (const auto & file: std::as_const(files)) {
                 EXPECT_TRUE(file.fileName().startsWith(gTestDatabaseFileName));
             }
 
@@ -128,7 +130,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     EXPECT_FALSE(fileInfos.isEmpty());
     bool foundRestoredFromBackupLocalStorage = false;
 
-    for (const auto & fileInfo: qAsConst(fileInfos)) {
+    for (const auto & fileInfo: std::as_const(fileInfos)) {
         if (fileInfo.fileName() == gTestDatabaseFileName) {
             foundRestoredFromBackupLocalStorage = true;
             break;
@@ -136,7 +138,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     }
 
     dirInfos = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const auto & dirInfo: qAsConst(dirInfos)) {
+    for (const auto & dirInfo: std::as_const(dirInfos)) {
         if (dirInfo.fileName().startsWith(backupDirPrefix)) {
             QDir backupDir{dir.absoluteFilePath(dirInfo.fileName())};
 
@@ -144,7 +146,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
                 backupDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
             EXPECT_FALSE(files.isEmpty());
 
-            for (const auto & file: qAsConst(files)) {
+            for (const auto & file: std::as_const(files)) {
                 EXPECT_TRUE(file.fileName().startsWith(gTestDatabaseFileName));
             }
 
@@ -169,7 +171,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     foundLocalStorageBackup = false;
     foundRestoredFromBackupLocalStorage = false;
 
-    for (const auto & entryInfo: qAsConst(entries)) {
+    for (const auto & entryInfo: std::as_const(entries)) {
         if (entryInfo.fileName().startsWith(backupDirPrefix)) {
             foundLocalStorageBackup = true;
             break;

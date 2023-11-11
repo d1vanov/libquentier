@@ -29,6 +29,8 @@
 #include <QSqlQuery>
 #include <QTextStream>
 
+#include <utility>
+
 namespace quentier::local_storage::sql::utils {
 
 namespace {
@@ -94,7 +96,7 @@ void removeStaleResourceBodyFiles(
     const auto entries =
         resourceDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
-    for (const auto & entry: qAsConst(entries)) {
+    for (const auto & entry: std::as_const(entries)) {
         if (entry.baseName() == actualVersionId) {
             continue;
         }

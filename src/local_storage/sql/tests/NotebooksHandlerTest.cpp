@@ -46,6 +46,7 @@
 
 #include <array>
 #include <iterator>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -894,7 +895,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
             m_connectionPool, m_threadPool, m_notifier,
             m_writerThread, m_temporaryDir.path());
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         qevercloud::LinkedNotebook linkedNotebook;
         linkedNotebook.setGuid(linkedNotebookGuid);
 
@@ -1835,7 +1836,7 @@ TEST_P(NotebooksHandlerListGuidsTest, ListNotebookGuids)
         m_connectionPool, m_threadPool, m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    for (const auto & notebook: qAsConst(gNotebooksForListGuidsTest)) {
+    for (const auto & notebook: std::as_const(gNotebooksForListGuidsTest)) {
         auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
         putNotebookFuture.waitForFinished();
     }

@@ -38,6 +38,8 @@
 #include <QSqlRecord>
 #include <QThreadPool>
 
+#include <utility>
+
 namespace quentier::local_storage::sql {
 
 namespace {
@@ -205,7 +207,7 @@ std::optional<qint32>
     }
 
     qint32 updateSequenceNumber = 0;
-    for (const auto & requestData: qAsConst(tablesAndUsnColumns)) {
+    for (const auto & requestData: std::as_const(tablesAndUsnColumns)) {
         auto usn = updateSequenceNumberFromTable(
             requestData.m_tableName, requestData.m_usnColumnName,
             requestData.m_queryCondition, database, errorDescription);

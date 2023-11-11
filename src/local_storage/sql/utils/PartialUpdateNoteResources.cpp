@@ -34,6 +34,8 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 
+#include <utility>
+
 namespace quentier::local_storage::sql::utils {
 
 namespace {
@@ -114,7 +116,9 @@ void classifyNoteResources(
     QList<qevercloud::Resource> & addedResources,   // NOLINT
     QList<qevercloud::Resource> & updatedResources) // NOLINT
 {
-    for (const auto & previousNoteResource: qAsConst(previousNoteResources)) {
+    for (const auto & previousNoteResource:
+         std::as_const(previousNoteResources))
+    {
         const auto updatedResourceIt = std::find_if(
             updatedNoteResources.constBegin(), updatedNoteResources.constEnd(),
             [&previousNoteResource](
@@ -135,7 +139,7 @@ void classifyNoteResources(
         }
     }
 
-    for (const auto & updatedResource: qAsConst(updatedNoteResources)) {
+    for (const auto & updatedResource: std::as_const(updatedNoteResources)) {
         const auto previousResourceIt = std::find_if(
             previousNoteResources.constBegin(),
             previousNoteResources.constEnd(),
@@ -297,8 +301,12 @@ bool partialUpdateNoteResources(
         Q_ASSERT(previousNoteResources.size() == updatedNoteResources.size());
         QList<std::pair<QString, int>> localIdsAndIndexesInNoteToUpdate;
         for (int i = 0; i < previousNoteResources.size(); ++i) {
-            const auto & previousResource = qAsConst(previousNoteResources)[i];
-            const auto & updatedResource = qAsConst(updatedNoteResources)[i];
+            const auto & previousResource =
+                std::as_const(previousNoteResources)[i];
+
+            const auto & updatedResource =
+                std::as_const(updatedNoteResources)[i];
+
             if (previousResource.localId() != updatedResource.localId()) {
                 localIdsAndIndexesInNoteToUpdate
                     << std::make_pair(updatedResource.localId(), i);
@@ -323,7 +331,7 @@ bool partialUpdateNoteResources(
         return true;
     }
 
-    for (const auto & resource: qAsConst(addedResources)) {
+    for (const auto & resource: std::as_const(addedResources)) {
         ErrorString error;
         if (!checkResource(resource, error)) {
             errorDescription.setBase(QStringLiteral(
@@ -339,7 +347,7 @@ bool partialUpdateNoteResources(
         }
     }
 
-    for (const auto & resource: qAsConst(updatedResources)) {
+    for (const auto & resource: std::as_const(updatedResources)) {
         ErrorString error;
         if (!checkResource(resource, error)) {
             errorDescription.setBase(QStringLiteral(
@@ -383,8 +391,11 @@ bool partialUpdateNoteResources(
         // See whether indexes of remaining resources need to be updated
         int firstChangedIndex = -1;
         for (int i = 0; i < remainingResources.size(); ++i) {
-            const auto & remainingResource = qAsConst(remainingResources)[i];
-            const auto & previousResource = qAsConst(previousNoteResources)[i];
+            const auto & remainingResource =
+                std::as_const(remainingResources)[i];
+
+            const auto & previousResource =
+                std::as_const(previousNoteResources)[i];
 
             if (remainingResource.localId() != previousResource.localId()) {
                 firstChangedIndex = i;
@@ -397,7 +408,7 @@ bool partialUpdateNoteResources(
             for (int i = firstChangedIndex; i < remainingResources.size(); ++i)
             {
                 const auto & remainingResource =
-                    qAsConst(remainingResources)[i];
+                    std::as_const(remainingResources)[i];
 
                 localIdsAndIndexesInNoteToUpdate
                     << std::make_pair(remainingResource.localId(), i);
