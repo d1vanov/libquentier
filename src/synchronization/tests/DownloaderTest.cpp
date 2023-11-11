@@ -71,6 +71,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -273,7 +274,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.notes()) {
             result += syncChunk.notes()->size();
         }
@@ -285,7 +286,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.expungedNotes()) {
             result += syncChunk.expungedNotes()->size();
         }
@@ -297,7 +298,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.resources()) {
             result += syncChunk.resources()->size();
         }
@@ -309,7 +310,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.notebooks()) {
             result += syncChunk.notebooks()->size();
         }
@@ -321,7 +322,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.expungedNotebooks()) {
             result += syncChunk.expungedNotebooks()->size();
         }
@@ -333,7 +334,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.tags()) {
             result += syncChunk.tags()->size();
         }
@@ -345,7 +346,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.expungedTags()) {
             result += syncChunk.expungedTags()->size();
         }
@@ -357,7 +358,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.searches()) {
             result += syncChunk.searches()->size();
         }
@@ -369,7 +370,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.expungedSearches()) {
             result += syncChunk.expungedSearches()->size();
         }
@@ -381,7 +382,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.linkedNotebooks()) {
             result += syncChunk.linkedNotebooks()->size();
         }
@@ -393,7 +394,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     qint32 result = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.expungedLinkedNotebooks()) {
             result += syncChunk.expungedLinkedNotebooks()->size();
         }
@@ -600,7 +601,7 @@ void checkSyncChunksDataCountersUpdate(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
     QList<qevercloud::LinkedNotebook> result;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.linkedNotebooks()) {
             result << *syncChunk.linkedNotebooks();
         }
@@ -613,27 +614,28 @@ void checkSyncChunksDataCountersUpdate(
 {
     IFullSyncStaleDataExpunger::PreservedGuids preservedGuids;
 
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.notebooks()) {
-            for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
+            for (const auto & notebook: std::as_const(*syncChunk.notebooks())) {
                 preservedGuids.notebookGuids << notebook.guid().value();
             }
         }
 
         if (syncChunk.notes()) {
-            for (const auto & note: qAsConst(*syncChunk.notes())) {
+            for (const auto & note: std::as_const(*syncChunk.notes())) {
                 preservedGuids.noteGuids << note.guid().value();
             }
         }
 
         if (syncChunk.tags()) {
-            for (const auto & tag: qAsConst(*syncChunk.tags())) {
+            for (const auto & tag: std::as_const(*syncChunk.tags())) {
                 preservedGuids.tagGuids << tag.guid().value();
             }
         }
 
         if (syncChunk.searches()) {
-            for (const auto & savedSearch: qAsConst(*syncChunk.searches())) {
+            for (const auto & savedSearch: std::as_const(*syncChunk.searches()))
+            {
                 preservedGuids.savedSearchGuids << savedSearch.guid().value();
             }
         }
@@ -648,12 +650,12 @@ void emulateSyncChunksNotesProcessing(
     DownloadNotesStatus & downloadNotesStatus)
 {
     quint64 noteIndex = 0UL;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (!syncChunk.notes()) {
             continue;
         }
 
-        for (const auto & note: qAsConst(*syncChunk.notes())) {
+        for (const auto & note: std::as_const(*syncChunk.notes())) {
             if (noteIndex % 4 == 0) {
                 const auto noteGuid = note.guid().value();
                 const auto noteUsn = note.updateSequenceNum().value();
@@ -713,13 +715,13 @@ void emulateSyncChunksNotesProcessing(
         noteIndex - downloadNotesStatus.m_totalNewNotes;
 
     noteIndex = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (!syncChunk.expungedNotes()) {
             continue;
         }
 
         for (const auto & expungedNoteGuid:
-             qAsConst(*syncChunk.expungedNotes())) {
+             std::as_const(*syncChunk.expungedNotes())) {
             if (noteIndex % 2 == 0) {
                 if (callback) {
                     callback->onExpungedNote(expungedNoteGuid);
@@ -756,12 +758,12 @@ void emulateSyncChunksResourcesProcessing(
     DownloadResourcesStatus & downloadResourcesStatus)
 {
     quint64 resourceIndex = 0UL;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (!syncChunk.resources()) {
             continue;
         }
 
-        for (const auto & resource: qAsConst(*syncChunk.resources())) {
+        for (const auto & resource: std::as_const(*syncChunk.resources())) {
             if (resourceIndex % 4 == 0) {
                 const auto resourceGuid = resource.guid().value();
                 const auto resourceUsn = resource.updateSequenceNum().value();
@@ -1348,7 +1350,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 if (testData.m_syncMode == SyncMode::FullNonFirst) {
                     syncState->m_userDataLastSyncTime = now;
                 }
-                for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+                for (const auto & linkedNotebook:
+                     std::as_const(linkedNotebooks)) {
                     Q_ASSERT(linkedNotebook.guid());
                     const auto & guid = *linkedNotebook.guid();
                     syncState->m_linkedNotebookUpdateCounts[guid] =
@@ -1415,7 +1418,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     const qint32 lastPreviousUsn = afterUsn;
                     const qint32 highestServerUsn =
                         syncChunks.last().chunkHighUSN().value();
-                    for (const auto & syncChunk: qAsConst(syncChunks)) {
+                    for (const auto & syncChunk: std::as_const(syncChunks)) {
                         callback->onUserOwnSyncChunksDownloadProgress(
                             syncChunk.chunkHighUSN().value(), highestServerUsn,
                             lastPreviousUsn);
@@ -1432,7 +1435,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
         const qint32 highestServerUsn =
             syncChunks.last().chunkHighUSN().value();
-        for (const auto & syncChunk: qAsConst(syncChunks)) {
+        for (const auto & syncChunk: std::as_const(syncChunks)) {
             EXPECT_CALL(
                 *mockDownloaderCallback,
                 onSyncChunksDownloadProgress(
@@ -1692,7 +1695,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
     QHash<qevercloud::Guid, LinkedNotebookData> linkedNotebooksData;
     linkedNotebooksData.reserve(linkedNotebooks.size());
 
-    for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
         const auto linkedNotebookSyncChunks = generateSyncChunks(
             SyncChunksFlags{} | SyncChunksFlag::WithNotebooks |
                 SyncChunksFlag::WithNotes | SyncChunksFlag::WithResources |
@@ -1778,7 +1781,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     const qint32 highestServerUsn =
                         linkedNotebookSyncChunks.last().chunkHighUSN().value();
                     for (const auto & syncChunk:
-                         qAsConst(linkedNotebookSyncChunks)) {
+                         std::as_const(linkedNotebookSyncChunks)) {
                         callback->onLinkedNotebookSyncChunksDownloadProgress(
                             syncChunk.chunkHighUSN().value(), highestServerUsn,
                             lastPreviousUsn, ln);
@@ -1792,7 +1795,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
         const qint32 lastPreviousUsn = linkedNotebookAfterUsn;
         const qint32 highestServerUsn =
             linkedNotebookSyncChunks.last().chunkHighUSN().value();
-        for (const auto & syncChunk: qAsConst(linkedNotebookSyncChunks)) {
+        for (const auto & syncChunk: std::as_const(linkedNotebookSyncChunks)) {
             EXPECT_CALL(
                 *mockDownloaderCallback,
                 onLinkedNotebookSyncChunksDownloadProgress(
@@ -2056,7 +2059,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
     // Check data from linked notebooks status
     EXPECT_EQ(status.linkedNotebookResults.size(), linkedNotebooks.size());
 
-    for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
         const auto & linkedNotebookGuid = linkedNotebook.guid().value();
 
         const auto it =

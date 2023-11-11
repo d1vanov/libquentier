@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <array>
 #include <optional>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -187,7 +188,7 @@ protected:
         const auto entries =
             dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-        for (const auto & entry: qAsConst(entries)) {
+        for (const auto & entry: std::as_const(entries)) {
             if (entry.isDir()) {
                 ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
             }
@@ -246,7 +247,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
             const QList<qevercloud::Note> syncChunkNotes = [&] {
                 QList<qevercloud::Note> result;
-                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                for (const auto & syncChunk: std::as_const(syncChunks)) {
                     result << utils::collectNotesFromSyncChunk(syncChunk);
                 }
                 return result;
@@ -258,7 +259,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             status->m_totalNewNotes =
                 static_cast<quint64>(syncChunkNotes.size());
 
-            for (const auto & note: qAsConst(notes)) {
+            for (const auto & note: std::as_const(notes)) {
                 status->m_processedNoteGuidsAndUsns[note.guid().value()] =
                     note.updateSequenceNum().value();
 
@@ -281,7 +282,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
     EXPECT_EQ(status->m_totalNewNotes, notes.size());
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -302,7 +303,8 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
         utils::processedNotesInfoFromLastSync(lastSyncNotesDir);
     ASSERT_EQ(processedNotesInfo.size(), notes.size());
 
-    for (const auto it: qevercloud::toRange(qAsConst(processedNotesInfo))) {
+    for (const auto it: qevercloud::toRange(std::as_const(processedNotesInfo)))
+    {
         const auto sit = status->m_processedNoteGuidsAndUsns.find(it.key());
 
         EXPECT_NE(sit, status->m_processedNoteGuidsAndUsns.end());
@@ -340,7 +342,7 @@ TEST_F(
 
             const QList<qevercloud::Note> syncChunkNotes = [&] {
                 QList<qevercloud::Note> result;
-                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                for (const auto & syncChunk: std::as_const(syncChunks)) {
                     result << utils::collectNotesFromSyncChunk(syncChunk);
                 }
                 return result;
@@ -409,7 +411,7 @@ TEST_F(
 
             const QList<qevercloud::Guid> syncChunkExpungedNotes = [&] {
                 QList<qevercloud::Guid> result;
-                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                for (const auto & syncChunk: std::as_const(syncChunks)) {
                     result << utils::collectExpungedNoteGuidsFromSyncChunk(
                         syncChunk);
                 }
@@ -722,22 +724,22 @@ TEST_P(
     }
 
     if (!testData.m_expungedNoteGuids.isEmpty()) {
-        for (const auto & guid: qAsConst(testData.m_expungedNoteGuids)) {
+        for (const auto & guid: std::as_const(testData.m_expungedNoteGuids)) {
             utils::writeExpungedNote(guid, syncNotesDir);
         }
     }
 
     if (!testData.m_notesWhichFailedToDownloadDuringPreviousSync.isEmpty()) {
-        for (const auto & note:
-             qAsConst(testData.m_notesWhichFailedToDownloadDuringPreviousSync))
+        for (const auto & note: std::as_const(
+                 testData.m_notesWhichFailedToDownloadDuringPreviousSync))
         {
             utils::writeFailedToDownloadNote(note, syncNotesDir);
         }
     }
 
     if (!testData.m_notesWhichFailedToProcessDuringPreviousSync.isEmpty()) {
-        for (const auto & note:
-             qAsConst(testData.m_notesWhichFailedToProcessDuringPreviousSync))
+        for (const auto & note: std::as_const(
+                 testData.m_notesWhichFailedToProcessDuringPreviousSync))
         {
             utils::writeFailedToProcessNote(note, syncNotesDir);
         }
@@ -745,13 +747,14 @@ TEST_P(
 
     if (!testData.m_notesCancelledDuringPreviousSync.isEmpty()) {
         for (const auto & note:
-             qAsConst(testData.m_notesCancelledDuringPreviousSync)) {
+             std::as_const(testData.m_notesCancelledDuringPreviousSync))
+        {
             utils::writeCancelledNote(note, syncNotesDir);
         }
     }
 
     if (!testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync.isEmpty()) {
-        for (const auto & guid: qAsConst(
+        for (const auto & guid: std::as_const(
                  testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync))
         {
             utils::writeFailedToExpungeNote(guid, syncNotesDir);
@@ -804,7 +807,7 @@ TEST_P(
     DownloadNotesStatus currentNotesStatus;
     currentNotesStatus.m_totalNewNotes =
         static_cast<quint64>(std::max<int>(notes.size(), 0));
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         EXPECT_TRUE(note.guid());
         if (!note.guid()) {
             continue;
@@ -854,7 +857,8 @@ TEST_P(
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
                     if (callback) {
-                        for (const auto & syncChunk: qAsConst(syncChunks)) {
+                        for (const auto & syncChunk: std::as_const(syncChunks))
+                        {
                             if (!syncChunk.expungedNotes()) {
                                 continue;
                             }
@@ -883,7 +887,7 @@ TEST_P(
         previousNotesStatus->m_totalUpdatedNotes = static_cast<quint64>(
             std::max<int>(notesFromPreviousSync.size(), 0));
 
-        for (const auto & note: qAsConst(notesFromPreviousSync)) {
+        for (const auto & note: std::as_const(notesFromPreviousSync)) {
             EXPECT_TRUE(note.guid());
             if (!note.guid()) {
                 continue;
@@ -914,7 +918,8 @@ TEST_P(
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
                     if (callback) {
-                        for (const auto & syncChunk: qAsConst(syncChunks)) {
+                        for (const auto & syncChunk: std::as_const(syncChunks))
+                        {
                             if (!syncChunk.notes()) {
                                 continue;
                             }
@@ -993,7 +998,7 @@ TEST_P(
                     return;
                 }
 
-                for (const auto & note: qAsConst(notes)) {
+                for (const auto & note: std::as_const(notes)) {
                     EXPECT_TRUE(note.guid());
                     if (Q_UNLIKELY(!note.guid())) {
                         continue;

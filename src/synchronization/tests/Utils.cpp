@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
 // clazy:excludeall=returning-void-expression
 
 namespace quentier::synchronization::tests {
@@ -28,7 +30,7 @@ void compareGuidLists(
     const QList<qevercloud::Guid> & lhs, const QList<qevercloud::Guid> & rhs)
 {
     ASSERT_EQ(lhs.size(), rhs.size());
-    for (const auto & l: qAsConst(lhs)) {
+    for (const auto & l: std::as_const(lhs)) {
         EXPECT_TRUE(rhs.contains(l));
     }
 }

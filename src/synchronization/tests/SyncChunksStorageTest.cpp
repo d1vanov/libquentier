@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,6 +40,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <utility>
 
 // clazy:excludeall=returning-void-expression
 
@@ -201,7 +202,7 @@ void checkLinkedNotebookSyncChunksPersistenceIsNotEmpty(const QDir & dir)
     ASSERT_FALSE(dirEntries.isEmpty());
 
     bool foundLinkedNotebookDir = false;
-    for (const QFileInfo & entryInfo: qAsConst(dirEntries)) {
+    for (const QFileInfo & entryInfo: std::as_const(dirEntries)) {
         if (entryInfo.fileName() == QStringLiteral("user_own")) {
             continue;
         }
@@ -235,7 +236,7 @@ protected:
         const auto entries =
             dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-        for (const auto & entry: qAsConst(entries)) {
+        for (const auto & entry: std::as_const(entries)) {
             if (entry.isDir()) {
                 ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
             }
@@ -364,7 +365,7 @@ TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
     QList<std::pair<qint32, qint32>> expectedUsnsRange;
     expectedUsnsRange.reserve(syncChunkCount * linkedNotebookCount);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         for (int i = 0; i < syncChunkCount; ++i) {
             const auto syncChunk = generateSyncChunk(i * 18, (i + 1) * 18 - 1);
             const auto jsonObject = qevercloud::serializeToJson(syncChunk);
@@ -405,7 +406,7 @@ TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
     QList<std::pair<qint32, qint32>> usnsRange;
     usnsRange.reserve(syncChunkCount * linkedNotebookCount);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks << storage->fetchRelevantLinkedNotebookSyncChunks(
             linkedNotebookGuid, 0);
 
@@ -491,7 +492,7 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
     QHash<qevercloud::Guid, QList<std::pair<qint32, qint32>>>
         usnsRangePerLinkedNotebookGuid;
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks.clear();
         usnsRange.clear();
         for (int i = 0; i < syncChunkCount; ++i) {
@@ -508,7 +509,7 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
 
     checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         {
             const auto it =
                 syncChunksPerLinkedNotebookGuid.find(linkedNotebookGuid);
@@ -542,7 +543,7 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
     checkLinkedNotebookSyncChunksPersistenceIsNotEmpty(temporaryDir);
 
     // Also make sure that fetch continues to work after flushing
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         {
             const auto it =
                 syncChunksPerLinkedNotebookGuid.find(linkedNotebookGuid);
@@ -641,7 +642,7 @@ TEST_F(
     QList<std::pair<qint32, qint32>> usnsRange;
     usnsRange.reserve(syncChunkCount);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks.clear();
         usnsRange.clear();
         for (int i = 0; i < syncChunkCount; ++i) {
@@ -653,7 +654,7 @@ TEST_F(
         storage->putLinkedNotebookSyncChunks(linkedNotebookGuid, syncChunks);
     }
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         const auto newPutSyncChunks = QList<qevercloud::SyncChunk>{}
             << generateSyncChunk(36, 53);
 
@@ -794,7 +795,7 @@ TEST_F(
     QHash<qevercloud::Guid, QList<qevercloud::SyncChunk>>
         syncChunksPerLinkedNotebookGuid;
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks.clear();
         for (int i = 0; i < syncChunkCount; ++i) {
             syncChunks << generateSyncChunk(i * 18, (i + 1) * 18 - 1);
@@ -804,7 +805,7 @@ TEST_F(
         syncChunksPerLinkedNotebookGuid[linkedNotebookGuid] = syncChunks;
     }
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         const auto it =
             syncChunksPerLinkedNotebookGuid.find(linkedNotebookGuid);
 
@@ -843,7 +844,7 @@ TEST_F(
     QHash<qevercloud::Guid, QList<qevercloud::SyncChunk>>
         syncChunksPerLinkedNotebookGuid;
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks.clear();
         for (int i = 0; i < syncChunkCount; ++i) {
             syncChunks << generateSyncChunk(i * 18, (i + 1) * 18 - 1);
@@ -867,7 +868,7 @@ TEST_F(
         }
     };
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         const auto it =
             syncChunksPerLinkedNotebookGuid.find(linkedNotebookGuid);
 
@@ -969,7 +970,7 @@ TEST_F(SyncChunksStorageTest, ClearLinkedNotebookSyncChunks)
     QList<qevercloud::SyncChunk> syncChunks;
     syncChunks.reserve(syncChunkCount);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks.clear();
         for (int i = 0; i < syncChunkCount; ++i) {
             syncChunks << generateSyncChunk(i * 18, (i + 1) * 18 - 1);
@@ -977,7 +978,7 @@ TEST_F(SyncChunksStorageTest, ClearLinkedNotebookSyncChunks)
         storage->putLinkedNotebookSyncChunks(linkedNotebookGuid, syncChunks);
     }
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         auto fetchedSyncChunks = storage->fetchRelevantLinkedNotebookSyncChunks(
             linkedNotebookGuid, 0);
 
@@ -1027,7 +1028,7 @@ TEST_F(SyncChunksStorageTest, ClearAllSyncChunks)
 
     storage->putUserOwnSyncChunks(syncChunks);
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         syncChunks.clear();
         for (int i = 0; i < syncChunkCount; ++i) {
             syncChunks << generateSyncChunk(i * 18, (i + 1) * 18 - 1);
@@ -1041,7 +1042,7 @@ TEST_F(SyncChunksStorageTest, ClearAllSyncChunks)
     auto fetchedUsnsRange = storage->fetchUserOwnSyncChunksLowAndHighUsns();
     EXPECT_FALSE(fetchedUsnsRange.isEmpty());
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         fetchedSyncChunks = storage->fetchRelevantLinkedNotebookSyncChunks(
             linkedNotebookGuid, 0);
 
@@ -1061,7 +1062,7 @@ TEST_F(SyncChunksStorageTest, ClearAllSyncChunks)
     fetchedUsnsRange = storage->fetchUserOwnSyncChunksLowAndHighUsns();
     EXPECT_TRUE(fetchedUsnsRange.isEmpty());
 
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         fetchedSyncChunks = storage->fetchRelevantLinkedNotebookSyncChunks(
             linkedNotebookGuid, 0);
 

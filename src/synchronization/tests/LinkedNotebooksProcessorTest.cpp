@@ -39,6 +39,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -65,7 +66,7 @@ void compareLinkedNotebookLists(
 {
     ASSERT_EQ(lhs.size(), rhs.size());
 
-    for (const auto & l: qAsConst(lhs)) {
+    for (const auto & l: std::as_const(lhs)) {
         const auto it = std::find_if(
             rhs.constBegin(), rhs.constEnd(),
             [guid = l.guid().value()](const qevercloud::LinkedNotebook & r) {
@@ -299,7 +300,7 @@ TEST_F(
     const auto expungedLinkedNotebookGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(linkedNotebooks.size());
-        for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+        for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
             guids << linkedNotebook.guid().value();
         }
         return guids;

@@ -43,6 +43,7 @@
 
 #include <array>
 #include <memory>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -278,7 +279,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
         });
 
     std::optional<qint32> previousChunkHighUsn;
-    for (const auto & syncChunk: qAsConst(testData.m_syncChunks)) {
+    for (const auto & syncChunk: std::as_const(testData.m_syncChunks)) {
         if (previousChunkHighUsn) {
             afterUsn = *previousChunkHighUsn;
         }
@@ -403,7 +404,7 @@ TEST_P(
         });
 
     std::optional<qint32> previousChunkHighUsn;
-    for (const auto & syncChunk: qAsConst(testData.m_syncChunks)) {
+    for (const auto & syncChunk: std::as_const(testData.m_syncChunks)) {
         if (previousChunkHighUsn) {
             afterUsn = *previousChunkHighUsn;
         }
@@ -492,7 +493,7 @@ TEST_F(
                                        << sampleSyncChunk3);
 
     std::optional<qint32> previousChunkHighUsn;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (previousChunkHighUsn) {
             afterUsn = *previousChunkHighUsn;
         }
@@ -583,7 +584,7 @@ TEST_F(
                                        << sampleSyncChunk3);
 
     std::optional<qint32> previousChunkHighUsn;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (previousChunkHighUsn) {
             afterUsn = *previousChunkHighUsn;
         }
@@ -676,7 +677,7 @@ TEST_F(
 
     bool pendingLastSyncChunk = false;
     int i = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         ++i;
         if (i == 3) {
             break;
@@ -780,7 +781,7 @@ TEST_F(
                                        << sampleSyncChunk3);
 
     std::optional<qint32> previousChunkHighUsn;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (previousChunkHighUsn) {
             afterUsn = *previousChunkHighUsn;
         }
@@ -884,7 +885,7 @@ TEST_F(
                                        << sampleSyncChunk3);
 
     std::optional<qint32> previousChunkHighUsn;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (previousChunkHighUsn) {
             afterUsn = *previousChunkHighUsn;
         }
@@ -990,7 +991,7 @@ TEST_F(
 
     bool pendingLastSyncChunk = false;
     int i = 0;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         ++i;
         if (i == 3) {
             break;

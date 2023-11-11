@@ -18,6 +18,8 @@
 
 #include "SendStatus.h"
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 namespace {
@@ -32,7 +34,7 @@ void printItemWithExceptionList(
         return;
     }
 
-    for (const auto & itemWithException: qAsConst(values)) {
+    for (const auto & itemWithException: std::as_const(values)) {
         strm << "{" << typeName << ": " << itemWithException.first
              << "\nException: ";
 

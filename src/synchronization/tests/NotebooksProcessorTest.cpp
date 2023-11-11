@@ -41,6 +41,7 @@
 
 #include <algorithm>
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -68,7 +69,7 @@ void compareNotebookLists(
 {
     ASSERT_EQ(lhs.size(), rhs.size());
 
-    for (const auto & l: qAsConst(lhs)) {
+    for (const auto & l: std::as_const(lhs)) {
         const auto it = std::find_if(
             rhs.constBegin(), rhs.constEnd(),
             [localId = l.localId()](const qevercloud::Notebook & r) {
@@ -384,7 +385,7 @@ TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
     const auto expungedNotebookGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(notebooks.size());
-        for (const auto & notebook: qAsConst(notebooks)) {
+        for (const auto & notebook: std::as_const(notebooks)) {
             guids << notebook.guid().value();
         }
         return guids;

@@ -37,6 +37,7 @@
 #include <QMutexLocker>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -118,7 +119,7 @@ QFuture<void> TagsProcessor::processTags(
 
     QList<qevercloud::Tag> tags;
     QList<qevercloud::Guid> expungedTags;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         tags << utils::collectTagsFromSyncChunk(syncChunk);
         expungedTags << utils::collectExpungedTagGuidsFromSyncChunk(syncChunk);
     }
@@ -194,7 +195,7 @@ QFuture<void> TagsProcessor::processTagsList(
 
     QList<QFuture<void>> tagFutures;
     tagFutures.reserve(tags.size());
-    for (const auto & promise: qAsConst(tagPromises)) {
+    for (const auto & promise: std::as_const(tagPromises)) {
         tagFutures << promise->future();
     }
 
@@ -217,7 +218,7 @@ QFuture<void> TagsProcessor::processExpungedTags(
 
     QList<QFuture<void>> expungedTagFutures;
     expungedTagFutures.reserve(expungedTags.size());
-    for (const auto & guid: qAsConst(expungedTags)) {
+    for (const auto & guid: std::as_const(expungedTags)) {
         auto tagPromise = std::make_shared<QPromise<void>>();
         expungedTagFutures << tagPromise->future();
         tagPromise->start();

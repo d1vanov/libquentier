@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <array>
 #include <optional>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -141,7 +142,7 @@ protected:
         const auto entries =
             dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-        for (const auto & entry: qAsConst(entries)) {
+        for (const auto & entry: std::as_const(entries)) {
             if (entry.isDir()) {
                 ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
             }
@@ -203,7 +204,7 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
             const QList<qevercloud::Resource> syncChunkResources = [&] {
                 QList<qevercloud::Resource> result;
-                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                for (const auto & syncChunk: std::as_const(syncChunks)) {
                     result << utils::collectResourcesFromSyncChunk(syncChunk);
                 }
                 return result;
@@ -215,7 +216,7 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             status->m_totalNewResources =
                 static_cast<quint64>(syncChunkResources.size());
 
-            for (const auto & resource: qAsConst(resources)) {
+            for (const auto & resource: std::as_const(resources)) {
                 status
                     ->m_processedResourceGuidsAndUsns[resource.guid().value()] =
                     resource.updateSequenceNum().value();
@@ -240,7 +241,7 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
     EXPECT_EQ(status->m_totalNewResources, resources.size());
     ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size());
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = status->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -262,7 +263,9 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
         utils::processedResourcesInfoFromLastSync(lastSyncResourcesDir);
     ASSERT_EQ(processedResourcesInfo.size(), resources.size());
 
-    for (const auto it: qevercloud::toRange(qAsConst(processedResourcesInfo))) {
+    for (const auto it:
+         qevercloud::toRange(std::as_const(processedResourcesInfo)))
+    {
         const auto sit = status->m_processedResourceGuidsAndUsns.find(it.key());
 
         EXPECT_NE(sit, status->m_processedResourceGuidsAndUsns.end());
@@ -298,7 +301,7 @@ TEST_F(
 
             const QList<qevercloud::Resource> syncChunkResources = [&] {
                 QList<qevercloud::Resource> result;
-                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                for (const auto & syncChunk: std::as_const(syncChunks)) {
                     result << utils::collectResourcesFromSyncChunk(syncChunk);
                 }
                 return result;
@@ -581,7 +584,7 @@ TEST_P(
 
     if (!testData.m_resourcesWhichFailedToDownloadDuringPreviousSync.isEmpty())
     {
-        for (const auto & resource: qAsConst(
+        for (const auto & resource: std::as_const(
                  testData.m_resourcesWhichFailedToDownloadDuringPreviousSync))
         {
             utils::writeFailedToDownloadResource(resource, syncResourcesDir);
@@ -589,7 +592,7 @@ TEST_P(
     }
 
     if (!testData.m_resourcesWhichFailedToProcessDuringPreviousSync.isEmpty()) {
-        for (const auto & resource: qAsConst(
+        for (const auto & resource: std::as_const(
                  testData.m_resourcesWhichFailedToProcessDuringPreviousSync))
         {
             utils::writeFailedToProcessResource(resource, syncResourcesDir);
@@ -598,7 +601,7 @@ TEST_P(
 
     if (!testData.m_resourcesCancelledDuringPreviousSync.isEmpty()) {
         for (const auto & resource:
-             qAsConst(testData.m_resourcesCancelledDuringPreviousSync))
+             std::as_const(testData.m_resourcesCancelledDuringPreviousSync))
         {
             utils::writeCancelledResource(resource, syncResourcesDir);
         }
@@ -633,7 +636,7 @@ TEST_P(
     DownloadResourcesStatus currentResourcesStatus;
     currentResourcesStatus.m_totalNewResources =
         static_cast<quint64>(std::max<int>(resources.size(), 0));
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         EXPECT_TRUE(resource.guid());
         if (!resource.guid()) {
             continue;
@@ -665,7 +668,7 @@ TEST_P(
         previousResourcesStatus->m_totalUpdatedResources = static_cast<quint64>(
             std::max<int>(resourcesFromPreviousSync.size(), 0));
 
-        for (const auto & resource: qAsConst(resourcesFromPreviousSync)) {
+        for (const auto & resource: std::as_const(resourcesFromPreviousSync)) {
             EXPECT_TRUE(resource.guid());
             if (!resource.guid()) {
                 continue;
@@ -697,7 +700,7 @@ TEST_P(
                 const auto callback = callbackWeak.lock();
                 EXPECT_TRUE(callback);
                 if (callback) {
-                    for (const auto & syncChunk: qAsConst(syncChunks)) {
+                    for (const auto & syncChunk: std::as_const(syncChunks)) {
                         if (!syncChunk.resources()) {
                             continue;
                         }
@@ -770,7 +773,7 @@ TEST_P(
                     return;
                 }
 
-                for (const auto & resource: qAsConst(resources)) {
+                for (const auto & resource: std::as_const(resources)) {
                     EXPECT_TRUE(resource.guid());
                     if (Q_UNLIKELY(!resource.guid())) {
                         continue;

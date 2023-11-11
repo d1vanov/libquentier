@@ -23,6 +23,7 @@
 #include <QTextStream>
 
 #include <optional>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -39,7 +40,7 @@ void printSyncChunksResult(
 
     std::optional<qint32> chunksLowUsn;
     std::optional<qint32> chunksHighUsn;
-    for (const auto & syncChunk: qAsConst(result.m_syncChunks)) {
+    for (const auto & syncChunk: std::as_const(result.m_syncChunks)) {
         const auto lowUsn = utils::syncChunkLowUsn(syncChunk);
         if (lowUsn && (!chunksLowUsn || *chunksLowUsn > *lowUsn)) {
             chunksLowUsn = lowUsn;

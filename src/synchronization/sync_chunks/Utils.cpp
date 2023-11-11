@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@ namespace quentier::synchronization::utils {
     std::optional<qint32> lowUsn;
 
     const auto checkLowUsn = [&](const auto & items) {
-        for (const auto & item: qAsConst(items)) {
+        for (const auto & item: std::as_const(items)) {
             if (item.updateSequenceNum() &&
                 (!lowUsn || *lowUsn > *item.updateSequenceNum()))
             {
@@ -92,7 +92,7 @@ QList<qevercloud::Notebook> collectNotebooksFromSyncChunk(
 
     QList<qevercloud::Notebook> notebooks;
     notebooks.reserve(syncChunk.notebooks()->size());
-    for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
+    for (const auto & notebook: std::as_const(*syncChunk.notebooks())) {
         if (Q_UNLIKELY(!notebook.guid())) {
             QNWARNING(
                 "synchronization::utils",
@@ -137,7 +137,9 @@ QList<qevercloud::LinkedNotebook> collectLinkedNotebooksFromSyncChunk(
 
     QList<qevercloud::LinkedNotebook> linkedNotebooks;
     linkedNotebooks.reserve(syncChunk.linkedNotebooks()->size());
-    for (const auto & linkedNotebook: qAsConst(*syncChunk.linkedNotebooks())) {
+    for (const auto & linkedNotebook:
+         std::as_const(*syncChunk.linkedNotebooks()))
+    {
         if (Q_UNLIKELY(!linkedNotebook.guid())) {
             QNWARNING(
                 "synchronization::utils",
@@ -176,7 +178,7 @@ QList<qevercloud::Note> collectNotesFromSyncChunk(
 
     QList<qevercloud::Note> notes;
     notes.reserve(syncChunk.notes()->size());
-    for (const auto & note: qAsConst(*syncChunk.notes())) {
+    for (const auto & note: std::as_const(*syncChunk.notes())) {
         if (Q_UNLIKELY(!note.guid())) {
             QNWARNING(
                 "synchronization::utils",
@@ -220,7 +222,7 @@ QList<qevercloud::Resource> collectResourcesFromSyncChunk(
 
     QList<qevercloud::Resource> resources;
     resources.reserve(syncChunk.resources()->size());
-    for (const auto & resource: qAsConst(*syncChunk.resources())) {
+    for (const auto & resource: std::as_const(*syncChunk.resources())) {
         if (Q_UNLIKELY(!resource.guid())) {
             QNWARNING(
                 "synchronization::utils",
@@ -259,7 +261,7 @@ QList<qevercloud::SavedSearch> collectSavedSearchesFromSyncChunk(
 
     QList<qevercloud::SavedSearch> savedSearches;
     savedSearches.reserve(syncChunk.searches()->size());
-    for (const auto & savedSearch: qAsConst(*syncChunk.searches())) {
+    for (const auto & savedSearch: std::as_const(*syncChunk.searches())) {
         if (Q_UNLIKELY(!savedSearch.guid())) {
             QNWARNING(
                 "synchronization::utils",
@@ -305,7 +307,7 @@ QList<qevercloud::Tag> collectTagsFromSyncChunk(
 
     QList<qevercloud::Tag> tags;
     tags.reserve(syncChunk.tags()->size());
-    for (const auto & tag: qAsConst(*syncChunk.tags())) {
+    for (const auto & tag: std::as_const(*syncChunk.tags())) {
         if (Q_UNLIKELY(!tag.guid())) {
             QNWARNING(
                 "synchronization::utils",

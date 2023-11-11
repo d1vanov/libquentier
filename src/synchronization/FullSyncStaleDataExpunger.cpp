@@ -28,6 +28,8 @@
 
 #include <QThread>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 FullSyncStaleDataExpunger::FullSyncStaleDataExpunger(
@@ -151,7 +153,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
                                  const QSet<qevercloud::Guid> & preservedGuids,
                                  QSet<qevercloud::Guid> & guidsToExpunge,
                                  QSet<qevercloud::Guid> & guidsToUpdate) {
-        for (const auto & guid: qAsConst(modifiedGuids)) {
+        for (const auto & guid: std::as_const(modifiedGuids)) {
             if (preservedGuids.contains(guid)) {
                 continue;
             }
@@ -159,7 +161,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
             guidsToUpdate.insert(guid);
         }
 
-        for (const auto & guid: qAsConst(unmodifiedGuids)) {
+        for (const auto & guid: std::as_const(unmodifiedGuids)) {
             if (preservedGuids.contains(guid)) {
                 continue;
             }
@@ -194,24 +196,24 @@ void FullSyncStaleDataExpunger::onGuidsListed(
         notebookGuidsToExpunge.size() + tagGuidsToExpunge.size() +
             noteGuidsToExpunge.size() + savedSearchGuidsToExpunge.size()));
 
-    for (const auto & guid: qAsConst(noteGuidsToExpunge)) {
+    for (const auto & guid: std::as_const(noteGuidsToExpunge)) {
         auto expungeNoteFuture = m_localStorage->expungeNoteByGuid(guid);
         expungeFutures << expungeNoteFuture;
     }
 
-    for (const auto & guid: qAsConst(notebookGuidsToExpunge)) {
+    for (const auto & guid: std::as_const(notebookGuidsToExpunge)) {
         auto expungeNotebookFuture =
             m_localStorage->expungeNotebookByGuid(guid);
 
         expungeFutures << expungeNotebookFuture;
     }
 
-    for (const auto & guid: qAsConst(tagGuidsToExpunge)) {
+    for (const auto & guid: std::as_const(tagGuidsToExpunge)) {
         auto expungeTagFuture = m_localStorage->expungeTagByGuid(guid);
         expungeFutures << expungeTagFuture;
     }
 
-    for (const auto & guid: qAsConst(savedSearchGuidsToExpunge)) {
+    for (const auto & guid: std::as_const(savedSearchGuidsToExpunge)) {
         auto expungeSavedSearchFuture =
             m_localStorage->expungeSavedSearchByGuid(guid);
 
@@ -306,7 +308,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
 
     QList<QFuture<GuidWithLocalId>> processNotebookFutures;
     processNotebookFutures.reserve(std::max(0, notebookGuids.size()));
-    for (const auto & guid: qAsConst(notebookGuids)) {
+    for (const auto & guid: std::as_const(notebookGuids)) {
         QFuture<std::optional<qevercloud::Notebook>> notebookFuture =
             m_localStorage->findNotebookByGuid(guid);
 
@@ -376,7 +378,7 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
 
     QList<QFuture<GuidWithTagData>> processTagFutures;
     processTagFutures.reserve(std::max(0, tagGuids.size()));
-    for (const auto & guid: qAsConst(tagGuids)) {
+    for (const auto & guid: std::as_const(tagGuids)) {
         QFuture<std::optional<qevercloud::Tag>> tagFuture =
             m_localStorage->findTagByGuid(guid);
 
@@ -443,7 +445,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
 
     QList<QFuture<void>> processSavedSearchFutures;
     processSavedSearchFutures.reserve(std::max(0, savedSearchGuids.size()));
-    for (const auto & guid: qAsConst(savedSearchGuids)) {
+    for (const auto & guid: std::as_const(savedSearchGuids)) {
         QFuture<std::optional<qevercloud::SavedSearch>> savedSearchFuture =
             m_localStorage->findSavedSearchByGuid(guid);
 
@@ -489,7 +491,7 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
 
     QList<QFuture<void>> processNoteFutures;
     processNoteFutures.reserve(std::max(0, noteGuids.size()));
-    for (const auto & guid: qAsConst(noteGuids)) {
+    for (const auto & guid: std::as_const(noteGuids)) {
         QFuture<std::optional<qevercloud::Note>> noteFuture =
             m_localStorage->findNoteByGuid(guid, fetchNoteOptions);
 
@@ -778,7 +780,7 @@ void FullSyncStaleDataExpunger::processModifiedNote(
 
     if (note->tagGuids()) {
         QStringList tagLocalIds = note->tagLocalIds();
-        for (const auto & tagGuid: qAsConst(*note->tagGuids())) {
+        for (const auto & tagGuid: std::as_const(*note->tagGuids())) {
             const auto it = newTagsMap->constFind(tagGuid);
             if (it != newTagsMap->constEnd()) {
                 const auto & tagData = it.value();

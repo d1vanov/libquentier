@@ -20,6 +20,8 @@
 
 #include <qevercloud/utility/ToRange.h>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 quint64 DownloadResourcesStatus::totalNewResources() const noexcept
@@ -76,7 +78,7 @@ QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
                 return;
             }
 
-            for (const auto & resourceWithException: qAsConst(values)) {
+            for (const auto & resourceWithException: std::as_const(values)) {
                 strm << "{resource: " << resourceWithException.first
                      << "\nException:";
 
@@ -111,7 +113,7 @@ QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
                 return;
             }
 
-            for (const auto it: qevercloud::toRange(qAsConst(usns))) {
+            for (const auto it: qevercloud::toRange(std::as_const(usns))) {
                 strm << "{" << it.key() << ": " << it.value() << "};";
             }
             strm << " ";

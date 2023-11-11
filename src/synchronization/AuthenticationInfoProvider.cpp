@@ -49,6 +49,7 @@
 
 #include <limits>
 #include <optional>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -1155,7 +1156,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                     authenticationInfo->userStoreCookies();
 
                 bool persistentCookieFound = false;
-                for (const auto & cookie: qAsConst(userStoreCookies)) {
+                for (const auto & cookie: std::as_const(userStoreCookies)) {
                     const QString cookieName = QString::fromUtf8(cookie.name());
                     if (!cookieName.startsWith(QStringLiteral("web")) ||
                         !cookieName.endsWith(QStringLiteral("PreUserGuid")))
@@ -1290,7 +1291,8 @@ void AuthenticationInfoProvider::clearAllUserCaches()
         authenticationInfos.swap(m_authenticationInfos);
     }
 
-    for (const auto it: qevercloud::toRange(qAsConst(authenticationInfos))) {
+    for (const auto it: qevercloud::toRange(std::as_const(authenticationInfos)))
+    {
         const auto & accountAuthenticationInfo = it.value();
         clearUserCacheImpl(accountAuthenticationInfo);
     }
@@ -1307,7 +1309,7 @@ void AuthenticationInfoProvider::clearAllLinkedNotebookCaches()
     }
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookAuthenticationInfos)))
+         qevercloud::toRange(std::as_const(linkedNotebookAuthenticationInfos)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & accountAuthenticationInfo = it.value();

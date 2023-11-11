@@ -41,6 +41,7 @@
 
 #include <algorithm>
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -68,7 +69,7 @@ void compareSavedSearchLists(
 {
     ASSERT_EQ(lhs.size(), rhs.size());
 
-    for (const auto & l: qAsConst(lhs)) {
+    for (const auto & l: std::as_const(lhs)) {
         const auto it = std::find_if(
             rhs.constBegin(), rhs.constEnd(),
             [localId = l.localId()](const qevercloud::SavedSearch & r) {
@@ -394,7 +395,7 @@ TEST_F(
     const auto expungedSavedSearchGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(savedSearches.size());
-        for (const auto & savedSearch: qAsConst(savedSearches)) {
+        for (const auto & savedSearch: std::as_const(savedSearches)) {
             guids << savedSearch.guid().value();
         }
         return guids;

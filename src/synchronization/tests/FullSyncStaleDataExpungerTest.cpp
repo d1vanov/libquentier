@@ -45,6 +45,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -268,11 +269,11 @@ Q_DECLARE_FLAGS(
     const QList<qevercloud::Notebook> notebooks = [&] {
         QList<qevercloud::Notebook> notebooks;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedNotebooks))) {
+             qevercloud::toRange(std::as_const(result.m_unmodifiedNotebooks))) {
             notebooks << it.value();
         }
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedNotebooks))) {
+             qevercloud::toRange(std::as_const(result.m_modifiedNotebooks))) {
             notebooks << it.value();
         }
         return notebooks;
@@ -281,11 +282,11 @@ Q_DECLARE_FLAGS(
     const QList<qevercloud::Tag> tags = [&] {
         QList<qevercloud::Tag> tags;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
+             qevercloud::toRange(std::as_const(result.m_unmodifiedTags))) {
             tags << it.value();
         }
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedTags))) {
+             qevercloud::toRange(std::as_const(result.m_modifiedTags))) {
             tags << it.value();
         }
         return tags;
@@ -376,7 +377,7 @@ Q_DECLARE_FLAGS(
     {
         int counter = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedNotebooks))) {
+             qevercloud::toRange(std::as_const(result.m_unmodifiedNotebooks))) {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -387,7 +388,7 @@ Q_DECLARE_FLAGS(
 
         counter = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedNotebooks))) {
+             qevercloud::toRange(std::as_const(result.m_modifiedNotebooks))) {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -411,7 +412,7 @@ Q_DECLARE_FLAGS(
     {
         int counter = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedTags))) {
+             qevercloud::toRange(std::as_const(result.m_unmodifiedTags))) {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -421,7 +422,7 @@ Q_DECLARE_FLAGS(
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedTags))) {
+             qevercloud::toRange(std::as_const(result.m_modifiedTags))) {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -444,7 +445,7 @@ Q_DECLARE_FLAGS(
     {
         int counter = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedNotes))) {
+             qevercloud::toRange(std::as_const(result.m_unmodifiedNotes))) {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -454,7 +455,7 @@ Q_DECLARE_FLAGS(
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedNotes))) {
+             qevercloud::toRange(std::as_const(result.m_modifiedNotes))) {
             ++counter;
             if (counter % 2 == 0) {
                 continue;
@@ -476,8 +477,8 @@ Q_DECLARE_FLAGS(
                              WithPreservedSavedSearchGuids))
     {
         int counter = 0;
-        for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_unmodifiedSavedSearches)))
+        for (const auto it: qevercloud::toRange(
+                 std::as_const(result.m_unmodifiedSavedSearches)))
         {
             ++counter;
             if (counter % 2 == 0) {
@@ -488,7 +489,7 @@ Q_DECLARE_FLAGS(
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.m_modifiedSavedSearches)))
+             qevercloud::toRange(std::as_const(result.m_modifiedSavedSearches)))
         {
             ++counter;
             if (counter % 2 == 0) {
@@ -777,8 +778,9 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
                           linkedNotebookGuid) {
             QSet<qevercloud::Guid> modifiedNotebookGuids;
             modifiedNotebookGuids.reserve(testData.m_modifiedNotebooks.size());
-            for (const auto it:
-                 qevercloud::toRange(qAsConst(testData.m_modifiedNotebooks))) {
+            for (const auto it: qevercloud::toRange(
+                     std::as_const(testData.m_modifiedNotebooks)))
+            {
                 modifiedNotebookGuids.insert(it.key());
             }
             return threading::makeReadyFuture<QSet<qevercloud::Guid>>(
@@ -795,8 +797,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             QSet<qevercloud::Guid> unmodifiedNotebookGuids;
             unmodifiedNotebookGuids.reserve(
                 testData.m_unmodifiedNotebooks.size());
-            for (const auto it:
-                 qevercloud::toRange(qAsConst(testData.m_unmodifiedNotebooks)))
+            for (const auto it: qevercloud::toRange(
+                     std::as_const(testData.m_unmodifiedNotebooks)))
             {
                 unmodifiedNotebookGuids.insert(it.key());
             }
@@ -814,7 +816,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             QSet<qevercloud::Guid> modifiedTagGuids;
             modifiedTagGuids.reserve(testData.m_modifiedTags.size());
             for (const auto it:
-                 qevercloud::toRange(qAsConst(testData.m_modifiedTags))) {
+                 qevercloud::toRange(std::as_const(testData.m_modifiedTags))) {
                 modifiedTagGuids.insert(it.key());
             }
             return threading::makeReadyFuture<QSet<qevercloud::Guid>>(
@@ -831,7 +833,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             QSet<qevercloud::Guid> unmodifiedTagGuids;
             unmodifiedTagGuids.reserve(testData.m_unmodifiedTags.size());
             for (const auto it:
-                 qevercloud::toRange(qAsConst(testData.m_unmodifiedTags))) {
+                 qevercloud::toRange(std::as_const(testData.m_unmodifiedTags)))
+            {
                 unmodifiedTagGuids.insert(it.key());
             }
             return threading::makeReadyFuture<QSet<qevercloud::Guid>>(
@@ -848,7 +851,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             QSet<qevercloud::Guid> modifiedNoteGuids;
             modifiedNoteGuids.reserve(testData.m_modifiedNotes.size());
             for (const auto it:
-                 qevercloud::toRange(qAsConst(testData.m_modifiedNotes))) {
+                 qevercloud::toRange(std::as_const(testData.m_modifiedNotes))) {
                 modifiedNoteGuids.insert(it.key());
             }
             return threading::makeReadyFuture<QSet<qevercloud::Guid>>(
@@ -865,7 +868,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             QSet<qevercloud::Guid> unmodifiedNoteGuids;
             unmodifiedNoteGuids.reserve(testData.m_unmodifiedNotes.size());
             for (const auto it:
-                 qevercloud::toRange(qAsConst(testData.m_unmodifiedNotes))) {
+                 qevercloud::toRange(std::as_const(testData.m_unmodifiedNotes)))
+            {
                 unmodifiedNoteGuids.insert(it.key());
             }
             return threading::makeReadyFuture<QSet<qevercloud::Guid>>(
@@ -880,7 +884,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
                 modifiedSavedSearchGuids.reserve(
                     testData.m_modifiedSavedSearches.size());
                 for (const auto it: qevercloud::toRange(
-                         qAsConst(testData.m_modifiedSavedSearches)))
+                         std::as_const(testData.m_modifiedSavedSearches)))
                 {
                     modifiedSavedSearchGuids.insert(it.key());
                 }
@@ -896,7 +900,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
                 unmodifiedSavedSearchGuids.reserve(
                     testData.m_unmodifiedSavedSearches.size());
                 for (const auto it: qevercloud::toRange(
-                         qAsConst(testData.m_unmodifiedSavedSearches)))
+                         std::as_const(testData.m_unmodifiedSavedSearches)))
                 {
                     unmodifiedSavedSearchGuids.insert(it.key());
                 }
@@ -1045,7 +1049,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_unmodifiedNotebooks)))
+             qevercloud::toRange(std::as_const(testData.m_unmodifiedNotebooks)))
         {
             const auto & guid = it.key();
             if (!testData.m_preservedNotebookGuids.contains(guid)) {
@@ -1054,7 +1058,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_modifiedNotebooks))) {
+             qevercloud::toRange(std::as_const(testData.m_modifiedNotebooks))) {
             const auto & guid = it.key();
             if (!testData.m_preservedNotebookGuids.contains(guid)) {
                 guids.insert(guid);
@@ -1070,7 +1074,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_unmodifiedNotes))) {
+             qevercloud::toRange(std::as_const(testData.m_unmodifiedNotes))) {
             const auto & guid = it.key();
             if (!testData.m_preservedNoteGuids.contains(guid)) {
                 guids.insert(guid);
@@ -1078,7 +1082,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_modifiedNotes))) {
+             qevercloud::toRange(std::as_const(testData.m_modifiedNotes))) {
             const auto & guid = it.key();
             if (!testData.m_preservedNoteGuids.contains(guid)) {
                 guids.insert(guid);
@@ -1094,7 +1098,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         QSet<qevercloud::Guid> guids;
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_unmodifiedTags))) {
+             qevercloud::toRange(std::as_const(testData.m_unmodifiedTags))) {
             const auto & guid = it.key();
             if (!testData.m_preservedTagGuids.contains(guid)) {
                 guids.insert(guid);
@@ -1102,7 +1106,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         }
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_modifiedTags))) {
+             qevercloud::toRange(std::as_const(testData.m_modifiedTags))) {
             const auto & guid = it.key();
             if (!testData.m_preservedTagGuids.contains(guid)) {
                 guids.insert(guid);
@@ -1117,8 +1121,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
     const QSet<qevercloud::Guid> expectedExpungedSavedSearchGuids = [&] {
         QSet<qevercloud::Guid> guids;
 
-        for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_unmodifiedSavedSearches)))
+        for (const auto it: qevercloud::toRange(
+                 std::as_const(testData.m_unmodifiedSavedSearches)))
         {
             const auto & guid = it.key();
             if (!testData.m_preservedSavedSearchGuids.contains(guid)) {
@@ -1126,8 +1130,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             }
         }
 
-        for (const auto it:
-             qevercloud::toRange(qAsConst(testData.m_modifiedSavedSearches)))
+        for (const auto it: qevercloud::toRange(
+                 std::as_const(testData.m_modifiedSavedSearches)))
         {
             const auto & guid = it.key();
             if (!testData.m_preservedSavedSearchGuids.contains(guid)) {
@@ -1143,7 +1147,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
     // === Check put expectations ===
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(testData.m_modifiedNotebooks))) {
+         qevercloud::toRange(std::as_const(testData.m_modifiedNotebooks))) {
         auto originalNotebook = it.value();
         ASSERT_TRUE(originalNotebook.name());
 
@@ -1172,7 +1176,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         EXPECT_EQ(putNotebook, originalNotebook);
     }
 
-    for (const auto it: qevercloud::toRange(qAsConst(testData.m_modifiedNotes)))
+    for (const auto it:
+         qevercloud::toRange(std::as_const(testData.m_modifiedNotes)))
     {
         auto originalNote = it.value();
         ASSERT_TRUE(originalNote.title());
@@ -1233,7 +1238,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             EXPECT_EQ(putNote.notebookLocalId(), pit.value().localId());
         }
 
-        for (const auto & tagGuid: qAsConst(originalTagGuids)) {
+        for (const auto & tagGuid: std::as_const(originalTagGuids)) {
             if (const auto nit = testData.m_modifiedTags.constFind(tagGuid);
                 nit != testData.m_modifiedTags.constEnd())
             {
@@ -1247,7 +1252,8 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
         }
     }
 
-    for (const auto it: qevercloud::toRange(qAsConst(testData.m_modifiedTags)))
+    for (const auto it:
+         qevercloud::toRange(std::as_const(testData.m_modifiedTags)))
     {
         auto originalTag = it.value();
         ASSERT_TRUE(originalTag.name());
@@ -1274,7 +1280,7 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
     }
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(testData.m_modifiedSavedSearches)))
+         qevercloud::toRange(std::as_const(testData.m_modifiedSavedSearches)))
     {
         auto originalSavedSearch = it.value();
         ASSERT_TRUE(originalSavedSearch.name());

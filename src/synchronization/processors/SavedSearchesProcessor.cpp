@@ -33,6 +33,8 @@
 #include <QMutexLocker>
 #include <QThread>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 namespace {
@@ -46,7 +48,7 @@ namespace {
 
     QList<qevercloud::SavedSearch> savedSearches;
     savedSearches.reserve(syncChunk.searches()->size());
-    for (const auto & savedSearch: qAsConst(*syncChunk.searches())) {
+    for (const auto & savedSearch: std::as_const(*syncChunk.searches())) {
         if (Q_UNLIKELY(!savedSearch.guid())) {
             QNWARNING(
                 "synchronization::SavedSearchesProcessor",
@@ -167,7 +169,7 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
 
     QList<qevercloud::SavedSearch> savedSearches;
     QList<qevercloud::Guid> expungedSavedSearches;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         savedSearches << collectSavedSearches(syncChunk);
         expungedSavedSearches << collectExpungedSavedSearchGuids(syncChunk);
     }
@@ -196,7 +198,7 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         totalSavedSearches, totalSavedSearchesToExpunge,
         std::move(callbackWeak));
 
-    for (const auto & savedSearch: qAsConst(savedSearches)) {
+    for (const auto & savedSearch: std::as_const(savedSearches)) {
         auto savedSearchPromise = std::make_shared<QPromise<void>>();
         savedSearchFutures << savedSearchPromise->future();
         savedSearchPromise->start();
@@ -237,7 +239,7 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
             });
     }
 
-    for (const auto & guid: qAsConst(expungedSavedSearches)) {
+    for (const auto & guid: std::as_const(expungedSavedSearches)) {
         auto savedSearchPromise = std::make_shared<QPromise<void>>();
         savedSearchFutures << savedSearchPromise->future();
         savedSearchPromise->start();

@@ -49,6 +49,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -618,8 +619,8 @@ bool AccountSynchronizer::processDownloadStopSynchronizationError(
         return true;
     }
 
-    for (const auto it:
-         qevercloud::toRange(qAsConst(downloadResult.linkedNotebookResults)))
+    for (const auto it: qevercloud::toRange(
+             std::as_const(downloadResult.linkedNotebookResults)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & result = it.value();
@@ -807,8 +808,8 @@ void AccountSynchronizer::appendToPreviousSyncResult(
             *context.previousSyncResult->m_userAccountDownloadResourcesStatus);
     }
 
-    for (const auto it:
-         qevercloud::toRange(qAsConst(downloadResult.linkedNotebookResults)))
+    for (const auto it: qevercloud::toRange(
+             std::as_const(downloadResult.linkedNotebookResults)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & result = it.value();
@@ -898,7 +899,7 @@ void AccountSynchronizer::appendToPreviousSyncResult(
     }
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(sendResult.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(sendResult.linkedNotebookResults)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & result = it.value();
@@ -983,7 +984,7 @@ void AccountSynchronizer::onSendFinished(
         }
 
         for (const auto it: // NOLINT
-             qevercloud::toRange(qAsConst(
+             qevercloud::toRange(std::as_const(
                  context->previousSyncResult->m_linkedNotebookSendStatuses)))
         {
             const auto & result = it.value();
@@ -1050,7 +1051,7 @@ bool AccountSynchronizer::processSendStopSynchronizationError(
     }
 
     for (const auto it: // NOLINT
-         qevercloud::toRange(qAsConst(sendResult.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(sendResult.linkedNotebookResults)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & result = it.value();

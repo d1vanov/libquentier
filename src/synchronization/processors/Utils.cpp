@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -123,7 +123,7 @@ template <class T>
     QList<T> result;
     result.reserve(fileNames.size());
 
-    for (const auto & fileName: qAsConst(fileNames)) {
+    for (const auto & fileName: std::as_const(fileNames)) {
         QFile file{dir.absoluteFilePath(fileName)};
         if (Q_UNLIKELY(!file.open(QIODevice::ReadOnly))) {
             QNWARNING(
@@ -212,7 +212,7 @@ void writeResource(const qevercloud::Resource & resource, const QDir & dir)
 
     QHash<qevercloud::Guid, qint32> result;
     result.reserve(guids.size());
-    for (const auto & guid: qAsConst(guids)) {
+    for (const auto & guid: std::as_const(guids)) {
         const auto value = processedItemsSettings.value(guid);
         if (Q_UNLIKELY(!value.isValid())) {
             QNWARNING(

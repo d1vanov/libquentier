@@ -542,7 +542,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -561,7 +561,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -746,7 +746,7 @@ TEST_P(
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.updateSequenceNum().value() == 2) {
             continue;
         }
@@ -771,7 +771,7 @@ TEST_P(
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.updateSequenceNum().value() == 2) {
             continue;
         }
@@ -963,7 +963,7 @@ TEST_P(
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[1].guid()) {
             continue;
         }
@@ -988,7 +988,7 @@ TEST_P(
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1179,7 +1179,7 @@ TEST_P(
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1207,7 +1207,7 @@ TEST_P(
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1413,7 +1413,7 @@ TEST_P(
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1438,7 +1438,7 @@ TEST_P(
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1669,7 +1669,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
         notes[0].updateSequenceNum().value());
 
     ASSERT_EQ(status->m_cancelledNoteGuidsAndUsns.size(), notes.size() - 2);
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1722,7 +1722,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
         notes[0].updateSequenceNum().value());
 
     ASSERT_EQ(callback->m_cancelledNotes.size(), notes.size() - 2);
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
             continue;
         }
@@ -1957,7 +1957,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
         notes[0].updateSequenceNum().value());
 
     ASSERT_EQ(status->m_cancelledNoteGuidsAndUsns.size(), notes.size() - 2);
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
             continue;
         }
@@ -2004,7 +2004,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
         notes[0].updateSequenceNum().value());
 
     ASSERT_EQ(callback->m_cancelledNotes.size(), notes.size() - 2);
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
             continue;
         }
@@ -2080,7 +2080,7 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
 
     ASSERT_EQ(callback->m_expungedNoteGuids.size(), expungedNoteGuids.size());
-    for (const auto & guid: qAsConst(expungedNoteGuids)) {
+    for (const auto & guid: std::as_const(expungedNoteGuids)) {
         EXPECT_TRUE(callback->m_expungedNoteGuids.contains(guid));
     }
 }
@@ -2167,7 +2167,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
     ASSERT_EQ(
         callback->m_expungedNoteGuids.size(), expectedExpungedNoteGuids.size());
 
-    for (const auto & guid: qAsConst(expectedExpungedNoteGuids)) {
+    for (const auto & guid: std::as_const(expectedExpungedNoteGuids)) {
         EXPECT_TRUE(callback->m_expungedNoteGuids.contains(guid));
     }
 }
@@ -2209,7 +2209,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     const auto expungedNoteGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(notes.size());
-        for (const auto & note: qAsConst(notes)) {
+        for (const auto & note: std::as_const(notes)) {
             guids << note.guid().value();
         }
         return guids;
@@ -2273,7 +2273,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     ASSERT_EQ(callback->m_expungedNoteGuids.size(), expungedNoteGuids.size());
 
-    for (const auto & guid: qAsConst(expungedNoteGuids)) {
+    for (const auto & guid: std::as_const(expungedNoteGuids)) {
         EXPECT_TRUE(callback->m_expungedNoteGuids.contains(guid));
     }
 }
@@ -2564,7 +2564,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
     }
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (!note.guid()) {
             ASSERT_TRUE(movedLocalConflict);
             EXPECT_EQ(note, *movedLocalConflict);
@@ -2596,7 +2596,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
     }
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (!note.guid()) {
             ASSERT_TRUE(movedLocalConflict);
             EXPECT_EQ(note, *movedLocalConflict);
@@ -2778,7 +2778,7 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -2797,7 +2797,7 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -2970,7 +2970,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -2989,7 +2989,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3154,7 +3154,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3173,7 +3173,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3360,7 +3360,7 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3379,7 +3379,7 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3567,7 +3567,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3586,7 +3586,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3763,7 +3763,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
 
     ASSERT_EQ(status->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             status->m_processedNoteGuidsAndUsns.find(note.guid().value());
 
@@ -3782,7 +3782,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
 
     ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         const auto it =
             callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
 

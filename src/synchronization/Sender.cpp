@@ -193,7 +193,7 @@ QFuture<ISender::Result> Sender::send(
             result.linkedNotebookResults.reserve(
                 sendContext->linkedNotebookSendStatuses.size());
             for (const auto it: qevercloud::toRange(
-                     qAsConst(sendContext->linkedNotebookSendStatuses)))
+                     std::as_const(sendContext->linkedNotebookSendStatuses)))
             {
                 result.linkedNotebookResults[it.key()] = it.value();
             }
@@ -324,7 +324,7 @@ void Sender::sendNotes(
             }
 
             const QStringList & tagLocalIds = note.tagLocalIds();
-            for (const QString & tagLocalId: qAsConst(tagLocalIds)) {
+            for (const QString & tagLocalId: std::as_const(tagLocalIds)) {
                 if (sendContext->failedToSendNewTagLocalIds.contains(
                         tagLocalId)) {
                     containsFailedToSendTags = true;
@@ -335,7 +335,7 @@ void Sender::sendNotes(
             QList<qevercloud::Guid> tagGuids =
                 note.tagGuids().value_or(QList<qevercloud::Guid>{});
             bool foundSomeNewTagGuid = false;
-            for (const QString & tagLocalId: qAsConst(tagLocalIds)) {
+            for (const QString & tagLocalId: std::as_const(tagLocalIds)) {
                 if (const auto it =
                         sendContext->newTagLocalIdsToGuids.constFind(
                             tagLocalId);

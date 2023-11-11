@@ -60,6 +60,8 @@
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
@@ -322,7 +324,7 @@ namespace {
         generateSampleDownloadResourcesStatus(1);
 
     qint32 counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         auto & result =
             downloadResult.linkedNotebookResults[linkedNotebookGuid];
 
@@ -345,7 +347,7 @@ namespace {
     downloadSyncState->m_userDataLastSyncTime = now;
 
     counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         downloadSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
             84 + counter * 2;
 
@@ -368,7 +370,7 @@ namespace {
     sendResult.userOwnResult = generateSampleSendStatus(1);
 
     int counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         sendResult.linkedNotebookResults[linkedNotebookGuid] =
             generateSampleSendStatus(static_cast<quint64>(counter) * 5);
     }
@@ -378,7 +380,7 @@ namespace {
     sendSyncState->m_userDataLastSyncTime = now + 1;
 
     counter = 1;
-    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+    for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         sendSyncState->m_linkedNotebookUpdateCounts[linkedNotebookGuid] =
             120 + counter * 3;
 
@@ -448,7 +450,9 @@ protected:
             resultLinkedNotebookLastSyncTimes.size(),
             linkedNotebookGuids.size());
 
-        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (const auto & linkedNotebookGuid:
+             std::as_const(linkedNotebookGuids))
+        {
             const auto it =
                 resultLinkedNotebookLastSyncTimes.constFind(linkedNotebookGuid);
             ASSERT_NE(it, resultLinkedNotebookLastSyncTimes.constEnd());
@@ -470,7 +474,9 @@ protected:
             resultLinkedNotebookUpdateCounts.size(),
             linkedNotebookGuids.size());
 
-        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (const auto & linkedNotebookGuid:
+             std::as_const(linkedNotebookGuids))
+        {
             const auto it =
                 resultLinkedNotebookUpdateCounts.constFind(linkedNotebookGuid);
             ASSERT_NE(it, resultLinkedNotebookUpdateCounts.constEnd());
@@ -506,7 +512,9 @@ protected:
             resultLinkedNotebookSyncChunksDataCounters.size(),
             downloadResult.linkedNotebookResults.size());
 
-        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (const auto & linkedNotebookGuid:
+             std::as_const(linkedNotebookGuids))
+        {
             const auto it =
                 resultLinkedNotebookSyncChunksDataCounters.constFind(
                     linkedNotebookGuid);
@@ -535,7 +543,9 @@ protected:
             resultLinkedNotebookDownloadNotesStatuses.size(),
             linkedNotebookGuids.size());
 
-        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (const auto & linkedNotebookGuid:
+             std::as_const(linkedNotebookGuids))
+        {
             const auto it = resultLinkedNotebookDownloadNotesStatuses.constFind(
                 linkedNotebookGuid);
             ASSERT_NE(it, resultLinkedNotebookDownloadNotesStatuses.constEnd());
@@ -562,7 +572,9 @@ protected:
             resultLinkedNotebookDownloadResourcesStatuses.size(),
             linkedNotebookGuids.size());
 
-        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (const auto & linkedNotebookGuid:
+             std::as_const(linkedNotebookGuids))
+        {
             const auto it =
                 resultLinkedNotebookDownloadResourcesStatuses.constFind(
                     linkedNotebookGuid);
@@ -592,7 +604,9 @@ protected:
             resultLinkedNotebookSendStatuses.size(),
             linkedNotebookGuids.size());
 
-        for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (const auto & linkedNotebookGuid:
+             std::as_const(linkedNotebookGuids))
+        {
             const auto it =
                 resultLinkedNotebookSendStatuses.constFind(linkedNotebookGuid);
             ASSERT_NE(it, resultLinkedNotebookSendStatuses.constEnd());
@@ -2109,7 +2123,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
             QList<qevercloud::LinkedNotebook> result;
             result.reserve(linkedNotebookGuids.size());
             int i = 0;
-            for (const auto & guid: qAsConst(linkedNotebookGuids)) {
+            for (const auto & guid: std::as_const(linkedNotebookGuids)) {
                 result
                     << qevercloud::LinkedNotebookBuilder{}
                            .setGuid(guid)

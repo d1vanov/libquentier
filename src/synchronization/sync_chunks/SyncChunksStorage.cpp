@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -90,7 +91,7 @@ namespace {
     const auto storedSyncChunkFileInfos =
         dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
-    for (const auto & fileInfo: qAsConst(storedSyncChunkFileInfos)) {
+    for (const auto & fileInfo: std::as_const(storedSyncChunkFileInfos)) {
         if (Q_UNLIKELY(!fileInfo.isReadable())) {
             QNWARNING(
                 "synchronization::SyncChunksStorage",
@@ -242,7 +243,7 @@ void filterLowUsnsForSyncChunk(
         }
     };
 
-    for (const auto & fileInfo: qAsConst(storedSyncChunkFileInfos)) {
+    for (const auto & fileInfo: std::as_const(storedSyncChunkFileInfos)) {
         if (Q_UNLIKELY(!fileInfo.isReadable())) {
             QNWARNING(
                 "synchronization::SyncChunksStorage",
@@ -465,7 +466,7 @@ void SyncChunksStorage::putUserOwnSyncChunks(
         const auto & lastExistingUsnRange =
             userOwnSyncChunkLowAndHighUsns.constLast();
 
-        for (const auto & usnRange: qAsConst(usns)) {
+        for (const auto & usnRange: std::as_const(usns)) {
             if (usnRange.first <= lastExistingUsnRange.second) {
                 // At least one of new sync chunks put to the storage has
                 // USN range which is interleaving with existing stored sync
@@ -512,7 +513,7 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
     if (!lowAndHighUsnsData.isEmpty()) {
         const auto & lastExistingUsnRange = lowAndHighUsnsData.constLast();
 
-        for (const auto & usnRange: qAsConst(usns)) {
+        for (const auto & usnRange: std::as_const(usns)) {
             if (usnRange.first <= lastExistingUsnRange.second) {
                 // At least one of new sync chunks put to the storage has
                 // USN range which is interleaving with existing stored sync
@@ -594,7 +595,7 @@ void SyncChunksStorage::clearAllSyncChunks()
     const auto entries = m_rootDir.entryInfoList(
         QDir::Filters{} | QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
 
-    for (const auto & entry: qAsConst(entries)) {
+    for (const auto & entry: std::as_const(entries)) {
         if (entry.isDir()) {
             removeDirWithLog(entry.absoluteFilePath());
         }
@@ -609,7 +610,7 @@ void SyncChunksStorage::flush()
     const QWriteLocker locker{m_dataLock.get()};
 
     for (const auto & syncChunkInfo:
-         qAsConst(m_userOwnSyncChunksPendingPersistence))
+         std::as_const(m_userOwnSyncChunksPendingPersistence))
     {
         flushSyncChunk(
             m_userOwnSyncChunksDir, syncChunkInfo.m_syncChunk,
@@ -618,7 +619,7 @@ void SyncChunksStorage::flush()
     m_userOwnSyncChunksPendingPersistence.clear();
 
     for (const auto it: qevercloud::toRange(
-             qAsConst(m_linkedNotebookSyncChunksPendingPersistence)))
+             std::as_const(m_linkedNotebookSyncChunksPendingPersistence)))
     {
         const auto & linkedNotebookGuid = it.key();
 
@@ -644,7 +645,7 @@ void SyncChunksStorage::flush()
             continue;
         }
 
-        for (const auto & syncChunkInfo: qAsConst(it.value())) {
+        for (const auto & syncChunkInfo: std::as_const(it.value())) {
             flushSyncChunk(
                 linkedNotebookDir, syncChunkInfo.m_syncChunk,
                 syncChunkInfo.m_lowUsn, syncChunkInfo.m_highUsn);
@@ -693,7 +694,7 @@ void SyncChunksStorage::appendPendingSyncChunks(
     const QList<SyncChunkInfo> & syncChunksInfo, qint32 afterUsn,
     QList<qevercloud::SyncChunk> & result) const
 {
-    for (const auto & syncChunkInfo: qAsConst(syncChunksInfo)) {
+    for (const auto & syncChunkInfo: std::as_const(syncChunksInfo)) {
         if (syncChunkInfo.m_highUsn <= afterUsn) {
             continue;
         }
@@ -740,7 +741,7 @@ SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsDataAccessor(
                 lowAndHighUsnsData.m_linkedNotebookSyncChunkLowAndHighUsns
                     .reserve(std::max<int>(entries.size() - 1, 0));
 
-                for (const auto & entry: qAsConst(entries)) {
+                for (const auto & entry: std::as_const(entries)) {
                     if (entry.absoluteFilePath() ==
                         userOwnSyncChunksDir.absolutePath()) {
                         continue;

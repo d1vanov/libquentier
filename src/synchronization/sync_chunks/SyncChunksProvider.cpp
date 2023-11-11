@@ -105,7 +105,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     QString result;
     QTextStream strm{&result};
 
-    for (const auto & pair: qAsConst(usnRange)) {
+    for (const auto & pair: std::as_const(usnRange)) {
         strm << "[" << pair.first << ", " << pair.second << "]; ";
     }
 
@@ -215,7 +215,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     // check for that
     std::optional<qint32> chunksLowUsn;
     std::optional<qint32> chunksHighUsn;
-    for (const auto & syncChunk: qAsConst(storedSyncChunks)) {
+    for (const auto & syncChunk: std::as_const(storedSyncChunks)) {
         const auto highUsn = syncChunk.chunkHighUSN();
         if (Q_UNLIKELY(!highUsn)) {
             QNWARNING(

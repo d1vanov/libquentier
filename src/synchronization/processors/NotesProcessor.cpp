@@ -53,6 +53,7 @@
 #include <QThread>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -65,7 +66,7 @@ namespace {
         return std::nullopt;
     }
 
-    for (const auto & resource: qAsConst(*note.resources())) {
+    for (const auto & resource: std::as_const(*note.resources())) {
         if (resource.guid() && resource.mime() && resource.width() &&
             resource.height() &&
             (*resource.mime() ==
@@ -144,7 +145,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
 
     QList<qevercloud::Note> notes;
     QList<qevercloud::Guid> expungedNotes;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         notes << utils::collectNotesFromSyncChunk(syncChunk);
 
         expungedNotes << utils::collectExpungedNoteGuidsFromSyncChunk(
@@ -206,7 +207,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
 
     context->callbackWeak = std::move(callbackWeak);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         auto notePromise = std::make_shared<QPromise<ProcessNoteStatus>>();
         noteFutures << notePromise->future();
         notePromise->start();
@@ -274,7 +275,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
             });
     }
 
-    for (const auto & guid: qAsConst(expungedNotes)) {
+    for (const auto & guid: std::as_const(expungedNotes)) {
         auto promise = std::make_shared<QPromise<ProcessNoteStatus>>();
         noteFutures << promise->future();
         promise->start();
@@ -567,7 +568,7 @@ void NotesProcessor::downloadFullNoteDataImpl(
     QHash<qevercloud::Guid, QString> resourceLocalIdsByGuids = [&] {
         QHash<qevercloud::Guid, QString> result;
         if (note.resources() && !note.resources()->isEmpty()) {
-            for (const auto & resource: qAsConst(*note.resources())) {
+            for (const auto & resource: std::as_const(*note.resources())) {
                 Q_ASSERT(resource.guid());
                 result[*resource.guid()] = resource.localId();
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,8 @@
 #include "DownloadNotesStatus.h"
 
 #include <qevercloud/utility/ToRange.h>
+
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -90,7 +92,7 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
                 return;
             }
 
-            for (const auto & noteWithException: qAsConst(values)) {
+            for (const auto & noteWithException: std::as_const(values)) {
                 strm << "{note: " << noteWithException.first << "\nException: ";
 
                 if (noteWithException.second) {
@@ -122,7 +124,7 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
     }
     else {
         for (const auto & guidWithException:
-             qAsConst(m_noteGuidsWhichFailedToExpunge)) {
+             std::as_const(m_noteGuidsWhichFailedToExpunge)) {
             strm << "{" << guidWithException.first;
             strm << ": ";
 
@@ -151,7 +153,7 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
                 return;
             }
 
-            for (const auto it: qevercloud::toRange(qAsConst(usns))) {
+            for (const auto it: qevercloud::toRange(std::as_const(usns))) {
                 strm << "{" << it.key() << ": " << it.value() << "};";
             }
             strm << " ";
@@ -168,7 +170,7 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
         strm << "<empty>";
     }
     else {
-        for (const auto & guid: qAsConst(m_expungedNoteGuids)) {
+        for (const auto & guid: std::as_const(m_expungedNoteGuids)) {
             strm << "{" << guid << "};";
         }
     }

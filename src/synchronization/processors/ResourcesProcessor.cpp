@@ -47,6 +47,7 @@
 
 #include <algorithm>
 #include <type_traits>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -87,7 +88,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     Q_ASSERT(canceler);
 
     QList<qevercloud::Resource> resources;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         resources << utils::collectResourcesFromSyncChunk(syncChunk);
     }
 
@@ -137,7 +138,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
 
     context->callbackWeak = std::move(callbackWeak);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         auto resourcePromise =
             std::make_shared<QPromise<ProcessResourceStatus>>();
 

@@ -57,6 +57,7 @@
 #include <algorithm>
 #include <array>
 #include <limits>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -218,7 +219,7 @@ enum class WithEvernoteFields
         QStringList tagLocalIds = [&] {
             QStringList res;
             res.reserve(newTags.size());
-            for (const auto & tag: qAsConst(newTags)) {
+            for (const auto & tag: std::as_const(newTags)) {
                 res << tag.localId();
             }
             return res;
@@ -229,7 +230,7 @@ enum class WithEvernoteFields
         QStringList tagLocalIds = [&] {
             QStringList res;
             res.reserve(updatedTags.size());
-            for (const auto & tag: qAsConst(updatedTags)) {
+            for (const auto & tag: std::as_const(updatedTags)) {
                 res << tag.localId();
             }
             return res;
@@ -239,7 +240,7 @@ enum class WithEvernoteFields
         QList<qevercloud::Guid> tagGuids = [&] {
             QList<qevercloud::Guid> res;
             res.reserve(updatedTags.size());
-            for (const auto & tag: qAsConst(updatedTags)) {
+            for (const auto & tag: std::as_const(updatedTags)) {
                 res << tag.guid().value();
             }
             return res;
@@ -517,7 +518,7 @@ void findAndSetNoteTagGuids(
     QList<qevercloud::Guid> tagGuids =
         note.tagGuids().value_or(QList<qevercloud::Guid>{});
 
-    for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+    for (const auto & tagLocalId: std::as_const(note.tagLocalIds())) {
         if (const auto it = std::find_if(
                 tags.constBegin(), tags.constEnd(),
                 [&](const qevercloud::Tag & tag) {
@@ -590,7 +591,7 @@ void checkDataPutToLocalStorage(
     ASSERT_EQ(dataPutToLocalStorage.notes.size(), sentData.sentNotes.size());
 
     for (const auto & savedSearch:
-         qAsConst(dataPutToLocalStorage.savedSearches))
+         std::as_const(dataPutToLocalStorage.savedSearches))
     {
         const auto it = std::find_if(
             sentData.sentSavedSearches.constBegin(),
@@ -606,7 +607,8 @@ void checkDataPutToLocalStorage(
         EXPECT_EQ(*it, savedSearchCopy);
     }
 
-    for (const auto & notebook: qAsConst(dataPutToLocalStorage.notebooks)) {
+    for (const auto & notebook: std::as_const(dataPutToLocalStorage.notebooks))
+    {
         const auto it = std::find_if(
             sentData.sentNotebooks.constBegin(),
             sentData.sentNotebooks.constEnd(),
@@ -621,7 +623,7 @@ void checkDataPutToLocalStorage(
         EXPECT_EQ(*it, notebookCopy);
     }
 
-    for (const auto & note: qAsConst(dataPutToLocalStorage.notes)) {
+    for (const auto & note: std::as_const(dataPutToLocalStorage.notes)) {
         const auto it = std::find_if(
             sentData.sentNotes.constBegin(), sentData.sentNotes.constEnd(),
             [&](const qevercloud::Note & n) {
@@ -638,7 +640,7 @@ void checkDataPutToLocalStorage(
         EXPECT_EQ(noteCopyLhs, noteCopyRhs);
     }
 
-    for (const auto & tag: qAsConst(dataPutToLocalStorage.tags)) {
+    for (const auto & tag: std::as_const(dataPutToLocalStorage.tags)) {
         const auto it = std::find_if(
             sentData.sentTags.constBegin(), sentData.sentTags.constEnd(),
             [&](const qevercloud::Tag & t) {
@@ -1289,7 +1291,8 @@ void setupLinkedNotebookNoteStoreMocks(
         };
 
     auto i = std::make_shared<std::atomic<int>>(0);
-    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(testData.m_linkedNotebooks))
+    {
         ASSERT_TRUE(linkedNotebook.guid());
 
         auto & mockNoteStore = mockNoteStores[*linkedNotebook.guid()];
@@ -1353,7 +1356,7 @@ void setupLinkedNotebookNoteStoreMocks(
             const QList<qevercloud::Notebook> updatedNotebooks = [&] {
                 QList<qevercloud::Notebook> notebooks;
                 for (const auto & notebook:
-                     qAsConst(testData.m_updatedLinkedNotebooks))
+                     std::as_const(testData.m_updatedLinkedNotebooks))
                 {
                     if (notebook.linkedNotebookGuid() == linkedNotebook.guid())
                     {
@@ -1487,7 +1490,8 @@ void setupLinkedNotebookNoteStoreMocks(
                 QList<qevercloud::Tag> tags;
                 const auto processTags =
                     [&](const QList<qevercloud::Tag> & newOrUpdatedTags) {
-                        for (const auto & tag: qAsConst(newOrUpdatedTags)) {
+                        for (const auto & tag: std::as_const(newOrUpdatedTags))
+                        {
                             if (tag.linkedNotebookGuid() ==
                                 linkedNotebook.guid()) {
                                 tags << tag;
@@ -1877,23 +1881,28 @@ void setupLocalStorageMock(
         }
     };
 
-    for (const auto & savedSearch: qAsConst(testData.m_updatedSavedSearches)) {
+    for (const auto & savedSearch:
+         std::as_const(testData.m_updatedSavedSearches))
+    {
         checkUsn(savedSearch.updateSequenceNum().value());
     }
 
-    for (const auto & tag: qAsConst(testData.m_updatedUserOwnTags)) {
+    for (const auto & tag: std::as_const(testData.m_updatedUserOwnTags)) {
         checkUsn(tag.updateSequenceNum().value());
     }
 
-    for (const auto & notebook: qAsConst(testData.m_updatedUserOwnNotebooks)) {
+    for (const auto & notebook:
+         std::as_const(testData.m_updatedUserOwnNotebooks))
+    {
         checkUsn(notebook.updateSequenceNum().value());
     }
 
-    for (const auto & note: qAsConst(testData.m_updatedUserOwnNotes)) {
+    for (const auto & note: std::as_const(testData.m_updatedUserOwnNotes)) {
         checkUsn(note.updateSequenceNum().value());
     }
 
-    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(testData.m_linkedNotebooks))
+    {
         checkUsn(linkedNotebook.updateSequenceNum().value());
     }
 
@@ -1904,7 +1913,7 @@ void setupLocalStorageMock(
     const SenderTestData & testData)
 {
     QHash<qevercloud::Guid, qint32> result;
-    for (const auto & notebook: qAsConst(testData.m_linkedNotebooks)) {
+    for (const auto & notebook: std::as_const(testData.m_linkedNotebooks)) {
         result[notebook.guid().value()] = std::numeric_limits<qint32>::min();
     }
 
@@ -1916,18 +1925,23 @@ void setupLocalStorageMock(
         }
     };
 
-    for (const auto & notebook: qAsConst(testData.m_updatedLinkedNotebooks)) {
+    for (const auto & notebook:
+         std::as_const(testData.m_updatedLinkedNotebooks))
+    {
         checkUsn(
             notebook.updateSequenceNum().value(),
             notebook.linkedNotebookGuid().value());
     }
 
-    for (const auto & tag: qAsConst(testData.m_updatedLinkedNotebooksTags)) {
+    for (const auto & tag: std::as_const(testData.m_updatedLinkedNotebooksTags))
+    {
         checkUsn(
             tag.updateSequenceNum().value(), tag.linkedNotebookGuid().value());
     }
 
-    for (const auto & note: qAsConst(testData.m_updatedLinkedNotebooksNotes)) {
+    for (const auto & note:
+         std::as_const(testData.m_updatedLinkedNotebooksNotes))
+    {
         const auto notebookIt = std::find_if(
             testData.m_updatedLinkedNotebooks.constBegin(),
             testData.m_updatedLinkedNotebooks.constEnd(),
@@ -1947,7 +1961,7 @@ void setupLocalStorageMock(
             notebookIt->linkedNotebookGuid().value());
     }
 
-    for (const auto & notebook: qAsConst(testData.m_linkedNotebooks)) {
+    for (const auto & notebook: std::as_const(testData.m_linkedNotebooks)) {
         auto & res = result[notebook.guid().value()];
         if (res == std::numeric_limits<qint32>::min()) {
             res = testData.m_maxLinkedNotebookUsns[*notebook.guid()] - 1;
@@ -1964,7 +1978,8 @@ void setupSyncStateStorageMock(
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
     QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
-    for (const auto & linkedNotebook: qAsConst(testData.m_linkedNotebooks)) {
+    for (const auto & linkedNotebook: std::as_const(testData.m_linkedNotebooks))
+    {
         linkedNotebookLastSyncTimes[linkedNotebook.guid().value()] = now;
     }
 
@@ -3082,7 +3097,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+             qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
         {
             count += it.value()->totalAttemptedToSendNotes();
         }
@@ -3109,7 +3124,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
     }();
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
     {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
@@ -3129,7 +3144,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
         const int tagCount = [&] {
             int count = 0;
             const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
-                for (const auto & tag: qAsConst(tags)) {
+                for (const auto & tag: std::as_const(tags)) {
                     if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
                         ++count;
                     }
@@ -3144,7 +3159,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks))
+                 std::as_const(testData.m_updatedLinkedNotebooks))
             {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
@@ -3175,7 +3190,7 @@ TEST_P(SenderNeedToRepeatIncrementalSyncTest, DetectNeedToRepeatIncrementalSync)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
@@ -3379,7 +3394,7 @@ TEST_P(SenderDataTest, SenderDataTest)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+             qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
         {
             count += it.value()->totalAttemptedToSendNotes();
         }
@@ -3391,7 +3406,7 @@ TEST_P(SenderDataTest, SenderDataTest)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
     {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
@@ -3411,7 +3426,7 @@ TEST_P(SenderDataTest, SenderDataTest)
         const int tagCount = [&] {
             int count = 0;
             const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
-                for (const auto & tag: qAsConst(tags)) {
+                for (const auto & tag: std::as_const(tags)) {
                     if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
                         ++count;
                     }
@@ -3426,7 +3441,7 @@ TEST_P(SenderDataTest, SenderDataTest)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks))
+                 std::as_const(testData.m_updatedLinkedNotebooks))
             {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
@@ -3454,7 +3469,7 @@ TEST_P(SenderDataTest, SenderDataTest)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
@@ -3600,7 +3615,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+             qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
         {
             count += it.value()->totalAttemptedToSendNotes();
         }
@@ -3612,7 +3627,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
     {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
@@ -3632,7 +3647,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
         const int tagCount = [&] {
             int count = 0;
             const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
-                for (const auto & tag: qAsConst(tags)) {
+                for (const auto & tag: std::as_const(tags)) {
                     if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
                         ++count;
                     }
@@ -3647,7 +3662,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks))
+                 std::as_const(testData.m_updatedLinkedNotebooks))
             {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
@@ -3672,7 +3687,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
@@ -3819,7 +3834,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+             qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
         {
             count += it.value()->totalAttemptedToSendNotes();
         }
@@ -3831,7 +3846,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
     {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
@@ -3851,7 +3866,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
         const int tagCount = [&] {
             int count = 0;
             const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
-                for (const auto & tag: qAsConst(tags)) {
+                for (const auto & tag: std::as_const(tags)) {
                     if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
                         ++count;
                     }
@@ -3866,7 +3881,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
         const int notebookCount = [&] {
             int count = 0;
             for (const auto & notebook:
-                 qAsConst(testData.m_updatedLinkedNotebooks))
+                 std::as_const(testData.m_updatedLinkedNotebooks))
             {
                 if (notebook.linkedNotebookGuid() == linkedNotebookGuid) {
                     ++count;
@@ -3891,7 +3906,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());
@@ -4138,7 +4153,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         const auto failedToSendNotes =
             result.userOwnResult->failedToSendNotes();
 
-        for (const auto & noteWithException: qAsConst(failedToSendNotes)) {
+        for (const auto & noteWithException: std::as_const(failedToSendNotes)) {
             ASSERT_TRUE(noteWithException.second);
             processException(*noteWithException.second);
         }
@@ -4166,7 +4181,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
             result.userOwnResult->failedToSendNotebooks();
 
         for (const auto & notebookWithException:
-             qAsConst(failedToSendNotebooks))
+             std::as_const(failedToSendNotebooks))
         {
             ASSERT_TRUE(notebookWithException.second);
             processException(*notebookWithException.second);
@@ -4192,7 +4207,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         EXPECT_FALSE(result.userOwnResult->failedToSendTags().isEmpty());
 
         const auto failedToSendTags = result.userOwnResult->failedToSendTags();
-        for (const auto & tagWithException: qAsConst(failedToSendTags)) {
+        for (const auto & tagWithException: std::as_const(failedToSendTags)) {
             ASSERT_TRUE(tagWithException.second);
             processException(*tagWithException.second);
         }
@@ -4221,7 +4236,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
             result.userOwnResult->failedToSendSavedSearches();
 
         for (const auto & savedSearchWithException:
-             qAsConst(failedToSendSavedSearches))
+             std::as_const(failedToSendSavedSearches))
         {
             ASSERT_TRUE(savedSearchWithException.second);
             processException(*savedSearchWithException.second);
@@ -4265,7 +4280,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
     const quint64 totalLinkedNotebooksAttemptedToSendNotes = [&] {
         quint64 count = 0;
         for (const auto it:
-             qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+             qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
         {
             count += it.value()->totalAttemptedToSendNotes();
         }
@@ -4277,7 +4292,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
             testData.m_updatedLinkedNotebooksNotes.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(result.linkedNotebookResults)))
+         qevercloud::toRange(std::as_const(result.linkedNotebookResults)))
     {
         const qevercloud::Guid & linkedNotebookGuid = it.key();
         const ISendStatusPtr & sendStatus = it.value();
@@ -4312,7 +4327,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         const int tagCount = [&] {
             int count = 0;
             const auto countTags = [&](const QList<qevercloud::Tag> & tags) {
-                for (const auto & tag: qAsConst(tags)) {
+                for (const auto & tag: std::as_const(tags)) {
                     if (tag.linkedNotebookGuid() == linkedNotebookGuid) {
                         ++count;
                     }
@@ -4332,21 +4347,21 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         EXPECT_FALSE(sendStatus->needToRepeatIncrementalSync());
 
         const auto failedToSendNotes = sendStatus->failedToSendNotes();
-        for (const auto & noteWithException: qAsConst(failedToSendNotes)) {
+        for (const auto & noteWithException: std::as_const(failedToSendNotes)) {
             ASSERT_TRUE(noteWithException.second);
             processException(*noteWithException.second);
         }
 
         const auto failedToSendNotebooks = sendStatus->failedToSendNotebooks();
         for (const auto & notebookWithException:
-             qAsConst(failedToSendNotebooks))
+             std::as_const(failedToSendNotebooks))
         {
             ASSERT_TRUE(notebookWithException.second);
             processException(*notebookWithException.second);
         }
 
         const auto failedToSendTags = sendStatus->failedToSendTags();
-        for (const auto & tagWithException: qAsConst(failedToSendTags)) {
+        for (const auto & tagWithException: std::as_const(failedToSendTags)) {
             ASSERT_TRUE(tagWithException.second);
             processException(*tagWithException.second);
         }
@@ -4375,7 +4390,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
         testData.m_maxLinkedNotebookUsns.size());
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         const auto uit = testData.m_maxLinkedNotebookUsns.constFind(it.key());
         ASSERT_NE(uit, testData.m_maxLinkedNotebookUsns.constEnd());

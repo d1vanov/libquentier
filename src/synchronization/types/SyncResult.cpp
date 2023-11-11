@@ -26,6 +26,8 @@
 
 #include <qevercloud/utility/ToRange.h>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 ISyncStatePtr SyncResult::syncState() const noexcept
@@ -44,8 +46,8 @@ QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
 {
     QHash<qevercloud::Guid, ISyncChunksDataCountersPtr> result;
     result.reserve(m_linkedNotebookSyncChunksDataCounters.size());
-    for (const auto it:
-         qevercloud::toRange(qAsConst(m_linkedNotebookSyncChunksDataCounters)))
+    for (const auto it: qevercloud::toRange(
+             std::as_const(m_linkedNotebookSyncChunksDataCounters)))
     {
         result[it.key()] = it.value();
     }
@@ -63,8 +65,8 @@ QHash<qevercloud::Guid, IDownloadNotesStatusPtr>
 {
     QHash<qevercloud::Guid, IDownloadNotesStatusPtr> result;
     result.reserve(m_linkedNotebookDownloadNotesStatuses.size());
-    for (const auto it:
-         qevercloud::toRange(qAsConst(m_linkedNotebookDownloadNotesStatuses)))
+    for (const auto it: qevercloud::toRange(
+             std::as_const(m_linkedNotebookDownloadNotesStatuses)))
     {
         result[it.key()] = it.value();
     }
@@ -84,7 +86,7 @@ QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
     QHash<qevercloud::Guid, IDownloadResourcesStatusPtr> result;
     result.reserve(m_linkedNotebookDownloadResourcesStatuses.size());
     for (const auto it: qevercloud::toRange(
-             qAsConst(m_linkedNotebookDownloadResourcesStatuses)))
+             std::as_const(m_linkedNotebookDownloadResourcesStatuses)))
     {
         result[it.key()] = it.value();
     }
@@ -102,7 +104,8 @@ QHash<qevercloud::Guid, ISendStatusPtr> SyncResult::linkedNotebookSendStatuses()
     QHash<qevercloud::Guid, ISendStatusPtr> result;
     result.reserve(m_linkedNotebookSendStatuses.size());
     for (const auto it:
-         qevercloud::toRange(qAsConst(m_linkedNotebookSendStatuses))) {
+         qevercloud::toRange(std::as_const(m_linkedNotebookSendStatuses)))
+    {
         result[it.key()] = it.value();
     }
     return result;

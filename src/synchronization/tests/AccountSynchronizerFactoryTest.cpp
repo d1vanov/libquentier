@@ -32,6 +32,8 @@
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
@@ -49,7 +51,7 @@ protected:
         const auto entries =
             dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-        for (const auto & entry: qAsConst(entries)) {
+        for (const auto & entry: std::as_const(entries)) {
             if (entry.isDir()) {
                 ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,8 @@
 
 #include <QTextStream>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 QTextStream & AuthenticationInfo::print(QTextStream & strm) const
@@ -40,7 +42,7 @@ QTextStream & AuthenticationInfo::print(QTextStream & strm) const
         strm << "<empty>";
     }
     else {
-        for (const auto & cookie: qAsConst(m_userStoreCookies)) {
+        for (const auto & cookie: std::as_const(m_userStoreCookies)) {
             strm << "{" << QString::fromUtf8(cookie.toRawForm()) << "};";
         }
     }

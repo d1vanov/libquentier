@@ -20,6 +20,8 @@
 
 #include <qevercloud/IRequestContext.h>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 bool SyncOptions::downloadNoteThumbnails() const noexcept
@@ -72,7 +74,7 @@ QTextStream & SyncOptions::print(QTextStream & strm) const
              << ", max request retry count = " << m_ctx->maxRequestRetryCount()
              << ", cookies: ";
         const auto cookies = m_ctx->cookies();
-        for (const auto & cookie: qAsConst(cookies)) {
+        for (const auto & cookie: std::as_const(cookies)) {
             strm << "[" << cookie.name() << ": " << cookie.value() << "]; ";
         }
         strm << "}";

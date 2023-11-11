@@ -52,6 +52,7 @@
 
 #include <atomic>
 #include <limits>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -101,10 +102,10 @@ private:
 {
     IFullSyncStaleDataExpunger::PreservedGuids preservedGuids;
 
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         const auto & notebooks = syncChunk.notebooks();
         if (notebooks) {
-            for (const auto & notebook: qAsConst(*notebooks)) {
+            for (const auto & notebook: std::as_const(*notebooks)) {
                 if (notebook.guid()) {
                     preservedGuids.notebookGuids.insert(*notebook.guid());
                 }
@@ -113,7 +114,7 @@ private:
 
         const auto & tags = syncChunk.tags();
         if (tags) {
-            for (const auto & tag: qAsConst(*tags)) {
+            for (const auto & tag: std::as_const(*tags)) {
                 if (tag.guid()) {
                     preservedGuids.tagGuids.insert(*tag.guid());
                 }
@@ -122,7 +123,7 @@ private:
 
         const auto & notes = syncChunk.notes();
         if (notes) {
-            for (const auto & note: qAsConst(*notes)) {
+            for (const auto & note: std::as_const(*notes)) {
                 if (note.guid()) {
                     preservedGuids.noteGuids.insert(*note.guid());
                 }
@@ -131,7 +132,7 @@ private:
 
         const auto & savedSearches = syncChunk.searches();
         if (savedSearches) {
-            for (const auto & savedSearch: qAsConst(*savedSearches)) {
+            for (const auto & savedSearch: std::as_const(*savedSearches)) {
                 if (savedSearch.guid()) {
                     preservedGuids.savedSearchGuids.insert(*savedSearch.guid());
                 }
@@ -146,7 +147,7 @@ private:
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     quint64 result = 0UL;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (!syncChunk.notes()) {
             continue;
         }
@@ -160,7 +161,7 @@ private:
     const QList<qevercloud::SyncChunk> & syncChunks) noexcept
 {
     quint64 result = 0UL;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (!syncChunk.resources()) {
             continue;
         }
@@ -1057,7 +1058,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
             QList<QFuture<Result>> linkedNotebookFutures;
             linkedNotebookFutures.reserve(std::max(linkedNotebooks.size(), 0));
 
-            for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
                 if (Q_UNLIKELY(!linkedNotebook.guid())) {
                     QNWARNING(
                         "synchronization::Downloader",
@@ -1499,7 +1500,7 @@ void Downloader::initializeTotalsInSyncChunksDataCounters(
     int totalNotebooks = 0;
     int totalExpungedNotebooks = 0;
 
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         if (syncChunk.searches()) {
             totalSavedSearches += syncChunk.searches()->size();
         }
@@ -1574,7 +1575,7 @@ void Downloader::updateSyncState(const DownloadContext & downloadContext)
     // to be processed again without regard to the sync state.
 
     const QMutexLocker locker{downloadContext.lastSyncStateMutex.get()};
-    for (const auto & syncChunk: qAsConst(downloadContext.syncChunks)) {
+    for (const auto & syncChunk: std::as_const(downloadContext.syncChunks)) {
         const auto chunkHighUsn = syncChunk.chunkHighUSN();
         if (Q_UNLIKELY(!chunkHighUsn)) {
             QNWARNING(

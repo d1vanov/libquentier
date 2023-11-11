@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <array>
 #include <iterator>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -68,7 +69,7 @@ void compareTagLists(
 {
     ASSERT_EQ(lhs.size(), rhs.size());
 
-    for (const auto & l: qAsConst(lhs)) {
+    for (const auto & l: std::as_const(lhs)) {
         const auto it = std::find_if(
             rhs.constBegin(), rhs.constEnd(),
             [localId = l.localId()](const qevercloud::Tag & r) {
@@ -421,7 +422,7 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
     const auto expungedTagGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(tags.size());
-        for (const auto & tag: qAsConst(tags)) {
+        for (const auto & tag: std::as_const(tags)) {
             guids << tag.guid().value();
         }
         return guids;

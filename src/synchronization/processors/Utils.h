@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,6 +30,7 @@
 #include <QList>
 
 #include <algorithm>
+#include <utility>
 
 class QDir;
 
@@ -46,7 +47,7 @@ void filterOutExpungedItems(
         return;
     }
 
-    for (const auto & guid: qAsConst(expungedGuids)) {
+    for (const auto & guid: std::as_const(expungedGuids)) {
         auto it =
             std::find_if(items.begin(), items.end(), [&guid](const T & item) {
                 return item.guid() && (*item.guid() == guid);

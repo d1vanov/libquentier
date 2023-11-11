@@ -47,8 +47,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-
-#include <quentier/logging/QuentierLogger.h>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -397,7 +396,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     EXPECT_TRUE(status->m_cancelledResourceGuidsAndUsns.isEmpty());
 
     ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size());
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = status->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -415,7 +414,7 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = callback->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -586,7 +585,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     ASSERT_EQ(
         status->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.updateSequenceNum().value() == 2) {
             continue;
         }
@@ -612,7 +611,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.updateSequenceNum().value() == 2) {
             continue;
         }
@@ -790,7 +789,7 @@ TEST_F(
     ASSERT_EQ(
         status->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid().value() == resources[1].guid().value()) {
             continue;
         }
@@ -816,7 +815,7 @@ TEST_F(
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.updateSequenceNum().value() == 2) {
             continue;
         }
@@ -995,7 +994,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     ASSERT_EQ(
         status->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid().value() == resources[1].guid().value()) {
             continue;
         }
@@ -1025,7 +1024,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.updateSequenceNum().value() == 2) {
             continue;
         }
@@ -1192,7 +1191,7 @@ TEST_F(
 
     ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = status->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -1210,7 +1209,7 @@ TEST_F(
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = callback->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -1378,7 +1377,8 @@ TEST_F(
 
             EXPECT_TRUE(putNote.resources());
             if (putNote.resources()) {
-                for (const auto & resource: qAsConst(*putNote.resources())) {
+                for (const auto & resource: std::as_const(*putNote.resources()))
+                {
                     EXPECT_FALSE(resource.guid());
                     EXPECT_FALSE(resource.updateSequenceNum());
                     EXPECT_FALSE(resource.noteGuid());
@@ -1418,7 +1418,7 @@ TEST_F(
 
     ASSERT_EQ(status->m_processedResourceGuidsAndUsns.size(), resources.size());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = status->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -1436,7 +1436,7 @@ TEST_F(
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const auto it = callback->m_processedResourceGuidsAndUsns.find(
             resource.guid().value());
 
@@ -1625,7 +1625,7 @@ TEST_F(
     ASSERT_EQ(
         status->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[1].guid()) {
             continue;
         }
@@ -1651,7 +1651,7 @@ TEST_F(
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[1].guid()) {
             continue;
         }
@@ -1844,7 +1844,7 @@ TEST_F(
     ASSERT_EQ(
         status->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[1].guid()) {
             continue;
         }
@@ -1870,7 +1870,7 @@ TEST_F(
     ASSERT_EQ(
         callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[1].guid()) {
             continue;
         }
@@ -2093,7 +2093,7 @@ TEST_F(
 
     ASSERT_EQ(
         status->m_cancelledResourceGuidsAndUsns.size(), resources.size() - 2);
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[0].guid() ||
             resource.guid() == resources[1].guid())
         {
@@ -2147,7 +2147,7 @@ TEST_F(
         resources[0].updateSequenceNum().value());
 
     ASSERT_EQ(callback->m_cancelledResources.size(), resources.size() - 2);
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[0].guid() ||
             resource.guid() == resources[1].guid())
         {
@@ -2374,7 +2374,7 @@ TEST_F(
 
     ASSERT_EQ(
         status->m_cancelledResourceGuidsAndUsns.size(), resources.size() - 2);
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[0].guid() ||
             resource.guid() == resources[1].guid())
         {
@@ -2422,7 +2422,7 @@ TEST_F(
         resources[0].updateSequenceNum().value());
 
     ASSERT_EQ(callback->m_cancelledResources.size(), resources.size() - 2);
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.guid() == resources[0].guid() ||
             resource.guid() == resources[1].guid())
         {

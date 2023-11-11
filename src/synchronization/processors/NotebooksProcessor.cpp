@@ -37,6 +37,7 @@
 #include <QThread>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -121,7 +122,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 
     QList<qevercloud::Notebook> notebooks;
     QList<qevercloud::Guid> expungedNotebooks;
-    for (const auto & syncChunk: qAsConst(syncChunks)) {
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
         notebooks << utils::collectNotebooksFromSyncChunk(syncChunk);
 
         expungedNotebooks << utils::collectExpungedNotebookGuidsFromSyncChunk(
@@ -149,7 +150,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     const auto notebookCounters = std::make_shared<NotebookCounters>(
         totalNotebooks, totalExpungedNotebooks, std::move(callbackWeak));
 
-    for (const auto & notebook: qAsConst(notebooks)) {
+    for (const auto & notebook: std::as_const(notebooks)) {
         auto notebookPromise = std::make_shared<QPromise<void>>();
         notebookFutures << notebookPromise->future();
         notebookPromise->start();
@@ -181,7 +182,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 
     auto * currentThread = QThread::currentThread();
 
-    for (const auto & guid: qAsConst(expungedNotebooks)) {
+    for (const auto & guid: std::as_const(expungedNotebooks)) {
         auto notebookPromise = std::make_shared<QPromise<void>>();
         notebookFutures << notebookPromise->future();
         notebookPromise->start();

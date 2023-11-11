@@ -41,6 +41,7 @@
 
 #include <array>
 #include <memory>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -205,7 +206,7 @@ TEST_P(
     QList<QFuture<qevercloud::Note>> futures;
     futures.reserve(noteCount);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         futures << noteFullDataDownloader->downloadFullNoteData(
             note.guid().value(), m_mockNoteStore, ctx);
         EXPECT_FALSE(futures.back().isFinished());
@@ -288,7 +289,7 @@ TEST_P(
     QList<QFuture<qevercloud::Note>> futures;
     futures.reserve(noteCount);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         futures << noteFullDataDownloader->downloadFullNoteData(
             note.guid().value(), m_mockNoteStore, ctx);
         EXPECT_FALSE(futures.back().isFinished());

@@ -28,6 +28,8 @@
 
 #include <QThread>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 namespace {
@@ -149,7 +151,7 @@ void LinkedNotebookFinder::init()
 
 LinkedNotebookFinder::~LinkedNotebookFinder()
 {
-    for (const auto & connection: qAsConst(m_localStorageConnections)) {
+    for (const auto & connection: std::as_const(m_localStorageConnections)) {
         QObject::disconnect(connection);
     }
 }
@@ -423,7 +425,9 @@ void LinkedNotebookFinder::removeFuturesByLinkedNotebookGuid(
     QList<qevercloud::Guid> removedNotebookGuids;
     if (!removedNotebookLocalIds.isEmpty()) {
         const QMutexLocker locker{&m_notebookGuidsByLocalIdsMutex};
-        for (const auto & notebookLocalId: qAsConst(removedNotebookLocalIds)) {
+        for (const auto & notebookLocalId:
+             std::as_const(removedNotebookLocalIds))
+        {
             const auto it =
                 m_notebookGuidsByLocalIds.constFind(notebookLocalId);
             if (it != m_notebookGuidsByLocalIds.constEnd()) {
