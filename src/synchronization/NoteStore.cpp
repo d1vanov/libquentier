@@ -1931,7 +1931,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         }
 
         if (userException.parameter.ref() == QStringLiteral("Resource.data") ||
-            userException.parameter.ref() == QStringLiteral("Data.body")) {
+            userException.parameter.ref() == QStringLiteral("Data.body"))
+        {
             errorDescription.appendBase(
                 QT_TR_NOOP("data body for some of note's "
                            "resources is missing"));
