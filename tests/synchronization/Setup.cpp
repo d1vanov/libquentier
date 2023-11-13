@@ -19,6 +19,7 @@
 #include "NoteStoreServer.h"
 #include "Setup.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
@@ -1228,6 +1229,8 @@ void setupLocalStorage(
     const ItemGroups itemGroups, const ItemSources itemSources,
     local_storage::ILocalStorage & localStorage)
 {
+    QNINFO("tests::synchronization::Setup", "setupLocalStorage");
+
     if (dataItemTypes.testFlag(DataItemType::SavedSearch) &&
         itemSources.testFlag(ItemSource::UserOwnAccount))
     {
@@ -1308,6 +1311,37 @@ void setupLocalStorage(
         }
     }
 
+    const auto remapLinkedNotebookGuids = [&](const auto & items) {
+        const auto & linkedNotebooks =
+            itemGroups.testFlag(ItemGroup::Base)
+            ? testData.m_baseLinkedNotebooks
+            : testData.m_modifiedLinkedNotebooks;
+        Q_ASSERT(!linkedNotebooks.isEmpty());
+
+        int linkedNotebookIndex = 0;
+        auto newItems = items;
+        for (auto & item: newItems) {
+            if (linkedNotebookIndex >= linkedNotebooks.size()) {
+                linkedNotebookIndex = 0;
+            }
+
+            const auto & linkedNotebook = linkedNotebooks[linkedNotebookIndex];
+            Q_ASSERT(linkedNotebook.guid());
+
+            item.setLinkedNotebookGuid(linkedNotebook.guid());
+            Q_ASSERT(item.name());
+            const int index =
+                item.name()->indexOf(QStringLiteral("linked notebook"));
+            Q_ASSERT(index >= 0);
+            QString itemNewName = item.name()->left(index) +
+                QString::fromUtf8(" linked notebook %1")
+                .arg(*linkedNotebook.guid());
+            item.setName(std::move(itemNewName));
+            ++linkedNotebookIndex;
+        }
+        return newItems;
+    };
+
     if (dataItemTypes.testFlag(DataItemType::Tag)) {
         const auto putTags = [&](const QList<qevercloud::Tag> & tags,
                                  const ItemGroup itemGroup) {
@@ -1360,7 +1394,22 @@ void setupLocalStorage(
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
-                putTags(testData.m_linkedNotebookNewTags, ItemGroup::New);
+                // New linked notebooks cannot be present in the local storage,
+                // so need to "remap" new tags to some linked notebooks present
+                // in the local storage
+                if (!itemGroups.testFlag(ItemGroup::Base) &&
+                    !itemGroups.testFlag(ItemGroup::Modified))
+                {
+                    throw InvalidArgument{ErrorString{QStringLiteral(
+                        "Cannot add put new linked notebook tags into "
+                        "local storage: no base or modified linked "
+                        "notebooks")}};
+                }
+
+                const auto tags =
+                    remapLinkedNotebookGuids(testData.m_linkedNotebookNewTags);
+
+                putTags(tags, ItemGroup::New);
             }
         }
     }
@@ -1420,8 +1469,22 @@ void setupLocalStorage(
             }
 
             if (itemGroups.testFlag(ItemGroup::New)) {
-                putNotebooks(
-                    testData.m_linkedNotebookNewNotebooks, ItemGroup::New);
+                // New linked notebooks cannot be present in the local storage,
+                // so need to "remap" new notebooks to some linked notebooks
+                // present in the local storage
+                if (!itemGroups.testFlag(ItemGroup::Base) &&
+                    !itemGroups.testFlag(ItemGroup::Modified))
+                {
+                    throw InvalidArgument{ErrorString{QStringLiteral(
+                        "Cannot add put new linked notebook notebooks into "
+                        "local storage: no base or modified linked "
+                        "notebooks")}};
+                }
+
+                const auto notebooks = remapLinkedNotebookGuids(
+                    testData.m_linkedNotebookNewNotebooks);
+
+                putNotebooks(notebooks, ItemGroup::New);
             }
         }
     }
