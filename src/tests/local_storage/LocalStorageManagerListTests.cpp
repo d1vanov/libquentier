@@ -23,7 +23,7 @@
 #include <quentier/types/NoteUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <QtTest/QtTest>
+#include <QTest>
 
 namespace quentier::test {
 

@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_TESTS_TEST_MACROS_H
 
 #include <QDebug>
-#include <QtTest/QtTest>
+#include <QTest>
 
 #include <stdexcept>
 

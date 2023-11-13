@@ -27,7 +27,7 @@
 
 #include <QApplication>
 #include <QTextStream>
-#include <QtTest/QTest>
+#include <QTest>
 
 #define CATCH_EXCEPTION()                                                      \
     catch (const std::exception & exception) {                                 \

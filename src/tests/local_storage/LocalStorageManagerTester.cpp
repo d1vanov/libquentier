@@ -28,7 +28,7 @@
 #include <quentier/utility/SysInfo.h>
 
 #include <QTextStream>
-#include <QtTest/QTest>
+#include <QTest>
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000

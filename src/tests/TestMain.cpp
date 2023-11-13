@@ -31,7 +31,7 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QtTest/QtTest>
+#include <QTest>
 
 using namespace quentier::test;
 

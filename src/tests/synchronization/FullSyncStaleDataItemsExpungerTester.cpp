@@ -26,7 +26,7 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <QTimer>
-#include <QtTest/QTest>
+#include <QTest>
 
 // 10 minutes should be enough
 constexpr int gTestMaxMilliseconds = 600000;

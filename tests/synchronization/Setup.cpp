@@ -37,7 +37,7 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QGlobalStatic>
-#include <QtTest>
+#include <QTest>
 
 #include <algorithm>
 #include <optional>

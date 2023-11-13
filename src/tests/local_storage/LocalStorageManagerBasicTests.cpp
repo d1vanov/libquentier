@@ -27,7 +27,7 @@
 #include <qevercloud/types/All.h>
 
 #include <QCryptographicHash>
-#include <QtTest/QtTest>
+#include <QTest>
 
 #include <algorithm>
 

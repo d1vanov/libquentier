@@ -22,7 +22,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/SynchronizationManager.h>
 
-#include <QtTest/QtTest>
+#include <QTest>
 
 namespace quentier {
 

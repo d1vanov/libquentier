@@ -32,9 +32,10 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
+#include <QStringBuilder>
 #include <QTextStream>
 #include <QTimer>
-#include <QtTest/QtTest>
+#include <QTest>
 
 #include <iostream>
 

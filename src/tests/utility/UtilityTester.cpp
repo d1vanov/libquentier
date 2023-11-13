@@ -31,7 +31,7 @@
 #include <QApplication>
 #include <QTextStream>
 #include <QTimer>
-#include <QtTest/QTest>
+#include <QTest>
 
 namespace quentier::test {
 

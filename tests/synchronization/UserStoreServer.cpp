@@ -28,7 +28,7 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QtTest>
+#include <QTest>
 
 #include <algorithm>
 
