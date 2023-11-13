@@ -285,12 +285,14 @@ void printItemSources(T & t, const ItemSources sources)
 [[nodiscard]] qevercloud::LinkedNotebook generateLinkedNotebook(
     const int index, const quint16 port)
 {
+    auto guid = UidGenerator::Generate();
     return qevercloud::LinkedNotebookBuilder{}
-        .setGuid(UidGenerator::Generate())
+        .setGuid(guid)
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
-        .setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1").arg(port))
+        .setNoteStoreUrl(
+            QString::fromUtf8("http://127.0.0.1:%1/%2").arg(port).arg(guid))
         .setShardId(QStringLiteral("Fake shard id"))
         .setWebApiUrlPrefix(QStringLiteral("Fake web api url prefix"))
         .setUsername(QString::fromUtf8("Username #%1").arg(index))
