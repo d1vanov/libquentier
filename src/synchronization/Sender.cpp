@@ -917,14 +917,20 @@ void Sender::sendTags(
         tagProcessingFutures << tagProcessingPromise->future();
         tagProcessingPromise->start();
 
+        // NOTE: linkedNotebookGuid field of qevercloud::Tag is not
+        // serialized on thrift level and thus in the lambda right below
+        // the sent tag would not contain linkedNotebookGuid. Hence
+        // passing it to the lambda manually.
+        auto linkedNotebookGuid = tag.linkedNotebookGuid();
+
         auto tagThenFuture = threading::then(
             std::move(tagFuture), currentThread,
             [sendContext, selfWeak, this,
+             linkedNotebookGuid = std::move(linkedNotebookGuid),
              tagProcessingPromise](qevercloud::Tag tag) {
+                tag.setLinkedNotebookGuid(linkedNotebookGuid);
                 if (sendContext->canceler->isCanceled()) {
                     {
-                        const auto linkedNotebookGuid =
-                            tag.linkedNotebookGuid();
                         const QMutexLocker locker{
                             sendContext->sendStatusMutex.get()};
                         auto status =
@@ -1284,15 +1290,20 @@ void Sender::sendNotebooks(
         notebookProcessingFutures << notebookProcessingPromise->future();
         notebookProcessingPromise->start();
 
+        // NOTE: linkedNotebookGuid field of qevercloud::Notebook is not
+        // serialized on thrift level and thus in the lambda right below
+        // the sent notebook would not contain linkedNotebookGuid. Hence
+        // passing it to the lambda manually.
+        auto linkedNotebookGuid = notebook.linkedNotebookGuid();
+
         auto notebookThenFuture = threading::then(
             std::move(notebookFuture), currentThread,
             [sendContext, selfWeak, this,
+             linkedNotebookGuid = std::move(linkedNotebookGuid),
              notebookProcessingPromise](qevercloud::Notebook notebook) {
+                notebook.setLinkedNotebookGuid(linkedNotebookGuid);
                 if (sendContext->canceler->isCanceled()) {
                     {
-                        const auto linkedNotebookGuid =
-                            notebook.linkedNotebookGuid();
-
                         const QMutexLocker locker{
                             sendContext->sendStatusMutex.get()};
                         auto status =
