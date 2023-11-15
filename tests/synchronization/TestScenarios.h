@@ -508,6 +508,30 @@ static const std::array gTestScenarioData{
         false, // expectSomeLinkedNotebookDataSent
         "Incremental sync with new local data from user's own account"sv, // name
     },
+    TestScenarioData{
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch |
+            DataItemType::Tag,                      // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // serverItemGroups
+        ItemSources{} | ItemSource::LinkedNotebook, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch | DataItemType::Tag, // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base | ItemGroup::New,   // localItemGroups
+        ItemSources{} | ItemSource::LinkedNotebook,        // localItemSources
+        StopSynchronizationError{std::monostate{}},        // stopSyncError
+        false,                                             // expectFailure
+        false, // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        false, // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        false, // expectSomeUserOwnDataSent
+        true,  // expectSomeLinkedNotebookDataSent
+        "Incremental sync with new local data from linked notebooks"sv, // name
+    },
 };
 
 } // namespace quentier::synchronization::tests
