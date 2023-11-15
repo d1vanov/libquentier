@@ -479,6 +479,8 @@ private:
     qevercloud::NoteStoreServer * m_server = nullptr;
     QHash<QUuid, QTcpSocket*> m_sockets;
 
+    QHash<QUuid, QByteArray> m_uriByRequestId;
+
     note_store::SavedSearches m_savedSearches;
     QSet<qevercloud::Guid> m_expungedSavedSearchGuids;
 

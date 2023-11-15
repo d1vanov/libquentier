@@ -161,7 +161,7 @@ NoteStoreServer::NoteStoreServer(
     }
 
     QNDEBUG(
-        "synchronization::tests::NoteStoreServer",
+        "tests::synchronization::NoteStoreServer",
         "NoteStoreServer: listening on port " << m_tcpServer->serverPort());
 
     QObject::connect(m_tcpServer, &QTcpServer::newConnection, this, [this] {
@@ -172,7 +172,7 @@ NoteStoreServer::NoteStoreServer(
         m_sockets[requestId] = socket;
 
         QNDEBUG(
-            "synchronization::tests::NoteStoreServer",
+            "tests::synchronization::NoteStoreServer",
             "New connection: socket " << static_cast<const void *>(socket)
                                       << ", request id " << requestId);
 
@@ -183,14 +183,21 @@ NoteStoreServer::NoteStoreServer(
             socket, &QAbstractSocket::disconnected, this,
             [this, socket, requestId] {
                 QNDEBUG(
-                    "synchronization::tests::NoteStoreServer",
+                    "tests::synchronization::NoteStoreServer",
                     "Socket " << static_cast<const void *>(socket)
                               << " corresponding to request id " << requestId
                               << " disconnected");
 
-                const auto it = m_sockets.find(requestId);
-                if (it != m_sockets.end()) {
+                if (const auto it = m_sockets.find(requestId);
+                    it != m_sockets.end())
+                {
                     m_sockets.erase(it);
+                }
+
+                if (const auto it = m_uriByRequestId.find(requestId);
+                    it != m_uriByRequestId.end())
+                {
+                    m_uriByRequestId.erase(it);
                 }
 
                 socket->disconnect();
@@ -199,7 +206,7 @@ NoteStoreServer::NoteStoreServer(
 
         if (!socket->waitForConnected()) {
             QNWARNING(
-                "synchronization::tests::NoteStoreServer",
+                "tests::synchronization::NoteStoreServer",
                 "Failed to establish connection for socket "
                     << static_cast<const void *>(socket)
                     << ", request id = " << requestId);
@@ -207,24 +214,29 @@ NoteStoreServer::NoteStoreServer(
             return;
         }
 
-        QByteArray requestData = utils::readRequestBodyFromSocket(*socket);
-        if (requestData.isEmpty()) {
+        utils::HttpRequestData requestData =
+            utils::readRequestDataFromSocket(*socket);
+        if (requestData.body.isEmpty()) {
             QNWARNING(
-                "synchronization::tests::NoteStoreServer",
+                "tests::synchronization::NoteStoreServer",
                 "Failed to read request body for socket "
                     << static_cast<const void *>(socket));
             QFAIL("Failed to read request body");
             return;
         }
 
-        m_server->onRequest(std::move(requestData), requestId);
+        if (requestData.uri.size() > 1) {
+            m_uriByRequestId[requestId] = requestData.uri.mid(1);
+        }
+
+        m_server->onRequest(std::move(requestData.body), requestId);
     });
 
     QObject::connect(
         m_tcpServer, &QTcpServer::acceptError, this,
         [](const QAbstractSocket::SocketError error) {
             QNWARNING(
-                "synchronization::tests::NoteStoreServer",
+                "tests::synchronization::NoteStoreServer",
                 "Error accepting connection: " << error);
         });
 
@@ -233,9 +245,7 @@ NoteStoreServer::NoteStoreServer(
 
 NoteStoreServer::~NoteStoreServer()
 {
-    QNDEBUG(
-        "synchronization::tests::NoteStoreServer",
-        "NoteStoreServer: dtor");
+    QNDEBUG("tests::synchronization::NoteStoreServer", "NoteStoreServer: dtor");
 }
 
 quint16 NoteStoreServer::port() const noexcept
@@ -487,7 +497,7 @@ void NoteStoreServer::removeTag(const qevercloud::Guid & guid)
         tagIt = index.find(guid);
         if (Q_UNLIKELY(tagIt == index.end())) {
             QNWARNING(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Tag to be removed is not not found after the removal of its "
                     << "child tags: guid = " << guid);
             return;
@@ -1117,7 +1127,7 @@ void NoteStoreServer::removeResource(const qevercloud::Guid & guid)
     }
     else {
         QNWARNING(
-            "tests::synchronization",
+            "tests::synchronization::NoteStoreServer",
             "Found no note corresponding to the removed resource: " << *it);
     }
 
@@ -1409,13 +1419,13 @@ void NoteStoreServer::onRequestReady(
     const QByteArray & responseData, QUuid requestId)
 {
     QNDEBUG(
-        "synchronization::tests::NoteStoreServer",
+        "tests::synchronization::NoteStoreServer",
         "NoteStoreServer::onRequestReady: request id = " << requestId);
 
     const auto it = m_sockets.find(requestId);
     if (Q_UNLIKELY(it == m_sockets.end())) {
         QNWARNING(
-            "synchronization::tests::NoteStoreServer",
+            "tests::synchronization::NoteStoreServer",
             "Cannot find socket for request id " << requestId);
         QFAIL("NoteStoreServer: no socket on ready request");
         return;
@@ -1424,7 +1434,7 @@ void NoteStoreServer::onRequestReady(
     auto * socket = it.value();
     if (!socket->isOpen()) {
         QNWARNING(
-            "synchronization::tests::NoteStoreServer",
+            "tests::synchronization::NoteStoreServer",
             "Cannot respond to request with id " << requestId
                                                  << ": socket is closed");
         QFAIL("NoteStoreServer: socket is closed on ready request");
@@ -1441,7 +1451,7 @@ void NoteStoreServer::onRequestReady(
 
     if (!utils::writeBufferToSocket(buffer, *socket)) {
         QNWARNING(
-            "synchronization::tests::NoteStoreServer",
+            "tests::synchronization::NoteStoreServer",
             "Cannot respond to request with id "
                 << requestId
                 << ": cannot write response data to socket; last socket error "
@@ -1486,14 +1496,23 @@ void NoteStoreServer::onCreateNotebookRequest(
         return;
     }
 
-    if (notebook.linkedNotebookGuid()) {
-        if (auto exc = checkLinkedNotebookAuthentication(
-                *notebook.linkedNotebookGuid(), ctx))
+    // NOTE: notebook's linkedNotebookGuid field is not serialized on thrift
+    // level and thus it won't be propagated inside the notebook to
+    // NoteStoreServer. Instead linkedNotebookGuid is encoded in the request's
+    // uri.
+    if (const auto it = m_uriByRequestId.find(ctx->requestId());
+        it != m_uriByRequestId.end())
+    {
+        auto linkedNotebookGuid = QString::fromUtf8(it.value());
+        if (auto exc =
+                checkLinkedNotebookAuthentication(linkedNotebookGuid, ctx))
         {
             Q_EMIT createNotebookRequestReady(
                 qevercloud::Notebook{}, std::move(exc), ctx->requestId());
             return;
         }
+
+        notebook.setLinkedNotebookGuid(std::move(linkedNotebookGuid));
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT createNotebookRequestReady(
@@ -1502,7 +1521,8 @@ void NoteStoreServer::onCreateNotebookRequest(
     }
 
     if (notebook.linkedNotebookGuid() &&
-        notebook.defaultNotebook().value_or(false)) {
+        notebook.defaultNotebook().value_or(false))
+    {
         Q_EMIT createNotebookRequestReady(
             qevercloud::Notebook{},
             std::make_exception_ptr(utils::createUserException(
@@ -1599,7 +1619,8 @@ void NoteStoreServer::onUpdateNotebookRequest(
     }
 
     if (notebook.linkedNotebookGuid() &&
-        notebook.defaultNotebook().value_or(false)) {
+        notebook.defaultNotebook().value_or(false))
+    {
         Q_EMIT updateNotebookRequestReady(
             0,
             std::make_exception_ptr(utils::createUserException(
@@ -2025,14 +2046,22 @@ void NoteStoreServer::onCreateTagRequest(
         return;
     }
 
-    if (tag.linkedNotebookGuid()) {
-        if (auto exc = checkLinkedNotebookAuthentication(
-                *tag.linkedNotebookGuid(), ctx))
+    // NOTE: tag's linkedNotebookGuid field is not serialized on thrift level
+    // and thus it won't be propagated inside the tag to NoteStoreServer.
+    // Instead linkedNotebookGuid is encoded in the request's uri.
+    if (const auto it = m_uriByRequestId.find(ctx->requestId());
+        it != m_uriByRequestId.end())
+    {
+        auto linkedNotebookGuid = QString::fromUtf8(it.value());
+        if (auto exc =
+                checkLinkedNotebookAuthentication(linkedNotebookGuid, ctx))
         {
             Q_EMIT createTagRequestReady(
                 qevercloud::Tag{}, std::move(exc), ctx->requestId());
             return;
         }
+
+        tag.setLinkedNotebookGuid(std::move(linkedNotebookGuid));
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT createTagRequestReady(
@@ -2717,7 +2746,8 @@ void NoteStoreServer::onGetNoteWithResultSpecRequest(
             resource.setNoteLocalId(QString{});
 
             if (!resultSpec.includeResourcesData().value_or(false) &&
-                resource.data()) {
+                resource.data())
+            {
                 resource.mutableData()->setBody(std::nullopt);
             }
 
@@ -3320,7 +3350,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         [&syncChunk](const qint32 usn) -> std::exception_ptr {
         if (syncChunk.chunkHighUSN() && *syncChunk.chunkHighUSN() >= usn) {
             QNWARNING(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Internal error during sync chunk collection: "
                     << "chunk high usn " << *syncChunk.chunkHighUSN()
                     << " is not less than the next item's usn " << usn);
@@ -3338,7 +3368,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
         syncChunk.setChunkHighUSN(usn);
         QNDEBUG(
-            "tests::synchronization",
+            "tests::synchronization::NoteStoreServer",
             "Sync chunk high USN updated to " << *syncChunk.chunkHighUSN());
         return {};
     };
@@ -3427,13 +3457,13 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
     int syncChunkEntriesCounter = 0;
     while (true) {
         QNDEBUG(
-            "tests::synchronization",
+            "tests::synchronization::NoteStoreServer",
             "Sync chunk collecting loop iteration, entries counter = "
                 << syncChunkEntriesCounter);
 
         if (syncChunkEntriesCounter >= maxEntries) {
             QNDEBUG(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Collected max number of sync chunk entries already");
             break;
         }
@@ -3445,7 +3475,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             const auto & nextSearch = *savedSearchIt;
             const qint32 usn = nextSearch.updateSequenceNum().value();
             QNDEBUG(
-                "tests::synchronization", "Next saved search usn = " << usn);
+                "tests::synchronization::NoteStoreServer",
+                "Next saved search usn = " << usn);
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::SavedSearch;
@@ -3456,7 +3487,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             const auto & nextLinkedNotebook = *linkedNotebookIt;
             const qint32 usn = nextLinkedNotebook.updateSequenceNum().value();
             QNDEBUG(
-                "tests::synchronization", "Next linked notebook usn = " << usn);
+                "tests::synchronization::NoteStoreServer",
+                "Next linked notebook usn = " << usn);
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::LinkedNotebook;
@@ -3466,7 +3498,9 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         if (tagIt != tagUsnIndex.end()) {
             const auto & nextTag = *tagIt;
             const qint32 usn = nextTag.updateSequenceNum().value();
-            QNDEBUG("tests::synchronization", "Next tag usn = " << usn);
+            QNDEBUG(
+                "tests::synchronization::NoteStoreServer",
+                "Next tag usn = " << usn);
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Tag;
@@ -3476,7 +3510,9 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         if (notebookIt != notebookUsnIndex.end()) {
             const auto & nextNotebook = *notebookIt;
             const qint32 usn = nextNotebook.updateSequenceNum().value();
-            QNDEBUG("tests::synchronization", "Next notebook usn = " << usn);
+            QNDEBUG(
+                "tests::synchronization::NoteStoreServer",
+                "Next notebook usn = " << usn);
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Notebook;
@@ -3486,7 +3522,9 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         if (noteIt != noteUsnIndex.end()) {
             const auto & nextNote = *noteIt;
             const qint32 usn = nextNote.updateSequenceNum().value();
-            QNDEBUG("tests::synchronization", "Next note usn = " << usn);
+            QNDEBUG(
+                "tests::synchronization::NoteStoreServer",
+                "Next note usn = " << usn);
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Note;
@@ -3496,7 +3534,9 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         if (resourceIt != resourceUsnIndex.end()) {
             const auto & nextResource = *resourceIt;
             const qint32 usn = nextResource.updateSequenceNum().value();
-            QNDEBUG("tests::synchronization", "Next resource usn = " << usn);
+            QNDEBUG(
+                "tests::synchronization::NoteStoreServer",
+                "Next resource usn = " << usn);
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Resource;
@@ -3504,7 +3544,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         }
 
         QNDEBUG(
-            "tests::synchronization",
+            "tests::synchronization::NoteStoreServer",
             "Next item type = " << nextItemType << ", usn = " << lastItemUsn);
 
         if (nextItemType == NextItemType::None) {
@@ -3527,7 +3567,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableSearches()->append(search);
             QNDEBUG(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Added saved search to sync chunk: " << *savedSearchIt);
 
             ++syncChunkEntriesCounter;
@@ -3557,7 +3597,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableTags()->append(tag);
             QNDEBUG(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Added tag to sync chunk: " << *tagIt);
 
             ++syncChunkEntriesCounter;
@@ -3587,13 +3627,14 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableNotebooks()->append(notebook);
             QNDEBUG(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Added notebook to sync chunk: " << *notebookIt);
 
             ++syncChunkEntriesCounter;
 
             if (auto exc = updateSyncChunkHighUsn(
-                    notebookIt->updateSequenceNum().value())) {
+                    notebookIt->updateSequenceNum().value()))
+            {
                 return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
             }
 
@@ -3642,7 +3683,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                 {
                     for (auto & resource: *qecNote.mutableResources()) {
                         if (resource.attributes() &&
-                            resource.attributes()->applicationData()) {
+                            resource.attributes()->applicationData())
+                        {
                             resource.mutableAttributes()
                                 ->mutableApplicationData()
                                 ->setFullMap(std::nullopt);
@@ -3682,7 +3724,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableNotes()->append(qecNote);
             QNDEBUG(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Added note to sync chunk: " << qecNote);
 
             ++syncChunkEntriesCounter;
@@ -3703,7 +3745,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                             *resource.updateSequenceNum());
 
                         QNDEBUG(
-                            "tests::synchronization",
+                            "tests::synchronization::NoteStoreServer",
                             "Sync chunk high USN updated to "
                                 << *syncChunk.chunkHighUSN());
                     }
@@ -3760,13 +3802,14 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
                 syncChunk.mutableResources()->append(qecResource);
                 QNDEBUG(
-                    "tests::synchronization",
+                    "tests::synchronization::NoteStoreServer",
                     "Added resource to sync chunk: " << qecResource);
 
                 ++syncChunkEntriesCounter;
 
                 if (auto exc = updateSyncChunkHighUsn(
-                        resourceIt->updateSequenceNum().value())) {
+                        resourceIt->updateSequenceNum().value()))
+                {
                     return std::make_pair(
                         qevercloud::SyncChunk{}, std::move(exc));
                 }
@@ -3795,7 +3838,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
                 if (!foundResourceWithinNote) {
                     QNWARNING(
-                        "tests::synchronization",
+                        "tests::synchronization::NoteStoreServer",
                         "Internal error during sync chunk collection: "
                             << "chunk high usn "
                             << (syncChunk.chunkHighUSN()
@@ -3811,26 +3854,28 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                     return std::make_pair(
                         qevercloud::SyncChunk{},
                         std::make_exception_ptr(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::INTERNAL_ERROR)
-                            .setMessage(
-                                QString::fromUtf8("Internal error during sync "
-                                                  "chunk collection: "
-                                                  "chunk high usn %1 is not "
-                                                  "less than the next "
-                                                  "resource's usn %2")
-                                    .arg(
-                                        (syncChunk.chunkHighUSN()
-                                             ? QString::number(
-                                                   *syncChunk.chunkHighUSN())
-                                             : QStringLiteral("<none>")),
-                                        (resourceIt->updateSequenceNum()
-                                             ? QString::number(
-                                                   *resourceIt
-                                                        ->updateSequenceNum())
-                                             : QStringLiteral("<none>"))))
-                            .build()));
+                            qevercloud::EDAMSystemExceptionBuilder{}
+                                .setErrorCode(
+                                    qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                                .setMessage(
+                                    QString::fromUtf8(
+                                        "Internal error during sync "
+                                        "chunk collection: "
+                                        "chunk high usn %1 is not "
+                                        "less than the next "
+                                        "resource's usn %2")
+                                        .arg(
+                                            (syncChunk.chunkHighUSN()
+                                                 ? QString::number(
+                                                       *syncChunk
+                                                            .chunkHighUSN())
+                                                 : QStringLiteral("<none>")),
+                                            (resourceIt->updateSequenceNum()
+                                                 ? QString::number(
+                                                       *resourceIt
+                                                            ->updateSequenceNum())
+                                                 : QStringLiteral("<none>"))))
+                                .build()));
                 }
             }
 
@@ -3847,7 +3892,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableLinkedNotebooks()->append(*linkedNotebookIt);
             QNDEBUG(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Added linked notebook to sync chunk: " << *linkedNotebookIt);
 
             ++syncChunkEntriesCounter;
@@ -3862,7 +3907,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         } break;
         default:
             QNWARNING(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Unexpected next item type: " << nextItemType);
             break;
         }
@@ -4010,7 +4055,7 @@ note_store::NotesByUSN::const_iterator NoteStoreServer::nextNoteByUsnIterator(
         auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
         if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
             QNWARNING(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Found note which notebook guid doesn't correspond to any "
                     << "existing notebook: " << *it);
             ++it;
@@ -4047,7 +4092,7 @@ note_store::ResourcesByUSN::const_iterator
         auto resourceNoteIt = noteGuidIndex.find(noteGuid);
         if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end())) {
             QNWARNING(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Found resource which note guid doesn't correspond to any "
                     << "existing note: " << *it);
             ++it;
@@ -4059,7 +4104,7 @@ note_store::ResourcesByUSN::const_iterator
         auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
         if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
             QNWARNING(
-                "tests::synchronization",
+                "tests::synchronization::NoteStoreServer",
                 "Found note which notebook guid doesn't correspond to any "
                     << "existing notebook: " << note);
             ++it;
