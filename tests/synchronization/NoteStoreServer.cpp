@@ -1604,14 +1604,23 @@ void NoteStoreServer::onUpdateNotebookRequest(
         return;
     }
 
-    if (notebook.linkedNotebookGuid()) {
+    // NOTE: notebook's linkedNotebookGuid field is not serialized on thrift
+    // level and thus it won't be propagated inside the notebook to
+    // NoteStoreServer. Instead linkedNotebookGuid is encoded in the request's
+    // uri.
+    if (const auto it = m_uriByRequestId.find(ctx->requestId());
+        it != m_uriByRequestId.end())
+    {
+        auto linkedNotebookGuid = QString::fromUtf8(it.value());
         if (auto exc = checkLinkedNotebookAuthentication(
-                *notebook.linkedNotebookGuid(), ctx))
+                linkedNotebookGuid, ctx))
         {
             Q_EMIT updateNotebookRequestReady(
                 0, std::move(exc), ctx->requestId());
             return;
         }
+
+        notebook.setLinkedNotebookGuid(std::move(linkedNotebookGuid));
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateNotebookRequestReady(0, std::move(exc), ctx->requestId());
@@ -1863,7 +1872,7 @@ void NoteStoreServer::onUpdateNoteRequest(
         return;
     }
 
-    const auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
+    auto & noteGuidIndex = m_notes.get<note_store::NoteByGuidTag>();
     const auto noteIt = noteGuidIndex.find(*note.guid());
     if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
         Q_EMIT updateNoteRequestReady(
@@ -1960,19 +1969,54 @@ void NoteStoreServer::onUpdateNoteRequest(
         return;
     }
 
+    if (note.resources() && !note.resources()->isEmpty()) {
+        auto & resourceGuidIndex =
+            m_resources.get<note_store::ResourceByGuidTag>();
+        for (auto & resource: *note.mutableResources()) {
+            if (!resource.guid()) {
+                Q_EMIT updateNoteRequestReady(
+                    qevercloud::Note{},
+                    std::make_exception_ptr(
+                        qevercloud::EDAMSystemExceptionBuilder{}
+                            .setErrorCode(
+                                qevercloud::EDAMErrorCode::INTERNAL_ERROR)
+                            .setMessage(QStringLiteral(
+                                "Creation of new resources within the note "
+                                "is not supported in this test environment"))
+                            .build()),
+                    ctx->requestId());
+                return;
+            }
+
+            auto resourceIt = resourceGuidIndex.find(*resource.guid());
+            if (Q_UNLIKELY(resourceIt == resourceGuidIndex.end())) {
+                Q_EMIT updateNoteRequestReady(
+                    qevercloud::Note{},
+                    std::make_exception_ptr(
+                        qevercloud::EDAMSystemExceptionBuilder{}
+                            .setErrorCode(
+                                qevercloud::EDAMErrorCode::DATA_CONFLICT)
+                            .setMessage(QStringLiteral(
+                                "Could not find updated note's resource by "
+                                "guid"))
+                            .build()),
+                    ctx->requestId());
+                return;
+            }
+
+            ++(*maxUsn);
+            resource.setUpdateSequenceNum(maxUsn);
+            setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+
+            resourceGuidIndex.replace(resourceIt, resource);
+        }
+    }
+
     ++(*maxUsn);
     note.setUpdateSequenceNum(maxUsn);
     setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
-    if (note.resources() && !note.resources()->isEmpty()) {
-        for (auto & resource: *note.mutableResources()) {
-            ++(*maxUsn);
-            resource.setUpdateSequenceNum(maxUsn);
-            setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
-        }
-    }
-
-    m_notes.insert(note);
+    noteGuidIndex.replace(noteIt, note);
     Q_EMIT updateNoteRequestReady(std::move(note), nullptr, ctx->requestId());
 }
 
@@ -2124,7 +2168,7 @@ void NoteStoreServer::onUpdateTagRequest(
         return;
     }
 
-    const auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
+    auto & tagGuidIndex = m_tags.get<note_store::TagByGuidTag>();
     const auto tagIt = tagGuidIndex.find(*tag.guid());
     if (Q_UNLIKELY(tagIt == tagGuidIndex.end())) {
         Q_EMIT updateTagRequestReady(
@@ -2179,13 +2223,21 @@ void NoteStoreServer::onUpdateTagRequest(
         return;
     }
 
-    if (tag.linkedNotebookGuid()) {
+    // NOTE: tag's linkedNotebookGuid field is not serialized on thrift level
+    // and thus it won't be propagated inside the tag to NoteStoreServer.
+    // Instead linkedNotebookGuid is encoded in the request's uri.
+    if (const auto it = m_uriByRequestId.find(ctx->requestId());
+        it != m_uriByRequestId.end())
+    {
+        auto linkedNotebookGuid = QString::fromUtf8(it.value());
         if (auto exc = checkLinkedNotebookAuthentication(
-                *tag.linkedNotebookGuid(), ctx))
+                linkedNotebookGuid, ctx))
         {
             Q_EMIT updateTagRequestReady(0, std::move(exc), ctx->requestId());
             return;
         }
+
+        tag.setLinkedNotebookGuid(std::move(linkedNotebookGuid));
     }
     else if (auto exc = checkAuthentication(ctx)) {
         Q_EMIT updateTagRequestReady(0, std::move(exc), ctx->requestId());
@@ -2213,7 +2265,7 @@ void NoteStoreServer::onUpdateTagRequest(
     tag.setUpdateSequenceNum(maxUsn);
     setMaxUsn(*maxUsn, tag.linkedNotebookGuid());
 
-    m_tags.insert(tag);
+    tagGuidIndex.replace(tagIt, tag);
     Q_EMIT updateTagRequestReady(*maxUsn, nullptr, ctx->requestId());
 }
 
@@ -2316,7 +2368,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
         return;
     }
 
-    const auto & savedSearchGuidIndex =
+    auto & savedSearchGuidIndex =
         m_savedSearches.get<note_store::SavedSearchByGuidTag>();
 
     const auto savedSearchIt = savedSearchGuidIndex.find(*search.guid());
@@ -2371,7 +2423,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
     search.setUpdateSequenceNum(maxUsn);
     m_userOwnMaxUsn = maxUsn;
 
-    m_savedSearches.insert(search);
+    savedSearchGuidIndex.replace(savedSearchIt, search);
     Q_EMIT updateSavedSearchRequestReady(maxUsn, nullptr, ctx->requestId());
 }
 
