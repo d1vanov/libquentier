@@ -49,6 +49,7 @@
 
 #include <functional>
 #include <memory>
+#include <utility>
 
 // 25 Mb in bytes
 #define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)
@@ -1208,7 +1209,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
         QNTRACE("enml", "Parsed forbidden attributes per element: ");
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(elementToForbiddenAttributes)))
+             qevercloud::toRange(std::as_const(elementToForbiddenAttributes)))
         {
             QNTRACE("enml", "[" << it.key() << "]: " << it.value());
         }
@@ -1601,7 +1602,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     }
 
     bool foundNoteEligibleForExport = false;
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (!note.title() && !note.content() &&
             (!note.resources() || note.resources()->isEmpty()) &&
             note.tagLocalIds().isEmpty())
@@ -1665,7 +1666,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
     writer.writeAttributes(enExportAttributes);
 
-    for (const auto & note: qAsConst(notes)) {
+    for (const auto & note: std::as_const(notes)) {
         if (!note.title() && !note.content() &&
             (!note.resources() || note.resources()->isEmpty()) &&
             ((exportTagsOption != ENMLConverter::EnexExportTags::Yes) ||
@@ -1884,7 +1885,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
         if (note.resources()) {
             auto resources = *note.resources();
 
-            for (const auto & resource: qAsConst(resources)) {
+            for (const auto & resource: std::as_const(resources)) {
                 if (!resource.data() || !resource.data()->body()) {
                     QNINFO(
                         "enml",
