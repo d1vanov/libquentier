@@ -889,7 +889,8 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
             for (auto it = lastElementAttributes.begin(); // NOLINT
                  it != lastElementAttributes.end();)
             {
-                QStringRef attributeName = it->name();
+                const auto & attribute = *it;
+                const QStringRef attributeName = attribute.name();
                 if (isForbiddenXhtmlAttribute(attributeName.toString())) {
                     QNTRACE(
                         "enml",
@@ -1273,7 +1274,8 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
             for (auto ait = lastElementAttributes.begin(); // NOLINT
                  ait != lastElementAttributes.end();)
             {
-                QString attributeName = ait->name().toString();
+                const auto & attribute = *ait;
+                const QString attributeName = attribute.name().toString();
                 if (forbiddenAttributes.contains(attributeName)) {
                     QNTRACE(
                         "enml",
@@ -4318,7 +4320,8 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     for (auto it = state.m_lastElementAttributes.begin(); // NOLINT
          it != state.m_lastElementAttributes.end();)
     {
-        const QStringRef attributeName = it->name();
+        const auto & attribute = *it;
+        const QStringRef attributeName = attribute.name();
         if (isForbiddenXhtmlAttribute(attributeName.toString())) {
             QNTRACE("enml", "Erasing forbidden attribute " << attributeName);
             it = state.m_lastElementAttributes.erase(it);
