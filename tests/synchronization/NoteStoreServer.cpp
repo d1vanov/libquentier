@@ -40,6 +40,7 @@
 #include <QUuid>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::synchronization::tests {
 
@@ -486,7 +487,7 @@ void NoteStoreServer::removeTag(const qevercloud::Guid & guid)
         childTagGuids << it->guid().value();
     }
 
-    for (const auto & childTagGuid: qAsConst(childTagGuids)) {
+    for (const auto & childTagGuid: std::as_const(childTagGuids)) {
         removeTag(childTagGuid);
     }
 
@@ -713,7 +714,7 @@ void NoteStoreServer::removeNotebook(const qevercloud::Guid & guid)
         noteGuids << it->guid().value();
     }
 
-    for (const auto & noteGuid: qAsConst(noteGuids)) {
+    for (const auto & noteGuid: std::as_const(noteGuids)) {
         removeNote(noteGuid);
     }
 
@@ -931,7 +932,7 @@ void NoteStoreServer::removeNote(const qevercloud::Guid & guid)
     const auto & note = *it;
     if (note.resources() && !note.resources()->isEmpty()) {
         const auto resources = *note.resources();
-        for (const auto & resource: qAsConst(resources)) {
+        for (const auto & resource: std::as_const(resources)) {
             removeResource(resource.guid().value());
         }
     }
@@ -1836,7 +1837,7 @@ void NoteStoreServer::onCreateNoteRequest(
 
     m_notes.insert(note);
     if (note.resources() && !note.resources()->isEmpty()) {
-        for (const auto & resource: qAsConst(*note.resources())) {
+        for (const auto & resource: std::as_const(*note.resources())) {
             m_resources.insert(resource);
         }
     }
@@ -3788,7 +3789,8 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             if (noteIt->resources() && !noteIt->resources()->isEmpty()) {
-                for (const auto & resource: qAsConst(*noteIt->resources())) {
+                for (const auto & resource: std::as_const(*noteIt->resources()))
+                {
                     if (!syncChunk.chunkHighUSN() ||
                         syncChunk.chunkHighUSN() <
                             resource.updateSequenceNum().value())
@@ -3869,7 +3871,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             else {
                 bool foundResourceWithinNote = false;
                 if (syncChunk.notes() && !syncChunk.notes()->isEmpty()) {
-                    for (const auto & note: qAsConst(*syncChunk.notes())) {
+                    for (const auto & note: std::as_const(*syncChunk.notes())) {
                         if (!note.resources() || note.resources()->isEmpty()) {
                             continue;
                         }
@@ -3979,7 +3981,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedSearches()->reserve(
             m_expungedSavedSearchGuids.size());
 
-        for (const auto & guid: qAsConst(m_expungedSavedSearchGuids)) {
+        for (const auto & guid: std::as_const(m_expungedSavedSearchGuids)) {
             syncChunk.mutableExpungedSearches()->append(guid);
         }
     }
@@ -3992,7 +3994,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedTags()->reserve(
             m_expungedUserOwnTagGuids.size());
 
-        for (const auto & guid: qAsConst(m_expungedUserOwnTagGuids)) {
+        for (const auto & guid: std::as_const(m_expungedUserOwnTagGuids)) {
             syncChunk.mutableExpungedTags()->append(guid);
         }
     }
@@ -4008,7 +4010,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableExpungedTags()->reserve(expungedTagGuids.size());
 
-            for (const auto & guid: qAsConst(expungedTagGuids)) {
+            for (const auto & guid: std::as_const(expungedTagGuids)) {
                 syncChunk.mutableExpungedTags()->append(guid);
             }
         }
@@ -4022,7 +4024,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedNotebooks()->reserve(
             m_expungedUserOwnNotebookGuids.size());
 
-        for (const auto & guid: qAsConst(m_expungedUserOwnNotebookGuids)) {
+        for (const auto & guid: std::as_const(m_expungedUserOwnNotebookGuids)) {
             syncChunk.mutableExpungedNotebooks()->append(guid);
         }
     }
@@ -4039,7 +4041,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             syncChunk.mutableExpungedNotebooks()->reserve(
                 expungedNotebookGuids.size());
 
-            for (const auto & guid: qAsConst(expungedNotebookGuids)) {
+            for (const auto & guid: std::as_const(expungedNotebookGuids)) {
                 syncChunk.mutableExpungedNotebooks()->append(guid);
             }
         }
@@ -4053,7 +4055,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         syncChunk.mutableExpungedNotes()->reserve(
             m_expungedUserOwnNoteGuids.size());
 
-        for (const auto & guid: qAsConst(m_expungedUserOwnNoteGuids)) {
+        for (const auto & guid: std::as_const(m_expungedUserOwnNoteGuids)) {
             syncChunk.mutableExpungedNotes()->append(guid);
         }
     }
@@ -4069,7 +4071,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
             syncChunk.mutableExpungedNotes()->reserve(expungedNoteGuids.size());
 
-            for (const auto & guid: qAsConst(expungedNoteGuids)) {
+            for (const auto & guid: std::as_const(expungedNoteGuids)) {
                 syncChunk.mutableExpungedNotes()->append(guid);
             }
         }

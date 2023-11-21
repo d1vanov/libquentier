@@ -23,6 +23,8 @@
 
 #include <qevercloud/utility/ToRange.h>
 
+#include <utility>
+
 namespace quentier::synchronization::tests {
 
 SyncEventsCollector::SyncEventsCollector(QObject * parent) : QObject(parent) {}
@@ -368,7 +370,7 @@ bool SyncEventsCollector::checkLinkedNotebookSyncChunksDownloadProgressOrder(
     const char *& errorMessage) const
 {
     for (const auto it: qevercloud::toRange(
-             qAsConst(m_linkedNotebookSyncChunksDownloadProgressMessages)))
+             std::as_const(m_linkedNotebookSyncChunksDownloadProgressMessages)))
     {
         bool res = checkSyncChunksDownloadProgressOrderImpl(
             it.value().second, errorMessage);
@@ -468,7 +470,7 @@ bool SyncEventsCollector::checkLinkedNotebookNotesDownloadProgressOrder(
     const char *& errorMessage) const
 {
     for (const auto it: qevercloud::toRange(
-             qAsConst(m_linkedNotebookNoteDownloadProgressMessages)))
+             std::as_const(m_linkedNotebookNoteDownloadProgressMessages)))
     {
         if (!checkNotesDownloadProgressOrderImpl(
                 it.value().second, errorMessage)) {
@@ -551,7 +553,7 @@ bool SyncEventsCollector::checkLinkedNotebookResourcesDownloadProgressOrder(
     const char *& errorMessage) const
 {
     for (const auto it: qevercloud::toRange(
-             qAsConst(m_linkedNotebookResourceDownloadProgressMessages)))
+             std::as_const(m_linkedNotebookResourceDownloadProgressMessages)))
     {
         if (!checkResourcesDownloadProgressOrderImpl(
                 it.value().second, errorMessage)) {
@@ -638,8 +640,8 @@ bool SyncEventsCollector::checkUserOwnSyncChunksDataCountersOrder(
 bool SyncEventsCollector::checkLinkedNotebookSyncChunkDataCountersOrder(
     const char *& errorMessage) const
 {
-    for (const auto it:
-         qevercloud::toRange(qAsConst(m_linkedNotebookSyncChunksDataCounters)))
+    for (const auto it: qevercloud::toRange(
+             std::as_const(m_linkedNotebookSyncChunksDataCounters)))
     {
         if (!checkSyncChunksDataCountersOrderImpl(
                 it.value().second, errorMessage)) {
@@ -659,7 +661,7 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
     }
 
     ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
-    for (const auto & currentCounters: qAsConst(messages)) {
+    for (const auto & currentCounters: std::as_const(messages)) {
         Q_ASSERT(currentCounters);
 
         if (!lastSyncChunksDataCounters) {

@@ -502,7 +502,7 @@ void setupTestData(
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
             for (const auto & linkedNotebookGuid:
-                 qAsConst(baseLinkedNotebookGuids))
+                 std::as_const(baseLinkedNotebookGuids))
             {
                 if (itemGroups.testFlag(ItemGroup::Base)) {
                     putTags(
@@ -514,7 +514,7 @@ void setupTestData(
             }
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(modifiedLinkedNotebookGuids))
+                 std::as_const(modifiedLinkedNotebookGuids))
             {
                 if (itemGroups.testFlag(ItemGroup::Modified)) {
                     putTags(
@@ -527,7 +527,7 @@ void setupTestData(
             }
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(newLinkedNotebookGuids))
+                 std::as_const(newLinkedNotebookGuids))
             {
                 if (itemGroups.testFlag(ItemGroup::New)) {
                     putTags(
@@ -581,7 +581,7 @@ void setupTestData(
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
             for (const auto & linkedNotebookGuid:
-                 qAsConst(baseLinkedNotebookGuids))
+                 std::as_const(baseLinkedNotebookGuids))
             {
                 if (itemGroups.testFlag(ItemGroup::Base)) {
                     putNotebooks(
@@ -594,7 +594,7 @@ void setupTestData(
             }
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(modifiedLinkedNotebookGuids))
+                 std::as_const(modifiedLinkedNotebookGuids))
             {
                 if (itemGroups.testFlag(ItemGroup::Modified)) {
                     putNotebooks(
@@ -607,7 +607,7 @@ void setupTestData(
             }
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(newLinkedNotebookGuids))
+                 std::as_const(newLinkedNotebookGuids))
             {
                 if (itemGroups.testFlag(ItemGroup::New)) {
                     putNotebooks(
@@ -650,13 +650,13 @@ void setupTestData(
                     QStringList tagLocalIds;
                     if (i % 3 == 0) {
                         tagGuids.reserve(tags.size());
-                        for (const auto & tag: qAsConst(tags)) {
+                        for (const auto & tag: std::as_const(tags)) {
                             Q_ASSERT(tag.guid());
                             tagGuids << *tag.guid();
                         }
 
                         tagLocalIds.reserve(tags.size());
-                        for (const auto & tag: qAsConst(tags)) {
+                        for (const auto & tag: std::as_const(tags)) {
                             tagLocalIds << tag.localId();
                         }
                     }
@@ -702,7 +702,7 @@ void setupTestData(
                     QStringList tagLocalIds;
                     if (i % 3 == 0) {
                         int tagCount = 0;
-                        for (const auto & tag: qAsConst(tags)) {
+                        for (const auto & tag: std::as_const(tags)) {
                             Q_ASSERT(tag.guid());
                             if (tag.linkedNotebookGuid() != linkedNotebookGuid)
                             {
@@ -803,7 +803,9 @@ void setupTestData(
         };
 
         if (itemSources.testFlag(ItemSource::UserOwnAccount)) {
-            for (const auto & note: qAsConst(testData.m_userOwnModifiedNotes)) {
+            for (const auto & note:
+                 std::as_const(testData.m_userOwnModifiedNotes))
+            {
                 if (!note.resources() || note.resources()->isEmpty()) {
                     continue;
                 }
@@ -817,7 +819,7 @@ void setupTestData(
 
         if (itemSources.testFlag(ItemSource::LinkedNotebook)) {
             for (const auto & note:
-                 qAsConst(testData.m_linkedNotebookModifiedNotes))
+                 std::as_const(testData.m_linkedNotebookModifiedNotes))
             {
                 if (!note.resources() || note.resources()->isEmpty()) {
                     continue;
@@ -858,7 +860,7 @@ void setupTestData(
                 modifiedLinkedNotebookGuids.size());
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(modifiedLinkedNotebookGuids))
+                 std::as_const(modifiedLinkedNotebookGuids))
             {
                 auto & expungedTagGuids =
                     testData
@@ -881,7 +883,7 @@ void setupTestData(
                 modifiedLinkedNotebookGuids.size());
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(modifiedLinkedNotebookGuids))
+                 std::as_const(modifiedLinkedNotebookGuids))
             {
                 auto & expungedNotebookGuids =
                     testData.m_expungedLinkedNotebookNotebookGuids
@@ -904,7 +906,7 @@ void setupTestData(
                 modifiedLinkedNotebookGuids.size());
 
             for (const auto & linkedNotebookGuid:
-                 qAsConst(modifiedLinkedNotebookGuids))
+                 std::as_const(modifiedLinkedNotebookGuids))
             {
                 auto & expungedNoteGuids =
                     testData
@@ -1194,48 +1196,51 @@ void setupNoteStoreServer(
     }
 
     for (const auto & guid:
-         qAsConst(testData.m_expungedUserOwnSavedSearchGuids))
+         std::as_const(testData.m_expungedUserOwnSavedSearchGuids))
     {
         noteStoreServer.putExpungedSavedSearchGuid(guid);
     }
 
-    for (const auto & guid: qAsConst(testData.m_expungedUserOwnTagGuids)) {
+    for (const auto & guid: std::as_const(testData.m_expungedUserOwnTagGuids)) {
         noteStoreServer.putExpungedUserOwnTagGuid(guid);
     }
 
-    for (const auto & guid: qAsConst(testData.m_expungedUserOwnNotebookGuids)) {
+    for (const auto & guid:
+         std::as_const(testData.m_expungedUserOwnNotebookGuids))
+    {
         noteStoreServer.putExpungedUserOwnNotebookGuid(guid);
     }
 
-    for (const auto & guid: qAsConst(testData.m_expungedUserOwnNoteGuids)) {
+    for (const auto & guid: std::as_const(testData.m_expungedUserOwnNoteGuids))
+    {
         noteStoreServer.putExpungedUserOwnNoteGuid(guid);
     }
 
     for (const auto it: qevercloud::toRange(
-             qAsConst(testData.m_expungedLinkedNotebookTagGuids)))
+             std::as_const(testData.m_expungedLinkedNotebookTagGuids)))
     {
         const auto & linkedNotebookGuid = it.key();
-        for (const auto & tagGuid: qAsConst(it.value())) {
+        for (const auto & tagGuid: std::as_const(it.value())) {
             noteStoreServer.putExpungedLinkedNotebookTagGuid(
                 linkedNotebookGuid, tagGuid);
         }
     }
 
     for (const auto it: qevercloud::toRange(
-             qAsConst(testData.m_expungedLinkedNotebookNotebookGuids)))
+             std::as_const(testData.m_expungedLinkedNotebookNotebookGuids)))
     {
         const auto & linkedNotebookGuid = it.key();
-        for (const auto & notebookGuid: qAsConst(it.value())) {
+        for (const auto & notebookGuid: std::as_const(it.value())) {
             noteStoreServer.putExpungedLinkedNotebookNotebookGuid(
                 linkedNotebookGuid, notebookGuid);
         }
     }
 
     for (const auto it: qevercloud::toRange(
-             qAsConst(testData.m_expungedLinkedNotebookNoteGuids)))
+             std::as_const(testData.m_expungedLinkedNotebookNoteGuids)))
     {
         const auto & linkedNotebookGuid = it.key();
-        for (const auto & noteGuid: qAsConst(it.value())) {
+        for (const auto & noteGuid: std::as_const(it.value())) {
             noteStoreServer.putExpungedLinkedNotebookNoteGuid(
                 linkedNotebookGuid, noteGuid);
         }
@@ -1255,7 +1260,7 @@ void setupLocalStorage(
         const auto putSavedSearches = [&](const QList<qevercloud::SavedSearch> &
                                               savedSearches,
                                           const ItemGroup itemGroup) {
-            for (const auto & savedSearch: qAsConst(savedSearches)) {
+            for (const auto & savedSearch: std::as_const(savedSearches)) {
                 switch (itemGroup) {
                 case ItemGroup::Base:
                     localStorage.putSavedSearch(savedSearch).waitForFinished();
@@ -1298,7 +1303,8 @@ void setupLocalStorage(
         const auto putLinkedNotebooks =
             [&](const QList<qevercloud::LinkedNotebook> & linkedNotebooks,
                 const ItemGroup itemGroup) {
-                for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
+                for (const auto & linkedNotebook:
+                     std::as_const(linkedNotebooks)) {
                     switch (itemGroup) {
                     case ItemGroup::Base:
                         localStorage.putLinkedNotebook(linkedNotebook)
@@ -1362,7 +1368,7 @@ void setupLocalStorage(
     if (dataItemTypes.testFlag(DataItemType::Tag)) {
         const auto putTags = [&](const QList<qevercloud::Tag> & tags,
                                  const ItemGroup itemGroup) {
-            for (const auto & tag: qAsConst(tags)) {
+            for (const auto & tag: std::as_const(tags)) {
                 switch (itemGroup) {
                 case ItemGroup::Base:
                     localStorage.putTag(tag).waitForFinished();
@@ -1435,7 +1441,7 @@ void setupLocalStorage(
         const auto putNotebooks = [&](const QList<qevercloud::Notebook> &
                                           notebooks,
                                       const ItemGroup itemGroup) {
-            for (const auto & notebook: qAsConst(notebooks)) {
+            for (const auto & notebook: std::as_const(notebooks)) {
                 switch (itemGroup) {
                 case ItemGroup::Base:
                     localStorage.putNotebook(notebook).waitForFinished();
@@ -1509,7 +1515,7 @@ void setupLocalStorage(
     if (dataItemTypes.testFlag(DataItemType::Note)) {
         const auto putNotes = [&](const QList<qevercloud::Note> & notes,
                                   const ItemGroup itemGroup) {
-            for (const auto & note: qAsConst(notes)) {
+            for (const auto & note: std::as_const(notes)) {
                 switch (itemGroup) {
                 case ItemGroup::Base:
                     localStorage.putNote(note).waitForFinished();
@@ -1575,7 +1581,7 @@ void setupLocalStorage(
 
     int expungedSavedSearchIndex = 1;
     for (const auto & guid:
-         qAsConst(testData.m_expungedUserOwnSavedSearchGuids))
+         std::as_const(testData.m_expungedUserOwnSavedSearchGuids))
     {
         localStorage
             .putSavedSearch(
@@ -1589,7 +1595,9 @@ void setupLocalStorage(
     }
 
     int expungedNotebookIndex = 1;
-    for (const auto & guid: qAsConst(testData.m_expungedUserOwnNotebookGuids)) {
+    for (const auto & guid:
+         std::as_const(testData.m_expungedUserOwnNotebookGuids))
+    {
         localStorage
             .putNotebook(qevercloud::NotebookBuilder{}
                              .setGuid(guid)
@@ -1601,11 +1609,11 @@ void setupLocalStorage(
     }
 
     for (const auto it: qevercloud::toRange(
-             qAsConst(testData.m_expungedLinkedNotebookNotebookGuids)))
+             std::as_const(testData.m_expungedLinkedNotebookNotebookGuids)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & guids = it.value();
-        for (const auto & guid: qAsConst(guids)) {
+        for (const auto & guid: std::as_const(guids)) {
             localStorage
                 .putNotebook(
                     qevercloud::NotebookBuilder{}
@@ -1621,7 +1629,7 @@ void setupLocalStorage(
     }
 
     int expungedTagIndex = 1;
-    for (const auto & guid: qAsConst(testData.m_expungedUserOwnTagGuids)) {
+    for (const auto & guid: std::as_const(testData.m_expungedUserOwnTagGuids)) {
         localStorage
             .putTag(qevercloud::TagBuilder{}
                         .setGuid(guid)
@@ -1633,11 +1641,11 @@ void setupLocalStorage(
     }
 
     for (const auto it: qevercloud::toRange(
-             qAsConst(testData.m_expungedLinkedNotebookTagGuids)))
+             std::as_const(testData.m_expungedLinkedNotebookTagGuids)))
     {
         const auto & linkedNotebookGuid = it.key();
         const auto & guids = it.value();
-        for (const auto & guid: qAsConst(guids)) {
+        for (const auto & guid: std::as_const(guids)) {
             localStorage
                 .putTag(qevercloud::TagBuilder{}
                             .setGuid(guid)
@@ -1669,7 +1677,9 @@ void setupLocalStorage(
 
         const auto & notebook = notebooks[0];
 
-        for (const auto & guid: qAsConst(testData.m_expungedUserOwnNoteGuids)) {
+        for (const auto & guid:
+             std::as_const(testData.m_expungedUserOwnNoteGuids))
+        {
             localStorage
                 .putNote(qevercloud::NoteBuilder{}
                              .setGuid(guid)
@@ -1698,11 +1708,11 @@ void setupLocalStorage(
         const auto notebooks = notebooksFuture.result();
 
         for (const auto it: qevercloud::toRange(
-                 qAsConst(testData.m_expungedLinkedNotebookTagGuids)))
+                 std::as_const(testData.m_expungedLinkedNotebookTagGuids)))
         {
             const auto & linkedNotebookGuid = it.key();
             const auto & guids = it.value();
-            for (const auto & guid: qAsConst(guids)) {
+            for (const auto & guid: std::as_const(guids)) {
                 const auto notebookIt = std::find_if(
                     notebooks.constBegin(), notebooks.constEnd(),
                     [&](const qevercloud::Notebook & notebook) {
@@ -1748,7 +1758,7 @@ ISyncStatePtr setupSyncState(
     }
 
     const auto processItems = [&](const auto & items) {
-        for (const auto & item: qAsConst(items)) {
+        for (const auto & item: std::as_const(items)) {
             Q_ASSERT(item.updateSequenceNum());
 
             std::optional<qevercloud::Guid> linkedNotebookGuid;
@@ -1776,7 +1786,7 @@ ISyncStatePtr setupSyncState(
                     &testData.m_linkedNotebookNewNotebooks,
                 };
 
-                for (const auto & noteList: qAsConst(noteLists)) {
+                for (const auto & noteList: std::as_const(noteLists)) {
                     const auto noteIt = std::find_if(
                         noteList->constBegin(), noteList->constEnd(),
                         [&](const qevercloud::Note & note) {
@@ -1786,7 +1796,9 @@ ISyncStatePtr setupSyncState(
                         continue;
                     }
 
-                    for (const auto & notebookList: qAsConst(notebookLists)) {
+                    for (const auto & notebookList:
+                         std::as_const(notebookLists))
+                    {
                         const auto it = std::find_if(
                             notebookList->constBegin(),
                             notebookList->constEnd(),
@@ -1820,7 +1832,7 @@ ISyncStatePtr setupSyncState(
                     &testData.m_linkedNotebookNewNotebooks,
                 };
 
-                for (const auto & list: qAsConst(lists)) {
+                for (const auto & list: std::as_const(lists)) {
                     const auto it = std::find_if(
                         list->constBegin(), list->constEnd(),
                         [&](const qevercloud::Notebook & notebook) {
@@ -2021,7 +2033,7 @@ ISyncStatePtr setupSyncState(
     QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
     linkedNotebookLastSyncTimes.reserve(linkedNotebookUpdateCounts.size());
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts)))
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         linkedNotebookLastSyncTimes[it.key()] = *lastUpdateTimestamp;
     }

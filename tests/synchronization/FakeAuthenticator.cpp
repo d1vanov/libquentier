@@ -35,6 +35,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <utility>
+
 namespace quentier::synchronization::tests {
 
 FakeAuthenticator::FakeAuthenticator(
@@ -70,7 +72,7 @@ IAuthenticationInfoPtr FakeAuthenticator::findAuthInfo(
     const Account & account) const
 {
     const QMutexLocker locker{&m_mutex};
-    for (const auto & accountAuthInfo: qAsConst(m_accountAuthInfos)) {
+    for (const auto & accountAuthInfo: std::as_const(m_accountAuthInfos)) {
         if (accountAuthInfo.account == account) {
             QNDEBUG(
                 "tests::synchronization::FakeAuthenticator",

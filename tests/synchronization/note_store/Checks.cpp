@@ -28,6 +28,8 @@
 
 #include <QRegularExpression>
 
+#include <utility>
+
 namespace quentier::synchronization::tests::note_store {
 
 namespace {
@@ -325,7 +327,7 @@ std::optional<qevercloud::EDAMUserException> checkNote(
                 QStringLiteral("Note.resources"));
         }
 
-        for (const auto & resource: qAsConst(resources)) {
+        for (const auto & resource: std::as_const(resources)) {
             if (!resource.data() || !resource.data()->body()) {
                 return utils::createUserException(
                     qevercloud::EDAMErrorCode::DATA_REQUIRED,

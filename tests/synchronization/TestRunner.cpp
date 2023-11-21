@@ -206,7 +206,7 @@ template <class T>
     QList<T> & onlyRhs, QList<std::pair<T, T>> & diffs)
 {
     QSet<qevercloud::Guid> processedRhsGuids;
-    for (const auto & lhsItem: qAsConst(lhs)) {
+    for (const auto & lhsItem: std::as_const(lhs)) {
         Q_ASSERT(lhsItem.guid());
         const auto it = std::find_if(
             rhs.constBegin(), rhs.constEnd(), [&lhsItem](const T & rhsItem) {
@@ -228,7 +228,7 @@ template <class T>
         }
     }
 
-    for (const auto & rhsItem: qAsConst(rhs)) {
+    for (const auto & rhsItem: std::as_const(rhs)) {
         Q_ASSERT(rhsItem.guid());
         if (processedRhsGuids.contains(*rhsItem.guid())) {
             continue;
@@ -257,17 +257,17 @@ QString composeDifferentListsErrorMessage(
     strm << "Found differences in item lists:\n\n";
 
     strm << "Items present only on the local side:\n\n";
-    for (const auto & item: qAsConst(onlyLhs)) {
+    for (const auto & item: std::as_const(onlyLhs)) {
         strm << item << "\n\n";
     }
 
     strm << "Items present only on the server side:\n\n";
-    for (const auto & item: qAsConst(onlyRhs)) {
+    for (const auto & item: std::as_const(onlyRhs)) {
         strm << item << "\n\n";
     }
 
     strm << "Items which differ from each other:\n\n";
-    for (const auto & pair: qAsConst(diffs)) {
+    for (const auto & pair: std::as_const(diffs)) {
         strm << pair.first << "\n";
         strm << pair.second << "\n\n";
     }
@@ -749,7 +749,8 @@ void TestRunner::runTestScenario()
         serverSyncState->linkedNotebookLastSyncTimes();
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+         qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
+    {
         const auto lastSyncTime = linkedNotebookLastSyncTimes.value(it.key());
         m_noteStoreServer->putLinkedNotebookSyncState(
             it.key(),
@@ -898,7 +899,8 @@ void TestRunner::runTestScenario()
             syncState->linkedNotebookUpdateCounts();
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(linkedNotebookUpdateCounts))) {
+             qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
+        {
             const auto serverMaxUsn =
                 m_noteStoreServer->currentLinkedNotebookMaxUsn(it.key());
 
@@ -921,7 +923,8 @@ void TestRunner::runTestScenario()
             linkedNotebookUpdateCounts.size());
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(linkedNotebookLastSyncTimes))) {
+             qevercloud::toRange(std::as_const(linkedNotebookLastSyncTimes)))
+        {
             QVERIFY2(
                 it.value() > 0,
                 "Detected zero last sync time in sync state for some linked "
