@@ -1601,9 +1601,9 @@ void Downloader::updateSyncState(const DownloadContext & downloadContext)
                 updateCounts.find(*downloadContext.linkedNotebook->guid());
 
             qint32 lastUpdateCount =
-                (it == updateCounts.constEnd() ? 0 : it.value());
+                (it == updateCounts.end() ? 0 : it.value());
             if (lastUpdateCount < *chunkHighUsn) {
-                if (it != updateCounts.constEnd()) {
+                if (it != updateCounts.end()) {
                     it.value() = *chunkHighUsn;
                 }
                 else {
