@@ -54,11 +54,11 @@ public:
 
     /**
      * @brief The SkipHtmlElementRule class describes the set of rules
-     * for HTML -> ENML conversion about the HTML elements that should not
+     * for HTML to ENML conversion about the HTML elements that should not
      * be actually converted to ENML due to their nature of being "helper"
      * elements for the display or functioning of something within
      * the note editor's page.
-     * The HTML -> ENML conversion would ignore tags and attributes forbidden
+     * The HTML to ENML conversion would ignore tags and attributes forbidden
      * by ENML even without these rules conditionally preserving or skipping
      * the contents and nested elements of skipped elements
      */
@@ -105,11 +105,11 @@ public:
      * with equivalents/alternatives) of any tags and attributes not supported
      * by the ENML representation of note page's HTML
      *
-     * @param inputHtml - the input HTML to be cleaned up
-     * @param cleanedUpHtml - the result of the method's work
-     * @param errorDescription - the textual description of the error if
-     * conversion of input HTML into QTextDocument has failed
-     *
+     * @param inputHtml Input HTML to be cleaned up
+     * @param cleanedUpHtml Result of the method's work
+     * @param errorDescription Textual description of the error if the
+     *                         conversion of input HTML into QTextDocument
+     *                         failed
      * @return true in case of successful conversion, false otherwise
      */
     [[nodiscard]] bool cleanupExternalHtml(
@@ -121,12 +121,12 @@ public:
      * QTextDocument (see http://doc.qt.io/qt-5/richtext-html-subset.html for
      * the list of elements supported by QTextDocument)
      *
-     * @param html - the input HTML which needs to be converted to QTextDocument
-     * @param doc - QTextDocument filled with the result of the method's work
-     * @param errorDescription - the textual description of the error if
-     * conversion of input HTML into QTextDocument has failed
-     * @param skipRules - rules for skipping the particular elements
-     *
+     * @param html Input HTML which needs to be converted to QTextDocument
+     * @param doc QTextDocument filled with the result of the method's work
+     * @param errorDescription Textual description of the error if the
+     *                         conversion of input HTML into QTextDocument
+     *                         failed
+     * @param skipRules Rules for skipping of particular elements
      * @return true in case of successful conversion, false otherwise
      */
     [[nodiscard]] bool htmlToQTextDocument(
@@ -170,8 +170,7 @@ public:
 
     [[nodiscard]] static QString encryptedTextHtml(
         const QString & encryptedText, const QString & hint,
-        const QString & cipher, size_t keyLength,
-        quint64 enCryptIndex);
+        const QString & cipher, size_t keyLength, quint64 enCryptIndex);
 
     [[nodiscard]] static QString decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
@@ -197,7 +196,7 @@ public:
      * @brief exportNotesToEnex exports either a single note or a set of notes
      * into ENEX format
      *
-     * @param notes                     The notes to be exported into the enex
+     * @param notes                     Notes to be exported into the enex
      *                                  format. The connection of particular
      *                                  notes to tags is expected to follow from
      *                                  note's tag local uids. In other words,
@@ -211,15 +210,14 @@ public:
      *                                  an error and the overall export attempt
      *                                  fails
      * @param exportTagsOption          Whether the export to ENEX should
-     * include the names of notes' tags
-     * @param enex                      The output of the method
-     * @param errorDescription          The textual description of the error, if
-     * any
+     *                                  include the names of notes' tags
+     * @param enex                      Output of the method
+     * @param errorDescription          Textual description of the error, if any
      * @param version                   Optional "version" tag for the ENEX.
      *                                  If not set, the corresponding ENEX tag
      *                                  is set to empty value
      * @return                          True if the export completed
-     * successfully, false otherwise
+     *                                  successfully, false otherwise
      */
     [[nodiscard]] bool exportNotesToEnex(
         const QList<qevercloud::Note> & notes,
@@ -231,7 +229,7 @@ public:
      * @brief importEnex reads the content of input ENEX file and converts it
      * into a set of notes and tag names.
      *
-     * @param enex                      The input ENEX file contents
+     * @param enex                      Input ENEX file contents
      * @param notes                     Notes read from the ENEX
      * @param tagNamesByNoteLocalId     Tag names per each read note; it is
      *                                  the responsibility of the method caller
@@ -243,7 +241,8 @@ public:
      *                                  converted into a set of notes and tag
      *                                  names for them
      * @return                          True of the ENEX file was read and
-     * converted into a set of notes and tag names successfully, false otherwise
+     *                                  converted into a set of notes and tag
+     *                                  names successfully, false otherwise
      */
     [[nodiscard]] bool importEnex(
         const QString & enex, QList<qevercloud::Note> & notes,
