@@ -708,7 +708,7 @@ void TestRunner::runTestScenario()
     auto localSyncState = setupSyncState(
         testData, testScenarioData.localDataItemTypes,
         testScenarioData.localItemGroups & (~(ItemGroups{} | ItemGroup::New)),
-        testScenarioData.localItemSources, now);
+        testScenarioData.localItemSources, DataItemTypes{}, ItemSources{}, now);
     QVERIFY(localSyncState);
 
     QNINFO(
@@ -724,7 +724,8 @@ void TestRunner::runTestScenario()
     auto serverSyncState = setupSyncState(
         testData, testScenarioData.serverDataItemTypes,
         testScenarioData.serverItemGroups, testScenarioData.serverItemSources,
-        now);
+        testScenarioData.serverExpungedDataItemTypes,
+        testScenarioData.serverExpungedDataItemSources, now);
     QVERIFY(serverSyncState);
 
     QNINFO(
@@ -944,7 +945,11 @@ void TestRunner::runTestScenario()
 
     QVERIFY(
         (userOwnNotesStatus && !empty(*userOwnNotesStatus)) ==
-        testScenarioData.expectSomeUserOwnNotes);
+            testScenarioData.expectSomeUserOwnNotes ||
+        (testScenarioData.serverExpungedDataItemTypes.testFlag(
+             DataItemType::Note) &&
+         testScenarioData.serverExpungedDataItemSources.testFlag(
+             ItemSource::UserOwnAccount)));
 
     const auto userOwnResourcesStatus =
         syncResult->userAccountDownloadResourcesStatus();

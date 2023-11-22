@@ -123,6 +123,7 @@ void setupLocalStorage(
 [[nodiscard]] ISyncStatePtr setupSyncState(
     const TestData & testData, DataItemTypes dataItemTypes,
     ItemGroups itemGroups, ItemSources itemSources,
+    DataItemTypes expungedDataItemTypes, ItemSources expungedItemSources,
     std::optional<qevercloud::Timestamp> lastUpdateTimestamp = std::nullopt);
 
 } // namespace quentier::synchronization::tests
