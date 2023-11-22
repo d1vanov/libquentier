@@ -1987,7 +1987,7 @@ ISyncStatePtr setupSyncState(
                 processItems(testData.m_linkedNotebookModifiedNotebooks);
             }
 
-            if (itemGroups.testFlag(ItemGroup::Modified)) {
+            if (itemGroups.testFlag(ItemGroup::New)) {
                 processItems(testData.m_linkedNotebookNewNotebooks);
             }
         }
