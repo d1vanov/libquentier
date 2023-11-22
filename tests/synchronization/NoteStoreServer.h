@@ -482,27 +482,27 @@ private:
     QHash<QUuid, QByteArray> m_uriByRequestId;
 
     note_store::SavedSearches m_savedSearches;
-    QSet<qevercloud::Guid> m_expungedSavedSearchGuids;
+    QHash<qevercloud::Guid, qint32> m_expungedSavedSearchGuidsAndUsns;
 
     note_store::Tags m_tags;
-    QSet<qevercloud::Guid> m_expungedUserOwnTagGuids;
-    QHash<qevercloud::Guid, QSet<qevercloud::Guid>>
-        m_expungedLinkedNotebookTagGuids;
+    QHash<qevercloud::Guid, qint32> m_expungedUserOwnTagGuidsAndUsns;
+    QHash<qevercloud::Guid, QHash<qevercloud::Guid, qint32>>
+        m_expungedLinkedNotebookTagGuidsAndUsns;
 
     note_store::Notebooks m_notebooks;
-    QSet<qevercloud::Guid> m_expungedUserOwnNotebookGuids;
-    QHash<qevercloud::Guid, QSet<qevercloud::Guid>>
-        m_expungedLinkedNotebookNotebookGuids;
+    QHash<qevercloud::Guid, qint32> m_expungedUserOwnNotebookGuidsAndUsns;
+    QHash<qevercloud::Guid, QHash<qevercloud::Guid, qint32>>
+        m_expungedLinkedNotebookNotebookGuidsAndUsns;
 
     note_store::Notes m_notes;
-    QSet<qevercloud::Guid> m_expungedUserOwnNoteGuids;
-    QHash<qevercloud::Guid, QSet<qevercloud::Guid>>
-        m_expungedLinkedNotebookNoteGuids;
+    QHash<qevercloud::Guid, qint32> m_expungedUserOwnNoteGuidsAndUsns;
+    QHash<qevercloud::Guid, QHash<qevercloud::Guid, qint32>>
+        m_expungedLinkedNotebookNoteGuidsAndUsns;
 
     note_store::Resources m_resources;
 
     note_store::LinkedNotebooks m_linkedNotebooks;
-    QSet<QString> m_expungedLinkedNotebookGuids;
+    QHash<QString, qint32> m_expungedLinkedNotebookGuidsAndUsns;
 
     std::optional<StopSynchronizationErrorData> m_stopSynchronizationErrorData;
 
