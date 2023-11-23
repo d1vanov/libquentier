@@ -1094,6 +1094,12 @@ void Downloader::launchLinkedNotebooksDataDownload(
                             return;
                         }
 
+                        QNDEBUG(
+                            "synchronization::Downloader",
+                            "Linked notebook sync state from Evernote: "
+                                << linkedNotebookSyncState
+                                << "\nLinked notebook: " << linkedNotebook);
+
                         auto f =
                             fetchAuthInfoAndStartLinkedNotebookDataDownload(
                                 downloadContext,
