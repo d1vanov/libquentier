@@ -857,23 +857,30 @@ void setupTestData(
         generateExpungedGuids(testData.m_expungedUserOwnSavedSearchGuids);
     }
 
+    QList<qevercloud::LinkedNotebook> linkedNotebooks;
+    if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
+        if (itemGroups.testFlag(ItemGroup::Base)) {
+            linkedNotebooks << testData.m_baseLinkedNotebooks;
+        }
+        if (itemGroups.testFlag(ItemGroup::Modified)) {
+            linkedNotebooks << testData.m_modifiedLinkedNotebooks;
+        }
+    }
+
     if (expungedDataItemTypes.testFlag(DataItemType::Tag)) {
         if (expungedItemSources.testFlag(ItemSource::UserOwnAccount)) {
             generateExpungedGuids(testData.m_expungedUserOwnTagGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook) &&
-            itemGroups.testFlag(ItemGroup::Modified))
-        {
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
             testData.m_expungedLinkedNotebookTagGuids.reserve(
-                modifiedLinkedNotebookGuids.size());
+                linkedNotebooks.size());
 
-            for (const auto & linkedNotebookGuid:
-                 std::as_const(modifiedLinkedNotebookGuids))
-            {
+            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+                Q_ASSERT(linkedNotebook.guid());
+                const auto & guid = *linkedNotebook.guid();
                 auto & expungedTagGuids =
-                    testData
-                        .m_expungedLinkedNotebookTagGuids[linkedNotebookGuid];
+                    testData.m_expungedLinkedNotebookTagGuids[guid];
 
                 generateExpungedGuids(expungedTagGuids);
             }
@@ -885,18 +892,16 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnNotebookGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook) &&
-            itemGroups.testFlag(ItemGroup::Modified))
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook))
         {
             testData.m_expungedLinkedNotebookNotebookGuids.reserve(
-                modifiedLinkedNotebookGuids.size());
+                linkedNotebooks.size());
 
-            for (const auto & linkedNotebookGuid:
-                 std::as_const(modifiedLinkedNotebookGuids))
-            {
+            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+                Q_ASSERT(linkedNotebook.guid());
+                const auto & guid = *linkedNotebook.guid();
                 auto & expungedNotebookGuids =
-                    testData.m_expungedLinkedNotebookNotebookGuids
-                        [linkedNotebookGuid];
+                    testData.m_expungedLinkedNotebookNotebookGuids[guid];
 
                 generateExpungedGuids(expungedNotebookGuids);
             }
@@ -908,18 +913,16 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnNoteGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook) &&
-            itemGroups.testFlag(ItemGroup::Modified))
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook))
         {
             testData.m_expungedLinkedNotebookNoteGuids.reserve(
-                modifiedLinkedNotebookGuids.size());
+                linkedNotebooks.size());
 
-            for (const auto & linkedNotebookGuid:
-                 std::as_const(modifiedLinkedNotebookGuids))
-            {
+            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+                Q_ASSERT(linkedNotebook.guid());
+                const auto & guid = *linkedNotebook.guid();
                 auto & expungedNoteGuids =
-                    testData
-                        .m_expungedLinkedNotebookNoteGuids[linkedNotebookGuid];
+                    testData.m_expungedLinkedNotebookNoteGuids[guid];
 
                 generateExpungedGuids(expungedNoteGuids);
             }
@@ -1724,7 +1727,7 @@ void setupLocalStorage(
         QVERIFY(!notebooks.isEmpty());
 
         for (const auto it: qevercloud::toRange(
-                 std::as_const(testData.m_expungedLinkedNotebookTagGuids)))
+                 std::as_const(testData.m_expungedLinkedNotebookNoteGuids)))
         {
             const auto & linkedNotebookGuid = it.key();
             const auto & guids = it.value();
