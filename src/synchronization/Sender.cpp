@@ -497,6 +497,7 @@ void Sender::sendNoteImpl(
             n.setLocalData(std::move(note.mutableLocalData()));
             n.setTagLocalIds(std::move(note.mutableTagLocalIds()));
             n.setLocallyModified(containsFailedToSendTags);
+            n.setNotebookLocalId(note.notebookLocalId());
             if (n.resources()) {
                 Q_ASSERT(note.resources());
                 Q_ASSERT(note.resources()->size() == n.resources()->size());
@@ -1999,6 +2000,11 @@ void Sender::checkUpdateSequenceNumber(
         if (previousUpdateCount &&
             (updateSequenceNumber != *previousUpdateCount + 1)) {
             status->m_needToRepeatIncrementalSync = true;
+            QNDEBUG(
+                "synchronization::Sender",
+                "Detected the need to repeat incremental sync after sending: "
+                    << "previous update count = " << *previousUpdateCount
+                    << ", USN = " << updateSequenceNumber);
         }
     }
 
