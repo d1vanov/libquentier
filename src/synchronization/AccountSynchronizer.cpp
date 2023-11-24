@@ -196,6 +196,33 @@ void merge(const ISyncState & from, SyncState & to)
     }
 }
 
+void merge(const ISyncChunksDataCounters & from, SyncChunksDataCounters & to)
+{
+    to.m_totalSavedSearches += from.totalSavedSearches();
+    to.m_totalExpungedSavedSearches += from.totalExpungedSavedSearches();
+    to.m_addedSavedSearches += from.addedSavedSearches();
+    to.m_updatedSavedSearches += from.updatedSavedSearches();
+    to.m_expungedSavedSearches += from.expungedSavedSearches();
+
+    to.m_totalTags += from.totalTags();
+    to.m_totalExpungedTags += from.totalExpungedTags();
+    to.m_addedTags += from.addedTags();
+    to.m_updatedTags += from.updatedTags();
+    to.m_expungedTags += from.expungedTags();
+
+    to.m_totalLinkedNotebooks += from.totalLinkedNotebooks();
+    to.m_totalExpungedLinkedNotebooks += from.totalExpungedLinkedNotebooks();
+    to.m_addedLinkedNotebooks += from.addedLinkedNotebooks();
+    to.m_updatedLinkedNotebooks += from.updatedLinkedNotebooks();
+    to.m_expungedLinkedNotebooks += from.expungedLinkedNotebooks();
+
+    to.m_totalNotebooks += from.totalNotebooks();
+    to.m_totalExpungedNotebooks += from.totalExpungedNotebooks();
+    to.m_addedNotebooks += from.addedNotebooks();
+    to.m_updatedNotebooks += from.updatedNotebooks();
+    to.m_expungedNotebooks += from.expungedNotebooks();
+}
+
 } // namespace
 
 class AccountSynchronizer::CallbackWrapper :
@@ -784,8 +811,16 @@ void AccountSynchronizer::appendToPreviousSyncResult(
     }
 
     if (downloadResult.userOwnResult.syncChunksDataCounters) {
-        context.previousSyncResult->m_userAccountSyncChunksDataCounters =
-            downloadResult.userOwnResult.syncChunksDataCounters;
+        if (context.previousSyncResult->m_userAccountSyncChunksDataCounters) {
+            merge(
+                *downloadResult.userOwnResult.syncChunksDataCounters,
+                *context.previousSyncResult
+                     ->m_userAccountSyncChunksDataCounters);
+        }
+        else {
+            context.previousSyncResult->m_userAccountSyncChunksDataCounters =
+                downloadResult.userOwnResult.syncChunksDataCounters;
+        }
     }
 
     if (!context.previousSyncResult->m_userAccountDownloadNotesStatus) {
@@ -815,9 +850,15 @@ void AccountSynchronizer::appendToPreviousSyncResult(
         const auto & result = it.value();
 
         if (result.syncChunksDataCounters) {
-            context.previousSyncResult
-                ->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
-                result.syncChunksDataCounters;
+            auto & counters = context.previousSyncResult
+                                  ->m_linkedNotebookSyncChunksDataCounters
+                                      [linkedNotebookGuid];
+            if (counters) {
+                merge(*result.syncChunksDataCounters, *counters);
+            }
+            else {
+                counters = result.syncChunksDataCounters;
+            }
         }
 
         if (result.downloadNotesStatus) {
