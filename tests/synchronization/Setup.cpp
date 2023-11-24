@@ -857,15 +857,7 @@ void setupTestData(
         generateExpungedGuids(testData.m_expungedUserOwnSavedSearchGuids);
     }
 
-    QList<qevercloud::LinkedNotebook> linkedNotebooks;
-    if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
-        if (itemGroups.testFlag(ItemGroup::Base)) {
-            linkedNotebooks << testData.m_baseLinkedNotebooks;
-        }
-        if (itemGroups.testFlag(ItemGroup::Modified)) {
-            linkedNotebooks << testData.m_modifiedLinkedNotebooks;
-        }
-    }
+    Q_ASSERT(itemGroups.testFlag(ItemGroup::Base));
 
     if (expungedDataItemTypes.testFlag(DataItemType::Tag)) {
         if (expungedItemSources.testFlag(ItemSource::UserOwnAccount)) {
@@ -874,9 +866,11 @@ void setupTestData(
 
         if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
             testData.m_expungedLinkedNotebookTagGuids.reserve(
-                linkedNotebooks.size());
+                testData.m_baseLinkedNotebooks.size());
 
-            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+            for (const auto & linkedNotebook:
+                 std::as_const(testData.m_baseLinkedNotebooks))
+            {
                 Q_ASSERT(linkedNotebook.guid());
                 const auto & guid = *linkedNotebook.guid();
                 auto & expungedTagGuids =
@@ -895,9 +889,11 @@ void setupTestData(
         if (expungedItemSources.testFlag(ItemSource::LinkedNotebook))
         {
             testData.m_expungedLinkedNotebookNotebookGuids.reserve(
-                linkedNotebooks.size());
+                testData.m_baseLinkedNotebooks.size());
 
-            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+            for (const auto & linkedNotebook:
+                 std::as_const(testData.m_baseLinkedNotebooks))
+            {
                 Q_ASSERT(linkedNotebook.guid());
                 const auto & guid = *linkedNotebook.guid();
                 auto & expungedNotebookGuids =
@@ -916,9 +912,11 @@ void setupTestData(
         if (expungedItemSources.testFlag(ItemSource::LinkedNotebook))
         {
             testData.m_expungedLinkedNotebookNoteGuids.reserve(
-                linkedNotebooks.size());
+                testData.m_baseLinkedNotebooks.size());
 
-            for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+            for (const auto & linkedNotebook:
+                 std::as_const(testData.m_baseLinkedNotebooks))
+            {
                 Q_ASSERT(linkedNotebook.guid());
                 const auto & guid = *linkedNotebook.guid();
                 auto & expungedNoteGuids =
