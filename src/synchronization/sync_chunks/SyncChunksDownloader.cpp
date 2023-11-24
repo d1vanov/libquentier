@@ -283,6 +283,12 @@ void processSingleDownloadedSyncChunk(
 
     runningResult << syncChunk;
 
+    QNDEBUG(
+        "synchronization::SyncChunksDownloader",
+        "Downloaded sync chunk: high USN = " << *syncChunk.chunkHighUSN()
+            << ", update count = " << syncChunk.updateCount()
+            << ", last previous USN = " << lastPreviousUsn);
+
     if (const auto callback = callbackWeak.lock()) {
         if (linkedNotebook) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
