@@ -1852,10 +1852,6 @@ void NoteStoreServer::onCreateNoteRequest(
         return;
     }
 
-    ++(*maxUsn);
-    note.setUpdateSequenceNum(maxUsn);
-    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
-
     note.setGuid(UidGenerator::Generate());
     if (note.resources() && !note.resources()->isEmpty()) {
         for (auto & resource: *note.mutableResources()) {
@@ -1866,6 +1862,10 @@ void NoteStoreServer::onCreateNoteRequest(
             setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
         }
     }
+
+    ++(*maxUsn);
+    note.setUpdateSequenceNum(maxUsn);
+    setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
     m_notes.insert(note);
     if (note.resources() && !note.resources()->isEmpty()) {
@@ -2002,9 +2002,15 @@ void NoteStoreServer::onUpdateNoteRequest(
         return;
     }
 
+    qint32 localMaxUsn = *maxUsn;
+
     if (note.resources() && !note.resources()->isEmpty()) {
+        using ResourceIt = note_store::ResourcesByGuid::iterator;
+        QList<std::pair<ResourceIt, qevercloud::Resource>> updatedResources;
+
         auto & resourceGuidIndex =
             m_resources.get<note_store::ResourceByGuidTag>();
+
         for (auto & resource: *note.mutableResources()) {
             if (!resource.guid()) {
                 Q_EMIT updateNoteRequestReady(
@@ -2037,16 +2043,18 @@ void NoteStoreServer::onUpdateNoteRequest(
                 return;
             }
 
-            ++(*maxUsn);
-            resource.setUpdateSequenceNum(maxUsn);
-            setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
+            resource.setUpdateSequenceNum(++localMaxUsn);
+            updatedResources << std::make_pair(resourceIt, resource);
+        }
 
-            resourceGuidIndex.replace(resourceIt, resource);
+        for (const auto & pair: std::as_const(updatedResources)) {
+            resourceGuidIndex.replace(pair.first, pair.second);
         }
     }
 
-    ++(*maxUsn);
-    note.setUpdateSequenceNum(maxUsn);
+    *maxUsn = localMaxUsn;
+
+    note.setUpdateSequenceNum(++(*maxUsn));
     setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
     noteGuidIndex.replace(noteIt, note);
@@ -3379,10 +3387,12 @@ void NoteStoreServer::setMaxUsn(
 {
     if (!linkedNotebookGuid) {
         m_userOwnMaxUsn = maxUsn;
+        m_userOwnSyncState.setUpdateCount(maxUsn);
         return;
     }
 
     m_linkedNotebookMaxUsns[*linkedNotebookGuid] = maxUsn;
+    m_linkedNotebookSyncStates[*linkedNotebookGuid].setUpdateCount(maxUsn);
 }
 
 std::pair<qevercloud::SyncChunk, std::exception_ptr>
@@ -4008,38 +4018,58 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
         return std::make_pair(std::move(syncChunk), nullptr);
     }
 
+    // Processing of expunged items is not strictly correct - each fact of
+    // item expunging actually causes the increase of corresponding USN - user's
+    // own one of the one from some linked notebook. So expunged items should
+    // really be accounted for in the loop above over different data item types.
+    // However, for now a bit simpler scheme is involved which seems to be
+    // good enough for sync integrational tests so far: expunged items are just
+    // "retrofitted" into the already collected sync chunk if their
+    // corresponding USNs are appropriate for the requested USN range.
     if (!linkedNotebookGuid && !m_expungedSavedSearchGuidsAndUsns.isEmpty()) {
-        if (!syncChunk.expungedSearches()) {
-            syncChunk.setExpungedSearches(QList<qevercloud::Guid>{});
-        }
-
-        syncChunk.mutableExpungedSearches()->reserve(
-            m_expungedSavedSearchGuidsAndUsns.size());
-
         for (const auto it: qevercloud::toRange(
-                std::as_const(m_expungedSavedSearchGuidsAndUsns)))
+                 std::as_const(m_expungedSavedSearchGuidsAndUsns)))
         {
+            const qint32 usn = it.value();
+            if (usn < afterUsn) {
+                continue;
+            }
+
+            if (!syncChunk.expungedSearches()) {
+                syncChunk.setExpungedSearches(QList<qevercloud::Guid>{});
+            }
+
             syncChunk.mutableExpungedSearches()->append(it.key());
-            if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
+            if (!syncChunk.chunkHighUSN() || *syncChunk.chunkHighUSN() < usn) {
+                syncChunk.setChunkHighUSN(usn);
+                QNDEBUG(
+                    "tests::synchronization::NoteStoreServer",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
             }
         }
     }
 
     if (!linkedNotebookGuid && !m_expungedUserOwnTagGuidsAndUsns.isEmpty()) {
-        if (!syncChunk.expungedTags()) {
-            syncChunk.setExpungedTags(QList<qevercloud::Guid>{});
-        }
-
-        syncChunk.mutableExpungedTags()->reserve(
-            m_expungedUserOwnTagGuidsAndUsns.size());
-
         for (const auto it: qevercloud::toRange(
-                std::as_const(m_expungedUserOwnTagGuidsAndUsns)))
+                 std::as_const(m_expungedUserOwnTagGuidsAndUsns)))
         {
+            const qint32 usn = it.value();
+            if (usn < afterUsn) {
+                continue;
+            }
+
+            if (!syncChunk.expungedTags()) {
+                syncChunk.setExpungedTags(QList<qevercloud::Guid>{});
+            }
+
             syncChunk.mutableExpungedTags()->append(it.key());
-            if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                return std::make_pair(qevercloud::SyncChunk{}, std::move(exc));
+            if (!syncChunk.chunkHighUSN() || *syncChunk.chunkHighUSN() < usn) {
+                syncChunk.setChunkHighUSN(usn);
+                QNDEBUG(
+                    "tests::synchronization::NoteStoreServer",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
             }
         }
     }
@@ -4048,41 +4078,53 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             *linkedNotebookGuid);
         if (it != m_expungedLinkedNotebookTagGuidsAndUsns.constEnd()) {
             const auto & expungedTagGuidsAndUsns = it.value();
-
-            if (!syncChunk.expungedTags()) {
-                syncChunk.setExpungedTags(QList<qevercloud::Guid>{});
-            }
-
-            syncChunk.mutableExpungedTags()->reserve(
-                expungedTagGuidsAndUsns.size());
-
-            for (const auto it: qevercloud::toRange(
-                    std::as_const(expungedTagGuidsAndUsns)))
+            for (const auto it:
+                 qevercloud::toRange(std::as_const(expungedTagGuidsAndUsns)))
             {
+                const qint32 usn = it.value();
+                if (usn < afterUsn) {
+                    continue;
+                }
+
+                if (!syncChunk.expungedTags()) {
+                    syncChunk.setExpungedTags(QList<qevercloud::Guid>{});
+                }
+
                 syncChunk.mutableExpungedTags()->append(it.key());
-                if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                    return std::make_pair(
-                        qevercloud::SyncChunk{}, std::move(exc));
+                if (!syncChunk.chunkHighUSN() ||
+                    *syncChunk.chunkHighUSN() < usn)
+                {
+                    syncChunk.setChunkHighUSN(usn);
+                    QNDEBUG(
+                        "tests::synchronization::NoteStoreServer",
+                        "Sync chunk high USN updated to "
+                            << *syncChunk.chunkHighUSN());
                 }
             }
         }
     }
 
-    if (!linkedNotebookGuid && !m_expungedUserOwnNotebookGuidsAndUsns.isEmpty()) {
-        if (!syncChunk.expungedNotebooks()) {
-            syncChunk.setExpungedNotebooks(QList<qevercloud::Guid>{});
-        }
-
-        syncChunk.mutableExpungedNotebooks()->reserve(
-            m_expungedUserOwnNotebookGuidsAndUsns.size());
-
+    if (!linkedNotebookGuid && !m_expungedUserOwnNotebookGuidsAndUsns.isEmpty())
+    {
         for (const auto it: qevercloud::toRange(
-                std::as_const(m_expungedUserOwnNotebookGuidsAndUsns)))
+                 std::as_const(m_expungedUserOwnNotebookGuidsAndUsns)))
         {
+            const qint32 usn = it.value();
+            if (usn < afterUsn) {
+                continue;
+            }
+
+            if (!syncChunk.expungedNotebooks()) {
+                syncChunk.setExpungedNotebooks(QList<qevercloud::Guid>{});
+            }
+
             syncChunk.mutableExpungedNotebooks()->append(it.key());
-            if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                return std::make_pair(
-                    qevercloud::SyncChunk{}, std::move(exc));
+            if (!syncChunk.chunkHighUSN() || *syncChunk.chunkHighUSN() < usn) {
+                syncChunk.setChunkHighUSN(usn);
+                QNDEBUG(
+                    "tests::synchronization::NoteStoreServer",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
             }
         }
     }
@@ -4096,16 +4138,23 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                 syncChunk.setExpungedNotebooks(QList<qevercloud::Guid>{});
             }
 
-            syncChunk.mutableExpungedNotebooks()->reserve(
-                expungedNotebookGuidsAndUsns.size());
-
             for (const auto it: qevercloud::toRange(
-                    std::as_const(expungedNotebookGuidsAndUsns)))
+                     std::as_const(expungedNotebookGuidsAndUsns)))
             {
+                const qint32 usn = it.value();
+                if (usn < afterUsn) {
+                    continue;
+                }
+
                 syncChunk.mutableExpungedNotebooks()->append(it.key());
-                if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                    return std::make_pair(
-                        qevercloud::SyncChunk{}, std::move(exc));
+                if (!syncChunk.chunkHighUSN() ||
+                    *syncChunk.chunkHighUSN() < usn)
+                {
+                    syncChunk.setChunkHighUSN(usn);
+                    QNDEBUG(
+                        "tests::synchronization::NoteStoreServer",
+                        "Sync chunk high USN updated to "
+                            << *syncChunk.chunkHighUSN());
                 }
             }
         }
@@ -4120,12 +4169,20 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             m_expungedUserOwnNoteGuidsAndUsns.size());
 
         for (const auto it: qevercloud::toRange(
-                std::as_const(m_expungedUserOwnNoteGuidsAndUsns)))
+                 std::as_const(m_expungedUserOwnNoteGuidsAndUsns)))
         {
+            const qint32 usn = it.value();
+            if (usn < afterUsn) {
+                continue;
+            }
+
             syncChunk.mutableExpungedNotes()->append(it.key());
-            if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                return std::make_pair(
-                    qevercloud::SyncChunk{}, std::move(exc));
+            if (!syncChunk.chunkHighUSN() || *syncChunk.chunkHighUSN() < usn) {
+                syncChunk.setChunkHighUSN(usn);
+                QNDEBUG(
+                    "tests::synchronization::NoteStoreServer",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
             }
         }
     }
@@ -4134,20 +4191,27 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             *linkedNotebookGuid);
         if (it != m_expungedLinkedNotebookNoteGuidsAndUsns.constEnd()) {
             const auto & expungedNoteGuidsAndUsns = it.value();
+            for (const auto it:
+                 qevercloud::toRange(std::as_const(expungedNoteGuidsAndUsns)))
+            {
+                const qint32 usn = it.value();
+                if (usn < afterUsn) {
+                    continue;
+                }
 
-            if (!syncChunk.expungedNotes()) {
-                syncChunk.setExpungedNotes(QList<qevercloud::Guid>{});
-            }
+                if (!syncChunk.expungedNotes()) {
+                    syncChunk.setExpungedNotes(QList<qevercloud::Guid>{});
+                }
 
-            syncChunk.mutableExpungedNotes()->reserve(
-                expungedNoteGuidsAndUsns.size());
-
-            for (const auto it: qevercloud::toRange(
-                    std::as_const(expungedNoteGuidsAndUsns))) {
                 syncChunk.mutableExpungedNotes()->append(it.key());
-                if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                    return std::make_pair(
-                        qevercloud::SyncChunk{}, std::move(exc));
+                if (!syncChunk.chunkHighUSN() ||
+                    *syncChunk.chunkHighUSN() < usn)
+                {
+                    syncChunk.setChunkHighUSN(usn);
+                    QNDEBUG(
+                        "tests::synchronization::NoteStoreServer",
+                        "Sync chunk high USN updated to "
+                            << *syncChunk.chunkHighUSN());
                 }
             }
         }
@@ -4155,20 +4219,25 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
 
     if (!linkedNotebookGuid && !m_expungedLinkedNotebookGuidsAndUsns.isEmpty())
     {
-        if (!syncChunk.expungedLinkedNotebooks()) {
-            syncChunk.setExpungedLinkedNotebooks(QList<qevercloud::Guid>{});
-        }
-
-        syncChunk.mutableExpungedLinkedNotebooks()->reserve(
-            m_expungedLinkedNotebookGuidsAndUsns.size());
-
         for (const auto it: qevercloud::toRange(
-                std::as_const(m_expungedLinkedNotebookGuidsAndUsns)))
+                 std::as_const(m_expungedLinkedNotebookGuidsAndUsns)))
         {
+            const qint32 usn = it.value();
+            if (usn < afterUsn) {
+                continue;
+            }
+
+            if (!syncChunk.expungedLinkedNotebooks()) {
+                syncChunk.setExpungedLinkedNotebooks(QList<qevercloud::Guid>{});
+            }
+
             syncChunk.mutableExpungedLinkedNotebooks()->append(it.key());
-            if (auto exc = updateSyncChunkHighUsn(it.value())) {
-                return std::make_pair(
-                    qevercloud::SyncChunk{}, std::move(exc));
+            if (!syncChunk.chunkHighUSN() || *syncChunk.chunkHighUSN() < usn) {
+                syncChunk.setChunkHighUSN(usn);
+                QNDEBUG(
+                    "tests::synchronization::NoteStoreServer",
+                    "Sync chunk high USN updated to "
+                        << *syncChunk.chunkHighUSN());
             }
         }
     }
