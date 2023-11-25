@@ -993,6 +993,52 @@ static const std::array gTestScenarioData{
         "and modified and new local data items from user's own account and "
         "linked notebooks"sv // name
     },
+    TestScenarioData{
+        DataItemTypes{} | DataItemType::SavedSearch, // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,              // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount,  // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{}, // localDataItemTypes
+        ItemGroups{},    // localItemGroups
+        ItemSources{},   // localItemSources
+        StopSynchronizationError{std::monostate{}}, // stopSyncError
+        true,                                      // expectFailure
+        false, // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        false, // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        false, // expectSomeUserOwnDataSent
+        false, // expectSomeLinkedNotebookDataSent
+        "EDAM version major mismatch"sv, // name
+        qint16{2}, // edamVersionMajor
+        qevercloud::EDAM_VERSION_MINOR, // edamVersionMinor
+    },
+    TestScenarioData{
+        DataItemTypes{} | DataItemType::SavedSearch, // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,              // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount,  // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{}, // localDataItemTypes
+        ItemGroups{},    // localItemGroups
+        ItemSources{},   // localItemSources
+        StopSynchronizationError{std::monostate{}}, // stopSyncError
+        true,                                      // expectFailure
+        false, // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        false, // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        false, // expectSomeUserOwnDataSent
+        false, // expectSomeLinkedNotebookDataSent
+        "EDAM version minor mismatch"sv, // name
+        qevercloud::EDAM_VERSION_MAJOR, // edamVersionMajor
+        qint16{99}, // edamVersionMinor
+    },
 };
 
 } // namespace quentier::synchronization::tests

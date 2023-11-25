@@ -23,6 +23,7 @@
 #include <quentier/synchronization/types/Errors.h>
 
 #include <qevercloud/exceptions/Fwd.h>
+#include <qevercloud/Constants.h>
 
 #include <QMetaType>
 
@@ -58,6 +59,10 @@ struct TestScenarioData
 
     // Name of the test scenario
     std::string_view name;
+
+    // EDAM protocol versions
+    qint16 edamVersionMajor = qevercloud::EDAM_VERSION_MAJOR;
+    qint16 edamVersionMinor = qevercloud::EDAM_VERSION_MINOR;
 };
 
 } // namespace quentier::synchronization::tests

@@ -597,8 +597,6 @@ void TestRunner::init()
         m_testAccount, std::move(authenticationInfo));
 
     m_userStoreServer = new UserStoreServer(authToken, userStoreCookies, this);
-    m_userStoreServer->setEdamVersionMajor(qevercloud::EDAM_VERSION_MAJOR);
-    m_userStoreServer->setEdamVersionMinor(qevercloud::EDAM_VERSION_MINOR);
 
     m_userStoreServer->putUser(
         authToken,
@@ -659,6 +657,9 @@ void TestRunner::runTestScenario()
     QNINFO(
         "tests::synchronization::TestRunner",
         "TestRunner::runTestScenario: " << testScenarioData.name.data());
+
+    m_userStoreServer->setEdamVersionMajor(testScenarioData.edamVersionMajor);
+    m_userStoreServer->setEdamVersionMinor(testScenarioData.edamVersionMinor);
 
     const DataItemTypes mergedDataItemTypes = [&testScenarioData] {
         DataItemTypes result;
@@ -793,6 +794,7 @@ void TestRunner::runTestScenario()
         while (!syncResultPair.first.isFinished()) {
             QCoreApplication::processEvents();
         }
+        syncResultPair.first.waitForFinished();
     }
     catch (...) {
         caughtException = true;
