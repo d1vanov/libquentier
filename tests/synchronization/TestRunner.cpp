@@ -694,6 +694,12 @@ void TestRunner::runTestScenario()
         testScenarioData.serverItemGroups, testScenarioData.serverItemSources,
         *m_noteStoreServer);
 
+    if (testScenarioData.stopSyncErrorTrigger) {
+        m_noteStoreServer->setStopSynchronizationError(
+            *testScenarioData.stopSyncErrorTrigger,
+            testScenarioData.stopSyncError);
+    }
+
     setupLocalStorage(
         testData, testScenarioData.localDataItemTypes,
         testScenarioData.localItemGroups, testScenarioData.localItemSources,
@@ -701,7 +707,8 @@ void TestRunner::runTestScenario()
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
-    QNINFO("tests::synchronization::TestRunner", "Setting up local sync state");
+    QNDEBUG(
+        "tests::synchronization::TestRunner", "Setting up local sync state");
 
     // Will exclude local new items from computing the sync state as local new
     // items don't actually have update sequence numbers from local storage's
@@ -719,7 +726,7 @@ void TestRunner::runTestScenario()
     m_fakeSyncStateStorage->setSyncState(
         m_testAccount, std::move(localSyncState));
 
-    QNINFO(
+    QNDEBUG(
         "tests::synchronization::TestRunner", "Setting up server sync state");
 
     auto serverSyncState = setupSyncState(
@@ -800,6 +807,44 @@ void TestRunner::runTestScenario()
         caughtException = true;
     }
 
+    if (!caughtException) {
+        QVERIFY2(
+            syncResultPair.first.resultCount() == 1, "Empty sync result future");
+
+        const auto syncResult = syncResultPair.first.result();
+        QVERIFY(syncResult);
+
+        QVERIFY(
+            testScenarioData.stopSyncError.index() ==
+            syncResult->stopSynchronizationError().index());
+
+        if (!std::holds_alternative<std::monostate>(
+                testScenarioData.stopSyncError))
+        {
+            QNDEBUG(
+                "tests::synchronization::TestRunner",
+                "Retrying the sync");
+
+            m_noteStoreServer->clearStopSynchronizationError();
+
+            // Repeat the attempt
+            syncResultPair = synchronizer->synchronizeAccount(
+                m_testAccount, m_localStorage, canceler);
+
+            m_syncEventsCollector->connectToNotifier(syncResultPair.second);
+
+            try {
+                while (!syncResultPair.first.isFinished()) {
+                    QCoreApplication::processEvents();
+                }
+                syncResultPair.first.waitForFinished();
+            }
+            catch (...) {
+                caughtException = true;
+            }
+        }
+    }
+
     // process events once more just to be sure that they are all delivered
     // to SyncEventsCollector
     QCoreApplication::processEvents();
@@ -874,10 +919,6 @@ void TestRunner::runTestScenario()
 
     const auto syncResult = syncResultPair.first.result();
     QVERIFY(syncResult);
-
-    // TODO: check whether the first synchronization attempt should yield stop
-    // synchronization error. If so, check the presence of the error and restart
-    // the sync, the next attempt should be successful.
 
     if (testScenarioData.expectSomeUserOwnSyncChunks ||
         testScenarioData.expectSomeLinkedNotebooksSyncChunks)

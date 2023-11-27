@@ -19,6 +19,7 @@
 #pragma once
 
 #include "Setup.h"
+#include "StopSynchronizationErrorTrigger.h"
 
 #include <quentier/synchronization/types/Errors.h>
 
@@ -27,12 +28,16 @@
 
 #include <QMetaType>
 
+#include <optional>
 #include <string_view>
 
 namespace quentier::synchronization::tests {
 
 struct TestScenarioData
 {
+    // Name of the test scenario
+    std::string_view name;
+
     DataItemTypes serverDataItemTypes;
     ItemGroups serverItemGroups;
     ItemSources serverItemSources;
@@ -44,9 +49,6 @@ struct TestScenarioData
     ItemGroups localItemGroups;
     ItemSources localItemSources;
 
-    StopSynchronizationError stopSyncError;
-    bool expectFailure = false;
-
     // Expectations of sync events received during the sync
     bool expectSomeUserOwnSyncChunks = false;
     bool expectSomeLinkedNotebooksSyncChunks = false;
@@ -57,8 +59,13 @@ struct TestScenarioData
     bool expectSomeUserOwnDataSent = false;
     bool expectSomeLinkedNotebookDataSent = false;
 
-    // Name of the test scenario
-    std::string_view name;
+    bool expectFailure = false;
+
+    StopSynchronizationError stopSyncError =
+        StopSynchronizationError{std::monostate{}};
+
+    std::optional<StopSynchronizationErrorTrigger> stopSyncErrorTrigger =
+        std::nullopt;
 
     // EDAM protocol versions
     qint16 edamVersionMajor = qevercloud::EDAM_VERSION_MAJOR;

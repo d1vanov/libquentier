@@ -14,6 +14,7 @@ add_library(${TESTS_LIB_NAME} STATIC
   NoteStoreServer.h
   Setup.cpp
   Setup.h
+  StopSynchronizationErrorTrigger.h
   SyncEventsCollector.cpp
   SyncEventsCollector.h
   TestData.h

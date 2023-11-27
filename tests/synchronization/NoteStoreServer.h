@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "StopSynchronizationErrorTrigger.h"
 #include "note_store/LinkedNotebooks.h"
 #include "note_store/Notebooks.h"
 #include "note_store/Notes.h"
@@ -82,27 +83,6 @@ public:
 
         // For notes only: update sequence numbers assigned to note's resources
         QHash<qevercloud::Guid, qint32> resourceUsns;
-    };
-
-    enum class StopSynchronizationErrorTrigger
-    {
-        OnGetUserOwnSyncState,
-        OnGetLinkedNotebookSyncState,
-        OnGetUserOwnSyncChunk,
-        OnGetNoteAfterDownloadingUserOwnSyncChunks,
-        OnGetResourceAfterDownloadingUserOwnSyncChunks,
-        OnGetLinkedNotebookSyncChunk,
-        OnGetNoteAfterDownloadingLinkedNotebookSyncChunks,
-        OnGetResourceAfterDownloadingLinkedNotebookSyncChunks,
-        OnCreateSavedSearch,
-        OnUpdateSavedSearch,
-        OnCreateTag,
-        OnUpdateTag,
-        OnCreateNotebook,
-        OnUpdateNotebook,
-        OnCreateNote,
-        OnUpdateNote,
-        OnAuthenticateToSharedNotebook
     };
 
 public:

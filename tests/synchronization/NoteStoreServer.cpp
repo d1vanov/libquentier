@@ -1327,8 +1327,8 @@ std::optional<qint32> NoteStoreServer::currentLinkedNotebookMaxUsn(
     return std::nullopt;
 }
 
-std::optional<std::pair<
-    NoteStoreServer::StopSynchronizationErrorTrigger, StopSynchronizationError>>
+std::optional<
+    std::pair<StopSynchronizationErrorTrigger, StopSynchronizationError>>
     NoteStoreServer::stopSynchronizationError() const
 {
     if (!m_stopSynchronizationErrorData) {
