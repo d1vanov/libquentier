@@ -194,7 +194,7 @@ static const std::array gTestScenarioData{
         false,           // expectFailure
     },
     TestScenarioData{
-        "Full sync with user own linked notebooks' data"sv, // name
+        "Full sync with user own and linked notebooks' data"sv, // name
         DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
             DataItemType::SavedSearch |
             DataItemType::Tag,          // serverDataItemTypes
@@ -1005,8 +1005,7 @@ static const std::array gTestScenarioData{
         qint16{99},                                 // edamVersionMinor
     },
     TestScenarioData{
-        "Full sync with user own saved searches, notebooks, tags and "
-        "notes with rate limit exceeding on getting user own sync "
+        "Full sync with rate limit exceeding on getting user own sync "
         "state"sv, // name
         DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
             DataItemType::SavedSearch |
@@ -1031,6 +1030,33 @@ static const std::array gTestScenarioData{
         StopSynchronizationErrorTrigger::
             OnGetUserOwnSyncState, // stopSyncErrorTrigger
     },
+    /*
+    TestScenarioData{
+        "Full sync with rate limit exceeding on getting linked notebook sync "
+        "state"sv, // name
+        DataItemTypes{} | DataItemType::Notebook |
+            DataItemType::Note,                     // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // serverItemGroups
+        ItemSources{} | ItemSource::LinkedNotebook, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{}, // localDataItemTypes
+        ItemGroups{},    // localItemGroups
+        ItemSources{},   // localItemSources
+        true,            // expectSomeUserOwnSyncChunks
+        true,            // expectSomeLinkedNotebooksSyncChunks
+        false,           // expectSomeUserOwnNotes
+        false,           // expectSomeUserOwnResources
+        true,            // expectSomeLinkedNotebookNotes
+        false,           // expectSomeLinkedNotebookResources
+        false,           // expectSomeUserOwnDataSent
+        false,           // expectSomeLinkedNotebookDataSent
+        false,           // expectFailure
+        StopSynchronizationError{RateLimitReachedError{120}}, // stopSyncError
+        StopSynchronizationErrorTrigger::
+            OnGetLinkedNotebookSyncState, // stopSyncErrorTrigger
+    },
+    */
 };
 
 } // namespace quentier::synchronization::tests
