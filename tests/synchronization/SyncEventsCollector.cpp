@@ -413,7 +413,7 @@ bool SyncEventsCollector::checkSyncChunksDownloadProgressOrderImpl(
             }
         }
 
-        if (previousProgress.m_highestDownloadedUsn >=
+        if (previousProgress.m_highestDownloadedUsn >
             currentProgress.m_highestDownloadedUsn)
         {
             errorMessage = "Found decreasing highest downloaded USN";
