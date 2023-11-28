@@ -25,6 +25,12 @@
 #include <synchronization/IAccountSynchronizer.h>
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/types/TypeAliases.h>
+
+#include <QHash>
+#include <QList>
+#include <QMutex>
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
@@ -43,7 +49,8 @@ public:
     AccountSynchronizer(
         Account account, IDownloaderPtr downloader, ISenderPtr sender,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        ISyncStateStoragePtr syncStateStorage);
+        ISyncStateStoragePtr syncStateStorage,
+        ISyncChunksStoragePtr syncChunksStorage);
 
 public: // IAccountSynchronizer
     [[nodiscard]] QFuture<ISyncResultPtr> synchronize(
@@ -61,9 +68,15 @@ private:
         utility::cancelers::ICancelerPtr canceler;
         SyncResultPtr previousSyncResult;
         bool sendNeeded = true;
+
+        std::shared_ptr<QMutex> syncChunksMutex;
+        QList<qevercloud::SyncChunk> downloadedUserOwnSyncChunks;
+        QHash<qevercloud::Guid, QList<qevercloud::SyncChunk>>
+            downloadedLinkedNotebookSyncChunks;
     };
 
     using ContextPtr = std::shared_ptr<Context>;
+    using ContextWeakPtr = std::weak_ptr<Context>;
 
     enum class SendAfterDownload
     {
@@ -100,6 +113,7 @@ private:
     [[nodiscard]] bool processSendStopSynchronizationError(
         const ContextPtr & context, const ISender::Result & sendResult);
 
+    void storeDownloadedSyncChunks(Context & context);
     void clearAuthenticationCachesAndRestartSync(ContextPtr context);
 
     void finalize(Context & context);
@@ -110,6 +124,7 @@ private:
     const ISenderPtr m_sender;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
+    const ISyncChunksStoragePtr m_syncChunksStorage;
 };
 
 } // namespace quentier::synchronization

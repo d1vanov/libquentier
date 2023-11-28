@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,7 +44,9 @@ public:
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
          qint32 lastPreviousUsn), (override));
 
-    MOCK_METHOD(void, onSyncChunksDownloaded, (), (override));
+    MOCK_METHOD(
+        void, onSyncChunksDownloaded, (QList<qevercloud::SyncChunk> syncChunks),
+        (override));
 
     MOCK_METHOD(
         void, onSyncChunksDataProcessingProgress,
@@ -63,7 +65,8 @@ public:
 
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloaded,
-        (const qevercloud::LinkedNotebook & linkedNotebook), (override));
+        (const qevercloud::LinkedNotebook & linkedNotebook,
+         QList<qevercloud::SyncChunk> syncChunks), (override));
 
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDataProcessingProgress,

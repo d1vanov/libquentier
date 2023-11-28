@@ -44,7 +44,9 @@ public: // IDownloader::ICallback
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
          qint32 lastPreviousUsn), (override));
 
-    MOCK_METHOD(void, onSyncChunksDownloaded, (), (override));
+    MOCK_METHOD(
+        void, onSyncChunksDownloaded, (QList<qevercloud::SyncChunk> syncChunks),
+        (override));
 
     MOCK_METHOD(
         void, onSyncChunksDataProcessingProgress,
@@ -63,7 +65,8 @@ public: // IDownloader::ICallback
 
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloaded,
-        (const qevercloud::LinkedNotebook & linkedNotebook), (override));
+        (const qevercloud::LinkedNotebook & linkedNotebook,
+         QList<qevercloud::SyncChunk> syncChunks), (override));
 
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDataProcessingProgress,

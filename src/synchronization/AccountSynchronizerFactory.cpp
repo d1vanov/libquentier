@@ -171,7 +171,7 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto syncChunksStorage = std::make_shared<SyncChunksStorage>(syncChunksDir);
 
     auto syncChunksProvider = std::make_shared<SyncChunksProvider>(
-        std::move(syncChunksDownloader), std::move(syncChunksStorage));
+        std::move(syncChunksDownloader), syncChunksStorage);
 
     auto linkedNotebooksProcessor =
         std::make_shared<LinkedNotebooksProcessor>(localStorage);
@@ -240,7 +240,8 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
 
     return std::make_shared<AccountSynchronizer>(
         std::move(account), std::move(downloader), std::move(sender),
-        m_authenticationInfoProvider, m_syncStateStorage);
+        m_authenticationInfoProvider, m_syncStateStorage,
+        std::move(syncChunksStorage));
 }
 
 } // namespace quentier::synchronization

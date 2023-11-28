@@ -57,7 +57,8 @@ public: // IDownloader::ICallback
             highestDownloadedUsn, highestServerUsn, lastPreviousUsn);
     }
 
-    void onSyncChunksDownloaded() override
+    void onSyncChunksDownloaded(
+        [[maybe_unused]] QList<qevercloud::SyncChunk> syncChunks) override
     {
         m_notifier->notifySyncChunksDownloaded();
     }
@@ -85,7 +86,8 @@ public: // IDownloader::ICallback
     }
 
     void onLinkedNotebookSyncChunksDownloaded(
-        const qevercloud::LinkedNotebook & linkedNotebook) override
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        [[maybe_unused]] QList<qevercloud::SyncChunk> syncChunks) override
     {
         m_notifier->notifyLinkedNotebookSyncChunksDownloaded(linkedNotebook);
     }

@@ -1806,7 +1806,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
         EXPECT_CALL(
             *mockDownloaderCallback,
-            onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+            onLinkedNotebookSyncChunksDownloaded(
+                linkedNotebook, linkedNotebookSyncChunks));
 
         SyncChunksDataCountersPtr lastSyncChunksDataCounters;
         EXPECT_CALL(

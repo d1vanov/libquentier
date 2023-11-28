@@ -266,6 +266,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
             std::move(callbackWeak));
     }
 
+    // FIXME: should not actually request sync chunks beyond those already
+    // stored if their updateCount corresponds to the actual updateCount
+    // from Evernote service.
+
     // At this point we can be sure that stored sync chunks indeed start
     // from afterUsn + 1. But instead of just returning them, will still
     // request sync chunks after chunksHighUsn from the downloader, then unite

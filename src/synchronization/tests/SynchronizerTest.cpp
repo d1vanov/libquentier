@@ -353,8 +353,11 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
         QCoreApplication::processEvents();
     }
 
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{} << qevercloud::SyncChunk{};
+
     callback->onSyncChunksDownloadProgress(42, 42, 42);
-    callback->onSyncChunksDownloaded();
+    callback->onSyncChunksDownloaded(syncChunks);
     callback->onSyncChunksDataProcessingProgress(nullptr);
     callback->onStartLinkedNotebooksDataDownloading(
         QList<qevercloud::LinkedNotebook>{});
@@ -363,7 +366,7 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
         42, 42, 42, qevercloud::LinkedNotebook{});
 
     callback->onLinkedNotebookSyncChunksDownloaded(
-        qevercloud::LinkedNotebook{});
+        qevercloud::LinkedNotebook{}, syncChunks);
 
     callback->onLinkedNotebookSyncChunksDataProcessingProgress(
         nullptr, qevercloud::LinkedNotebook{});

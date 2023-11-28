@@ -25,10 +25,12 @@
 #include <synchronization/Fwd.h>
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
 
 #include <QFuture>
 #include <QHash>
+#include <QList>
 
 #include <memory>
 
@@ -67,8 +69,10 @@ public:
         /**
         * This method is called when the sync chunks for data from user's
         * own account are downloaded during the download synchronization step.
+        * @param syncChunks                 Dowloaded sync chunks
         */
-        virtual void onSyncChunksDownloaded() = 0;
+        virtual void onSyncChunksDownloaded(
+            QList<qevercloud::SyncChunk> syncChunks) = 0;
 
         /**
         * This method is called during user own account's downloaded sync chunks
@@ -116,9 +120,11 @@ public:
         * notebook are downloaded during "remote to local" synchronization step
         * @param linkedNotebook             The linked notebook which sync
         *                                   chunks were downloaded
+        * @param syncChunks                 Dowloaded sync chunks
         */
         virtual void onLinkedNotebookSyncChunksDownloaded(
-            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
+            const qevercloud::LinkedNotebook & linkedNotebook,
+            QList<qevercloud::SyncChunk> syncChunks) = 0;
 
         /**
         * This method is called during some linked notebook's downloaded sync

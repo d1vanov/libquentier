@@ -979,13 +979,13 @@ void Downloader::launchUserOwnDataDownload(
             [this, downloadContext = std::move(downloadContext), syncMode,
              syncChunksProviderCallback =
                  std::move(syncChunksProviderCallback)](
-                QList<qevercloud::SyncChunk> syncChunks) mutable {
+                const QList<qevercloud::SyncChunk> & syncChunks) mutable {
                 if (const auto callback = downloadContext->callbackWeak.lock())
                 {
-                    callback->onSyncChunksDownloaded();
+                    callback->onSyncChunksDownloaded(syncChunks);
                 }
 
-                downloadContext->syncChunks = std::move(syncChunks);
+                downloadContext->syncChunks = syncChunks;
                 processSyncChunks(std::move(downloadContext), syncMode);
             }});
 }
@@ -1284,14 +1284,15 @@ void Downloader::startLinkedNotebookDataDownload(
             [this, syncMode, downloadContext = std::move(downloadContext),
              syncChunksProviderCallback =
                  std::move(syncChunksProviderCallback)](
-                QList<qevercloud::SyncChunk> syncChunks) mutable {
+                const QList<qevercloud::SyncChunk> & syncChunks) mutable {
                 if (const auto callback = downloadContext->callbackWeak.lock())
                 {
                     callback->onLinkedNotebookSyncChunksDownloaded(
-                        *downloadContext->linkedNotebook);
+                        *downloadContext->linkedNotebook,
+                        syncChunks);
                 }
 
-                downloadContext->syncChunks = std::move(syncChunks);
+                downloadContext->syncChunks = syncChunks;
 
                 // Below calls to NoteStore should use authentication token
                 // corresponding to the linked notebook instead of the

@@ -35,6 +35,7 @@
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockIDownloader.h>
 #include <synchronization/tests/mocks/MockISender.h>
+#include <synchronization/tests/mocks/MockISyncChunksStorage.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
@@ -640,6 +641,10 @@ protected:
 
     const std::shared_ptr<mocks::MockISyncStateStorage> m_mockSyncStateStorage =
         std::make_shared<StrictMock<mocks::MockISyncStateStorage>>();
+
+    const std::shared_ptr<mocks::MockISyncChunksStorage>
+        m_mockSyncChunksStorage =
+            std::make_shared<StrictMock<mocks::MockISyncChunksStorage>>();
 };
 
 TEST_F(AccountSynchronizerTest, Ctor)
@@ -647,7 +652,8 @@ TEST_F(AccountSynchronizerTest, Ctor)
     EXPECT_NO_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage));
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+            m_mockSyncChunksStorage));
 }
 
 TEST_F(AccountSynchronizerTest, CtorEmptyAccount)
@@ -655,7 +661,8 @@ TEST_F(AccountSynchronizerTest, CtorEmptyAccount)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             Account{}, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage),
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+            m_mockSyncChunksStorage),
         InvalidArgument);
 }
 
@@ -664,7 +671,7 @@ TEST_F(AccountSynchronizerTest, CtorNullDownloader)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, nullptr, m_mockSender, m_mockAuthenticationInfoProvider,
-            m_mockSyncStateStorage),
+            m_mockSyncStateStorage, m_mockSyncChunksStorage),
         InvalidArgument);
 }
 
@@ -673,7 +680,8 @@ TEST_F(AccountSynchronizerTest, CtorNullSender)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, nullptr,
-            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage),
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+            m_mockSyncChunksStorage),
         InvalidArgument);
 }
 
@@ -682,7 +690,7 @@ TEST_F(AccountSynchronizerTest, CtorNullAuthenticationInfoProvider)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender, nullptr,
-            m_mockSyncStateStorage),
+            m_mockSyncStateStorage, m_mockSyncChunksStorage),
         InvalidArgument);
 }
 
@@ -691,7 +699,16 @@ TEST_F(AccountSynchronizerTest, CtorNullSyncStateStorage)
     EXPECT_THROW(
         const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
             m_account, m_mockDownloader, m_mockSender,
-            m_mockAuthenticationInfoProvider, nullptr),
+            m_mockAuthenticationInfoProvider, nullptr, m_mockSyncChunksStorage),
+        InvalidArgument);
+}
+
+TEST_F(AccountSynchronizerTest, CtorNullSyncChunksStorage)
+{
+    EXPECT_THROW(
+        const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
+            m_account, m_mockDownloader, m_mockSender,
+            m_mockAuthenticationInfoProvider, m_mockSyncStateStorage, nullptr),
         InvalidArgument);
 }
 
@@ -699,7 +716,8 @@ TEST_F(AccountSynchronizerTest, NothingToDownloadOrSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
@@ -738,7 +756,8 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -785,7 +804,8 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
@@ -834,7 +854,8 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -886,7 +907,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -951,11 +973,17 @@ TEST_F(
         *result, *downloadSecondSyncState, linkedNotebookGuids);
 
     auto mergedDownloadResult = downloadResult;
+
+    // Sync chunks data counters should have been merged from the first download
+    EXPECT_NE(
+        result->userAccountSyncChunksDataCounters(),
+        downloadSecondResult.userOwnResult.syncChunksDataCounters);
+
     mergedDownloadResult.userOwnResult.syncChunksDataCounters =
-        downloadSecondResult.userOwnResult.syncChunksDataCounters;
+        std::dynamic_pointer_cast<SyncChunksDataCounters>(
+            result->userAccountSyncChunksDataCounters());
 
     checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
-
     checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
@@ -965,7 +993,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1059,17 +1088,24 @@ TEST_F(
     mergedDownloadResult.linkedNotebookResults =
         downloadResult.linkedNotebookResults;
 
+    const auto & linkedNotebookResultSyncChunksDataCounters =
+        result->linkedNotebookSyncChunksDataCounters();
+
     for (const auto it:
          qevercloud::toRange(mergedDownloadResult.linkedNotebookResults))
     {
         const auto & linkedNotebookGuid = it.key();
+
+        const auto rit = linkedNotebookResultSyncChunksDataCounters.constFind(
+            linkedNotebookGuid);
+        ASSERT_NE(rit, linkedNotebookResultSyncChunksDataCounters.constEnd());
+
+        EXPECT_EQ(rit.value(), it.value().syncChunksDataCounters);
         it.value().syncChunksDataCounters =
-            downloadSecondResult.linkedNotebookResults[linkedNotebookGuid]
-                .syncChunksDataCounters;
+            std::dynamic_pointer_cast<SyncChunksDataCounters>(rit.value());
     }
 
     checkResultDownloadPart(*result, mergedDownloadResult, linkedNotebookGuids);
-
     checkResultSendPart(*result, sendResult, linkedNotebookGuids);
 }
 
@@ -1079,7 +1115,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1141,7 +1178,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1221,7 +1259,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1301,7 +1340,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1396,7 +1436,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1493,7 +1534,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
 
@@ -1574,7 +1616,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1674,7 +1717,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const qint32 rateLimitDuration = 1000;
 
@@ -1728,7 +1772,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const qint32 rateLimitDuration = 1000;
@@ -1778,7 +1823,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const qint32 rateLimitDuration = 1000;
@@ -1828,7 +1874,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1885,7 +1932,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -1943,7 +1991,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     const qint32 rateLimitDuration = 1000;
@@ -1998,7 +2047,8 @@ TEST_F(
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -2059,7 +2109,8 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
@@ -2107,8 +2158,11 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
             highestDownloadedUsn, highestServerUsn, lastPreviousUsn);
     }
 
-    EXPECT_CALL(*mockCallback, onSyncChunksDownloaded);
-    downloaderCallback->onSyncChunksDownloaded();
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{} << qevercloud::SyncChunk{};
+
+    EXPECT_CALL(*mockCallback, onSyncChunksDownloaded(syncChunks));
+    downloaderCallback->onSyncChunksDownloaded(syncChunks);
 
     EXPECT_CALL(
         *mockCallback,
@@ -2167,9 +2221,11 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
     }
 
     EXPECT_CALL(
-        *mockCallback, onLinkedNotebookSyncChunksDownloaded(linkedNotebook));
+        *mockCallback,
+        onLinkedNotebookSyncChunksDownloaded(linkedNotebook, syncChunks));
 
-    downloaderCallback->onLinkedNotebookSyncChunksDownloaded(linkedNotebook);
+    downloaderCallback->onLinkedNotebookSyncChunksDownloaded(
+        linkedNotebook, syncChunks);
 
     EXPECT_CALL(
         *mockCallback,
@@ -2257,7 +2313,8 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
 {
     const auto accountSynchronizer = std::make_shared<AccountSynchronizer>(
         m_account, m_mockDownloader, m_mockSender,
-        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage);
+        m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksStorage);
 
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());

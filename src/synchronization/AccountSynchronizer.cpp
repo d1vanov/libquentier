@@ -33,6 +33,7 @@
 #include <synchronization/IDownloader.h>
 #include <synchronization/ISender.h>
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/sync_chunks/ISyncChunksStorage.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
@@ -230,8 +231,10 @@ class AccountSynchronizer::CallbackWrapper :
 {
 public:
     explicit CallbackWrapper(
-        IAccountSynchronizer::ICallbackWeakPtr callbackWeak) :
-        m_callbackWeak{std::move(callbackWeak)}
+        IAccountSynchronizer::ICallbackWeakPtr callbackWeak,
+        AccountSynchronizer::ContextWeakPtr contextWeak) :
+        m_callbackWeak{std::move(callbackWeak)},
+        m_contextWeak{std::move(contextWeak)}
     {}
 
     [[nodiscard]] SyncChunksDataCountersPtr userOwnSyncChunksDataCounters()
@@ -259,10 +262,17 @@ public: // IDownloader::ICallback
         }
     }
 
-    void onSyncChunksDownloaded() override
+    void onSyncChunksDownloaded(
+        QList<qevercloud::SyncChunk> syncChunks) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
-            callback->onSyncChunksDownloaded();
+            callback->onSyncChunksDownloaded(syncChunks);
+        }
+
+        if (const auto context = m_contextWeak.lock()) {
+            Q_ASSERT(context->syncChunksMutex);
+            const QMutexLocker locker{context->syncChunksMutex.get()};
+            context->downloadedUserOwnSyncChunks = std::move(syncChunks);
         }
     }
 
@@ -300,10 +310,21 @@ public: // IDownloader::ICallback
     }
 
     void onLinkedNotebookSyncChunksDownloaded(
-        const qevercloud::LinkedNotebook & linkedNotebook) override
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        QList<qevercloud::SyncChunk> syncChunks) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
-            callback->onLinkedNotebookSyncChunksDownloaded(linkedNotebook);
+            callback->onLinkedNotebookSyncChunksDownloaded(
+                linkedNotebook, std::move(syncChunks));
+        }
+
+        if (const auto context = m_contextWeak.lock()) {
+            Q_ASSERT(context->syncChunksMutex);
+            Q_ASSERT(linkedNotebook.guid());
+            const QMutexLocker locker{context->syncChunksMutex.get()};
+            context
+                ->downloadedLinkedNotebookSyncChunks[*linkedNotebook.guid()] =
+                std::move(syncChunks);
         }
     }
 
@@ -381,6 +402,7 @@ public: // ISender::ICallback
 
 private:
     const IAccountSynchronizer::ICallbackWeakPtr m_callbackWeak;
+    const AccountSynchronizer::ContextWeakPtr m_contextWeak;
 
     mutable QMutex m_mutex;
     SyncChunksDataCountersPtr m_userOwnSyncChunksDataCounters;
@@ -391,13 +413,15 @@ private:
 AccountSynchronizer::AccountSynchronizer(
     Account account, IDownloaderPtr downloader, ISenderPtr sender,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
-    ISyncStateStoragePtr syncStateStorage) :
+    ISyncStateStoragePtr syncStateStorage,
+    ISyncChunksStoragePtr syncChunksStorage) :
     m_account{std::move(account)},
     m_downloader{std::move(downloader)},
     // clang-format off
     m_sender{std::move(sender)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
-    m_syncStateStorage{std::move(syncStateStorage)}
+    m_syncStateStorage{std::move(syncStateStorage)},
+    m_syncChunksStorage{std::move(syncChunksStorage)}
     // clang-format on
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
@@ -424,6 +448,11 @@ AccountSynchronizer::AccountSynchronizer(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "AccountSynchronizer ctor: sync state storage is null")}};
     }
+
+    if (Q_UNLIKELY(!m_syncChunksStorage)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "AccountSynchronizer ctor: sync chunks storage is null")}};
+    }
 }
 
 QFuture<ISyncResultPtr> AccountSynchronizer::synchronize(
@@ -442,9 +471,11 @@ QFuture<ISyncResultPtr> AccountSynchronizer::synchronize(
 
     auto context = std::make_shared<Context>();
     context->promise = std::move(promise);
-    context->callbackWrapper =
-        std::make_shared<CallbackWrapper>(std::move(callbackWeak));
     context->canceler = std::move(canceler);
+    context->syncChunksMutex = std::make_shared<QMutex>();
+
+    context->callbackWrapper = std::make_shared<CallbackWrapper>(
+        std::move(callbackWeak), std::weak_ptr{context});
 
     synchronizeImpl(std::move(context));
     return future;
@@ -522,6 +553,8 @@ void AccountSynchronizer::onDownloadFailed(
     ContextPtr context, const QException & e)
 {
     Q_ASSERT(context);
+
+    storeDownloadedSyncChunks(*context);
 
     try {
         e.raise();
@@ -1149,6 +1182,44 @@ bool AccountSynchronizer::processSendStopSynchronizationError(
     }
 
     return false;
+}
+
+void AccountSynchronizer::storeDownloadedSyncChunks(Context & context)
+{
+    QNDEBUG(
+        "synchronization::AccountSynchronizer",
+        "AccountSynchronizer::storeDownloadedSyncChunks");
+
+    QList<qevercloud::SyncChunk> userOwnSyncChunks;
+    QHash<qevercloud::Guid, QList<qevercloud::SyncChunk>>
+        linkedNotebookSyncChunks;
+
+    {
+        Q_ASSERT(context.syncChunksMutex);
+        const QMutexLocker locker{context.syncChunksMutex.get()};
+
+        userOwnSyncChunks = std::move(context.downloadedUserOwnSyncChunks);
+        context.downloadedUserOwnSyncChunks = {};
+
+        linkedNotebookSyncChunks = context.downloadedLinkedNotebookSyncChunks;
+        context.downloadedLinkedNotebookSyncChunks = {};
+    }
+
+    bool storedSomething = false;
+    if (!userOwnSyncChunks.isEmpty()) {
+        m_syncChunksStorage->putUserOwnSyncChunks(std::move(userOwnSyncChunks));
+        storedSomething = true;
+    }
+
+    for (auto it: qevercloud::toRange(linkedNotebookSyncChunks)) {
+        m_syncChunksStorage->putLinkedNotebookSyncChunks(
+            it.key(), std::move(it.value()));
+        storedSomething = true;
+    }
+
+    if (storedSomething) {
+        m_syncChunksStorage->flush();
+    }
 }
 
 void AccountSynchronizer::clearAuthenticationCachesAndRestartSync(
