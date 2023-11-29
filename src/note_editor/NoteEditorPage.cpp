@@ -31,8 +31,10 @@
 namespace quentier {
 
 NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
-    WebPage(&parent), m_parent(&parent),
-    m_pJavaScriptInOrderExecutor(new JavaScriptInOrderExecutor(parent, this))
+    WebPage{&parent}, m_parent{&parent},
+    m_javaScriptCanceler{std::make_shared<std::atomic<bool>>(false)},
+    m_pJavaScriptInOrderExecutor{
+        new JavaScriptInOrderExecutor(parent, m_javaScriptCanceler, this)}
 {
     QUENTIER_CHECK_PTR("note_editor", m_parent);
 
@@ -48,6 +50,7 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
 NoteEditorPage::~NoteEditorPage()
 {
     QNDEBUG("note_editor", "NoteEditorPage::~NoteEditorPage");
+    m_javaScriptCanceler->store(true, std::memory_order_release);
 }
 
 bool NoteEditorPage::javaScriptQueueEmpty() const
