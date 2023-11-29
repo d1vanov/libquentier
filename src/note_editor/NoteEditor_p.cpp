@@ -982,10 +982,10 @@ void NoteEditorPrivate::onJavaScriptLoaded()
 
     NoteEditorPage * pSenderPage = qobject_cast<NoteEditorPage *>(sender());
     if (Q_UNLIKELY(!pSenderPage)) {
-        QNWARNING(
+        QNDEBUG(
             "note_editor",
-            "Can't get the pointer to NoteEditor page "
-                << "from which the event of JavaScrupt loading came in");
+            "Can't get the pointer to NoteEditor page from which the event of "
+                << "JavaScrupt loading came in, probably it is already dead");
         return;
     }
 

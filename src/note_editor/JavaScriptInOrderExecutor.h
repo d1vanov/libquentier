@@ -29,7 +29,9 @@
 #include <QWebView>
 #endif
 
+#include <atomic>
 #include <functional>
+#include <memory>
 #include <utility>
 
 namespace quentier {
@@ -47,9 +49,10 @@ private:
 
 public:
     using Callback = std::function<void(const QVariant &)>;
+    using Canceler = std::shared_ptr<std::atomic<bool>>;
 
-    explicit JavaScriptInOrderExecutor(
-        WebView & view, QObject * parent = nullptr);
+    JavaScriptInOrderExecutor(
+        WebView & view, Canceler canceler, QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = 0);
 
@@ -96,8 +99,12 @@ private:
 
     void next(const QVariant & data);
 
+    bool canceled() const;
+
 private:
     WebView & m_view;
+    const Canceler m_canceler;
+
     QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
     Callback m_currentPendingCallback;
     bool m_inProgress = false;
