@@ -1030,7 +1030,6 @@ static const std::array gTestScenarioData{
         StopSynchronizationErrorTrigger::
             OnGetUserOwnSyncState, // stopSyncErrorTrigger
     },
-    /*
     TestScenarioData{
         "Full sync with rate limit exceeding on getting linked notebook sync "
         "state"sv, // name
@@ -1056,7 +1055,32 @@ static const std::array gTestScenarioData{
         StopSynchronizationErrorTrigger::
             OnGetLinkedNotebookSyncState, // stopSyncErrorTrigger
     },
-    */
+    TestScenarioData{
+        "Full sync with rate limit exceeding on getting user own sync "
+        "chunk"sv, // name
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch |
+            DataItemType::Tag,                      // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{}, // localDataItemTypes
+        ItemGroups{},    // localItemGroups
+        ItemSources{},   // localItemSources
+        true,            // expectSomeUserOwnSyncChunks
+        false,           // expectSomeLinkedNotebooksSyncChunks
+        true,            // expectSomeUserOwnNotes
+        false,           // expectSomeUserOwnResources
+        false,           // expectSomeLinkedNotebookNotes
+        false,           // expectSomeLinkedNotebookResources
+        false,           // expectSomeUserOwnDataSent
+        false,           // expectSomeLinkedNotebookDataSent
+        false,           // expectFailure
+        StopSynchronizationError{RateLimitReachedError{120}}, // stopSyncError
+        StopSynchronizationErrorTrigger::
+            OnGetUserOwnSyncChunk, // stopSyncErrorTrigger
+    },
 };
 
 } // namespace quentier::synchronization::tests
