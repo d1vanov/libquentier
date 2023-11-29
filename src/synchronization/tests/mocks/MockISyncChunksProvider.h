@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class MockISyncChunksProvider : public ISyncChunksProvider
 public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::SyncChunk>>, fetchSyncChunks,
-        (qint32 afterUsn, SynchronizationMode syncMode,
+        (qint32 afterUsn, qint32 updateCount, SynchronizationMode syncMode,
          qevercloud::IRequestContextPtr ctx,
          utility::cancelers::ICancelerPtr canceler,
          ICallbackWeakPtr callbackWeak), (override));
@@ -37,7 +37,8 @@ public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::SyncChunk>>, fetchLinkedNotebookSyncChunks,
         (qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-         SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
+         qint32 updateCount, SynchronizationMode syncMode,
+         qevercloud::IRequestContextPtr ctx,
          utility::cancelers::ICancelerPtr canceler,
          ICallbackWeakPtr callbackWeak), (override));
 };

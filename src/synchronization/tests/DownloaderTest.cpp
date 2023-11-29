@@ -267,6 +267,13 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
         result << builder.build();
     }
 
+    if (!result.isEmpty()) {
+        const qint32 updateCount = result.constLast().chunkHighUSN().value();
+        for (auto & syncChunk: result) {
+            syncChunk.setUpdateCount(updateCount);
+        }
+    }
+
     return result;
 }
 
@@ -1391,7 +1398,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
             });
 
         EXPECT_CALL(*m_mockSyncChunksProvider, fetchSyncChunks)
-            .WillOnce([&](const qint32 afterUsn,
+            .WillOnce([&](const qint32 afterUsn, const qint32 updateCount,
                           [[maybe_unused]] const SynchronizationMode syncMode,
                           const qevercloud::IRequestContextPtr & ctx,
                           const utility::cancelers::ICancelerPtr & canceler,
@@ -1404,6 +1411,9 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 else {
                     EXPECT_EQ(afterUsn, userOwnAfterUsn);
                 }
+
+                EXPECT_EQ(
+                    updateCount, syncChunks.last().chunkHighUSN().value());
 
                 EXPECT_TRUE(ctx);
                 if (ctx) {
@@ -1748,10 +1758,11 @@ TEST_P(DownloaderSyncChunksTest, Download)
         EXPECT_CALL(
             *m_mockSyncChunksProvider,
             fetchLinkedNotebookSyncChunks(
-                linkedNotebook, _, _, _, _, _))
+                linkedNotebook, _, _, _, _, _, _))
             .WillOnce([&, linkedNotebookSyncChunks](
                           const qevercloud::LinkedNotebook & ln,
                           [[maybe_unused]] qint32 afterUsn,
+                          [[maybe_unused]] qint32 updateCount,
                           [[maybe_unused]] const SynchronizationMode syncMode,
                           const qevercloud::IRequestContextPtr & ctx,
                           const utility::cancelers::ICancelerPtr & canceler,

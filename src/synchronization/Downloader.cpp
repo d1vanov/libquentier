@@ -896,7 +896,9 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                         "synchronization::Downloader",
                         "Sync state from Evernote: " << syncState);
 
-                    if (syncState.fullSyncBefore() >
+                    downloadContext->serverSyncState = std::move(syncState);
+
+                    if (downloadContext->serverSyncState->fullSyncBefore() >
                         downloadContext->lastSyncState
                             ->m_userDataLastSyncTime)
                     {
@@ -910,7 +912,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                             SynchronizationMode::Full);
                     }
                     else if (
-                        syncState.updateCount() ==
+                        downloadContext->serverSyncState->updateCount() ==
                         downloadContext->lastSyncState
                             ->m_userDataUpdateCount)
                     {
@@ -955,6 +957,7 @@ void Downloader::launchUserOwnDataDownload(
         "Downloader::launchUserOwnDataDownload: sync mode = " << syncMode);
 
     Q_ASSERT(downloadContext);
+    Q_ASSERT(downloadContext->serverSyncState);
 
     const qint32 afterUsn =
         (syncMode == SynchronizationMode::Full
@@ -966,7 +969,8 @@ void Downloader::launchUserOwnDataDownload(
             downloadContext->callbackWeak);
 
     auto syncChunksFuture = m_syncChunksProvider->fetchSyncChunks(
-        afterUsn, syncMode, downloadContext->ctx, downloadContext->canceler,
+        afterUsn, downloadContext->serverSyncState->updateCount(), syncMode,
+        downloadContext->ctx, downloadContext->canceler,
         syncChunksProviderCallback);
 
     auto * currentThread = QThread::currentThread();
@@ -1219,23 +1223,24 @@ QFuture<IDownloader::Result>
                 linkedNotebookDownloadContext->linkedNotebookAuthToken =
                     authInfo->authToken();
 
+                linkedNotebookDownloadContext->serverSyncState =
+                    std::move(linkedNotebookSyncState);
+
                 startLinkedNotebookDataDownload(
-                    std::move(linkedNotebookDownloadContext),
-                    linkedNotebookSyncState, syncMode);
+                    std::move(linkedNotebookDownloadContext), syncMode);
             }});
 
     return future;
 }
 
 void Downloader::startLinkedNotebookDataDownload(
-    DownloadContextPtr downloadContext,
-    const qevercloud::SyncState & linkedNotebookSyncState,
-    const SynchronizationMode syncMode)
+    DownloadContextPtr downloadContext, const SynchronizationMode syncMode)
 {
     Q_ASSERT(downloadContext);
     Q_ASSERT(downloadContext->linkedNotebook);
     Q_ASSERT(downloadContext->linkedNotebook->guid());
     Q_ASSERT(downloadContext->linkedNotebookAuthToken);
+    Q_ASSERT(downloadContext->serverSyncState);
 
     const qint32 afterUsn = [&] {
         if (syncMode == SynchronizationMode::Full) {
@@ -1256,7 +1261,7 @@ void Downloader::startLinkedNotebookDataDownload(
         return 0;
     }();
 
-    if (afterUsn == linkedNotebookSyncState.updateCount()) {
+    if (afterUsn == downloadContext->serverSyncState->updateCount()) {
         QNDEBUG(
             "synchronization::Downloader",
             "Evernote has no updates for linked notebook "
@@ -1270,7 +1275,8 @@ void Downloader::startLinkedNotebookDataDownload(
             downloadContext->callbackWeak);
 
     auto syncChunksFuture = m_syncChunksProvider->fetchLinkedNotebookSyncChunks(
-        *downloadContext->linkedNotebook, afterUsn, syncMode,
+        *downloadContext->linkedNotebook, afterUsn,
+        downloadContext->serverSyncState->updateCount(), syncMode,
         downloadContext->ctx, downloadContext->canceler,
         syncChunksProviderCallback);
 

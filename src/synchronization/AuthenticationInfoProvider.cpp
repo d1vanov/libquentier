@@ -1185,7 +1185,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
 
                 QNDEBUG(
                     "synchronization::AuthenticationInfoProvider",
-                    "Successfully wrote the authentication info to the "
+                    "Successfully wrote authentication info to the "
                         << "application settings for host " << m_host
                         << ", user id " << authenticationInfo->userId()
                         << ": auth token expiration timestamp = "
@@ -1268,7 +1268,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
 
                 QNDEBUG(
                     "synchronization::AuthenticationInfoProvider",
-                    "Successfully wrote the linked notebook authentication "
+                    "Successfully wrote linked notebook authentication "
                         << "info to the application settings for host "
                         << m_host << ", user id "
                         << authenticationInfo->userId()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,7 +54,7 @@ public:
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunks(
-        qint32 afterUsn, SynchronizationMode syncMode,
+        qint32 afterUsn, qint32 updateCount, SynchronizationMode syncMode,
         qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak) = 0;
@@ -62,7 +62,8 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>>
         fetchLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-            SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
+            qint32 updateCount, SynchronizationMode syncMode,
+            qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) = 0;
 };

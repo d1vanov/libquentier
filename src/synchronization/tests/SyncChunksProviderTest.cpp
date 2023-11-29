@@ -129,6 +129,7 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -144,6 +145,7 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -159,20 +161,14 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
         .WillOnce(Return(syncChunks));
 
-    EXPECT_CALL(
-        *m_mockSyncChunksDownloader,
-        downloadSyncChunks(82, SynchronizationMode::Full, _, _, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                {})));
-
     auto future = provider.fetchSyncChunks(
-        0, SynchronizationMode::Full, qevercloud::newRequestContext(),
+        0, 82, SynchronizationMode::Full, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -210,6 +206,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(54)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -225,6 +222,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(54)
                .build();
 
     EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
@@ -245,6 +243,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     auto fullSyncChunks = syncChunks;
@@ -280,7 +279,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, SynchronizationMode::Full, qevercloud::newRequestContext(),
+        0, 82, SynchronizationMode::Full, qevercloud::newRequestContext(),
         m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -315,6 +314,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -330,6 +330,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -345,6 +346,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     EXPECT_CALL(
@@ -377,8 +379,8 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
-        m_manualCanceler, m_mockCallback);
+        0, 82, SynchronizationMode::Incremental,
+        qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
@@ -418,6 +420,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(54)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -433,6 +436,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(54)
                .build();
 
     EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
@@ -453,6 +457,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     auto fullSyncChunks = syncChunks;
@@ -488,8 +493,8 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
-        m_manualCanceler, m_mockCallback);
+        0, 82, SynchronizationMode::Incremental,
+        qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
     ASSERT_TRUE(future.resultCount());
@@ -524,6 +529,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -539,6 +545,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -554,6 +561,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     EXPECT_CALL(
@@ -591,8 +599,8 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
-        m_manualCanceler, m_mockCallback);
+        0, 82, SynchronizationMode::Incremental,
+        qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
@@ -630,6 +638,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(54)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -645,6 +654,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(54)
                .build();
 
     EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
@@ -665,6 +675,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     auto fullSyncChunks = syncChunks;
@@ -706,8 +717,8 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchSyncChunks(
-        0, SynchronizationMode::Incremental, qevercloud::newRequestContext(),
-        m_manualCanceler, m_mockCallback);
+        0, 82, SynchronizationMode::Incremental,
+        qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
     EXPECT_THROW(future.waitForFinished(), qevercloud::EverCloudException);
@@ -748,6 +759,7 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -763,6 +775,7 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -778,6 +791,7 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     EXPECT_CALL(
@@ -788,16 +802,8 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
     const auto linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}.setGuid(linkedNotebookGuid).build();
 
-    EXPECT_CALL(
-        *m_mockSyncChunksDownloader,
-        downloadLinkedNotebookSyncChunks(
-            linkedNotebook, 82, SynchronizationMode::Full, _, _, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                {})));
-
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, SynchronizationMode::Full,
+        linkedNotebook, 0, 82, SynchronizationMode::Full,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -839,6 +845,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(54)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -854,6 +861,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(54)
                .build();
 
     EXPECT_CALL(
@@ -876,6 +884,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     auto fullSyncChunks = syncChunks;
@@ -922,7 +931,7 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, SynchronizationMode::Incremental,
+        linkedNotebook, 0, 82, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -962,6 +971,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -977,6 +987,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -992,6 +1003,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     const auto linkedNotebook =
@@ -1033,7 +1045,7 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, SynchronizationMode::Incremental,
+        linkedNotebook, 0, 82, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -1078,6 +1090,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(54)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -1093,6 +1106,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(54)
                .build();
 
     EXPECT_CALL(
@@ -1115,6 +1129,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     auto fullSyncChunks = syncChunks;
@@ -1160,7 +1175,7 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, SynchronizationMode::Incremental,
+        linkedNotebook, 0, 82, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -1200,6 +1215,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -1215,6 +1231,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(82)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -1230,6 +1247,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     const auto linkedNotebook =
@@ -1278,7 +1296,7 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, SynchronizationMode::Full,
+        linkedNotebook, 0, 82, SynchronizationMode::Full,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);
@@ -1321,6 +1339,7 @@ TEST_F(
                           .setUpdateSequenceNum(35)
                           .build())
                .setChunkHighUSN(35)
+               .setUpdateCount(54)
                .build()
         << qevercloud::SyncChunkBuilder{}
                .setNotebooks(
@@ -1336,6 +1355,7 @@ TEST_F(
                           .setUpdateSequenceNum(54)
                           .build())
                .setChunkHighUSN(54)
+               .setUpdateCount(54)
                .build();
 
     EXPECT_CALL(
@@ -1358,6 +1378,7 @@ TEST_F(
                           .setUpdateSequenceNum(82)
                           .build())
                .setChunkHighUSN(82)
+               .setUpdateCount(82)
                .build();
 
     auto fullSyncChunks = syncChunks;
@@ -1409,7 +1430,7 @@ TEST_F(
         .Times(1);
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
-        linkedNotebook, 0, SynchronizationMode::Incremental,
+        linkedNotebook, 0, 82, SynchronizationMode::Incremental,
         qevercloud::newRequestContext(), m_manualCanceler, m_mockCallback);
 
     waitForFuture(future);

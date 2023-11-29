@@ -113,7 +113,8 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 }
 
 [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunksImpl(
-    qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+    const qint32 afterUsn, const qint32 updateCount,
+    qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler,
     ISyncChunksProvider::ICallbackWeakPtr callbackWeak,
     const StoredSyncChunksUsnRangeFetcher & storedSyncChunksUsnRangeFetcher,
@@ -123,7 +124,8 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 {
     QNDEBUG(
         "synchronization::SyncChunksProvider",
-        "SyncChunksProvider: fetchSyncChunksImpl: afterUsn = " << afterUsn);
+        "SyncChunksProvider: fetchSyncChunksImpl: afterUsn = " << afterUsn
+            << ", updateCount = " << updateCount);
 
     Q_ASSERT(storedSyncChunksUsnRangeFetcher);
     Q_ASSERT(syncChunksDownloader);
@@ -136,7 +138,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     auto downloadSyncChunks =
         [syncChunksDownloader = std::move(syncChunksDownloader),
          syncChunksStorer = std::move(syncChunksStorer), currentThread](
-            qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+            const qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ISyncChunksProvider::ICallbackWeakPtr callbackWeak) mutable {
             auto promise =
@@ -215,6 +217,7 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
     // check for that
     std::optional<qint32> chunksLowUsn;
     std::optional<qint32> chunksHighUsn;
+    std::optional<qint32> chunksUpdateCount;
     for (const auto & syncChunk: std::as_const(storedSyncChunks)) {
         const auto highUsn = syncChunk.chunkHighUSN();
         if (Q_UNLIKELY(!highUsn)) {
@@ -249,6 +252,11 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
         if (!chunksHighUsn || (*chunksHighUsn < *highUsn)) {
             chunksHighUsn = *highUsn;
         }
+
+        const qint32 chunkUpdateCount = syncChunk.updateCount();
+        if (!chunksUpdateCount || (*chunksUpdateCount < chunkUpdateCount)) {
+            chunksUpdateCount = chunkUpdateCount;
+        }
     }
 
     if (!chunksLowUsn || !chunksHighUsn ||
@@ -266,9 +274,14 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
             std::move(callbackWeak));
     }
 
-    // FIXME: should not actually request sync chunks beyond those already
-    // stored if their updateCount corresponds to the actual updateCount
-    // from Evernote service.
+    // Stored sync chunks indeed start from afterUsn + 1
+    if (chunksUpdateCount && (*chunksUpdateCount == updateCount)) {
+        // Stored sync chunks have the same updateCount as the one passed
+        // to the provider - it means there's no need to try downloading
+        // sync chunks after chunksHighUsn, the server doesn't have anything
+        // to return.
+        return threading::makeReadyFuture(std::move(storedSyncChunks));
+    }
 
     // At this point we can be sure that stored sync chunks indeed start
     // from afterUsn + 1. But instead of just returning them, will still
@@ -331,23 +344,25 @@ SyncChunksProvider::SyncChunksProvider(
 }
 
 QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
-    qint32 afterUsn, SynchronizationMode syncMode,
-    qevercloud::IRequestContextPtr ctx,
+    const qint32 afterUsn, const qint32 updateCount,
+    const SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
     utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG(
         "synchronization::SyncChunksProvider",
         "SyncChunksProvider::fetchSyncChunks: afterUsn = " << afterUsn
-            << ", sync mode = " << syncMode);
+            << ", updateCount = " << updateCount << ", sync mode = "
+            << syncMode);
 
     return fetchSyncChunksImpl(
-        afterUsn, std::move(ctx), std::move(canceler), std::move(callbackWeak),
+        afterUsn, updateCount, std::move(ctx), std::move(canceler),
+        std::move(callbackWeak),
         [this] {
             return m_syncChunksStorage->fetchUserOwnSyncChunksLowAndHighUsns();
         },
         [this, syncMode, actualAfterUsn = afterUsn,
          currentThread = QThread::currentThread()](
-            qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+            const qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) {
             // Artificially prolonging the lifetime of
@@ -366,7 +381,7 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
                 });
             return resultFuture;
         },
-        [this](qint32 afterUsn) {
+        [this](const qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantUserOwnSyncChunks(
                 afterUsn);
         },
@@ -377,8 +392,8 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
 
 QFuture<QList<qevercloud::SyncChunk>>
     SyncChunksProvider::fetchLinkedNotebookSyncChunks(
-        qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-        SynchronizationMode syncMode,
+        qevercloud::LinkedNotebook linkedNotebook, const qint32 afterUsn,
+        const qint32 updateCount, const SynchronizationMode syncMode,
         qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
@@ -392,7 +407,8 @@ QFuture<QList<qevercloud::SyncChunk>>
     }
 
     return fetchSyncChunksImpl(
-        afterUsn, std::move(ctx), std::move(canceler), std::move(callbackWeak),
+        afterUsn, updateCount, std::move(ctx), std::move(canceler),
+        std::move(callbackWeak),
         [this, linkedNotebookGuid = *linkedNotebookGuid] {
             return m_syncChunksStorage
                 ->fetchLinkedNotebookSyncChunksLowAndHighUsns(
@@ -400,7 +416,7 @@ QFuture<QList<qevercloud::SyncChunk>>
         },
         [this, syncMode, linkedNotebook = std::move(linkedNotebook),
          actualAfterUsn = afterUsn, currentThread = QThread::currentThread()](
-            qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+            const qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
             utility::cancelers::ICancelerPtr canceler,
             ICallbackWeakPtr callbackWeak) mutable {
             // Artificially prolonging the lifetime of
@@ -420,7 +436,8 @@ QFuture<QList<qevercloud::SyncChunk>>
                 });
             return resultFuture;
         },
-        [this, linkedNotebookGuid = *linkedNotebookGuid](qint32 afterUsn) {
+        [this,
+         linkedNotebookGuid = *linkedNotebookGuid](const qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantLinkedNotebookSyncChunks(
                 linkedNotebookGuid, afterUsn);
         },

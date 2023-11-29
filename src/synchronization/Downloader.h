@@ -102,6 +102,8 @@ private:
         utility::cancelers::ICancelerPtr canceler;
         ICallbackWeakPtr callbackWeak;
 
+        std::optional<qevercloud::SyncState> serverSyncState;
+
         // Linked notebook to which this DownloadContext belongs
         std::optional<qevercloud::LinkedNotebook> linkedNotebook;
 
@@ -142,9 +144,7 @@ private:
         qevercloud::LinkedNotebook linkedNotebook);
 
     void startLinkedNotebookDataDownload(
-        DownloadContextPtr downloadContext,
-        const qevercloud::SyncState & linkedNotebookSyncState,
-        SynchronizationMode syncMode);
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
     void processSyncChunks(
         DownloadContextPtr downloadContext, SynchronizationMode syncMode,
