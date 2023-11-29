@@ -3851,7 +3851,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     QByteArray dtdRawData = dtdFile.readAll();
 
     xmlParserInputBufferPtr pBuf = xmlParserInputBufferCreateMem(
-        dtdRawData.constData(), dtdRawData.size(), XML_CHAR_ENCODING_NONE);
+        dtdRawData.constData(), dtdRawData.size(), XML_CHAR_ENCODING_UTF8);
 
     if (!pBuf) {
         errorDescription.setBase(
@@ -3862,7 +3862,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
         return false;
     }
 
-    xmlDtdPtr pDtd = xmlIOParseDTD(NULL, pBuf, XML_CHAR_ENCODING_NONE);
+    xmlDtdPtr pDtd = xmlIOParseDTD(NULL, pBuf, XML_CHAR_ENCODING_UTF8);
     if (!pDtd) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, failed to parse DTD"));
@@ -3872,7 +3872,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
         return false;
     }
 
-    xmlParserCtxtPtr pContext = xmlNewParserCtxt();
+    xmlValidCtxtPtr pContext = xmlNewValidCtxt();
     if (!pContext) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, can't allocate parser "
@@ -3884,12 +3884,12 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     }
 
     QString errorString;
-    pContext->vctxt.userData = &errorString;
-    pContext->vctxt.error = (xmlValidityErrorFunc)xmlValidationErrorFunc;
+    pContext->userData = &errorString;
+    pContext->error = (xmlValidityErrorFunc)xmlValidationErrorFunc;
 
-    bool res = static_cast<bool>(xmlValidateDtd(&pContext->vctxt, pDoc, pDtd));
+    bool res = static_cast<bool>(xmlValidateDtd(pContext, pDoc, pDtd));
 
-    xmlFreeParserCtxt(pContext);
+    xmlFreeValidCtxt(pContext);
     xmlFreeDtd(pDtd);
     // WARNING: xmlIOParseDTD should have "consumed" the input buffer so one
     // should not attempt to free it manually
