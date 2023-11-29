@@ -121,6 +121,7 @@ function ToDoCheckboxAutomaticInserter() {
         newCheckbox.className = "checkbox_unchecked";
         newCheckbox.setAttribute("en-tag", "en-todo");
         newCheckbox.setAttribute("en-todo-id", id);
+        newCheckbox.onclick = onEnToDoTagClick;
 
         if (anchorNode.nodeType == 3) {
             var offset = selection.anchorOffset;
@@ -328,6 +329,7 @@ function ToDoCheckboxAutomaticInserter() {
                 newCheckbox.className = "checkbox_unchecked";
                 newCheckbox.setAttribute("en-tag", "en-todo");
                 newCheckbox.setAttribute("en-todo-id", maxEnToDo.toString());
+                newCheckbox.onclick = onEnToDoTagClick;
                 newDiv.appendChild(newCheckbox);
                 var newRange = document.createRange();
                 newRange.selectNode(newCheckbox);
@@ -344,6 +346,11 @@ function ToDoCheckboxAutomaticInserter() {
                 htmlToInsert += "\">";
                 this.pushUndo(lastElementNode.parentNode.parentNode, lastElementNode.parentNode.parentNode.innerHTML);
                 document.execCommand('insertHTML', false, htmlToInsert);
+
+                var newCheckbox = document.querySelectorAll('[en-todo-id="' + (maxEnToDo + 1).toString() + '"]');
+                if (newCheckbox.length == 1) {
+                    newCheckbox[0].onclick = onEnToDoTagClick;
+                }
             }
         }
         finally {
