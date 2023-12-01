@@ -675,6 +675,7 @@ bool AccountSynchronizer::processDownloadStopSynchronizationError(
                     m_account.id()}});
 
         appendToPreviousSyncResult(*context, downloadResult);
+        storeDownloadedSyncChunks(*context);
         synchronizeImpl(context);
         return true;
     }
@@ -705,6 +706,7 @@ bool AccountSynchronizer::processDownloadStopSynchronizationError(
                         LinkedNotebook{linkedNotebookGuid}});
 
             appendToPreviousSyncResult(*context, downloadResult);
+            storeDownloadedSyncChunks(*context);
             synchronizeImpl(context);
             return true;
         }
@@ -825,6 +827,7 @@ bool AccountSynchronizer::processDownloadStopSynchronizationError(
 
     if (rateLimitReachedError) {
         appendToPreviousSyncResult(*context, downloadResult);
+        storeDownloadedSyncChunks(*context);
         auto & syncResult = context->previousSyncResult;
         Q_ASSERT(syncResult);
         syncResult->m_stopSynchronizationError = *rateLimitReachedError;
