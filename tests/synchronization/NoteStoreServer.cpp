@@ -1645,8 +1645,8 @@ void NoteStoreServer::onUpdateNotebookRequest(
         it != m_uriByRequestId.end())
     {
         auto linkedNotebookGuid = QString::fromUtf8(it.value());
-        if (auto exc = checkLinkedNotebookAuthentication(
-                linkedNotebookGuid, ctx))
+        if (auto exc =
+                checkLinkedNotebookAuthentication(linkedNotebookGuid, ctx))
         {
             Q_EMIT updateNotebookRequestReady(
                 0, std::move(exc), ctx->requestId());
@@ -2271,8 +2271,8 @@ void NoteStoreServer::onUpdateTagRequest(
         it != m_uriByRequestId.end())
     {
         auto linkedNotebookGuid = QString::fromUtf8(it.value());
-        if (auto exc = checkLinkedNotebookAuthentication(
-                linkedNotebookGuid, ctx))
+        if (auto exc =
+                checkLinkedNotebookAuthentication(linkedNotebookGuid, ctx))
         {
             Q_EMIT updateTagRequestReady(0, std::move(exc), ctx->requestId());
             return;
@@ -2599,8 +2599,25 @@ void NoteStoreServer::onGetFilteredSyncChunkRequest(
         return;
     }
 
+    if (m_lastServedUserOwnSyncChunkHighUsn >= 0 &&
+        afterUSN < m_lastServedUserOwnSyncChunkHighUsn)
+    {
+        QNWARNING(
+            "tests::synchronization::NoteStoreServer",
+            "Detected request of already served user own sync chunk data: "
+                << "after usn = " << afterUSN << ", last served user own "
+                << "sync chunk high usn = "
+                << m_lastServedUserOwnSyncChunkHighUsn);
+        throw RuntimeError{ErrorString{QStringLiteral(
+            "Detected request of already served user own sync chunk data")}};
+    }
+
     auto result = getSyncChunkImpl(
         afterUSN, maxEntries, (afterUSN == 0), std::nullopt, filter, ctx);
+
+    if (result.first.chunkHighUSN()) {
+        m_lastServedUserOwnSyncChunkHighUsn = *result.first.chunkHighUSN();
+    }
 
     Q_EMIT getFilteredSyncChunkRequestReady(
         std::move(result.first), std::move(result.second), ctx->requestId());
@@ -2673,6 +2690,22 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
         return;
     }
 
+    if (const auto it = m_lastServedLinkedNotebookSyncChunkHighUsns.constFind(
+            *linkedNotebook.guid());
+        it != m_lastServedLinkedNotebookSyncChunkHighUsns.constEnd() &&
+        afterUSN < it.value())
+    {
+        QNWARNING(
+            "tests::synchronization::NoteStoreServer",
+            "Detected request of already served linked notebook sync chunk "
+                << "data: after usn = " << afterUSN << ", last served linked "
+                << "notebook sync chunk high usn = " << it.value()
+                << ", linked notebook guid = " << *linkedNotebook.guid());
+        throw RuntimeError{ErrorString{QStringLiteral(
+            "Detected request of already served linked notebook sync chunk "
+            "data")}};
+    }
+
     qevercloud::SyncChunkFilter filter;
     filter.setIncludeTags(true);
     filter.setIncludeNotebooks(true);
@@ -2690,6 +2723,11 @@ void NoteStoreServer::onGetLinkedNotebookSyncChunkRequest(
     auto result = getSyncChunkImpl(
         afterUSN, maxEntries, (afterUSN == 0), *linkedNotebook.guid(), filter,
         ctx);
+
+    if (result.first.chunkHighUSN()) {
+        m_lastServedLinkedNotebookSyncChunkHighUsns[*linkedNotebook.guid()] =
+            *result.first.chunkHighUSN();
+    }
 
     Q_EMIT getLinkedNotebookSyncChunkRequestReady(
         std::move(result.first), std::move(result.second), ctx->requestId());

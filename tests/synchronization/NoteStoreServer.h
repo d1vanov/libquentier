@@ -455,6 +455,9 @@ private:
 
     QHash<qevercloud::Guid, QString> m_linkedNotebookAuthTokensByGuid;
 
+    qint32 m_lastServedUserOwnSyncChunkHighUsn = -1;
+    QHash<qevercloud::Guid, qint32> m_lastServedLinkedNotebookSyncChunkHighUsns;
+
     QTcpServer * m_tcpServer = nullptr;
     qevercloud::NoteStoreServer * m_server = nullptr;
     QHash<QUuid, QTcpSocket*> m_sockets;
