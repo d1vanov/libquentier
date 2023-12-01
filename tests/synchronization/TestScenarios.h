@@ -1081,6 +1081,31 @@ static const std::array gTestScenarioData{
         StopSynchronizationErrorTrigger::
             OnGetUserOwnSyncChunk, // stopSyncErrorTrigger
     },
+    TestScenarioData{
+        "Full sync with rate limit exceeding on getting user own note"sv, // name
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch |
+            DataItemType::Tag,                      // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{}, // localDataItemTypes
+        ItemGroups{},    // localItemGroups
+        ItemSources{},   // localItemSources
+        true,            // expectSomeUserOwnSyncChunks
+        false,           // expectSomeLinkedNotebooksSyncChunks
+        true,            // expectSomeUserOwnNotes
+        false,           // expectSomeUserOwnResources
+        false,           // expectSomeLinkedNotebookNotes
+        false,           // expectSomeLinkedNotebookResources
+        false,           // expectSomeUserOwnDataSent
+        false,           // expectSomeLinkedNotebookDataSent
+        false,           // expectFailure
+        StopSynchronizationError{RateLimitReachedError{120}}, // stopSyncError
+        StopSynchronizationErrorTrigger::
+            OnGetNoteAfterDownloadingUserOwnSyncChunks, // stopSyncErrorTrigger
+    },
 };
 
 } // namespace quentier::synchronization::tests
