@@ -25,9 +25,9 @@
 #include <QDir>
 #include <QFuture>
 #include <QList>
-#include <QMutex>
 #include <QReadWriteLock>
 
+#include <atomic>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -41,8 +41,7 @@ namespace quentier::synchronization {
 class SyncChunksStorage final : public ISyncChunksStorage
 {
 public:
-    explicit SyncChunksStorage(
-        const QDir & rootDir, const threading::QThreadPoolPtr & threadPool = {});
+    explicit SyncChunksStorage(const QDir & rootDir);
 
     [[nodiscard]] QList<std::pair<qint32, qint32>>
         fetchUserOwnSyncChunksLowAndHighUsns() const override;
@@ -59,8 +58,7 @@ public:
             const qevercloud::Guid & linkedNotebookGuid,
             qint32 afterUsn) const override;
 
-    void putUserOwnSyncChunks(
-        QList<qevercloud::SyncChunk> syncChunks) override;
+    void putUserOwnSyncChunks(QList<qevercloud::SyncChunk> syncChunks) override;
 
     void putLinkedNotebookSyncChunks(
         const qevercloud::Guid & linkedNotebookGuid,
@@ -81,41 +79,10 @@ private:
     void clearLinkedNotebookSyncChunksImpl(
         const qevercloud::Guid & linkedNotebookGuid);
 
+    void initLowAndHighUsnsLists() const;
+
 private:
-    using RWLockPtr = std::shared_ptr<QReadWriteLock>;
-
-    class LowAndHighUsnsDataAccessor
-    {
-    public:
-        struct LowAndHighUsnsData
-        {
-            using LowAndHighUsnsList = QList<std::pair<qint32, qint32>>;
-
-            LowAndHighUsnsList m_userOwnSyncChunkLowAndHighUsns;
-
-            QHash<qevercloud::Guid, LowAndHighUsnsList>
-                m_linkedNotebookSyncChunkLowAndHighUsns;
-        };
-
-    public:
-        explicit LowAndHighUsnsDataAccessor(
-            const QDir & rootDir, const QDir & userOwnSyncChunksDir,
-            const threading::QThreadPoolPtr & threadPool,
-            RWLockPtr dataLock);
-
-        [[nodiscard]] LowAndHighUsnsData & data();
-
-        void reset();
-
-    private:
-        void waitForLowAndHighUsnsDataInit();
-
-    private:
-        std::optional<QFuture<LowAndHighUsnsData>> m_lowAndHighUsnsDataFuture;
-
-        QMutex m_mutex;
-        LowAndHighUsnsData m_lowAndHighUsnsData;
-    };
+    using LowAndHighUsnsList = QList<std::pair<qint32, qint32>>;
 
     struct SyncChunkInfo
     {
@@ -136,17 +103,22 @@ private:
         QList<qevercloud::SyncChunk> & result) const;
 
 private:
-    const RWLockPtr m_dataLock;
-
     QDir m_rootDir;
     QDir m_userOwnSyncChunksDir;
+
+    mutable std::atomic<bool> m_initializedLowAndHighUsns = false;
+
+    mutable LowAndHighUsnsList m_userOwnSyncChunkLowAndHighUsns;
+
+    mutable QHash<qevercloud::Guid, LowAndHighUsnsList>
+        m_linkedNotebookSyncChunkLowAndHighUsns;
 
     QList<SyncChunkInfo> m_userOwnSyncChunksPendingPersistence;
 
     QHash<qevercloud::Guid, QList<SyncChunkInfo>>
         m_linkedNotebookSyncChunksPendingPersistence;
 
-    std::unique_ptr<LowAndHighUsnsDataAccessor> m_lowAndHighUsnsDataAccessor;
+    mutable QReadWriteLock m_dataLock;
 };
 
 } // namespace quentier::synchronization

@@ -223,13 +223,6 @@ void checkLinkedNotebookSyncChunksPersistenceIsNotEmpty(const QDir & dir)
 class SyncChunksStorageTest : public testing::Test
 {
 protected:
-    void SetUp() override
-    {
-        auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-        m_threadPool = std::shared_ptr<QThreadPool>(
-            QThreadPool::globalInstance(), std::move(nullDeleter));
-    }
-
     void TearDown() override
     {
         QDir dir{m_temporaryDir.path()};
@@ -248,27 +241,19 @@ protected:
 
 protected:
     QTemporaryDir m_temporaryDir;
-    threading::QThreadPoolPtr m_threadPool;
 };
 
 TEST_F(SyncChunksStorageTest, Ctor)
 {
     EXPECT_NO_THROW(
         auto storage = std::make_shared<SyncChunksStorage>(
-            QDir{m_temporaryDir.path()}, m_threadPool));
-}
-
-TEST_F(SyncChunksStorageTest, CtorNullThreadPool)
-{
-    EXPECT_NO_THROW(
-        auto storage = std::make_shared<SyncChunksStorage>(
-            QDir{m_temporaryDir.path()}, nullptr));
+            QDir{m_temporaryDir.path()}));
 }
 
 TEST_F(SyncChunksStorageTest, FetchNonexistentUserOwnSyncChunks)
 {
     auto storage = std::make_shared<SyncChunksStorage>(
-        QDir{m_temporaryDir.path()}, m_threadPool);
+        QDir{m_temporaryDir.path()});
 
     const auto usnsRange = storage->fetchUserOwnSyncChunksLowAndHighUsns();
     EXPECT_TRUE(usnsRange.isEmpty());
@@ -280,7 +265,7 @@ TEST_F(SyncChunksStorageTest, FetchNonexistentUserOwnSyncChunks)
 TEST_F(SyncChunksStorageTest, FetchNonexistentLinkedNotebookSyncChunks)
 {
     auto storage = std::make_shared<SyncChunksStorage>(
-        QDir{m_temporaryDir.path()}, m_threadPool);
+        QDir{m_temporaryDir.path()});
 
     const auto linkedNotebookGuid = UidGenerator::Generate();
 
@@ -331,8 +316,7 @@ TEST_F(SyncChunksStorageTest, FetchExistingUserOwnSyncChunks)
         file.close();
     }
 
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     const auto syncChunks = storage->fetchRelevantUserOwnSyncChunks(0);
     EXPECT_EQ(syncChunks, expectedSyncChunks);
@@ -397,8 +381,7 @@ TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
         }
     }
 
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     QList<qevercloud::SyncChunk> syncChunks;
     syncChunks.reserve(syncChunkCount * linkedNotebookCount);
@@ -421,9 +404,7 @@ TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
 TEST_F(SyncChunksStorageTest, PutAndFetchUserOwnSyncChunks)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int syncChunkCount = 3;
     QList<qevercloud::SyncChunk> syncChunks;
@@ -468,9 +449,7 @@ TEST_F(SyncChunksStorageTest, PutAndFetchUserOwnSyncChunks)
 TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int linkedNotebookCount = 3;
     QList<qevercloud::Guid> linkedNotebookGuids;
@@ -577,9 +556,7 @@ TEST_F(
     ProtectFromPuttingUserOwnSyncChunksWithInconsistentUsnsOrder)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int syncChunkCount = 3;
     QList<qevercloud::SyncChunk> syncChunks;
@@ -624,9 +601,7 @@ TEST_F(
     ProtectFromPuttingLinkedNotebookSyncChunksWithInconsistentUsnsOrder)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int linkedNotebookCount = 3;
     QList<qevercloud::Guid> linkedNotebookGuids;
@@ -680,9 +655,7 @@ TEST_F(
     FetchUserOwnSyncChunksConsideringAfterUsnMatchingSyncChunkBoundary)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int syncChunkCount = 3;
     QList<qevercloud::SyncChunk> syncChunks;
@@ -702,9 +675,7 @@ TEST_F(
     FetchUserOwnSyncChunksConsideringAfterUsnNotMatchingSyncChunkBoundary)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int syncChunkCount = 3;
     QList<qevercloud::SyncChunk> syncChunks;
@@ -777,9 +748,7 @@ TEST_F(
     FetchLinkedNotebookSyncChunksConsideringAfterUsnMatchingSyncChunkBoundary)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int linkedNotebookCount = 3;
     QList<qevercloud::Guid> linkedNotebookGuids;
@@ -826,9 +795,7 @@ TEST_F(
     FetchLinkedNotebookSyncChunksConsideringAfterUsnNotMatchingSyncChunkBoundary)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int linkedNotebookCount = 3;
     QList<qevercloud::Guid> linkedNotebookGuids;
@@ -926,9 +893,7 @@ TEST_F(
 TEST_F(SyncChunksStorageTest, ClearUserOwnSyncChunks)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int syncChunkCount = 3;
     QList<qevercloud::SyncChunk> syncChunks;
@@ -955,9 +920,7 @@ TEST_F(SyncChunksStorageTest, ClearUserOwnSyncChunks)
 TEST_F(SyncChunksStorageTest, ClearLinkedNotebookSyncChunks)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int linkedNotebookCount = 3;
     QList<qevercloud::Guid> linkedNotebookGuids;
@@ -1007,9 +970,7 @@ TEST_F(SyncChunksStorageTest, ClearLinkedNotebookSyncChunks)
 TEST_F(SyncChunksStorageTest, ClearAllSyncChunks)
 {
     QDir temporaryDir{m_temporaryDir.path()};
-
-    auto storage =
-        std::make_shared<SyncChunksStorage>(temporaryDir, m_threadPool);
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
 
     constexpr int linkedNotebookCount = 3;
     QList<qevercloud::Guid> linkedNotebookGuids;
