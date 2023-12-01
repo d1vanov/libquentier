@@ -29,6 +29,22 @@ namespace quentier::synchronization::tests {
 
 SyncEventsCollector::SyncEventsCollector(QObject * parent) : QObject(parent) {}
 
+void SyncEventsCollector::clear()
+{
+    m_userOwnSyncChunksDownloadProgressMessages.clear();
+    m_userOwnSyncChunksDownloaded = false;
+    m_userOwnSyncChunksDataCounters.clear();
+    m_startedLinkedNotebooksDataDownloading = false;
+    m_syncChunksDownloadedLinkedNotebooks.clear();
+    m_linkedNotebookSyncChunksDataCounters.clear();
+    m_userOwnNoteDownloadProgressMessages.clear();
+    m_linkedNotebookNoteDownloadProgressMessages.clear();
+    m_userOwnResourceDownloadProgressMessages.clear();
+    m_linkedNotebookResourceDownloadProgressMessages.clear();
+    m_userOwnSendStatusMessages.clear();
+    m_linkedNotebookSendStatusMessages.clear();
+}
+
 QList<SyncEventsCollector::SyncChunksDownloadProgressMessage>
     SyncEventsCollector::userOwnSyncChunksDownloadProgressMessages() const
 {

@@ -89,6 +89,8 @@ public:
 public:
     explicit SyncEventsCollector(QObject * parent = nullptr);
 
+    void clear();
+
     [[nodiscard]] QList<SyncChunksDownloadProgressMessage>
         userOwnSyncChunksDownloadProgressMessages() const;
 
