@@ -155,6 +155,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/ISyncStateBuilder.h)
 
 set(THREADING_HEADERS
+    headers/quentier/threading/Factory.h
     headers/quentier/threading/Future.h
     headers/quentier/threading/Fwd.h
     headers/quentier/threading/Post.h
@@ -468,6 +469,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncOptionsBuilder.cpp
     src/synchronization/types/SyncStateBuilder.cpp
+    src/threading/Factory.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp
     src/types/Account.cpp
