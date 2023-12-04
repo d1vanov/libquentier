@@ -1106,6 +1106,35 @@ static const std::array gTestScenarioData{
         StopSynchronizationErrorTrigger::
             OnGetNoteAfterDownloadingUserOwnSyncChunks, // stopSyncErrorTrigger
     },
+    TestScenarioData{
+        "Incremental sync with rate limit exceeding on getting user own "
+        "resource"sv, // name
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::Resource | DataItemType::SavedSearch |
+            DataItemType::Tag, // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base |
+            ItemGroup::Modified,                    // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch | DataItemType::Resource |
+            DataItemType::Tag,                      // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // localItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // localItemSources
+        true,  // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        true,  // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        false, // expectSomeUserOwnDataSent
+        false, // expectSomeLinkedNotebookDataSent
+        false, // expectFailure
+        StopSynchronizationError{RateLimitReachedError{120}}, // stopSyncError
+        StopSynchronizationErrorTrigger::
+            OnGetResourceAfterDownloadingUserOwnSyncChunks, // stopSyncErrorTrigger
+    },
 };
 
 } // namespace quentier::synchronization::tests
