@@ -11,6 +11,7 @@
 #include "MockIInkNoteImageDownloaderFactory.h"
 #include "MockILinkedNotebookFinder.h"
 #include "MockILinkedNotebooksProcessor.h"
+#include "MockILinkedNotebookTagsCleaner.h"
 #include "MockINotebookFinder.h"
 #include "MockINotebooksProcessor.h"
 #include "MockINoteFullDataDownloader.h"
