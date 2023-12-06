@@ -27,6 +27,7 @@
 #include <synchronization/FullSyncStaleDataExpunger.h>
 #include <synchronization/InkNoteImageDownloaderFactory.h>
 #include <synchronization/LinkedNotebookFinder.h>
+#include <synchronization/LinkedNotebookTagsCleaner.h>
 #include <synchronization/NoteStoreFactory.h>
 #include <synchronization/NoteStoreProvider.h>
 #include <synchronization/NoteThumbnailDownloaderFactory.h>
@@ -226,13 +227,17 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto fullSyncStaleDataExpunger =
         std::make_shared<FullSyncStaleDataExpunger>(localStorage);
 
+    auto linkedNotebookTagsCleaner =
+        std::make_shared<LinkedNotebookTagsCleaner>(localStorage);
+
     auto downloader = std::make_shared<Downloader>(
         account, m_authenticationInfoProvider, m_syncStateStorage,
         std::move(syncChunksProvider), std::move(linkedNotebooksProcessor),
         std::move(notebooksProcessor), std::move(durableNotesProcessor),
         std::move(durableResourcesProcessor), std::move(savedSearchesProcessor),
         std::move(tagsProcessor), std::move(fullSyncStaleDataExpunger),
-        noteStoreProvider, localStorage, ctx, retryPolicy);
+        noteStoreProvider, std::move(linkedNotebookTagsCleaner), localStorage,
+        ctx, retryPolicy);
 
     auto sender = std::make_shared<Sender>(
         account, std::move(localStorage), m_syncStateStorage,

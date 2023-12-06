@@ -56,6 +56,10 @@ using IInkNoteImageDownloaderFactoryPtr =
 class ILinkedNotebookFinder;
 using ILinkedNotebookFinderPtr = std::shared_ptr<ILinkedNotebookFinder>;
 
+class ILinkedNotebookTagsCleaner;
+using ILinkedNotebookTagsCleanerPtr =
+    std::shared_ptr<ILinkedNotebookTagsCleaner>;
+
 class INotebookFinder;
 using INotebookFinderPtr = std::shared_ptr<INotebookFinder>;
 
@@ -76,7 +80,8 @@ class IProtocolVersionChecker;
 using IProtocolVersionCheckerPtr = std::shared_ptr<IProtocolVersionChecker>;
 
 class IResourceFullDataDownloader;
-using IResourceFullDataDownloaderPtr = std::shared_ptr<IResourceFullDataDownloader>;
+using IResourceFullDataDownloaderPtr =
+    std::shared_ptr<IResourceFullDataDownloader>;
 
 class ISender;
 using ISenderPtr = std::shared_ptr<ISender>;

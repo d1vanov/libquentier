@@ -346,7 +346,35 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::Tag>::check(
-            [&noteStoreServer] { return noteStoreServer.tags().values(); },
+            [&noteStoreServer] {
+                auto tags = noteStoreServer.tags().values();
+                auto notes = noteStoreServer.notes().values();
+                // Will filter out server tags which are not referenced by any
+                // notes because during the last step of downloading step of the
+                // sync such notes should be cleared out of the local storage
+                for (auto it = tags.begin(); it != tags.end();) {
+                    if (!it->linkedNotebookGuid()) {
+                        ++it;
+                        continue;
+                    }
+                    Q_ASSERT(it->guid());
+                    bool foundNoteReference = false;
+                    for (const auto & note: std::as_const(notes)) {
+                        if (note.tagGuids() &&
+                            note.tagGuids()->contains(*it->guid())) {
+                            foundNoteReference = true; // NOLINT
+                            break;
+                        }
+                    }
+                    if (foundNoteReference) {
+                        ++it;
+                        continue;
+                    }
+
+                    it = tags.erase(it); // NOLINT
+                }
+                return tags;
+            },
             [&localStorage] { return localStorage.listTags(); },
             errorDescription))
     {
@@ -539,6 +567,42 @@ struct ItemListsChecker
                     .arg(tag.toString());
             return false;
         }
+    }
+
+    return true;
+}
+
+[[nodiscard]] bool checkNoNotelessLinkedNotebookTagsInLocalStorageAfterSync(
+    const local_storage::ILocalStorage & localStorage,
+    QString & errorDescription)
+{
+    const auto listTagsOptions = [] {
+        local_storage::ILocalStorage::ListTagsOptions options;
+        options.m_affiliation =
+            local_storage::ILocalStorage::Affiliation::AnyLinkedNotebook;
+        options.m_tagNotesRelation =
+            local_storage::ILocalStorage::TagNotesRelation::WithoutNotes;
+        return options;
+    }();
+
+    auto listTagsFuture = localStorage.listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+    if (Q_UNLIKELY(listTagsFuture.resultCount() != 1)) {
+        errorDescription = QString::fromUtf8(
+                               "Failed to list tags from local storage, future "
+                               "result count = %1")
+                               .arg(listTagsFuture.resultCount());
+        return false;
+    }
+
+    const auto tags = listTagsFuture.result();
+    if (!tags.isEmpty()) {
+        errorDescription =
+            QString::fromUtf8(
+                "Found %1 linked notebook tags not related to any note in "
+                "local storage after the sync")
+                .arg(tags.size());
+        return false;
     }
 
     return true;
@@ -1040,6 +1104,15 @@ void TestRunner::runTestScenario()
         QString errorMessage;
         const bool res = checkNoLocallyModifiedObjectsInLocalStorageAfterSync(
             *m_localStorage, errorMessage);
+        const QByteArray errorMessageData = errorMessage.toLatin1();
+        QVERIFY2(res, errorMessageData.data());
+    }
+
+    {
+        QString errorMessage;
+        const bool res =
+            checkNoNotelessLinkedNotebookTagsInLocalStorageAfterSync(
+                *m_localStorage, errorMessage);
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
     }

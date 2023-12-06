@@ -31,6 +31,8 @@
 
 #include <algorithm>
 
+// clazy:excludeall=returning-void-expression
+
 namespace quentier::synchronization::tests {
 
 using testing::Return;

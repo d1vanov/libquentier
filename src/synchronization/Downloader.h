@@ -69,6 +69,7 @@ public:
         ITagsProcessorPtr tagsProcessor,
         IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
         INoteStoreProviderPtr noteStoreProvider,
+        ILinkedNotebookTagsCleanerPtr linkedNotebookTagsCleaner,
         local_storage::ILocalStoragePtr localStorage,
         qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {});
@@ -162,7 +163,10 @@ private:
     void downloadResources(
         DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
-    void finalize(DownloadContextPtr & downloadContext);
+    static void finalize(
+        const DownloadContextPtr & downloadContext,
+        QHash<qevercloud::Guid, LocalResult> linkedNotebookResults = {});
+
     static void cancel(QPromise<Result> & promise);
 
 private:
@@ -178,6 +182,7 @@ private:
     const ITagsProcessorPtr m_tagsProcessor;
     const IFullSyncStaleDataExpungerPtr m_fullSyncStaleDataExpunger;
     const INoteStoreProviderPtr m_noteStoreProvider;
+    const ILinkedNotebookTagsCleanerPtr m_linkedNotebookTagsCleaner;
     const local_storage::ILocalStoragePtr m_localStorage;
     const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;

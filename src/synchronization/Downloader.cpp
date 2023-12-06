@@ -30,6 +30,7 @@
 
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IFullSyncStaleDataExpunger.h>
+#include <synchronization/ILinkedNotebookTagsCleaner.h>
 #include <synchronization/INoteStoreProvider.h>
 #include <synchronization/IProtocolVersionChecker.h>
 #include <synchronization/SyncChunksDataCounters.h>
@@ -672,6 +673,7 @@ Downloader::Downloader(
     ITagsProcessorPtr tagsProcessor,
     IFullSyncStaleDataExpungerPtr fullSyncStaleDataExpunger,
     INoteStoreProviderPtr noteStoreProvider,
+    ILinkedNotebookTagsCleanerPtr linkedNotebookTagsCleaner,
     local_storage::ILocalStoragePtr localStorage,
     qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy) :
@@ -689,6 +691,7 @@ Downloader::Downloader(
     m_tagsProcessor{std::move(tagsProcessor)},
     m_fullSyncStaleDataExpunger{std::move(fullSyncStaleDataExpunger)},
     m_noteStoreProvider{std::move(noteStoreProvider)},
+    m_linkedNotebookTagsCleaner{std::move(linkedNotebookTagsCleaner)},
     m_localStorage{std::move(localStorage)},
     m_ctx{std::move(ctx)},
     m_retryPolicy{std::move(retryPolicy)},
@@ -758,6 +761,12 @@ Downloader::Downloader(
     if (Q_UNLIKELY(!m_noteStoreProvider)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("Downloader ctor: note store provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_linkedNotebookTagsCleaner)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Downloader ctor: linked notebook tags cleaner is "
+                           "null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorage)) {
@@ -1027,7 +1036,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
     Q_ASSERT(downloadContext->ctx);
 
     if (linkedNotebooks.isEmpty()) {
-        finalize(downloadContext);
+        Downloader::finalize(downloadContext);
         return;
     }
 
@@ -1122,7 +1131,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
             }
 
             if (linkedNotebookFutures.isEmpty()) {
-                finalize(downloadContext);
+                Downloader::finalize(downloadContext);
                 return;
             }
 
@@ -1131,7 +1140,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
             threading::thenOrFailed(
                 std::move(allLinkedNotebooksFuture), currentThread, promise,
-                [downloadContext = std::move(downloadContext),
+                [selfWeak, downloadContext = std::move(downloadContext),
                  linkedNotebookGuids = std::move(linkedNotebookGuids)](
                     QList<Result> linkedNotebookResults) {
                     const int size = linkedNotebookResults.size();
@@ -1156,17 +1165,39 @@ void Downloader::launchLinkedNotebooksDataDownload(
                             std::move(currentResult.downloadResourcesStatus)};
                     }
 
-                    Downloader::updateSyncState(*downloadContext);
-                    downloadContext->promise->addResult(Result{
-                        LocalResult{
-                            std::move(downloadContext->syncChunksDataCounters),
-                            std::move(downloadContext->downloadNotesStatus),
-                            std::move(
-                                downloadContext->downloadResourcesStatus)},
-                        std::move(results),
-                        std::move(downloadContext->lastSyncState)});
+                    const auto self = selfWeak.lock();
+                    if (!self) {
+                        Downloader::finalize(
+                            downloadContext, std::move(results));
+                        return;
+                    }
 
-                    downloadContext->promise->finish();
+                    // One additional step: need to expunge all linked notebook
+                    // tags which after the download step no longer refer to
+                    // any notes.
+                    auto clearTagsFuture = self->m_linkedNotebookTagsCleaner
+                                               ->clearStaleLinkedNotebookTags();
+
+                    auto clearTagsThenFuture = threading::then(
+                        std::move(clearTagsFuture),
+                        [downloadContext, results = results]() mutable {
+                            Downloader::finalize(
+                                downloadContext, std::move(results));
+                        });
+
+                    threading::onFailed(
+                        std::move(clearTagsThenFuture),
+                        [downloadContext, results = std::move(results)](
+                            const QException & e) mutable {
+                            QNWARNING(
+                                "synchronization::Downloader",
+                                "Failed to clear linked notebook tags after "
+                                    << "the download step: " << e.what());
+                            // Will mostly just ignore this failure as it's not
+                            // fatal and return the result.
+                            Downloader::finalize(
+                                downloadContext, std::move(results));
+                        });
                 });
         });
 }
@@ -1266,7 +1297,7 @@ void Downloader::startLinkedNotebookDataDownload(
             "synchronization::Downloader",
             "Evernote has no updates for linked notebook "
                 << linkedNotebookInfo(*downloadContext->linkedNotebook));
-        finalize(downloadContext);
+        Downloader::finalize(downloadContext);
         return;
     }
 
@@ -1713,7 +1744,7 @@ void Downloader::downloadResources(
                 downloadContext->downloadResourcesStatus =
                     std::move(resourcesStatus);
                 if (downloadContext->linkedNotebook) {
-                    finalize(downloadContext);
+                    Downloader::finalize(downloadContext);
                     return;
                 }
 
@@ -1722,7 +1753,9 @@ void Downloader::downloadResources(
             }});
 }
 
-void Downloader::finalize(DownloadContextPtr & downloadContext)
+void Downloader::finalize(
+    const DownloadContextPtr & downloadContext,
+    QHash<qevercloud::Guid, LocalResult> linkedNotebookResults)
 {
     Q_ASSERT(downloadContext);
 
@@ -1733,7 +1766,7 @@ void Downloader::finalize(DownloadContextPtr & downloadContext)
             std::move(downloadContext->downloadNotesStatus),
             std::move(
                 downloadContext->downloadResourcesStatus)}, // userOwnResult
-        {},                                        // linkedNotebookResults
+        std::move(linkedNotebookResults), // linkedNotebookResults
         std::move(downloadContext->lastSyncState), // syncState
     });
     downloadContext->promise->finish();
