@@ -315,7 +315,7 @@ public: // IDownloader::ICallback
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloaded(
-                linkedNotebook, std::move(syncChunks));
+                linkedNotebook, syncChunks);
         }
 
         if (const auto context = m_contextWeak.lock()) {
