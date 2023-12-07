@@ -2835,6 +2835,12 @@ void NoteStoreServer::onGetNoteWithResultSpecRequest(
         return;
     }
 
+    if (m_onceServedNoteGuids.contains(guid)) {
+        QTest::qFail(
+            "Detected attempt to download the same note twice", __FILE__,
+            __LINE__);
+    }
+
     auto note = *noteIt;
 
     note.setLocalId(QString{});
@@ -2899,6 +2905,8 @@ void NoteStoreServer::onGetNoteWithResultSpecRequest(
 
         note.setResources(resources);
     }
+
+    m_onceServedNoteGuids.insert(guid);
 
     Q_EMIT getNoteWithResultSpecRequestReady(
         std::move(note), nullptr, ctx->requestId());

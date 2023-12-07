@@ -484,6 +484,8 @@ private:
 
     note_store::Resources m_resources;
 
+    QSet<qevercloud::Guid> m_onceServedNoteGuids;
+
     note_store::LinkedNotebooks m_linkedNotebooks;
     QHash<QString, qint32> m_expungedLinkedNotebookGuidsAndUsns;
 
