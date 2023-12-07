@@ -1690,6 +1690,9 @@ void Downloader::downloadNotes(
 
     auto notesFuture = m_notesProcessor->processNotes(
         downloadContext->syncChunks, downloadContext->canceler,
+        downloadContext->linkedNotebook
+            ? downloadContext->linkedNotebook->guid()
+            : std::nullopt,
         notesProcessorCallback);
 
     auto * currentThread = QThread::currentThread();

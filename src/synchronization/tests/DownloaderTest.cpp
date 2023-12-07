@@ -1669,25 +1669,28 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 return threading::makeReadyFuture();
             });
 
-        EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _, _))
-            .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
-                          const utility::cancelers::ICancelerPtr & canceler,
-                          const IDurableNotesProcessor::ICallbackWeakPtr &
-                              callbackWeak) {
-                EXPECT_TRUE(canceler);
+        EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _, _, _))
+            .WillOnce(
+                [&](const QList<qevercloud::SyncChunk> & chunks,
+                    const utility::cancelers::ICancelerPtr & canceler,
+                    [[maybe_unused]] const std::optional<qevercloud::Guid> &
+                        linkedNotebookGuid,
+                    const IDurableNotesProcessor::ICallbackWeakPtr &
+                        callbackWeak) {
+                    EXPECT_TRUE(canceler);
 
-                const auto callback = callbackWeak.lock();
-                EXPECT_TRUE(callback);
+                    const auto callback = callbackWeak.lock();
+                    EXPECT_TRUE(callback);
 
-                auto downloadNotesStatus =
-                    std::make_shared<DownloadNotesStatus>();
+                    auto downloadNotesStatus =
+                        std::make_shared<DownloadNotesStatus>();
 
-                emulateSyncChunksNotesProcessing(
-                    chunks, callback, *downloadNotesStatus);
+                    emulateSyncChunksNotesProcessing(
+                        chunks, callback, *downloadNotesStatus);
 
-                return threading::makeReadyFuture<DownloadNotesStatusPtr>(
-                    std::move(downloadNotesStatus));
-            });
+                    return threading::makeReadyFuture<DownloadNotesStatusPtr>(
+                        std::move(downloadNotesStatus));
+                });
 
         EXPECT_CALL(
             *m_mockResourcesProcessor, processResources(syncChunks, _, _))
@@ -2027,9 +2030,11 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
             EXPECT_CALL(
                 *m_mockNotesProcessor,
-                processNotes(linkedNotebookSyncChunks, _, _))
+                processNotes(linkedNotebookSyncChunks, _, _, _))
                 .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
                               const utility::cancelers::ICancelerPtr & canceler,
+                              [[maybe_unused]] const std::optional<
+                                  qevercloud::Guid> & linkedNotebookGuid,
                               const IDurableNotesProcessor::ICallbackWeakPtr &
                                   callbackWeak) {
                     EXPECT_TRUE(canceler);

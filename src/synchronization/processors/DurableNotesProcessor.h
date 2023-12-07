@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,20 +47,27 @@ public:
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid =
+            std::nullopt,
         ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
-    [[nodiscard]] QList<qevercloud::Note> notesFromPreviousSync() const;
+    [[nodiscard]] QList<qevercloud::Note> notesFromPreviousSync(
+        const QDir & dir) const;
 
-    [[nodiscard]] QList<qevercloud::Guid> failedToExpungeNotesFromPreviousSync()
-        const;
+    [[nodiscard]] QList<qevercloud::Guid> failedToExpungeNotesFromPreviousSync(
+        const QDir & dir) const;
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         ICallbackWeakPtr callbackWeak);
+
+    [[nodiscard]] QDir syncNotesDir(
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid) const;
 
 private:
     const INotesProcessorPtr m_notesProcessor;
