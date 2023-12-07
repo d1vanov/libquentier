@@ -19,8 +19,13 @@
 #include "Utils.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/DateTime.h>
 
 #include <qevercloud/types/SyncChunk.h>
+
+#include <QTextStream>
+
+#include <utility>
 
 namespace quentier::synchronization::utils {
 
@@ -340,6 +345,95 @@ QList<qevercloud::Guid> collectExpungedTagGuidsFromSyncChunk(
     const qevercloud::SyncChunk & syncChunk)
 {
     return syncChunk.expungedTags().value_or(QList<qevercloud::Guid>{});
+}
+
+QString briefSyncChunkInfo(const qevercloud::SyncChunk & syncChunk)
+{
+    QString res;
+    QTextStream strm{&res};
+
+    strm << "Current time = "
+         << printableDateTimeFromTimestamp(syncChunk.currentTime())
+         << ", chunk high USN = "
+         << (syncChunk.chunkHighUSN()
+                 ? QString::number(*syncChunk.chunkHighUSN())
+                 : QStringLiteral("<none>"))
+         << ", update count = " << syncChunk.updateCount() << "\n";
+
+    const auto printContainer = [&strm](const auto & container) {
+        for (const auto & item: std::as_const(container)) {
+            strm << "    [" << item.guid().value_or(QStringLiteral("<unknown>"))
+                 << ": " << item.updateSequenceNum().value_or(-1) << "]\n";
+        }
+    };
+
+    if (syncChunk.notes() && !syncChunk.notes()->isEmpty()) {
+        strm << "Notes:\n";
+        printContainer(*syncChunk.notes());
+    }
+
+    if (syncChunk.notebooks() && !syncChunk.notebooks()->isEmpty()) {
+        strm << "Notebooks:\n";
+        printContainer(*syncChunk.notebooks());
+    }
+
+    if (syncChunk.tags() && !syncChunk.tags()->isEmpty()) {
+        strm << "Tags:\n";
+        printContainer(*syncChunk.tags());
+    }
+
+    if (syncChunk.searches() && !syncChunk.searches()->isEmpty()) {
+        strm << "Saved searches:\n";
+        printContainer(*syncChunk.searches());
+    }
+
+    if (syncChunk.resources() && !syncChunk.resources()->isEmpty()) {
+        strm << "Resources:\n";
+        printContainer(*syncChunk.resources());
+    }
+
+    if (syncChunk.linkedNotebooks() && !syncChunk.linkedNotebooks()->isEmpty())
+    {
+        strm << "Linked notebooks:\n";
+        printContainer(*syncChunk.linkedNotebooks());
+    }
+
+    const auto printExpungedContainer = [&strm](const auto & container) {
+        for (const auto & item: std::as_const(container)) {
+            strm << "    [" << item << "]\n";
+        }
+    };
+
+    if (syncChunk.expungedNotes() && !syncChunk.expungedNotes()->isEmpty()) {
+        strm << "Expunged notes:\n";
+        printExpungedContainer(*syncChunk.expungedNotes());
+    }
+
+    if (syncChunk.expungedNotebooks() &&
+        !syncChunk.expungedNotebooks()->isEmpty())
+    {
+        strm << "Expunged notebooks:\n";
+        printExpungedContainer(*syncChunk.expungedNotebooks());
+    }
+
+    if (syncChunk.expungedTags() && !syncChunk.expungedTags()->isEmpty()) {
+        strm << "Expunged tags:\n";
+        printExpungedContainer(*syncChunk.expungedTags());
+    }
+
+    if (syncChunk.expungedSearches()) {
+        strm << "Expunged saved searches:\n";
+        printExpungedContainer(*syncChunk.expungedSearches());
+    }
+
+    if (syncChunk.expungedLinkedNotebooks() &&
+        !syncChunk.expungedLinkedNotebooks()->isEmpty())
+    {
+        strm << "Expunged linked notebooks:\n";
+        printExpungedContainer(*syncChunk.expungedLinkedNotebooks());
+    }
+
+    return res;
 }
 
 } // namespace quentier::synchronization::utils
