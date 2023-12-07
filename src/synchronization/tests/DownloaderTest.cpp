@@ -1693,9 +1693,11 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 });
 
         EXPECT_CALL(
-            *m_mockResourcesProcessor, processResources(syncChunks, _, _))
+            *m_mockResourcesProcessor, processResources(syncChunks, _, _, _))
             .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
                           const utility::cancelers::ICancelerPtr & canceler,
+                          [[maybe_unused]] const std::optional<
+                              qevercloud::Guid> & linkedNotebookGuid,
                           const IDurableResourcesProcessor::ICallbackWeakPtr &
                               callbackWeak) {
                 EXPECT_TRUE(canceler);
@@ -2054,10 +2056,12 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
             EXPECT_CALL(
                 *m_mockResourcesProcessor,
-                processResources(linkedNotebookSyncChunks, _, _))
+                processResources(linkedNotebookSyncChunks, _, _, _))
                 .WillOnce(
                     [&](const QList<qevercloud::SyncChunk> & chunks,
                         const utility::cancelers::ICancelerPtr & canceler,
+                        [[maybe_unused]] const std::optional<qevercloud::Guid> &
+                            linkedNotebookGuid,
                         const IDurableResourcesProcessor::ICallbackWeakPtr &
                             callbackWeak) {
                         EXPECT_TRUE(canceler);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,6 +29,8 @@
 
 #include <QFuture>
 #include <QList>
+
+#include <optional>
 
 namespace quentier::synchronization {
 
@@ -67,6 +69,8 @@ public:
     [[nodiscard]] virtual QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid =
+            std::nullopt,
         ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 

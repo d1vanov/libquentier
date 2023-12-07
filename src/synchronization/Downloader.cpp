@@ -1731,6 +1731,9 @@ void Downloader::downloadResources(
 
     auto resourcesFuture = m_resourcesProcessor->processResources(
         downloadContext->syncChunks, downloadContext->canceler,
+        downloadContext->linkedNotebook
+            ? downloadContext->linkedNotebook->guid()
+            : std::nullopt,
         resourcesProcessorCallback);
 
     auto * currentThread = QThread::currentThread();

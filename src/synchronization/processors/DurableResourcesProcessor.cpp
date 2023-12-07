@@ -205,25 +205,29 @@ DurableResourcesProcessor::DurableResourcesProcessor(
 
 QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks,
-    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
+    utility::cancelers::ICancelerPtr canceler,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
+    ICallbackWeakPtr callbackWeak)
 {
     Q_ASSERT(canceler);
+
+    const QDir dir = syncResourcesDir(linkedNotebookGuid);
 
     // First need to check whether there are resources which failed to be
     // processed or which processing was cancelled. If such resources exist,
     // they need to be processed first.
-    auto previousResources = resourcesFromPreviousSync();
+    auto previousResources = resourcesFromPreviousSync(dir);
 
     // Also need to check whether there are resources which were fully processed
     // during the last sync within the sync chunks. If so, such resources should
     // not be processed again
     const auto alreadyProcessedResourcesInfo =
-        utils::processedResourcesInfoFromLastSync(m_syncResourcesDir);
+        utils::processedResourcesInfoFromLastSync(dir);
 
     if (alreadyProcessedResourcesInfo.isEmpty()) {
         return processResourcesImpl(
             syncChunks, std::move(canceler), std::move(previousResources),
-            std::move(callbackWeak));
+            linkedNotebookGuid, std::move(callbackWeak));
     }
 
     auto filteredSyncChunks = syncChunks;
@@ -257,25 +261,22 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
 
     return processResourcesImpl(
         filteredSyncChunks, std::move(canceler), std::move(previousResources),
-        std::move(callbackWeak));
+        linkedNotebookGuid, std::move(callbackWeak));
 }
 
 QList<qevercloud::Resource>
-    DurableResourcesProcessor::resourcesFromPreviousSync() const
+    DurableResourcesProcessor::resourcesFromPreviousSync(
+        const QDir & dir) const
 {
-    if (!m_syncResourcesDir.exists()) {
+    if (!dir.exists()) {
         return {};
     }
 
     QList<qevercloud::Resource> result;
 
-    result << utils::resourcesWhichFailedToDownloadDuringLastSync(
-        m_syncResourcesDir);
-
-    result << utils::resourcesWhichFailedToProcessDuringLastSync(
-        m_syncResourcesDir);
-
-    result << utils::resourcesCancelledDuringLastSync(m_syncResourcesDir);
+    result << utils::resourcesWhichFailedToDownloadDuringLastSync(dir);
+    result << utils::resourcesWhichFailedToProcessDuringLastSync(dir);
+    result << utils::resourcesCancelledDuringLastSync(dir);
     return result;
 }
 
@@ -284,6 +285,7 @@ QFuture<DownloadResourcesStatusPtr>
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Resource> previousResources,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         ICallbackWeakPtr callbackWeak)
 {
     const auto selfWeak = weak_from_this();
@@ -293,9 +295,11 @@ QFuture<DownloadResourcesStatusPtr>
     auto future = promise->future();
     promise->start();
 
+    const QDir dir = syncResourcesDir(linkedNotebookGuid);
+
     if (previousResources.isEmpty()) {
         auto callback = std::make_shared<Callback>(
-            std::move(callbackWeak), weak_from_this(), m_syncResourcesDir);
+            std::move(callbackWeak), weak_from_this(), dir);
 
         auto processSyncChunksFuture = m_resourcesProcessor->processResources(
             syncChunks, std::move(canceler), callback);
@@ -317,7 +321,7 @@ QFuture<DownloadResourcesStatusPtr>
                .build();
 
     auto callback =
-        std::make_shared<Callback>(callbackWeak, selfWeak, m_syncResourcesDir);
+        std::make_shared<Callback>(callbackWeak, selfWeak, dir);
 
     auto resourcesFuture = m_resourcesProcessor->processResources(
         pseudoSyncChunks, canceler, callback);
@@ -326,11 +330,12 @@ QFuture<DownloadResourcesStatusPtr>
         std::move(resourcesFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, promise, canceler = std::move(canceler),
-             syncChunks, callbackWeak = std::move(callbackWeak),
-             currentThread](DownloadResourcesStatusPtr status) mutable {
+            [this, selfWeak, promise, currentThread, linkedNotebookGuid,
+             syncChunks, canceler = std::move(canceler),
+             callbackWeak = std::move(callbackWeak)](
+                DownloadResourcesStatusPtr status) mutable {
                 auto processResourcesFuture = processResourcesImpl(
-                    syncChunks, std::move(canceler), {},
+                    syncChunks, std::move(canceler), {}, linkedNotebookGuid,
                     std::move(callbackWeak));
 
                 threading::thenOrFailed(
@@ -349,6 +354,15 @@ QFuture<DownloadResourcesStatusPtr>
             }});
 
     return future;
+}
+
+QDir DurableResourcesProcessor::syncResourcesDir(
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid) const
+{
+    return linkedNotebookGuid
+        ? QDir{m_syncResourcesDir.absoluteFilePath(
+              QStringLiteral("linkedNotebooks/") + *linkedNotebookGuid)}
+        : m_syncResourcesDir;
 }
 
 } // namespace quentier::synchronization

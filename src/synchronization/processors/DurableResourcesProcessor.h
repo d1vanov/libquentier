@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,16 +47,23 @@ public:
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid =
+            std::nullopt,
         ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
-    [[nodiscard]] QList<qevercloud::Resource> resourcesFromPreviousSync() const;
+    [[nodiscard]] QList<qevercloud::Resource> resourcesFromPreviousSync(
+        const QDir & dir) const;
 
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Resource> previousResources,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         ICallbackWeakPtr callbackWeak);
+
+    [[nodiscard]] QDir syncResourcesDir(
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid) const;
 
 private:
     const IResourcesProcessorPtr m_resourcesProcessor;
