@@ -2007,6 +2007,8 @@ TEST_F(
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
+    expectSetSyncState(sendResult.syncState);
+
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
@@ -2070,6 +2072,8 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
+
+    expectSetSyncState(sendResult.syncState);
 
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<

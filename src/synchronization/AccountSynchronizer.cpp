@@ -1176,6 +1176,7 @@ bool AccountSynchronizer::processSendStopSynchronizationError(
 
     if (rateLimitReachedError) {
         appendToPreviousSyncResult(*context, sendResult);
+        updateStoredSyncState(sendResult);
         auto & syncResult = context->previousSyncResult;
         Q_ASSERT(syncResult);
         syncResult->m_stopSynchronizationError = *rateLimitReachedError;
