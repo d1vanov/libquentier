@@ -1375,6 +1375,59 @@ static const std::array gTestScenarioData{
         StopSynchronizationErrorTrigger::
             OnUpdateNotebook, // stopSyncErrorTrigger
     },
+    TestScenarioData{
+        "Incremental sync with rate limit exceeding on creating a "
+        "note"sv, // name
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch |
+            DataItemType::Tag,                      // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base,             // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch | DataItemType::Tag, // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base | ItemGroup::New,   // localItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount,        // localItemSources
+        false, // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        false, // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        true,  // expectSomeUserOwnDataSent
+        false, // expectSomeLinkedNotebookDataSent
+        false, // expectFailure
+        StopSynchronizationError{RateLimitReachedError{120}}, // stopSyncError
+        StopSynchronizationErrorTrigger::OnCreateNote, // stopSyncErrorTrigger
+    },
+    TestScenarioData{
+        "Incremental sync with rate limit exceeding on updating a "
+        "note"sv, // name
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch |
+            DataItemType::Tag, // serverDataItemTypes
+        ItemGroups{} | ItemGroup::Base |
+            ItemGroup::Modified,                    // serverItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // serverItemSources
+        DataItemTypes{}, // serverExpungedDataItemTypes
+        ItemSources{},   // serverExpungedDataItemSources
+        DataItemTypes{} | DataItemType::Notebook | DataItemType::Note |
+            DataItemType::SavedSearch | DataItemType::Tag, // localDataItemTypes
+        ItemGroups{} | ItemGroup::Base | ItemGroup::Modified, // localItemGroups
+        ItemSources{} | ItemSource::UserOwnAccount, // localItemSources
+        false, // expectSomeUserOwnSyncChunks
+        false, // expectSomeLinkedNotebooksSyncChunks
+        false, // expectSomeUserOwnNotes
+        false, // expectSomeUserOwnResources
+        false, // expectSomeLinkedNotebookNotes
+        false, // expectSomeLinkedNotebookResources
+        true,  // expectSomeUserOwnDataSent
+        false, // expectSomeLinkedNotebookDataSent
+        false, // expectFailure
+        StopSynchronizationError{RateLimitReachedError{120}}, // stopSyncError
+        StopSynchronizationErrorTrigger::OnUpdateNote, // stopSyncErrorTrigger
+    },
 };
 
 } // namespace quentier::synchronization::tests
