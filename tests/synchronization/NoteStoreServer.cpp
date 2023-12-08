@@ -2374,7 +2374,7 @@ void NoteStoreServer::onCreateSavedSearchRequest(
     auto maxUsn = currentUserOwnMaxUsn();
     ++maxUsn;
     search.setUpdateSequenceNum(maxUsn);
-    m_userOwnMaxUsn = maxUsn;
+    setMaxUsn(maxUsn);
 
     m_savedSearches.insert(search);
     Q_EMIT createSavedSearchRequestReady(
@@ -2462,7 +2462,7 @@ void NoteStoreServer::onUpdateSavedSearchRequest(
     auto maxUsn = currentUserOwnMaxUsn();
     ++maxUsn;
     search.setUpdateSequenceNum(maxUsn);
-    m_userOwnMaxUsn = maxUsn;
+    setMaxUsn(maxUsn);
 
     savedSearchGuidIndex.replace(savedSearchIt, search);
     Q_EMIT updateSavedSearchRequestReady(maxUsn, nullptr, ctx->requestId());
