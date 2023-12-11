@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,7 +69,6 @@
 #include "undo_stack/ToDoCheckboxAutomaticInsertionUndoCommand.h"
 #include "undo_stack/ToDoCheckboxUndoCommand.h"
 
-#include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Checks.h>
@@ -104,7 +103,6 @@ using OwnershipNamespace = QWebFrame;
 #include <QIcon>
 #include <QPageLayout>
 #include <QPainter>
-#include <QTimer>
 #include <QWebEngineSettings>
 
 #include <QtWebChannel>
@@ -8342,7 +8340,7 @@ void NoteEditorPrivate::execJavascriptCommand(
 }
 
 void NoteEditorPrivate::initialize(
-    LocalStorageManagerAsync & localStorageManager, SpellChecker & spellChecker,
+    local_storage::ILocalStoragePtr localStorage, SpellChecker & spellChecker,
     const Account & account, QThread * pBackgroundJobsThread)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::initialize");
@@ -8350,7 +8348,7 @@ void NoteEditorPrivate::initialize(
     auto & noteEditorLocalStorageBroker =
         NoteEditorLocalStorageBroker::instance();
 
-    noteEditorLocalStorageBroker.setLocalStorageManager(localStorageManager);
+    noteEditorLocalStorageBroker.setLocalStorage(std::move(localStorage));
 
     m_pSpellChecker = &spellChecker;
 
@@ -11380,10 +11378,10 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
             auto & noteEditorLocalStorageBroker =
                 NoteEditorLocalStorageBroker::instance();
 
-            auto * pLocalStorageManager =
-                noteEditorLocalStorageBroker.localStorageManager();
+            auto localStorage=
+                noteEditorLocalStorageBroker.localStorage();
 
-            if (Q_UNLIKELY(!pLocalStorageManager)) {
+            if (Q_UNLIKELY(!localStorage)) {
                 ErrorString error(
                     QT_TR_NOOP("Can't remove the attachment: note "
                                "editor is not initialized properly"));
@@ -11393,7 +11391,7 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
             }
 
             auto * delegate = new RemoveResourceDelegate(
-                resource, *this, *pLocalStorageManager);
+                resource, *this, localStorage);
 
             QObject::connect(
                 delegate, &RemoveResourceDelegate::finished, this,

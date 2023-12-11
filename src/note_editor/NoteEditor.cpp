@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,11 +45,11 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
 NoteEditor::~NoteEditor() noexcept = default;
 
 void NoteEditor::initialize(
-    LocalStorageManagerAsync & localStorageManager, SpellChecker & spellChecker,
+    local_storage::ILocalStoragePtr localStorage, SpellChecker & spellChecker,
     const Account & account, QThread * pBackgroundJobsThread)
 {
     m_backend->initialize(
-        localStorageManager, spellChecker, account, pBackgroundJobsThread);
+        std::move(localStorage), spellChecker, account, pBackgroundJobsThread);
 }
 
 INoteEditorBackend * NoteEditor::backend() noexcept

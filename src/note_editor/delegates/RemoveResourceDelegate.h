@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,12 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_REMOVE_RESOURCE_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_REMOVE_RESOURCE_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Note.h>
@@ -31,7 +30,6 @@
 
 namespace quentier {
 
-class LocalStorageManagerAsync;
 class NoteEditorPrivate;
 
 class Q_DECL_HIDDEN RemoveResourceDelegate final : public QObject
@@ -40,7 +38,7 @@ class Q_DECL_HIDDEN RemoveResourceDelegate final : public QObject
 public:
     explicit RemoveResourceDelegate(
         qevercloud::Resource resourceToRemove, NoteEditorPrivate & noteEditor,
-        LocalStorageManagerAsync & localStorageManager);
+        local_storage::ILocalStoragePtr localStorage);
 
     void start();
 
@@ -49,44 +47,23 @@ Q_SIGNALS:
     void cancelled(QString resourceLocalId);
     void notifyError(ErrorString error);
 
-    // private signals
-    void findResource(
-        qevercloud::Resource resource,
-        LocalStorageManager::GetResourceOptions options, QUuid requestId);
-
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(qevercloud::Note note);
-
     void onResourceReferenceRemovedFromNoteContent(const QVariant & data);
-
-private Q_SLOTS:
-    void onFindResourceComplete(
-        qevercloud::Resource resource,
-        LocalStorageManager::GetResourceOptions options,
-        QUuid requestId);
-
-    void onFindResourceFailed(
-        qevercloud::Resource resource,
-        LocalStorageManager::GetResourceOptions options,
-        ErrorString errorDescription, QUuid requestId);
 
 private:
     void doStart();
     void removeResourceFromNoteEditorPage();
-    void connectToLocalStorage();
 
 private:
     using JsCallback = JsResultCallbackFunctor<RemoveResourceDelegate>;
 
 private:
     NoteEditorPrivate & m_noteEditor;
-    LocalStorageManagerAsync & m_localStorageManager;
+    const local_storage::ILocalStoragePtr m_localStorage;
+
     qevercloud::Resource m_resource;
     bool m_reversible = true;
-
-    QUuid m_findResourceRequestId;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_REMOVE_RESOURCE_DELEGATE_H

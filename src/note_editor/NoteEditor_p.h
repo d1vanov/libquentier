@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_P_H
-#define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_P_H
+#pragma once
 
 #include "NoteEditorPage.h"
 #include "ResourceInfo.h"
@@ -292,9 +291,8 @@ public:
 
 public Q_SLOTS:
     void initialize(
-        LocalStorageManagerAsync & localStorageManager,
-        SpellChecker & spellChecker,
-        const Account & account,
+        local_storage::ILocalStoragePtr localStorage,
+        SpellChecker & spellChecker, const Account & account,
         QThread * pBackgroundJobsThread) override;
 
     void setAccount(const Account & account) override;
@@ -1444,5 +1442,3 @@ private:
 } // namespace quentier
 
 void initNoteEditorResources();
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_P_H

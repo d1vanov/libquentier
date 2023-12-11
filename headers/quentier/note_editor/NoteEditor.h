@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
-#define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
+#pragma once
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 
@@ -36,7 +36,6 @@ namespace quentier {
 
 class Account;
 class INoteEditorBackend;
-class LocalStorageManagerAsync;
 class SpellChecker;
 
 /**
@@ -63,12 +62,10 @@ public:
      * processing these can't be passed right inside the constructor,
      * hence here's a special initialization method
      *
-     * @param localStorageManager           The reference to
-     *                                      LocalStorageManagerAsync, to set up
-     *                                      signal-slot connections with it
-     * @param spellChecker                  The spell checker to be used by note
-     *                                      editor for, well, spell-checking
-     * @param account                       Currently active account
+     * @param localStorage                  Local storage
+     * @param spellChecker                  Spell checker to be used by note
+     *                                      editor
+     * @param account                       Current account
      * @param pBackgroundJobsThread         Pointer to the thread to be used for
      *                                      scheduling of background jobs
      *                                      of NoteEditor; if null, NoteEditor's
@@ -76,7 +73,7 @@ public:
      *                                      GUI thread
      */
     void initialize(
-        LocalStorageManagerAsync & localStorageManager,
+        local_storage::ILocalStoragePtr localStorage,
         SpellChecker & spellChecker, const Account & account,
         QThread * pBackgroundJobsThread = nullptr);
 
@@ -481,5 +478,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H

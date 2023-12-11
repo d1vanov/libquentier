@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
-#define LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
+#pragma once
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
@@ -34,7 +34,6 @@ namespace quentier {
 
 class Account;
 class ErrorString;
-class LocalStorageManagerAsync;
 class NoteEditor;
 class SpellChecker;
 
@@ -44,7 +43,7 @@ public:
     virtual ~INoteEditorBackend() noexcept;
 
     virtual void initialize(
-        LocalStorageManagerAsync & localStorageManager,
+        local_storage::ILocalStoragePtr localStorage,
         SpellChecker & spellChecker, const Account & account,
         QThread * pBackgroundJobsThread) = 0;
 
@@ -227,5 +226,3 @@ protected:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
