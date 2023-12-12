@@ -144,10 +144,9 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(
                     return;
                 }
 
-                ErrorString error;
-                error.base() = QT_TR_NOOP(
+                ErrorString error{QT_TR_NOOP(
                     "Cannot save note to local storage: failed to find "
-                    "the previous version of the note");
+                    "the previous version of the note")};
                 error.details() = QString::fromUtf8(e.what());
                 Q_EMIT failedToSaveNoteToLocalStorage(note.localId(), error);
             });

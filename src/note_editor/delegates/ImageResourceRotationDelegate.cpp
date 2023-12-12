@@ -427,7 +427,15 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         QStringLiteral("', '") + QString::fromLocal8Bit(dataHash.toHex()) +
         QStringLiteral("');");
 
-    GET_PAGE()
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());
+    if (Q_UNLIKELY(!page)) {
+        ErrorString error{QT_TR_NOOP(
+            "Can't rotate the image attachment: no note editor page")};
+        QNWARNING("note_editor:delegate", error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
     page->executeJavaScript(
         javascript,
         JsCallback(
@@ -455,7 +463,15 @@ void ImageResourceRotationDelegate::onResourceTagHashUpdated(
                                                   : qint16(0)) +
         QStringLiteral(");");
 
-    GET_PAGE()
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());
+    if (Q_UNLIKELY(!page)) {
+        ErrorString error{QT_TR_NOOP(
+            "Can't rotate the image attachment: no note editor page")};
+        QNWARNING("note_editor:delegate", error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
     page->executeJavaScript(
         javascript,
         JsCallback(

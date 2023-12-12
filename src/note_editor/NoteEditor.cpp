@@ -20,7 +20,6 @@
 
 #include "NoteEditor_p.h"
 
-#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 
 #include <QColor>

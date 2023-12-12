@@ -41,17 +41,6 @@
 
 namespace quentier {
 
-#define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());         \
-    if (Q_UNLIKELY(!page)) {                                                   \
-        ErrorString error(QT_TRANSLATE_NOOP(                                   \
-            "AddResourceDelegate",                                             \
-            "Can't add attachment: no note editor page"));                     \
-        QNWARNING("note_editor:delegate", error);                              \
-        Q_EMIT notifyError(error);                                             \
-        return;                                                                \
-    }
-
 AddResourceDelegate::AddResourceDelegate(
     QString filePath, NoteEditorPrivate & noteEditor,
     ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
@@ -658,7 +647,15 @@ void AddResourceDelegate::insertNewResourceHtml()
 
     QNTRACE("note_editor:delegate", "Resource html: " << resourceHtml);
 
-    GET_PAGE()
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());
+    if (Q_UNLIKELY(!page)) {
+        ErrorString error{QT_TR_NOOP(
+            "Can't add attachment: no note editor page")};
+        QNWARNING("note_editor:delegate", error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
     page->executeJavaScript(
         QStringLiteral("resourceManager.addResource('") + resourceHtml +
             QStringLiteral("');"),

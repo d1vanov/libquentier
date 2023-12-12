@@ -73,7 +73,6 @@ class WebSocketClientWrapper;
 namespace quentier {
 
 class FileIOProcessorAsync;
-class LocalStorageManagerAsync;
 class ResourceDataInTemporaryFileStorageManager;
 class ResourceInfoJavaScriptHandler;
 
