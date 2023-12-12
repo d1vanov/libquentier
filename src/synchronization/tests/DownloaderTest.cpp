@@ -23,7 +23,6 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/threading/Future.h>
@@ -31,8 +30,6 @@
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/Unreachable.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
-
-#include <synchronization/SyncChunksDataCounters.h>
 
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockIDownloader.h>
@@ -47,10 +44,10 @@
 #include <synchronization/tests/mocks/MockISyncChunksProvider.h>
 #include <synchronization/tests/mocks/MockITagsProcessor.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
-
 #include <synchronization/types/AuthenticationInfo.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
+#include <synchronization/types/SyncChunksDataCounters.h>
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/types/builders/DataBuilder.h>

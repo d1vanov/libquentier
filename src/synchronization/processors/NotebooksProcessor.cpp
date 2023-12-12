@@ -19,8 +19,8 @@
 #include "NotebooksProcessor.h"
 #include "Utils.h"
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/sync_chunks/Utils.h>
+#include <synchronization/types/SyncChunksDataCounters.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>

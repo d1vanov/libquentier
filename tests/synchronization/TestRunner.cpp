@@ -35,13 +35,14 @@
 #include <quentier/local_storage/ILocalStorageNotifier.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/Factory.h>
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISynchronizer.h>
 #include <quentier/synchronization/types/IAuthenticationInfoBuilder.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/IDownloadResourcesStatus.h>
 #include <quentier/synchronization/types/ISendStatus.h>
+#include <quentier/synchronization/types/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/ISyncResult.h>
+#include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 

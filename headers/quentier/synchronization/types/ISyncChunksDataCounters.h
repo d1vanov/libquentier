@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_CHUNKS_DATA_COUNTERS_H
-#define LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_CHUNKS_DATA_COUNTERS_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
 #include <QtGlobal>
 
-namespace quentier {
+namespace quentier::synchronization {
 
 /**
  * @brief The ISyncChunksDataCounters interface provides integer counters
@@ -151,6 +150,4 @@ struct QUENTIER_EXPORT ISyncChunksDataCounters : public Printable
     [[nodiscard]] virtual quint64 expungedNotebooks() const noexcept = 0;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_CHUNKS_DATA_COUNTERS_H
+} // namespace quentier::synchronization

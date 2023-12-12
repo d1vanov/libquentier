@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #include "SyncChunksDataCounters.h"
 
-namespace quentier {
+namespace quentier::synchronization {
 
 QTextStream & SyncChunksDataCounters::print(QTextStream & strm) const
 {
@@ -49,4 +49,4 @@ QTextStream & SyncChunksDataCounters::print(QTextStream & strm) const
     return strm;
 }
 
-} // namespace quentier
+} // namespace quentier::synchronization

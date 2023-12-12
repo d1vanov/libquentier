@@ -18,8 +18,8 @@
 
 #include "SyncEventsCollector.h"
 
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISyncEventsNotifier.h>
+#include <quentier/synchronization/types/ISyncChunksDataCounters.h>
 
 #include <qevercloud/utility/ToRange.h>
 

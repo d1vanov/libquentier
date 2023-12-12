@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,9 +17,6 @@
  */
 
 #include "enml/ENMLTester.h"
-#include "local_storage/LocalStorageManagerTester.h"
-#include "synchronization/FullSyncStaleDataItemsExpungerTester.h"
-#include "synchronization/SynchronizationTester.h"
 #include "types/TypesTester.h"
 #include "utility/UtilityTester.h"
 
@@ -91,9 +88,6 @@ int main(int argc, char * argv[])
     RUN_TESTS(TypesTester)
     RUN_TESTS(ENMLTester)
     RUN_TESTS(UtilityTester)
-    RUN_TESTS(LocalStorageManagerTester)
-    RUN_TESTS(FullSyncStaleDataItemsExpungerTester)
-    RUN_TESTS(SynchronizationTester)
 
     return 0;
 }

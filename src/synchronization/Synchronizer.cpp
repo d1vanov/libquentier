@@ -27,9 +27,9 @@
 #include <synchronization/IAccountSynchronizerFactory.h>
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IProtocolVersionChecker.h>
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/SyncEventsNotifier.h>
 #include <synchronization/types/SendStatus.h>
+#include <synchronization/types/SyncChunksDataCounters.h>
 #include <synchronization/types/SyncOptions.h>
 
 #include <QThread>

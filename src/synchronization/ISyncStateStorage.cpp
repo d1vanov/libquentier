@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,15 +18,12 @@
 
 #include <quentier/synchronization/ISyncStateStorage.h>
 
-#include "SyncStateStorage.h"
+namespace quentier::synchronization {
 
-#include <quentier/utility/DateTime.h>
+ISyncStateStorage::ISyncStateStorage(QObject * parent) :
+    QObject(parent)
+{}
 
-namespace quentier {
+ISyncStateStorage::~ISyncStateStorage() = default;
 
-ISyncStateStoragePtr newSyncStateStorage(QObject * parent)
-{
-    return std::make_shared<SyncStateStorage>(parent);
-}
-
-} // namespace quentier
+} // namespace quentier::synchronization

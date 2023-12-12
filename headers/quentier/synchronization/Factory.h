@@ -51,4 +51,7 @@ namespace quentier::synchronization {
     createSimpleSyncConflictResolver(
         local_storage::ILocalStoragePtr localStorage);
 
+[[nodiscard]] QUENTIER_EXPORT ISyncStateStoragePtr
+    createSyncStateStorage(QObject * parent = nullptr);
+
 } // namespace quentier::synchronization

@@ -147,14 +147,10 @@ using ITagsProcessorPtr = std::shared_ptr<ITagsProcessor>;
 struct SendStatus;
 using SendStatusPtr = std::shared_ptr<SendStatus>;
 
+struct SyncChunksDataCounters;
+using SyncChunksDataCountersPtr = std::shared_ptr<SyncChunksDataCounters>;
+
 class SyncEventsNotifier;
 using SyncEventsNotifierPtr = std::shared_ptr<SyncEventsNotifier>;
 
 } // namespace quentier::synchronization
-
-namespace quentier {
-
-struct SyncChunksDataCounters;
-using SyncChunksDataCountersPtr = std::shared_ptr<SyncChunksDataCounters>;
-
-} // namespace quentier

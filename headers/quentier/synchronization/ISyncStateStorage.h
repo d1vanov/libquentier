@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,24 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
+#pragma once
 
-#include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/types/Fwd.h>
-#include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qevercloud/QEverCloud.h>
-
-#include <QHash>
 #include <QObject>
-#include <QString>
 
-#include <memory>
-
-namespace quentier {
+namespace quentier::synchronization {
 
 /**
  * @brief The ISyncStateStorage interface represents the interface of a class
@@ -43,14 +34,11 @@ namespace quentier {
 class QUENTIER_EXPORT ISyncStateStorage : public QObject
 {
     Q_OBJECT
-public:
-    using ISyncState = synchronization::ISyncState;
-    using ISyncStatePtr = synchronization::ISyncStatePtr;
+protected:
+    explicit ISyncStateStorage(QObject * parent = nullptr);
 
 public:
-    explicit ISyncStateStorage(QObject * parent = nullptr) : QObject(parent) {}
-
-    ~ISyncStateStorage() override = default;
+    ~ISyncStateStorage() override;
 
     [[nodiscard]] virtual ISyncStatePtr getSyncState(
         const Account & account) = 0;
@@ -67,9 +55,4 @@ Q_SIGNALS:
     void notifySyncStateUpdated(Account account, ISyncStatePtr syncState);
 };
 
-QUENTIER_EXPORT ISyncStateStoragePtr
-newSyncStateStorage(QObject * parent = nullptr);
-
-} // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
+} // namespace quentier::synchronization

@@ -33,7 +33,6 @@
 #include <synchronization/ILinkedNotebookTagsCleaner.h>
 #include <synchronization/INoteStoreProvider.h>
 #include <synchronization/IProtocolVersionChecker.h>
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/IDurableNotesProcessor.h>
 #include <synchronization/processors/IDurableResourcesProcessor.h>
 #include <synchronization/processors/ILinkedNotebooksProcessor.h>
@@ -43,6 +42,7 @@
 #include <synchronization/sync_chunks/ISyncChunksProvider.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
+#include <synchronization/types/SyncChunksDataCounters.h>
 
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>

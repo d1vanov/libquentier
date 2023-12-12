@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,6 @@
  */
 
 #include "SyncStateStorage.h"
-#include "SynchronizationShared.h"
 #include "types/SyncState.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -25,12 +24,33 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 
-namespace quentier {
+namespace quentier::synchronization {
+
+namespace {
+
+const QString gSynchronizationPersistenceName =
+    QStringLiteral("SynchronizationPersistence");
+
+const QString gLastSyncParamsGroup = QStringLiteral("last_sync_params");
+const QString gLastSyncUpdateCount = QStringLiteral("last_sync_update_count");
+const QString gLastSyncTime = QStringLiteral("last_sync_time");
+const QString gLinkedNotebookGuid = QStringLiteral("linked_notebook_guid");
+
+const QString gLastSyncLinkedNotebookParams =
+    QStringLiteral("last_sync_linked_notebooks_params");
+
+const QString gLinkedNotebookLastUpdateCount =
+    QStringLiteral("linked_notebook_last_update_count");
+
+const QString gLinkedNotebookLastSyncTime =
+    QStringLiteral("linked_notebook_last_sync_time");
+
+} // namespace
 
 SyncStateStorage::SyncStateStorage(QObject * parent) : ISyncStateStorage(parent)
 {}
 
-ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
+ISyncStatePtr SyncStateStorage::getSyncState(
     const Account & account)
 {
     QNDEBUG(
@@ -39,15 +59,15 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
 
     auto syncState = std::make_shared<synchronization::SyncState>();
 
-    ApplicationSettings appSettings(account, SYNCHRONIZATION_PERSISTENCE_NAME);
+    ApplicationSettings appSettings{account, gSynchronizationPersistenceName};
 
     const QString keyGroup = QStringLiteral("Synchronization/") +
         account.evernoteHost() + QStringLiteral("/") +
         QString::number(account.id()) + QStringLiteral("/") +
-        LAST_SYNC_PARAMS_KEY_GROUP + QStringLiteral("/");
+        gLastSyncParamsGroup + QStringLiteral("/");
 
     const QVariant lastUpdateCountVar =
-        appSettings.value(keyGroup + LAST_SYNC_UPDATE_COUNT_KEY);
+        appSettings.value(keyGroup + gLastSyncUpdateCount);
 
     if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
@@ -67,7 +87,7 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
     }
 
     const QVariant lastSyncTimeVar =
-        appSettings.value(keyGroup + LAST_SYNC_TIME_KEY);
+        appSettings.value(keyGroup + gLastSyncTime);
 
     if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
@@ -87,13 +107,13 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
     }
 
     const int numLinkedNotebooksSyncParams = appSettings.beginReadArray(
-        keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS);
+        keyGroup + gLastSyncLinkedNotebookParams);
 
     for (int i = 0; i < numLinkedNotebooksSyncParams; ++i) {
         appSettings.setArrayIndex(i);
 
         const QString guid =
-            appSettings.value(LINKED_NOTEBOOK_GUID_KEY).toString();
+            appSettings.value(gLinkedNotebookGuid).toString();
 
         if (guid.isEmpty()) {
             QNWARNING(
@@ -104,7 +124,7 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
         }
 
         const QVariant lastUpdateCountVar =
-            appSettings.value(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY);
+            appSettings.value(gLinkedNotebookLastUpdateCount);
 
         bool conversionResult = false;
         const int lastUpdateCount = lastUpdateCountVar.toInt(&conversionResult);
@@ -117,7 +137,7 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
         }
 
         const QVariant lastSyncTimeVar =
-            appSettings.value(LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY);
+            appSettings.value(gLinkedNotebookLastSyncTime);
 
         conversionResult = false;
 
@@ -145,19 +165,19 @@ void SyncStateStorage::setSyncState(
 {
     QUENTIER_CHECK_PTR("synchronization: state_storage", syncState.get())
 
-    ApplicationSettings appSettings{account, SYNCHRONIZATION_PERSISTENCE_NAME};
+    ApplicationSettings appSettings{account, gSynchronizationPersistenceName};
 
     const QString keyGroup = QStringLiteral("Synchronization/") +
         account.evernoteHost() + QStringLiteral("/") +
         QString::number(account.id()) + QStringLiteral("/") +
-        LAST_SYNC_PARAMS_KEY_GROUP + QStringLiteral("/");
+        gLastSyncParamsGroup + QStringLiteral("/");
 
     appSettings.setValue(
-        keyGroup + LAST_SYNC_UPDATE_COUNT_KEY,
+        keyGroup + gLastSyncUpdateCount,
         syncState->userDataUpdateCount());
 
     appSettings.setValue(
-        keyGroup + LAST_SYNC_TIME_KEY, syncState->userDataLastSyncTime());
+        keyGroup + gLastSyncTime, syncState->userDataLastSyncTime());
 
     const auto updateCountsByLinkedNotebookGuid =
         syncState->linkedNotebookUpdateCounts();
@@ -169,7 +189,7 @@ void SyncStateStorage::setSyncState(
         updateCountsByLinkedNotebookGuid.size();
 
     appSettings.beginWriteArray(
-        keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS,
+        keyGroup + gLastSyncLinkedNotebookParams,
         numLinkedNotebooksSyncParams);
 
     int counter = 0;
@@ -191,11 +211,11 @@ void SyncStateStorage::setSyncState(
         }
 
         appSettings.setArrayIndex(counter);
-        appSettings.setValue(LINKED_NOTEBOOK_GUID_KEY, guid);
-        appSettings.setValue(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY, it.value());
+        appSettings.setValue(gLinkedNotebookGuid, guid);
+        appSettings.setValue(gLinkedNotebookLastUpdateCount, it.value());
 
         appSettings.setValue(
-            LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY, syncTimeIt.value());
+            gLinkedNotebookLastSyncTime, syncTimeIt.value());
 
         QNTRACE(
             "synchronization::SyncStateStorage",
@@ -215,4 +235,4 @@ void SyncStateStorage::setSyncState(
     Q_EMIT notifySyncStateUpdated(account, syncState);
 }
 
-} // namespace quentier
+} // namespace quentier::synchronization

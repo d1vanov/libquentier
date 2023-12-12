@@ -32,11 +32,11 @@
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IDownloader.h>
 #include <synchronization/ISender.h>
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/sync_chunks/ISyncChunksStorage.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
+#include <synchronization/types/SyncChunksDataCounters.h>
 #include <synchronization/types/SyncResult.h>
 #include <synchronization/types/SyncState.h>
 

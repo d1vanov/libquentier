@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,12 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNC_STATE_STORAGE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_SYNC_STATE_STORAGE_H
+#pragma once
 
 #include <quentier/synchronization/ISyncStateStorage.h>
 
-namespace quentier {
+namespace quentier::synchronization {
 
 class Q_DECL_HIDDEN SyncStateStorage final : public ISyncStateStorage
 {
@@ -37,6 +36,4 @@ public:
         const Account & account, ISyncStatePtr syncState) override;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_SYNC_STATE_STORAGE_H
+} // namespace quentier::synchronization

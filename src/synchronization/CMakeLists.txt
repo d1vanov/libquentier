@@ -57,8 +57,6 @@ target_sources(${LIBRARY_NAME}
   SynchronizationMode.h
   Synchronizer.cpp
   Synchronizer.h
-  SyncChunksDataCounters.cpp
-  SyncChunksDataCounters.h
   SyncEventsNotifier.cpp
   SyncEventsNotifier.h
   UserInfoProvider.cpp
@@ -139,6 +137,8 @@ target_sources(${LIBRARY_NAME}
   types/Fwd.h
   types/SendStatus.cpp
   types/SendStatus.h
+  types/SyncChunksDataCounters.cpp
+  types/SyncChunksDataCounters.h
   types/SyncOptions.cpp
   types/SyncOptions.h
   types/SyncOptionsBuilder.cpp

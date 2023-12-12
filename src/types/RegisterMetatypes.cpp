@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../src/synchronization/SynchronizationShared.h"
-
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/Fwd.h>
+#include <quentier/synchronization/types/ISyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/RegisterMetatypes.h>
@@ -51,9 +49,6 @@ namespace quentier {
 void registerMetatypes()
 {
     qRegisterMetaType<Account>("Account");
-
-    qRegisterMetaType<QVector<LinkedNotebookAuthData>>(
-        "QVector<LinkedNotebookAuthData>");
 
     qRegisterMetaType<QList<qevercloud::Notebook>>("QList<qevercloud::Notebook>");
     qRegisterMetaType<QList<qevercloud::Note>>("QList<qevercloud::Note>");
@@ -136,18 +131,17 @@ void registerMetatypes()
 
     qRegisterMetaType<QList<QNetworkCookie>>("QList<QNeworkCookie>");
 
-    using ISyncStatePtr = ISyncStateStorage::ISyncStatePtr;
-    qRegisterMetaType<ISyncStatePtr>("ISyncStatePtr");
+    qRegisterMetaType<synchronization::ISyncStatePtr>("ISyncStatePtr");
 
     qRegisterMetaType<std::size_t>("std::size_t");
 
-    qRegisterMetaType<ISyncChunksDataCountersPtr>("ISyncChunksDataCountersPtr");
+    qRegisterMetaType<synchronization::ISyncChunksDataCountersPtr>(
+        "ISyncChunksDataCountersPtr");
 
     qRegisterMetaType<local_storage::ILocalStorage::UpdateNoteOptions>(
         "ILocalStorage::UpdateNoteOptions");
 
-    using ISendStatusPtr = synchronization::ISendStatusPtr;
-    qRegisterMetaType<ISendStatusPtr>("ISendStatusPtr");
+    qRegisterMetaType<synchronization::ISendStatusPtr>("ISendStatusPtr");
 }
 
 } // namespace quentier

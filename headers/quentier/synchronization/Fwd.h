@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,31 +16,17 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
-#define LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
+#pragma once
 
 #include <memory>
 
-namespace quentier {
-
-class IAuthenticationManager;
-
-class INoteStore;
-using INoteStorePtr = std::shared_ptr<INoteStore>;
-
-class ISyncStateStorage;
-using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
-
-class IUserStore;
-using IUserStorePtr = std::shared_ptr<IUserStore>;
-
-struct ISyncChunksDataCounters;
-using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
-
-namespace synchronization {
+namespace quentier::synchronization {
 
 class IAuthenticator;
 using IAuthenticatorPtr = std::shared_ptr<IAuthenticator>;
+
+struct ISyncChunksDataCounters;
+using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
 
 class ISyncConflictResolver;
 using ISyncConflictResolverPtr = std::shared_ptr<ISyncConflictResolver>;
@@ -53,8 +39,7 @@ class ISyncEventsNotifier;
 class ISyncOptions;
 using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 
-} // namespace synchronization
+class ISyncStateStorage;
+using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
+} // namespace quentier::synchronization

@@ -30,7 +30,6 @@
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/tests/mocks/MockIAccountSynchronizer.h>
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockIDownloader.h>
@@ -39,6 +38,7 @@
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SendStatus.h>
+#include <synchronization/types/SyncChunksDataCounters.h>
 #include <synchronization/types/SyncState.h>
 
 #include <qevercloud/exceptions/EDAMSystemExceptionAuthExpired.h>

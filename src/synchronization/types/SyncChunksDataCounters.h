@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
+#include <quentier/synchronization/types/ISyncChunksDataCounters.h>
 
-namespace quentier {
+namespace quentier::synchronization {
 
 struct SyncChunksDataCounters final : public ISyncChunksDataCounters
 {
@@ -152,4 +152,4 @@ struct SyncChunksDataCounters final : public ISyncChunksDataCounters
     quint64 m_expungedNotebooks = 0UL;
 };
 
-} // namespace quentier
+} // namespace quentier::synchronization

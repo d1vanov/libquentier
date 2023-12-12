@@ -131,16 +131,11 @@ set(LOCAL_STORAGE_HEADERS
 set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/Factory.h
     headers/quentier/synchronization/Fwd.h
-    headers/quentier/synchronization/IAuthenticationManager.h
     headers/quentier/synchronization/IAuthenticator.h
-    headers/quentier/synchronization/INoteStore.h
     headers/quentier/synchronization/ISyncStateStorage.h
-    headers/quentier/synchronization/IUserStore.h
-    headers/quentier/synchronization/ISyncChunksDataCounters.h
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISyncEventsNotifier.h
     headers/quentier/synchronization/ISynchronizer.h
-    headers/quentier/synchronization/SynchronizationManager.h
     headers/quentier/synchronization/types/Errors.h
     headers/quentier/synchronization/types/Fwd.h
     headers/quentier/synchronization/types/IAuthenticationInfo.h
@@ -148,6 +143,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/IDownloadNotesStatus.h
     headers/quentier/synchronization/types/IDownloadResourcesStatus.h
     headers/quentier/synchronization/types/ISendStatus.h
+    headers/quentier/synchronization/types/ISyncChunksDataCounters.h
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncResult.h
@@ -167,11 +163,6 @@ if(NOT BUILD_WITH_QT6)
   list(APPEND THREADING_HEADERS
     headers/quentier/threading/Qt5FutureHelpers.h
     headers/quentier/threading/Qt5Promise.h)
-endif()
-
-if(BUILD_WITH_AUTHENTICATION_MANAGER)
-  list(APPEND SYNCHRONIZATION_HEADERS
-    headers/quentier/synchronization/AuthenticationManager.h)
 endif()
 
 set(LOGGING_HEADERS
@@ -257,28 +248,10 @@ set(PRIVATE_HEADERS
     src/types/data/ResourceRecognitionIndicesData.h
     src/enml/ENMLConverter_p.h
     src/enml/DecryptedTextManager_p.h
-    src/synchronization/ExceptionHandlingHelpers.h
-    src/synchronization/InkNoteImageDownloader.h
     src/synchronization/ISyncEventsNotifier.cpp
-    src/synchronization/NoteStore.h
-    src/synchronization/UserStore.h
-    src/synchronization/NoteThumbnailDownloader.h
-    src/synchronization/RemoteToLocalSynchronizationManager.h
-    src/synchronization/SendLocalChangesManager.h
-    src/synchronization/SyncChunksDataCounters.h
-    src/synchronization/SynchronizationShared.h
-    src/synchronization/SynchronizationManager_p.h
     src/synchronization/SyncStateStorage.h
-    src/synchronization/NotebookSyncConflictResolver.h
-    src/synchronization/NotebookSyncCache.h
-    src/synchronization/TagSyncConflictResolver.h
-    src/synchronization/TagSyncCache.h
-    src/synchronization/SavedSearchSyncConflictResolver.h
-    src/synchronization/SavedSearchSyncCache.h
-    src/synchronization/NoteSyncConflictResolver.h
-    src/synchronization/NoteSyncCache.h
-    src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/types/AuthenticationInfo.h
+    src/synchronization/types/SyncChunksDataCounters.h
     src/synchronization/types/SyncOptions.h
     src/synchronization/types/SyncOptionsBuilder.h
     src/synchronization/types/SyncStateBuilder.h
@@ -291,11 +264,6 @@ set(PRIVATE_HEADERS
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
-
-if(BUILD_WITH_AUTHENTICATION_MANAGER)
-  list(APPEND PRIVATE_HEADERS
-       src/synchronization/AuthenticationManager_p.h)
-endif()
 
 if(BUILD_WITH_NOTE_EDITOR)
   list(APPEND PRIVATE_HEADERS
@@ -432,33 +400,11 @@ set(${PROJECT_NAME}_SOURCES
     src/logging/QuentierLogger.cpp
     src/logging/QuentierLogger_p.cpp
     src/synchronization/Factory.cpp
-    src/synchronization/IAuthenticationManager.cpp
     src/synchronization/IAuthenticator.cpp
-    src/synchronization/InkNoteImageDownloader.cpp
-    src/synchronization/INoteStore.cpp
     src/synchronization/ISyncConflictResolver.cpp
     src/synchronization/ISynchronizer.cpp
     src/synchronization/ISyncStateStorage.cpp
-    src/synchronization/IUserStore.cpp
-    src/synchronization/NoteStore.cpp
-    src/synchronization/UserStore.cpp
-    src/synchronization/NoteThumbnailDownloader.cpp
-    src/synchronization/SynchronizationShared.cpp
-    src/synchronization/SynchronizationManager.cpp
-    src/synchronization/SynchronizationManager_p.cpp
     src/synchronization/SyncStateStorage.cpp
-    src/synchronization/RemoteToLocalSynchronizationManager.cpp
-    src/synchronization/SendLocalChangesManager.cpp
-    src/synchronization/NotebookSyncCache.cpp
-    src/synchronization/TagSyncConflictResolver.cpp
-    src/synchronization/TagSyncCache.cpp
-    src/synchronization/SavedSearchSyncConflictResolver.cpp
-    src/synchronization/SavedSearchSyncCache.cpp
-    src/synchronization/NotebookSyncConflictResolver.cpp
-    src/synchronization/NoteSyncConflictResolver.cpp
-    src/synchronization/NoteSyncCache.cpp
-    src/synchronization/FullSyncStaleDataItemsExpunger.cpp
-    src/synchronization/SyncChunksDataCounters.cpp
     src/synchronization/types/Errors.cpp
     src/synchronization/types/IAuthenticationInfoBuilder.cpp
     src/synchronization/types/IDownloadNotesStatus.cpp
@@ -466,6 +412,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/ISyncOptions.cpp
     src/synchronization/types/ISyncOptionsBuilder.cpp
     src/synchronization/types/ISyncStateBuilder.cpp
+    src/synchronization/types/SyncChunksDataCounters.cpp
     src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncOptionsBuilder.cpp
     src/synchronization/types/SyncStateBuilder.cpp
@@ -517,12 +464,6 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/TagSortByParentChildRelations.cpp
     src/utility/UidGenerator.cpp
     src/utility/VersionInfo.cpp)
-
-if(BUILD_WITH_AUTHENTICATION_MANAGER)
-  list(APPEND ${PROJECT_NAME}_SOURCES
-       src/synchronization/AuthenticationManager.cpp
-       src/synchronization/AuthenticationManager_p.cpp)
-endif()
 
 if(BUILD_WITH_NOTE_EDITOR)
   list(APPEND ${PROJECT_NAME}_SOURCES
@@ -864,79 +805,25 @@ set(TEST_HEADERS
     src/tests/enml/EnexExportImportTests.h
     src/tests/enml/ENMLConverterTests.h
     src/tests/enml/ENMLTester.h
-    src/tests/local_storage/LocalStorageCacheAsyncTester.h
-    src/tests/local_storage/LocalStorageManagerTester.h
-    src/tests/local_storage/LocalStorageManagerAsyncTests.h
-    src/tests/local_storage/LocalStorageManagerBasicTests.h
-    src/tests/local_storage/LocalStorageManagerListTests.h
-    src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.h
-    src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.h
-    src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.h
-    src/tests/local_storage/NoteLocalStorageManagerAsyncTester.h
-    src/tests/local_storage/NoteNotebookAndTagListTrackingAsyncTester.h
-    src/tests/local_storage/NoteSearchQueryParsingTest.h
-    src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.h
-    src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.h
-    src/tests/local_storage/TagLocalStorageManagerAsyncTester.h
-    src/tests/local_storage/UserLocalStorageManagerAsyncTester.h
     src/tests/types/ResourceRecognitionIndicesParsingTest.h
     src/tests/types/TypesTester.h
-    src/tests/synchronization/FakeAuthenticationManager.h
-    src/tests/synchronization/FakeKeychainService.h
-    src/tests/synchronization/FakeNoteStore.h
-    src/tests/synchronization/FakeUserStore.h
-    src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.h
-    src/tests/synchronization/SynchronizationManagerSignalsCatcher.h
-    src/tests/synchronization/SynchronizationTester.h
     src/tests/utility/EncryptionManagerTests.h
     src/tests/utility/LRUCacheTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/utility/UtilityTester.h
-    src/tests/TestMacros.h
-    src/synchronization/FullSyncStaleDataItemsExpunger.h
-    src/synchronization/TagSyncCache.h
-    src/synchronization/SavedSearchSyncCache.h
-    src/synchronization/NoteSyncCache.h
-    src/synchronization/NotebookSyncCache.h)
+    src/tests/TestMacros.h)
 
 set(TEST_SOURCES
     src/tests/enml/EnexExportImportTests.cpp
     src/tests/enml/ENMLConverterTests.cpp
     src/tests/enml/ENMLTester.cpp
-    src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
-    src/tests/local_storage/LocalStorageManagerTester.cpp
-    src/tests/local_storage/LocalStorageManagerAsyncTests.cpp
-    src/tests/local_storage/LocalStorageManagerBasicTests.cpp
-    src/tests/local_storage/LocalStorageManagerListTests.cpp
-    src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.cpp
-    src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.cpp
-    src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.cpp
-    src/tests/local_storage/NoteLocalStorageManagerAsyncTester.cpp
-    src/tests/local_storage/NoteNotebookAndTagListTrackingAsyncTester.cpp
-    src/tests/local_storage/NoteSearchQueryParsingTest.cpp
-    src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.cpp
-    src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.cpp
-    src/tests/local_storage/TagLocalStorageManagerAsyncTester.cpp
-    src/tests/local_storage/UserLocalStorageManagerAsyncTester.cpp
     src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
     src/tests/types/TypesTester.cpp
-    src/tests/synchronization/FakeAuthenticationManager.cpp
-    src/tests/synchronization/FakeKeychainService.cpp
-    src/tests/synchronization/FakeNoteStore.cpp
-    src/tests/synchronization/FakeUserStore.cpp
-    src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.cpp
-    src/tests/synchronization/SynchronizationManagerSignalsCatcher.cpp
-    src/tests/synchronization/SynchronizationTester.cpp
     src/tests/utility/EncryptionManagerTests.cpp
     src/tests/utility/LRUCacheTests.cpp
     src/tests/utility/TagSortByParentChildRelationsTest.cpp
     src/tests/utility/UtilityTester.cpp
-    src/tests/TestMain.cpp
-    src/synchronization/FullSyncStaleDataItemsExpunger.cpp
-    src/synchronization/TagSyncCache.cpp
-    src/synchronization/SavedSearchSyncCache.cpp
-    src/synchronization/NoteSyncCache.cpp
-    src/synchronization/NotebookSyncCache.cpp)
+    src/tests/TestMain.cpp)
 
 set(TEST_RESOURCES
     src/tests/resources/test_resources.qrc)

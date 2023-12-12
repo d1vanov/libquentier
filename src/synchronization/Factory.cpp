@@ -26,6 +26,7 @@
 #include <synchronization/NoteStoreFactory.h>
 #include <synchronization/ProtocolVersionChecker.h>
 #include <synchronization/Synchronizer.h>
+#include <synchronization/SyncStateStorage.h>
 #include <synchronization/UserInfoProvider.h>
 #include <synchronization/conflict_resolvers/Factory.h>
 #include <synchronization/conflict_resolvers/SimpleNoteSyncConflictResolver.h>
@@ -109,6 +110,11 @@ ISyncConflictResolverPtr createSimpleSyncConflictResolver(
         std::move(noteConflictResolver),
         std::move(savedSearchConflictResolver),
         std::move(tagConflictResolver));
+}
+
+ISyncStateStoragePtr createSyncStateStorage(QObject * parent)
+{
+    return std::make_shared<SyncStateStorage>(parent);
 }
 
 } // namespace quentier::synchronization
