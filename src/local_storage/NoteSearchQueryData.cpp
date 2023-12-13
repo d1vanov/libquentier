@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 
 #include <QDateTime>
 
-namespace quentier {
+namespace quentier::local_storage {
 
 void NoteSearchQuery::Data::clear()
 {
@@ -1022,13 +1022,13 @@ bool NoteSearchQuery::Data::dateTimeStringToTimestamp(
     else if (dateTimeString.startsWith(QStringLiteral("week"))) {
         relativeDateArgumentFound = true;
 
-        int dayOfWeek = dateTime.date().dayOfWeek();
+        qint64 dayOfWeek = dateTime.date().dayOfWeek();
         dateTime = dateTime.addDays(-1 * dayOfWeek); // go to week start
 
         QString offsetSubstr = dateTimeString.remove(QStringLiteral("week"));
         if (!offsetSubstr.isEmpty()) {
             bool conversionResult = false;
-            int weekOffset = offsetSubstr.toInt(&conversionResult);
+            qint64 weekOffset = offsetSubstr.toInt(&conversionResult);
             if (!conversionResult) {
                 error.setBase(QT_TRANSLATE_NOOP(
                     "NoteSearchQueryData",
@@ -1043,7 +1043,7 @@ bool NoteSearchQuery::Data::dateTimeStringToTimestamp(
     else if (dateTimeString.startsWith(QStringLiteral("month"))) {
         relativeDateArgumentFound = true;
 
-        int dayOfMonth = dateTime.date().day();
+        qint64 dayOfMonth = dateTime.date().day();
         dateTime = dateTime.addDays(-1 * (dayOfMonth - 1)); // go to month start
 
         QString offsetSubstr = dateTimeString.remove(QStringLiteral("month"));
@@ -1064,7 +1064,7 @@ bool NoteSearchQuery::Data::dateTimeStringToTimestamp(
     else if (dateTimeString.startsWith(QStringLiteral("year"))) {
         relativeDateArgumentFound = true;
 
-        int dayOfMonth = dateTime.date().day();
+        qint64 dayOfMonth = dateTime.date().day();
         dateTime = dateTime.addDays(-1 * (dayOfMonth - 1)); // go to month start
 
         int currentMonth = dateTime.date().month();
@@ -1182,4 +1182,4 @@ void NoteSearchQuery::Data::removeBoundaryQuotesFromWord(QString & word) const
     }
 }
 
-} // namespace quentier
+} // namespace quentier::local_storage

@@ -20,17 +20,12 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/threading/Fwd.h>
+#include <quentier/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QtGlobal>
 
 class QDir;
-
-namespace quentier {
-
-class Account;
-
-} // namespace quentier
 
 namespace quentier::local_storage {
 

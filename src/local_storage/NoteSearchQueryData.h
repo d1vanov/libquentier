@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_DATA_H
-#define LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_DATA_H
+#pragma once
 
 #include <quentier/local_storage/NoteSearchQuery.h>
 
 #include <QSharedData>
 #include <QStringList>
 
-namespace quentier {
+namespace quentier::local_storage {
 
 class Q_DECL_HIDDEN NoteSearchQuery::Data final :
     public QSharedData,
@@ -167,6 +166,4 @@ private:
     void removeBoundaryQuotesFromWord(QString & word) const;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_DATA_H
+} // namespace quentier::local_storage

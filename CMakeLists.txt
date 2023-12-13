@@ -101,6 +101,7 @@ endif()
 set(TYPES_HEADERS
     headers/quentier/types/Account.h
     headers/quentier/types/ErrorString.h
+    headers/quentier/types/Fwd.h
     headers/quentier/types/NoteUtils.h
     headers/quentier/types/ResourceRecognitionIndexItem.h
     headers/quentier/types/ResourceRecognitionIndices.h
@@ -116,16 +117,9 @@ set(ENML_HEADERS
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/Factory.h
     headers/quentier/local_storage/ILocalStorage.h
-    headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/ILocalStorageNotifier.h
-    headers/quentier/local_storage/ILocalStoragePatch.h
     headers/quentier/local_storage/IPatch.h
-    headers/quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/Fwd.h
-    headers/quentier/local_storage/Lists.h
-    headers/quentier/local_storage/LocalStorageCacheManager.h
-    headers/quentier/local_storage/LocalStorageManager.h
-    headers/quentier/local_storage/LocalStorageManagerAsync.h
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
@@ -233,14 +227,7 @@ list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
-    src/local_storage/LocalStorageCacheManager_p.h
-    src/local_storage/LocalStoragePatchManager.h
-    src/local_storage/LocalStorageManager_p.h
-    src/local_storage/LocalStorageShared.h
     src/local_storage/NoteSearchQueryData.h
-    src/local_storage/Transaction.h
-    src/local_storage/TypeChecks.h
-    src/local_storage/patches/LocalStoragePatch1To2.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
     src/types/data/ErrorStringData.h
@@ -381,22 +368,9 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/Factory.cpp
     src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageNotifier.cpp
-    src/local_storage/ILocalStorageCacheExpiryChecker.cpp
     src/local_storage/IPatch.cpp
-    src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp
-    src/local_storage/LocalStorageManager.cpp
-    src/local_storage/LocalStorageManager_p.cpp
-    src/local_storage/LocalStorageCacheManager.cpp
-    src/local_storage/LocalStorageCacheManager_p.cpp
-    src/local_storage/LocalStoragePatchManager.cpp
-    src/local_storage/LocalStorageManagerAsync.cpp
-    src/local_storage/LocalStorageShared.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
-    src/local_storage/Transaction.cpp
-    src/local_storage/TypeChecks.cpp
-    src/local_storage/patches/ILocalStoragePatch.cpp
-    src/local_storage/patches/LocalStoragePatch1To2.cpp
     src/logging/QuentierLogger.cpp
     src/logging/QuentierLogger_p.cpp
     src/synchronization/Factory.cpp

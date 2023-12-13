@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,20 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_LOCAL_STORAGE_FWD_H
-#define LIB_QUENTIER_LOCAL_STORAGE_FWD_H
+#pragma once
 
 #include <memory>
 
-namespace quentier {
-
-class ILocalStoragePatch;
-using ILocalStoragePatchPtr = std::shared_ptr<ILocalStoragePatch>;
-
-class LocalStorageManager;
-class LocalStorageManagerAsync;
-
-namespace local_storage {
+namespace quentier::local_storage {
 
 class ILocalStorage;
 using ILocalStoragePtr = std::shared_ptr<ILocalStorage>;
@@ -39,7 +30,4 @@ class ILocalStorageNotifier;
 class IPatch;
 using IPatchPtr = std::shared_ptr<IPatch>;
 
-} // namespace local_storage
-} // namespace quentier
-
-#endif // LIB_QUENTIER_LOCAL_STORAGE_FWD_H
+} // namespace quentier::local_storage

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include "NoteSearchQueryData.h"
 
-namespace quentier {
+namespace quentier::local_storage {
 
 NoteSearchQuery::NoteSearchQuery() : d(new NoteSearchQuery::Data) {}
 
@@ -494,14 +494,14 @@ QTextStream & NoteSearchQuery::print(QTextStream & strm) const
     return d->print(strm);
 }
 
-bool operator==(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs)
+bool operator==(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept
 {
     return lhs.queryString() == rhs.queryString();
 }
 
-bool operator!=(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs)
+bool operator!=(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept
 {
     return !(lhs == rhs);
 }
 
-} // namespace quentier
+} // namespace quentier::local_storage

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_H
-#define LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 
 #include <QList>
 #include <QSharedDataPointer>
 
-namespace quentier {
+namespace quentier::local_storage {
 
 class QUENTIER_EXPORT NoteSearchQuery : public Printable
 {
@@ -176,11 +175,9 @@ private:
 };
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs);
+    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs);
+    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept;
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_H
+} // namespace quentier::local_storage

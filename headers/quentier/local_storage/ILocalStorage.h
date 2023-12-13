@@ -18,6 +18,11 @@
 
 #pragma once
 
+#include <quentier/local_storage/Fwd.h>
+#include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/types/Fwd.h>
+#include <quentier/utility/Linkage.h>
+
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
@@ -26,10 +31,6 @@
 #include <qevercloud/types/SharedNotebook.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
-
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/NoteSearchQuery.h>
-#include <quentier/utility/Linkage.h>
 
 #include <QFlags>
 #include <QFuture>
@@ -44,12 +45,6 @@
 class QDebug;
 class QTextStream;
 class QThreadPool;
-
-namespace quentier {
-
-class Account;
-
-} // namespace quentier
 
 namespace quentier::local_storage {
 

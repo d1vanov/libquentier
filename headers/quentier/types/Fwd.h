@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,30 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QENTIER_TYPES_RESULT_H
-#define LIB_QENTIER_TYPES_RESULT_H
+#pragma once
 
-#include <Error.h>
-#include <ErrorString.h>
+namespace quentier {
 
-namespace quentier::types {
+class Account;
+class ErrorString;
+class ResourceRecognitionIndexItem;
+class ResourceRecognitionIndices;
 
-struct ResultBase
-{
-    error::ErrorCode m_errorCode;
-    ErrorString m_errorMessage;
-};
-
-template <class T>
-struct Result : ResultBase
-{
-    T m_value;
-};
-
-template <>
-struct Result<void> : ResultBase
-{};
-
-} // namespace quentier::types
-
-#endif // LIB_QENTIER_TYPES_RESULT_H
+} // namespace quentier

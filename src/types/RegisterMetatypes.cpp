@@ -17,7 +17,6 @@
  */
 
 #include <quentier/local_storage/ILocalStorage.h>
-#include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
@@ -59,41 +58,6 @@ void registerMetatypes()
     qRegisterMetaType<QList<qevercloud::SavedSearch>>("QList<qevercloud::SavedSearch>");
     qRegisterMetaType<QList<qevercloud::SharedNotebook>>("QList<qevercloud::SharedNotebook>");
 
-    qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
-        "LocalStorageManager::ListObjectsOptions");
-
-    qRegisterMetaType<LocalStorageManager::ListNotesOrder>(
-        "LocalStorageManager::ListNotesOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder>(
-        "LocalStorageManager::ListNotebooksOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder>(
-        "LocalStorageManager::ListLinkedNotebooksOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListTagsOrder>(
-        "LocalStorageManager::ListTagsOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder>(
-        "LocalStorageManager::ListSavedSearchesOrder");
-
-    qRegisterMetaType<LocalStorageManager::OrderDirection>(
-        "LocalStorageManager::OrderDirection");
-
-    qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>(
-        "LocalStorageManager::UpdateNoteOptions");
-
-    qRegisterMetaType<LocalStorageManager::GetNoteOptions>(
-        "LocalStorageManager::GetNoteOptions");
-
-    qRegisterMetaType<LocalStorageManager::GetResourceOptions>(
-        "LocalStorageManager::GetResourceOptions");
-
-    qRegisterMetaType<LocalStorageManager::StartupOptions>(
-        "LocalStorageManager::StartupOptions");
-
-    qRegisterMetaType<LocalStorageManager::NoteCountOptions>(
-        "LocalStorageManager::NoteCountOptions");
 
     qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<QUuid>("QUuid");
@@ -112,7 +76,7 @@ void registerMetatypes()
     qRegisterMetaType<QHash<QString, qint32>>("QHash<QString,qint32>");
     qRegisterMetaType<QHash<QString, int>>("QHash<QString,int>");
 
-    qRegisterMetaType<NoteSearchQuery>("NoteSearchQuery");
+    qRegisterMetaType<local_storage::NoteSearchQuery>("NoteSearchQuery");
 
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
