@@ -18,8 +18,8 @@
 
 #include "ENMLConverter_p.h"
 
-#include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/HTMLCleaner.h>
+#include <quentier/enml/IDecryptedTextCache.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/utility/DateTime.h>
@@ -144,7 +144,7 @@ ENMLConverterPrivate::~ENMLConverterPrivate()
 
 bool ENMLConverterPrivate::htmlToNoteContent(
     const QString & html, const QList<SkipHtmlElementRule> & skipRules,
-    QString & noteContent, DecryptedTextManager & decryptedTextManager,
+    QString & noteContent, enml::IDecryptedTextCache & decryptedTextCache,
     ErrorString & errorDescription) const
 {
     QNDEBUG(
@@ -206,7 +206,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
         if (reader.isStartElement()) {
             auto status = processElementForHtmlToNoteContentConversion(
-                skipRules, state, decryptedTextManager, reader, writer,
+                skipRules, state, decryptedTextCache, reader, writer,
                 errorDescription);
 
             if (status == ProcessElementStatus::Error) {
@@ -957,7 +957,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
 
 bool ENMLConverterPrivate::noteContentToHtml(
     const QString & noteContent, QString & html, ErrorString & errorDescription,
-    DecryptedTextManager & decryptedTextManager,
+    enml::IDecryptedTextCache & decryptedTextCache,
     NoteContentToHtmlExtraData & extraData) const
 {
     QNDEBUG("enml", "ENMLConverterPrivate::noteContentToHtml: " << noteContent);
@@ -1065,7 +1065,7 @@ bool ENMLConverterPrivate::noteContentToHtml(
 
                 if (!encryptedTextToHtml(
                     lastElementAttributes, reader.text(), enCryptIndex,
-                    enDecryptedIndex, writer, decryptedTextManager,
+                    enDecryptedIndex, writer, decryptedTextCache,
                     convertedToEnCryptNode))
                 {
                     return false;
@@ -3366,7 +3366,7 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
     const QXmlStreamAttributes & enCryptAttributes,
     const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex,
     const quint64 enDecryptedIndex, QXmlStreamWriter & writer,
-    DecryptedTextManager & decryptedTextManager,
+    enml::IDecryptedTextCache & decryptedTextCache,
     bool & convertedToEnCryptNode) const
 {
     QNDEBUG(
@@ -3391,14 +3391,11 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
         hint = enCryptAttributes.value(QStringLiteral("hint")).toString();
     }
 
-    QString decryptedText;
-    bool rememberForSession = false;
-    const bool foundDecryptedText =
-        decryptedTextManager.findDecryptedTextByEncryptedText(
-            encryptedTextCharacters.toString(), decryptedText,
-            rememberForSession);
+    const auto decryptedTextInfo =
+        decryptedTextCache.findDecryptedTextInfo(
+            encryptedTextCharacters.toString());
 
-    if (foundDecryptedText) {
+    if (decryptedTextInfo) {
         QNTRACE(
             "enml",
             "Found encrypted text which has already been "
@@ -3419,8 +3416,8 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
         }
 
         decryptedTextHtml(
-            decryptedText, encryptedTextCharacters.toString(), hint, cipher,
-            keyLength, enDecryptedIndex, writer);
+            decryptedTextInfo->first, encryptedTextCharacters.toString(), hint,
+            cipher, keyLength, enDecryptedIndex, writer);
 
         convertedToEnCryptNode = false;
         return true;
@@ -3567,7 +3564,7 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
 }
 
 bool ENMLConverterPrivate::decryptedTextToEnml(
-    QXmlStreamReader & reader, DecryptedTextManager & decryptedTextManager,
+    QXmlStreamReader & reader, enml::IDecryptedTextCache & decryptedTextCache,
     QXmlStreamWriter & writer, ErrorString & errorDescription) const
 {
     QNDEBUG("enml", "ENMLConverterPrivate::decryptedTextToEnml");
@@ -3584,11 +3581,9 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
     QString encryptedText =
         attributes.value(QStringLiteral("encrypted_text")).toString();
 
-    QString storedDecryptedText;
-    bool rememberForSession = false;
-    if (!decryptedTextManager.findDecryptedTextByEncryptedText(
-            encryptedText, storedDecryptedText, rememberForSession))
-    {
+    const auto decryptedTextInfo = decryptedTextCache.findDecryptedTextInfo(
+        encryptedText);
+    if (!decryptedTextInfo) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't find the decrypted text by its encrypted text"));
         QNWARNING("enml", errorDescription);
@@ -3633,19 +3628,19 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
         return false;
     }
 
-    if (storedDecryptedText != actualDecryptedText) {
+    if (decryptedTextInfo->first != actualDecryptedText) {
         QNTRACE("enml", "Found modified decrypted text, need to re-encrypt");
 
-        QString actualEncryptedText;
-        if (decryptedTextManager.modifyDecryptedText(
-                encryptedText, actualDecryptedText, actualEncryptedText))
+        if (const auto actualEncryptedText =
+                decryptedTextCache.updateDecryptedTextInfo(
+                    encryptedText, actualDecryptedText))
         {
             QNTRACE(
                 "enml",
                 "Re-evaluated the modified decrypted text's "
                     << "encrypted text; was: " << encryptedText
-                    << "; new: " << actualEncryptedText);
-            encryptedText = actualEncryptedText;
+                    << "; new: " << *actualEncryptedText);
+            encryptedText = *actualEncryptedText;
         }
     }
 
@@ -4085,7 +4080,7 @@ SkipElementOption ENMLConverterPrivate::skipElementOption(
 ENMLConverterPrivate::ProcessElementStatus
 ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     const QList<SkipHtmlElementRule> & skipRules, ConversionState & state,
-    DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
+    enml::IDecryptedTextCache & decryptedTextCache, QXmlStreamReader & reader,
     QXmlStreamWriter & writer, ErrorString & errorDescription) const
 {
     if (state.m_skippedElementNestingCounter) {
@@ -4185,7 +4180,7 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
                     << "convert it back to en-crypt form");
 
             if (!decryptedTextToEnml(
-                    reader, decryptedTextManager, writer, errorDescription))
+                    reader, decryptedTextCache, writer, errorDescription))
             {
                 return ProcessElementStatus::Error;
             }

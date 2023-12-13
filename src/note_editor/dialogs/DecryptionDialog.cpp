@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,8 @@
 
 #include "../NoteEditorSettingsNames.h"
 
-#include <quentier/enml/DecryptedTextManager.h>
+#include <quentier/exception/InvalidArgument.h>
+#include <quentier/enml/IDecryptedTextCache.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -31,19 +32,26 @@ namespace quentier {
 DecryptionDialog::DecryptionDialog(
     QString encryptedText, QString cipher, QString hint, const size_t keyLength,
     Account account, std::shared_ptr<EncryptionManager> encryptionManager,
-    std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+    enml::IDecryptedTextCachePtr decryptedTextCache,
     QWidget * parent, bool decryptPermanentlyFlag) :
-    QDialog(parent),
-    m_pUI(new Ui::DecryptionDialog), m_encryptedText(std::move(encryptedText)),
-    m_cipher(std::move(cipher)), m_hint(std::move(hint)),
-    m_account(std::move(account)),
-    m_encryptionManager(std::move(encryptionManager)),
-    m_decryptedTextManager(std::move(decryptedTextManager)),
-    m_keyLength(keyLength)
+    QDialog{parent},
+    m_encryptionManager{std::move(encryptionManager)},
+    m_decryptedTextCache{std::move(decryptedTextCache)},
+    m_pUI{new Ui::DecryptionDialog}, m_encryptedText{std::move(encryptedText)},
+    m_cipher{std::move(cipher)}, m_hint{std::move(hint)},
+    m_account{std::move(account)}, m_keyLength{keyLength}
 {
-    m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR("note_editor:dialog", m_encryptionManager.get())
+    if (Q_UNLIKELY(!m_encryptionManager)) {
+        throw InvalidArgument{ErrorString{
+            "DecryptionDialog ctor: encryption manager is null"}};
+    }
 
+    if (Q_UNLIKELY(!m_decryptedTextCache)) {
+        throw InvalidArgument{ErrorString{
+            "DecryptionDialog ctor: decrypted text cache is null"}};
+    }
+
+    m_pUI->setupUi(this);
     m_pUI->decryptPermanentlyCheckBox->setChecked(decryptPermanentlyFlag);
 
     setHint(m_hint);
@@ -124,9 +132,9 @@ void DecryptionDialog::onRememberPassphraseStateChanged(int checked)
     ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
     if (!appSettings.isWritable()) {
         QNINFO(
-            "note_editor:dialog",
-            "Can't persist remember passphrase for "
-                << "session setting: settings are not writable");
+            "note_editor::DecryptionDialog",
+            "Can't persist remember passphrase for session setting: settings "
+                << "are not writable");
     }
     else {
         appSettings.setValue(
@@ -159,11 +167,10 @@ void DecryptionDialog::accept()
 
     if (!res && (m_cipher == QStringLiteral("AES")) && (m_keyLength == 128)) {
         QNDEBUG(
-            "note_editor:dialog",
-            "The initial attempt to decrypt the text "
-                << "using AES cipher and 128 bit key has failed; checking "
-                << "whether it is old encrypted text area using RC2 "
-                << "encryption and 64 bit key");
+            "note_editor::DecryptionDialog",
+            "The initial attempt to decrypt the text using AES cipher and "
+                << "128 bit key has failed; checking whether it is old "
+                << "encrypted text area using RC2 encryption and 64 bit key");
 
         res = m_encryptionManager->decrypt(
             m_encryptedText, passphrase, QStringLiteral("RC2"), 64,
@@ -185,12 +192,15 @@ void DecryptionDialog::accept()
     const bool decryptPermanently =
         m_pUI->decryptPermanentlyCheckBox->isChecked();
 
-    m_decryptedTextManager->addEntry(
-        m_encryptedText, m_cachedDecryptedText, rememberForSession, passphrase,
-        m_cipher, m_keyLength);
+    m_decryptedTextCache->addDecryptexTextInfo(
+        m_encryptedText, m_cachedDecryptedText, passphrase,
+        m_cipher, m_keyLength,
+        rememberForSession
+        ? enml::IDecryptedTextCache::RememberForSession::Yes
+        : enml::IDecryptedTextCache::RememberForSession::No);
 
     QNTRACE(
-        "note_editor:dialog",
+        "note_editor::DecryptionDialog",
         "Cached decrypted text for encryptedText: "
             << m_encryptedText << "; remember for session = "
             << (rememberForSession ? "true" : "false")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,59 +20,61 @@
 
 #include "../NoteEditor_p.h"
 
+#include <quentier/enml/IDecryptedTextCache.h>
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());  \
-    if (Q_UNLIKELY(!page)) {                                                   \
-        ErrorString error(QT_TRANSLATE_NOOP(                                   \
-            "DecryptUndoCommand",                                              \
-            "Can't undo/redo the encrypted text "                              \
-            "decryption: no note editor page"));                               \
-        QNWARNING("note_editor:undo", error);                                  \
-        Q_EMIT notifyError(error);                                             \
-        return;                                                                \
-    }
-
 DecryptUndoCommand::DecryptUndoCommand(
     EncryptDecryptUndoCommandInfo info,
-    std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+    enml::IDecryptedTextCachePtr decryptedTextCache,
     NoteEditorPrivate & noteEditorPrivate, Callback callback,
-    QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_info(std::move(info)),
-    m_decryptedTextManager(std::move(decryptedTextManager)),
-    m_callback(std::move(callback))
+    QUndoCommand * parent) : DecryptUndoCommand(
+        std::move(info), std::move(decryptedTextCache), noteEditorPrivate,
+        std::move(callback), tr("Decrypt text"), parent)
 {
-    setText(tr("Decrypt text"));
 }
 
 DecryptUndoCommand::DecryptUndoCommand(
     EncryptDecryptUndoCommandInfo info,
-    std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+    enml::IDecryptedTextCachePtr decryptedTextCache,
     NoteEditorPrivate & noteEditorPrivate, Callback callback,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_info(std::move(info)),
-    m_decryptedTextManager(std::move(decryptedTextManager)),
+    m_decryptedTextCache(std::move(decryptedTextCache)),
     m_callback(std::move(callback))
-{}
+{
+    if (Q_UNLIKELY(!m_decryptedTextCache)) {
+        throw InvalidArgument{ErrorString{
+            "DecryptUndoCommand ctor: decrypted text cache is null"}};
+    }
+}
 
 DecryptUndoCommand::~DecryptUndoCommand() noexcept = default;
 
 void DecryptUndoCommand::redoImpl()
 {
-    QNDEBUG("note_editor:undo", "DecryptUndoCommand::redoImpl");
+    QNDEBUG("note_editor::DecryptUndoCommand", "DecryptUndoCommand::redoImpl");
 
-    GET_PAGE()
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());
+    if (Q_UNLIKELY(!page)) {
+        ErrorString error{QT_TR_NOOP(
+            "Can'redo encrypted text decryption: no note editor page")};
+        QNWARNING("note_editor:::DecryptUndoCommand", error);
+        Q_EMIT notifyError(error);
+        return;
+    }
 
     if (!m_info.m_decryptPermanently) {
-        m_decryptedTextManager->addEntry(
+        m_decryptedTextCache->addDecryptexTextInfo(
             m_info.m_encryptedText, m_info.m_decryptedText,
-            m_info.m_rememberForSession, m_info.m_passphrase, m_info.m_cipher,
-            m_info.m_keyLength);
+            m_info.m_passphrase, m_info.m_cipher,
+            m_info.m_keyLength,
+            m_info.m_rememberForSession
+                ? enml::IDecryptedTextCache::RememberForSession::Yes
+                : enml::IDecryptedTextCache::RememberForSession::No);
     }
 
     page->executeJavaScript(
@@ -81,12 +83,19 @@ void DecryptUndoCommand::redoImpl()
 
 void DecryptUndoCommand::undoImpl()
 {
-    QNDEBUG("note_editor:undo", "DecryptUndoCommand::undoImpl");
+    QNDEBUG("note_editor::DecryptUndoCommand", "DecryptUndoCommand::undoImpl");
 
-    GET_PAGE()
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());
+    if (Q_UNLIKELY(!page)) {
+        ErrorString error{QT_TR_NOOP(
+            "Can'undo encrypted text decryption: no note editor page")};
+        QNWARNING("note_editor:::DecryptUndoCommand", error);
+        Q_EMIT notifyError(error);
+        return;
+    }
 
     if (!m_info.m_decryptPermanently) {
-        m_decryptedTextManager->removeEntry(m_info.m_encryptedText);
+        m_decryptedTextCache->removeDecryptedTextInfo(m_info.m_encryptedText);
     }
 
     page->executeJavaScript(

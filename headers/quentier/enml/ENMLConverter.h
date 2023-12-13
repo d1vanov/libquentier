@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,12 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_ENML_ENML_CONVERTER_H
-#define LIB_QUENTIER_ENML_ENML_CONVERTER_H
+#pragma once
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
+
+#include <qevercloud/types/Fwd.h>
 
 #include <QHash>
 #include <QList>
@@ -29,16 +31,8 @@
 #include <QString>
 #include <QTextDocument>
 
-namespace qevercloud {
-
-class Note;
-class Resource;
-
-} // namespace qevercloud
-
 namespace quentier {
 
-class DecryptedTextManager;
 class ENMLConverterPrivate;
 
 /**
@@ -95,7 +89,7 @@ public:
 
     [[nodiscard]] bool htmlToNoteContent(
         const QString & html, QString & noteContent,
-        DecryptedTextManager & decryptedTextManager,
+        enml::IDecryptedTextCache & decryptedTextCache,
         ErrorString & errorDescription,
         const QList<SkipHtmlElementRule> & skipRules = {}) const;
 
@@ -145,7 +139,7 @@ public:
     [[nodiscard]] bool noteContentToHtml(
         const QString & noteContent, QString & html,
         ErrorString & errorDescription,
-        DecryptedTextManager & decryptedTextManager,
+        enml::IDecryptedTextCache & decryptedTextCache,
         NoteContentToHtmlExtraData & extraData) const;
 
     [[nodiscard]] bool validateEnml(
@@ -258,5 +252,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_ENML_ENML_CONVERTER_H

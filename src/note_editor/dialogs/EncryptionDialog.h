@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H
+#pragma once
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/EncryptionManager.h>
@@ -28,12 +28,12 @@
 #include <memory>
 
 namespace Ui {
+
 class EncryptionDialog;
-}
+
+} // namespace Ui
 
 namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 
 class Q_DECL_HIDDEN EncryptionDialog final : public QDialog
 {
@@ -42,7 +42,7 @@ public:
     explicit EncryptionDialog(
         QString textToEncrypt, Account account,
         std::shared_ptr<EncryptionManager> encryptionManager,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+        enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr);
 
     ~EncryptionDialog() noexcept override;
@@ -68,14 +68,13 @@ private:
     void setError(const ErrorString & error);
 
 private:
+    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     Ui::EncryptionDialog * m_pUI;
+
     QString m_textToEncrypt;
     QString m_cachedEncryptedText;
     Account m_account;
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H

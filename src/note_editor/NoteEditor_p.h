@@ -21,8 +21,8 @@
 #include "NoteEditorPage.h"
 #include "ResourceInfo.h"
 
-#include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/Fwd.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/types/ErrorString.h>
@@ -1352,7 +1352,7 @@ private:
     qint64 m_lastInteractionTimestamp = -1;
 
     std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
+    enml::IDecryptedTextCachePtr m_decryptedTextCache;
 
     ENMLConverter m_enmlConverter;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,8 +18,9 @@
 
 #include "ENMLConverterTests.h"
 
-#include <quentier/enml/DecryptedTextManager.h>
+#include <quentier/enml/IDecryptedTextCache.h>
 #include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/Factory.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
@@ -31,7 +32,7 @@ void initENMLConversionTestResources();
 namespace quentier::test {
 
 [[nodiscard]] bool convertNoteToHtmlAndBackImpl(
-    const QString & noteContent, DecryptedTextManager & decryptedTextManager,
+    const QString & noteContent, enml::IDecryptedTextCache & decryptedTextCache,
     QString & error);
 
 [[nodiscard]] bool compareEnml(
@@ -55,10 +56,9 @@ bool convertSimpleNoteToHtmlAndBack(QString & error)
         "<div>-- Author unknown</div>"
         "</en-note>");
 
-    DecryptedTextManager decryptedTextManager;
-
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertNoteWithToDoTagsToHtmlAndBack(QString & error)
@@ -77,10 +77,9 @@ bool convertNoteWithToDoTagsToHtmlAndBack(QString & error)
         "<en-todo checked=\"false\"/>Another not yet completed item"
         "</en-note>");
 
-    DecryptedTextManager decryptedTextManager;
-
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
@@ -183,9 +182,9 @@ bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
         "AwnDDBoCUOsAb2nCh2UZ6LSFneb58xQ/6WeoQ7QDDHLSoUIXn</en-crypt>"
         "</en-note>");
 
-    DecryptedTextManager decryptedTextManager;
+    auto decryptedTextCache = enml::createDecryptedTextCache();
 
-    decryptedTextManager.addEntry(
+    decryptedTextCache->addDecryptexTextInfo(
         QStringLiteral("K+sUXSxI2Mt075+pSDxR/gnCNIEnk5XH1P/D0Eie17"
                        "JIWgGnNo5QeMo3L0OeBORARGvVtBlmJx6vJY2Ij/2En"
                        "MVy6/aifSdZXAxRlfnTLvI1IpVgHpTMzEfy6zBVMo+V"
@@ -193,22 +192,21 @@ bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
         QStringLiteral("<span style=\"display: inline !important; float: none; "
                        "\">Ok, here's a piece of text I'm going to encrypt "
                        "now</span>"),
-        /* remember for session = */ true,
         QStringLiteral("my_own_encryption_key_1988"), QStringLiteral("RC2"),
-        64);
+        64, enml::IDecryptedTextCache::RememberForSession::Yes);
 
-    decryptedTextManager.addEntry(
+    decryptedTextCache->addDecryptexTextInfo(
         QStringLiteral("RU5DMBwXjfKR+x9ksjSJhtiF+CxfwXn2Hf/WqdVwLwJDX9YX5R34Z5S"
                        "BMSCIOFFr1MUeNkzHGVP5fHEppUlIExDG/Vpjh9KK1uu0VqTFoUWA0I"
                        "XAAMA5eHnbxhBrjvL3CoTQV7prRqJVLpUX77Q0vbNims1quxVWaf7+u"
                        "VeK60YoiJnSOHvEYptoOs1FVfZAwnDDBoCUOsAb2nCh2UZ6LSFneb58"
                        "xQ/6WeoQ7QDDHLSoUIXn"),
         QStringLiteral("Sample text said to be the decrypted one"),
-        /* remember for session = */ true,
-        QStringLiteral("MyEncryptionPassword"), QStringLiteral("AES"), 128);
+        QStringLiteral("MyEncryptionPassword"), QStringLiteral("AES"), 128,
+        enml::IDecryptedTextCache::RememberForSession::Yes);
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertNoteWithResourcesToHtmlAndBack(QString & error)
@@ -228,10 +226,9 @@ bool convertNoteWithResourcesToHtmlAndBack(QString & error)
         "type=\"application/pdf\" hash=\"6051a24c8677fd21c65c1566654c228\"/>"
         "</en-note>");
 
-    DecryptedTextManager decryptedTextManager;
-
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertComplexNoteToHtmlAndBack(QString & error)
@@ -246,10 +243,10 @@ bool convertComplexNoteToHtmlAndBack(QString & error)
     }
 
     const QString noteContent = QString::fromLocal8Bit(file.readAll());
-    DecryptedTextManager decryptedTextManager;
 
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertComplexNote2ToHtmlAndBack(QString & error)
@@ -264,10 +261,10 @@ bool convertComplexNote2ToHtmlAndBack(QString & error)
     }
 
     const QString noteContent = QString::fromLocal8Bit(file.readAll());
-    DecryptedTextManager decryptedTextManager;
 
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertComplexNote3ToHtmlAndBack(QString & error)
@@ -282,10 +279,10 @@ bool convertComplexNote3ToHtmlAndBack(QString & error)
     }
 
     const QString noteContent = QString::fromLocal8Bit(file.readAll());
-    DecryptedTextManager decryptedTextManager;
 
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertComplexNote4ToHtmlAndBack(QString & error)
@@ -300,14 +297,14 @@ bool convertComplexNote4ToHtmlAndBack(QString & error)
     }
 
     const QString noteContent = QString::fromLocal8Bit(file.readAll());
-    DecryptedTextManager decryptedTextManager;
 
+    auto decryptedTextCache = enml::createDecryptedTextCache();
     return convertNoteToHtmlAndBackImpl(
-        noteContent, decryptedTextManager, error);
+        noteContent, *decryptedTextCache, error);
 }
 
 bool convertNoteToHtmlAndBackImpl(
-    const QString & noteContent, DecryptedTextManager & decryptedTextManager,
+    const QString & noteContent, enml::IDecryptedTextCache & decryptedTextCache,
     QString & error)
 {
     const QString & originalNoteContent = noteContent;
@@ -318,7 +315,7 @@ bool convertNoteToHtmlAndBackImpl(
     ErrorString errorMessage;
 
     bool res = converter.noteContentToHtml(
-        originalNoteContent, html, errorMessage, decryptedTextManager,
+        originalNoteContent, html, errorMessage, decryptedTextCache,
         extraData);
     if (!res) {
         error = QStringLiteral("Unable to convert the note content to HTML: ");
@@ -340,7 +337,7 @@ bool convertNoteToHtmlAndBackImpl(
     QString processedNoteContent;
     errorMessage.clear();
     res = converter.htmlToNoteContent(
-        html, processedNoteContent, decryptedTextManager, errorMessage);
+        html, processedNoteContent, decryptedTextCache, errorMessage);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
@@ -769,8 +766,8 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
         "0IZUuDKjm/OWiGzoEzCTvmz3m5x89dAIUJ10lV56uhGTp9of+yPI"
         "</en-crypt></en-note>");
 
-    DecryptedTextManager decryptedTextManager;
-    decryptedTextManager.addEntry(
+    auto decryptedTextCache = enml::createDecryptedTextCache();
+    decryptedTextCache->addDecryptexTextInfo(
         QStringLiteral("RU5DMI1mnQ7fKjBk9f0a57gSc9Nfbuw3uuwMKs32Y+wJGLZa0N8PcTz"
                        "f7pu3/2VOBqZMvfkKGh4mnJuGy45ZT2TwOfqt+ey8Tic7BmhGg7b4n+"
                        "SpJFHntkeLglxFWJt6oIG14i7IpamIuYyE5XcBRkOQs2cr7rg730d1h"
@@ -784,9 +781,9 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
                        "type it on and on and it will not stop any time soon "
                        "just yet. The password is going to be long also."
                        "</span>"),
-        /* remember for session = */ false,
         QStringLiteral("thisismyriflethisismygunthisisforfortunethisisforfun"),
-        QStringLiteral("AES"), 128);
+        QStringLiteral("AES"), 128,
+        enml::IDecryptedTextCache::RememberForSession::No);
     // NOTE: the text in decrypted text cache is different from that in html
     // meaning that encrypted text was modified; The conversion to ENML should
     // re-calculate the hash of the encrypted text and ensure this entry is
@@ -799,7 +796,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
     ErrorString errorMessage;
 
     bool res = converter.noteContentToHtml(
-        originalENML, html, errorMessage, decryptedTextManager, extraData);
+        originalENML, html, errorMessage, *decryptedTextCache, extraData);
     if (!res) {
         error = QStringLiteral("Unable to convert the note content to HTML: ");
         error += errorMessage.nonLocalizedString();
@@ -817,7 +814,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
 
     html.append(QStringLiteral("</html>"));
 
-    decryptedTextManager.addEntry(
+    decryptedTextCache->addDecryptexTextInfo(
         QStringLiteral("RU5DMI1mnQ7fKjBk9f0a57gSc9Nfbuw3uuwMKs32Y+wJGLZa0N8PcTz"
                        "f7pu3/2VOBqZMvfkKGh4mnJuGy45ZT2TwOfqt+ey8Tic7BmhGg7b4n+"
                        "SpJFHntkeLglxFWJt6oIG14i7IpamIuYyE5XcBRkOQs2cr7rg730d1h"
@@ -832,9 +829,9 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
                        "just yet. The password is going to be long also. And I "
                        "can <b>edit</b> it as well without too much trying."
                        "&nbsp;</span>"),
-        /* remember for session = */ false,
         QStringLiteral("thisismyriflethisismygunthisisforfortunethisisforfun"),
-        QStringLiteral("AES"), 128);
+        QStringLiteral("AES"), 128,
+        enml::IDecryptedTextCache::RememberForSession::No);
     // NOTE: specifying the entry with the same hash as above but with different
     // decrypted text to trigger the re-evaluation of decrypted text hash in
     // the following conversion
@@ -842,7 +839,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
     QString processedENML;
     errorMessage.clear();
     res = converter.htmlToNoteContent(
-        html, processedENML, decryptedTextManager, errorMessage);
+        html, processedENML, *decryptedTextCache, errorMessage);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
@@ -885,7 +882,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
     file.close();
 
     ENMLConverter converter;
-    DecryptedTextManager decryptedTextManager;
+    auto decryptedTextCache = enml::createDecryptedTextCache();
 
     ENMLConverter::SkipHtmlElementRule skipRule;
     skipRule.m_attributeValueToSkip = QStringLiteral("JCLRgrip");
@@ -899,7 +896,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
     QString processedNoteContent;
     ErrorString errorMessage;
     bool res = converter.htmlToNoteContent(
-        html, processedNoteContent, decryptedTextManager, errorMessage,
+        html, processedNoteContent, *decryptedTextCache, errorMessage,
         skipRules);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
@@ -943,7 +940,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     file.close();
 
     ENMLConverter converter;
-    DecryptedTextManager decryptedTextManager;
+    auto decryptedTextCache = enml::createDecryptedTextCache();
 
     ENMLConverter::SkipHtmlElementRule tableSkipRule;
     tableSkipRule.m_attributeValueToSkip = QStringLiteral("JCLRgrip");
@@ -965,7 +962,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     QString processedNoteContent;
     ErrorString errorMessage;
     bool res = converter.htmlToNoteContent(
-        html, processedNoteContent, decryptedTextManager, errorMessage,
+        html, processedNoteContent, *decryptedTextCache, errorMessage,
         skipRules);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");

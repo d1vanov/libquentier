@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_ENML_ENML_CONVERTER_P_H
-#define LIB_QUENTIER_ENML_ENML_CONVERTER_P_H
+#pragma once
 
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/ErrorString.h>
@@ -32,7 +31,6 @@ class QXmlStreamWriter;
 
 namespace quentier {
 
-class DecryptedTextManager;
 class HTMLCleaner;
 
 enum class SkipElementOption
@@ -60,7 +58,7 @@ public:
 
     [[nodiscard]] bool htmlToNoteContent(
         const QString & html, const QList<SkipHtmlElementRule> & skipRules,
-        QString & noteContent, DecryptedTextManager & decryptedTextManager,
+        QString & noteContent, enml::IDecryptedTextCache & decryptedTextCache,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool cleanupExternalHtml(
@@ -70,7 +68,7 @@ public:
     [[nodiscard]] bool noteContentToHtml(
         const QString & noteContent, QString & html,
         ErrorString & errorDescription,
-        DecryptedTextManager & decryptedTextManager,
+        enml::IDecryptedTextCache & decryptedTextCache,
         NoteContentToHtmlExtraData & extraData) const;
 
     [[nodiscard]] bool htmlToQTextDocument(
@@ -137,7 +135,7 @@ private:
 
     // convert <div> element with decrypted text to ENML <en-crypt> tag
     [[nodiscard]] bool decryptedTextToEnml(
-        QXmlStreamReader & reader, DecryptedTextManager & decryptedTextManager,
+        QXmlStreamReader & reader, enml::IDecryptedTextCache & decryptedTextCache,
         QXmlStreamWriter & writer, ErrorString & errorDescription) const;
 
     // convert ENML en-crypt tag to HTML <object> tag
@@ -145,7 +143,7 @@ private:
         const QXmlStreamAttributes & enCryptAttributes,
         const QStringRef & encryptedTextCharacters, quint64 enCryptIndex,
         quint64 enDecryptedIndex, QXmlStreamWriter & writer,
-        DecryptedTextManager & decryptedTextManager,
+        enml::IDecryptedTextCache & decryptedTextCache,
         bool & convertedToEnCryptNode) const;
 
     // convert ENML <en-media> tag to HTML <object> tag
@@ -201,8 +199,9 @@ private:
     [[nodiscard]] ProcessElementStatus
     processElementForHtmlToNoteContentConversion(
         const QList<SkipHtmlElementRule> & skipRules, ConversionState & state,
-        DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
-        QXmlStreamWriter & writer, ErrorString & errorDescription) const;
+        enml::IDecryptedTextCache & decryptedTextCache,
+        QXmlStreamReader & reader, QXmlStreamWriter & writer,
+        ErrorString & errorDescription) const;
 
 private:
     Q_DISABLE_COPY(ENMLConverterPrivate)
@@ -226,5 +225,3 @@ QUENTIER_DECLARE_PRINTABLE(QXmlStreamAttributes)
 
 QUENTIER_DECLARE_PRINTABLE(
     QList<quentier::ENMLConverter::SkipHtmlElementRule>)
-
-#endif // LIB_QUENTIER_ENML_ENML_CONVERTER_P_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 #include "../NoteEditor_p.h"
 #include "../dialogs/DecryptionDialog.h"
 
-#include <quentier/enml/DecryptedTextManager.h>
+#include <quentier/enml/IDecryptedTextCache.h>
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/EncryptionManager.h>
@@ -70,12 +70,12 @@ DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
     QString encryptedTextId, QString encryptedText, QString cipher,
     const QString & length, QString hint, NoteEditorPrivate * pNoteEditor,
     std::shared_ptr<EncryptionManager> encryptionManager,
-    std::shared_ptr<DecryptedTextManager> decryptedTextManager) :
-    m_encryptedTextId(std::move(encryptedTextId)),
-    m_encryptedText(std::move(encryptedText)), m_cipher(std::move(cipher)),
-    m_hint(std::move(hint)), m_pNoteEditor(pNoteEditor),
-    m_encryptionManager(std::move(encryptionManager)),
-    m_decryptedTextManager(std::move(decryptedTextManager))
+    enml::IDecryptedTextCachePtr decryptedTextCache) :
+    m_encryptionManager{std::move(encryptionManager)},
+    m_decryptedTextCache{std::move(decryptedTextCache)},
+    m_encryptedTextId{std::move(encryptedTextId)},
+    m_encryptedText{std::move(encryptedText)}, m_cipher{std::move(cipher)},
+    m_hint{std::move(hint)}, m_pNoteEditor{pNoteEditor}
 {
     if (length.isEmpty()) {
         m_length = 128;
@@ -93,7 +93,9 @@ DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
 
 void DecryptEncryptedTextDelegate::start()
 {
-    QNDEBUG("note_editor:delegate", "DecryptEncryptedTextDelegate::start");
+    QNDEBUG(
+        "note_editor::DecryptEncryptedTextDelegate",
+        "DecryptEncryptedTextDelegate::start");
 
     CHECK_NOTE_EDITOR()
 
@@ -123,7 +125,7 @@ void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(
     qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
-        "note_editor:delegate",
+        "note_editor::DecryptEncryptedTextDelegate",
         "DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote");
 
     CHECK_NOTE_EDITOR()
@@ -140,7 +142,7 @@ void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(
 void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
 {
     QNDEBUG(
-        "note_editor:delegate",
+        "note_editor::DecryptEncryptedTextDelegate",
         "DecryptEncryptedTextDelegate::raiseDecryptionDialog");
 
     CHECK_ACCOUNT()
@@ -152,7 +154,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
     const auto pDecryptionDialog = std::make_unique<DecryptionDialog>(
         m_encryptedText, m_cipher, m_hint, m_length,
         *m_pNoteEditor->accountPtr(), m_encryptionManager,
-        m_decryptedTextManager, m_pNoteEditor);
+        m_decryptedTextCache, m_pNoteEditor);
 
     pDecryptionDialog->setWindowModality(Qt::WindowModal);
 
@@ -160,7 +162,6 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
         pDecryptionDialog.get(), &DecryptionDialog::decryptionAccepted, this,
         &DecryptEncryptedTextDelegate::onEncryptedTextDecrypted);
 
-    QNTRACE("note_editor:delegate", "Will exec decryption dialog now");
     if (pDecryptionDialog->exec() == QDialog::Rejected) {
         Q_EMIT cancelled();
         return;
@@ -173,7 +174,7 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
     bool decryptPermanently)
 {
     QNDEBUG(
-        "note_editor:delegate",
+        "note_editor::DecryptEncryptedTextDelegate",
         "DecryptEncryptedTextDelegate"
             << "::onEncryptedTextDecrypted: encrypted text = " << encryptedText
             << ", remember for session = "
@@ -216,9 +217,8 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
     const QVariant & data)
 {
     QNDEBUG(
-        "note_editor:delegate",
-        "DecryptEncryptedTextDelegate"
-            << "::onDecryptionScriptFinished: " << data);
+        "note_editor::DecryptEncryptedTextDelegate",
+        "DecryptEncryptedTextDelegate::onDecryptionScriptFinished: " << data);
 
     const auto resultMap = data.toMap();
 

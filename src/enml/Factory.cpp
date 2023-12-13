@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,24 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <quentier/enml/Factory.h>
 
-#include <QString>
+#include "DecryptedTextCache.h"
 
-#include <cstddef>
+namespace quentier::enml {
 
-namespace quentier {
-
-struct Q_DECL_HIDDEN EncryptDecryptUndoCommandInfo
+IDecryptedTextCachePtr createDecryptedTextCache()
 {
-    QString m_encryptedText;
-    QString m_decryptedText;
-    QString m_passphrase;
-    QString m_cipher;
-    QString m_hint;
-    std::size_t m_keyLength = 0;
-    bool m_rememberForSession = false;
-    bool m_decryptPermanently = false;
-};
+    return std::make_shared<DecryptedTextCache>();
+}
 
-} // namespace quentier
+} // namespace quentier::enml

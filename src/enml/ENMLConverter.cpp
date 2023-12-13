@@ -31,13 +31,14 @@ ENMLConverter::~ENMLConverter() noexcept
 
 bool ENMLConverter::htmlToNoteContent(
     const QString & html, QString & noteContent,
-    DecryptedTextManager & decryptedTextManager, ErrorString & errorDescription,
+    enml::IDecryptedTextCache & decryptedTextCache,
+    ErrorString & errorDescription,
     const QList<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
 
     return d->htmlToNoteContent(
-        html, skipRules, noteContent, decryptedTextManager, errorDescription);
+        html, skipRules, noteContent, decryptedTextCache, errorDescription);
 }
 
 bool ENMLConverter::cleanupExternalHtml(
@@ -58,13 +59,13 @@ bool ENMLConverter::htmlToQTextDocument(
 
 bool ENMLConverter::noteContentToHtml(
     const QString & noteContent, QString & html, ErrorString & errorDescription,
-    DecryptedTextManager & decryptedTextManager,
+    enml::IDecryptedTextCache & decryptedTextCache,
     NoteContentToHtmlExtraData & extraData) const
 {
     Q_D(const ENMLConverter);
 
     return d->noteContentToHtml(
-        noteContent, html, errorDescription, decryptedTextManager, extraData);
+        noteContent, html, errorDescription, decryptedTextCache, extraData);
 }
 
 bool ENMLConverter::validateEnml(

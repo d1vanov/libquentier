@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,22 +16,22 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Note.h>
 
 #include <QPointer>
 
+#include <cstddef>
 #include <memory>
 
 namespace quentier {
 
-class DecryptedTextManager;
 class EncryptionManager;
 class NoteEditorPrivate;
 
@@ -48,7 +48,7 @@ public:
         QString encryptedTextId, QString encryptedText, QString cipher,
         const QString & length, QString hint, NoteEditorPrivate * pNoteEditor,
         std::shared_ptr<EncryptionManager> encryptionManager,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager);
+        enml::IDecryptedTextCachePtr decryptedTextCache);
 
     void start();
 
@@ -78,10 +78,13 @@ private:
     using JsCallback = JsResultCallbackFunctor<DecryptEncryptedTextDelegate>;
 
 private:
+    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
+
     QString m_encryptedTextId;
     QString m_encryptedText;
     QString m_cipher;
-    size_t m_length = 0;
+    std::size_t m_length = 0;
     QString m_hint;
     QString m_decryptedText;
     QString m_passphrase;
@@ -89,10 +92,6 @@ private:
     bool m_decryptPermanently = false;
 
     QPointer<NoteEditorPrivate> m_pNoteEditor;
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H

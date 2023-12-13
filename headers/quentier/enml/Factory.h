@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,22 +18,11 @@
 
 #pragma once
 
-#include <QString>
+#include <quentier/enml/Fwd.h>
+#include <quentier/utility/Linkage.h>
 
-#include <cstddef>
+namespace quentier::enml {
 
-namespace quentier {
+[[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr createDecryptedTextCache();
 
-struct Q_DECL_HIDDEN EncryptDecryptUndoCommandInfo
-{
-    QString m_encryptedText;
-    QString m_decryptedText;
-    QString m_passphrase;
-    QString m_cipher;
-    QString m_hint;
-    std::size_t m_keyLength = 0;
-    bool m_rememberForSession = false;
-    bool m_decryptPermanently = false;
-};
-
-} // namespace quentier
+} // namespace quentier::enml

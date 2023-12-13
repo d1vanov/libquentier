@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ENCRYPT_SELECTED_TEXT_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ENCRYPT_SELECTED_TEXT_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Note.h>
@@ -31,7 +31,6 @@
 
 namespace quentier {
 
-class DecryptedTextManager;
 class EncryptionManager;
 class NoteEditorPrivate;
 
@@ -48,7 +47,7 @@ public:
     explicit EncryptSelectedTextDelegate(
         NoteEditorPrivate * pNoteEditor,
         std::shared_ptr<EncryptionManager> encryptionManager,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager);
+        enml::IDecryptedTextCachePtr decryptedTextCache);
 
     void start(const QString & selectionHtml);
 
@@ -74,9 +73,9 @@ private:
     using JsCallback = JsResultCallbackFunctor<EncryptSelectedTextDelegate>;
 
 private:
-    QPointer<NoteEditorPrivate> m_pNoteEditor;
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
+    const QPointer<NoteEditorPrivate> m_pNoteEditor;
+    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
 
     QString m_encryptedTextHtml;
 
@@ -89,5 +88,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ENCRYPT_SELECTED_TEXT_DELEGATE_H

@@ -110,9 +110,11 @@ set(TYPES_HEADERS
     headers/quentier/types/RegisterMetatypes.h)
 
 set(ENML_HEADERS
-    headers/quentier/enml/DecryptedTextManager.h
     headers/quentier/enml/ENMLConverter.h
-    headers/quentier/enml/HTMLCleaner.h)
+    headers/quentier/enml/Factory.h
+    headers/quentier/enml/Fwd.h
+    headers/quentier/enml/HTMLCleaner.h
+    headers/quentier/enml/IDecryptedTextCache.h)
 
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/Factory.h
@@ -233,8 +235,8 @@ set(PRIVATE_HEADERS
     src/types/data/ErrorStringData.h
     src/types/data/ResourceRecognitionIndexItemData.h
     src/types/data/ResourceRecognitionIndicesData.h
+    src/enml/DecryptedTextCache.h
     src/enml/ENMLConverter_p.h
-    src/enml/DecryptedTextManager_p.h
     src/synchronization/ISyncEventsNotifier.cpp
     src/synchronization/SyncStateStorage.h
     src/synchronization/types/AuthenticationInfo.h
@@ -345,11 +347,12 @@ endif()
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
 
 set(${PROJECT_NAME}_SOURCES
+    src/enml/DecryptedTextCache.cpp
     src/enml/ENMLConverter.cpp
     src/enml/ENMLConverter_p.cpp
+    src/enml/Factory.cpp
+    src/enml/IDecryptedTextCache.cpp
     src/enml/HTMLCleaner.cpp
-    src/enml/DecryptedTextManager.cpp
-    src/enml/DecryptedTextManager_p.cpp
     src/exception/ApplicationSettingsInitializationException.cpp
     src/exception/EmptyDataElementException.cpp
     src/exception/DatabaseLockedException.cpp
