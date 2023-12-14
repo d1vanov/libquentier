@@ -114,7 +114,12 @@ set(ENML_HEADERS
     headers/quentier/enml/Factory.h
     headers/quentier/enml/Fwd.h
     headers/quentier/enml/HTMLCleaner.h
-    headers/quentier/enml/IDecryptedTextCache.h)
+    headers/quentier/enml/IDecryptedTextCache.h
+    headers/quentier/enml/conversion_rules/Factory.h
+    headers/quentier/enml/conversion_rules/Fwd.h
+    headers/quentier/enml/conversion_rules/ISkipRule.h
+    headers/quentier/enml/conversion_rules/ISkipRuleBuilder.h
+    headers/quentier/enml/conversion_rules/MatchMode.h)
 
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/Factory.h
@@ -237,6 +242,10 @@ set(PRIVATE_HEADERS
     src/types/data/ResourceRecognitionIndicesData.h
     src/enml/DecryptedTextCache.h
     src/enml/ENMLConverter_p.h
+    src/enml/conversion_rules/Factory.cpp
+    src/enml/conversion_rules/ISkipRule.cpp
+    src/enml/conversion_rules/ISkipRuleBuilder.cpp
+    src/enml/conversion_rules/MatchMode.cpp
     src/synchronization/ISyncEventsNotifier.cpp
     src/synchronization/SyncStateStorage.h
     src/synchronization/types/AuthenticationInfo.h
@@ -746,6 +755,7 @@ endif()
 find_package(GMock)
 find_package(GTest)
 
+add_subdirectory(src/enml)
 add_subdirectory(src/local_storage/sql)
 add_subdirectory(src/synchronization)
 add_subdirectory(src/threading)
@@ -757,6 +767,7 @@ target_link_libraries(${LIBNAME}
   ${QT_LIBRARIES}
   PRIVATE
   ${THIRDPARTY_LIBS}
+  ${LIBNAME}_enml
   ${LIBNAME}_local_storage_sql
   ${LIBNAME}_synchronization
   ${LIBNAME}_threading
