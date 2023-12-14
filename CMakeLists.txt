@@ -103,6 +103,7 @@ set(TYPES_HEADERS
     headers/quentier/types/ErrorString.h
     headers/quentier/types/Fwd.h
     headers/quentier/types/NoteUtils.h
+    headers/quentier/types/Result.h
     headers/quentier/types/ResourceRecognitionIndexItem.h
     headers/quentier/types/ResourceRecognitionIndices.h
     headers/quentier/types/ResourceUtils.h
