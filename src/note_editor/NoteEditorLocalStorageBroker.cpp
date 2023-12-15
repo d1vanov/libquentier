@@ -813,8 +813,6 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         return;
     }
 
-    const QString & noteLocalId = updatedNoteVersion.localId();
-
     QFuture<void> putAllResourcesFuture = [&, this] {
         if (newAndUpdatedResources.isEmpty()) {
             return threading::makeReadyFuture();
