@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,20 +18,24 @@
 
 #pragma once
 
-#include <memory>
+#include <quentier/enml/IHtmlData.h>
 
 namespace quentier::enml {
 
-class IConverter;
-using IConverterPtr = std::shared_ptr<IConverter>;
+struct HtmlData: public IHtmlData
+{
+public: // IHtmlData
+    [[nodiscard]] QString html() const override;
+    [[nodiscard]] quint32 numEnToDoNodes() const noexcept override;
+    [[nodiscard]] quint32 numHyperlinkNodes() const noexcept override;
+    [[nodiscard]] quint32 numEnCryptNodes() const noexcept override;
+    [[nodiscard]] quint32 numEnDecryptedNodes() const noexcept override;
 
-class IDecryptedTextCache;
-using IDecryptedTextCachePtr = std::shared_ptr<IDecryptedTextCache>;
-
-class IENMLTagsConverter;
-using IENMLTagsConverterPtr = std::shared_ptr<IENMLTagsConverter>;
-
-class IHtmlData;
-using IHtmlDataPtr = std::shared_ptr<IHtmlData>;
+    QString m_html;
+    quint32 m_enToDoNodes = 0;
+    quint32 m_hyperlinkNodes = 0;
+    quint32 m_enCryptNodes = 0;
+    quint32 m_enDecryptedNodes;
+};
 
 } // namespace quentier::enml

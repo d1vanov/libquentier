@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,22 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <memory>
+#include <quentier/enml/IHtmlData.h>
 
 namespace quentier::enml {
 
-class IConverter;
-using IConverterPtr = std::shared_ptr<IConverter>;
-
-class IDecryptedTextCache;
-using IDecryptedTextCachePtr = std::shared_ptr<IDecryptedTextCache>;
-
-class IENMLTagsConverter;
-using IENMLTagsConverterPtr = std::shared_ptr<IENMLTagsConverter>;
-
-class IHtmlData;
-using IHtmlDataPtr = std::shared_ptr<IHtmlData>;
+QTextStream & IHtmlData::print(QTextStream & strm) const
+{
+    strm << "HTML: " << html()
+        << "\ntodo nodes: " << numEnToDoNodes()
+        << ", hyperlinks: " << numHyperlinkNodes()
+        << ", en-crypt nodes: " << numEnCryptNodes()
+        << ", decrypted en-crypt nodes: " << numEnDecryptedNodes();
+    return strm;
+}
 
 } // namespace quentier::enml

@@ -6,6 +6,10 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  DecryptedTextCache.cpp
+  DecryptedTextCache.h
+  HtmlData.cpp
+  HtmlData.h
   conversion_rules/SkipRule.cpp
   conversion_rules/SkipRule.h
   conversion_rules/SkipRuleBuilder.cpp

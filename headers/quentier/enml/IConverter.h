@@ -28,7 +28,7 @@
 #include <QStringList>
 #include <QTextDocument>
 
-#include <variant>
+#include <qevercloud/types/Note.h>
 
 namespace quentier::enml {
 
@@ -42,44 +42,119 @@ class QUENTIER_EXPORT IConverter
 public:
     virtual ~IConverter();
 
-    [[nodiscard]] virtual Result<QString, ErrorString> cleanupExternalHtml(
-        const QString & html) const = 0;
-
+    /**
+     * Converts HTML representation of note content into ENML
+     * @param html HTML representation of note content
+     * @param decryptedTextCache cache of decrypted text fragments
+     * @param skipRules skip rules to be used during the conversion
+     * @return Result with ENML in case of success or error string in case of
+     *         failure
+     */
     [[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToEnml(
         const QString & html, IDecryptedTextCache & decryptedTextCache,
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {}) const = 0;
 
+    /**
+     * Convert HTML representation of note content into QTextDocument
+     * @param html HTML representation of note content
+     * @param skipRules skip rules to be used during the conversion
+     * @return Result with QTextDocument in case of success or error string in
+     *         case of failure
+     */
     [[nodiscard]] virtual Result<QTextDocument, ErrorString> convertHtmlToDoc(
         const QString & html,
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {}) const = 0;
 
-    struct HtmlData
-    {
-        QString m_html;
-        quint32 m_numEnToDoNodes = 0;
-        quint32 m_numHyperlinkNodes = 0;
-        quint32 m_numEnCryptNodes = 0;
-        quint32 m_numEnDecryptedNodes = 0;
-    };
-
-    [[nodiscard]] virtual Result<HtmlData, ErrorString> convertEnmlToHtml(
+    /**
+     * Converts ENML into HTML representation of note content
+     * @param enml ENML representation of note content
+     * @param decryptedTextCache cache of decrypted text fragments
+     * @return Result with HTML data in case of success or error string in case
+     *         of failure
+     */
+    [[nodiscard]] virtual Result<IHtmlDataPtr, ErrorString> convertEnmlToHtml(
         const QString & enml,
         IDecryptedTextCache & decryptedTextCache) const = 0;
 
+    /**
+     * Converts ENML into plain text representation of note content
+     * @param enml ENML representation of note content
+     * @return Result with plain text representation of note content in case
+     *         of success or error string in case of failure
+     */
     [[nodiscard]] virtual Result<QString, ErrorString> convertEnmlToPlainText(
         const QString & enml) const = 0;
 
+    /**
+     * Converts ENML into a list of words
+     * @param enml ENML representation of note content
+     * @return Result with list of words in case of success or error string in
+     *         case of failure
+     */
     [[nodiscard]] virtual Result<QStringList, ErrorString>
         convertEnmlToWordsList(const QString & enml) const = 0;
 
+    /**
+     * Converts plain text into a list of words
+     * @param plainText plain text representation of note content
+     * @return list of words
+     */
     [[nodiscard]] virtual QStringList convertPlainTextToWordsList(
         const QString & plainText) const = 0;
 
+    /**
+     * Validates ENML against rules
+     * @param enml ENML representation of note content
+     * @return valid Result in case of success or error string in case of
+     *         failure
+     */
     [[nodiscard]] virtual Result<void, ErrorString> validateEnml(
         const QString & enml) const = 0;
 
+    /**
+     * Validates ENML and attempts to fix it automatically if it's not valid
+     * @param enml ENML representation of note content
+     * @return Result with either unchanged or fixed up ENML in case of success
+     *         or error string in case of failure
+     */
     [[nodiscard]] virtual Result<QString, ErrorString> validateAndFixupEnml(
         const QString & enml) const = 0;
+
+    /**
+     * @brief The EnexExportTags enum allows to specify whether export of
+     * note(s) to ENEX should include the names of note's tags or not.
+     */
+    enum class EnexExportTags
+    {
+        Yes = 0,
+        No
+    };
+
+    /**
+     * Exports a list of notes into ENEX
+     * @param notes notes to be exported into ENEX
+     * @param tagNamesByTagLocalIds mapper from tag local ids into tag names
+     * @param exportTagsOption option controlling the export of tag names
+     * @param version optional version tag for ENEX, omitted if not set
+     * @return Result with ENEX in case of success or error string in case of
+     *         failure
+     */
+    [[nodiscard]] virtual Result<QString, ErrorString> exportNotesToEnex(
+        const QList<qevercloud::Note> & notes,
+        const QHash<QString, QString> & tagNamesByTagLocalIds,
+        EnexExportTags exportTagsOption,
+        const QString & version = {}) const = 0;
+
+    /**
+     * Import notes from ENEX
+     * @param enex ENEX to be used for import
+     * @return Result with list of notes in case of success or error string in
+     *         case of failure
+     * @note if tag names are present in ENEX, corresponding notes would have
+     *       their tagNames field filled
+     */
+    [[nodiscard]] virtual Result<QList<qevercloud::Note>, ErrorString>
+        importEnex(const QString & enex) const = 0;
 };
 
 } // namespace quentier::enml
