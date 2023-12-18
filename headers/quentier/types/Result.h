@@ -36,21 +36,29 @@ template <
         !std::is_same_v<std::decay_t<T>, std::decay_t<Error>>>>
 class Result
 {
-    using ValueType = std::conditional<
+    using ValueType = std::conditional_t<
         std::is_same_v<std::decay_t<T>, void>, std::monostate, T>;
 
 public:
     template <
-        typename = typename std::enable_if_t<!std::is_void_v<std::decay_t<T>>>>
-    explicit Result(T t) : m_valueOrError{std::move(t)}
+        typename T1 = T,
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
+    explicit Result(T1 t) : m_valueOrError{std::move(t)}
     {}
 
     template <
-        typename = typename std::enable_if_t<std::is_void_v<std::decay_t<T>>>>
+        typename T1 = T,
+        typename std::enable_if_t<std::is_void_v<std::decay_t<T1>>> * = nullptr>
     explicit Result() : m_valueOrError{std::monostate{}}
     {}
 
     explicit Result(Error error) : m_valueOrError{std::move(error)} {}
+
+    Result(const Result<T, Error> & other) = default;
+    Result(Result<T, Error> && other) = default;
+
+    Result & operator=(const Result<T, Error> & other) = default;
+    Result & operator=(Result<T, Error> && other) = default;
 
     /**
      * @return boolean value indicating whether the result contains a value
@@ -66,8 +74,8 @@ public:
     }
 
     template <
-        typename =
-            typename std::enable_if_t<!std::is_same_v<std::decay_t<T>, void>>>
+        typename T1 = T,
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
     [[nodiscard]] T & get()
     {
         // NOTE: std::get also performs the check of what is stored inside the
@@ -86,8 +94,8 @@ public:
     }
 
     template <
-        typename =
-            typename std::enable_if_t<!std::is_same_v<std::decay_t<T>, void>>>
+        typename T1 = T,
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
     [[nodiscard]] const T & get() const
     {
         // NOTE: std::get also performs the check of what is stored inside the
@@ -106,16 +114,16 @@ public:
     }
 
     template <
-        typename =
-            typename std::enable_if_t<!std::is_same_v<std::decay_t<T>, void>>>
+        typename T1 = T,
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
     [[nodiscard]] T & operator*()
     {
         return get();
     }
 
     template <
-        typename =
-            typename std::enable_if_t<!std::is_same_v<std::decay_t<T>, void>>>
+        typename T1 = T,
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
     [[nodiscard]] const T & operator*() const
     {
         return get();
