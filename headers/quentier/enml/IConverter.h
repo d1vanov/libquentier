@@ -33,9 +33,8 @@
 namespace quentier::enml {
 
 /**
- * @brief The IConverter interface encapsulates a set of methods
- * performing conversions between ENML and other note content formats, namely
- * HTML for use in the note editor
+ * @brief The IConverter interface encapsulates a set of methods performing
+ * conversions between ENML and other note content formats, namely HTML
  */
 class QUENTIER_EXPORT IConverter
 {
@@ -64,6 +63,24 @@ public:
     [[nodiscard]] virtual Result<QTextDocument, ErrorString> convertHtmlToDoc(
         const QString & html,
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {}) const = 0;
+
+	/**
+	 * Convert HTML representation of note content into a valid XML document
+	 * @param html HTML representation of note content
+	 * @return Result with XML in case of success of error string in case of
+	 * 		   failure
+	 */
+	[[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToXml(
+		const QString & html) const = 0;
+
+	/**
+	 * Convert HTML representation of note content into a valid XHTML document
+	 * @param html HTML representation of note content
+	 * @return Result with XHTML in case of success of error string in case of
+	 * 		   failure
+	 */
+	[[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToXhtml(
+		const QString & html) const = 0;
 
     /**
      * Converts ENML into HTML representation of note content
