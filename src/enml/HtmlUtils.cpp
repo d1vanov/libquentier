@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HtmlConverter.h"
+#include "HtmlUtils.h"
 
 #include <memory>
 #include <quentier/logging/QuentierLogger.h>
@@ -392,5 +392,20 @@ private:
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
+
+Result<QString, ErrorString> convertHtmlToXml(const QString & html)
+{
+    return convertHtml(html, TidyXmlOut);
+}
+
+Result<QString, ErrorString> convertHtmlToXhtml(const QString & html)
+{
+    return convertHtml(html, TidyXhtmlOut);
+}
+
+Result<QString, ErrorString> cleanupHtml(const QString & html)
+{
+    return convertHtml(html, TidyHtmlOut);
+}
 
 } // namespace quentier::enml

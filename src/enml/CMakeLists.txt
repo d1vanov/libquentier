@@ -8,10 +8,10 @@ target_sources(${LIBRARY_NAME}
   PRIVATE
   DecryptedTextCache.cpp
   DecryptedTextCache.h
-  HtmlConverter.cpp
-  HtmlConverter.h
   HtmlData.cpp
   HtmlData.h
+  HtmlUtils.cpp
+  HtmlUtils.h
   conversion_rules/SkipRule.cpp
   conversion_rules/SkipRule.h
   conversion_rules/SkipRuleBuilder.cpp

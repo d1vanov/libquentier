@@ -25,17 +25,13 @@
 
 namespace quentier::enml {
 
-class HtmlConverter
-{
-public:
-	[[nodiscard]] Result<QString, ErrorString> convertHtmlToXml(
-		const QString & html) const;
+[[nodiscard]] static Result<QString, ErrorString> convertHtmlToXml(
+    const QString & html);
 
-	[[nodiscard]] Result<QString, ErrorString> convertHtmlToXhtml(
-		const QString & html) const;
+[[nodiscard]] static Result<QString, ErrorString> convertHtmlToXhtml(
+    const QString & html);
 
-	[[nodiscard]] Result<QString, ErrorString> cleanupHtml(
-		const QString & html) const;
-};
+[[nodiscard]] static Result<QString, ErrorString> cleanupHtml(
+    const QString & html);
 
 } // namespace quentier::enml
