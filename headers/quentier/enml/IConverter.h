@@ -56,12 +56,13 @@ public:
     /**
      * Convert HTML representation of note content into QTextDocument
      * @param html HTML representation of note content
+     * @param doc QTextDocument into which the converted note content is put
      * @param skipRules skip rules to be used during the conversion
-     * @return Result with QTextDocument in case of success or error string in
-     *         case of failure
+     * @return Valid result in case of success or error string in case of
+     *         failure
      */
-    [[nodiscard]] virtual Result<QTextDocument, ErrorString> convertHtmlToDoc(
-        const QString & html,
+    [[nodiscard]] virtual Result<void, ErrorString> convertHtmlToDoc(
+        const QString & html, QTextDocument & doc,
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {}) const = 0;
 
 	/**

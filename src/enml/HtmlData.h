@@ -35,7 +35,7 @@ public: // IHtmlData
     quint32 m_enToDoNodes = 0;
     quint32 m_hyperlinkNodes = 0;
     quint32 m_enCryptNodes = 0;
-    quint32 m_enDecryptedNodes;
+    quint32 m_enDecryptedNodes = 0;
 };
 
 } // namespace quentier::enml

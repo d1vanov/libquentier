@@ -44,7 +44,7 @@ RESTORE_WARNINGS
 #include <cerrno>
 #include <cstdio>
 
-namespace quentier::enml {
+namespace quentier::enml::utils {
 
 namespace {
 
@@ -408,4 +408,4 @@ Result<QString, ErrorString> cleanupHtml(const QString & html)
     return convertHtml(html, TidyHtmlOut);
 }
 
-} // namespace quentier::enml
+} // namespace quentier::enml::utils

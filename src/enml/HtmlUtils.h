@@ -23,15 +23,14 @@
 
 #include <memory>
 
-namespace quentier::enml {
+namespace quentier::enml::utils {
 
-[[nodiscard]] static Result<QString, ErrorString> convertHtmlToXml(
+[[nodiscard]] Result<QString, ErrorString> convertHtmlToXml(
     const QString & html);
 
-[[nodiscard]] static Result<QString, ErrorString> convertHtmlToXhtml(
+[[nodiscard]] Result<QString, ErrorString> convertHtmlToXhtml(
     const QString & html);
 
-[[nodiscard]] static Result<QString, ErrorString> cleanupHtml(
-    const QString & html);
+[[nodiscard]] Result<QString, ErrorString> cleanupHtml(const QString & html);
 
-} // namespace quentier::enml
+} // namespace quentier::enml::utils

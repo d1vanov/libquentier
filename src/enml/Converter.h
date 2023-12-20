@@ -33,7 +33,7 @@ namespace quentier::enml {
 class Converter : public IConverter
 {
 public:
-    Converter();
+    explicit Converter(IENMLTagsConverterPtr enmlTagsConverter);
 
 public: // IConverter
     [[nodiscard]] Result<QString, ErrorString> convertHtmlToEnml(
@@ -41,8 +41,8 @@ public: // IConverter
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {})
         const override;
 
-    [[nodiscard]] Result<QTextDocument, ErrorString> convertHtmlToDoc(
-        const QString & html,
+    [[nodiscard]] Result<void, ErrorString> convertHtmlToDoc(
+        const QString & html, QTextDocument & doc,
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {})
         const override;
 
@@ -110,7 +110,11 @@ private:
             QXmlStreamReader & reader, QXmlStreamWriter & writer,
             ErrorString & errorDescription) const;
 
+    [[nodiscard]] bool isForbiddenXhtmlAttribute(
+        const QString & attributeName) const noexcept;
+
 private:
+    const IENMLTagsConverterPtr m_enmlTagsConverter;
     const QSet<QString> m_forbiddenXhtmlTags;
     const QSet<QString> m_forbiddenXhtmlAttributes;
     const QSet<QString> m_evernoteSpecificXhtmlTags;

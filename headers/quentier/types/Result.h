@@ -76,7 +76,7 @@ public:
     template <
         typename T1 = T,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
-    [[nodiscard]] T & get()
+    [[nodiscard]] T1 & get()
     {
         // NOTE: std::get also performs the check of what is stored inside the
         // variant but it throws std::bad_variant_access which doesn't implement
@@ -96,7 +96,7 @@ public:
     template <
         typename T1 = T,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
-    [[nodiscard]] const T & get() const
+    [[nodiscard]] const T1 & get() const
     {
         // NOTE: std::get also performs the check of what is stored inside the
         // variant but it throws std::bad_variant_access which doesn't implement
@@ -116,7 +116,7 @@ public:
     template <
         typename T1 = T,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
-    [[nodiscard]] T & operator*()
+    [[nodiscard]] T1 & operator*()
     {
         return get();
     }
@@ -124,12 +124,29 @@ public:
     template <
         typename T1 = T,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
-    [[nodiscard]] const T & operator*() const
+    [[nodiscard]] const T1 & operator*() const
     {
         return get();
     }
 
     [[nodiscard]] const Error & error() const
+    {
+        // NOTE: std::get also performs the check of what is stored inside the
+        // variant but it throws std::bad_variant_access which doesn't implement
+        // QException so this exception is not representable inside QFuture
+        // in Qt5. Due to this for Qt5 also performing another check and using
+        // another exception type
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        if (Q_UNLIKELY(isValid())) {
+            throw RuntimeError{ErrorString{
+                "Detected attempt to get error from non-empty Result"}};
+        }
+#endif
+
+        return std::get<Error>(m_valueOrError);
+    }
+
+    [[nodiscard]] Error & error()
     {
         // NOTE: std::get also performs the check of what is stored inside the
         // variant but it throws std::bad_variant_access which doesn't implement
