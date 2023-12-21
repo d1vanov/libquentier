@@ -113,6 +113,9 @@ private:
     [[nodiscard]] bool isForbiddenXhtmlAttribute(
         const QString & attributeName) const noexcept;
 
+    [[nodiscard]] Result<void, ErrorString> validateAgainstDtd(
+        const QString & input, const QString & dtdFilePath) const;
+
 private:
     const IENMLTagsConverterPtr m_enmlTagsConverter;
     const QSet<QString> m_forbiddenXhtmlTags;

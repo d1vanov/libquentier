@@ -29,16 +29,20 @@
 
 #include <QApplication>
 #include <QBuffer>
+#include <QFile>
 #include <QFileInfo>
 #include <QFlags>
 #include <QImage>
 #include <QPainter>
 #include <QPen>
 #include <QPixmap>
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QThread>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+
+#include <libxml/xmlreader.h>
 
 #include <utility>
 
@@ -569,6 +573,17 @@ void toDoTagsToHtml(
         QStringLiteral("en-todo-id"), QString::number(enToDoIndex));
 
     writer.writeAttributes(attributes);
+}
+
+void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
+{
+    QNDEBUG("enml::Converter", "xmlValidationErrorFunc");
+
+    QString currentError = QString::asprintf(msg, args);
+
+    auto * pErrorString = reinterpret_cast<QString *>(ctx);
+    *pErrorString += currentError;
+    QNDEBUG("enml::Converter", "Error string: " << *pErrorString);
 }
 
 } // namespace
@@ -1521,6 +1536,107 @@ Result<IHtmlDataPtr, ErrorString> Converter::convertEnmlToHtml(
     return Result<IHtmlDataPtr, ErrorString>{std::move(htmlData)};
 }
 
+Result<QString, ErrorString> Converter::convertEnmlToPlainText(
+    const QString & enml) const
+{
+    QNTRACE("enml::Converter", "Converter::noteContentToPlainText: " << enml);
+
+    QString plainText;
+    QTextStream strm{&plainText};
+
+    QXmlStreamReader reader{enml};
+
+    bool skipIteration = false;
+    while (!reader.atEnd()) {
+        Q_UNUSED(reader.readNext());
+
+        if (reader.isStartDocument()) {
+            continue;
+        }
+
+        if (reader.isDTD()) {
+            continue;
+        }
+
+        if (reader.isEndDocument()) {
+            break;
+        }
+
+        if (reader.isStartElement()) {
+            const QStringRef element = reader.name();
+            if ((element == QStringLiteral("en-media")) ||
+                (element == QStringLiteral("en-crypt")))
+            {
+                skipIteration = true;
+            }
+
+            continue;
+        }
+
+        if (reader.isEndElement()) {
+            const QStringRef element = reader.name();
+            if ((element == QStringLiteral("en-media")) ||
+                (element == QStringLiteral("en-crypt")))
+            {
+                skipIteration = false;
+            }
+
+            continue;
+        }
+
+        if (reader.isCharacters() && !skipIteration) {
+            strm << reader.text();
+        }
+    }
+
+    if (Q_UNLIKELY(reader.hasError())) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Failed to convert the note content to plain text")};
+        errorDescription.details() = reader.errorString();
+        errorDescription.details() += QStringLiteral(", error code ");
+        errorDescription.details() += QString::number(reader.error());
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    return Result<QString, ErrorString>{std::move(plainText)};
+}
+
+Result<QStringList, ErrorString> Converter::convertEnmlToWordsList(
+    const QString & enml) const
+{
+    QString plainText;
+
+    auto res = convertEnmlToPlainText(enml);
+    if (Q_UNLIKELY(!res.isValid())) {
+        return Result<QStringList, ErrorString>{std::move(res.error())};
+    }
+
+    auto wordsList = convertPlainTextToWordsList(res.get());
+    return Result<QStringList, ErrorString>{std::move(wordsList)};
+}
+
+QStringList Converter::convertPlainTextToWordsList(
+    const QString & plainText) const
+{
+    // Simply remove all non-word characters from plain text
+    return plainText.split(
+        QRegularExpression{QStringLiteral("([[:punct:]]|[[:space:]])+")},
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        Qt::SkipEmptyParts);
+#else
+        QString::SkipEmptyParts);
+#endif
+}
+
+Result<void, ErrorString> Converter::validateEnml(
+    const QString & enml) const
+{
+    QNDEBUG("enml::Converter", "Converter::validateEnml");
+    return validateAgainstDtd(enml, QStringLiteral(":/enml2.dtd"));
+}
+
 Converter::ProcessElementStatus
     Converter::processElementForHtmlToNoteContentConversion(
         const QList<conversion_rules::ISkipRulePtr> & skipRules,
@@ -1810,6 +1926,101 @@ bool Converter::isForbiddenXhtmlAttribute(
     }
 
     return attributeName.startsWith(QStringLiteral("on"));
+}
+
+Result<void, ErrorString> Converter::validateAgainstDtd(
+    const QString & input, const QString & dtdFilePath) const
+{
+    QNDEBUG(
+        "enml::Converter",
+        "Converter::validateAgainstDtd: dtd file " << dtdFilePath);
+
+    const QByteArray inputBuffer = input.toUtf8();
+
+    const std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> doc{
+        xmlParseMemory(inputBuffer.constData(), inputBuffer.size()),
+        xmlFreeDoc};
+
+    if (Q_UNLIKELY(!doc)) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Could not validate document, can't parse the input into xml doc")};
+        QNWARNING("enml::Converter", errorDescription << ": input = " << input);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    }
+
+    QFile dtdFile{dtdFilePath};
+    if (Q_UNLIKELY(!dtdFile.open(QIODevice::ReadOnly))) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Could not validate document, can't open the resource file with "
+            "DTD")};
+        QNWARNING(
+            "enml::Converter",
+            errorDescription << ": input = " << input
+                             << ", DTD file path = " << dtdFilePath);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    }
+
+    const QByteArray dtdRawData = dtdFile.readAll();
+
+    std::unique_ptr<xmlParserInputBuffer, void (*)(xmlParserInputBufferPtr)>
+        buf{xmlParserInputBufferCreateMem(
+                dtdRawData.constData(), dtdRawData.size(),
+                XML_CHAR_ENCODING_NONE),
+            xmlFreeParserInputBuffer};
+
+    if (!buf) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Could not validate document, can't allocate the input buffer for "
+            "dtd validation")};
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    }
+
+    // NOTE: xmlIOParseDTD should have "consumed" the input buffer so one
+    // should not attempt to free it manually
+    const std::unique_ptr<xmlDtd, void (*)(xmlDtdPtr)> dtd{
+        xmlIOParseDTD(nullptr, buf.release(), XML_CHAR_ENCODING_NONE),
+        xmlFreeDtd};
+
+    if (!dtd) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Could not validate document, failed to parse DTD")};
+        QNWARNING("enml", errorDescription);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    }
+
+    const std::unique_ptr<xmlValidCtxt, void (*)(xmlValidCtxtPtr)> context{
+        xmlNewValidCtxt(), xmlFreeValidCtxt};
+
+    if (!context) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Could not validate document, can't allocate parser context")};
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    }
+
+    QString errorString;
+    context->userData = &errorString;
+    context->error = (xmlValidityErrorFunc)xmlValidationErrorFunc;
+
+    if (!xmlValidateDtd(context.get(), doc.get(), dtd.get())) {
+        ErrorString errorDescription{
+            QT_TRANSLATE_NOOP("enml::Converter", "Document is invalid")};
+        if (!errorString.isEmpty()) {
+            errorDescription.details() = QStringLiteral(": ");
+            errorDescription.details() += errorString;
+        }
+
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    }
+
+    return Result<void, ErrorString>{};
 }
 
 } // namespace quentier::enml
