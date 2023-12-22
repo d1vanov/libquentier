@@ -31,7 +31,7 @@ using IDecryptedTextCachePtr = std::shared_ptr<IDecryptedTextCache>;
 class IENMLTagsConverter;
 using IENMLTagsConverterPtr = std::shared_ptr<IENMLTagsConverter>;
 
-class IHtmlData;
+struct IHtmlData;
 using IHtmlDataPtr = std::shared_ptr<IHtmlData>;
 
 } // namespace quentier::enml

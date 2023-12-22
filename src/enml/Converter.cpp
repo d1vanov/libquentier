@@ -25,10 +25,16 @@
 #include <quentier/enml/conversion_rules/ISkipRule.h>
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/Unreachable.h>
+
+#include <qevercloud/utility/ToRange.h>
 
 #include <QApplication>
 #include <QBuffer>
+#include <QCryptographicHash>
+#include <QDateTime>
+#include <QDebug>
 #include <QFile>
 #include <QFileInfo>
 #include <QFlags>
@@ -44,11 +50,18 @@
 
 #include <libxml/xmlreader.h>
 
+#include <string_view>
 #include <utility>
 
 namespace quentier::enml {
 
+using namespace std::string_view_literals;
+
 namespace {
+
+constexpr int gEnexMaxResourceDataSize = 26214400; // 25 Mb in bytes
+constexpr auto gEnexDateTimeFormat = "yyyyMMdd'T'HHmmss'Z'"sv;
+constexpr auto gEnexDateTimeFormatStrftime = "%Y%m%dT%H%M%SZ"sv;
 
 enum class SkipElementOption
 {
@@ -57,9 +70,25 @@ enum class SkipElementOption
     DontSkip = 0x2
 };
 
-QTextStream & operator<<(QTextStream & strm, SkipElementOption option);
-
 Q_DECLARE_FLAGS(SkipElementOptions, SkipElementOption);
+
+////////////////////////////////////////////////////////////////////////////////
+
+QDebug & operator<<(QDebug & dbg, const QXmlStreamAttributes & obj)
+{
+    const int numAttributes = obj.size();
+
+    dbg << "QXmlStreamAttributes(" << numAttributes << "): {\n";
+
+    for (int i = 0; i < numAttributes; ++i) {
+        const auto & attribute = obj[i];
+        dbg << "  [" << i << "]: name = " << attribute.name().toString()
+            << ", value = " << attribute.value().toString() << "\n";
+    }
+
+    dbg << "}\n";
+    return dbg;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -477,7 +506,7 @@ void encryptedTextToHtml(
 [[nodiscard]] Result<void, ErrorString> resourceInfoToHtml(
     const QXmlStreamAttributes & attributes, QXmlStreamWriter & writer)
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::resourceInfoToHtml");
+    QNDEBUG("enml::Converter", "ENMLConverterPrivate::resourceInfoToHtml");
 
     if (!attributes.hasAttribute(QStringLiteral("hash"))) {
         ErrorString errorDescription{QT_TRANSLATE_NOOP(
@@ -573,6 +602,44 @@ void toDoTagsToHtml(
         QStringLiteral("en-todo-id"), QString::number(enToDoIndex));
 
     writer.writeAttributes(attributes);
+}
+
+[[nodiscard]] qevercloud::Timestamp timestampFromDateTime(
+    const QDateTime & dateTime) noexcept
+{
+    if (!dateTime.isValid()) {
+        return 0;
+    }
+
+    auto timestamp = dateTime.toMSecsSinceEpoch();
+    if (Q_UNLIKELY(timestamp < 0)) {
+        return 0;
+    }
+
+    return timestamp;
+}
+
+template <class T, class Attrs>
+[[nodiscard]] Attrs & ensureAttributes(T & value)
+{
+    if (!value.attributes()) {
+        value.setAttributes(Attrs{});
+    }
+
+    return *value.mutableAttributes();
+}
+
+[[nodiscard]] qevercloud::NoteAttributes & ensureNoteAttributes(
+    qevercloud::Note & note)
+{
+    return ensureAttributes<qevercloud::Note, qevercloud::NoteAttributes>(note);
+}
+
+[[nodiscard]] qevercloud::ResourceAttributes & ensureResourceAttributes(
+    qevercloud::Resource & resource)
+{
+    return ensureAttributes<
+        qevercloud::Resource, qevercloud::ResourceAttributes>(resource);
 }
 
 void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
@@ -973,7 +1040,8 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                 (lastElementName == QStringLiteral("col")) ||
                 (lastElementName == QStringLiteral("colgroup")))
             {
-                QNTRACE("enml", "Skipping element " << lastElementName);
+                QNTRACE(
+                    "enml::Converter", "Skipping element " << lastElementName);
                 ++skippedElementNestingCounter;
                 continue;
             }
@@ -1431,7 +1499,8 @@ Result<IHtmlDataPtr, ErrorString> Converter::convertEnmlToHtml(
             lastElementAttributes = reader.attributes();
 
             if (lastElementName == QStringLiteral("en-note")) {
-                QNTRACE("enml", "Replacing en-note with \"body\" tag");
+                QNTRACE(
+                    "enml::Converter", "Replacing en-note with \"body\" tag");
                 lastElementName = QStringLiteral("body");
             }
             else if (lastElementName == QStringLiteral("en-media")) {
@@ -1470,7 +1539,7 @@ Result<IHtmlDataPtr, ErrorString> Converter::convertEnmlToHtml(
             writer.writeAttributes(lastElementAttributes);
 
             QNTRACE(
-                "enml",
+                "enml::Converter",
                 "Wrote start element: " << lastElementName
                                         << " and its attributes");
         }
@@ -1606,8 +1675,6 @@ Result<QString, ErrorString> Converter::convertEnmlToPlainText(
 Result<QStringList, ErrorString> Converter::convertEnmlToWordsList(
     const QString & enml) const
 {
-    QString plainText;
-
     auto res = convertEnmlToPlainText(enml);
     if (Q_UNLIKELY(!res.isValid())) {
         return Result<QStringList, ErrorString>{std::move(res.error())};
@@ -1630,11 +1697,1999 @@ QStringList Converter::convertPlainTextToWordsList(
 #endif
 }
 
-Result<void, ErrorString> Converter::validateEnml(
-    const QString & enml) const
+Result<void, ErrorString> Converter::validateEnml(const QString & enml) const
 {
     QNDEBUG("enml::Converter", "Converter::validateEnml");
     return validateAgainstDtd(enml, QStringLiteral(":/enml2.dtd"));
+}
+
+Result<QString, ErrorString> Converter::validateAndFixupEnml(
+    const QString & enml) const
+{
+    QNDEBUG("enml::Converter", "Converter::validateAndFixupEnml");
+
+    auto res = validateEnml(enml);
+    if (res.isValid()) {
+        return Result<QString, ErrorString>{enml};
+    }
+
+    // If we got here, the ENML it not valid. Most probably it is due to some
+    // attributes on some elements that Evernote doesn't quite like. Will try to
+    // parse the names of such attributes and corresponding elements from
+    // the error description and remove them during one more pass.
+
+    // FIXME: a better approach would be to consult the DTD file which knows
+    // exactly which attributes are allowed on which elements but it's kinda
+    // troublesome - libxml2 is probably capable of this but it's tedious to
+    // learn the exact way to do it. Hence, this simplified solution involving
+    // parsing the error description.
+
+    // I've tried to get a regex do this for me but it turned pretty bad pretty
+    // quickly so here's the dirty yet working solution
+    QString error = res.error().details();
+    QHash<QString, QStringList> elementToForbiddenAttributes;
+
+    int lastIndex = 0;
+
+    QString attributePrefix = QStringLiteral("No declaration for attribute ");
+    int attributePrefixSize = attributePrefix.size();
+
+    QString elementPrefix = QStringLiteral("element ");
+    int elementPrefixSize = elementPrefix.size();
+
+    while (true) {
+        int attributeNameIndex = error.indexOf(attributePrefix, lastIndex);
+        if (attributeNameIndex < 0) {
+            break;
+        }
+
+        attributeNameIndex += attributePrefixSize;
+
+        int attributeNameEndIndex =
+            error.indexOf(QStringLiteral(" "), attributeNameIndex);
+        if (attributeNameEndIndex < 0) {
+            break;
+        }
+
+        int elementNameIndex =
+            error.indexOf(elementPrefix, attributeNameEndIndex);
+
+        if (elementNameIndex < 0) {
+            break;
+        }
+
+        elementNameIndex += elementPrefixSize;
+
+        int elementNameIndexEnd =
+            error.indexOf(QStringLiteral("\n"), elementNameIndex);
+
+        if (elementNameIndexEnd < 0) {
+            break;
+        }
+
+        lastIndex = elementNameIndexEnd;
+
+        QString elementName = error.mid(
+            elementNameIndex, (elementNameIndexEnd - elementNameIndex));
+
+        QString attributeName = error.mid(
+            attributeNameIndex, (attributeNameEndIndex - attributeNameIndex));
+
+        QStringList & attributesForElement =
+            elementToForbiddenAttributes[elementName];
+
+        if (!attributesForElement.contains(attributeName)) {
+            attributesForElement << attributeName;
+        }
+    }
+
+    if (QuentierIsLogLevelActive(LogLevel::Trace)) {
+        QNTRACE("enml::Converter", "Parsed forbidden attributes per element: ");
+
+        for (const auto it:
+             qevercloud::toRange(std::as_const(elementToForbiddenAttributes)))
+        {
+            QNTRACE("enml::Converter", "[" << it.key() << "]: " << it.value());
+        }
+    }
+
+    QBuffer fixedUpEnmlBuffer;
+    if (Q_UNLIKELY(!fixedUpEnmlBuffer.open(QIODevice::WriteOnly))) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Failed to open the buffer to write the fixed up note content "
+            "into")};
+        errorDescription.details() = fixedUpEnmlBuffer.errorString();
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    QXmlStreamWriter writer(&fixedUpEnmlBuffer);
+    writer.setAutoFormatting(false);
+    writer.setCodec("UTF-8");
+    writer.writeStartDocument();
+    writer.writeDTD(
+        QStringLiteral("<!DOCTYPE en-note SYSTEM "
+                       "\"http://xml.evernote.com/pub/enml2.dtd\">"));
+
+    QString lastElementName;
+    QXmlStreamAttributes lastElementAttributes;
+
+    QXmlStreamReader reader(enml);
+    while (!reader.atEnd()) {
+        Q_UNUSED(reader.readNext());
+
+        if (reader.isStartDocument()) {
+            continue;
+        }
+
+        if (reader.isDTD()) {
+            continue;
+        }
+
+        if (reader.isEndDocument()) {
+            break;
+        }
+
+        if (reader.isStartElement()) {
+            lastElementName = reader.name().toString();
+            lastElementAttributes = reader.attributes();
+
+            auto it = elementToForbiddenAttributes.find(lastElementName);
+            if (it == elementToForbiddenAttributes.end()) {
+                QNTRACE(
+                    "enml::Converter",
+                    "No forbidden attributes for element " << lastElementName);
+
+                writer.writeStartElement(lastElementName);
+                writer.writeAttributes(lastElementAttributes);
+                continue;
+            }
+
+            const QStringList & forbiddenAttributes = it.value();
+
+            // Erasing forbidden attributes
+            for (auto ait = lastElementAttributes.begin(); // NOLINT
+                 ait != lastElementAttributes.end();)
+            {
+                const auto & attribute = *ait;
+                const QString attributeName = attribute.name().toString();
+                if (forbiddenAttributes.contains(attributeName)) {
+                    QNTRACE(
+                        "enml::Converter",
+                        "Erasing forbidden attribute " << attributeName);
+
+                    ait = lastElementAttributes.erase(ait);
+                    continue;
+                }
+
+                ++ait;
+            }
+
+            writer.writeStartElement(lastElementName);
+            writer.writeAttributes(lastElementAttributes);
+
+            QNTRACE(
+                "enml::Converter",
+                "Wrote element: name = " << lastElementName
+                                         << " and its attributes");
+        }
+
+        if (reader.isCharacters()) {
+            QString text = reader.text().toString();
+
+            if (reader.isCDATA()) {
+                writer.writeCDATA(text);
+                QNTRACE("enml::Converter", "Wrote CDATA: " << text);
+            }
+            else {
+                writer.writeCharacters(text);
+                QNTRACE("enml::Converter", "Wrote characters: " << text);
+            }
+        }
+
+        if (reader.isEndElement()) {
+            writer.writeEndElement();
+        }
+    }
+
+    if (Q_UNLIKELY(reader.hasError())) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Could not fixup ENML as it is not a valid XML document")};
+        errorDescription.details() = reader.errorString();
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    auto fixedUpEnml = QString::fromUtf8(fixedUpEnmlBuffer.buffer());
+    QNTRACE("enml::Converter", "ENML after fixing up: " << fixedUpEnml);
+
+    res = validateEnml(fixedUpEnml);
+    if (!res.isValid()) {
+        return Result<QString, ErrorString>{std::move(res.error())};
+    }
+
+    return Result<QString, ErrorString>{std::move(fixedUpEnml)};
+}
+
+Result<QString, ErrorString> Converter::exportNotesToEnex(
+    const QList<qevercloud::Note> & notes,
+    const QHash<QString, QString> & tagNamesByTagLocalIds,
+    EnexExportTags exportTagsOption, const QString & version) const
+{
+    QNDEBUG(
+        "enml::Converter",
+        "Converter::exportNotesToEnex: num notes = "
+            << notes.size() << ", num tag names by tag local ids = "
+            << tagNamesByTagLocalIds.size() << ", export tags option = "
+            << ((exportTagsOption == EnexExportTags::Yes) ? "Yes" : "No")
+            << ", version = " << version);
+
+    if (notes.isEmpty()) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter", "Can't export note(s) to ENEX: no notes")};
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    QString enex;
+    bool foundNoteEligibleForExport = false;
+    for (const auto & note: std::as_const(notes)) {
+        if (!note.title() && !note.content() &&
+            (!note.resources() || note.resources()->isEmpty()) &&
+            note.tagLocalIds().isEmpty())
+        {
+            continue;
+        }
+
+        foundNoteEligibleForExport = true;
+        break;
+    }
+
+    if (!foundNoteEligibleForExport) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Can't export note(s) to ENEX: no notes eligible for export")};
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    QBuffer enexBuffer;
+    if (Q_UNLIKELY(!enexBuffer.open(QIODevice::WriteOnly))) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Can't export note(s) to ENEX: can't open the buffer to write the "
+            "ENEX into")};
+        errorDescription.details() = enexBuffer.errorString();
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    QXmlStreamWriter writer(&enexBuffer);
+    writer.setAutoFormatting(false);
+    writer.setCodec("UTF-8");
+    writer.writeStartDocument();
+    writer.writeDTD(QStringLiteral(
+        "<!DOCTYPE en-export SYSTEM "
+        "\"http://xml.evernote.com/pub/evernote-export3.dtd\">"));
+
+    writer.writeStartElement(QStringLiteral("en-export"));
+
+    QXmlStreamAttributes enExportAttributes;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    DateTimePrintOptions dateTimePrintOptions;
+#else
+    DateTimePrintOptions dateTimePrintOptions{0}; // NOLINT
+#endif
+
+    const qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();
+
+    enExportAttributes.append(
+        QStringLiteral("export-date"),
+        printableDateTimeFromTimestamp(
+            currentTimestamp, dateTimePrintOptions,
+            gEnexDateTimeFormatStrftime.data()));
+
+    enExportAttributes.append(
+        QStringLiteral("application"), QCoreApplication::applicationName());
+
+    enExportAttributes.append(QStringLiteral("version"), version);
+
+    writer.writeAttributes(enExportAttributes);
+
+    for (const auto & note: std::as_const(notes)) {
+        if (!note.title() && !note.content() &&
+            (!note.resources() || note.resources()->isEmpty()) &&
+            ((exportTagsOption != EnexExportTags::Yes) ||
+             note.tagLocalIds().isEmpty()))
+        {
+            QNINFO(
+                "enml::Converter",
+                "Skipping note without title, content, resources or tags in "
+                "export to ENML");
+            continue;
+        }
+
+        writer.writeStartElement(QStringLiteral("note"));
+
+        // NOTE: per DTD, title and content tags have to exist while created
+        // and updated don't have to
+        writer.writeStartElement(QStringLiteral("title"));
+        if (note.title()) {
+            writer.writeCharacters(*note.title());
+        }
+        writer.writeEndElement(); // title
+
+        writer.writeStartElement(QStringLiteral("content"));
+        if (note.content()) {
+            writer.writeCDATA(*note.content());
+        }
+        writer.writeEndElement(); // content
+
+        if (note.created()) {
+            writer.writeStartElement(QStringLiteral("created"));
+            writer.writeCharacters(printableDateTimeFromTimestamp(
+                *note.created(), dateTimePrintOptions,
+                gEnexDateTimeFormatStrftime.data()));
+            writer.writeEndElement(); // created
+        }
+
+        if (note.updated()) {
+            writer.writeStartElement(QStringLiteral("updated"));
+            writer.writeCharacters(printableDateTimeFromTimestamp(
+                *note.updated(), dateTimePrintOptions,
+                gEnexDateTimeFormatStrftime.data()));
+            writer.writeEndElement(); // updated
+        }
+
+        if (exportTagsOption == EnexExportTags::Yes) {
+            const QStringList & tagLocalIds = note.tagLocalIds();
+            for (auto tagIt = tagLocalIds.constBegin(),
+                      tagEnd = tagLocalIds.constEnd();
+                 tagIt != tagEnd; ++tagIt)
+            {
+                auto tagNameIt = tagNamesByTagLocalIds.find(*tagIt);
+                if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalIds.end())) {
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Can't export note(s) to ENEX: one of notes has tag "
+                        "local uid for which no tag name was found")};
+                    QNWARNING("enml::Converter", errorDescription);
+                    return Result<QString, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                const QString & tagName = tagNameIt.value();
+                if (Q_UNLIKELY(tagName.isEmpty())) {
+                    QNWARNING(
+                        "enml::Converter",
+                        "Skipping tag with empty name, "
+                            << " tag local uid = " << *tagIt
+                            << ", note: " << note);
+                    continue;
+                }
+
+                writer.writeStartElement(QStringLiteral("tag"));
+                writer.writeCharacters(tagName);
+                writer.writeEndElement();
+            }
+        }
+
+        if (note.attributes()) {
+            const auto & noteAttributes = *note.attributes();
+
+            if (noteAttributes.latitude() || noteAttributes.longitude() ||
+                noteAttributes.altitude() || noteAttributes.author() ||
+                noteAttributes.source() || noteAttributes.sourceURL() ||
+                noteAttributes.sourceApplication() ||
+                noteAttributes.reminderOrder() ||
+                noteAttributes.reminderTime() ||
+                noteAttributes.reminderDoneTime() ||
+                noteAttributes.placeName() || noteAttributes.contentClass() ||
+                noteAttributes.subjectDate() ||
+                noteAttributes.applicationData())
+            {
+                writer.writeStartElement(QStringLiteral("note-attributes"));
+
+                if (noteAttributes.subjectDate()) {
+                    writer.writeStartElement(QStringLiteral("subject-date"));
+                    writer.writeCharacters(printableDateTimeFromTimestamp(
+                        *noteAttributes.subjectDate(), dateTimePrintOptions,
+                        gEnexDateTimeFormatStrftime.data()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.latitude()) {
+                    writer.writeStartElement(QStringLiteral("latitude"));
+                    writer.writeCharacters(
+                        QString::number(*noteAttributes.latitude()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.longitude()) {
+                    writer.writeStartElement(QStringLiteral("longitude"));
+                    writer.writeCharacters(
+                        QString::number(*noteAttributes.longitude()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.altitude()) {
+                    writer.writeStartElement(QStringLiteral("altitude"));
+                    writer.writeCharacters(
+                        QString::number(*noteAttributes.altitude()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.author()) {
+                    writer.writeStartElement(QStringLiteral("author"));
+                    writer.writeCharacters(*noteAttributes.author());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.source()) {
+                    writer.writeStartElement(QStringLiteral("source"));
+                    writer.writeCharacters(*noteAttributes.source());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.sourceURL()) {
+                    writer.writeStartElement(QStringLiteral("source-url"));
+                    writer.writeCharacters(*noteAttributes.sourceURL());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.sourceApplication()) {
+                    writer.writeStartElement(
+                        QStringLiteral("source-application"));
+
+                    writer.writeCharacters(*noteAttributes.sourceApplication());
+
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.reminderOrder()) {
+                    writer.writeStartElement(QStringLiteral("reminder-order"));
+
+                    writer.writeCharacters(
+                        QString::number(*noteAttributes.reminderOrder()));
+
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.reminderTime()) {
+                    writer.writeStartElement(QStringLiteral("reminder-time"));
+                    writer.writeCharacters(printableDateTimeFromTimestamp(
+                        *noteAttributes.reminderTime(), dateTimePrintOptions,
+                        gEnexDateTimeFormatStrftime.data()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.reminderDoneTime()) {
+                    writer.writeStartElement(
+                        QStringLiteral("reminder-done-time"));
+
+                    writer.writeCharacters(printableDateTimeFromTimestamp(
+                        *noteAttributes.reminderDoneTime(),
+                        dateTimePrintOptions,
+                        gEnexDateTimeFormatStrftime.data()));
+
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.placeName()) {
+                    writer.writeStartElement(QStringLiteral("place-name"));
+                    writer.writeCharacters(*noteAttributes.placeName());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.contentClass()) {
+                    writer.writeStartElement(QStringLiteral("content-class"));
+                    writer.writeCharacters(*noteAttributes.contentClass());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.applicationData()) {
+                    const auto & appData = *noteAttributes.applicationData();
+                    if (appData.fullMap()) {
+                        const auto & fullMap = *appData.fullMap();
+
+                        for (const auto mapIt: qevercloud::toRange(fullMap)) {
+                            writer.writeStartElement(
+                                QStringLiteral("application-data"));
+                            writer.writeAttribute(
+                                QStringLiteral("key"), mapIt.key());
+                            writer.writeCharacters(mapIt.value());
+                            writer.writeEndElement();
+                        }
+                    }
+                }
+
+                writer.writeEndElement(); // note-attributes
+            }
+        }
+
+        if (note.resources()) {
+            auto resources = *note.resources();
+
+            for (const auto & resource: std::as_const(resources)) {
+                if (!resource.data() || !resource.data()->body()) {
+                    QNINFO(
+                        "enml::Converter",
+                        "Skipping ENEX export of a resource "
+                            << "without data body: " << resource);
+                    continue;
+                }
+
+                if (!resource.mime()) {
+                    QNINFO(
+                        "enml::Converter",
+                        "Skipping ENEX export of a resource "
+                            << "without mime type: " << resource);
+                    continue;
+                }
+
+                writer.writeStartElement(QStringLiteral("resource"));
+
+                const QByteArray & resourceData = *resource.data()->body();
+                if (resourceData.size() > gEnexMaxResourceDataSize) {
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Can't export note(s) to ENEX: found resource larger "
+                        "than 25 Mb")};
+                    QNINFO(
+                        "enml::Converter",
+                        errorDescription << ", resource: " << resource);
+                    return Result<QString, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                writer.writeStartElement(QStringLiteral("data"));
+
+                writer.writeAttribute(
+                    QStringLiteral("encoding"), QStringLiteral("base64"));
+
+                writer.writeCharacters(
+                    QString::fromLocal8Bit(resourceData.toBase64()));
+
+                writer.writeEndElement(); // data
+
+                writer.writeStartElement(QStringLiteral("mime"));
+                writer.writeCharacters(*resource.mime());
+                writer.writeEndElement(); // mime
+
+                if (resource.width()) {
+                    writer.writeStartElement(QStringLiteral("width"));
+                    writer.writeCharacters(QString::number(*resource.width()));
+                    writer.writeEndElement(); // width
+                }
+
+                if (resource.height()) {
+                    writer.writeStartElement(QStringLiteral("height"));
+                    writer.writeCharacters(QString::number(*resource.height()));
+                    writer.writeEndElement();
+                }
+
+                if (resource.recognition() && resource.recognition()->body()) {
+                    const auto & recognitionData =
+                        *resource.recognition()->body();
+
+                    const auto recoIndexRes =
+                        validateRecoIndex(QString::fromUtf8(recognitionData));
+
+                    if (Q_UNLIKELY(!recoIndexRes.isValid())) {
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Can't export note(s) to ENEX: found invalid "
+                            "resource recognition index at one of notes")};
+                        const auto & error = recoIndexRes.error();
+                        errorDescription.appendBase(error.base());
+                        errorDescription.appendBase(error.additionalBases());
+                        errorDescription.details() = error.details();
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QString, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    writer.writeStartElement(QStringLiteral("recognition"));
+                    writer.writeCDATA(QString::fromUtf8(recognitionData));
+                    writer.writeEndElement(); // recognition
+                }
+
+                if (resource.attributes()) {
+                    const auto & resourceAttributes = *resource.attributes();
+                    if (resourceAttributes.sourceURL() ||
+                        resourceAttributes.timestamp() ||
+                        resourceAttributes.latitude() ||
+                        resourceAttributes.longitude() ||
+                        resourceAttributes.altitude() ||
+                        resourceAttributes.cameraMake() ||
+                        resourceAttributes.recoType() ||
+                        resourceAttributes.fileName() ||
+                        resourceAttributes.attachment() ||
+                        resourceAttributes.applicationData())
+                    {
+                        writer.writeStartElement(
+                            QStringLiteral("resource-attributes"));
+
+                        if (resourceAttributes.sourceURL()) {
+                            writer.writeStartElement(
+                                QStringLiteral("source-url"));
+
+                            writer.writeCharacters(
+                                *resourceAttributes.sourceURL());
+
+                            writer.writeEndElement(); // source-url
+                        }
+
+                        if (resourceAttributes.timestamp()) {
+                            writer.writeStartElement(
+                                QStringLiteral("timestamp"));
+
+                            writer.writeCharacters(
+                                printableDateTimeFromTimestamp(
+                                    *resourceAttributes.timestamp(),
+                                    dateTimePrintOptions,
+                                    gEnexDateTimeFormatStrftime.data()));
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.latitude()) {
+                            writer.writeStartElement(
+                                QStringLiteral("latitude"));
+
+                            writer.writeCharacters(QString::number(
+                                *resourceAttributes.latitude()));
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.longitude()) {
+                            writer.writeStartElement(
+                                QStringLiteral("longitude"));
+
+                            writer.writeCharacters(QString::number(
+                                *resourceAttributes.longitude()));
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.altitude()) {
+                            writer.writeStartElement(
+                                QStringLiteral("altitude"));
+
+                            writer.writeCharacters(QString::number(
+                                *resourceAttributes.altitude()));
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.cameraMake()) {
+                            writer.writeStartElement(
+                                QStringLiteral("camera-make"));
+
+                            writer.writeCharacters(
+                                *resourceAttributes.cameraMake());
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.recoType()) {
+                            writer.writeStartElement(
+                                QStringLiteral("reco-type"));
+
+                            writer.writeCharacters(
+                                *resourceAttributes.recoType());
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.fileName()) {
+                            writer.writeStartElement(
+                                QStringLiteral("file-name"));
+
+                            writer.writeCharacters(
+                                *resourceAttributes.fileName());
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.attachment()) {
+                            writer.writeStartElement(
+                                QStringLiteral("attachment"));
+
+                            writer.writeCharacters(
+                                *resourceAttributes.attachment()
+                                    ? QStringLiteral("true")
+                                    : QStringLiteral("false"));
+
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.applicationData()) {
+                            const auto & appData =
+                                *resourceAttributes.applicationData();
+
+                            if (appData.fullMap()) {
+                                const auto & fullMap = *appData.fullMap();
+
+                                for (const auto mapIt:
+                                     qevercloud::toRange(fullMap))
+                                {
+                                    writer.writeStartElement(
+                                        QStringLiteral("application-data"));
+
+                                    writer.writeAttribute(
+                                        QStringLiteral("key"), mapIt.key());
+
+                                    writer.writeCharacters(mapIt.value());
+                                    writer.writeEndElement();
+                                }
+                            }
+                        }
+
+                        writer.writeEndElement(); // resource-attributes
+                    }
+                }
+
+                if (resource.alternateData() &&
+                    resource.alternateData()->body())
+                {
+                    const auto & resourceAltData =
+                        *resource.alternateData()->body();
+
+                    writer.writeStartElement(QStringLiteral("alternate-data"));
+
+                    writer.writeAttribute(
+                        QStringLiteral("encoding"), QStringLiteral("base64"));
+
+                    writer.writeCharacters(
+                        QString::fromLocal8Bit(resourceAltData.toBase64()));
+
+                    writer.writeEndElement(); // alternate-data
+                }
+
+                writer.writeEndElement(); // resource
+            }
+        }
+
+        writer.writeEndElement(); // note
+    }
+
+    writer.writeEndElement(); // en-export
+    writer.writeEndDocument();
+
+    enex = QString::fromUtf8(enexBuffer.buffer());
+
+    auto res = validateEnex(enex);
+    if (Q_UNLIKELY(!res.isValid())) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter", "Cannot export note(s) to ENEX")};
+        const auto & error = res.error();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.setDetails(error.details());
+        QNWARNING("enml::Converter", errorDescription << ", enex: " << enex);
+        return Result<QString, ErrorString>{std::move(errorDescription)};
+    }
+
+    return Result<QString, ErrorString>{std::move(enex)};
+}
+
+Result<QList<qevercloud::Note>, ErrorString> Converter::importEnex(
+    const QString & enex) const
+{
+    QNDEBUG("enml::Converter", "Converter::importEnex");
+
+    if (Q_UNLIKELY(enex.isEmpty())) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter", "Can't import ENEX: the input is empty")};
+        QNWARNING("enml::Converter", errorDescription << ", enex: " << enex);
+        return Result<QList<qevercloud::Note>, ErrorString>{
+            std::move(errorDescription)};
+    }
+
+    QList<qevercloud::Note> notes;
+
+    const QString dateTimeFormat = QString::fromUtf8(
+        gEnexDateTimeFormat.data(),
+        static_cast<int>(gEnexDateTimeFormat.size()));
+
+    bool insideNote = false;
+    bool insideNoteContent = false;
+    bool insideNoteAttributes = false;
+    bool insideResource = false;
+    bool insideResourceData = false;
+    bool insideResourceRecognitionData = false;
+    bool insideResourceAlternateData = false;
+    bool insideResourceAttributes = false;
+
+    qevercloud::Note currentNote;
+    QString currentNoteContent;
+
+    qevercloud::Resource currentResource;
+    QByteArray currentResourceData;
+    QByteArray currentResourceRecognitionData;
+    QByteArray currentResourceAlternateData;
+
+    QXmlStreamReader reader{enex};
+
+    const auto readNoteTimestamp =
+        [&dateTimeFormat, &reader, &insideNote, &currentNote](
+            const std::function<void(
+                qevercloud::Note *, qevercloud::Timestamp)> & setter,
+            const char * fieldName) -> Result<void, ErrorString> {
+        if (!insideNote) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter",
+                "Detected timestamp tag related to note outside of note "
+                "tag")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const QString timestampString =
+            reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+        QNTRACE("enml::Converter", fieldName << ": " << timestampString);
+
+        const auto dateTime =
+            QDateTime::fromString(timestampString, dateTimeFormat);
+
+        if (Q_UNLIKELY(!dateTime.isValid())) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter", "Failed to parse timestamp from string")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const auto timestamp = timestampFromDateTime(dateTime);
+        setter(&currentNote, timestamp);
+        QNTRACE("enml::Converter", "Set " << fieldName << " to " << timestamp);
+        return Result<void, ErrorString>{};
+    };
+
+    const auto readDoubleNoteOrResourceAttribute =
+        [&insideNote, &insideNoteAttributes, &insideResourceAttributes, &reader,
+         &currentNote, &currentResource](
+            const std::function<void(
+                qevercloud::ResourceAttributes *, double)> & resourceSetter,
+            const std::function<void(qevercloud::NoteAttributes *, double)> &
+                noteSetter,
+            const char * fieldName) -> Result<void, ErrorString> {
+        if (!insideNote) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter",
+                "Detected tag of double type related to note outside of "
+                "note tag")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const QString valueString =
+            reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+        bool conversionResult = false;
+        const double num = valueString.toDouble(&conversionResult);
+        if (Q_UNLIKELY(!conversionResult)) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter", "Failed to parse attribute of double type")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        if (insideNoteAttributes) {
+            auto & attributes = ensureNoteAttributes(currentNote);
+            noteSetter(&attributes, num);
+            QNTRACE(
+                "enml::Converter",
+                "Set note " << fieldName << " attribute to " << num);
+            return Result<void, ErrorString>{};
+        }
+
+        if (insideResourceAttributes) {
+            auto & attributes = ensureResourceAttributes(currentResource);
+            resourceSetter(&attributes, num);
+            QNTRACE(
+                "enml::Converter",
+                "Set resource " << fieldName << " attribute to " << num);
+            return Result<void, ErrorString>{};
+        }
+
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Detected tag of double type outside of note attributes or "
+            "resource attributes")};
+        errorDescription.setDetails(fieldName);
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    };
+
+    const auto readStringNoteAttribute =
+        [&insideNote, &insideNoteAttributes, &reader, &currentNote](
+            const std::function<void(qevercloud::NoteAttributes *, QString)> &
+                setter,
+            const char * fieldName) -> Result<void, ErrorString> {
+        if (!insideNote || !insideNoteAttributes) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter",
+                "Detected tag of string type outside of note or note "
+                "attributes")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const QString value =
+            reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+        auto & attributes = ensureNoteAttributes(currentNote);
+        setter(&attributes, value);
+        QNTRACE(
+            "enml::Converter",
+            "Set " << fieldName << " note attribute to " << value);
+        return Result<void, ErrorString>{};
+    };
+
+    const auto readTimestampNoteAttribute =
+        [&insideNote, &insideNoteAttributes, &reader, &currentNote,
+         &dateTimeFormat](
+            const std::function<void(
+                qevercloud::NoteAttributes *, qevercloud::Timestamp)> & setter,
+            const char * fieldName) -> Result<void, ErrorString> {
+        if (!insideNote || !insideNoteAttributes) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter",
+                "Detected tag of timestamp type outside of note or note "
+                "attributes")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const QString timestampString =
+            reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+        QNTRACE("enml::Converter", fieldName << ": " << timestampString);
+
+        const auto dateTime =
+            QDateTime::fromString(timestampString, dateTimeFormat);
+
+        if (Q_UNLIKELY(!dateTime.isValid())) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter", "Failed to parse timestamp from string")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const auto timestamp = timestampFromDateTime(dateTime);
+        auto & attributes = ensureNoteAttributes(currentNote);
+        setter(&attributes, timestamp);
+        QNTRACE("enml::Converter", "Set " << fieldName << " to " << timestamp);
+        return Result<void, ErrorString>{};
+    };
+
+    const auto readStringResourceAttribute =
+        [&insideResource, &insideResourceAttributes, &reader, &currentResource](
+            const std::function<void(
+                qevercloud::ResourceAttributes *, QString)> & setter,
+            const char * fieldName) -> Result<void, ErrorString> {
+        if (!insideResource || !insideResourceAttributes) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter",
+                "Detected tag of string type outside of "
+                "resource or resource attributes")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml::Converter", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const QString value =
+            reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+        auto & attributes = ensureResourceAttributes(currentResource);
+        setter(&attributes, value);
+        QNTRACE(
+            "enml::Converter",
+            "Set " << fieldName << " resource attribute to " << value);
+        return Result<void, ErrorString>{};
+    };
+
+    const auto readStringNoteOrResourceAttribute =
+        [&insideNote, &insideNoteAttributes, &insideResource,
+         &insideResourceAttributes, &reader, &currentNote, &currentResource](
+            const std::function<void(qevercloud::NoteAttributes *, QString)> &
+                noteSetter,
+            const std::function<void(
+                qevercloud::ResourceAttributes *, QString)> & resourceSetter,
+            const char * fieldName) -> Result<void, ErrorString> {
+        if (!insideNote) {
+            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "enml::Converter",
+                "Detected tag of string type related to note "
+                "outside of note tag")};
+            errorDescription.setDetails(fieldName);
+            QNWARNING("enml", errorDescription);
+            return Result<void, ErrorString>{std::move(errorDescription)};
+        }
+
+        const QString value =
+            reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+        if (insideNoteAttributes) {
+            auto & attributes = ensureNoteAttributes(currentNote);
+            noteSetter(&attributes, value);
+            QNTRACE(
+                "enml::Converter",
+                "Set " << fieldName << " note attribute to " << value);
+            return Result<void, ErrorString>{};
+        }
+
+        if (insideResource && insideResourceAttributes) {
+            auto & attributes = ensureResourceAttributes(currentResource);
+            resourceSetter(&attributes, value);
+            QNTRACE(
+                "enml::Converter",
+                "Set " << fieldName << " resource attribute to " << value);
+            return Result<void, ErrorString>{};
+        }
+
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+            "enml::Converter",
+            "Detected tag of string type outside of note attributes or "
+            "resource attributes")};
+        errorDescription.setDetails(fieldName);
+        QNWARNING("enml::Converter", errorDescription);
+        return Result<void, ErrorString>{std::move(errorDescription)};
+    };
+
+    while (!reader.atEnd()) {
+        Q_UNUSED(reader.readNext())
+
+        if (reader.isStartElement()) {
+            QStringRef elementName = reader.name();
+
+            if (elementName == QStringLiteral("en-export")) {
+                continue;
+            }
+
+            if (elementName == QStringLiteral("export-date")) {
+                QNTRACE(
+                    "enml::Converter",
+                    "export date: " << reader.readElementText(
+                        QXmlStreamReader::SkipChildElements));
+                continue;
+            }
+
+            if (elementName == QStringLiteral("application")) {
+                QNTRACE(
+                    "enml::Converter",
+                    "application: " << reader.readElementText(
+                        QXmlStreamReader::SkipChildElements));
+                continue;
+            }
+
+            if (elementName == QStringLiteral("version")) {
+                QNTRACE(
+                    "enml::Converter",
+                    "version" << reader.readElementText(
+                        QXmlStreamReader::SkipChildElements));
+                continue;
+            }
+
+            if (elementName == QStringLiteral("note")) {
+                QNTRACE("enml::Converter", "Starting a new note");
+                currentNote = qevercloud::Note{};
+                insideNote = true;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("title")) {
+                if (insideNote) {
+                    QString title = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    QNTRACE("enml::Converter", "Note title: " << title);
+                    if (!title.isEmpty()) {
+                        currentNote.setTitle(title);
+                    }
+                    else {
+                        currentNote.setTitle(std::nullopt);
+                    }
+
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected title tag outside of note tag")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("content")) {
+                if (insideNote) {
+                    QNTRACE("enml::Converter", "Start of note content");
+                    insideNoteContent = true;
+                    currentNoteContent.resize(0);
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected content tag outside of note tag")};
+
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("created")) {
+                auto res = readNoteTimestamp(
+                    &qevercloud::Note::setCreated, "creation timestamp");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("updated")) {
+                auto res = readNoteTimestamp(
+                    &qevercloud::Note::setUpdated, "modification timestamp");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("tag")) {
+                if (insideNote) {
+                    QString tagName = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    if (!currentNote.tagNames()) {
+                        currentNote.setTagNames(QList<QString>{});
+                    }
+
+                    if (!currentNote.tagNames()->contains(tagName)) {
+                        currentNote.mutableTagNames()->append(tagName);
+                        QNTRACE(
+                            "enml::Converted",
+                            "Added tag name " << tagName
+                                              << " for note local id "
+                                              << currentNote.localId());
+                    }
+
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter", "Detected tag outside of note")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("note-attributes")) {
+                if (insideNote) {
+                    QNTRACE("enml", "Start of note attributes");
+                    insideNoteAttributes = true;
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected note-attributes tag outside of note")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("latitude")) {
+                auto res = readDoubleNoteOrResourceAttribute(
+                    &qevercloud::ResourceAttributes::setLatitude,
+                    &qevercloud::NoteAttributes::setLatitude, "latitude");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("longitude")) {
+                auto res = readDoubleNoteOrResourceAttribute(
+                    &qevercloud::ResourceAttributes::setLongitude,
+                    &qevercloud::NoteAttributes::setLongitude, "longitude");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("altitude")) {
+                auto res = readDoubleNoteOrResourceAttribute(
+                    &qevercloud::ResourceAttributes::setAltitude,
+                    &qevercloud::NoteAttributes::setAltitude, "altitude");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("author")) {
+                auto res = readStringNoteAttribute(
+                    &qevercloud::NoteAttributes::setAuthor, "author");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("source")) {
+                auto res = readStringNoteAttribute(
+                    &qevercloud::NoteAttributes::setSource, "source");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("source-url")) {
+                auto res = readStringNoteOrResourceAttribute(
+                    &qevercloud::NoteAttributes::setSourceURL,
+                    &qevercloud::ResourceAttributes::setSourceURL,
+                    "source-url");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("source-application")) {
+                auto res = readStringNoteAttribute(
+                    &qevercloud::NoteAttributes::setSourceApplication,
+                    "source-application");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("reminder-order")) {
+                if (insideNote && insideNoteAttributes) {
+                    QString reminderOrder = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    bool conversionResult = false;
+
+                    qint64 reminderOrderNum =
+                        reminderOrder.toLongLong(&conversionResult);
+
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Failed to parse reminder order")};
+                        errorDescription.details() = reminderOrder;
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    auto & attributes = ensureNoteAttributes(currentNote);
+                    attributes.setReminderOrder(reminderOrderNum);
+
+                    QNTRACE(
+                        "enml::Converter",
+                        "Set the reminder order to " << reminderOrderNum);
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected reminder-order tag outside of note or note "
+                    "attributes")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("reminder-time")) {
+                auto res = readTimestampNoteAttribute(
+                    &qevercloud::NoteAttributes::setReminderTime,
+                    "reminder-time");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("subject-date")) {
+                auto res = readTimestampNoteAttribute(
+                    &qevercloud::NoteAttributes::setSubjectDate,
+                    "subject-date");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("reminder-done-time")) {
+                auto res = readTimestampNoteAttribute(
+                    &qevercloud::NoteAttributes::setReminderDoneTime,
+                    "reminder-done-time");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("place-name")) {
+                auto res = readStringNoteAttribute(
+                    &qevercloud::NoteAttributes::setPlaceName, "place-name");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("content-class")) {
+                auto res = readStringNoteAttribute(
+                    &qevercloud::NoteAttributes::setContentClass,
+                    "content-class");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("application-data")) {
+                if (insideNote) {
+                    auto appDataAttributes = reader.attributes();
+                    if (insideNoteAttributes) {
+                        if (appDataAttributes.hasAttribute(
+                                QStringLiteral("key")))
+                        {
+                            const QString key =
+                                appDataAttributes.value(QStringLiteral("key"))
+                                    .toString();
+
+                            const QString value = reader.readElementText(
+                                QXmlStreamReader::SkipChildElements);
+
+                            auto & noteAttributes =
+                                ensureNoteAttributes(currentNote);
+
+                            auto & appData =
+                                noteAttributes.mutableApplicationData();
+
+                            if (!appData) {
+                                appData = qevercloud::LazyMap();
+                            }
+
+                            if (!appData->keysOnly()) {
+                                appData->setKeysOnly(QSet<QString>());
+                            }
+
+                            if (!appData->fullMap()) {
+                                appData->setFullMap(QMap<QString, QString>());
+                            }
+
+                            Q_UNUSED(appData->mutableKeysOnly()->insert(key));
+                            (*appData->mutableFullMap())[key] = value;
+
+                            QNTRACE(
+                                "enml::Converter",
+                                "Inserted note application data entry: key = "
+                                    << key << ", value = " << value);
+                            continue;
+                        }
+
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Failed to parse application-data tag for note: no "
+                            "key attribute")};
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    if (insideResourceAttributes) {
+                        if (appDataAttributes.hasAttribute(
+                                QStringLiteral("key")))
+                        {
+                            const QString key =
+                                appDataAttributes.value(QStringLiteral("key"))
+                                    .toString();
+
+                            const QString value = reader.readElementText(
+                                QXmlStreamReader::SkipChildElements);
+
+                            auto & resourceAttributes =
+                                ensureResourceAttributes(currentResource);
+
+                            auto & appData =
+                                resourceAttributes.mutableApplicationData();
+
+                            if (!appData) {
+                                appData = qevercloud::LazyMap();
+                            }
+
+                            if (!appData->keysOnly()) {
+                                appData->setKeysOnly(QSet<QString>());
+                            }
+
+                            if (!appData->fullMap()) {
+                                appData->setFullMap(QMap<QString, QString>());
+                            }
+
+                            Q_UNUSED(appData->mutableKeysOnly()->insert(key));
+                            (*appData->mutableFullMap())[key] = value;
+
+                            QNTRACE(
+                                "enml::Converter",
+                                "Inserted resource application data entry: key "
+                                    << "= " << key << ", value = " << value);
+                            continue;
+                        }
+
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Failed to parse application-data tag for "
+                            "resource: no key attribute")};
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Detected application-data tag outside of note "
+                        "attributes or resource attributes")};
+                    QNWARNING("enml::Converter", errorDescription);
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected application-data tag outside of note")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("resource")) {
+                QNTRACE("enml::Converter", "Start of resource tag");
+                insideResource = true;
+
+                currentResource = qevercloud::Resource{};
+
+                currentResourceData.resize(0);
+                currentResourceRecognitionData.resize(0);
+                currentResourceAlternateData.resize(0);
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("data")) {
+                if (insideResource) {
+                    QNTRACE("enml::Converter", "Start of resource data");
+                    insideResourceData = true;
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected data tag outside of resource")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("mime")) {
+                if (insideResource) {
+                    const QString mime = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    currentResource.setMime(mime);
+                    QNTRACE("enml::Converter", "Set resource mime to " << mime);
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected mime tag outside of resource")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("width")) {
+                if (insideResource) {
+                    const QString width = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    bool conversionResult = false;
+                    const qint16 widthNum = width.toShort(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Failed to parse resource width from string")};
+                        errorDescription.details() = width;
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    currentResource.setWidth(widthNum);
+                    QNTRACE(
+                        "enml::Converter",
+                        "Set resource width to " << widthNum);
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected width tag outside of resource")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("height")) {
+                if (insideResource) {
+                    const QString height = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    bool conversionResult = false;
+                    const qint16 heightNum = height.toShort(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Failed to parse resource height from string")};
+                        errorDescription.details() = height;
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    currentResource.setHeight(heightNum);
+                    QNTRACE(
+                        "enml::Converter",
+                        "Set resource height to " << heightNum);
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected height tag outside of resource")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("recognition")) {
+                if (insideResource) {
+                    QNTRACE(
+                        "enml::Converter",
+                        "Start of resource recognition data");
+                    insideResourceRecognitionData = true;
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected recognition tag outside of resource")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("resource-attributes")) {
+                if (insideResource) {
+                    QNTRACE("enml::Converter", "Start of resource attributes");
+                    insideResourceAttributes = true;
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected resource-attributes tag outside of resource")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("timestamp")) {
+                if (insideResource && insideResourceAttributes) {
+                    const QString timestampString = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    const auto timestampDateTime =
+                        QDateTime::fromString(timestampString, dateTimeFormat);
+
+                    if (Q_UNLIKELY(!timestampDateTime.isValid())) {
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Failed to parse the resource timestamp from "
+                            "string")};
+                        errorDescription.details() = timestampString;
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    const qint64 timestamp =
+                        timestampFromDateTime(timestampDateTime);
+
+                    auto & resourceAttributes =
+                        ensureResourceAttributes(currentResource);
+
+                    resourceAttributes.setTimestamp(timestamp);
+                    QNTRACE(
+                        "enml::Converter",
+                        "Set resource timestamp to " << timestamp);
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected timestamp tag outside of resource or resource "
+                    "attributes")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("camera-make")) {
+                auto res = readStringResourceAttribute(
+                    &qevercloud::ResourceAttributes::setCameraMake,
+                    "camera-make");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("reco-type")) {
+                auto res = readStringResourceAttribute(
+                    &qevercloud::ResourceAttributes::setRecoType, "reco-type");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("file-name")) {
+                auto res = readStringResourceAttribute(
+                    &qevercloud::ResourceAttributes::setFileName, "file-name");
+                if (!res.isValid()) {
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(res.error())};
+                }
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("attachment")) {
+                if (insideResource && insideResourceAttributes) {
+                    const QString attachment = reader.readElementText(
+                        QXmlStreamReader::SkipChildElements);
+
+                    auto & resourceAttributes =
+                        ensureResourceAttributes(currentResource);
+
+                    if (attachment == QStringLiteral("true")) {
+                        resourceAttributes.setAttachment(true);
+                        QNTRACE("enml::Converter", "Set attachment to true");
+                    }
+                    else if (attachment == QStringLiteral("false")) {
+                        resourceAttributes.setAttachment(false);
+                        QNTRACE("enml::Converter", "Set attachment to false");
+                    }
+                    else {
+                        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                            "enml::Converter",
+                            "Detected attachment tag with wrong value, must be "
+                            "true or false")};
+                        QNWARNING("enml::Converter", errorDescription);
+                        return Result<QList<qevercloud::Note>, ErrorString>{
+                            std::move(errorDescription)};
+                    }
+
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected attachment tag outside of resource or resource "
+                    "attributes")};
+                QNWARNING("enml::Converter", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+
+            if (elementName == QStringLiteral("alternate-data")) {
+                if (insideResource) {
+                    QNTRACE(
+                        "enml::Converter", "Start of resource alternate data");
+                    insideResourceAlternateData = true;
+                    continue;
+                }
+
+                ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                    "enml::Converter",
+                    "Detected alternate-data tag outside of resource")};
+                QNWARNING("enml", errorDescription);
+                return Result<QList<qevercloud::Note>, ErrorString>{
+                    std::move(errorDescription)};
+            }
+        }
+
+        if (reader.isCharacters()) {
+            if (insideNote) {
+                if (insideNoteContent && reader.isCDATA()) {
+                    currentNoteContent = reader.text().toString();
+                    QNTRACE(
+                        "enml::Converter",
+                        "Current note content: " << currentNoteContent);
+                    continue;
+                }
+
+                if (insideResource) {
+                    if (insideResourceData) {
+                        currentResourceData = QByteArray::fromBase64(
+                            reader.text().toString().toLocal8Bit());
+                        QNTRACE("enml::Converter", "Read resource data");
+                        continue;
+                    }
+
+                    if (insideResourceRecognitionData) {
+                        currentResourceRecognitionData =
+                            reader.text().toString().toUtf8();
+
+                        QNTRACE(
+                            "enml::Converter",
+                            "Read resource recognition data");
+
+                        auto res = validateRecoIndex(
+                            QString::fromUtf8(currentResourceRecognitionData));
+                        if (!res.isValid()) {
+                            ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                                "enml::Converter",
+                                "Resource recognition index is invalid")};
+                            const auto & error = res.error();
+                            errorDescription.appendBase(error.base());
+                            errorDescription.appendBase(
+                                error.additionalBases());
+                            errorDescription.details() = error.details();
+                            QNWARNING("enml::Converter", errorDescription);
+                            return Result<QList<qevercloud::Note>, ErrorString>{
+                                std::move(errorDescription)};
+                        }
+
+                        continue;
+                    }
+
+                    if (insideResourceAlternateData) {
+                        currentResourceAlternateData = QByteArray::fromBase64(
+                            reader.text().toString().toLocal8Bit());
+                        QNTRACE(
+                            "enml::Converter", "Read resource alternate data");
+                        continue;
+                    }
+                }
+            }
+        }
+
+        if (reader.isEndElement()) {
+            const QStringRef elementName = reader.name();
+
+            if (elementName == QStringLiteral("content")) {
+                QNTRACE(
+                    "enml::Converter",
+                    "End of note content: " << currentNoteContent);
+                currentNote.setContent(currentNoteContent);
+                insideNoteContent = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("note-attributes")) {
+                QNTRACE("enml::Converter", "End of note attributes");
+                insideNoteAttributes = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("resource-attributes")) {
+                QNTRACE("enml::Converter", "End of resource attributes");
+                insideResourceAttributes = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("data")) {
+                QNTRACE("enml::Converter", "End of resource data");
+
+                if (!currentResource.data()) {
+                    currentResource.setData(qevercloud::Data{});
+                }
+                currentResource.mutableData()->setBody(currentResourceData);
+
+                currentResource.mutableData()->setBodyHash(
+                    QCryptographicHash::hash(
+                        currentResourceData, QCryptographicHash::Md5));
+
+                currentResource.mutableData()->setSize(
+                    currentResourceData.size());
+
+                insideResourceData = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("recognition")) {
+                QNTRACE("enml::Converter", "End of resource recognition data");
+
+                if (!currentResource.recognition()) {
+                    currentResource.setRecognition(qevercloud::Data{});
+                }
+
+                currentResource.mutableRecognition()->setBody(
+                    currentResourceRecognitionData);
+
+                currentResource.mutableRecognition()->setBodyHash(
+                    QCryptographicHash::hash(
+                        currentResourceRecognitionData,
+                        QCryptographicHash::Md5));
+
+                currentResource.mutableRecognition()->setSize(
+                    currentResourceRecognitionData.size());
+
+                insideResourceRecognitionData = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("alternate-data")) {
+                QNTRACE("enml::Converter", "End of resource alternate data");
+
+                if (!currentResource.alternateData()) {
+                    currentResource.setAlternateData(qevercloud::Data{});
+                }
+
+                currentResource.mutableAlternateData()->setBody(
+                    currentResourceAlternateData);
+
+                currentResource.mutableAlternateData()->setBodyHash(
+                    QCryptographicHash::hash(
+                        currentResourceAlternateData, QCryptographicHash::Md5));
+
+                currentResource.mutableAlternateData()->setSize(
+                    currentResourceAlternateData.size());
+
+                insideResourceAlternateData = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("resource")) {
+                QNTRACE("enml::Converter", "End of resource");
+
+                if (Q_UNLIKELY(
+                        !(currentResource.data() &&
+                          currentResource.data()->body())))
+                {
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Parsed resource without a data body")};
+                    QNWARNING(
+                        "enml::Converter",
+                        errorDescription << ", resource: " << currentResource);
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                if (Q_UNLIKELY(
+                        !(currentResource.data() &&
+                          currentResource.data()->bodyHash())))
+                {
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Internal error: data hash is not computed for the "
+                        "resource")};
+                    QNWARNING(
+                        "enml::Converter",
+                        errorDescription << ", resource: " << currentResource);
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                if (Q_UNLIKELY(
+                        !(currentResource.data() &&
+                          currentResource.data()->size())))
+                {
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Internal error: data size is not computed "
+                        "for the resource")};
+                    QNWARNING(
+                        "enml::Converter",
+                        errorDescription << ", resource: " << currentResource);
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                if (Q_UNLIKELY(!currentResource.mime())) {
+                    ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                        "enml::Converter",
+                        "Parsed resource without a mime type")};
+                    QNWARNING(
+                        "enml::Converter",
+                        errorDescription << ", resource: " << currentResource);
+                    return Result<QList<qevercloud::Note>, ErrorString>{
+                        std::move(errorDescription)};
+                }
+
+                insideResource = false;
+
+                if (!currentNote.resources()) {
+                    currentNote.setResources(QList<qevercloud::Resource>());
+                }
+
+                currentNote.mutableResources()->push_back(currentResource);
+                QNTRACE("enml", "Added resource to note: " << currentResource);
+
+                currentResource = qevercloud::Resource{};
+                continue;
+            }
+
+            if (elementName == QStringLiteral("note")) {
+                QNTRACE("enml", "End of note: " << currentNote);
+                notes << currentNote;
+                currentNote = qevercloud::Note{};
+                insideNote = false;
+                continue;
+            }
+        }
+    }
+
+    QNDEBUG("enml::Converter", "ENEX import end: num notes = " << notes.size());
+    return Result<QList<qevercloud::Note>, ErrorString>{std::move(notes)};
 }
 
 Converter::ProcessElementStatus
@@ -1898,7 +3953,8 @@ Converter::ProcessElementStatus
         if ((state.m_lastElementName == QStringLiteral("a")) &&
             (attributeName == QStringLiteral("en-hyperlink-id")))
         {
-            QNTRACE("enml", "Erasing custom attribute en-hyperlink-id");
+            QNTRACE(
+                "enml::Converter", "Erasing custom attribute en-hyperlink-id");
             it = state.m_lastElementAttributes.erase(it);
             continue;
         }
@@ -1989,7 +4045,7 @@ Result<void, ErrorString> Converter::validateAgainstDtd(
         ErrorString errorDescription{QT_TRANSLATE_NOOP(
             "enml::Converter",
             "Could not validate document, failed to parse DTD")};
-        QNWARNING("enml", errorDescription);
+        QNWARNING("enml::Converter", errorDescription);
         return Result<void, ErrorString>{std::move(errorDescription)};
     }
 
@@ -2021,6 +4077,23 @@ Result<void, ErrorString> Converter::validateAgainstDtd(
     }
 
     return Result<void, ErrorString>{};
+}
+
+Result<void, ErrorString> Converter::validateRecoIndex(
+    const QString & recoIndex) const
+{
+    QNDEBUG(
+        "enml::Converter",
+        "Converter::validateRecoIndex: reco index = " << recoIndex);
+
+    return validateAgainstDtd(recoIndex, QStringLiteral(":/recoIndex.dtd"));
+}
+
+Result<void, ErrorString> Converter::validateEnex(const QString & enex) const
+{
+    QNDEBUG("enml::Converter", "Converter::validateEnex");
+
+    return validateAgainstDtd(enex, QStringLiteral(":/evernote-export3.dtd"));
 }
 
 } // namespace quentier::enml

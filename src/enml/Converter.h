@@ -116,6 +116,12 @@ private:
     [[nodiscard]] Result<void, ErrorString> validateAgainstDtd(
         const QString & input, const QString & dtdFilePath) const;
 
+    [[nodiscard]] Result<void, ErrorString> validateRecoIndex(
+        const QString & recoIndex) const;
+
+    [[nodiscard]] Result<void, ErrorString> validateEnex(
+        const QString & enex) const;
+
 private:
     const IENMLTagsConverterPtr m_enmlTagsConverter;
     const QSet<QString> m_forbiddenXhtmlTags;

@@ -6,6 +6,8 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  Converter.cpp
+  Converter.h
   DecryptedTextCache.cpp
   DecryptedTextCache.h
   HtmlData.cpp
