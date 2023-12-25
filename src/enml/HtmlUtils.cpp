@@ -408,4 +408,20 @@ Result<QString, ErrorString> cleanupHtml(const QString & html)
     return convertHtml(html, TidyHtmlOut);
 }
 
+QString htmlEscapeString(QString str, const EscapeStringOptions options)
+{
+    QString res = std::move(str);
+    res.replace(
+        QStringLiteral("\'"), QStringLiteral("\\x27"), Qt::CaseInsensitive);
+
+    res.replace(
+        QStringLiteral("\""), QStringLiteral("\\x22"), Qt::CaseInsensitive);
+
+    if (options.testFlag(EscapeStringOption::Simplify)) {
+        res = res.simplified();
+    }
+
+    return res;
+}
+
 } // namespace quentier::enml::utils

@@ -21,6 +21,8 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Result.h>
 
+#include <QFlags>
+
 #include <memory>
 
 namespace quentier::enml::utils {
@@ -32,5 +34,15 @@ namespace quentier::enml::utils {
     const QString & html);
 
 [[nodiscard]] Result<QString, ErrorString> cleanupHtml(const QString & html);
+
+enum class EscapeStringOption
+{
+    Simplify = 1 << 0,
+};
+
+Q_DECLARE_FLAGS(EscapeStringOptions, EscapeStringOption);
+
+[[nodiscard]] QString htmlEscapeString(
+    QString str, EscapeStringOptions options);
 
 } // namespace quentier::enml::utils

@@ -61,7 +61,7 @@ public:
      *              so that different en-crypt tags can be differentiated
      * @return HTML representation of en-crypt tag
      */
-    [[nodiscard]] virtual QString encryptedTextHtml(
+    [[nodiscard]] virtual QString convertEncryptedText(
         const QString & encryptedText, const QString & hint,
         const QString & cipher, std::size_t keyLength,
         quint32 index) const = 0;
@@ -77,7 +77,7 @@ public:
      *              so that different en-crypt tags can be differentiated
      * @return HTML representation of decrypted en-crypt tag
      */
-    [[nodiscard]] virtual QString decryptedTextHtml(
+    [[nodiscard]] virtual QString convertDecryptedText(
         const QString & decryptedText, const QString & encryptedText,
         const QString & hint, const QString & cipher, std::size_t keyLength,
         quint32 index) const = 0;
@@ -88,8 +88,8 @@ public:
      * @return Result with valid HTML representing the resource/en-media tag in
      *         case of success or error string in case of failure
      */
-    [[nodiscard]] Result<QString, ErrorString> resourceHtml(
-        const qevercloud::Resource & resource);
+    [[nodiscard]] virtual Result<QString, ErrorString> convertResource(
+        const qevercloud::Resource & resource) const = 0;
 };
 
 } // namespace quentier::enml

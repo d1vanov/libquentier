@@ -10,6 +10,8 @@ target_sources(${LIBRARY_NAME}
   Converter.h
   DecryptedTextCache.cpp
   DecryptedTextCache.h
+  ENMLTagsConverter.cpp
+  ENMLTagsConverter.h
   HtmlData.cpp
   HtmlData.h
   HtmlUtils.cpp
