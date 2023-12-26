@@ -18,13 +18,29 @@
 
 #include <quentier/enml/Factory.h>
 
+#include "Converter.h"
 #include "DecryptedTextCache.h"
+#include "ENMLTagsConverter.h"
 
 namespace quentier::enml {
 
 IDecryptedTextCachePtr createDecryptedTextCache()
 {
     return std::make_shared<DecryptedTextCache>();
+}
+
+IENMLTagsConverterPtr createEnmlTagsConverter()
+{
+    return std::make_shared<ENMLTagsConverter>();
+}
+
+IConverterPtr createConverter(IENMLTagsConverterPtr enmlTagsConverter)
+{
+    if (!enmlTagsConverter) {
+        enmlTagsConverter = createEnmlTagsConverter();
+    }
+
+    return std::make_shared<Converter>(std::move(enmlTagsConverter));
 }
 
 } // namespace quentier::enml

@@ -23,6 +23,24 @@
 
 namespace quentier::enml {
 
+/**
+ * @brief factory function for IDecryptedTextCache
+ */
 [[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr createDecryptedTextCache();
+
+/**
+ * @brief factory function for IENMLTagsConverter
+ */
+[[nodiscard]] QUENTIER_EXPORT IENMLTagsConverterPtr createEnmlTagsConverter();
+
+/**
+ * @brief factory function for IConverter
+ * @param enmlTagsConverter instance of IENMLTagsConverter to be used by
+ *                          the returned IConverter instance. If nullptr,
+ *                          the default implementation of IENMLTagsConverter is
+ *                          used.
+ */
+[[nodiscard]] QUENTIER_EXPORT IConverterPtr createConverter(
+    IENMLTagsConverterPtr enmlTagsConverter = nullptr);
 
 } // namespace quentier::enml
