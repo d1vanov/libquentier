@@ -532,8 +532,7 @@ void encryptedTextToHtml(
         inlineImage = true;
     }
 
-    writer.writeStartElement(
-        inlineImage ? QStringLiteral("img") : QStringLiteral("object"));
+    writer.writeStartElement(QStringLiteral("img"));
 
     // NOTE: Converter cannot set src attribute for img tag as it doesn't know
     // whether the resource is stored in any local file yet.
