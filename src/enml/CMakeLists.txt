@@ -24,3 +24,7 @@ target_sources(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   ${LIBNAME}_private
   Qt5::Core)
+
+if(GMOCK_FOUND AND GTEST_FOUND)
+  add_subdirectory(tests)
+endif()
