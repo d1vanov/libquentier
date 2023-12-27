@@ -40,6 +40,8 @@ target_link_libraries(${TESTS_NAME}
     Qt5::Core
     Qt5::Sql)
 
+add_test(${TESTS_NAME} ${TESTS_NAME})
+
 include(GoogleTest)
 
 gtest_discover_tests(${TESTS_NAME})

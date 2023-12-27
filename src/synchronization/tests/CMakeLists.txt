@@ -53,6 +53,8 @@ target_link_libraries(${TESTS_NAME}
     GTest::GTest
     Qt5::Core)
 
+add_test(${TESTS_NAME} ${TESTS_NAME})
+
 include(GoogleTest)
 
 gtest_discover_tests(${TESTS_NAME})
