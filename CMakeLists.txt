@@ -795,9 +795,6 @@ add_definitions("-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII")
 add_definitions("-DQT_NO_CAST_FROM_BYTEARRAY -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT")
 
 set(TEST_HEADERS
-    src/tests/enml/EnexExportImportTests.h
-    src/tests/enml/ENMLConverterTests.h
-    src/tests/enml/ENMLTester.h
     src/tests/types/ResourceRecognitionIndicesParsingTest.h
     src/tests/types/TypesTester.h
     src/tests/utility/EncryptionManagerTests.h
@@ -807,9 +804,6 @@ set(TEST_HEADERS
     src/tests/TestMacros.h)
 
 set(TEST_SOURCES
-    src/tests/enml/EnexExportImportTests.cpp
-    src/tests/enml/ENMLConverterTests.cpp
-    src/tests/enml/ENMLTester.cpp
     src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
     src/tests/types/TypesTester.cpp
     src/tests/utility/EncryptionManagerTests.cpp

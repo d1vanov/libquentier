@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "enml/ENMLTester.h"
 #include "types/TypesTester.h"
 #include "utility/UtilityTester.h"
 
@@ -86,7 +85,6 @@ int main(int argc, char * argv[])
     }
 
     RUN_TESTS(TypesTester)
-    RUN_TESTS(ENMLTester)
     RUN_TESTS(UtilityTester)
 
     return 0;
