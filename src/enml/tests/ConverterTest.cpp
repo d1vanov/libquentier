@@ -24,18 +24,12 @@
 
 #include <QFile>
 #include <QXmlStreamReader>
-#include <QtGlobal>
 
 #include <gtest/gtest.h>
 
 #include <array>
 
 // clazy:excludeall=non-pod-global-static
-
-void initConverterTestResources()
-{
-    Q_INIT_RESOURCE(test_resources);
-}
 
 namespace quentier::enml::tests {
 
@@ -670,8 +664,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(ConverterComplexEnmlTest, ConvertComplexEnmlToHtmlAndBack)
 {
-    initConverterTestResources();
-
     QFile file{QString::fromUtf8(":/tests/complexNote%1.txt").arg(GetParam())};
     ASSERT_TRUE(file.open(QIODevice::ReadOnly));
 

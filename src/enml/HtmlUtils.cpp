@@ -16,9 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HtmlUtils.h"
-
-#include <memory>
+#include <quentier/enml/HtmlUtils.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/SuppressWarnings.h>
@@ -43,6 +41,7 @@ RESTORE_WARNINGS
 
 #include <cerrno>
 #include <cstdio>
+#include <memory>
 
 namespace quentier::enml::utils {
 

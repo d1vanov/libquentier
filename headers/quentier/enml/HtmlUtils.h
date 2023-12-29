@@ -20,6 +20,7 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Result.h>
+#include <quentier/utility/Linkage.h>
 
 #include <QFlags>
 
@@ -27,13 +28,13 @@
 
 namespace quentier::enml::utils {
 
-[[nodiscard]] Result<QString, ErrorString> convertHtmlToXml(
+[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT convertHtmlToXml(
     const QString & html);
 
-[[nodiscard]] Result<QString, ErrorString> convertHtmlToXhtml(
+[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT convertHtmlToXhtml(
     const QString & html);
 
-[[nodiscard]] Result<QString, ErrorString> cleanupHtml(const QString & html);
+[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT cleanupHtml(const QString & html);
 
 enum class EscapeStringOption
 {
@@ -42,7 +43,7 @@ enum class EscapeStringOption
 
 Q_DECLARE_FLAGS(EscapeStringOptions, EscapeStringOption);
 
-[[nodiscard]] QString htmlEscapeString(
+[[nodiscard]] QString QUENTIER_EXPORT htmlEscapeString(
     QString str, EscapeStringOptions options);
 
 } // namespace quentier::enml::utils

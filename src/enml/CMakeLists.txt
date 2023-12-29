@@ -14,8 +14,6 @@ target_sources(${LIBRARY_NAME}
   ENMLTagsConverter.h
   HtmlData.cpp
   HtmlData.h
-  HtmlUtils.cpp
-  HtmlUtils.h
   conversion_rules/SkipRule.cpp
   conversion_rules/SkipRule.h
   conversion_rules/SkipRuleBuilder.cpp

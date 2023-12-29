@@ -18,8 +18,8 @@
 
 #include "Converter.h"
 #include "HtmlData.h"
-#include "HtmlUtils.h"
 
+#include <quentier/enml/HtmlUtils.h>
 #include <quentier/enml/IDecryptedTextCache.h>
 #include <quentier/enml/IENMLTagsConverter.h>
 #include <quentier/enml/conversion_rules/ISkipRule.h>

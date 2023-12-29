@@ -11,6 +11,7 @@ endif()
 add_executable(${TESTS_NAME}
   main.cpp
   ConverterTest.cpp
+  EnexConverterTest.cpp
   ${${TESTS_NAME}_RESOURCES_RCC}
 )
 

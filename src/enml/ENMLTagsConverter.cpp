@@ -17,8 +17,8 @@
  */
 
 #include "ENMLTagsConverter.h"
-#include "HtmlUtils.h"
 
+#include <quentier/enml/HtmlUtils.h>
 #include <quentier/logging/QuentierLogger.h>
 
 #include <qevercloud/types/Resource.h>

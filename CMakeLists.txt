@@ -115,6 +115,7 @@ set(ENML_HEADERS
     headers/quentier/enml/Factory.h
     headers/quentier/enml/Fwd.h
     headers/quentier/enml/HTMLCleaner.h
+	headers/quentier/enml/HtmlUtils.h
     headers/quentier/enml/IConverter.h
     headers/quentier/enml/IDecryptedTextCache.h
     headers/quentier/enml/IENMLTagsConverter.h
@@ -245,6 +246,7 @@ set(PRIVATE_HEADERS
     src/types/data/ResourceRecognitionIndexItemData.h
     src/types/data/ResourceRecognitionIndicesData.h
     src/enml/ENMLConverter_p.h
+	src/enml/HtmlUtils.cpp
     src/enml/conversion_rules/Factory.cpp
     src/enml/conversion_rules/ISkipRule.cpp
     src/enml/conversion_rules/ISkipRuleBuilder.cpp
