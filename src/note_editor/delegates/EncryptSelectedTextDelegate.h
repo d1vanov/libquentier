@@ -47,7 +47,8 @@ public:
     explicit EncryptSelectedTextDelegate(
         NoteEditorPrivate * pNoteEditor,
         std::shared_ptr<EncryptionManager> encryptionManager,
-        enml::IDecryptedTextCachePtr decryptedTextCache);
+        enml::IDecryptedTextCachePtr decryptedTextCache,
+        enml::IENMLTagsConverterPtr enmlTagsConverter);
 
     void start(const QString & selectionHtml);
 
@@ -76,6 +77,7 @@ private:
     const QPointer<NoteEditorPrivate> m_pNoteEditor;
     const std::shared_ptr<EncryptionManager> m_encryptionManager;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
+    const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     QString m_encryptedTextHtml;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,9 @@
 #include "../NoteEditor_p.h"
 #include "../ResourceDataInTemporaryFileStorageManager.h"
 
-#include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/HtmlUtils.h>
+#include <quentier/enml/IENMLTagsConverter.h>
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/NoteUtils.h>
@@ -47,17 +49,22 @@ namespace quentier {
 
 InsertHtmlDelegate::InsertHtmlDelegate(
     QString inputHtml, NoteEditorPrivate & noteEditor,
-    ENMLConverter & enmlConverter,
+    enml::IENMLTagsConverterPtr enmlTagsConverter,
     ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
     QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo, QObject * parent) :
     QObject(parent),
-    m_noteEditor(noteEditor), m_enmlConverter(enmlConverter),
+    m_noteEditor(noteEditor), m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
     m_resourceFileStoragePathsByResourceLocalId(
         resourceFileStoragePathsByResourceLocalId),
     m_resourceInfo(resourceInfo), m_inputHtml(std::move(inputHtml))
-{}
+{
+    if (Q_UNLIKELY(!m_enmlTagsConverter)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "InsertHtmlDelegate ctor: enml tags converter is null")}};
+    }
+}
 
 void InsertHtmlDelegate::start()
 {
@@ -228,12 +235,12 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         ImgData & imgData = it.value();
         auto & resource = imgData.m_resource;
 
-        if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor:delegate",
                 "One of added resources has no data hash");
 
-            if (Q_UNLIKELY(!resource.data() || !resource.data()->body())) {
+            if (Q_UNLIKELY(!(resource.data() && resource.data()->body()))) {
                 QNDEBUG(
                     "note_editor:delegate",
                     "This resource has no data body as well, skippint it");
@@ -246,12 +253,12 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
             resource.mutableData()->setBodyHash(dataHash);
         }
 
-        if (Q_UNLIKELY(!resource.data() || !resource.data()->size())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->size()))) {
             QNDEBUG(
                 "note_editor:delegate",
                 "One of added resources has no data size");
 
-            if (Q_UNLIKELY(!resource.data() || !resource.data()->body())) {
+            if (Q_UNLIKELY(!(resource.data() && resource.data()->body()))) {
                 QNDEBUG(
                     "note_editor:delegate",
                     "This resource has no data body as well, skipping it");
@@ -301,13 +308,13 @@ void InsertHtmlDelegate::doStart()
     }
 
     m_cleanedUpHtml.resize(0);
-    ErrorString errorDescription;
-    if (!m_enmlConverter.cleanupExternalHtml(
-            m_inputHtml, m_cleanedUpHtml, errorDescription))
-    {
-        Q_EMIT notifyError(errorDescription);
+    auto res = enml::utils::cleanupHtml(m_inputHtml);
+    if (!res.isValid()) {
+        Q_EMIT notifyError(res.error());
         return;
     }
+
+    m_cleanedUpHtml = std::move(res.get());
 
     // NOTE: will exploit the fact that the cleaned up HTML is a valid XML
 
@@ -842,15 +849,17 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                 const ImgData & imgData = it.value();
                 ErrorString resourceHtmlComposingError;
 
-                const QString resourceHtml = ENMLConverter::resourceHtml(
-                    imgData.m_resource, resourceHtmlComposingError);
-
-                if (Q_UNLIKELY(resourceHtml.isEmpty())) {
+                auto res = m_enmlTagsConverter->convertResource(imgData.m_resource);
+                if (!res.isValid()) {
                     removeAddedResourcesFromNote();
                     ErrorString errorDescription(
                         QT_TR_NOOP("Can't insert HTML: can't compose the HTML "
                                    "representation of a resource that replaced "
                                    "the external image link"));
+                    const auto & error = res.error();
+                    errorDescription.appendBase(error.base());
+                    errorDescription.appendBase(error.additionalBases());
+                    errorDescription.details() = error.details();
                     QNWARNING(
                         "note_editor:delegate",
                         errorDescription << "; resource: "
@@ -858,6 +867,9 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                     Q_EMIT notifyError(errorDescription);
                     return false;
                 }
+
+                const QString resourceHtml = std::move(res.get());
+                Q_ASSERT(!resourceHtml.isEmpty());
 
                 QString supplementedResourceHtml =
                     QStringLiteral("<html><body>");
@@ -976,9 +988,9 @@ void InsertHtmlDelegate::insertHtmlIntoEditor()
         return;
     }
 
-    ENMLConverter::escapeString(m_cleanedUpHtml, /* simplify = */ false);
-    m_cleanedUpHtml = m_cleanedUpHtml.trimmed();
+    m_cleanedUpHtml = enml::utils::htmlEscapeString(m_cleanedUpHtml).trimmed();
     QNTRACE("note_editor:delegate", "Trimmed HTML: " << m_cleanedUpHtml);
+
     m_cleanedUpHtml.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
     QNTRACE(
         "note_editor:delegate",

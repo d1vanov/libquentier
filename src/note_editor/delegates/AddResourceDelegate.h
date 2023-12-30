@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_RESOURCE_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_RESOURCE_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Note.h>
@@ -57,6 +57,7 @@ public:
      *                                      which the resource data is located
      * @param noteEditor                    The note editor holding the note to
      *                                      which the resource is to be added
+     * @param enmlTagsConverter             ENML tags converter
      * @param pResourceDataManager          The pointer to
      *                                      ResourceDataInTemporaryFileStorageManager
      *                                      which might be required for storing
@@ -79,6 +80,7 @@ public:
      */
     explicit AddResourceDelegate(
         QString filePath, NoteEditorPrivate & noteEditor,
+        enml::IENMLTagsConverterPtr enmlTagsConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
         FileIOProcessorAsync * pFileIOProcessorAsync,
         GenericResourceImageManager * pGenericResourceImageManager,
@@ -94,6 +96,7 @@ public:
      * @param mimeType                      The mime type of resource data
      * @param noteEditor                    The note editor holding the note to
      *                                      which the resource is to be added
+     * @param enmlTagsConverter             ENML tags converter
      * @param pResourceDataManager          The pointer to
      *                                      ResourceDataInTemporaryFileStorageManager
      *                                      which might be required for storing
@@ -116,6 +119,7 @@ public:
     explicit AddResourceDelegate(
         QByteArray resourceData, const QString & mimeType,
         NoteEditorPrivate & noteEditor,
+        enml::IENMLTagsConverterPtr enmlTagsConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
         FileIOProcessorAsync * pFileIOProcessorAsync,
         GenericResourceImageManager * pGenericResourceImageManager,
@@ -182,6 +186,7 @@ private:
 
 private:
     NoteEditorPrivate & m_noteEditor;
+    const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager;
@@ -211,5 +216,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_RESOURCE_DELEGATE_H

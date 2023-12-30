@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Note.h>
@@ -37,7 +37,6 @@
 namespace quentier {
 
 class Account;
-class ENMLConverter;
 class NoteEditorPrivate;
 class ResourceDataInTemporaryFileStorageManager;
 class ResourceInfo;
@@ -48,7 +47,7 @@ class Q_DECL_HIDDEN InsertHtmlDelegate final : public QObject
 public:
     explicit InsertHtmlDelegate(
         QString inputHtml, NoteEditorPrivate & noteEditor,
-        ENMLConverter & enmlConverter,
+        enml::IENMLTagsConverterPtr enmlTagsConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo, QObject * parent = nullptr);
@@ -91,7 +90,7 @@ private:
 
 private:
     NoteEditorPrivate & m_noteEditor;
-    ENMLConverter & m_enmlConverter;
+    const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager;
@@ -122,5 +121,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H

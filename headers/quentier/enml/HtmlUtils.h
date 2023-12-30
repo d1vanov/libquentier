@@ -44,6 +44,6 @@ enum class EscapeStringOption
 Q_DECLARE_FLAGS(EscapeStringOptions, EscapeStringOption);
 
 [[nodiscard]] QString QUENTIER_EXPORT htmlEscapeString(
-    QString str, EscapeStringOptions options);
+    QString str, EscapeStringOptions options = EscapeStringOptions{});
 
 } // namespace quentier::enml::utils

@@ -22,14 +22,12 @@
 #include "../NoteEditor_p.h"
 #include "../dialogs/DecryptionDialog.h"
 
+#include <quentier/enml/HtmlUtils.h>
 #include <quentier/enml/IDecryptedTextCache.h>
-#include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/IENMLTagsConverter.h>
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/EncryptionManager.h>
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebFrame>
-#endif
 
 #include <memory>
 
@@ -70,13 +68,31 @@ DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
     QString encryptedTextId, QString encryptedText, QString cipher,
     const QString & length, QString hint, NoteEditorPrivate * pNoteEditor,
     std::shared_ptr<EncryptionManager> encryptionManager,
-    enml::IDecryptedTextCachePtr decryptedTextCache) :
-    m_encryptionManager{std::move(encryptionManager)},
-    m_decryptedTextCache{std::move(decryptedTextCache)},
-    m_encryptedTextId{std::move(encryptedTextId)},
-    m_encryptedText{std::move(encryptedText)}, m_cipher{std::move(cipher)},
-    m_hint{std::move(hint)}, m_pNoteEditor{pNoteEditor}
+    enml::IDecryptedTextCachePtr decryptedTextCache,
+    enml::IENMLTagsConverterPtr enmlTagsConverter) :
+    QObject(pNoteEditor),
+    m_encryptionManager(std::move(encryptionManager)),
+    m_decryptedTextCache(std::move(decryptedTextCache)),
+    m_enmlTagsConverter(std::move(enmlTagsConverter)),
+    m_encryptedTextId(std::move(encryptedTextId)),
+    m_encryptedText(std::move(encryptedText)), m_cipher(std::move(cipher)),
+    m_hint(std::move(hint)), m_pNoteEditor(pNoteEditor)
 {
+    if (Q_UNLIKELY(!m_encryptionManager)) {
+        throw InvalidArgument{ErrorString{
+            "DecryptEncryptedTextDelegate ctor: encryption manager is null"}};
+    }
+
+    if (Q_UNLIKELY(!m_decryptedTextCache)) {
+        throw InvalidArgument{ErrorString{
+            "DecryptEncryptedTextDelegate ctor: decrypted text cache is null"}};
+    }
+
+    if (Q_UNLIKELY(!m_enmlTagsConverter)) {
+        throw InvalidArgument{ErrorString{
+            "DecryptEncryptedTextDelegate ctor: enml tags converter is null"}};
+    }
+
     if (length.isEmpty()) {
         m_length = 128;
     }
@@ -194,7 +210,7 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
 
     QString decryptedTextHtml;
     if (!m_decryptPermanently) {
-        decryptedTextHtml = ENMLConverter::decryptedTextHtml(
+        decryptedTextHtml = m_enmlTagsConverter->convertDecryptedText(
             m_decryptedText, m_encryptedText, m_hint, m_cipher, m_length,
             m_pNoteEditor->GetFreeDecryptedTextId());
     }
@@ -202,7 +218,7 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
         decryptedTextHtml = m_decryptedText;
     }
 
-    ENMLConverter::escapeString(decryptedTextHtml);
+    decryptedTextHtml = enml::utils::htmlEscapeString(decryptedTextHtml);
 
     GET_PAGE()
     page->executeJavaScript(

@@ -23,6 +23,8 @@
 #include "NoteEditorPrivateMacros.h"
 #include "NoteEditorSettingsNames.h"
 #include "ResourceDataInTemporaryFileStorageManager.h"
+#include "WebSocketClientWrapper.h"
+#include "WebSocketTransport.h"
 
 #include "delegates/AddHyperlinkToSelectedTextDelegate.h"
 #include "delegates/AddResourceDelegate.h"
@@ -37,6 +39,10 @@
 
 #include "javascript_glue/ActionsWatcher.h"
 #include "javascript_glue/ContextMenuEventJavaScriptHandler.h"
+#include "javascript_glue/EnCryptElementOnClickHandler.h"
+#include "javascript_glue/GenericResourceImageJavaScriptHandler.h"
+#include "javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h"
+#include "javascript_glue/HyperlinkClickJavaScriptHandler.h"
 #include "javascript_glue/PageMutationHandler.h"
 #include "javascript_glue/ResizableImageJavaScriptHandler.h"
 #include "javascript_glue/ResourceInfoJavaScriptHandler.h"
@@ -45,6 +51,7 @@
 #include "javascript_glue/TextCursorPositionJavaScriptHandler.h"
 #include "javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h"
 #include "javascript_glue/ToDoCheckboxOnClickHandler.h"
+#include "javascript_glue/WebSocketWaiter.h"
 
 #include "undo_stack/AddHyperlinkUndoCommand.h"
 #include "undo_stack/AddResourceUndoCommand.h"
@@ -70,61 +77,31 @@
 #include "undo_stack/ToDoCheckboxUndoCommand.h"
 
 #include <quentier/enml/Factory.h>
-#include <quentier/note_editor/SpellChecker.h>
-#include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/Checks.h>
-#include <quentier/utility/EventLoopWithExitStatus.h>
-#include <quentier/utility/FileSystem.h>
-#include <quentier/utility/Size.h>
-#include <quentier/utility/StandardPaths.h>
-
-#include <QDesktopServices>
-#include <QFileDialog>
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebFrame>
-#include <QWebPage>
-
-using WebSettings = QWebSettings;
-using OwnershipNamespace = QWebFrame;
-
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
-#else // QUENTIER_USE_QT_WEB_ENGINE
-#include "javascript_glue/EnCryptElementOnClickHandler.h"
-#include "javascript_glue/GenericResourceImageJavaScriptHandler.h"
-#include "javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h"
-#include "javascript_glue/HyperlinkClickJavaScriptHandler.h"
-#include "javascript_glue/WebSocketWaiter.h"
-
-#include "WebSocketClientWrapper.h"
-#include "WebSocketTransport.h"
-
-#include <QFontMetrics>
-#include <QIcon>
-#include <QPageLayout>
-#include <QPainter>
-#include <QWebEngineSettings>
-
-#include <QtWebChannel>
-#include <QtWebSockets/QWebSocketServer>
-using WebSettings = QWebEngineSettings;
-#endif // QUENTIER_USE_QT_WEB_ENGINE
-
-#include <quentier/enml/ENMLConverter.h>
-#include <quentier/enml/HTMLCleaner.h>
+#include <quentier/enml/HtmlUtils.h>
+#include <quentier/enml/IConverter.h>
 #include <quentier/enml/IDecryptedTextCache.h>
+#include <quentier/enml/IENMLTagsConverter.h>
+#include <quentier/enml/IHtmlData.h>
+#include <quentier/enml/conversion_rules/Factory.h>
+#include <quentier/enml/conversion_rules/ISkipRuleBuilder.h>
 #include <quentier/exception/NoteEditorInitializationException.h>
 #include <quentier/exception/NoteEditorPluginInitializationException.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/note_editor/SpellChecker.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 #include <quentier/types/ResourceUtils.h>
+#include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Checks.h>
 #include <quentier/utility/DateTime.h>
+#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
-#include <quentier/utility/QuentierCheckPtr.h>
+#include <quentier/utility/FileSystem.h>
 #include <quentier/utility/ShortcutManager.h>
+#include <quentier/utility/Size.h>
+#include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <QApplication>
@@ -134,20 +111,29 @@ using WebSettings = QWebEngineSettings;
 #include <QContextMenuEvent>
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QDesktopWidget>
 #include <QDropEvent>
 #include <QFile>
 #include <QFileInfo>
+#include <QFileDialog>
+#include <QFontMetrics>
 #include <QFontDatabase>
 #include <QFontDialog>
+#include <QIcon>
 #include <QImage>
 #include <QKeySequence>
 #include <QMenu>
 #include <QMimeDatabase>
+#include <QPageLayout>
+#include <QPainter>
 #include <QPixmap>
 #include <QThread>
 #include <QTimer>
 #include <QTransform>
+#include <QWebEngineSettings>
+#include <QtWebChannel>
+#include <QtWebSockets/QWebSocketServer>
 
 #include <algorithm>
 #include <cmath>
@@ -204,7 +190,6 @@ namespace {
 
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     INoteEditorBackend(&noteEditor),
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_pWebSocketServer(new QWebSocketServer(
         QStringLiteral("QWebChannel server"), QWebSocketServer::NonSecureMode,
         this)),
@@ -217,7 +202,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pHyperlinkClickJavaScriptHandler(
         new HyperlinkClickJavaScriptHandler(this)),
     m_pWebSocketWaiter(new WebSocketWaiter(this)),
-#endif
     m_pSpellCheckerDynamicHandler(new SpellCheckerDynamicHelper(this)),
     m_pTableResizeJavaScriptHandler(new TableResizeJavaScriptHandler(this)),
     m_pResizableImageJavaScriptHandler(
@@ -233,14 +217,14 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
         new TextCursorPositionJavaScriptHandler(this)),
     m_encryptionManager(new EncryptionManager),
     m_decryptedTextCache(enml::createDecryptedTextCache()),
+    m_enmlTagsConverter(enml::createEnmlTagsConverter()),
+    m_enmlConverter(enml::createConverter(m_enmlTagsConverter)),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
     m_pResourceInfoJavaScriptHandler(
         new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_pGenericResoureImageJavaScriptHandler(
         new GenericResourceImageJavaScriptHandler(
             m_genericResourceImageFilePathsByResourceHash, this)),
-#endif
     q_ptr(&noteEditor)
 {
     setupSkipRulesForHtmlToEnmlConversion();
@@ -398,57 +382,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_replaceSelectionWithHtmlJs);
     page->executeJavaScript(m_findReplaceManagerJs);
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    QWebFrame * frame = page->mainFrame();
-    if (Q_UNLIKELY(!frame)) {
-        return;
-    }
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("pageMutationObserver"), m_pPageMutationHandler,
-        OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("resourceCache"), m_pResourceInfoJavaScriptHandler,
-        OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("textCursorPositionHandler"),
-        m_pTextCursorPositionJavaScriptHandler,
-        OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("contextMenuEventHandler"),
-        m_pContextMenuEventJavaScriptHandler, OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("toDoCheckboxClickHandler"), m_pToDoCheckboxClickHandler,
-        OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("toDoCheckboxAutomaticInsertionHandler"),
-        m_pToDoCheckboxAutomaticInsertionHandler,
-        OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("tableResizeHandler"), m_pTableResizeJavaScriptHandler,
-        OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("resizableImageHandler"),
-        m_pResizableImageJavaScriptHandler, OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("spellCheckerDynamicHelper"),
-        m_pSpellCheckerDynamicHandler, OwnershipNamespace::QtOwnership);
-
-    frame->addToJavaScriptWindowObject(
-        QStringLiteral("actionsWatcher"), m_pActionsWatcher,
-        OwnershipNamespace::QtOwnership);
-
-    page->executeJavaScript(m_onResourceInfoReceivedJs);
-    page->executeJavaScript(m_qWebKitSetupJs);
-#else
     page->executeJavaScript(m_qWebChannelJs);
     page->executeJavaScript(m_onResourceInfoReceivedJs);
     page->executeJavaScript(m_onGenericResourceImageReceivedJs);
@@ -471,7 +404,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_provideSrcForGenericResourceImagesJs);
     page->executeJavaScript(m_clickInterceptorJs);
     page->executeJavaScript(m_notifyTextCursorPositionChangedJs);
-#endif
 
     page->executeJavaScript(m_findInnermostElementJs);
     page->executeJavaScript(m_resizableTableColumnsJs);
@@ -514,12 +446,10 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     updateColResizableTableBindings();
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
     page->executeJavaScript(m_setupTextCursorPositionTrackingJs);
     setupTextCursorPositionTracking();
     setupGenericResourceImages();
-#endif
 
     if (!m_pendingNoteImageResourceTemporaryFiles) {
         provideSrcForResourceImgTags();
@@ -756,18 +686,11 @@ void NoteEditorPrivate::onResourceFileChanged(
         }
     }
     else {
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
         QImage image = buildGenericResourceImage(resource);
         saveGenericResourceImage(resource, image);
-#else
-        if (m_pPluginFactory) {
-            m_pPluginFactory->updateResource(resource);
-        }
-#endif
     }
 }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::onGenericResourceImageSaved(
     bool success, QByteArray resourceActualHash, QString filePath, // NOLINT
     ErrorString errorDescription, QUuid requestId)
@@ -825,15 +748,6 @@ void NoteEditorPrivate::onWebSocketReady()
     m_webSocketReady = true;
     onNoteLoadFinished(true);
 }
-
-#else
-
-void NoteEditorPrivate::onHyperlinkClicked(QUrl url)
-{
-    handleHyperlinkClicked(url);
-}
-
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 void NoteEditorPrivate::onToDoCheckboxClicked(quint64 enToDoCheckboxId)
 {
@@ -1031,13 +945,8 @@ void NoteEditorPrivate::onJavaScriptLoaded()
             return;
         }
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-        m_htmlCachedMemory = page->mainFrame()->toHtml();
-        onPageHtmlReceived(m_htmlCachedMemory);
-#else
         page->toHtml(NoteEditorCallbackFunctor<QString>(
             this, &NoteEditorPrivate::onPageHtmlReceived));
-#endif
 
         QNTRACE("note_editor", "Emitting noteLoaded signal");
         Q_EMIT noteLoaded();
@@ -1561,11 +1470,7 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
             url = m_pendingNextPageUrl;
             m_pendingNotePageLoad = true;
             m_pendingNotePageLoadMethodExit = true;
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
             page()->setUrl(url);
-#else
-            page()->mainFrame()->setUrl(url);
-#endif
             m_pendingNotePageLoadMethodExit = false;
             QNDEBUG(
                 "note_editor",
@@ -1729,10 +1634,7 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(
         humanReadableSize(static_cast<quint64>(*addedResource.data()->size())),
         resourceFileStoragePath, resourceImageSize);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     setupGenericResourceImages();
-#endif
-
     provideSrcForResourceImgTags();
 
     auto * pCommand = new AddResourceUndoCommand(
@@ -1918,12 +1820,6 @@ void NoteEditorPrivate::onRenameResourceDelegateFinished(
 
     QNTRACE("note_editor", "Resource: " << resource);
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    if (m_pPluginFactory) {
-        m_pPluginFactory->updateResource(resource);
-    }
-#endif
-
     if (!performingUndo) {
         auto * pCommand = new RenameResourceUndoCommand(
             resource, oldResourceName, *this, m_pGenericResourceImageManager,
@@ -2100,10 +1996,7 @@ void NoteEditorPrivate::onHideDecryptedTextFinished(
     }
 
     setModified();
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
-#endif
 
     auto * pCommand = new HideDecryptedTextUndoCommand(
         *this,
@@ -2158,9 +2051,7 @@ void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(
         return;
     }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
-#endif
 }
 
 void NoteEditorPrivate::onEncryptSelectedTextDelegateFinished()
@@ -2190,9 +2081,7 @@ void NoteEditorPrivate::onEncryptSelectedTextDelegateFinished()
     m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
-#endif
 }
 
 void NoteEditorPrivate::onEncryptSelectedTextDelegateCancelled()
@@ -2268,9 +2157,7 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
     m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
-#endif
 }
 
 void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
@@ -2906,7 +2793,6 @@ void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
     applySpellCheck();
 }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::onPageHtmlReceivedForPrinting(
     const QString & html,
     const QVector<std::pair<QString, QString>> & extraData)
@@ -2919,7 +2805,6 @@ void NoteEditorPrivate::onPageHtmlReceivedForPrinting(
     m_htmlForPrinting = html;
     Q_EMIT htmlReadyForPrinting();
 }
-#endif
 
 void NoteEditorPrivate::clearCurrentNoteInfo()
 {
@@ -2960,13 +2845,7 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 
     m_lastInteractionTimestamp = -1;
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_webSocketServerPort = 0;
-#else
-    page()->setPluginFactory(nullptr);
-    delete m_pPluginFactory;
-    m_pPluginFactory = nullptr;
-#endif
 
     clearPrepareNoteImageResourcesProgressDialog();
 
@@ -2989,7 +2868,7 @@ void NoteEditorPrivate::reloadCurrentNote()
         return;
     }
 
-    if (Q_UNLIKELY(!m_pNote || !m_pNotebook)) {
+    if (Q_UNLIKELY(!(m_pNote && m_pNotebook))) {
         QString noteLocalId = m_noteLocalId;
         m_noteLocalId.clear();
         setCurrentNoteLocalId(noteLocalId);
@@ -3118,7 +2997,6 @@ void NoteEditorPrivate::dropEvent(QDropEvent * pEvent)
     onDropEvent(pEvent);
 }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::getHtmlForPrinting()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::getHtmlForPrinting");
@@ -3128,7 +3006,6 @@ void NoteEditorPrivate::getHtmlForPrinting()
     page->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceivedForPrinting));
 }
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 void NoteEditorPrivate::onFoundResourceData(
     qevercloud::Resource resource) // NOLINT
@@ -3211,8 +3088,9 @@ void NoteEditorPrivate::onFoundResourceData(
             return;
         }
 
-        if (Q_UNLIKELY(!resource.data() || !resource.data()->body() ||
-                       !resource.data()->bodyHash()))
+        if (Q_UNLIKELY(
+                !(resource.data() && resource.data()->body() &&
+                  resource.data()->bodyHash())))
         {
             ErrorString errorDescription(
                 QT_TR_NOOP("Can't rotate image attachment: the image "
@@ -3443,12 +3321,12 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(
             continue;
         }
 
-        if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNTRACE("note_editor", "Skipping the resource without data hash");
             continue;
         }
 
-        if (Q_UNLIKELY(!resource.data() || !resource.data()->size())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->size()))) {
             QNTRACE("note_editor", "Skipping the resource without data size");
             continue;
         }
@@ -3680,7 +3558,6 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(
 
     rebuildRecognitionIndicesCache();
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     if (m_webSocketServerPort == 0) {
         setupWebSocketServer();
     }
@@ -3688,26 +3565,6 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(
     if (!m_setUpJavaScriptObjects) {
         setupJavaScriptObjects();
     }
-#else
-    auto * pNoteEditorPage = qobject_cast<NoteEditorPage *>(page());
-    if (Q_LIKELY(pNoteEditorPage)) {
-        const bool missingPluginFactory = !m_pPluginFactory;
-        if (missingPluginFactory) {
-            m_pPluginFactory =
-                new NoteEditorPluginFactory(*this, pNoteEditorPage);
-        }
-
-        m_pPluginFactory->setNote(*m_pNote);
-
-        if (missingPluginFactory) {
-            QNDEBUG(
-                "note_editor",
-                "Setting note editor plugin factory to "
-                    << "the page");
-            pNoteEditorPage->setPluginFactory(m_pPluginFactory);
-        }
-    }
-#endif
 
     clearPrepareNoteImageResourcesProgressDialog();
 
@@ -4262,10 +4119,8 @@ void NoteEditorPrivate::updateJavaScriptBindings()
 
     updateColResizableTableBindings();
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
     setupGenericResourceImages();
-#endif
 
     if (m_spellCheckerEnabled) {
         applySpellCheck();
@@ -4396,7 +4251,6 @@ void NoteEditorPrivate::findText(
 
     GET_PAGE()
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     QString escapedTextToFind = textToFind;
     escapeStringForJavaScript(escapedTextToFind);
 
@@ -4410,23 +4264,6 @@ void NoteEditorPrivate::findText(
         QStringLiteral(", true);");
 
     page->executeJavaScript(javascript, std::move(callback));
-#else
-    WebPage::FindFlags flags;
-    flags |= QWebPage::FindWrapsAroundDocument;
-
-    if (matchCase) {
-        flags |= WebPage::FindCaseSensitively;
-    }
-
-    if (searchBackward) {
-        flags |= WebPage::FindBackward;
-    }
-
-    bool res = page->findText(textToFind, flags);
-    if (callback) {
-        callback(QVariant(res));
-    }
-#endif
 
     setSearchHighlight(textToFind, matchCase);
 }
@@ -4624,31 +4461,30 @@ void NoteEditorPrivate::noteToEditorContent()
 
     m_htmlCachedMemory.resize(0);
 
-    ErrorString error;
-    ENMLConverter::NoteContentToHtmlExtraData extraData;
-    const bool res = m_enmlConverter.noteContentToHtml(
-        noteContent, m_htmlCachedMemory, error, *m_decryptedTextCache,
-        extraData);
-
-    if (!res) {
-        ErrorString error(QT_TR_NOOP("Can't convert note's content to HTML"));
-        error.details() = m_errorCachedMemory;
-        QNWARNING("note_editor", error);
-        clearEditorContent(BlankPageKind::InternalError, error);
-        Q_EMIT notifyError(error);
+    const auto res = m_enmlConverter->convertEnmlToHtml(
+        noteContent, *m_decryptedTextCache);
+    if (!res.isValid()) {
+        QNWARNING("note_editor", res.error());
+        clearEditorContent(BlankPageKind::InternalError, res.error());
+        Q_EMIT notifyError(res.error());
         return;
     }
 
-    m_lastFreeEnToDoIdNumber = extraData.m_numEnToDoNodes + 1;
-    m_lastFreeHyperlinkIdNumber = extraData.m_numHyperlinkNodes + 1;
-    m_lastFreeEnCryptIdNumber = extraData.m_numEnCryptNodes + 1;
-    m_lastFreeEnDecryptedIdNumber = extraData.m_numEnDecryptedNodes + 1;
+    const auto & htmlData = res.get();
+    Q_ASSERT(htmlData);
+
+    m_lastFreeEnToDoIdNumber = htmlData->numEnToDoNodes() + 1;
+    m_lastFreeHyperlinkIdNumber = htmlData->numHyperlinkNodes() + 1;
+    m_lastFreeEnCryptIdNumber = htmlData->numEnCryptNodes() + 1;
+    m_lastFreeEnDecryptedIdNumber = htmlData->numEnDecryptedNodes() + 1;
+
+    m_htmlCachedMemory = htmlData->html();
 
     const int bodyTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("<body"));
     if (bodyTagIndex < 0) {
-        ErrorString error(
+        ErrorString error{
             QT_TR_NOOP("Can't find <body> tag in the result of note "
-                       "to HTML conversion"));
+                       "to HTML conversion")};
         QNWARNING(
             "note_editor",
             error << ", note content: " << *m_pNote->content()
@@ -4665,9 +4501,9 @@ void NoteEditorPrivate::noteToEditorContent()
         m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
 
     if (bodyClosingTagIndex < 0) {
-        error.setBase(
+        ErrorString error{
             QT_TR_NOOP("Can't find </body> tag in the result of note "
-                       "to HTML conversion"));
+                       "to HTML conversion")};
         QNWARNING(
             "note_editor",
             error << ", note content: " << *m_pNote->content()
@@ -4680,7 +4516,6 @@ void NoteEditorPrivate::noteToEditorContent()
     m_htmlCachedMemory.insert(
         bodyClosingTagIndex + 7, QStringLiteral("</html>"));
 
-    // Webkit-specific fix
     m_htmlCachedMemory.replace(
         QStringLiteral("<br></br>"), QStringLiteral("</br>"));
 
@@ -4875,13 +4710,8 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
 
     m_pendingConversionToNote = true;
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_htmlCachedMemory = page()->mainFrame()->toHtml();
-    onPageHtmlReceived(m_htmlCachedMemory);
-#else
     page()->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceived));
-#endif
 
     return true;
 }
@@ -4918,8 +4748,8 @@ void NoteEditorPrivate::manualSaveResourceToFile(
     QNDEBUG("note_editor", "NoteEditorPrivate::manualSaveResourceToFile");
 
     if (Q_UNLIKELY(
-            (!resource.data() || !resource.data()->body()) &&
-            (!resource.alternateData() || !resource.alternateData()->body())))
+            !((resource.data() && resource.data()->body()) ||
+              (resource.alternateData() && resource.alternateData()->body()))))
     {
         ErrorString error(
             QT_TR_NOOP("Can't save resource to file: resource has "
@@ -5315,7 +5145,6 @@ QImage NoteEditorPrivate::buildGenericResourceImage(
     return pixmap.toImage();
 }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::saveGenericResourceImage(
     const qevercloud::Resource & resource, const QImage & image)
 {
@@ -5334,9 +5163,9 @@ void NoteEditorPrivate::saveGenericResourceImage(
     }
 
     if (Q_UNLIKELY(
-            (!resource.data() || !resource.data()->bodyHash()) &&
-            (!resource.alternateData() ||
-             !resource.alternateData()->bodyHash())))
+            !((resource.data() && resource.data()->bodyHash()) ||
+              (resource.alternateData() &&
+               resource.alternateData()->bodyHash()))))
     {
         ErrorString error(
             QT_TR_NOOP("Can't save generic resource image: resource has "
@@ -5663,8 +5492,6 @@ void NoteEditorPrivate::setupTextCursorPositionTracking()
     page->executeJavaScript(javascript);
 }
 
-#endif // QUENTIER_USE_QT_WEB_ENGINE
-
 void NoteEditorPrivate::updateResource(
     const QString & resourceLocalId, const QByteArray & previousResourceHash,
     qevercloud::Resource updatedResource)
@@ -5686,7 +5513,7 @@ void NoteEditorPrivate::updateResource(
         return;
     }
 
-    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty())) {
+    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty())) { // NOLINT
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: no resources within "
                        "the note in the note editor"));
@@ -5716,12 +5543,11 @@ void NoteEditorPrivate::updateResource(
         return;
     }
 
-    if (Q_UNLIKELY(!updatedResource.data() ||
-                   !updatedResource.data()->body()))
+    if (Q_UNLIKELY(!(updatedResource.data() && updatedResource.data()->body())))
     {
         ErrorString error(
-            QT_TR_NOOP("Can't update the resource: the updated "
-                       "resource contains no data body"));
+            QT_TR_NOOP("Can't update the resource: the updated resource "
+                       "contains no data body"));
         QNWARNING(
             "note_editor", error << ", updated resource: " << updatedResource);
         Q_EMIT notifyError(error);
@@ -6262,7 +6088,6 @@ void NoteEditorPrivate::setupFileIO()
     m_pGenericResourceImageManager->moveToThread(
         m_pFileIOProcessorAsync->thread());
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     QObject::connect(
         this, &NoteEditorPrivate::saveGenericResourceImageToFile,
         m_pGenericResourceImageManager,
@@ -6277,7 +6102,6 @@ void NoteEditorPrivate::setupFileIO()
         this, &NoteEditorPrivate::currentNoteChanged,
         m_pGenericResourceImageManager,
         &GenericResourceImageManager::onCurrentNoteChanged);
-#endif
 }
 
 void NoteEditorPrivate::setupSpellChecker()
@@ -6433,14 +6257,10 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs);
     SETUP_SCRIPT("javascript/scripts/setFontSize.js", m_setFontSizeJs);
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
-#else
     SETUP_SCRIPT("qtwebchannel/qwebchannel.js", m_qWebChannelJs);
 
     SETUP_SCRIPT(
         "javascript/scripts/qWebChannelSetup.js", m_qWebChannelSetupJs);
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     SETUP_SCRIPT("javascript/scripts/enToDoTagsSetup.js", m_setupEnToDoTagsJs);
 
@@ -6448,7 +6268,6 @@ void NoteEditorPrivate::setupScripts()
         "javascript/scripts/flipEnToDoCheckboxState.js",
         m_flipEnToDoCheckboxStateJs);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT(
         "javascript/scripts/provideSrcAndOnClickScriptForEnCryptImgTags.js",
         m_provideSrcAndOnClickScriptForEnCryptImgTagsJs);
@@ -6479,8 +6298,6 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT(
         "javascript/scripts/setupTextCursorPositionTracking.js",
         m_setupTextCursorPositionTrackingJs);
-#endif // QUENTIER_USE_QT_WEB_ENGINE
-
 #undef SETUP_SCRIPT
 }
 
@@ -6695,69 +6512,10 @@ void NoteEditorPrivate::setupNoteEditorPage()
     auto * page = new NoteEditorPage(*this);
 
     page->settings()->setAttribute(
-        WebSettings::LocalContentCanAccessFileUrls, true);
+        QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
     page->settings()->setAttribute(
-        WebSettings::LocalContentCanAccessRemoteUrls, false);
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    page->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-    page->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
-
-    page->setLinkDelegationPolicy(QWebPage::DelegateExternalLinks);
-    page->setContentEditable(true);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("pageMutationObserver"), m_pPageMutationHandler,
-        OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("resourceCache"), m_pResourceInfoJavaScriptHandler,
-        OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("textCursorPositionHandler"),
-        m_pTextCursorPositionJavaScriptHandler,
-        OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("contextMenuEventHandler"),
-        m_pContextMenuEventJavaScriptHandler, OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("toDoCheckboxClickHandler"), m_pToDoCheckboxClickHandler,
-        OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("toDoCheckboxAutomaticInsertionHandler"),
-        m_pToDoCheckboxAutomaticInsertionHandler,
-        OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("tableResizeHandler"), m_pTableResizeJavaScriptHandler,
-        OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("resizableImageHandler"),
-        m_pResizableImageJavaScriptHandler, OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("spellCheckerDynamicHelper"),
-        m_pSpellCheckerDynamicHandler, OwnershipNamespace::QtOwnership);
-
-    page->mainFrame()->addToJavaScriptWindowObject(
-        QStringLiteral("actionsWatcher"), m_pActionsWatcher,
-        OwnershipNamespace::QtOwnership);
-
-    m_pPluginFactory = new NoteEditorPluginFactory(*this, page);
-    if (Q_LIKELY(m_pNote)) {
-        m_pPluginFactory->setNote(*m_pNote);
-    }
-
-    QNDEBUG("note_editor", "Setting note editor plugin factory to the page");
-    page->setPluginFactory(m_pPluginFactory);
-
-#endif // QUENTIER_USE_QT_WEB_ENGINE
+        QWebEngineSettings::LocalContentCanAccessRemoteUrls, false);
 
     setupNoteEditorPageConnections(page);
     setPage(page);
@@ -6774,25 +6532,9 @@ void NoteEditorPrivate::setupNoteEditorPageConnections( // NOLINT
         page, &NoteEditorPage::javaScriptLoaded, this,
         &NoteEditorPrivate::onJavaScriptLoaded);
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    QObject::connect(
-        page, &NoteEditorPage::microFocusChanged, this,
-        &NoteEditorPrivate::onTextCursorPositionChange);
-
-    QWebFrame * frame = page->mainFrame();
-
-    QObject::connect(
-        frame, &QWebFrame::loadFinished, this,
-        &NoteEditorPrivate::onNoteLoadFinished);
-
-    QObject::connect(
-        page, &QWebPage::linkClicked, this,
-        &NoteEditorPrivate::onHyperlinkClicked);
-#else
     QObject::connect(
         page, &NoteEditorPage::loadFinished, this,
         &NoteEditorPrivate::onNoteLoadFinished);
-#endif
 
     QObject::connect(
         page, &NoteEditorPage::undoActionRequested, this,
@@ -7056,94 +6798,61 @@ void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
 
     m_skipRulesForHtmlToEnmlConversion.reserve(7);
 
-    ENMLConverter::SkipHtmlElementRule tableSkipRule;
-    tableSkipRule.m_attributeValueToSkip = QStringLiteral("JCLRgrip");
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::StartsWith)
+        .setCaseSensitivity(Qt::CaseSensitive)
+        .setIncludeContents(true)
+        .setValue(QStringLiteral("JCLRgrip"))
+        .build();
 
-    tableSkipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::StartsWith;
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::Contains)
+        .setCaseSensitivity(Qt::CaseInsensitive)
+        .setIncludeContents(true)
+        .setValue(QStringLiteral("hilitorHelper"))
+        .build();
 
-    tableSkipRule.m_attributeValueCaseSensitivity = Qt::CaseSensitive;
-    m_skipRulesForHtmlToEnmlConversion << tableSkipRule;
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::Contains)
+        .setCaseSensitivity(Qt::CaseSensitive)
+        .setIncludeContents(true)
+        .setValue(QStringLiteral("image-area-hilitor"))
+        .build();
 
-    ENMLConverter::SkipHtmlElementRule hilitorSkipRule;
-    hilitorSkipRule.m_includeElementContents = true;
-    hilitorSkipRule.m_attributeValueToSkip = QStringLiteral("hilitorHelper");
-    hilitorSkipRule.m_attributeValueCaseSensitivity = Qt::CaseInsensitive;
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::Contains)
+        .setCaseSensitivity(Qt::CaseSensitive)
+        .setIncludeContents(true)
+        .setValue(QStringLiteral("misspell"))
+        .build();
 
-    hilitorSkipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::Contains)
+        .setCaseSensitivity(Qt::CaseSensitive)
+        .setIncludeContents(false)
+        .setValue(QStringLiteral("rangySelectionBoundary"))
+        .build();
+    
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::Contains)
+        .setCaseSensitivity(Qt::CaseSensitive)
+        .setIncludeContents(false)
+        .setValue(QStringLiteral("ui-resizable-handle"))
+        .build();
 
-    m_skipRulesForHtmlToEnmlConversion << hilitorSkipRule;
-
-    ENMLConverter::SkipHtmlElementRule imageAreaHilitorSkipRule;
-    imageAreaHilitorSkipRule.m_includeElementContents = false;
-
-    imageAreaHilitorSkipRule.m_attributeValueToSkip =
-        QStringLiteral("image-area-hilitor");
-
-    imageAreaHilitorSkipRule.m_attributeValueCaseSensitivity =
-        Qt::CaseSensitive;
-
-    imageAreaHilitorSkipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
-
-    m_skipRulesForHtmlToEnmlConversion << imageAreaHilitorSkipRule;
-
-    ENMLConverter::SkipHtmlElementRule spellCheckerHelperSkipRule;
-    spellCheckerHelperSkipRule.m_includeElementContents = true;
-
-    spellCheckerHelperSkipRule.m_attributeValueToSkip =
-        QStringLiteral("misspell");
-
-    spellCheckerHelperSkipRule.m_attributeValueCaseSensitivity =
-        Qt::CaseSensitive;
-
-    spellCheckerHelperSkipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
-
-    m_skipRulesForHtmlToEnmlConversion << spellCheckerHelperSkipRule;
-
-    ENMLConverter::SkipHtmlElementRule rangySelectionBoundaryRule;
-    rangySelectionBoundaryRule.m_includeElementContents = false;
-
-    rangySelectionBoundaryRule.m_attributeValueToSkip =
-        QStringLiteral("rangySelectionBoundary");
-
-    rangySelectionBoundaryRule.m_attributeValueCaseSensitivity =
-        Qt::CaseSensitive;
-
-    rangySelectionBoundaryRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
-
-    m_skipRulesForHtmlToEnmlConversion << rangySelectionBoundaryRule;
-
-    ENMLConverter::SkipHtmlElementRule resizableImageHandleRule;
-    resizableImageHandleRule.m_includeElementContents = false;
-
-    resizableImageHandleRule.m_attributeValueToSkip =
-        QStringLiteral("ui-resizable-handle");
-
-    resizableImageHandleRule.m_attributeValueCaseSensitivity =
-        Qt::CaseSensitive;
-
-    resizableImageHandleRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
-
-    m_skipRulesForHtmlToEnmlConversion << resizableImageHandleRule;
-
-    ENMLConverter::SkipHtmlElementRule resizableImageHelperDivRule;
-    resizableImageHelperDivRule.m_includeElementContents = true;
-
-    resizableImageHelperDivRule.m_attributeValueToSkip =
-        QStringLiteral("ui-wrapper");
-
-    resizableImageHelperDivRule.m_attributeValueCaseSensitivity =
-        Qt::CaseSensitive;
-
-    resizableImageHelperDivRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
-
-    m_skipRulesForHtmlToEnmlConversion << resizableImageHelperDivRule;
+    m_skipRulesForHtmlToEnmlConversion << enml::conversion_rules::createSkipRuleBuilder()
+        ->setTarget(enml::conversion_rules::ISkipRule::Target::AttributeValue)
+        .setMatchMode(enml::conversion_rules::MatchMode::Contains)
+        .setCaseSensitivity(Qt::CaseSensitive)
+        .setIncludeContents(true)
+        .setValue(QStringLiteral("ui-wrapper"))
+        .build();
 }
 
 QString NoteEditorPrivate::noteNotFoundPageHtml() const
@@ -7277,9 +6986,6 @@ void NoteEditorPrivate::setPageEditable(const bool editable)
 
     GET_PAGE()
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    page->setContentEditable(editable);
-#else
     const QString javascript =
         QStringLiteral("document.body.contentEditable='") +
         (editable ? QStringLiteral("true") : QStringLiteral("false")) +
@@ -7293,7 +6999,6 @@ void NoteEditorPrivate::setPageEditable(const bool editable)
         "note_editor",
         "Queued javascript to make page "
             << (editable ? "editable" : "non-editable") << ": " << javascript);
-#endif
 
     m_isPageEditable = editable;
 }
@@ -7350,17 +7055,17 @@ void NoteEditorPrivate::onPageHtmlReceived(
     }
 
     m_lastSelectedHtml.resize(0);
+
     m_htmlCachedMemory = html;
     m_enmlCachedMemory.resize(0);
-    ErrorString error;
 
-    const bool res = m_enmlConverter.htmlToNoteContent(
-        m_htmlCachedMemory, m_enmlCachedMemory, *m_decryptedTextCache, error,
+    const auto res = m_enmlConverter->convertHtmlToEnml(
+        m_htmlCachedMemory, *m_decryptedTextCache,
         m_skipRulesForHtmlToEnmlConversion);
-
-    if (!res) {
-        ErrorString errorDescription(
-            QT_TR_NOOP("Can't convert note editor page's content to ENML"));
+    if (!res.isValid()) {
+        ErrorString errorDescription{
+            QT_TR_NOOP("Can't convert note editor page's content to ENML")};
+        const auto & error = res.error();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
@@ -7378,6 +7083,8 @@ void NoteEditorPrivate::onPageHtmlReceived(
 
         return;
     }
+
+    m_enmlCachedMemory = res.get();
 
     ErrorString errorDescription;
     if (!checkNoteSize(m_enmlCachedMemory, errorDescription)) {
@@ -7425,15 +7132,10 @@ void NoteEditorPrivate::onSelectedTextEncryptionDone(
 
     m_pendingConversionToNote = true;
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_htmlCachedMemory = page()->mainFrame()->toHtml();
-    onPageHtmlReceived(m_htmlCachedMemory);
-#else
     page()->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceived));
 
     provideSrcAndOnClickScriptForImgEnCryptTags();
-#endif
 }
 
 void NoteEditorPrivate::onTableActionDone(
@@ -7759,14 +7461,14 @@ void NoteEditorPrivate::rebuildRecognitionIndicesCache()
     const int numResources = resources.size();
     for (int i = 0; i < numResources; ++i) {
         const auto & resource = qAsConst(resources)[i];
-        if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor",
                 "Skipping the resource without the data hash: " << resource);
             continue;
         }
 
-        if (!resource.recognition() || !resource.recognition()->body()) {
+        if (!(resource.recognition() && resource.recognition()->body())) {
             QNTRACE(
                 "note_editor",
                 "Skipping the resource without recognition data body");
@@ -7971,13 +7673,8 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
     Q_UNUSED(extraData)
 
     GET_PAGE()
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_htmlCachedMemory = page->mainFrame()->toHtml();
-    onPageHtmlReceived(m_htmlCachedMemory);
-#else
     page->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceived));
-#endif
 }
 
 void NoteEditorPrivate::updateBodyStyle()
@@ -8074,13 +7771,8 @@ void NoteEditorPrivate::onFontFamilyUpdated(
         return;
     }
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_htmlCachedMemory = page()->mainFrame()->toHtml();
-    onPageHtmlReceived(m_htmlCachedMemory);
-#else
     page()->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceived));
-#endif
 
     if (Q_UNLIKELY(extraData.empty())) {
         QNWARNING(
@@ -8152,13 +7844,8 @@ void NoteEditorPrivate::onFontHeightUpdated(
         return;
     }
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_htmlCachedMemory = page()->mainFrame()->toHtml();
-    onPageHtmlReceived(m_htmlCachedMemory);
-#else
     page()->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceived));
-#endif
 
     if (Q_UNLIKELY(extraData.empty())) {
         QNWARNING(
@@ -8282,34 +7969,6 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(
                              .arg(escapedCommand, escapedArgs);                \
     QNDEBUG("note_editor", "JS command: " << javascript)
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-QVariant NoteEditorPrivate::execJavascriptCommandWithResult(
-    const QString & command)
-{
-    COMMAND_TO_JS(command);
-    QWebFrame * frame = page()->mainFrame();
-    const QVariant result = frame->evaluateJavaScript(javascript);
-    QNTRACE(
-        "note_editor",
-        "Executed javascript command: " << javascript
-                                        << ", result = " << result.toString());
-    return result;
-}
-
-QVariant NoteEditorPrivate::execJavascriptCommandWithResult(
-    const QString & command, const QString & args)
-{
-    COMMAND_WITH_ARGS_TO_JS(command, args);
-    QWebFrame * frame = page()->mainFrame();
-    const QVariant result = frame->evaluateJavaScript(javascript);
-    QNTRACE(
-        "note_editor",
-        "Executed javascript command: " << javascript
-                                        << ", result = " << result.toString());
-    return result;
-}
-#endif
-
 void NoteEditorPrivate::execJavascriptCommand(const QString & command)
 {
     QNDEBUG(
@@ -8427,309 +8086,6 @@ bool NoteEditorPrivate::print(
 
     QTextDocument doc;
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    QWebPage * pPage = page();
-    if (Q_UNLIKELY(!pPage)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: internal error, "
-                       "no note editor page"));
-        QNWARNING("note_editor", errorDescription);
-        return false;
-    }
-
-    QWebFrame * pFrame = pPage->mainFrame();
-    if (Q_UNLIKELY(!pFrame)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: internal error, no main frame was "
-                       "found within the note editor page"));
-        QNWARNING("note_editor", errorDescription);
-        return false;
-    }
-
-    /**
-     * QtWebKit-based note editor uses plugins for encrypted text as well as
-     * for "generic" resources; these plugins won't be printable within
-     * QTextDocument, of course. For this reason need to convert
-     * the HTML pieces representing these plugins to plain images
-     */
-
-    const QString initialHtml = pFrame->toHtml();
-
-    HTMLCleaner htmlCleaner;
-    QString initialXml;
-
-    QString htmlToXmlError;
-    bool htmlToXmlRes =
-        htmlCleaner.htmlToXml(initialHtml, initialXml, htmlToXmlError);
-
-    if (Q_UNLIKELY(!htmlToXmlRes)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: failed to convert "
-                       "the note editor's HTML to XML"));
-        errorDescription.details() = htmlToXmlError;
-        QNWARNING("note_editor", errorDescription);
-        return false;
-    }
-
-    const auto resources =
-        (m_pNote->resources()
-         ? *m_pNote->resources()
-         : QList<qevercloud::Resource>());
-
-    QString preprocessedHtml;
-    QXmlStreamReader reader(initialXml);
-    QXmlStreamWriter writer(&preprocessedHtml);
-    writer.setAutoFormatting(true);
-
-    int writeElementCounter = 0;
-    bool insideGenericResourceImage = false;
-    bool insideEnCryptTag = false;
-
-    while (!reader.atEnd()) {
-        Q_UNUSED(reader.readNext());
-
-        if (reader.isStartDocument()) {
-            continue;
-        }
-
-        if (reader.isDTD()) {
-            continue;
-        }
-
-        if (reader.isEndDocument()) {
-            break;
-        }
-
-        if (reader.isStartElement()) {
-            ++writeElementCounter;
-
-            const QString elementName = reader.name().toString();
-            const auto elementAttributes = reader.attributes();
-
-            if (!elementAttributes.hasAttribute(QStringLiteral("en-tag"))) {
-                writer.writeStartElement(elementName);
-                writer.writeAttributes(elementAttributes);
-                continue;
-            }
-
-            const QString enTagAttr =
-                elementAttributes.value(QStringLiteral("en-tag")).toString();
-
-            if (enTagAttr == QStringLiteral("en-media")) {
-                if (elementName == QStringLiteral("img")) {
-                    writer.writeStartElement(elementName);
-                    writer.writeAttributes(elementAttributes);
-                    continue;
-                }
-
-                const QString typeAttr =
-                    elementAttributes.value(QStringLiteral("type")).toString();
-
-                const QString hashAttr =
-                    elementAttributes.value(QStringLiteral("hash")).toString();
-
-                if (Q_UNLIKELY(hashAttr.isEmpty())) {
-                    errorDescription.setBase(
-                        QT_TR_NOOP("Can't print note: found generic resource "
-                                   "image without hash attribute"));
-                    QNWARNING("note_editor", errorDescription);
-                    return false;
-                }
-
-                const QByteArray hashAttrByteArray =
-                    QByteArray::fromHex(hashAttr.toLocal8Bit());
-
-                QNTRACE(
-                    "note_editor",
-                    "Will look for resource with hash " << hashAttrByteArray);
-
-                const qevercloud::Resource * pTargetResource = nullptr;
-                for (const auto & resource: qAsConst(resources)) {
-                    QNTRACE(
-                        "note_editor",
-                        "Examining resource: data hash = "
-                            << (resource.data() && resource.data()->bodyHash())
-                                ? QString::fromLocal8Bit(
-                                    *resource.data()->bodyHash())
-                                : QStringLiteral("<null>"));
-
-                    if (resource.data() && resource.data()->bodyHash() &&
-                        (*resource.data()->bodyHash() == hashAttrByteArray)) {
-                        pTargetResource = &resource;
-                        break;
-                    }
-                }
-
-                if (Q_UNLIKELY(!pTargetResource)) {
-                    errorDescription.setBase(
-                        QT_TR_NOOP("Can't print note: could not find one of "
-                                   "resources referenced in the note text "
-                                   "within the actual note's resources"));
-                    errorDescription.details() = QStringLiteral("hash = ");
-                    errorDescription.details() += hashAttr;
-                    QNWARNING("note_editor", errorDescription);
-                    return false;
-                }
-
-                const QImage genericResourceImage =
-                    buildGenericResourceImage(*pTargetResource);
-
-                if (Q_UNLIKELY(genericResourceImage.isNull())) {
-                    errorDescription.setBase(
-                        QT_TR_NOOP("Can't print note: could not generate the "
-                                   "generic resource image"));
-                    QNWARNING("note_editor", errorDescription);
-                    return false;
-                }
-
-                writer.writeStartElement(QStringLiteral("img"));
-
-                QXmlStreamAttributes filteredAttributes;
-
-                filteredAttributes.append(
-                    QStringLiteral("en-tag"), QStringLiteral("en-media"));
-
-                filteredAttributes.append(QStringLiteral("type"), typeAttr);
-                filteredAttributes.append(QStringLiteral("hash"), hashAttr);
-
-                hashAttr.prepend(QStringLiteral(":"));
-                filteredAttributes.append(QStringLiteral("src"), hashAttr);
-
-                doc.addResource(
-                    QTextDocument::ImageResource, QUrl(hashAttr),
-                    genericResourceImage);
-
-                writer.writeAttributes(filteredAttributes);
-
-                insideGenericResourceImage = true;
-            }
-            else if (enTagAttr == QStringLiteral("en-crypt")) {
-                QString enCryptImageFilePath = QStringLiteral(
-                    ":/encrypted_area_icons/en-crypt/en-crypt.png");
-
-                const QImage encryptedTextImage(enCryptImageFilePath, "PNG");
-                enCryptImageFilePath.prepend(QStringLiteral("qrc"));
-
-                writer.writeStartElement(QStringLiteral("img"));
-
-                QXmlStreamAttributes filteredAttributes;
-
-                filteredAttributes.append(
-                    QStringLiteral("type"), QStringLiteral("image/png"));
-
-                filteredAttributes.append(
-                    QStringLiteral("src"), enCryptImageFilePath);
-
-                filteredAttributes.append(
-                    QStringLiteral("en-tag"), QStringLiteral("en-crypt"));
-
-                writer.writeAttributes(filteredAttributes);
-
-                doc.addResource(
-                    QTextDocument::ImageResource, QUrl(enCryptImageFilePath),
-                    encryptedTextImage);
-
-                insideEnCryptTag = true;
-            }
-            else {
-                writer.writeStartElement(elementName);
-                writer.writeAttributes(elementAttributes);
-            }
-        }
-
-        if ((writeElementCounter > 0) && reader.isCharacters()) {
-            if (insideGenericResourceImage) {
-                insideGenericResourceImage = false;
-                continue;
-            }
-
-            if (insideEnCryptTag) {
-                insideEnCryptTag = false;
-                continue;
-            }
-
-            if (reader.isCDATA()) {
-                writer.writeCDATA(reader.text().toString());
-                QNTRACE(
-                    "note_editor", "Wrote CDATA: " << reader.text().toString());
-            }
-            else {
-                writer.writeCharacters(reader.text().toString());
-                QNTRACE(
-                    "note_editor",
-                    "Wrote characters: " << reader.text().toString());
-            }
-        }
-
-        if ((writeElementCounter > 0) && reader.isEndElement()) {
-            writer.writeEndElement();
-            --writeElementCounter;
-        }
-    }
-
-    if (Q_UNLIKELY(reader.hasError())) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: failed to read the XML translated "
-                       "from the note editor's HTML"));
-        errorDescription.details() = reader.errorString();
-        errorDescription.details() += QStringLiteral("; error code = ");
-        errorDescription.details() += QString::number(reader.error());
-        QNWARNING("note_editor", errorDescription);
-        return false;
-    }
-
-    const int bodyOpeningTagStartIndex =
-        preprocessedHtml.indexOf(QStringLiteral("<body"));
-
-    if (Q_UNLIKELY(bodyOpeningTagStartIndex < 0)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: can't find the body tag within the "
-                       "preprocessed HTML prepared for conversion to "
-                       "QTextDocument"));
-        QNWARNING(
-            "note_editor",
-            errorDescription << "; preprocessed HTML: " << preprocessedHtml);
-        return false;
-    }
-
-    const int bodyOpeningTagEndIndex =
-        preprocessedHtml.indexOf(QStringLiteral(">"), bodyOpeningTagStartIndex);
-
-    if (Q_UNLIKELY(bodyOpeningTagEndIndex < 0)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: can't find the end of the body tag "
-                       "within the preprocessed HTML prepared for conversion "
-                       "to QTextDocument"));
-        QNWARNING(
-            "note_editor",
-            errorDescription << "; preprocessed HTML: " << preprocessedHtml);
-        return false;
-    }
-
-    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, noteEditorPagePrefix());
-
-    const int bodyClosingTagIndex = preprocessedHtml.indexOf(
-        QStringLiteral("</body>"), bodyOpeningTagEndIndex);
-
-    if (Q_UNLIKELY(bodyClosingTagIndex < 0)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't print note: can't find the enclosing body tag "
-                       "within the preprocessed HTML prepared for conversion "
-                       "to QTextDocument"));
-        QNWARNING(
-            "note_editor",
-            errorDescription << "; preprocessed HTML: " << preprocessedHtml);
-        return false;
-    }
-
-    preprocessedHtml.insert(bodyClosingTagIndex + 7, QStringLiteral("</html>"));
-
-    preprocessedHtml.replace(
-        QStringLiteral("<br></br>"), QStringLiteral("</br>"));
-
-    m_htmlForPrinting = preprocessedHtml;
-
-#else  // QUENTIER_USE_QT_WEB_ENGINE
     m_htmlForPrinting.resize(0);
 
     auto * pConversionTimer = new QTimer(this);
@@ -8762,14 +8118,12 @@ bool NoteEditorPrivate::print(
         QNWARNING("note_editor", errorDescription);
         return false;
     }
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
-    ErrorString error;
-    if (!m_enmlConverter.htmlToQTextDocument(
-            m_htmlForPrinting, doc, error,
-            m_skipRulesForHtmlToEnmlConversion))
-    {
-        errorDescription.setBase(QT_TR_NOOP("Can't print note"));
+    const auto res = m_enmlConverter->convertHtmlToDoc(
+        m_htmlForPrinting, doc, m_skipRulesForHtmlToEnmlConversion);
+    if (!res.isValid()) {
+        ErrorString errorDescription{QT_TR_NOOP("Can't print note")};
+        const auto & error = res.error();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
@@ -8822,8 +8176,7 @@ bool NoteEditorPrivate::exportToPdf(
         return false;
     }
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) &&                                     \
-    (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     QWebEnginePage * pPage = page();
     if (Q_UNLIKELY(!pPage)) {
         errorDescription.setBase(
@@ -8845,7 +8198,7 @@ bool NoteEditorPrivate::exportToPdf(
     printer.setPaperSize(QPrinter::A4);
     printer.setOutputFileName(filePath);
     return print(printer, errorDescription);
-#endif // QUENTIER_USE_QT_WEB_ENGINE
+#endif
 }
 
 bool NoteEditorPrivate::exportToEnex(
@@ -8935,12 +8288,19 @@ bool NoteEditorPrivate::exportToEnex(
 
     notes[0].setTagLocalIds(tagLocalIds);
 
-    const ENMLConverter::EnexExportTags exportTagsOption =
-        (tagNames.isEmpty() ? ENMLConverter::EnexExportTags::No
-                            : ENMLConverter::EnexExportTags::Yes);
+    const enml::IConverter::EnexExportTags exportTagsOption =
+        (tagNames.isEmpty() ? enml::IConverter::EnexExportTags::No
+                            : enml::IConverter::EnexExportTags::Yes);
 
-    return m_enmlConverter.exportNotesToEnex(
-        notes, tagNamesByTagLocalId, exportTagsOption, enex, errorDescription);
+    const auto res = m_enmlConverter->exportNotesToEnex(
+        notes, tagNamesByTagLocalId, exportTagsOption);
+    if (!res.isValid()) {
+        errorDescription = res.error();
+        return false;
+    }
+
+    enex = res.get();
+    return true;
 }
 
 QString NoteEditorPrivate::currentNoteLocalId() const
@@ -9312,7 +8672,7 @@ void NoteEditorPrivate::replaceResourceInNote(
         return;
     }
 
-    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty())) {
+    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty())) { // NOLINT
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
                        "note has no resources"));
@@ -9386,7 +8746,6 @@ void NoteEditorPrivate::setFocusToEditor()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::setFocusToEditor");
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 #if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
     QNDEBUG(
         "note_editor",
@@ -9399,11 +8758,9 @@ void NoteEditorPrivate::setFocusToEditor()
         pFocusWidget->clearFocus();
     }
 #endif
-#endif
 
     setFocus();
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 #if (QT_VERSION < QT_VERSION_CHECK(5, 9, 0)) &&                                \
     (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
     QRect r = rect();
@@ -9423,7 +8780,6 @@ void NoteEditorPrivate::setFocusToEditor()
             << bottomRight.x() << ", y = " << bottomRight.y());
 
     QApplication::sendEvent(this, &event);
-#endif
 #endif
 }
 
@@ -9814,7 +9170,7 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
         return qint64(0);
     }
 
-    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty())) {
+    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty())) { // NOLINT
         QNTRACE("note_editor", "Note has no resources - returning zero");
         return qint64(0);
     }
@@ -10180,7 +9536,7 @@ void NoteEditorPrivate::paste()
             QNDEBUG("note_editor", "HTML from mime data: " << html);
 
             auto * pInsertHtmlDelegate = new InsertHtmlDelegate(
-                html, *this, m_enmlConverter,
+                html, *this, m_enmlTagsConverter,
                 m_pResourceDataInTemporaryFileStorageManager,
                 m_resourceFileStoragePathsByResourceLocalId, m_resourceInfo,
                 this);
@@ -11277,9 +10633,9 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
 
     const auto & resource = qAsConst(resources).at(resourceIndex);
 
-    if (Q_UNLIKELY(
-            (!resource.data() || !resource.data()->body()) &&
-            (!resource.alternateData() || !resource.alternateData()->body())))
+    if (Q_UNLIKELY(!(
+            (resource.data() && resource.data()->body()) ||
+            (resource.alternateData() && resource.alternateData()->body()))))
     {
         ErrorString error(
             QT_TR_NOOP("Can't copy the attachment as it has neither "
@@ -11513,7 +10869,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
     }
 
     auto & resource = resources[targetResourceIndex];
-    if (Q_UNLIKELY(!resource.data() || !resource.data()->body())) {
+    if (Q_UNLIKELY(!(resource.data() && resource.data()->body()))) {
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("The resource doesn't have the data body set"));
@@ -11522,7 +10878,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
         return;
     }
 
-    if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
+    if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("The resource doesn't have the data hash set"));
@@ -11610,7 +10966,7 @@ void NoteEditorPrivate::rotateImageAttachment(
     }
 
     auto & resource = resources[targetResourceIndex];
-    if (!resource.data() || !resource.data()->body()) {
+    if (!(resource.data() && resource.data()->body())) {
         QNDEBUG(
             "note_editor",
             "The resource to be rotated doesn't have data "
@@ -11625,7 +10981,7 @@ void NoteEditorPrivate::rotateImageAttachment(
         return;
     }
 
-    if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
+    if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("The attachment doesn't have the data hash set"));
@@ -11701,7 +11057,7 @@ void NoteEditorPrivate::encryptSelectedText()
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't encrypt the selected text"))
 
     auto * delegate = new EncryptSelectedTextDelegate(
-        this, m_encryptionManager, m_decryptedTextCache);
+        this, m_encryptionManager, m_decryptedTextCache, m_enmlTagsConverter);
 
     QObject::connect(
         delegate, &EncryptSelectedTextDelegate::finished, this,
@@ -11756,7 +11112,7 @@ void NoteEditorPrivate::decryptEncryptedText(
 
     auto * delegate = new DecryptEncryptedTextDelegate(
         enCryptIndex, encryptedText, cipher, length, hint, this,
-        m_encryptionManager, m_decryptedTextCache);
+        m_encryptionManager, m_decryptedTextCache, m_enmlTagsConverter);
 
     QObject::connect(
         delegate, &DecryptEncryptedTextDelegate::finished, this,
@@ -11865,7 +11221,7 @@ void NoteEditorPrivate::hideDecryptedText(
 
     const quint64 enCryptIndex = m_lastFreeEnCryptIdNumber++;
 
-    QString html = ENMLConverter::encryptedTextHtml(
+    QString html = m_enmlTagsConverter->convertEncryptedText(
         encryptedText, hint, cipher, keyLengthInt, enCryptIndex);
 
     escapeStringForJavaScript(html);
@@ -12067,7 +11423,8 @@ void NoteEditorPrivate::dropFile(const QString & filePath)
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't add the attachment via drag'n'drop"))
 
     auto * delegate = new AddResourceDelegate(
-        filePath, *this, m_pResourceDataInTemporaryFileStorageManager,
+        filePath, *this, m_enmlTagsConverter,
+        m_pResourceDataInTemporaryFileStorageManager,
         m_pFileIOProcessorAsync, m_pGenericResourceImageManager,
         m_genericResourceImageFilePathsByResourceHash);
 
@@ -12095,7 +11452,8 @@ void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
     const QString mimeType = QStringLiteral("image/png");
 
     auto * delegate = new AddResourceDelegate(
-        data, mimeType, *this, m_pResourceDataInTemporaryFileStorageManager,
+        data, mimeType, *this, m_enmlTagsConverter,
+        m_pResourceDataInTemporaryFileStorageManager,
         m_pFileIOProcessorAsync, m_pGenericResourceImageManager,
         m_genericResourceImageFilePathsByResourceHash);
 
@@ -12123,7 +11481,7 @@ void NoteEditorPrivate::escapeStringForJavaScript(QString & str) const
     str.replace(QStringLiteral("\?"), QStringLiteral("\\?"));
 
     // Escape single and double quotes
-    ENMLConverter::escapeString(str, /* simplify = */ false);
+    str = enml::utils::htmlEscapeString(str);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

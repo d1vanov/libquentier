@@ -21,8 +21,8 @@
 #include "NoteEditorPage.h"
 #include "ResourceInfo.h"
 
-#include <quentier/enml/ENMLConverter.h>
 #include <quentier/enml/Fwd.h>
+#include <quentier/enml/conversion_rules/Fwd.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/types/ErrorString.h>
@@ -42,18 +42,7 @@
 #include <QPointer>
 #include <QProgressDialog>
 #include <QUndoStack>
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebEngineView>
-using WebView = QWebEngineView;
-using WebPage = QWebEnginePage;
-#else
-#include "NoteEditorPluginFactory.h"
-
-#include <QWebView>
-using WebView = QWebView;
-using WebPage = QWebPage;
-#endif
 
 #include <memory>
 #include <utility>
@@ -63,56 +52,41 @@ class QByteArray;
 class QImage;
 class QMimeType;
 class QThread;
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 class QWebChannel;
 class QWebSocketServer;
 class WebSocketClientWrapper;
-#endif
 
 namespace quentier {
 
-class FileIOProcessorAsync;
-class ResourceDataInTemporaryFileStorageManager;
-class ResourceInfoJavaScriptHandler;
-
 class ActionsWatcher;
 class ContextMenuEventJavaScriptHandler;
+class EnCryptElementOnClickHandler;
+class FileIOProcessorAsync;
+class GenericResourceImageJavaScriptHandler;
 class GenericResourceImageManager;
+class GenericResourceOpenAndSaveButtonsOnClickHandler;
+class HyperlinkClickJavaScriptHandler;
 class PageMutationHandler;
 class RenameResourceDelegate;
 class ResizableImageJavaScriptHandler;
+class ResourceDataInTemporaryFileStorageManager;
+class ResourceInfoJavaScriptHandler;
 class SpellChecker;
 class SpellCheckerDynamicHelper;
 class TableResizeJavaScriptHandler;
 class TextCursorPositionJavaScriptHandler;
 class ToDoCheckboxOnClickHandler;
 class ToDoCheckboxAutomaticInsertionHandler;
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-class EnCryptElementOnClickHandler;
-class GenericResourceOpenAndSaveButtonsOnClickHandler;
-class GenericResourceImageJavaScriptHandler;
-class HyperlinkClickJavaScriptHandler;
 class WebSocketWaiter;
-#endif
 
 class Q_DECL_HIDDEN NoteEditorPrivate final :
-    public WebView,
+    public QWebEngineView,
     public INoteEditorBackend
 {
     Q_OBJECT
 public:
     explicit NoteEditorPrivate(NoteEditor & noteEditor);
     ~NoteEditorPrivate() noexcept override;
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    [[nodiscard]] QVariant execJavascriptCommandWithResult(
-        const QString & command);
-
-    [[nodiscard]] QVariant execJavascriptCommandWithResult(
-        const QString & command, const QString & args);
-#endif
 
     void execJavascriptCommand(const QString & command);
     void execJavascriptCommand(const QString & command, const QString & args);
@@ -188,13 +162,11 @@ public:
     [[nodiscard]] QImage buildGenericResourceImage(
         const qevercloud::Resource & resource);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void saveGenericResourceImage(
         const qevercloud::Resource & resource, const QImage & image);
 
     void provideSrcForGenericResourceImages();
     void setupGenericResourceOnClickHandler();
-#endif
 
     void updateResource(
         const QString & resourceLocalId,
@@ -474,7 +446,6 @@ Q_SIGNALS:
         QString absoluteFilePath, QByteArray resourceData, QUuid requestId,
         bool append);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     /**
      * The signal used during the preparation for loading the note into the note
      * editor page: this signal initiates writing the specifically constructed
@@ -486,7 +457,6 @@ Q_SIGNALS:
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     // Signals for communicating with NoteEditorLocalStorageBroker
     void findNoteAndNotebook(const QString & noteLocalId);
@@ -497,13 +467,11 @@ Q_SIGNALS:
     void failedToSaveNoteToLocalStorage(
         ErrorString errorDescription, QString noteLocalId);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     /**
      * The signal used during the asynchronous sequence of actions required for
      * printing the note to pdf
      */
     void htmlReadyForPrinting();
-#endif
 
 private Q_SLOTS:
     void onTableResized();
@@ -523,17 +491,12 @@ private Q_SLOTS:
         QString resourceLocalId, QString fileStoragePath,
         QByteArray resourceData, QByteArray resourceDataHash);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onGenericResourceImageSaved(
         bool success, QByteArray resourceActualHash, QString filePath,
         ErrorString errorDescription, QUuid requestId);
 
     void onHyperlinkClicked(QString url);
-
     void onWebSocketReady();
-#else
-    void onHyperlinkClicked(QUrl url);
-#endif
 
     void onToDoCheckboxClicked(quint64 enToDoCheckboxId);
     void onToDoCheckboxClickHandlerError(ErrorString error);
@@ -717,9 +680,7 @@ private Q_SLOTS:
 
     void onSpellCheckerDictionaryEnabledOrDisabled(bool checked);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void getHtmlForPrinting();
-#endif
 
     // Slots for signals from NoteEditorLocalStorageBroker
     void onNoteSavedToLocalStorage(QString noteLocalId);
@@ -870,7 +831,6 @@ private:
 
     void manualSaveResourceToFile(const qevercloud::Resource & resource);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void provideSrcAndOnClickScriptForImgEnCryptTags();
 
     void setupGenericResourceImages();
@@ -883,7 +843,6 @@ private:
     void setupWebSocketServer();
     void setupJavaScriptObjects();
     void setupTextCursorPositionTracking();
-#endif
 
     void setupGenericTextContextMenu(
         const QStringList & extraData, const QString & selectedHtml,
@@ -984,11 +943,9 @@ private:
         quint64 hyperlinkId, const QString & presetHyperlink = {},
         const QString & replacementLinkText = {});
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onPageHtmlReceivedForPrinting(
         const QString & html,
         const QVector<std::pair<QString, QString>> & extraData = {});
-#endif
 
     void clearCurrentNoteInfo();
     void reloadCurrentNote();
@@ -1182,9 +1139,6 @@ private:
     QString m_setFontFamilyJs;
     QString m_setFontSizeJs;
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    QString m_qWebKitSetupJs;
-#else
     QString m_provideSrcForGenericResourceImagesJs;
     QString m_onGenericResourceImageReceivedJs;
     QString m_provideSrcAndOnClickScriptForEnCryptImgTagsJs;
@@ -1209,7 +1163,6 @@ private:
 
     bool m_webSocketReady = false;
     quint16 m_webSocketServerPort = 0;
-#endif
 
     GenericResourceImageManager * m_pGenericResourceImageManager = nullptr;
 
@@ -1353,12 +1306,8 @@ private:
 
     std::shared_ptr<EncryptionManager> m_encryptionManager;
     enml::IDecryptedTextCachePtr m_decryptedTextCache;
-
-    ENMLConverter m_enmlConverter;
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    NoteEditorPluginFactory * m_pPluginFactory = nullptr;
-#endif
+    enml::IENMLTagsConverterPtr m_enmlTagsConverter;
+    enml::IConverterPtr m_enmlConverter;
 
     /**
      * Dialog to display the progress of putting note's image resources into
@@ -1395,7 +1344,7 @@ private:
                                  // conversions
     QString m_errorCachedMemory; // Cached memory for various errors
 
-    QList<ENMLConverter::SkipHtmlElementRule>
+    QList<enml::conversion_rules::ISkipRulePtr>
         m_skipRulesForHtmlToEnmlConversion;
 
     ResourceDataInTemporaryFileStorageManager *
@@ -1413,10 +1362,8 @@ private:
 
     QHash<QByteArray, QString> m_genericResourceImageFilePathsByResourceHash;
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     GenericResourceImageJavaScriptHandler *
         m_pGenericResoureImageJavaScriptHandler;
-#endif
 
     QSet<QUuid> m_saveGenericResourceImageToFileRequestIds;
 

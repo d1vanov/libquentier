@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,8 @@
 #include "../NoteEditor_p.h"
 #include "../ResourceDataInTemporaryFileStorageManager.h"
 
+#include <quentier/enml/IENMLTagsConverter.h>
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/NoteUtils.h>
@@ -43,29 +45,36 @@ namespace quentier {
 
 AddResourceDelegate::AddResourceDelegate(
     QString filePath, NoteEditorPrivate & noteEditor,
+    enml::IENMLTagsConverterPtr enmlTagsConverter,
     ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
     FileIOProcessorAsync * pFileIOProcessorAsync,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
-    m_noteEditor(noteEditor),
+    m_noteEditor(noteEditor), m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(
         genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_filePath(std::move(filePath))
-{}
+{
+    if (Q_UNLIKELY(!m_enmlTagsConverter)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "AddResourceDelegate ctor: enml tags converter is null")}};
+    }
+}
 
 AddResourceDelegate::AddResourceDelegate(
     QByteArray resourceData, const QString & mimeType,
     NoteEditorPrivate & noteEditor,
+    enml::IENMLTagsConverterPtr enmlTagsConverter,
     ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
     FileIOProcessorAsync * pFileIOProcessorAsync,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
-    m_noteEditor(noteEditor),
+    m_noteEditor(noteEditor), m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(
@@ -73,6 +82,11 @@ AddResourceDelegate::AddResourceDelegate(
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_data(std::move(resourceData))
 {
+    if (Q_UNLIKELY(!m_enmlTagsConverter)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "AddResourceDelegate ctor: enml tags converter is null")}};
+    }
+
     const QMimeDatabase mimeDatabase;
     m_resourceMimeType = mimeDatabase.mimeTypeForName(mimeType);
 
@@ -627,23 +641,23 @@ void AddResourceDelegate::insertNewResourceHtml()
         "AddResourceDelegate"
             << "::insertNewResourceHtml");
 
-    ErrorString errorDescription;
-
-    const QString resourceHtml =
-        ENMLConverter::resourceHtml(m_resource, errorDescription);
-
-    if (Q_UNLIKELY(resourceHtml.isEmpty())) {
-        ErrorString error(
+    auto res = m_enmlTagsConverter->convertResource(m_resource);
+    if (Q_UNLIKELY(!res.isValid())) {
+        ErrorString errorDescription{
             QT_TR_NOOP("Can't compose the html representation of "
-                       "the attachment"));
-        error.appendBase(errorDescription.base());
-        error.appendBase(errorDescription.additionalBases());
-        error.details() = errorDescription.details();
-        QNWARNING("note_editor:delegate", error);
+                       "the attachment")};
+        const auto & error = res.error();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("note_editor:delegate", errorDescription);
         m_noteEditor.removeResourceFromNote(m_resource);
-        Q_EMIT notifyError(error);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
+
+    const QString resourceHtml = std::move(res.get());
+    Q_ASSERT(!resourceHtml.isEmpty());
 
     QNTRACE("note_editor:delegate", "Resource html: " << resourceHtml);
 
