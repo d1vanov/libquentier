@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,11 +19,8 @@
 #pragma once
 
 #include <QAbstractEventDispatcher>
-#include <QObject>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #include <QMetaObject>
-#endif
+#include <QObject>
 
 #include <QThread>
 
@@ -37,16 +34,9 @@ void postToObject(QObject * object, Function && function)
 {
     Q_ASSERT(object);
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     QMetaObject::invokeMethod(
         object, std::forward<Function>(function),
         Qt::QueuedConnection);
-#else
-    QObject src;
-    QObject::connect(
-        &src, &QObject::destroyed, object, std::forward<Function>(function),
-        Qt::QueuedConnection);
-#endif
 }
 
 template <typename Function>
@@ -79,14 +69,7 @@ void postToThread(QThread * pThread, Function && function)
         return;
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     QMetaObject::invokeMethod(pObject, std::forward<Function>(function));
-#else
-    QObject src;
-    QObject::connect(
-        &src, &QObject::destroyed, pObject, std::forward<Function>(function),
-        Qt::QueuedConnection);
-#endif
 }
 
 } // namespace quentier::threading

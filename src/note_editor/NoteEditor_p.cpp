@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -179,11 +179,7 @@ namespace {
 [[nodiscard]] int fontMetricsWidth(
     const QFontMetrics & fontMetrics, const QString & text, int len = -1)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
     return fontMetrics.horizontalAdvance(text, len);
-#else
-    return fontMetrics.width(text, len);
-#endif
 }
 
 } // namespace
@@ -8176,7 +8172,6 @@ bool NoteEditorPrivate::exportToPdf(
         return false;
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     QWebEnginePage * pPage = page();
     if (Q_UNLIKELY(!pPage)) {
         errorDescription.setBase(
@@ -8192,13 +8187,6 @@ bool NoteEditorPrivate::exportToPdf(
 
     pPage->printToPdf(filePath, pageLayout);
     return true;
-#else
-    QPrinter printer(QPrinter::PrinterResolution);
-    printer.setOutputFormat(QPrinter::PdfFormat);
-    printer.setPaperSize(QPrinter::A4);
-    printer.setOutputFileName(filePath);
-    return print(printer, errorDescription);
-#endif
 }
 
 bool NoteEditorPrivate::exportToEnex(
@@ -8745,42 +8733,7 @@ bool NoteEditorPrivate::isEditorPageModified() const
 void NoteEditorPrivate::setFocusToEditor()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::setFocusToEditor");
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-    QNDEBUG(
-        "note_editor",
-        "Working around Qt bug "
-            << "https://bugreports.qt.io/browse/QTBUG-58515");
-
-    QWidget * pFocusWidget = qApp->focusWidget();
-    if (pFocusWidget) {
-        QNDEBUG("note_editor", "Removing focus from widget: " << pFocusWidget);
-        pFocusWidget->clearFocus();
-    }
-#endif
-
     setFocus();
-
-#if (QT_VERSION < QT_VERSION_CHECK(5, 9, 0)) &&                                \
-    (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
-    QRect r = rect();
-    QPoint bottomRight = r.bottomRight();
-    bottomRight.setX(bottomRight.x() - 1);
-    bottomRight.setY(bottomRight.y() - 1);
-
-    QMouseEvent event(
-        QEvent::MouseButtonPress, bottomRight, bottomRight,
-        mapToGlobal(bottomRight), Qt::LeftButton,
-        Qt::MouseButtons(Qt::LeftButton), Qt::NoModifier,
-        Qt::MouseEventNotSynthesized);
-
-    QNDEBUG(
-        "note_editor",
-        "Sending QMouseEvent to the note editor: point x = "
-            << bottomRight.x() << ", y = " << bottomRight.y());
-
-    QApplication::sendEvent(this, &event);
-#endif
 }
 
 void NoteEditorPrivate::setModified()
@@ -9493,7 +9446,7 @@ void NoteEditorPrivate::copy()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::copy");
     GET_PAGE()
-    page->triggerAction(WebPage::Copy);
+    page->triggerAction(QWebEnginePage::Copy);
 }
 
 void NoteEditorPrivate::paste()
@@ -9691,7 +9644,7 @@ void NoteEditorPrivate::selectAll()
     QNDEBUG("note_editor", "NoteEditorPrivate::selectAll");
 
     GET_PAGE()
-    page->triggerAction(WebPage::SelectAll);
+    page->triggerAction(QWebEnginePage::SelectAll);
 }
 
 void NoteEditorPrivate::formatSelectionAsSourceCode()
@@ -9739,7 +9692,7 @@ void NoteEditorPrivate::cut()
 
     // NOTE: managed action can't properly copy the current selection into
     // the clipboard on all platforms, so triggering copy action first
-    page->triggerAction(WebPage::Copy);
+    page->triggerAction(QWebEnginePage::Copy);
 
     execJavascriptCommand(QStringLiteral("cut"));
     setModified();
@@ -11219,7 +11172,7 @@ void NoteEditorPrivate::hideDecryptedText(
         encryptedText = *reEncryptedText;
     }
 
-    const quint64 enCryptIndex = m_lastFreeEnCryptIdNumber++;
+    const quint32 enCryptIndex = m_lastFreeEnCryptIdNumber++;
 
     QString html = m_enmlTagsConverter->convertEncryptedText(
         encryptedText, hint, cipher, keyLengthInt, enCryptIndex);

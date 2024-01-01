@@ -212,7 +212,7 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
     if (!m_decryptPermanently) {
         decryptedTextHtml = m_enmlTagsConverter->convertDecryptedText(
             m_decryptedText, m_encryptedText, m_hint, m_cipher, m_length,
-            m_pNoteEditor->GetFreeDecryptedTextId());
+            m_pNoteEditor->nextDecryptedTextId());
     }
     else {
         decryptedTextHtml = m_decryptedText;

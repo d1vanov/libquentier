@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,14 +20,10 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebFrame>
-#endif
-
 namespace quentier {
 
 JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
-    WebView & view, QObject * parent) :
+    QWebEngineView & view, QObject * parent) :
     QObject(parent),
     m_view(view)
 {}
@@ -53,13 +49,7 @@ void JavaScriptInOrderExecutor::start()
     const Callback & callback = scriptCallbackPair.second;
 
     m_currentPendingCallback = callback;
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_view.page()->runJavaScript(script, JavaScriptCallback(*this));
-#else
-    QVariant data = m_view.page()->mainFrame()->evaluateJavaScript(script);
-    next(data);
-#endif
 }
 
 void JavaScriptInOrderExecutor::next(const QVariant & data)

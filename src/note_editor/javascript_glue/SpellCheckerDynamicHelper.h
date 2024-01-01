@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H
-#define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H
+#pragma once
 
 #include <QObject>
 #include <QStringList>
@@ -35,16 +34,9 @@ Q_SIGNALS:
     void lastEnteredWords(QStringList words);
 
 public Q_SLOTS:
-
     // NOTE: working around https://bugreports.qt.io/browse/QTBUG-39951 -
     // JavaScript array doesn't get automatically converted to QVariant
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void setLastEnteredWords(QVariant words);
-#else
-    void setLastEnteredWords(QVariantList words);
-#endif
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H

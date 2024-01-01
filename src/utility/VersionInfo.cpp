@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,11 +57,6 @@ bool libquentierHasNoteEditor() noexcept
 bool libquentierHasAuthenticationManager() noexcept
 {
     return static_cast<bool>(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER); // NOLINT
-}
-
-bool libquentierUsesQtWebEngine() noexcept
-{
-    return static_cast<bool>(LIB_QUENTIER_USE_QT_WEB_ENGINE); // NOLINT
 }
 
 int libquentierBuiltWithQEverCloudVersionMajor() noexcept

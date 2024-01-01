@@ -1,4 +1,4 @@
-find_package(Qt5Core 5.5 REQUIRED)
+find_package(Qt5Core 5.12.0 REQUIRED)
 message(STATUS "Found Qt5 installation, version ${Qt5Core_VERSION}")
 
 find_package(Qt5Gui REQUIRED)
@@ -7,20 +7,8 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 
 if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-  if(USE_QT5_WEBKIT)
-    find_package(Qt5WebKit REQUIRED)
-    find_package(Qt5WebKitWidgets REQUIRED)
-  elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
-    find_package(Qt5WebEngine REQUIRED)
-    set(QUENTIER_USE_QT_WEB_ENGINE TRUE)
-  else()
-    find_package(Qt5WebEngineCore REQUIRED)
-    set(QUENTIER_USE_QT_WEB_ENGINE TRUE)
-  endif()
-  if(NOT USE_QT5_WEBKIT)
-    find_package(Qt5WebEngineWidgets REQUIRED)
-    add_definitions(-DQUENTIER_USE_QT_WEB_ENGINE)
-  endif()
+  find_package(Qt5WebEngineCore REQUIRED)
+  find_package(Qt5WebEngineWidgets REQUIRED)
 endif()
 
 find_package(Qt5Xml REQUIRED)
@@ -70,52 +58,32 @@ if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND
 endif()
 
 if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-  if(USE_QT5_WEBKIT)
-    list(APPEND QT_INCLUDES
-      ${QT_INCLUDES}
-      ${Qt5WebKit_INCLUDE_DIRS}
-      ${Qt5WebKitWidgets_INCLUDE_DIRS})
+  find_package(Qt5WebSockets REQUIRED)
+  find_package(Qt5WebChannel REQUIRED)
 
-    list(APPEND QT_LIBRARIES
-      ${QT_LIBRARIES}
-      ${Qt5WebKit_LIBRARIES}
-      ${Qt5WebKitWidgets_LIBRARIES})
+  list(APPEND QT_INCLUDES
+    ${QT_INCLUDES}
+    ${Qt5WebEngine_INCLUDE_DIRS}
+	${Qt5WebEngineCore_INCLUDE_DIRS}
+    ${Qt5WebEngineWidgets_INCLUDE_DIRS}
+    ${Qt5WebSockets_INCLUDE_DIRS}
+    ${Qt5WebChannel_INCLUDE_DIRS})
 
-    list(APPEND QT_DEFINITIONS
-      ${QT_DEFINITIONS}
-      ${Qt5WebKit_DEFINITIONS}
-      ${Qt5WebKitWidgets_DEFINITIONS})
-  else()
-    find_package(Qt5WebSockets REQUIRED)
-    find_package(Qt5WebChannel REQUIRED)
+  list(APPEND QT_LIBRARIES
+    ${QT_LIBRARIES}
+    ${Qt5WebEngine_LIBRARIES}
+	${Qt5WebEngineCore_LIBRARIES}
+    ${Qt5WebEngineWidgets_LIBRARIES}
+    ${Qt5WebSockets_LIBRARIES}
+    ${Qt5WebChannel_LIBRARIES})
 
-    list(APPEND QT_INCLUDES
-      ${QT_INCLUDES}
-      ${Qt5WebEngine_INCLUDE_DIRS}
-      ${Qt5WebEngineWidgets_INCLUDE_DIRS}
-      ${Qt5WebSockets_INCLUDE_DIRS}
-      ${Qt5WebChannel_INCLUDE_DIRS})
-
-    list(APPEND QT_LIBRARIES
-      ${QT_LIBRARIES}
-      ${Qt5WebEngine_LIBRARIES}
-      ${Qt5WebEngineWidgets_LIBRARIES}
-      ${Qt5WebSockets_LIBRARIES}
-      ${Qt5WebChannel_LIBRARIES})
-
-    list(APPEND QT_DEFINITIONS
-      ${QT_DEFINITIONS}
-      ${Qt5WebEngine_DEFINITIONS}
-      ${Qt5WebEngineWidgets_DEFINITIONS}
-      ${Qt5WebSockets_DEFINITIONS}
-      ${Qt5WebChannel_DEFINITIONS})
-
-    if(NOT Qt5WebEngineWidgets_VERSION VERSION_LESS "5.6.0")
-      list(APPEND QT_INCLUDES ${QT_INCLUDES} ${Qt5WebEngineCore_INCLUDE_DIRS})
-      list(APPEND QT_LIBRARIES ${QT_LIBRARIES} ${Qt5WebEngineCore_LIBRARIES})
-      list(APPEND QT_DEFINITIONS ${QT_DEFINITIONS} ${Qt5WebEngineCore_DEFINITIONS})
-    endif()
-  endif()
+  list(APPEND QT_DEFINITIONS
+    ${QT_DEFINITIONS}
+    ${Qt5WebEngine_DEFINITIONS}
+	${Qt5WebEngineCore_DEFINITIONS}
+    ${Qt5WebEngineWidgets_DEFINITIONS}
+    ${Qt5WebSockets_DEFINITIONS}
+    ${Qt5WebChannel_DEFINITIONS})
 endif()
 
 macro(qt_add_translation)

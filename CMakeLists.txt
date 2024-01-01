@@ -278,6 +278,8 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/ResourceInfo.h
        src/note_editor/SpellChecker_p.h
        src/note_editor/SpellCheckerDictionariesFinder.h
+       src/note_editor/WebSocketClientWrapper.h
+       src/note_editor/WebSocketTransport.h
        src/note_editor/dialogs/EncryptionDialog.h
        src/note_editor/dialogs/DecryptionDialog.h
        src/note_editor/dialogs/EditHyperlinkDialog.h
@@ -294,15 +296,20 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/delegates/RemoveHyperlinkDelegate.h
        src/note_editor/delegates/RenameResourceDelegate.h
        src/note_editor/javascript_glue/ActionsWatcher.h
+       src/note_editor/javascript_glue/EnCryptElementOnClickHandler.h
+       src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h
+       src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.h
+       src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.h
        src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.h
        src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.h
        src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.h
        src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.h
        src/note_editor/javascript_glue/PageMutationHandler.h
+       src/note_editor/javascript_glue/SpellCheckerDynamicHelper.h
        src/note_editor/javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h
        src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.h
        src/note_editor/javascript_glue/TableResizeJavaScriptHandler.h
-       src/note_editor/javascript_glue/SpellCheckerDynamicHelper.h
+       src/note_editor/javascript_glue/WebSocketWaiter.h
        src/note_editor/undo_stack/INoteEditorUndoCommand.h
        src/note_editor/undo_stack/AddResourceUndoCommand.h
        src/note_editor/undo_stack/RemoveResourceUndoCommand.h
@@ -328,23 +335,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.h
        src/note_editor/undo_stack/TableActionUndoCommand.h
        src/note_editor/undo_stack/HideDecryptedTextUndoCommand.h)
-
-  if(NOT QUENTIER_USE_QT_WEB_ENGINE)
-    list(APPEND PRIVATE_HEADERS
-         src/note_editor/NoteEditorPluginFactory.h
-         src/note_editor/INoteEditorResourcePlugin.h
-         src/note_editor/EncryptedAreaPlugin.h
-         src/note_editor/GenericResourceDisplayWidget.h)
-  else()
-    list(APPEND PRIVATE_HEADERS
-         src/note_editor/javascript_glue/EnCryptElementOnClickHandler.h
-         src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h
-         src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.h
-         src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.h
-         src/note_editor/javascript_glue/WebSocketWaiter.h
-         src/note_editor/WebSocketClientWrapper.h
-         src/note_editor/WebSocketTransport.h)
-  endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -466,6 +456,8 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/SpellChecker.cpp
        src/note_editor/SpellChecker_p.cpp
        src/note_editor/SpellCheckerDictionariesFinder.cpp
+       src/note_editor/WebSocketClientWrapper.cpp
+       src/note_editor/WebSocketTransport.cpp
        src/note_editor/dialogs/EncryptionDialog.cpp
        src/note_editor/dialogs/DecryptionDialog.cpp
        src/note_editor/dialogs/EditHyperlinkDialog.cpp
@@ -481,15 +473,20 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/delegates/RemoveHyperlinkDelegate.cpp
        src/note_editor/delegates/RenameResourceDelegate.cpp
        src/note_editor/javascript_glue/ActionsWatcher.cpp
+       src/note_editor/javascript_glue/EnCryptElementOnClickHandler.cpp
+       src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.cpp
+       src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.cpp
+       src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.cpp
        src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.cpp
        src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.cpp
        src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.cpp
        src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.cpp
        src/note_editor/javascript_glue/PageMutationHandler.cpp
+       src/note_editor/javascript_glue/SpellCheckerDynamicHelper.cpp
        src/note_editor/javascript_glue/ToDoCheckboxAutomaticInsertionHandler.cpp
        src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.cpp
        src/note_editor/javascript_glue/TableResizeJavaScriptHandler.cpp
-       src/note_editor/javascript_glue/SpellCheckerDynamicHelper.cpp
+       src/note_editor/javascript_glue/WebSocketWaiter.cpp
        src/note_editor/undo_stack/INoteEditorUndoCommand.cpp
        src/note_editor/undo_stack/AddResourceUndoCommand.cpp
        src/note_editor/undo_stack/RemoveResourceUndoCommand.cpp
@@ -514,22 +511,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.cpp
        src/note_editor/undo_stack/TableActionUndoCommand.cpp
        src/note_editor/undo_stack/HideDecryptedTextUndoCommand.cpp)
-  if(NOT QUENTIER_USE_QT_WEB_ENGINE)
-    list(APPEND ${PROJECT_NAME}_SOURCES
-         src/note_editor/EncryptedAreaPlugin.cpp
-         src/note_editor/GenericResourceDisplayWidget.cpp
-         src/note_editor/INoteEditorResourcePlugin.cpp
-         src/note_editor/NoteEditorPluginFactory.cpp)
-  else()
-    list(APPEND ${PROJECT_NAME}_SOURCES
-         src/note_editor/javascript_glue/EnCryptElementOnClickHandler.cpp
-         src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.cpp
-         src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.cpp
-         src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.cpp
-         src/note_editor/javascript_glue/WebSocketWaiter.cpp
-         src/note_editor/WebSocketTransport.cpp
-         src/note_editor/WebSocketClientWrapper.cpp)
-  endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -547,12 +528,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 # generate version info header
-if(QUENTIER_USE_QT_WEB_ENGINE)
-  set(LIB_QUENTIER_QT_WEB_ENGINE_DEFINE "#define LIB_QUENTIER_USE_QT_WEB_ENGINE 1")
-else()
-  set(LIB_QUENTIER_QT_WEB_ENGINE_DEFINE "#define LIB_QUENTIER_USE_QT_WEB_ENGINE 0")
-endif()
-
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE "#define LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER 1")
 else()
@@ -658,11 +633,6 @@ if(BUILD_WITH_NOTE_EDITOR)
       src/note_editor/dialogs/EncryptionDialog.ui
       src/note_editor/dialogs/EditHyperlinkDialog.ui
       src/note_editor/dialogs/RenameResourceDialog.ui)
-  if(NOT QUENTIER_USE_QT_WEB_ENGINE)
-    list(APPEND FORMS
-         src/note_editor/EncryptedAreaPlugin.ui
-         src/note_editor/GenericResourceDisplayWidget.ui)
-  endif()
   qt_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
 endif()
 
@@ -846,12 +816,6 @@ prepend_path(TEST_SOURCES "${TEST_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBQUENTIER_CPPCHECKABLE_SOURCES ${${PROJECT_NAME}_SOURCES})
 list(APPEND LIBQUENTIER_CPPCHECKABLE_SOURCES ${TEST_SOURCES})
 
-if(QUENTIER_USE_QT_WEB_ENGINE)
-  set(LIB_QUENTIER_USE_QT_WEB_ENGINE_OPTION "set(LIBQUENTIER_USE_QT_WEB_ENGINE TRUE)")
-else()
-  set(LIB_QUENTIER_USE_QT_WEB_ENGINE_OPTION "set(LIBQUENTIER_USE_QT_WEB_ENGINE FALSE)")
-endif()
-
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_OPTION "set(LIBQUENTIER_HAS_AUTHENTICATION_MANAGER TRUE)")
 else()
@@ -872,10 +836,7 @@ configure_file(cmake/modules/LibquentierConfigVersion.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
 
 if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-  if(USE_QT5_WEBKIT)
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-  elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
+  if(Qt5Core_VERSION VERSION_LESS "5.6.0")
     file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
     file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
   else()

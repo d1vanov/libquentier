@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_VERSION_INFO_H
-#define LIB_QUENTIER_UTILITY_VERSION_INFO_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 #include <QString>
@@ -27,13 +26,6 @@
  * and functions which determine configuration-specific properties of
  * libquentier
  */
-
-/**
- * This macro is set to true if libquentier uses QtWebEngine component;
- * it requires specialized deployment, so this definition can tell whether
- * it is required for libquentier
- */
-@LIB_QUENTIER_QT_WEB_ENGINE_DEFINE@
 
 /**
  * This macro is set to true if libquentier was built with AuthenticationManager
@@ -110,15 +102,6 @@ namespace quentier {
 [[nodiscard]] bool QUENTIER_EXPORT libquentierHasAuthenticationManager() noexcept;
 
 /**
- * @return          True if the current build of libquentier uses QtWebEngine
- *                  component for note editor and/or authentication manager,
- *                  false otherwise (if neither note editor nor authentication
- *                  manager are present or if QtWebKit is used for these instead
- *                  of QtWebEngine)
- */
-[[nodiscard]] bool QUENTIER_EXPORT libquentierUsesQtWebEngine() noexcept;
-
-/**
  * @return          Major version of QEverCloud against which libquentier was
  *                  built
  */
@@ -146,5 +129,3 @@ libquentierBuiltWithQEverCloudVersionPatch() noexcept;
 libquentierBuiltWithQEverCloudBuildInfo() noexcept;
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_VERSION_INFO_H

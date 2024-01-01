@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,18 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
-#define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
+#pragma once
 
 #include <QObject>
 #include <QPointer>
 #include <QQueue>
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebEngineView>
-#else
-#include <QWebView>
-#endif
 
 #include <functional>
 #include <utility>
@@ -37,19 +31,11 @@ namespace quentier {
 class Q_DECL_HIDDEN JavaScriptInOrderExecutor final : public QObject
 {
     Q_OBJECT
-private:
-    using WebView =
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-        QWebEngineView;
-#else
-        QWebView;
-#endif
-
 public:
     using Callback = std::function<void(const QVariant &)>;
 
     explicit JavaScriptInOrderExecutor(
-        WebView & view, QObject * parent = nullptr);
+        QWebEngineView & view, QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = {});
 
@@ -97,12 +83,10 @@ private:
     void next(const QVariant & data);
 
 private:
-    WebView & m_view;
+    QWebEngineView & m_view;
     QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
     Callback m_currentPendingCallback;
     bool m_inProgress = false;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H

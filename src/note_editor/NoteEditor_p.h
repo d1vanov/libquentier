@@ -205,12 +205,12 @@ public:
     void onDropEvent(QDropEvent * pEvent);
     void dropFile(const QString & filepath);
 
-    [[nodiscard]] quint64 GetFreeEncryptedTextId() noexcept
+    [[nodiscard]] quint32 nextEncryptedTextId() noexcept
     {
         return m_lastFreeEnCryptIdNumber++;
     }
 
-    [[nodiscard]] quint64 GetFreeDecryptedTextId() noexcept
+    [[nodiscard]] quint32 nextDecryptedTextId() noexcept
     {
         return m_lastFreeEnDecryptedIdNumber++;
     }
@@ -1376,10 +1376,10 @@ private:
     QHash<QUuid, Rotation>
         m_rotationTypeByResourceLocalIdsPendingFindDataInLocalStorage;
 
-    quint64 m_lastFreeEnToDoIdNumber = 1;
-    quint64 m_lastFreeHyperlinkIdNumber = 1;
-    quint64 m_lastFreeEnCryptIdNumber = 1;
-    quint64 m_lastFreeEnDecryptedIdNumber = 1;
+    quint32 m_lastFreeEnToDoIdNumber = 1;
+    quint32 m_lastFreeHyperlinkIdNumber = 1;
+    quint32 m_lastFreeEnCryptIdNumber = 1;
+    quint32 m_lastFreeEnDecryptedIdNumber = 1;
 
     NoteEditor * const q_ptr;
     Q_DECLARE_PUBLIC(NoteEditor)

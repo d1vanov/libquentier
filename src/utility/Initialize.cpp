@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@ void initializeLibquentier()
     Q_UNUSED(NoteEditorLocalStorageBroker::instance())
 #endif
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
+#if LIB_QUENTIER_HAS_NOTE_EDITOR || LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER
     // Attempt to workaround https://bugreports.qt.io/browse/QTBUG-40765
     QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif

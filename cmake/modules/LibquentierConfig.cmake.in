@@ -4,7 +4,6 @@
 #  LIBQUENTIER_INCLUDE_DIRS - libquentier include directories
 #  LIBQUENTIER_LIBRARIES - The libraries needed to use libquentier
 #  LIBQUENTIER_HAS_AUTHENTICATION_MANAGER - Boolean set to true if libquentier was built with AuthenticationManager
-#  LIBQUENTIER_USE_QT_WEB_ENGINE - Boolean set to true if libquentier uses QtWebEngine
 #  LIBQUENTIER_HAS_NOTE_EDITOR - Boolean set to true if libquentier was built with NoteEditor
 
 # Compute paths
@@ -64,6 +63,5 @@ include("${CMAKE_CURRENT_LIST_DIR}/LibquentierFindTidyHtml5.cmake")
 set(LIBQUENTIER_LIBRARIES "lib@LIBQUENTIER_QT_VERSION@quentier@LIBQUENTIER_LIBNAME_SUFFIX@")
 
 @LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_OPTION@
-@LIB_QUENTIER_USE_QT_WEB_ENGINE_OPTION@
 @LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION@
 set(LIBQUENTIER_FOUND TRUE)

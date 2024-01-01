@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,10 +36,6 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QMimeDatabase>
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebFrame>
-#endif
 
 namespace quentier {
 

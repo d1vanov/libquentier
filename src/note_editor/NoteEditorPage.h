@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,30 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PAGE_H
-#define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PAGE_H
+#pragma once
 
 #include "JavaScriptInOrderExecutor.h"
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebPage>
-#else
 #include <QWebEnginePage>
-#endif
 
 namespace quentier {
-
-using WebPage =
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    QWebPage;
-#else
-    QWebEnginePage;
-#endif
 
 class NoteEditor;
 class NoteEditorPrivate;
 
-class Q_DECL_HIDDEN NoteEditorPage final : public WebPage
+class Q_DECL_HIDDEN NoteEditorPage final : public QWebEnginePage
 {
     Q_OBJECT
 public:
@@ -51,9 +39,6 @@ public:
     ~NoteEditorPage() noexcept override;
 
     [[nodiscard]] bool javaScriptQueueEmpty() const noexcept;
-
-    void setInactive();
-    void setActive();
 
     /**
      * @brief stopJavaScriptAutoExecution method can be used to prevent
@@ -74,7 +59,7 @@ public:
     void startJavaScriptAutoExecution();
 
     void triggerAction(
-        WebPage::WebAction action, bool checked = false) override;
+        QWebEnginePage::WebAction action, bool checked = false) override;
 
 Q_SIGNALS:
     void javaScriptLoaded();
@@ -88,11 +73,7 @@ Q_SIGNALS:
     void cutActionRequested();
 
 public Q_SLOTS:
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    virtual bool shouldInterruptJavaScript() override;
-#else
     bool shouldInterruptJavaScript();
-#endif
 
     void executeJavaScript(
         const QString & script, Callback callback = {},
@@ -102,17 +83,6 @@ private Q_SLOTS:
     void onJavaScriptQueueEmpty();
 
 private:
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    void javaScriptAlert(
-        QWebFrame * pFrame, const QString & message) override;
-
-    [[nodiscard]] bool javaScriptConfirm(
-        QWebFrame * pFrame, const QString & message) override;
-
-    void javaScriptConsoleMessage(
-        const QString & message, int lineNumber,
-        const QString & sourceID) override;
-#else
     void javaScriptAlert(
         const QUrl & securityOrigin, const QString & msg) override;
 
@@ -122,7 +92,6 @@ private:
     void javaScriptConsoleMessage(
         JavaScriptConsoleMessageLevel level, const QString & message,
         int lineNumber, const QString & sourceID) override;
-#endif
 
 private:
     NoteEditorPrivate * m_parent;
@@ -131,5 +100,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PAGE_H

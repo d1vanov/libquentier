@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@
 namespace quentier {
 
 NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
-    WebPage(&parent), m_parent(&parent),
+    QWebEnginePage(&parent), m_parent(&parent),
     m_pJavaScriptInOrderExecutor(new JavaScriptInOrderExecutor(parent, this))
 {
     QUENTIER_CHECK_PTR("note_editor", m_parent);
@@ -57,34 +57,6 @@ bool NoteEditorPage::javaScriptQueueEmpty() const noexcept
             << (m_pJavaScriptInOrderExecutor->empty() ? "true" : "false"));
 
     return m_pJavaScriptInOrderExecutor->empty();
-}
-
-void NoteEditorPage::setInactive()
-{
-    QNDEBUG("note_editor", "NoteEditorPage::setInactive");
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    auto * pPluginFactory =
-        qobject_cast<NoteEditorPluginFactory *>(pluginFactory());
-
-    if (Q_LIKELY(pPluginFactory)) {
-        pPluginFactory->setInactive();
-    }
-#endif
-}
-
-void NoteEditorPage::setActive()
-{
-    QNDEBUG("note_editor", "NoteEditorPage::setActive");
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    auto * pPluginFactory =
-        qobject_cast<NoteEditorPluginFactory *>(pluginFactory());
-
-    if (Q_LIKELY(pPluginFactory)) {
-        pPluginFactory->setActive();
-    }
-#endif
 }
 
 void NoteEditorPage::stopJavaScriptAutoExecution()
@@ -153,38 +125,6 @@ void NoteEditorPage::onJavaScriptQueueEmpty()
     Q_EMIT javaScriptLoaded();
 }
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-void NoteEditorPage::javaScriptAlert(
-    QWebFrame * pFrame, const QString & message)
-{
-    QNDEBUG(
-        "note_editor", "NoteEditorPage::javaScriptAlert, message: " << message);
-
-    QWebPage::javaScriptAlert(pFrame, message);
-}
-
-bool NoteEditorPage::javaScriptConfirm(
-    QWebFrame * pFrame, const QString & message)
-{
-    QNDEBUG(
-        "note_editor",
-        "NoteEditorPage::javaScriptConfirm, message: " << message);
-
-    return QWebPage::javaScriptConfirm(pFrame, message);
-}
-
-void NoteEditorPage::javaScriptConsoleMessage(
-    const QString & message, int lineNumber, const QString & sourceID)
-{
-    QNDEBUG(
-        "note_editor",
-        "NoteEditorPage::javaScriptConsoleMessage, message: "
-            << message << ", line number: " << lineNumber
-            << ", sourceID = " << sourceID);
-
-    QWebPage::javaScriptConsoleMessage(message, lineNumber, sourceID);
-}
-#else
 void NoteEditorPage::javaScriptAlert(
     const QUrl & securityOrigin, const QString & msg)
 {
@@ -214,51 +154,51 @@ void NoteEditorPage::javaScriptConsoleMessage(
     QWebEnginePage::javaScriptConsoleMessage(
         level, message, lineNumber, sourceID);
 }
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
-void NoteEditorPage::triggerAction(WebPage::WebAction action, bool checked)
+void NoteEditorPage::triggerAction(
+    QWebEnginePage::WebAction action, bool checked)
 {
     QNDEBUG(
         "note_editor",
         "NoteEditorPage::triggerAction: action = "
             << action << ", checked = " << (checked ? "true" : "false"));
 
-    if (action == WebPage::Back) {
+    if (action == QWebEnginePage::Back) {
         QNDEBUG("note_editor", "Filtering back action away");
         return;
     }
 
-    if (action == WebPage::Paste) {
+    if (action == QWebEnginePage::Paste) {
         QNDEBUG("note_editor", "Filtering paste action");
         Q_EMIT pasteActionRequested();
         return;
     }
 
-    if (action == WebPage::PasteAndMatchStyle) {
+    if (action == QWebEnginePage::PasteAndMatchStyle) {
         QNDEBUG("note_editor", "Filtering paste and match style action");
         Q_EMIT pasteAndMatchStyleActionRequested();
         return;
     }
 
-    if (action == WebPage::Cut) {
+    if (action == QWebEnginePage::Cut) {
         QNDEBUG("note_editor", "Filtering cut action");
         Q_EMIT cutActionRequested();
         return;
     }
 
-    if (action == WebPage::Undo) {
+    if (action == QWebEnginePage::Undo) {
         QNDEBUG("note_editor", "Filtering undo action");
         Q_EMIT undoActionRequested();
         return;
     }
 
-    if (action == WebPage::Redo) {
+    if (action == QWebEnginePage::Redo) {
         QNDEBUG("note_editor", "Filtering redo action");
         Q_EMIT redoActionRequested();
         return;
     }
 
-    WebPage::triggerAction(action, checked);
+    QWebEnginePage::triggerAction(action, checked);
 }
 
 } // namespace quentier

@@ -165,7 +165,7 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
     else {
         m_encryptedTextHtml = m_enmlTagsConverter->convertEncryptedText(
             encryptedText, hint, cipher, keyLength,
-            m_pNoteEditor->GetFreeEncryptedTextId());
+            m_pNoteEditor->nextEncryptedTextId());
 
         m_encryptedTextHtml = enml::utils::htmlEscapeString(
             m_encryptedTextHtml);
@@ -212,7 +212,7 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
     QString javascript;
     if (m_rememberForSession) {
         const QString id =
-            QString::number(m_pNoteEditor->GetFreeDecryptedTextId());
+            QString::number(m_pNoteEditor->nextDecryptedTextId());
 
         QString escapedDecryptedText =
             enml::utils::htmlEscapeString(m_selectionHtml);

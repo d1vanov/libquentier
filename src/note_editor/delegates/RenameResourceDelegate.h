@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
@@ -66,33 +65,26 @@ Q_SIGNALS:
     void notifyError(ErrorString);
 
 // private signals
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void saveGenericResourceImageToFile(
         QString noteLocalId, QString resourceLocalId,
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);
-#endif
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onRenameResourceDialogFinished(QString newResourceName);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onGenericResourceImageWriterFinished(
         bool success, QByteArray resourceHash, QString filePath,
         ErrorString errorDescription, QUuid requestId);
 
     void onGenericResourceImageUpdated(const QVariant & data);
-#endif
 
 private:
     void doStart();
     void raiseRenameResourceDialog();
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void buildAndSaveGenericResourceImage();
-#endif
 
 private:
     using JsCallback = JsResultCallbackFunctor<RenameResourceDelegate>;
@@ -111,11 +103,7 @@ private:
 
     qevercloud::Note * m_pNote;
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     QUuid m_genericResourceImageWriterRequestId;
-#endif
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H

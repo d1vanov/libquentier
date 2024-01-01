@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -141,12 +141,7 @@ void RenameResourceDelegate::doStart()
         }
         m_resource.mutableAttributes()->setFileName(m_newResourceName);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
         buildAndSaveGenericResourceImage();
-#else
-        Q_EMIT finished(
-            m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
-#endif
     }
 }
 
@@ -205,16 +200,9 @@ void RenameResourceDelegate::onRenameResourceDialogFinished(
     m_resource.mutableAttributes()->setFileName(m_newResourceName);
 
     m_noteEditor.replaceResourceInNote(m_resource);
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     buildAndSaveGenericResourceImage();
-#else
-    Q_EMIT finished(
-        m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
-#endif
 }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void RenameResourceDelegate::buildAndSaveGenericResourceImage()
 {
     QNDEBUG(
@@ -321,7 +309,5 @@ void RenameResourceDelegate::onGenericResourceImageUpdated(
     Q_EMIT finished(
         m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
 }
-
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 } // namespace quentier
