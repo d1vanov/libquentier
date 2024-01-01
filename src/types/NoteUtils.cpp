@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,7 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/Factory.h>
+#include <quentier/enml/IConverter.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/NoteUtils.h>
@@ -132,13 +133,10 @@ bool noteContentContainsEncryptedFragments(const QString & noteContent)
 QString noteContentToPlainText(
     const QString & noteContent, ErrorString * errorDescription)
 {
-    QString plainText;
-    ErrorString error;
-
-    const bool res =
-        ENMLConverter::noteContentToPlainText(noteContent, plainText, error);
-
-    if (!res) {
+    auto converter = enml::createConverter();
+    auto res = converter->convertEnmlToPlainText(noteContent);
+    if (!res.isValid()) {
+        const auto & error = res.error();
         QNWARNING("types:note_utils", error);
         if (errorDescription) {
             *errorDescription = error;
@@ -147,19 +145,16 @@ QString noteContentToPlainText(
         return {};
     }
 
-    return plainText;
+    return res.get();
 }
 
 QStringList noteContentToListOfWords(
     const QString & noteContent, ErrorString * errorDescription)
 {
-    QStringList result;
-    ErrorString error;
-
-    const bool res =
-        ENMLConverter::noteContentToListOfWords(noteContent, result, error);
-
-    if (!res) {
+    auto converter = enml::createConverter();
+    auto res = converter->convertEnmlToWordsList(noteContent);
+    if (!res.isValid()) {
+        const auto & error = res.error();
         QNWARNING("types:note_utils", error);
         if (errorDescription) {
             *errorDescription = error;
@@ -168,19 +163,17 @@ QStringList noteContentToListOfWords(
         return {};
     }
 
-    return result;
+    return res.get();
 }
 
 std::pair<QString, QStringList> noteContentToPlainTextAndListOfWords(
     const QString & noteContent, ErrorString * errorDescription)
 {
-    std::pair<QString, QStringList> result;
-    ErrorString error;
+    auto converter = enml::createConverter();
 
-    const bool res = ENMLConverter::noteContentToListOfWords(
-        noteContent, result.second, error, &result.first);
-
-    if (!res) {
+    auto res = converter->convertEnmlToPlainText(noteContent);
+    if (!res.isValid()) {
+        const auto & error = res.error();
         QNWARNING("types:note_utils", error);
         if (errorDescription) {
             *errorDescription = error;
@@ -189,7 +182,8 @@ std::pair<QString, QStringList> noteContentToPlainTextAndListOfWords(
         return {};
     }
 
-    return result;
+    auto wordsList = converter->convertPlainTextToWordsList(res.get());
+    return std::pair{std::move(res.get()), std::move(wordsList)};
 }
 
 } // namespace quentier

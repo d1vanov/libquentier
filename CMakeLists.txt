@@ -111,10 +111,8 @@ set(TYPES_HEADERS
     headers/quentier/types/RegisterMetatypes.h)
 
 set(ENML_HEADERS
-    headers/quentier/enml/ENMLConverter.h
     headers/quentier/enml/Factory.h
     headers/quentier/enml/Fwd.h
-    headers/quentier/enml/HTMLCleaner.h
 	headers/quentier/enml/HtmlUtils.h
     headers/quentier/enml/IConverter.h
     headers/quentier/enml/IDecryptedTextCache.h
@@ -245,7 +243,6 @@ set(PRIVATE_HEADERS
     src/types/data/ErrorStringData.h
     src/types/data/ResourceRecognitionIndexItemData.h
     src/types/data/ResourceRecognitionIndicesData.h
-    src/enml/ENMLConverter_p.h
 	src/enml/HtmlUtils.cpp
     src/enml/conversion_rules/Factory.cpp
     src/enml/conversion_rules/ISkipRule.cpp
@@ -361,14 +358,11 @@ endif()
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
 
 set(${PROJECT_NAME}_SOURCES
-    src/enml/ENMLConverter.cpp
-    src/enml/ENMLConverter_p.cpp
     src/enml/Factory.cpp
     src/enml/IConverter.cpp
     src/enml/IDecryptedTextCache.cpp
     src/enml/IENMLTagsConverter.cpp
     src/enml/IHtmlData.cpp
-    src/enml/HTMLCleaner.cpp
     src/exception/ApplicationSettingsInitializationException.cpp
     src/exception/EmptyDataElementException.cpp
     src/exception/DatabaseLockedException.cpp
