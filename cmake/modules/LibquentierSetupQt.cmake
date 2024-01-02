@@ -1,110 +1,34 @@
-find_package(Qt5Core 5.12.0 REQUIRED)
-message(STATUS "Found Qt5 installation, version ${Qt5Core_VERSION}")
-
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5PrintSupport REQUIRED)
-
+set(QT_COMPONENTS
+  Core
+  Gui
+  LinguistTools
+  Network
+  PrintSupport
+  Sql
+  Test
+  Xml
+  Widgets)
 if(BUILD_WITH_NOTE_EDITOR)
-  find_package(Qt5WebEngineCore REQUIRED)
-  find_package(Qt5WebEngineWidgets REQUIRED)
+  list(APPEND QT_COMPONENTS
+    WebChannel
+    WebEngineCore
+    WebEngineWidgets
+    WebSockets
+  )
 endif()
 
-find_package(Qt5Xml REQUIRED)
-find_package(Qt5Sql REQUIRED)
-find_package(Qt5Test REQUIRED)
-find_package(Qt5LinguistTools REQUIRED)
-
-list(APPEND QT_INCLUDES
-  ${Qt5Core_INCLUDE_DIRS}
-  ${Qt5Gui_INCLUDE_DIRS}
-  ${Qt5Network_INCLUDE_DIRS}
-  ${Qt5Widgets_INCLUDE_DIRS}
-  ${Qt5PrintSupport_INCLUDE_DIRS}
-  ${Qt5Xml_INCLUDE_DIRS}
-  ${Qt5Sql_INCLUDE_DIRS}
-  ${Qt5Test_INCLUDE_DIRS}
-  ${Qt5LinguistTools_INCLUDE_DIRS})
-
-list(APPEND QT_LIBRARIES
-  ${Qt5Core_LIBRARIES}
-  ${Qt5Gui_LIBRARIES}
-  ${Qt5Network_LIBRARIES}
-  ${Qt5Widgets_LIBRARIES}
-  ${Qt5PrintSupport_LIBRARIES}
-  ${Qt5Xml_LIBRARIES}
-  ${Qt5Sql_LIBRARIES}
-  ${Qt5Test_LIBRARIES}
-  ${Qt5LinguistTools_LIBRARIES})
-
-list(APPEND QT_DEFINITIONS
-  ${Qt5Core_DEFINITIONS}
-  ${Qt5Gui_DEFINITIONS}
-  ${Qt5Network_DEFINITIONS}
-  ${Qt5Widgets_DEFINITIONS}
-  ${Qt5PrintSupport_DEFINITIONS}
-  ${Qt5Xml_DEFINITIONS}
-  ${Qt5Sql_DEFINITIONS}
-  ${Qt5Test_DEFINITIONS}
-  ${Qt5LinguistTools_DEFINITIONS})
-
-if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND
-    NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-  find_package(Qt5DBus REQUIRED)
-  list(APPEND QT_INCLUDES ${QT_INCLUDES} ${Qt5DBus_INCLUDE_DIRS})
-  list(APPEND QT_LIBRARIES ${QT_LIBRARIES} ${Qt5DBus_LIBRARIES})
-  list(APPEND QT_DEFINITIONS ${QT_DEFINITIONS} ${Qt5DBus_DEFINITIONS})
+if(BUILD_WITH_QT6)
+  if(BUILD_WITH_NOTE_EDITOR)
+    set(MIN_QT_VERSION 6.4.0)
+  else()
+    set(MIN_QT_VERSION 6.0.0)
+  endif()
+  find_package(Qt6 6.4.0 COMPONENTS ${QT_COMPONENTS})
+  message(STATUS "Found Qt6 installation, version ${Qt6Core_VERSION}")
+else()
+  find_package(Qt5 5.12.0 COMPONENTS ${QT_COMPONENTS})
+  message(STATUS "Found Qt5 installation, version ${Qt5Core_VERSION}")
 endif()
-
-if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-  find_package(Qt5WebSockets REQUIRED)
-  find_package(Qt5WebChannel REQUIRED)
-
-  list(APPEND QT_INCLUDES
-    ${QT_INCLUDES}
-    ${Qt5WebEngine_INCLUDE_DIRS}
-	${Qt5WebEngineCore_INCLUDE_DIRS}
-    ${Qt5WebEngineWidgets_INCLUDE_DIRS}
-    ${Qt5WebSockets_INCLUDE_DIRS}
-    ${Qt5WebChannel_INCLUDE_DIRS})
-
-  list(APPEND QT_LIBRARIES
-    ${QT_LIBRARIES}
-    ${Qt5WebEngine_LIBRARIES}
-	${Qt5WebEngineCore_LIBRARIES}
-    ${Qt5WebEngineWidgets_LIBRARIES}
-    ${Qt5WebSockets_LIBRARIES}
-    ${Qt5WebChannel_LIBRARIES})
-
-  list(APPEND QT_DEFINITIONS
-    ${QT_DEFINITIONS}
-    ${Qt5WebEngine_DEFINITIONS}
-	${Qt5WebEngineCore_DEFINITIONS}
-    ${Qt5WebEngineWidgets_DEFINITIONS}
-    ${Qt5WebSockets_DEFINITIONS}
-    ${Qt5WebChannel_DEFINITIONS})
-endif()
-
-macro(qt_add_translation)
-  qt5_add_translation(${ARGN})
-endmacro()
-macro(qt_create_translation)
-  qt5_create_translation(${ARGN})
-endmacro()
-macro(qt_add_resources)
-  qt5_add_resources(${ARGN})
-endmacro()
-macro(qt_wrap_ui)
-  qt5_wrap_ui(${ARGN})
-endmacro()
-
-list(REMOVE_DUPLICATES QT_INCLUDES)
-list(REMOVE_DUPLICATES QT_LIBRARIES)
-list(REMOVE_DUPLICATES QT_DEFINITIONS)
-
-include_directories(SYSTEM "${QT_INCLUDES} ${SYSTEM}")
-add_definitions(${QT_DEFINITIONS})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR "ON")

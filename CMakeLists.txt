@@ -15,6 +15,7 @@ set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
 
 option(BUILD_WITH_NOTE_EDITOR "Build libquentier with note editor UI component" ON)
+option(BUILD_WITH_QT6 "Build with Qt6" OFF)
 
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
@@ -696,7 +697,6 @@ add_subdirectory(tests)
 
 target_link_libraries(${LIBNAME}
   PUBLIC
-  ${QT_LIBRARIES}
   QEverCloud::qt5qevercloud
   Qt5::Core
   Qt5::Gui
@@ -717,6 +717,16 @@ target_link_libraries(${LIBNAME}
   ${LIBNAME}_synchronization
   ${LIBNAME}_threading
   ${LIBNAME}_utility)
+
+if(BUILD_WITH_NOTE_EDITOR)
+  target_link_libraries(${LIBNAME}
+    PUBLIC
+    Qt5::WebEngineCore
+    Qt5::WebEngineWidgets
+    PRIVATE
+    Qt5::WebChannel
+    Qt5::WebSockets)
+endif()
 
 if(MSVC)
   target_link_libraries(${LIBNAME}
