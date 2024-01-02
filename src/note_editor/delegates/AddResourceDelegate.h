@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,7 +44,7 @@ class ResourceDataInTemporaryFileStorageManager;
  * The AddResourceDelegate class wraps a series of asynchronous actions required
  * for adding a resource to the note
  */
-class Q_DECL_HIDDEN AddResourceDelegate final : public QObject
+class AddResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:

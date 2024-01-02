@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H
-#define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/FileSystemWatcher.h>
@@ -45,8 +44,7 @@ namespace quentier {
  * existence and actuality and also to make it possible to move all the resource
  * file IO into a separate thread.
  */
-class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager final :
-    public QObject
+class ResourceDataInTemporaryFileStorageManager final : public QObject
 {
     Q_OBJECT
 public:
@@ -449,5 +447,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H

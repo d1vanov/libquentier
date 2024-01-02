@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_IGNORE_WORD_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_IGNORE_WORD_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -27,8 +26,7 @@ namespace quentier {
 
 class SpellChecker;
 
-class Q_DECL_HIDDEN SpellCheckIgnoreWordUndoCommand final :
-    public INoteEditorUndoCommand
+class SpellCheckIgnoreWordUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -52,5 +50,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_IGNORE_WORD_UNDO_COMMAND_H

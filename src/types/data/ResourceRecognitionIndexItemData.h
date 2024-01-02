@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_DATA_RESOURCE_RECOGNITION_INDEX_ITEM_DATA_H
-#define LIB_QUENTIER_TYPES_DATA_RESOURCE_RECOGNITION_INDEX_ITEM_DATA_H
+#pragma once
 
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 
@@ -27,7 +26,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceRecognitionIndexItemData final : public QSharedData
+class ResourceRecognitionIndexItemData final : public QSharedData
 {
 public:
     [[nodiscard]] bool isValid() const;
@@ -55,5 +54,3 @@ public:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_DATA_RESOURCE_RECOGNITION_INDEX_ITEM_DATA_H

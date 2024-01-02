@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_CLIENT_WRAPPER_H
-#define LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_CLIENT_WRAPPER_H
+#pragma once
 
 #include <QObject>
 
 class QWebSocketServer;
 class WebSocketTransport;
 
-class Q_DECL_HIDDEN WebSocketClientWrapper final : public QObject
+class WebSocketClientWrapper final : public QObject
 {
     Q_OBJECT
 public:
@@ -40,5 +39,3 @@ private Q_SLOTS:
 private:
     QWebSocketServer * m_server;
 };
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_CLIENT_WRAPPER_H

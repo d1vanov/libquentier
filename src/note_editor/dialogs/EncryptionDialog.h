@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,7 +35,7 @@ class EncryptionDialog;
 
 namespace quentier {
 
-class Q_DECL_HIDDEN EncryptionDialog final : public QDialog
+class EncryptionDialog final : public QDialog
 {
     Q_OBJECT
 public:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@ class NoteEditorPrivate;
 class ResourceDataInTemporaryFileStorageManager;
 class ResourceInfo;
 
-class Q_DECL_HIDDEN InsertHtmlDelegate final : public QObject
+class InsertHtmlDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -109,7 +109,7 @@ private:
     QHash<QString, QUrl> m_sourceUrlByResourceLocalId;
     QHash<QUrl, QUrl> m_urlToRedirectUrl;
 
-    struct Q_DECL_HIDDEN ImgData
+    struct ImgData
     {
         qevercloud::Resource m_resource;
         QString m_resourceFileStoragePath;

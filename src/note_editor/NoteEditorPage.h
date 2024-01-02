@@ -27,7 +27,7 @@ namespace quentier {
 class NoteEditor;
 class NoteEditorPrivate;
 
-class Q_DECL_HIDDEN NoteEditorPage final : public QWebEnginePage
+class NoteEditorPage final : public QWebEnginePage
 {
     Q_OBJECT
 public:

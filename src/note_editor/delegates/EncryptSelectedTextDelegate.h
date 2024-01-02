@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ class NoteEditorPrivate;
  * encryption considering the details of wrapping this action around the undo
  * stack
  */
-class Q_DECL_HIDDEN EncryptSelectedTextDelegate final : public QObject
+class EncryptSelectedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:

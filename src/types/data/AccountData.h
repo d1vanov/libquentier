@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_DATA_ACCOUNT_DATA_H
-#define LIB_QUENTIER_TYPES_DATA_ACCOUNT_DATA_H
+#pragma once
 
 #include <quentier/types/Account.h>
 
@@ -27,7 +26,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AccountData final : public QSharedData
+class AccountData final : public QSharedData
 {
 public:
     explicit AccountData();
@@ -83,5 +82,3 @@ public:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_DATA_ACCOUNT_DATA_H

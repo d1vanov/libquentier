@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,11 +30,10 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN DecryptUndoCommand final : public INoteEditorUndoCommand
+class DecryptUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
     using Callback = NoteEditorPage::Callback;
-
 public:
     DecryptUndoCommand(
         EncryptDecryptUndoCommandInfo info,

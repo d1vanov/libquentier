@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_JS_RESULT_CALLBACK_FUNCTOR_HPP
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_JS_RESULT_CALLBACK_FUNCTOR_HPP
+#pragma once
 
 #include <QVariant>
 
 namespace quentier {
 
 template <class T>
-class Q_DECL_HIDDEN JsResultCallbackFunctor
+class JsResultCallbackFunctor
 {
 public:
     using Method = void (T::*)(const QVariant &);
@@ -44,5 +43,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_JS_RESULT_CALLBACK_FUNCTOR_HPP

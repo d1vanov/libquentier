@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -27,7 +26,7 @@ class RenameResourceDialog;
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RenameResourceDialog final : public QDialog
+class RenameResourceDialog final : public QDialog
 {
     Q_OBJECT
 public:
@@ -47,5 +46,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H

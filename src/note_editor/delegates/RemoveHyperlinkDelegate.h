@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
@@ -34,7 +33,7 @@ class NoteEditorPrivate;
  * required for proper implementation of removing a hyperlink under cursor
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN RemoveHyperlinkDelegate final : public QObject
+class RemoveHyperlinkDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -63,5 +62,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H

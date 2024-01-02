@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-struct Q_DECL_HIDDEN EncryptDecryptUndoCommandInfo
+struct EncryptDecryptUndoCommandInfo
 {
     QString m_encryptedText;
     QString m_decryptedText;

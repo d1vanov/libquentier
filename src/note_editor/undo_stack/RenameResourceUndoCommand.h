@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -27,10 +26,9 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
+class GenericResourceImageManager;
 
-class Q_DECL_HIDDEN RenameResourceUndoCommand final :
-    public INoteEditorUndoCommand
+class RenameResourceUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -64,5 +62,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H

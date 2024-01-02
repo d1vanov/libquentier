@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ class NoteEditorPrivate;
  * callbacks required for proper implementation of decryption for encrypted text
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN DecryptEncryptedTextDelegate final : public QObject
+class DecryptEncryptedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:

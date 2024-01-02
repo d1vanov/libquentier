@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -159,8 +159,8 @@ void ImageResourceRotationDelegate::rotateImageResource()
     }
 
     m_rotatedResource = qAsConst(resources)[targetResourceIndex];
-    if (Q_UNLIKELY(!m_rotatedResource.data() ||
-                   !m_rotatedResource.data()->body()))
+    if (Q_UNLIKELY(!(m_rotatedResource.data() &&
+                     m_rotatedResource.data()->body())))
     {
         error.appendBase(QT_TR_NOOP("The data body is missing"));
         QNWARNING("note_editor:delegate", error);

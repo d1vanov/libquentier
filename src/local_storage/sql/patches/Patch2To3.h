@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ class ApplicationSettings;
 
 namespace quentier::local_storage::sql {
 
-class Q_DECL_HIDDEN Patch2To3 final : public PatchBase
+class Patch2To3 final : public PatchBase
 {
     Q_DECLARE_TR_FUNCTIONS(Patch2To3)
 public:

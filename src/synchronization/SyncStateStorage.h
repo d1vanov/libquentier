@@ -22,7 +22,7 @@
 
 namespace quentier::synchronization {
 
-class Q_DECL_HIDDEN SyncStateStorage final : public ISyncStateStorage
+class SyncStateStorage final : public ISyncStateStorage
 {
     Q_OBJECT
 public:

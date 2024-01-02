@@ -28,7 +28,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN JavaScriptInOrderExecutor final : public QObject
+class JavaScriptInOrderExecutor final : public QObject
 {
     Q_OBJECT
 public:
@@ -65,7 +65,7 @@ Q_SIGNALS:
     void finished();
 
 private:
-    class Q_DECL_HIDDEN JavaScriptCallback
+    class JavaScriptCallback
     {
     public:
         JavaScriptCallback(JavaScriptInOrderExecutor & executor) :

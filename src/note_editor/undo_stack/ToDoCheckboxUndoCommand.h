@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TO_DO_CHECKBOX_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TO_DO_CHECKBOX_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ToDoCheckboxUndoCommand final :
-    public INoteEditorUndoCommand
+class ToDoCheckboxUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -46,5 +44,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TO_DO_CHECKBOX_UNDO_COMMAND_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
-#define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
+#pragma once
 
 #include <quentier/utility/FileSystemWatcher.h>
 #include <quentier/utility/SuppressWarnings.h>
@@ -35,7 +34,7 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileSystemWatcherPrivate final : public QObject
+class FileSystemWatcherPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -95,5 +94,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H

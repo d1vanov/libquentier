@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QUrl>
@@ -28,7 +27,7 @@ class EditHyperlinkDialog;
 
 namespace quentier {
 
-class Q_DECL_HIDDEN EditHyperlinkDialog final : public QDialog
+class EditHyperlinkDialog final : public QDialog
 {
     Q_OBJECT
 public:
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H

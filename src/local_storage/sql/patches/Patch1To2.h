@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 
 namespace quentier::local_storage::sql {
 
-class Q_DECL_HIDDEN Patch1To2 final : public PatchBase
+class Patch1To2 final : public PatchBase
 {
     Q_DECLARE_TR_FUNCTIONS(Patch1To2)
 public:

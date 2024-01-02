@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 
 namespace quentier::threading {
 
-class Q_DECL_HIDDEN FunctionRunnable final: public QRunnable
+class FunctionRunnable final: public QRunnable
 {
 public:
     explicit FunctionRunnable(std::function<void()> function)

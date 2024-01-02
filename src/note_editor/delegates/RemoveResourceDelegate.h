@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ namespace quentier {
 
 class NoteEditorPrivate;
 
-class Q_DECL_HIDDEN RemoveResourceDelegate final : public QObject
+class RemoveResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -79,9 +79,7 @@ class ToDoCheckboxOnClickHandler;
 class ToDoCheckboxAutomaticInsertionHandler;
 class WebSocketWaiter;
 
-class Q_DECL_HIDDEN NoteEditorPrivate final :
-    public QWebEngineView,
-    public INoteEditorBackend
+class NoteEditorPrivate final : public QWebEngineView, public INoteEditorBackend
 {
     Q_OBJECT
 public:
@@ -967,7 +965,7 @@ private:
 
 private:
     template <class T>
-    class Q_DECL_HIDDEN NoteEditorCallbackFunctor
+    class NoteEditorCallbackFunctor
     {
     public:
         NoteEditorCallbackFunctor(
@@ -1017,7 +1015,7 @@ private:
     friend class NoteEditorCallbackFunctor<QString>;
     friend class NoteEditorCallbackFunctor<QVariant>;
 
-    class Q_DECL_HIDDEN ReplaceCallback
+    class ReplaceCallback
     {
     public:
         ReplaceCallback(NoteEditorPrivate * pNoteEditor) :
@@ -1045,7 +1043,7 @@ private:
         Full
     };
 
-    struct Q_DECL_HIDDEN TextFormattingState
+    struct TextFormattingState
     {
         bool m_bold = false;
         bool m_italic = false;
@@ -1071,7 +1069,7 @@ private:
     // Holds some data required for certain context menu actions, like
     // the encrypted text data for its decryption, the hash of the resource
     // under cursor for which the action is toggled etc.
-    struct Q_DECL_HIDDEN CurrentContextMenuExtraData
+    struct CurrentContextMenuExtraData
     {
         QString m_contentType;
 

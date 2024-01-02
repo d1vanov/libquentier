@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H
-#define LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 
@@ -28,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate final : public QObject
+class FileIOProcessorAsyncPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -62,5 +61,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H

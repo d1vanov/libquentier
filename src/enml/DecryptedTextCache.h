@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 
 namespace quentier::enml {
 
-class Q_DECL_HIDDEN DecryptedTextCache: public IDecryptedTextCache
+class DecryptedTextCache: public IDecryptedTextCache
 {
 public: // IDecryptedTextCache
     void addDecryptexTextInfo(

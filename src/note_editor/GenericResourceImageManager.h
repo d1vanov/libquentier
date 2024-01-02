@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
-#define LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 
@@ -37,7 +36,7 @@ namespace quentier {
  * It would also listen to the current note changes and remove stale generic
  * resource images as appropriate.
  */
-class Q_DECL_HIDDEN GenericResourceImageManager final : public QObject
+class GenericResourceImageManager final : public QObject
 {
     Q_OBJECT
 public:
@@ -68,5 +67,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
