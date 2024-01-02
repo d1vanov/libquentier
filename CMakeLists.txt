@@ -27,6 +27,9 @@ endif()
 
 set(LIBQUENTIER_FIND_DEPS_ARGS REQUIRED)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR "ON")
+
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
 include(LibquentierFindBoost)
@@ -803,7 +806,7 @@ target_compile_definitions(test_${PROJECT_NAME}
 add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
-target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES})
+target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} Qt5::Test)
 
 include(SetupClangFormat)
 include(SetupClangTidy)
