@@ -22,7 +22,10 @@ target_sources(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   PRIVATE
   ${LIBNAME}_private
-  Qt5::Core)
+  Qt5::Core
+  Qt5::Gui
+  Qt5::Widgets
+  LibXml2::LibXml2)
 
 if(GMOCK_FOUND AND GTEST_FOUND)
   add_subdirectory(tests)

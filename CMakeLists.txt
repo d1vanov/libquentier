@@ -17,19 +17,23 @@ set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
 option(BUILD_WITH_NOTE_EDITOR "Build libquentier with note editor UI component" ON)
 option(BUILD_WITH_QT6 "Build with Qt6" OFF)
 
+if(BUILD_WITH_QT6)
+  set(LIBQUENTIER_QT_VERSION 6)
+  set(_LIBQUENTIER_USE_QT6 ON)
+else()
+  set(LIBQUENTIER_QT_VERSION 5)
+  set(_LIBQUENTIER_USE_QT6 OFF)
+endif()
+
+set(LIBQUENTIER_FIND_DEPS_ARGS REQUIRED)
+
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
-include(LibquentierSetupQt)
-include(LibquentierUpdateTranslations)
-include(LibquentierFindLibXml2)
-include(LibquentierFindOpenSSL)
 include(LibquentierFindBoost)
-include(LibquentierFindHunspell)
-include(LibquentierFindQtKeychain)
-include(LibquentierFindQEverCloud)
-include(LibquentierFindTidyHtml5)
+include(LibquentierFindDependencies)
+include(LibquentierUpdateTranslations)
+include(LibquentierFindBoost)
 include(LibquentierSetupDoxygen)
-include(PrependPath)
 
 find_package(Sanitizers)
 
@@ -608,9 +612,7 @@ set(${PROJECT_NAME}_TR_FILES
 set(${PROJECT_NAME}_QM_FILES "")
 update_translation("${${PROJECT_NAME}_TR_SOURCES}" "${FORMS}" "${${PROJECT_NAME}_TR_FILES}")
 
-set(LIBQUENTIER_QT_VERSION "qt5")
-
-set(LIBNAME "lib${LIBQUENTIER_QT_VERSION}quentier")
+set(LIBNAME "libqt${LIBQUENTIER_QT_VERSION}quentier")
 
 add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_HEADERS}
@@ -680,7 +682,7 @@ if(NOT INSTALL_CMAKE_DIR)
   if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR "CMake")
   else()
-    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-${LIBQUENTIER_QT_VERSION}")
+    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-qt${LIBQUENTIER_QT_VERSION}")
   endif()
   set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 endif()
@@ -710,7 +712,6 @@ target_link_libraries(${LIBNAME}
   TidyHtml5::TidyHtml5
   OpenSSL::SSL
   OpenSSL::Crypto
-  Libxml2::Libxml2
   Hunspell::Libhunspell
   ${LIBNAME}_enml
   ${LIBNAME}_local_storage_sql
@@ -817,14 +818,6 @@ set(DOXY_PROJECT_BRIEF "\"The library for rich desktop clients of Evernote servi
 set(DOXY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doc")
 ADD_DOCUMENTATION(doc Doxyfile)
 
-# modifying sources list with absolute paths for the static analyzer
-prepend_path(${PROJECT_NAME}_SOURCES "${${PROJECT_NAME}_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
-prepend_path(TEST_SOURCES "${TEST_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
-
-# collect the list of sources to be checked by the static analyzer
-set(LIBQUENTIER_CPPCHECKABLE_SOURCES ${${PROJECT_NAME}_SOURCES})
-list(APPEND LIBQUENTIER_CPPCHECKABLE_SOURCES ${TEST_SOURCES})
-
 if(BUILD_WITH_NOTE_EDITOR)
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR TRUE)")
 else()
@@ -832,19 +825,14 @@ else()
 endif()
 
 configure_file(cmake/modules/LibquentierConfig.cmake.in
-               ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake @ONLY)
+               ${PROJECT_BINARY_DIR}/Libquentier-qt${LIBQUENTIER_QT_VERSION}Config.cmake @ONLY)
 configure_file(cmake/modules/LibquentierConfigVersion.cmake.in
-               ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
+               ${PROJECT_BINARY_DIR}/Libquentier-qt${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
 
-if(BUILD_WITH_NOTE_EDITOR)
-  file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-else()
-  file(COPY cmake/modules/LibquentierFindQt5DependenciesBase.cmake DESTINATION ${PROJECT_BINARY_DIR})
-  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesBase.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-endif()
-file(COPY cmake/modules/LibquentierFindOtherDependenciesQt5.cmake DESTINATION ${PROJECT_BINARY_DIR})
-file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindOtherDependenciesQt5.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake)
+# install cmake files
+file(COPY cmake/modules/LibquentierFindDependencies.cmake DESTINATION ${PROJECT_BINARY_DIR})
+file(COPY cmake/modules/LibquentierFindTidyHtml5.cmake DESTINATION ${PROJECT_BINARY_DIR})
+file(COPY cmake/modules/LibquentierFindHunspell.cmake DESTINATION ${PROJECT_BINARY_DIR})
 
 # install shared library
 install(TARGETS ${LIBNAME}
@@ -904,14 +892,12 @@ endforeach()
 
 # install cmake files
 install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindPackageWrapperMacro.cmake DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindHunspell.cmake DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/hunspell_new_api_check.cpp DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES cmake/modules/hunspell_new_api_check.cpp DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES cmake/modules/LibquentierFindDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES cmake/modules/LibquentierFindTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES cmake/modules/LibquentierFindHunspell.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_BINARY_DIR}/Libquentier-qt${LIBQUENTIER_QT_VERSION}Config.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_BINARY_DIR}/Libquentier-qt${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
