@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/sanitizers ${CMAKE_MODULE_PATH})
@@ -6,20 +6,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/sanitizers ${CMA
 include(LibquentierCMakePolicies)
 SET_POLICIES()
 
-project(libquentier VERSION 0.5.0)
+project(libquentier VERSION 0.8.0)
 
 set(PROJECT_VENDOR "Dmitry Ivanov")
-set(PROJECT_COPYRIGHT_YEAR "2020")
-set(PROJECT_DOMAIN_FIRST "quentier")
+set(PROJECT_COPYRIGHT_YEAR "2016-2024")
+set(PROJECT_DOMAIN_FIRST "libquentier")
 set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
 
-set(BUILD_WITH_AUTHENTICATION_MANAGER ON CACHE BOOL "If on, libquentier includes its own authentication manager, otherwise only the interface for it is included")
-set(BUILD_WITH_NOTE_EDITOR ON CACHE BOOL "If on, libquentier includes note editor UI component")
+option(BUILD_WITH_NOTE_EDITOR "Build libquentier with note editor UI component" ON)
 
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
-include(LibquentierLinkerSettings)
 include(LibquentierSetupQt)
 include(LibquentierUpdateTranslations)
 include(LibquentierFindLibXml2)
@@ -34,41 +32,6 @@ include(PrependPath)
 
 find_package(Sanitizers)
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/headers
-  ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-set(THIRDPARTY_LIBS QEverCloud::qt5qevercloud)
-list(APPEND THIRDPARTY_LIBS ${TIDY_HTML5_LIBRARIES})
-list(APPEND THIRDPARTY_LIBS ${QTKEYCHAIN_LIBRARIES})
-list(APPEND THIRDPARTY_LIBS OpenSSL::SSL)
-list(APPEND THIRDPARTY_LIBS OpenSSL::Crypto)
-list(APPEND THIRDPARTY_LIBS Libxml2::Libxml2)
-list(APPEND THIRDPARTY_LIBS Hunspell::Libhunspell)
-if(LIBCPP)
-  list(APPEND THIRDPARTY_LIBS ${LIBCPP})
-endif()
-if(MSVC)
-  list(APPEND THIRDPARTY_LIBS secur32.lib)
-endif()
-if(MINGW)
-  list(APPEND THIRDPARTY_LIBS secur32)
-endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  list(APPEND THIRDPARTY_LIBS "-ldl")
-endif()
-
-set(THIRDPARTY_LIB_DIRS ${QEVERCLOUD_LIB_DIR})
-list(APPEND THIRDPARTY_LIB_DIRS ${TIDY_HTML5_LIB_DIR})
-list(APPEND THIRDPARTY_LIB_DIRS ${QTKEYCHAIN_LIB_DIR})
-list(APPEND THIRDPARTY_LIB_DIRS ${OPENSSL_LIB_DIRS})
-list(APPEND THIRDPARTY_LIB_DIRS ${LIBXML2_LIB_DIR})
-list(APPEND THIRDPARTY_LIB_DIRS ${HUNSPELL_LIB_DIR})
-if(LIBCPP)
-  get_filename_component(LIBCPP_LIB_DIR "${LIBCPP}" PATH)
-  list(APPEND THIRDPARTY_LIB_DIRS ${LIBCPP_LIB_DIR})
-endif()
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -80,8 +43,6 @@ if(UNIX)
 endif()
 
 set(LIBQUENTIER_SOURCE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-include_directories(headers)
 
 define_property(SOURCE
   PROPERTY skip_autoformat
@@ -113,7 +74,7 @@ set(TYPES_HEADERS
 set(ENML_HEADERS
     headers/quentier/enml/Factory.h
     headers/quentier/enml/Fwd.h
-	headers/quentier/enml/HtmlUtils.h
+    headers/quentier/enml/HtmlUtils.h
     headers/quentier/enml/IConverter.h
     headers/quentier/enml/IDecryptedTextCache.h
     headers/quentier/enml/IENMLTagsConverter.h
@@ -243,7 +204,7 @@ set(PRIVATE_HEADERS
     src/types/data/ErrorStringData.h
     src/types/data/ResourceRecognitionIndexItemData.h
     src/types/data/ResourceRecognitionIndicesData.h
-	src/enml/HtmlUtils.cpp
+    src/enml/HtmlUtils.cpp
     src/enml/conversion_rules/Factory.cpp
     src/enml/conversion_rules/ISkipRule.cpp
     src/enml/conversion_rules/ISkipRuleBuilder.cpp
@@ -648,14 +609,7 @@ update_translation("${${PROJECT_NAME}_TR_SOURCES}" "${FORMS}" "${${PROJECT_NAME}
 
 set(LIBQUENTIER_QT_VERSION "qt5")
 
-set(MAJOR_VERSION_LIB_NAME_SUFFIX OFF CACHE BOOL "If on, the project's major version would be added to the library's name as a suffix")
-
-set(LIBQUENTIER_LIBNAME_SUFFIX "")
-if(MAJOR_VERSION_LIB_NAME_SUFFIX)
-  set(LIBQUENTIER_LIBNAME_SUFFIX "${PROJECT_VERSION_MAJOR}")
-endif()
-
-set(LIBNAME "lib${LIBQUENTIER_QT_VERSION}quentier${LIBQUENTIER_LIBNAME_SUFFIX}")
+set(LIBNAME "lib${LIBQUENTIER_QT_VERSION}quentier")
 
 add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_HEADERS}
@@ -663,14 +617,21 @@ add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_RESOURCES_RCC}
             ${${PROJECT_NAME}_FORMS_HEADERS})
 
+target_include_directories(${LIBNAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/headers>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:headers>)
+
 # Interface library exposing project's public interface features to internal
 # project parts
 add_library(${LIBNAME}_interface INTERFACE)
 
 target_include_directories(${LIBNAME}_interface
   INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/headers
-  ${CMAKE_CURRENT_BINARY_DIR})
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/headers>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:headers>)
 
 target_link_libraries(${LIBNAME}_interface
   INTERFACE
@@ -682,7 +643,7 @@ add_library(${LIBNAME}_private INTERFACE)
 
 target_include_directories(${LIBNAME}_private
   INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
 # Project parts using private features automatically use public features as well
 target_link_libraries(${LIBNAME}_private
@@ -736,13 +697,38 @@ add_subdirectory(tests)
 target_link_libraries(${LIBNAME}
   PUBLIC
   ${QT_LIBRARIES}
+  QEverCloud::qt5qevercloud
+  Qt5::Core
+  Qt5::Gui
+  Qt5::Widgets
+  Qt5::PrintSupport
   PRIVATE
-  ${THIRDPARTY_LIBS}
+  Qt5::Network
+  Qt5::Xml
+  Qt5::Sql
+  Qt5Keychain::Qt5Keychain
+  TidyHtml5::TidyHtml5
+  OpenSSL::SSL
+  OpenSSL::Crypto
+  Libxml2::Libxml2
+  Hunspell::Libhunspell
   ${LIBNAME}_enml
   ${LIBNAME}_local_storage_sql
   ${LIBNAME}_synchronization
   ${LIBNAME}_threading
   ${LIBNAME}_utility)
+
+if(MSVC)
+  target_link_libraries(${LIBNAME}
+    PRIVATE
+    secur32.lib)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  target_link_libraries(${LIBNAME}
+    PRIVATE
+    "-ldl")
+endif()
 
 add_sanitizers(${LIBNAME})
 
@@ -757,8 +743,13 @@ set_target_properties(${LIBNAME} PROPERTIES
   INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
   COMPILE_DEFINITIONS "${LIBNAME}_EXPORTS")
 
-add_definitions("-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII")
-add_definitions("-DQT_NO_CAST_FROM_BYTEARRAY -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT")
+target_compile_definitions(${LIBNAME}
+  PRIVATE
+  "-DQT_NO_CAST_FROM_ASCII"
+  "-DQT_NO_CAST_TO_ASCII"
+  "-DQT_NO_CAST_FROM_BYTEARRAY"
+  "-DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT"
+)
 
 set(TEST_HEADERS
     src/tests/types/ResourceRecognitionIndicesParsingTest.h
@@ -790,10 +781,18 @@ set_target_properties(test_${PROJECT_NAME} PROPERTIES
   CXX_STANDARD 17
   CXX_EXTENSIONS OFF)
 
+target_compile_definitions(test_${PROJECT_NAME}
+  PRIVATE
+  "-DQT_NO_CAST_FROM_ASCII"
+  "-DQT_NO_CAST_TO_ASCII"
+  "-DQT_NO_CAST_FROM_BYTEARRAY"
+  "-DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT"
+)
+
 add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
-target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
+target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES})
 
 include(SetupClangFormat)
 include(SetupClangTidy)
@@ -816,33 +815,20 @@ prepend_path(TEST_SOURCES "${TEST_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBQUENTIER_CPPCHECKABLE_SOURCES ${${PROJECT_NAME}_SOURCES})
 list(APPEND LIBQUENTIER_CPPCHECKABLE_SOURCES ${TEST_SOURCES})
 
-if(BUILD_WITH_AUTHENTICATION_MANAGER)
-  set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_OPTION "set(LIBQUENTIER_HAS_AUTHENTICATION_MANAGER TRUE)")
-else()
-  set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_OPTION "set(LIBQUENTIER_HAS_AUTHENTICATION_MANAGER FALSE)")
-endif()
-
 if(BUILD_WITH_NOTE_EDITOR)
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR TRUE)")
 else()
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR FALSE)")
 endif()
 
-configure_file(cmake/modules/LibquentierBuildTreeSettings.cmake.in
-               ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}BuildTreeSettings.cmake @ONLY)
 configure_file(cmake/modules/LibquentierConfig.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake @ONLY)
 configure_file(cmake/modules/LibquentierConfigVersion.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
 
-if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-  if(Qt5Core_VERSION VERSION_LESS "5.6.0")
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-  else()
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-  endif()
+if(BUILD_WITH_NOTE_EDITOR)
+  file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
 else()
   file(COPY cmake/modules/LibquentierFindQt5DependenciesBase.cmake DESTINATION ${PROJECT_BINARY_DIR})
   file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesBase.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
@@ -921,6 +907,3 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
 
 add_custom_target(check COMMAND "${CMAKE_CTEST_COMMAND}" "--verbose")
-
-set(LIBQUENTIER_CPPCHECKABLE_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/headers")
-include(LibquentierSetupCppCheck)

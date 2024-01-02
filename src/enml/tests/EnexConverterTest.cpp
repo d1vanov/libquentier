@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,6 +38,7 @@
 #include <cmath>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::enml::tests {
 

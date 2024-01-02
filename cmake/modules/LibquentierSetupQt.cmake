@@ -6,7 +6,7 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 
-if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
+if(BUILD_WITH_NOTE_EDITOR)
   find_package(Qt5WebEngineCore REQUIRED)
   find_package(Qt5WebEngineWidgets REQUIRED)
 endif()

@@ -30,6 +30,7 @@
 #include <array>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::enml::tests {
 

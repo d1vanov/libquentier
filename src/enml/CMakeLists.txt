@@ -20,6 +20,7 @@ target_sources(${LIBRARY_NAME}
   conversion_rules/SkipRuleBuilder.h)
 
 target_link_libraries(${LIBRARY_NAME}
+  PRIVATE
   ${LIBNAME}_private
   Qt5::Core)
 

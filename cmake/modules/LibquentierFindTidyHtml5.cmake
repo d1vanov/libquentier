@@ -61,3 +61,10 @@ message(STATUS "Found tidy-html5 library: ${TIDY_HTML5_LIB_DIR}/${TIDY_HTML5_LIB
 include_directories(SYSTEM ${TIDY_HTML5_INCLUDE_DIR})
 
 set(TIDY_HTML5_FOUND TRUE)
+
+if(NOT TARGET TidyHtml5::TidyHtml5)
+  add_library(TidyHtml5::TidyHtml5 UNKNOWN IMPORTED)
+  set_target_properties(TidyHtml5::TidyHtml5 PROPERTIES
+    IMPORTED_LOCATION "${TIDY_HTML5_LIB_DIR}/${TIDY_HTML5_LIB_NAME}"
+    INTERFACE_INCLUDE_DIRECTORIES "${TIDY_HTML5_INCLUDE_DIR}")
+endif()

@@ -28,12 +28,6 @@
  */
 
 /**
- * This macro is set to true if libquentier was built with AuthenticationManager
- * class for OAuth handling
- */
-@LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE@
-
-/**
  * This macro is set to true if libquentier was built with NoteEditor and
  * INoteEditorBackend classes (as well as their implementations)
  */
@@ -94,12 +88,6 @@ namespace quentier {
  *                  included, false otherwise
  */
 [[nodiscard]] bool QUENTIER_EXPORT libquentierHasNoteEditor() noexcept;
-
-/**
- * @return          True if the current build of libquentier has authentication
- *                  manager included, false otherwise
- */
-[[nodiscard]] bool QUENTIER_EXPORT libquentierHasAuthenticationManager() noexcept;
 
 /**
  * @return          Major version of QEverCloud against which libquentier was

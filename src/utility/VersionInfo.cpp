@@ -54,11 +54,6 @@ bool libquentierHasNoteEditor() noexcept
     return static_cast<bool>(LIB_QUENTIER_HAS_NOTE_EDITOR); // NOLINT
 }
 
-bool libquentierHasAuthenticationManager() noexcept
-{
-    return static_cast<bool>(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER); // NOLINT
-}
-
 int libquentierBuiltWithQEverCloudVersionMajor() noexcept
 {
     return QEVERCLOUD_VERSION_MAJOR;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,8 +27,6 @@
 #include "TestData.h"
 #include "TestScenarios.h"
 #include "UserStoreServer.h"
-
-#include <synchronization/types/AuthenticationInfo.h>
 
 #include <quentier/local_storage/Factory.h>
 #include <quentier/local_storage/ILocalStorage.h>
