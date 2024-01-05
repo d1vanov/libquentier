@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -153,7 +153,9 @@ private:
             continue;
         }
 
-        result += static_cast<quint64>(std::max(syncChunk.notes()->size(), 0));
+        result += static_cast<quint64>(
+            std::max<decltype(syncChunk.notes()->size())>(
+                syncChunk.notes()->size(), 0));
     }
     return result;
 }
@@ -167,8 +169,9 @@ private:
             continue;
         }
 
-        result +=
-            static_cast<quint64>(std::max(syncChunk.resources()->size(), 0));
+        result += static_cast<quint64>(
+            std::max<decltype(syncChunk.resources()->size())>(
+                syncChunk.resources()->size(), 0));
     }
     return result;
 }
@@ -1066,10 +1069,14 @@ void Downloader::launchLinkedNotebooksDataDownload(
             }
 
             QList<qevercloud::Guid> linkedNotebookGuids;
-            linkedNotebookGuids.reserve(std::max(linkedNotebooks.size(), 0));
+            linkedNotebookGuids.reserve(
+                std::max<decltype(linkedNotebooks.size())>(
+                    linkedNotebooks.size(), 0));
 
             QList<QFuture<Result>> linkedNotebookFutures;
-            linkedNotebookFutures.reserve(std::max(linkedNotebooks.size(), 0));
+            linkedNotebookFutures.reserve(
+                std::max<decltype(linkedNotebooks.size())>(
+                    linkedNotebooks.size(), 0));
 
             for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
                 if (Q_UNLIKELY(!linkedNotebook.guid())) {
@@ -1143,11 +1150,11 @@ void Downloader::launchLinkedNotebooksDataDownload(
                 [selfWeak, downloadContext = std::move(downloadContext),
                  linkedNotebookGuids = std::move(linkedNotebookGuids)](
                     QList<Result> linkedNotebookResults) {
-                    const int size = linkedNotebookResults.size();
+                    const auto size = linkedNotebookResults.size();
                     Q_ASSERT(linkedNotebookGuids.size() == size);
 
                     QHash<qevercloud::Guid, LocalResult> results;
-                    results.reserve(std::max(size, 0));
+                    results.reserve(std::max<decltype(size)>(size, 0));
 
                     for (int i = 0; i < size; ++i) {
                         // Somewhat confusing piece: for the sake of

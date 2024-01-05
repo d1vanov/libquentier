@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,6 +25,7 @@
 #include <quentier/enml/conversion_rules/ISkipRule.h>
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/Unreachable.h>
 
@@ -63,6 +64,19 @@ constexpr int gEnexMaxResourceDataSize = 26214400; // 25 Mb in bytes
 constexpr auto gEnexDateTimeFormat = "yyyyMMdd'T'HHmmss'Z'"sv;
 constexpr auto gEnexDateTimeFormatStrftime = "%Y%m%dT%H%M%SZ"sv;
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+using QStringView = QStringRef;
+#endif
+
+[[nodiscard]] QStringView makeStringView(const QString & str)
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    return QStringRef{&str};
+#else
+    return QStringView{str};
+#endif
+}
+
 enum class SkipElementOption
 {
     SkipWithContents = 0x0,
@@ -76,7 +90,7 @@ Q_DECLARE_FLAGS(SkipElementOptions, SkipElementOption);
 
 QDebug & operator<<(QDebug & dbg, const QXmlStreamAttributes & obj)
 {
-    const int numAttributes = obj.size();
+    const auto numAttributes = obj.size();
 
     dbg << "QXmlStreamAttributes(" << numAttributes << "): {\n";
 
@@ -108,7 +122,7 @@ QDebug & operator<<(QDebug & dbg, const QXmlStreamAttributes & obj)
     SkipElementOptions flags;
     flags |= SkipElementOption::DontSkip;
 
-    const auto getShouldSkip = [](const QStringRef & checkedValue,
+    const auto getShouldSkip = [](const QStringView & checkedValue,
                                   const QString & ruleValue,
                                   const conversion_rules::MatchMode matchMode,
                                   const Qt::CaseSensitivity caseSensitivity) {
@@ -142,13 +156,13 @@ QDebug & operator<<(QDebug & dbg, const QXmlStreamAttributes & obj)
         switch (target) {
         case conversion_rules::ISkipRule::Target::Element:
             shouldSkip = getShouldSkip(
-                QStringRef{&elementName}, ruleValue, matchMode,
+                makeStringView(elementName), ruleValue, matchMode,
                 caseSensitivity);
             break;
         case conversion_rules::ISkipRule::Target::AttibuteName:
         case conversion_rules::ISkipRule::Target::AttributeValue:
             for (const auto & attribute: std::as_const(attributes)) {
-                const QStringRef checkedValue =
+                const QStringView checkedValue =
                     (target == conversion_rules::ISkipRule::Target::AttibuteName
                          ? attribute.name()
                          : attribute.value());
@@ -414,7 +428,7 @@ void decryptedTextToHtml(
 
 void encryptedTextToHtml(
     const QXmlStreamAttributes & enCryptAttributes,
-    const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex,
+    const QStringView & encryptedTextCharacters, const quint64 enCryptIndex,
     const quint64 enDecryptedIndex, QXmlStreamWriter & writer,
     enml::IDecryptedTextCache & decryptedTextCache,
     bool & convertedToEnCryptNode)
@@ -524,7 +538,7 @@ void encryptedTextToHtml(
         return Result<void, ErrorString>{std::move(errorDescription)};
     }
 
-    const QStringRef mimeType = attributes.value(QStringLiteral("type"));
+    const QStringView mimeType = attributes.value(QStringLiteral("type"));
     bool inlineImage = false;
     if (mimeType.startsWith(QStringLiteral("image"), Qt::CaseInsensitive)) {
         // TODO: consider some proper high-level interface for making it
@@ -567,7 +581,7 @@ void toDoTagsToHtml(
     const QXmlStreamAttributes originalAttributes = reader.attributes();
     bool checked = false;
     if (originalAttributes.hasAttribute(QStringLiteral("checked"))) {
-        const QStringRef checkedStr =
+        const QStringView checkedStr =
             originalAttributes.value(QStringLiteral("checked"));
 
         if (checkedStr == QStringLiteral("true")) {
@@ -827,7 +841,11 @@ Result<QString, ErrorString> Converter::convertHtmlToEnml(
 
     QXmlStreamWriter writer{&noteContentBuffer};
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
+
     writer.writeStartDocument();
     writer.writeDTD(
         QStringLiteral("<!DOCTYPE en-note SYSTEM "
@@ -967,7 +985,11 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
 
     QXmlStreamWriter writer{&simplifiedHtmlBuffer};
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
+
     writer.writeDTD(
         QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "
                        "\"http://www.w3.org/TR/html4/strict.dtd\">"));
@@ -1048,10 +1070,10 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
             if (lastElementName == QStringLiteral("link")) {
                 lastElementAttributes = reader.attributes();
 
-                QStringRef relAttrRef =
+                QStringView relAttrView =
                     lastElementAttributes.value(QStringLiteral("rel"));
 
-                if (!relAttrRef.isEmpty()) {
+                if (!relAttrView.isEmpty()) {
                     QNTRACE(
                         "enml::Converter",
                         "Skipping CSS style element " << lastElementName);
@@ -1103,11 +1125,11 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
             {
                 QXmlStreamAttributes filteredAttributes;
 
-                QStringRef alignAttrRef =
+                QStringView alignAttrView =
                     lastElementAttributes.value(QStringLiteral("align"));
 
-                if (!alignAttrRef.isEmpty()) {
-                    QString alignAttr = alignAttrRef.toString();
+                if (!alignAttrView.isEmpty()) {
+                    QString alignAttr = alignAttrView.toString();
                     if ((alignAttr == QStringLiteral("left")) ||
                         (alignAttr == QStringLiteral("right")) ||
                         (alignAttr == QStringLiteral("center")) ||
@@ -1118,11 +1140,11 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                     }
                 }
 
-                QStringRef dirAttrRef =
+                QStringView dirAttrView =
                     lastElementAttributes.value(QStringLiteral("dir"));
 
-                if (!dirAttrRef.isEmpty()) {
-                    QString dirAttr = dirAttrRef.toString();
+                if (!dirAttrView.isEmpty()) {
+                    QString dirAttr = dirAttrView.toString();
                     if ((dirAttr == QStringLiteral("ltr")) ||
                         (dirAttr == QStringLiteral("rtl")))
                     {
@@ -1139,11 +1161,11 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                 (lastElementName == QStringLiteral("ol")) ||
                 (lastElementName == QStringLiteral("ul")))
             {
-                QStringRef typeAttrRef =
+                QStringView typeAttrView =
                     lastElementAttributes.value(QStringLiteral("type"));
 
-                if (!typeAttrRef.isEmpty()) {
-                    QString typeAttr = typeAttrRef.toString();
+                if (!typeAttrView.isEmpty()) {
+                    QString typeAttr = typeAttrView.toString();
                     if ((typeAttr == QStringLiteral("1")) ||
                         (typeAttr == QStringLiteral("a")) ||
                         (typeAttr == QStringLiteral("A")) ||
@@ -1176,35 +1198,35 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                     }
                 }
 
-                QStringRef bgcolorAttrRef =
+                QStringView bgcolorAttrView =
                     lastElementAttributes.value(QStringLiteral("bgcolor"));
 
-                if (!bgcolorAttrRef.isEmpty()) {
+                if (!bgcolorAttrView.isEmpty()) {
                     filteredAttributes.append(
-                        QStringLiteral("bgcolor"), bgcolorAttrRef.toString());
+                        QStringLiteral("bgcolor"), bgcolorAttrView.toString());
                 }
 
-                QStringRef colspanAttrRef =
+                QStringView colspanAttrView =
                     lastElementAttributes.value(QStringLiteral("colspan"));
 
-                if (!colspanAttrRef.isEmpty()) {
+                if (!colspanAttrView.isEmpty()) {
                     filteredAttributes.append(
-                        QStringLiteral("colspan"), colspanAttrRef.toString());
+                        QStringLiteral("colspan"), colspanAttrView.toString());
                 }
 
-                QStringRef rowspanAttrRef =
+                QStringView rowspanAttrView =
                     lastElementAttributes.value(QStringLiteral("rowspan"));
 
-                if (!rowspanAttrRef.isEmpty()) {
+                if (!rowspanAttrView.isEmpty()) {
                     filteredAttributes.append(
-                        QStringLiteral("rowspan"), rowspanAttrRef.toString());
+                        QStringLiteral("rowspan"), rowspanAttrView.toString());
                 }
 
-                QStringRef alignAttrRef =
+                QStringView alignAttrView =
                     lastElementAttributes.value(QStringLiteral("align"));
 
-                if (!alignAttrRef.isEmpty()) {
-                    QString alignAttr = alignAttrRef.toString();
+                if (!alignAttrView.isEmpty()) {
+                    QString alignAttr = alignAttrView.toString();
                     if ((alignAttr == QStringLiteral("left")) ||
                         (alignAttr == QStringLiteral("right")) ||
                         (alignAttr == QStringLiteral("center")) ||
@@ -1215,11 +1237,11 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                     }
                 }
 
-                QStringRef valignAttrRef =
+                QStringView valignAttrView =
                     lastElementAttributes.value(QStringLiteral("valign"));
 
-                if (!valignAttrRef.isEmpty()) {
-                    QString valignAttr = valignAttrRef.toString();
+                if (!valignAttrView.isEmpty()) {
+                    QString valignAttr = valignAttrView.toString();
                     if ((valignAttr == QStringLiteral("top")) ||
                         (valignAttr == QStringLiteral("middle")) ||
                         (valignAttr == QStringLiteral("bottom")))
@@ -1234,10 +1256,10 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                 }
             }
             else if (lastElementName == QStringLiteral("img")) {
-                QStringRef srcAttrRef =
+                QStringView srcAttrView =
                     lastElementAttributes.value(QStringLiteral("src"));
 
-                if (Q_UNLIKELY(srcAttrRef.isEmpty())) {
+                if (Q_UNLIKELY(srcAttrView.isEmpty())) {
                     ErrorString errorDescription{QT_TRANSLATE_NOOP(
                         "enml::Converter",
                         "Found img tag without src or with empty src "
@@ -1254,12 +1276,11 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
                         .toString();
 
                 if (enTag == QStringLiteral("en-media")) {
-                    QString typeAttr =
-                        lastElementAttributes.value(QStringLiteral("type"))
-                            .toString();
+                    QStringView typeAttrView =
+                        lastElementAttributes.value(QStringLiteral("type"));
 
-                    if (!typeAttr.isEmpty() &&
-                        !typeAttr.startsWith(QStringLiteral("image/")))
+                    if (!typeAttrView.isEmpty() &&
+                        !typeAttrView.startsWith(QStringLiteral("image/")))
                     {
                         isGenericResourceImage = true;
                     }
@@ -1275,7 +1296,7 @@ Result<void, ErrorString> Converter::convertHtmlToDoc(
 
                 bool shouldAddImgAsResource = false;
 
-                QString srcAttr = srcAttrRef.toString();
+                QString srcAttr = srcAttrView.toString();
 
                 QVariant existingDocImgData =
                     doc.resource(QTextDocument::ImageResource, QUrl(srcAttr));
@@ -1469,7 +1490,11 @@ Result<IHtmlDataPtr, ErrorString> Converter::convertEnmlToHtml(
 
     QXmlStreamWriter writer{&htmlBuffer};
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
+
     int writeElementCounter = 0;
 
     bool insideEnCryptTag = false;
@@ -1631,7 +1656,7 @@ Result<QString, ErrorString> Converter::convertEnmlToPlainText(
         }
 
         if (reader.isStartElement()) {
-            const QStringRef element = reader.name();
+            const QStringView element = reader.name();
             if ((element == QStringLiteral("en-media")) ||
                 (element == QStringLiteral("en-crypt")))
             {
@@ -1642,7 +1667,7 @@ Result<QString, ErrorString> Converter::convertEnmlToPlainText(
         }
 
         if (reader.isEndElement()) {
-            const QStringRef element = reader.name();
+            const QStringView element = reader.name();
             if ((element == QStringLiteral("en-media")) ||
                 (element == QStringLiteral("en-crypt")))
             {
@@ -1687,8 +1712,11 @@ QStringList Converter::convertPlainTextToWordsList(
     const QString & plainText) const
 {
     // Simply remove all non-word characters from plain text
+    static const QRegularExpression expr{
+        QStringLiteral("([[:punct:]]|[[:space:]])+")};
+
     return plainText.split(
-        QRegularExpression{QStringLiteral("([[:punct:]]|[[:space:]])+")},
+        expr,
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         Qt::SkipEmptyParts);
 #else
@@ -1731,26 +1759,27 @@ Result<QString, ErrorString> Converter::validateAndFixupEnml(
     int lastIndex = 0;
 
     QString attributePrefix = QStringLiteral("No declaration for attribute ");
-    int attributePrefixSize = attributePrefix.size();
+    auto attributePrefixSize = attributePrefix.size();
 
     QString elementPrefix = QStringLiteral("element ");
-    int elementPrefixSize = elementPrefix.size();
+    auto elementPrefixSize = elementPrefix.size();
 
     while (true) {
-        int attributeNameIndex = error.indexOf(attributePrefix, lastIndex);
+        auto attributeNameIndex =
+            error.indexOf(attributePrefix, lastIndex);
         if (attributeNameIndex < 0) {
             break;
         }
 
         attributeNameIndex += attributePrefixSize;
 
-        int attributeNameEndIndex =
+        auto attributeNameEndIndex =
             error.indexOf(QStringLiteral(" "), attributeNameIndex);
         if (attributeNameEndIndex < 0) {
             break;
         }
 
-        int elementNameIndex =
+        auto elementNameIndex =
             error.indexOf(elementPrefix, attributeNameEndIndex);
 
         if (elementNameIndex < 0) {
@@ -1759,14 +1788,14 @@ Result<QString, ErrorString> Converter::validateAndFixupEnml(
 
         elementNameIndex += elementPrefixSize;
 
-        int elementNameIndexEnd =
+        auto elementNameIndexEnd =
             error.indexOf(QStringLiteral("\n"), elementNameIndex);
 
         if (elementNameIndexEnd < 0) {
             break;
         }
 
-        lastIndex = elementNameIndexEnd;
+        lastIndex = static_cast<int>(elementNameIndexEnd);
 
         QString elementName = error.mid(
             elementNameIndex, (elementNameIndexEnd - elementNameIndex));
@@ -1805,7 +1834,11 @@ Result<QString, ErrorString> Converter::validateAndFixupEnml(
 
     QXmlStreamWriter writer(&fixedUpEnmlBuffer);
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
+
     writer.writeStartDocument();
     writer.writeDTD(
         QStringLiteral("<!DOCTYPE en-note SYSTEM "
@@ -1967,7 +2000,11 @@ Result<QString, ErrorString> Converter::exportNotesToEnex(
 
     QXmlStreamWriter writer(&enexBuffer);
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
+
     writer.writeStartDocument();
     writer.writeDTD(QStringLiteral(
         "<!DOCTYPE en-export SYSTEM "
@@ -2753,7 +2790,7 @@ Result<QList<qevercloud::Note>, ErrorString> Converter::importEnex(
         Q_UNUSED(reader.readNext())
 
         if (reader.isStartElement()) {
-            QStringRef elementName = reader.name();
+            auto elementName = reader.name();
 
             if (elementName == QStringLiteral("en-export")) {
                 continue;
@@ -3521,7 +3558,7 @@ Result<QList<qevercloud::Note>, ErrorString> Converter::importEnex(
         }
 
         if (reader.isEndElement()) {
-            const QStringRef elementName = reader.name();
+            const auto elementName = reader.name();
 
             if (elementName == QStringLiteral("content")) {
                 QNTRACE(
@@ -3785,7 +3822,7 @@ Converter::ProcessElementStatus
          (state.m_lastElementName == QStringLiteral("div"))) &&
         state.m_lastElementAttributes.hasAttribute(QStringLiteral("en-tag")))
     {
-        const QStringRef enTag =
+        const auto enTag =
             state.m_lastElementAttributes.value(QStringLiteral("en-tag"));
 
         if (enTag == QStringLiteral("en-decrypted")) {
@@ -3813,7 +3850,7 @@ Converter::ProcessElementStatus
                 return ProcessElementStatus::ProcessedFully;
             }
 
-            const QStringRef srcValue =
+            const auto srcValue =
                 state.m_lastElementAttributes.value(QStringLiteral("src"));
 
             if (srcValue.contains(
@@ -3887,7 +3924,7 @@ Converter::ProcessElementStatus
             state.m_enMediaAttributes.clear();
             state.m_insideEnMediaElement = true;
 
-            const int numAttributes = state.m_lastElementAttributes.size();
+            const auto numAttributes = state.m_lastElementAttributes.size();
             for (int i = 0; i < numAttributes; ++i) {
                 const auto & attribute = state.m_lastElementAttributes[i];
 
@@ -3993,7 +4030,8 @@ Result<void, ErrorString> Converter::validateAgainstDtd(
     const QByteArray inputBuffer = input.toUtf8();
 
     const std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> doc{
-        xmlParseMemory(inputBuffer.constData(), inputBuffer.size()),
+        xmlParseMemory(
+            inputBuffer.constData(), static_cast<int>(inputBuffer.size())),
         xmlFreeDoc};
 
     if (Q_UNLIKELY(!doc)) {
@@ -4021,7 +4059,7 @@ Result<void, ErrorString> Converter::validateAgainstDtd(
 
     std::unique_ptr<xmlParserInputBuffer, void (*)(xmlParserInputBufferPtr)>
         buf{xmlParserInputBufferCreateMem(
-                dtdRawData.constData(), dtdRawData.size(),
+                dtdRawData.constData(), static_cast<int>(dtdRawData.size()),
                 XML_CHAR_ENCODING_NONE),
             xmlFreeParserInputBuffer};
 

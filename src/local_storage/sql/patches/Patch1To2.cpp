@@ -241,7 +241,7 @@ bool Patch1To2::applySync(
             std::make_unique<ApplicationSettings::ArrayCloser>(
                 databaseUpgradeInfo);
 
-        const int numResources = resourceLocalIds.size();
+        const auto numResources = resourceLocalIds.size();
         double singleResourceProgressFraction = (0.01 * (70 - lastProgress)) /
             std::max(1.0, static_cast<double>(numResources));
 

@@ -163,8 +163,8 @@ template <class T>
         threading::bindCancellation(future, f);
     }
 
-    const int totalItemCount = futures.size();
-    promise->setProgressRange(0, totalItemCount);
+    const auto totalItemCount = futures.size();
+    promise->setProgressRange(0, static_cast<int>(totalItemCount));
     promise->setProgressValue(0);
 
     promise->start();
@@ -181,7 +181,7 @@ template <class T>
         auto thenFuture = then(
             std::move(f),
             [promise, processedItemsCount, totalItemCount, exceptionFlag, mutex,
-             resultIndexedList, i](auto result) {
+             resultIndexedList, i](std::decay_t<T> result) {
                 if (promise->isCanceled()) {
                     return;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -446,7 +446,7 @@ void fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
         *attributes.mutableApplicationData()->mutableKeysOnly();
 
     const QString keysOnlyString = value.toString();
-    const int length = keysOnlyString.length();
+    const auto length = keysOnlyString.length();
     bool insideQuotedText = false;
     QString currentKey;
     const QChar wordSep = QChar::fromLatin1('\'');
@@ -513,7 +513,7 @@ void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
     QStringList keysList, valuesList;
 
     const QString keysString = keys.toString();
-    const int keysLength = keysString.length();
+    const auto keysLength = keysString.length();
     keysList.reserve(keysLength / 2); // NOTE: just a wild guess
 
     bool insideQuotedText = false;
@@ -541,7 +541,7 @@ void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
     }
 
     const QString valuesString = values.toString();
-    int valuesLength = valuesString.length();
+    auto valuesLength = valuesString.length();
     valuesList.reserve(valuesLength / 2); // NOTE: just a wild guess
 
     insideQuotedText = false;
@@ -567,8 +567,8 @@ void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
         valuesList << currentValue;
     }
 
-    int numKeys = keysList.size();
-    for (int i = 0; i < numKeys; ++i) {
+    auto numKeys = keysList.size();
+    for (decltype(numKeys) i = 0; i < numKeys; ++i) {
         fullMap.insert(keysList.at(i), valuesList.at(i));
     }
 
@@ -608,7 +608,7 @@ void fillNoteAttributesClassificationsFromSqlRecord(
     QStringList keysList, valuesList;
 
     const QString keysString = keys.toString();
-    const int keysLength = keysString.length();
+    const auto keysLength = keysString.length();
     keysList.reserve(keysLength / 2); // NOTE: just a wild guess
     bool insideQuotedText = false;
     QString currentKey;
@@ -631,7 +631,7 @@ void fillNoteAttributesClassificationsFromSqlRecord(
     }
 
     const QString valuesString = values.toString();
-    const int valuesLength = valuesString.length();
+    const auto valuesLength = valuesString.length();
     valuesList.reserve(valuesLength / 2); // NOTE: just a wild guess
 
     insideQuotedText = false;
@@ -653,8 +653,8 @@ void fillNoteAttributesClassificationsFromSqlRecord(
         }
     }
 
-    int numKeys = keysList.size();
-    for (int i = 0; i < numKeys; ++i) {
+    auto numKeys = keysList.size();
+    for (decltype(numKeys) i = 0; i < numKeys; ++i) {
         classifications[keysList.at(i)] = valuesList.at(i);
     }
 
@@ -2632,7 +2632,14 @@ bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
     QSqlQuery & query, QSqlDatabase & database,
     QList<qevercloud::Notebook> & objects, ErrorString & errorDescription)
 {
-    QMap<QString, int> indexForLocalId;
+    using IndexType =
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        int;
+#else
+        qsizetype;
+#endif
+
+    QMap<QString, IndexType> indexForLocalId;
 
     while (query.next()) {
         const QSqlRecord rec = query.record();

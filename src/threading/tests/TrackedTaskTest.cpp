@@ -111,7 +111,7 @@ TEST(TrackedTaskTest, CallLink)
     EXPECT_CALL(*object, call0()).Times(1);
 
     const TrackedTask trackedTask{
-        selfWeak, [](MockCallable & mockCallable) { mockCallable.call0(); }};
+        selfWeak, [&object] { object->call0(); }};
 
     trackedTask();
 }

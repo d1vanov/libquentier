@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,13 +23,14 @@
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
+#include <QStringList>
+
 #include <optional>
 
 class QDebug;
 class QDir;
 class QSqlDatabase;
 class QString;
-class QStringList;
 
 namespace quentier {
 

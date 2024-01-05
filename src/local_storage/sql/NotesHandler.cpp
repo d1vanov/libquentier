@@ -1532,7 +1532,8 @@ QList<qevercloud::SharedNote> NotesHandler::listSharedNotesImpl(
     }
 
     QList<qevercloud::SharedNote> sharedNotes;
-    sharedNotes.reserve(std::max(sharedNotesByIndex.size(), 0));
+    sharedNotes.reserve(std::max<decltype(sharedNotesByIndex.size())>(
+        sharedNotesByIndex.size(), 0));
     for (const auto it: qevercloud::toRange(sharedNotesByIndex)) {
         sharedNotes << it.value();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -66,7 +66,7 @@ bool checkLinkedNotebook(
 
         QLatin1Char spaceChar(' ');
         const QString & name = *linkedNotebook.shareName();
-        const int size = name.size();
+        const auto size = name.size();
 
         bool nonSpaceCharFound = false;
         for (int i = 0; i < size; ++i) {
@@ -121,7 +121,7 @@ bool checkNote(
     }
 
     if (note.content()) {
-        int contentSize = note.content()->size();
+        auto contentSize = note.content()->size();
 
         if ((contentSize < qevercloud::EDAM_NOTE_CONTENT_LEN_MIN) ||
             (contentSize > qevercloud::EDAM_NOTE_CONTENT_LEN_MAX))
@@ -135,7 +135,7 @@ bool checkNote(
     }
 
     if (note.contentHash()) {
-        int contentHashSize = note.contentHash()->size();
+        auto contentHashSize = note.contentHash()->size();
 
         if (contentHashSize != qevercloud::EDAM_HASH_LEN) {
             errorDescription.setBase(
@@ -155,7 +155,7 @@ bool checkNote(
     }
 
     if (note.tagGuids()) {
-        int numTagGuids = note.tagGuids()->size();
+        auto numTagGuids = note.tagGuids()->size();
 
         if (numTagGuids > qevercloud::EDAM_NOTE_TAGS_MAX) {
             errorDescription.setBase(QStringLiteral("Note has too many tags"));
@@ -166,7 +166,7 @@ bool checkNote(
     }
 
     if (note.resources()) {
-        int numResources = note.resources()->size();
+        auto numResources = note.resources()->size();
 
         if (numResources > qevercloud::EDAM_NOTE_RESOURCES_MAX) {
             errorDescription.setBase(
@@ -187,7 +187,7 @@ bool checkNote(
 
 #define CHECK_NOTE_ATTRIBUTE(name)                                             \
     if (attributes.name()) {                                                   \
-        int name##Size = attributes.name()->size();                            \
+        auto name##Size = attributes.name()->size();                           \
         if ((name##Size < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||               \
             (name##Size > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))                 \
         {                                                                      \
@@ -205,7 +205,7 @@ bool checkNote(
 #undef CHECK_NOTE_ATTRIBUTE
 
         if (attributes.contentClass()) {
-            int contentClassSize = attributes.contentClass()->size();
+            auto contentClassSize = attributes.contentClass()->size();
             if ((contentClassSize <
                  qevercloud::EDAM_NOTE_CONTENT_CLASS_LEN_MIN) ||
                 (contentClassSize >
@@ -226,7 +226,7 @@ bool checkNote(
                 for (const auto & key:
                      std::as_const(*applicationData.keysOnly()))
                 {
-                    int keySize = key.size();
+                    auto keySize = key.size();
                     if ((keySize <
                          qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) ||
                         (keySize >
@@ -247,7 +247,7 @@ bool checkNote(
                           end = applicationData.fullMap()->constEnd();
                      it != end; ++it)
                 {
-                    int keySize = it.key().size();
+                    auto keySize = it.key().size();
                     if ((keySize <
                          qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) ||
                         (keySize >
@@ -261,7 +261,7 @@ bool checkNote(
                         return false;
                     }
 
-                    int valueSize = it.value().size();
+                    auto valueSize = it.value().size();
                     if ((valueSize <
                          qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MIN) ||
                         (valueSize >
@@ -275,7 +275,7 @@ bool checkNote(
                         return false;
                     }
 
-                    int sumSize = keySize + valueSize;
+                    auto sumSize = keySize + valueSize;
                     if (sumSize >
                         qevercloud::EDAM_APPLICATIONDATA_ENTRY_LEN_MAX) {
                         errorDescription.setBase(
@@ -373,7 +373,7 @@ bool checkNotebook(
 
     if (notebook.businessNotebook()) {
         if (notebook.businessNotebook()->notebookDescription()) {
-            int businessNotebookDescriptionSize =
+            auto businessNotebookDescriptionSize =
                 notebook.businessNotebook()->notebookDescription()->size();
 
             if ((businessNotebookDescriptionSize <
@@ -586,7 +586,7 @@ bool checkSavedSearch(
 
     if (savedSearch.query()) {
         const QString & query = *savedSearch.query();
-        int querySize = query.size();
+        auto querySize = query.size();
 
         if ((querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
             (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX))
@@ -674,7 +674,7 @@ bool checkUser(
 
     if (user.username()) {
         const QString & username = *user.username();
-        int usernameSize = username.size();
+        auto usernameSize = username.size();
 
         if ((usernameSize > qevercloud::EDAM_USER_USERNAME_LEN_MAX) ||
             (usernameSize < qevercloud::EDAM_USER_USERNAME_LEN_MIN))
@@ -700,7 +700,7 @@ bool checkUser(
 
     if (user.name()) {
         const QString & name = *user.name();
-        int nameSize = name.size();
+        auto nameSize = name.size();
 
         if ((nameSize > qevercloud::EDAM_USER_NAME_LEN_MAX) ||
             (nameSize < qevercloud::EDAM_USER_NAME_LEN_MIN))
@@ -723,7 +723,7 @@ bool checkUser(
 
     if (user.timezone()) {
         const QString & timezone = *user.timezone();
-        int timezoneSize = timezone.size();
+        auto timezoneSize = timezone.size();
 
         if ((timezoneSize > qevercloud::EDAM_TIMEZONE_LEN_MAX) ||
             (timezoneSize < qevercloud::EDAM_TIMEZONE_LEN_MIN))
@@ -753,7 +753,7 @@ bool checkUser(
             const QString & defaultLocationName =
                 *attributes.defaultLocationName();
 
-            int defaultLocationNameSize = defaultLocationName.size();
+            auto defaultLocationNameSize = defaultLocationName.size();
 
             if ((defaultLocationNameSize >
                  qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
@@ -773,7 +773,7 @@ bool checkUser(
 
             for (const auto & viewedPromotion: std::as_const(viewedPromotions))
             {
-                int viewedPromotionSize = viewedPromotion.size();
+                auto viewedPromotionSize = viewedPromotion.size();
                 if ((viewedPromotionSize >
                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                     (viewedPromotionSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN))
@@ -791,7 +791,7 @@ bool checkUser(
             const QString & incomingEmailAddress =
                 *attributes.incomingEmailAddress();
 
-            int incomingEmailAddressSize = incomingEmailAddress.size();
+            auto incomingEmailAddressSize = incomingEmailAddress.size();
 
             if ((incomingEmailAddressSize >
                  qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
@@ -809,7 +809,7 @@ bool checkUser(
             const QStringList & recentMailedAddresses =
                 *attributes.recentMailedAddresses();
 
-            int numRecentMailedAddresses = recentMailedAddresses.size();
+            auto numRecentMailedAddresses = recentMailedAddresses.size();
 
             if (numRecentMailedAddresses >
                 qevercloud::EDAM_USER_RECENT_MAILED_ADDRESSES_MAX)
@@ -825,7 +825,7 @@ bool checkUser(
 
             for (const auto & recentMailedAddress:
                  std::as_const(recentMailedAddresses)) {
-                int recentMailedAddressSize = recentMailedAddress.size();
+                auto recentMailedAddressSize = recentMailedAddress.size();
                 if ((recentMailedAddressSize >
                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                     (recentMailedAddressSize <
@@ -842,7 +842,7 @@ bool checkUser(
 
         if (attributes.comments()) {
             const QString & comments = *attributes.comments();
-            int commentsSize = comments.size();
+            auto commentsSize = comments.size();
 
             if ((commentsSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                 (commentsSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN))

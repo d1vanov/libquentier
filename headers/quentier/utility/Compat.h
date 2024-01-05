@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_COMPAT_H
-#define LIB_QUENTIER_UTILITY_COMPAT_H
+#pragma once
 
 #include <QHash>
 #include <QString>
+#include <QtGlobal>
 
 // Compatibility with boost parts which require to take a hash of QString
 
@@ -28,5 +28,3 @@ inline std::size_t hash_value(const QString & x) noexcept
 {
     return qHash(x);
 }
-
-#endif // LIB_QUENTIER_UTILITY_COMPAT_H

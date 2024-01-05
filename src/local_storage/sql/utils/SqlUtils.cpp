@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,6 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QStringList>
 #include <QTextStream>
 #include <QVariant>
 
@@ -82,7 +81,7 @@ QString toQuotedSqlList(const QStringList & items)
 
     for (const QString & item: std::as_const(items)) {
         strm << "'" << sqlEscape(item) << "'";
-        if (&item != items.constLast()) {
+        if (&item != &items.constLast()) {
             strm << ", ";
         }
     }

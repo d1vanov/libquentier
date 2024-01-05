@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,12 +21,12 @@
 #include <quentier/local_storage/ILocalStorage.h>
 
 #include <QString>
+#include <QStringList>
 #include <QTextStream>
 
 #include <utility>
 
 class QSqlDatabase;
-class QStringList;
 class QVariant;
 
 namespace quentier::local_storage::sql::utils {

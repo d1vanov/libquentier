@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,9 +38,11 @@ constexpr std::enable_if_t<std::is_invocable_v<Function, Arguments...>> invoke(
 }
 
 template <typename LockableObject, typename Function, typename... Arguments>
-constexpr std::enable_if_t<!std::is_invocable_v<Function, Arguments...>> invoke(
-    LockableObject & lockableObject, Function & function,
-    Arguments &&... arguments)
+constexpr std::enable_if_t<
+    !std::is_invocable_v<Function, Arguments...> &&
+    std::is_member_function_pointer_v<Function>> invoke(
+        LockableObject & lockableObject, Function & function,
+        Arguments &&... arguments)
 {
     const auto lockedObject = lockableObject.lock();
     if (lockedObject) {
@@ -79,7 +81,11 @@ public:
         m_function{std::forward<SomeFunction>(function)}
     {}
 
-    template<typename... Arguments>
+    template<
+        typename... Arguments,
+        typename = std::enable_if_t<
+            std::is_invocable_v<Function, Arguments...> ||
+            std::is_member_function_pointer_v<Function>>>
     constexpr void operator()(Arguments &&... arguments)
     {
         detail::invoke(
@@ -87,7 +93,11 @@ public:
             std::forward<Arguments>(arguments)...);
     }
 
-    template<typename... Arguments>
+    template<
+        typename... Arguments,
+        typename = std::enable_if_t<
+            std::is_invocable_v<Function, Arguments...> ||
+            std::is_member_function_pointer_v<Function>>>
     constexpr void operator()(Arguments &&... arguments) const
     {
         detail::invoke(

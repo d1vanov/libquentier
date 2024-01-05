@@ -191,7 +191,7 @@ void FullSyncStaleDataExpunger::onGuidsListed(
     }
 
     QList<QFuture<void>> expungeFutures;
-    expungeFutures.reserve(std::max(
+    expungeFutures.reserve(std::max<decltype(tagGuidsToExpunge.size())>(
         0,
         notebookGuidsToExpunge.size() + tagGuidsToExpunge.size() +
             noteGuidsToExpunge.size() + savedSearchGuidsToExpunge.size()));
@@ -307,7 +307,8 @@ QFuture<FullSyncStaleDataExpunger::GuidToLocalIdHash>
     auto * currentThread = QThread::currentThread();
 
     QList<QFuture<GuidWithLocalId>> processNotebookFutures;
-    processNotebookFutures.reserve(std::max(0, notebookGuids.size()));
+    processNotebookFutures.reserve(
+        std::max<decltype(notebookGuids.size())>(notebookGuids.size(), 0));
     for (const auto & guid: std::as_const(notebookGuids)) {
         QFuture<std::optional<qevercloud::Notebook>> notebookFuture =
             m_localStorage->findNotebookByGuid(guid);
@@ -377,7 +378,8 @@ QFuture<FullSyncStaleDataExpunger::GuidToTagDataHash>
     auto * currentThread = QThread::currentThread();
 
     QList<QFuture<GuidWithTagData>> processTagFutures;
-    processTagFutures.reserve(std::max(0, tagGuids.size()));
+    processTagFutures.reserve(
+        std::max<decltype(tagGuids.size())>(tagGuids.size(), 0));
     for (const auto & guid: std::as_const(tagGuids)) {
         QFuture<std::optional<qevercloud::Tag>> tagFuture =
             m_localStorage->findTagByGuid(guid);
@@ -444,7 +446,9 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedSavedSearches(
     auto * currentThread = QThread::currentThread();
 
     QList<QFuture<void>> processSavedSearchFutures;
-    processSavedSearchFutures.reserve(std::max(0, savedSearchGuids.size()));
+    processSavedSearchFutures.reserve(
+        std::max<decltype(savedSearchGuids.size())>(
+            savedSearchGuids.size(), 0));
     for (const auto & guid: std::as_const(savedSearchGuids)) {
         QFuture<std::optional<qevercloud::SavedSearch>> savedSearchFuture =
             m_localStorage->findSavedSearchByGuid(guid);
@@ -490,7 +494,8 @@ QFuture<void> FullSyncStaleDataExpunger::processModifiedNotes(
         local_storage::ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     QList<QFuture<void>> processNoteFutures;
-    processNoteFutures.reserve(std::max(0, noteGuids.size()));
+    processNoteFutures.reserve(
+        std::max<decltype(noteGuids.size())>(noteGuids.size(), 0));
     for (const auto & guid: std::as_const(noteGuids)) {
         QFuture<std::optional<qevercloud::Note>> noteFuture =
             m_localStorage->findNoteByGuid(guid, fetchNoteOptions);

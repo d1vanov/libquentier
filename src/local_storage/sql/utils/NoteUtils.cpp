@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -95,7 +95,7 @@ namespace {
         }
 
         QStringList result;
-        result.reserve(std::max(tagNames.size(), 0));
+        result.reserve(std::max<decltype(tagNames.size())>(tagNames.size(), 0));
         for (const auto & tagName: std::as_const(tagNames)) {
             errorDescription.clear();
             auto tagLocalId = tagLocalIdByName(
@@ -129,7 +129,7 @@ namespace {
              * the query which the note is labeled with
              */
 
-            const int numTagLocalIds = tagLocalIds.size();
+            const auto numTagLocalIds = tagLocalIds.size();
             strm << "(NoteTags.localNote IN (SELECT localNote "
                  << "FROM (SELECT localNote, localTag, COUNT(*) "
                  << "FROM NoteTags WHERE NoteTags.localTag IN ("
@@ -165,7 +165,7 @@ namespace {
              * condition
              */
 
-            const int numTagNegatedLocalIds = tagNegatedLocalIds.size();
+            const auto numTagNegatedLocalIds = tagNegatedLocalIds.size();
             strm << "(NoteTags.localNote NOT IN (SELECT localNote "
                  << "FROM (SELECT localNote, localTag, COUNT(*) "
                  << "FROM NoteTags WHERE NoteTags.localTag IN ("
@@ -399,7 +399,12 @@ void contentSearchTermToSqlQueryParts(
         frontSearchTermModifier = QStringLiteral("%");
         backSearchTermModifier = QStringLiteral("%");
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         int pos = -1;
+#else
+        qsizetype pos = -1;
+#endif
+
         while ((pos = searchTerm.indexOf(asterisk)) >= 0) {
             searchTerm.replace(pos, 1, QStringLiteral("%"));
         }
@@ -443,8 +448,6 @@ void contentSearchTermToSqlQueryParts(
     QString backSearchTermModifier;
     backSearchTermModifier.reserve(1);
 
-    QString currentSearchTerm;
-
     const QStringList & contentSearchTerms =
         noteSearchQuery.contentSearchTerms();
 
@@ -452,9 +455,9 @@ void contentSearchTermToSqlQueryParts(
     const auto asterisk = QList<QChar>{} << QChar::fromLatin1('*');
 
     if (!contentSearchTerms.isEmpty()) {
-        const int numContentSearchTerms = contentSearchTerms.size();
-        for (int i = 0; i < numContentSearchTerms; ++i) {
-            currentSearchTerm = contentSearchTerms[i];
+        for (const auto & searchTerm: std::as_const(contentSearchTerms))
+        {
+            auto currentSearchTerm = searchTerm;
             stringUtils.removePunctuation(currentSearchTerm, asterisk);
             if (currentSearchTerm.isEmpty()) {
                 continue;
@@ -490,7 +493,7 @@ void contentSearchTermToSqlQueryParts(
 
             positiveSqlPartStrm << ")";
 
-            if (i != (numContentSearchTerms - 1)) {
+            if (&searchTerm != &contentSearchTerms.constLast()) {
                 positiveSqlPartStrm << " " << uniteOperator << " ";
             }
         }
@@ -505,12 +508,9 @@ void contentSearchTermToSqlQueryParts(
         noteSearchQuery.negatedContentSearchTerms();
 
     if (!negatedContentSearchTerms.isEmpty()) {
-        const int numNegatedContentSearchTerms =
-            negatedContentSearchTerms.size();
-
-        for (int i = 0; i < numNegatedContentSearchTerms; ++i) {
-            currentSearchTerm = negatedContentSearchTerms[i];
-
+        for (const auto & searchTerm: std::as_const(negatedContentSearchTerms))
+        {
+            auto currentSearchTerm = searchTerm;
             stringUtils.removePunctuation(currentSearchTerm, asterisk);
 
             if (currentSearchTerm.isEmpty()) {
@@ -547,7 +547,7 @@ void contentSearchTermToSqlQueryParts(
 
             negatedSqlPartStrm << ")";
 
-            if (i != (numNegatedContentSearchTerms - 1)) {
+            if (&searchTerm != &negatedContentSearchTerms.constLast()) {
                 negatedSqlPartStrm << " " << uniteOperator << " ";
             }
         }

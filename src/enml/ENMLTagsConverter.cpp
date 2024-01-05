@@ -250,7 +250,7 @@ Result<QString, ErrorString> ENMLTagsConverter::convertResource(
         return Result<QString, ErrorString>{std::move(errorDescription)};
     }
 
-    const QStringRef mimeType = attributes.value(QStringLiteral("type"));
+    const auto mimeType = attributes.value(QStringLiteral("type"));
     bool inlineImage = false;
     if (mimeType.startsWith(QStringLiteral("image"), Qt::CaseInsensitive)) {
         // TODO: consider some proper high-level interface for making it
