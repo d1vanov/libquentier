@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 
@@ -20,7 +20,7 @@ target_link_libraries(${TESTS_NAME}
     ${LIBNAME}
     ${LIBRARY_NAME}
     GTest::GTest
-    Qt5::Core)
+    Qt${LIBQUENTIER_QT_VERSION}::Core)
 
 add_test(${TESTS_NAME} ${TESTS_NAME}) 
 

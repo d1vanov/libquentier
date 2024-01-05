@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(LIBRARY_NAME ${LIBNAME}_local_storage_sql)
 
@@ -88,8 +88,8 @@ target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_private
   ${LIBNAME}_threading
-  Qt5::Core
-  Qt5::Sql)
+  Qt${LIBQUENTIER_QT_VERSION}::Core
+  Qt${LIBQUENTIER_QT_VERSION}::Sql)
 
 if(GMOCK_FOUND AND GTEST_FOUND)
   add_subdirectory(tests)

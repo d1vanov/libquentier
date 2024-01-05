@@ -497,12 +497,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 # generate version info header
-if(BUILD_WITH_AUTHENTICATION_MANAGER)
-  set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE "#define LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER 1")
-else()
-  set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE "#define LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER 0")
-endif()
-
 if(BUILD_WITH_NOTE_EDITOR)
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE "#define LIB_QUENTIER_HAS_NOTE_EDITOR 1")
 else()
@@ -594,7 +588,11 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/javascript/rangy/rangy.qrc)
 endif()
 
-qt_add_resources(${PROJECT_NAME}_RESOURCES_RCC ${RESOURCES})
+if(BUILD_WITH_QT6)
+  qt6_add_resources(${PROJECT_NAME}_RESOURCES_RCC ${RESOURCES})
+else()
+  qt5_add_resources(${PROJECT_NAME}_RESOURCES_RCC ${RESOURCES})
+endif()
 
 if(BUILD_WITH_NOTE_EDITOR)
   set(FORMS
@@ -602,7 +600,12 @@ if(BUILD_WITH_NOTE_EDITOR)
       src/note_editor/dialogs/EncryptionDialog.ui
       src/note_editor/dialogs/EditHyperlinkDialog.ui
       src/note_editor/dialogs/RenameResourceDialog.ui)
-  qt_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
+
+  if(BUILD_WITH_QT6)
+    qt_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
+  else()
+    qt5_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
+  endif()
 endif()
 
 set(${PROJECT_NAME}_TR_SOURCES
@@ -641,7 +644,7 @@ target_include_directories(${LIBNAME}_interface
 
 target_link_libraries(${LIBNAME}_interface
   INTERFACE
-  QEverCloud::qt5qevercloud)
+  QEverCloud::qt${LIBQUENTIER_QT_VERSION}qevercloud)
 
 # Interface library exposing private project's features (not included in the API
 # of the shared library) to internal project parts
@@ -702,16 +705,16 @@ add_subdirectory(tests)
 
 target_link_libraries(${LIBNAME}
   PUBLIC
-  QEverCloud::qt5qevercloud
-  Qt5::Core
-  Qt5::Gui
-  Qt5::Widgets
-  Qt5::PrintSupport
+  QEverCloud::qt${LIBQUENTIER_QT_VERSION}qevercloud
+  Qt${LIBQUENTIER_QT_VERSION}::Core
+  Qt${LIBQUENTIER_QT_VERSION}::Gui
+  Qt${LIBQUENTIER_QT_VERSION}::Widgets
+  Qt${LIBQUENTIER_QT_VERSION}::PrintSupport
   PRIVATE
-  Qt5::Network
-  Qt5::Xml
-  Qt5::Sql
-  Qt5Keychain::Qt5Keychain
+  Qt${LIBQUENTIER_QT_VERSION}::Network
+  Qt${LIBQUENTIER_QT_VERSION}::Xml
+  Qt${LIBQUENTIER_QT_VERSION}::Sql
+  Qt${LIBQUENTIER_QT_VERSION}Keychain::Qt${LIBQUENTIER_QT_VERSION}Keychain
   TidyHtml5::TidyHtml5
   OpenSSL::SSL
   OpenSSL::Crypto
@@ -725,11 +728,11 @@ target_link_libraries(${LIBNAME}
 if(BUILD_WITH_NOTE_EDITOR)
   target_link_libraries(${LIBNAME}
     PUBLIC
-    Qt5::WebEngineCore
-    Qt5::WebEngineWidgets
+    Qt${LIBQUENTIER_QT_VERSION}::WebEngineCore
+    Qt${LIBQUENTIER_QT_VERSION}::WebEngineWidgets
     PRIVATE
-    Qt5::WebChannel
-    Qt5::WebSockets)
+    Qt${LIBQUENTIER_QT_VERSION}::WebChannel
+    Qt${LIBQUENTIER_QT_VERSION}::WebSockets)
 endif()
 
 if(MSVC)
@@ -786,7 +789,11 @@ set(TEST_SOURCES
 set(TEST_RESOURCES
     src/tests/resources/test_resources.qrc)
 
-qt_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
+if(BUILD_WITH_QT6)
+  qt6_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
+else()
+  qt5_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
+endif()
 
 add_executable(test_${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES} ${${PROJECT_NAME}_TEST_RESOURCES_RCC})
 
@@ -806,7 +813,7 @@ target_compile_definitions(test_${PROJECT_NAME}
 add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
-target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} Qt5::Test)
+target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} Qt${LIBQUENTIER_QT_VERSION}::Test)
 
 include(SetupClangFormat)
 include(SetupClangTidy)

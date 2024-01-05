@@ -1,12 +1,17 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 add_subdirectory(mocks)
 
 set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 set(TESTS_RESOURCES_NAME ${TESTS_NAME}_resources)
 
-qt5_add_resources(${TESTS_RESOURCES_NAME}
-  tests.qrc)
+if(BUILD_WITH_QT6)
+  qt6_add_resources(${TESTS_RESOURCES_NAME}
+    tests.qrc)
+else()
+  qt5_add_resources(${TESTS_RESOURCES_NAME}
+    tests.qrc)
+endif()
 
 add_executable(${TESTS_NAME}
   ConnectionPoolTest.cpp
@@ -37,8 +42,8 @@ target_link_libraries(${TESTS_NAME}
     ${LIBRARY_NAME}_testing_mocks
     ${GMOCK_LIBRARIES}
     GTest::GTest
-    Qt5::Core
-    Qt5::Sql)
+    Qt${LIBQUENTIER_QT_VERSION}::Core
+    Qt${LIBQUENTIER_QT_VERSION}::Sql)
 
 add_test(${TESTS_NAME} ${TESTS_NAME})
 

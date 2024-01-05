@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 

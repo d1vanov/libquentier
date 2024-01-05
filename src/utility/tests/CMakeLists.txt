@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 add_subdirectory(mocks)
 
@@ -18,7 +18,7 @@ target_link_libraries(${TESTS_NAME}
     ${LIBRARY_NAME}_testing_mocks
     ${QTKEYCHAIN_LIBRARIES}
     GTest::GTest
-    Qt5::Core)
+    Qt${LIBQUENTIER_QT_VERSION}::Core)
 
 include(GoogleTest)
 

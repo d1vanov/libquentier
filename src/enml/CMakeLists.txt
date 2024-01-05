@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(LIBRARY_NAME ${LIBNAME}_enml)
 
@@ -22,9 +22,9 @@ target_sources(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   PRIVATE
   ${LIBNAME}_private
-  Qt5::Core
-  Qt5::Gui
-  Qt5::Widgets
+  Qt${LIBQUENTIER_QT_VERSION}::Core
+  Qt${LIBQUENTIER_QT_VERSION}::Gui
+  Qt${LIBQUENTIER_QT_VERSION}::Widgets
   LibXml2::LibXml2)
 
 if(GMOCK_FOUND AND GTEST_FOUND)

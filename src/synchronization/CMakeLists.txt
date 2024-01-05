@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(LIBRARY_NAME ${LIBNAME}_synchronization)
 
@@ -152,7 +152,7 @@ target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_private
   ${LIBNAME}_threading
-  Qt5::Core)
+  Qt${LIBQUENTIER_QT_VERSION}::Core)
 
 if(GMOCK_FOUND AND GTEST_FOUND)
   add_subdirectory(tests)

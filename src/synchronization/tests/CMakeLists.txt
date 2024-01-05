@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 add_subdirectory(mocks)
 
@@ -51,7 +51,7 @@ target_link_libraries(${TESTS_NAME}
     ${LIBNAME}_local_storage_sql
     ${GMOCK_LIBRARIES}
     GTest::GTest
-    Qt5::Core)
+    Qt${LIBQUENTIER_QT_VERSION}::Core)
 
 add_test(${TESTS_NAME} ${TESTS_NAME})
 

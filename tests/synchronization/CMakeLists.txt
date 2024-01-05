@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16.3)
 
 set(TESTS_NAME "${LIBNAME}_synchronization_integrational_tests")
 set(TESTS_LIB_NAME "${TESTS_NAME}_lib")
@@ -45,11 +45,11 @@ target_link_libraries(${TESTS_LIB_NAME}
   PUBLIC
     ${LIBNAME}_interface
     ${QT_LIBRARIES}
-    Qt5::Test)
+    Qt${LIBQUENTIER_QT_VERSION}::Test)
 
 add_executable(${TESTS_NAME}
   main.cpp)
 
-target_link_libraries(${TESTS_NAME} ${TESTS_LIB_NAME} ${LIBNAME} ${THIRDPARTY_LIBS})
+target_link_libraries(${TESTS_NAME} ${TESTS_LIB_NAME} ${LIBNAME})
 
 add_test(${TESTS_NAME} ${TESTS_NAME})
