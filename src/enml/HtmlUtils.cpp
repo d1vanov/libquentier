@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -284,7 +284,7 @@ private:
     bool insertedNbspEntityDeclaration = false;
 
     if (output.startsWith(QStringLiteral("<?xml version"))) {
-        const int firstEnclosingBracketIndex =
+        const auto firstEnclosingBracketIndex =
             output.indexOf(QChar::fromLatin1('>'));
 
         if (firstEnclosingBracketIndex > 0) {
@@ -314,7 +314,11 @@ private:
 
     QXmlStreamWriter writer{&fixedUpOutputBuffer};
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
+
     writer.writeStartDocument();
 
     bool justProcessedEndElement = false;
@@ -358,7 +362,7 @@ private:
 
             if (justProcessedEndElement) {
                 // Need to remove the extra newline tidy added
-                const int firstNewlineIndex =
+                const auto firstNewlineIndex =
                     text.indexOf(QStringLiteral("\n"));
                 if (firstNewlineIndex >= 0) {
                     text.remove(firstNewlineIndex, 1);

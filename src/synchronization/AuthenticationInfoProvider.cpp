@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,25 +55,22 @@ namespace quentier::synchronization {
 
 namespace {
 
-const QString gAuthTokenKeychainKeyPart = QStringLiteral("auth_token");
-const QString gShardIdKeychainKeyPart = QStringLiteral("shard_id");
+const char * gAuthTokenKeychainKeyPart = "auth_token";
+const char * gShardIdKeychainKeyPart = "shard_id";
+const char * gSynchronizationPersistence = "SynchronizationPersistence";
 
-const QString gSynchronizationPersistence =
-    QStringLiteral("SynchronizationPersistence");
+const char * gNoteStoreUrlKey = "NoteStoreUrl";
+const char * gWebApiUrlPrefixKey = "WebApiUrlPrefix";
+const char * gUserStoreCookieKey = "UserStoreCookie";
+const char * gExpirationTimestampKey = "ExpirationTimestamp";
 
-const QString gNoteStoreUrlKey = QStringLiteral("NoteStoreUrl");
-const QString gWebApiUrlPrefixKey = QStringLiteral("WebApiUrlPrefix");
-const QString gUserStoreCookieKey = QStringLiteral("UserStoreCookie");
-const QString gExpirationTimestampKey = QStringLiteral("ExpirationTimestamp");
+const char * gLinkedNotebookExpirationTimestampKey =
+    "LinkedNotebookExpirationTimestamp";
 
-const QString gLinkedNotebookExpirationTimestampKey =
-    QStringLiteral("LinkedNotebookExpirationTimestamp");
+const char * gAuthenticationTimestampKey = "AuthenticationTimestamp";
 
-const QString gAuthenticationTimestampKey =
-    QStringLiteral("AuthenticationTimestamp");
-
-const QString gLinkedNotebookAuthenticationTimestamp =
-    QStringLiteral("LinkedNotebookAuthenticationTimestamp");
+const char * gLinkedNotebookAuthenticationTimestamp =
+    "LinkedNotebookAuthenticationTimestamp";
 
 [[nodiscard]] Account::EvernoteAccountType toEvernoteAccountType(
     const qevercloud::ServiceLevel serviceLevel) noexcept
@@ -846,7 +843,8 @@ std::shared_ptr<AuthenticationInfo>
     AuthenticationInfoProvider::readAuthenticationInfoPart(
         const Account & account) const
 {
-    ApplicationSettings settings{account, gSynchronizationPersistence};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gSynchronizationPersistence)};
 
     // NOTE: having account id as a part of the group seems redundant
     // as the settings are already being persisted for the given account
@@ -941,7 +939,8 @@ std::optional<AuthenticationInfoProvider::LinkedNotebookTimestamps>
         const Account & account,
         const qevercloud::Guid & linkedNotebookGuid) const
 {
-    ApplicationSettings settings{account, gSynchronizationPersistence};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gSynchronizationPersistence)};
 
     // NOTE: having account id as a part of the group seems redundant
     // as the settings are already being persisted for the given account
@@ -1128,7 +1127,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                 const QWriteLocker locker{&m_authenticationInfosRWLock};
 
                 ApplicationSettings settings{
-                    account, gSynchronizationPersistence};
+                    account, QString::fromUtf8(gSynchronizationPersistence)};
 
                 settings.beginGroup(
                     QString::fromUtf8("Authentication/%1/%2/")
@@ -1236,7 +1235,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
                     &m_linkedNotebookAuthenticationInfosRWLock};
 
                 ApplicationSettings settings{
-                    account, gSynchronizationPersistence};
+                    account, QString::fromUtf8(gSynchronizationPersistence)};
 
                 settings.beginGroup(
                     QString::fromUtf8("Authentication/%1/%2/")
@@ -1398,7 +1397,8 @@ void AuthenticationInfoProvider::clearUserCacheImpl(
 
     const Account & account = accountAuthenticationInfo.account;
 
-    ApplicationSettings settings{account, gSynchronizationPersistence};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gSynchronizationPersistence)};
 
     settings.beginGroup(
         QString::fromUtf8("Authentication/%1/%2/")
@@ -1444,7 +1444,8 @@ void AuthenticationInfoProvider::clearLinkedNotebookCacheImpl(
 
     const Account & account = accountAuthenticationInfo.account;
 
-    ApplicationSettings settings{account, gSynchronizationPersistence};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gSynchronizationPersistence)};
 
     settings.beginGroup(
         QString::fromUtf8("Authentication/%1/%2/")

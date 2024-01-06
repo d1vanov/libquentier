@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -158,8 +158,8 @@ QFuture<void> TagsProcessor::processTags(
         return threading::makeReadyFuture();
     }
 
-    const qint32 totalTags = tags.size();
-    const qint32 totalTagsToExpunge = expungedTags.size();
+    const auto totalTags = tags.size();
+    const auto totalTagsToExpunge = expungedTags.size();
 
     const auto tagCounters = std::make_shared<TagCounters>(
         totalTags, totalTagsToExpunge, std::move(callbackWeak));
@@ -186,10 +186,10 @@ QFuture<void> TagsProcessor::processTagsList(
             RuntimeError{std::move(errorDescription)});
     }
 
-    const int tagCount = tags.size();
+    const auto tagCount = tags.size();
     QList<std::shared_ptr<QPromise<void>>> tagPromises;
     tagPromises.reserve(tagCount);
-    for (int i = 0; i < tagCount; ++i) {
+    for (qint64 i = 0; i < tagCount; ++i) {
         tagPromises << std::make_shared<QPromise<void>>();
     }
 
@@ -362,7 +362,12 @@ void TagsProcessor::processTagsOneByOne(
     threading::onFailed(
         std::move(thenFuture), currentThread,
         [tagPromises, tagIndex](const QException & e) {
-            for (int i = tagIndex, size = tagPromises.size(); i < size; ++i) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            int i = tagIndex;
+#else
+            qsizetype i = tagIndex;
+#endif
+            for (auto size = tagPromises.size(); i < size; ++i) {
                 tagPromises[i]->setException(e);
             }
         });

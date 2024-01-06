@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,32 +39,19 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const QString gProcessedNotesIniFileName = QStringLiteral("processedNotes.ini");
-const QString gCancelledNotesDirName = QStringLiteral("cancelledNotes");
-
-const QString gFailedToDownloadNotesDirName =
-    QStringLiteral("failedToDownloadNotes");
-
-const QString gFailedToProcessNotesDirName =
-    QStringLiteral("failedToProcessNotes");
-
-const QString gExpungeNotesIniFileName = QStringLiteral("expungedNotes.ini");
-
-const QString gFailedToExpungeNotesIniFileName =
-    QStringLiteral("failedToExpungeNotes.ini");
+const char * gProcessedNotesIniFileName = "processedNotes.ini";
+const char * gCancelledNotesDirName = "cancelledNotes";
+const char * gFailedToDownloadNotesDirName = "failedToDownloadNotes";
+const char * gFailedToProcessNotesDirName = "failedToProcessNotes";
+const char * gExpungeNotesIniFileName = "expungedNotes.ini";
+const char * gFailedToExpungeNotesIniFileName = "failedToExpungeNotes.ini";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const QString gProcessedResourcesIniFileName =
-    QStringLiteral("processedResources.ini");
-
-const QString gCancelledResourcesDirName = QStringLiteral("cancelledResources");
-
-const QString gFailedToDownloadResourcesDirName =
-    QStringLiteral("failedToDownloadResources");
-
-const QString gFailedToProcessResourcesDirName =
-    QStringLiteral("failedToProcessResources");
+const char * gProcessedResourcesIniFileName = "processedResources.ini";
+const char * gCancelledResourcesDirName = "cancelledResources";
+const char * gFailedToDownloadResourcesDirName = "failedToDownloadResources";
+const char * gFailedToProcessResourcesDirName = "failedToProcessResources";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -417,7 +404,8 @@ void writeProcessedNoteInfo(
     // First, write the info into a file containing the list of guids and USNs
     // of processed notes
     QSettings processedNotesSettings{
-        lastSyncNotesDir.absoluteFilePath(gProcessedNotesIniFileName),
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gProcessedNotesIniFileName)),
         QSettings::IniFormat};
 
     processedNotesSettings.setValue(noteGuid, updateSequenceNum);
@@ -432,7 +420,8 @@ void writeProcessedNoteInfo(
 
     // 1. Cancelled notes
     const QDir cancelledNotesDir{
-        lastSyncNotesDir.absoluteFilePath(gCancelledNotesDirName)};
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gCancelledNotesDirName))};
 
     const QFileInfo cancelledNoteFileInfo{getNoteFileInfo(cancelledNotesDir)};
 
@@ -446,8 +435,8 @@ void writeProcessedNoteInfo(
     }
 
     // 2. Notes which failed to download
-    const QDir failedToDownloadNotesDir{
-        lastSyncNotesDir.absoluteFilePath(gFailedToDownloadNotesDirName)};
+    const QDir failedToDownloadNotesDir{lastSyncNotesDir.absoluteFilePath(
+        QString::fromUtf8(gFailedToDownloadNotesDirName))};
 
     const QFileInfo failedToDownloadNoteFileInfo{
         getNoteFileInfo(failedToDownloadNotesDir)};
@@ -463,8 +452,8 @@ void writeProcessedNoteInfo(
     }
 
     // 3. Notes which failed to process
-    const QDir failedToProcessNotesDir{
-        lastSyncNotesDir.absoluteFilePath(gFailedToProcessNotesDirName)};
+    const QDir failedToProcessNotesDir{lastSyncNotesDir.absoluteFilePath(
+        QString::fromUtf8(gFailedToProcessNotesDirName))};
 
     const QFileInfo failedToProcessNoteFileInfo{
         getNoteFileInfo(failedToProcessNotesDir)};
@@ -482,7 +471,8 @@ void writeProcessedNoteInfo(
     // 4. Also ensure that the note is not in the list of those which failed
     //    to expunge during the last sync
     QSettings notesWhichFailedToExpunge{
-        lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gFailedToExpungeNotesIniFileName)),
         QSettings::IniFormat};
 
     notesWhichFailedToExpunge.remove(noteGuid);
@@ -494,7 +484,8 @@ void writeFailedToDownloadNote(
 {
     writeNote(
         note,
-        QDir{lastSyncNotesDir.absoluteFilePath(gFailedToDownloadNotesDirName)});
+        QDir{lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gFailedToDownloadNotesDirName))});
 }
 
 void writeFailedToProcessNote(
@@ -502,21 +493,25 @@ void writeFailedToProcessNote(
 {
     writeNote(
         note,
-        QDir{lastSyncNotesDir.absoluteFilePath(gFailedToProcessNotesDirName)});
+        QDir{lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gFailedToProcessNotesDirName))});
 }
 
 void writeCancelledNote(
     const qevercloud::Note & note, const QDir & lastSyncNotesDir)
 {
     writeNote(
-        note, QDir{lastSyncNotesDir.absoluteFilePath(gCancelledNotesDirName)});
+        note,
+        QDir{lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gCancelledNotesDirName))});
 }
 
 void writeExpungedNote(
     const qevercloud::Guid & expungedNoteGuid, const QDir & lastSyncNotesDir)
 {
     QSettings expungedNotes{
-        lastSyncNotesDir.absoluteFilePath(gExpungeNotesIniFileName),
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gExpungeNotesIniFileName)),
         QSettings::IniFormat};
 
     expungedNotes.setValue(expungedNoteGuid, {});
@@ -527,7 +522,8 @@ void writeFailedToExpungeNote(
     const qevercloud::Guid & noteGuid, const QDir & lastSyncNotesDir)
 {
     QSettings failedToExpungeNotes{
-        lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gFailedToExpungeNotesIniFileName)),
         QSettings::IniFormat};
 
     failedToExpungeNotes.setValue(noteGuid, {});
@@ -550,7 +546,8 @@ void writeProcessedResourceInfo(
     // First, write the info into a file containing the list of guids and USNs
     // of processed resources
     QSettings processedResourcesSettings{
-        lastSyncResourcesDir.absoluteFilePath(gProcessedResourcesIniFileName),
+        lastSyncResourcesDir.absoluteFilePath(
+            QString::fromUtf8(gProcessedResourcesIniFileName)),
         QSettings::IniFormat};
 
     processedResourcesSettings.setValue(resourceGuid, updateSequenceNum);
@@ -565,8 +562,8 @@ void writeProcessedResourceInfo(
     };
 
     // 1. Cancelled resources
-    const QDir cancelledResourcesDir{
-        lastSyncResourcesDir.absoluteFilePath(gCancelledResourcesDirName)};
+    const QDir cancelledResourcesDir{lastSyncResourcesDir.absoluteFilePath(
+        QString::fromUtf8(gCancelledResourcesDirName))};
 
     const QFileInfo cancelledResourceFileInfo{
         getResourceFileInfo(cancelledResourcesDir)};
@@ -584,7 +581,7 @@ void writeProcessedResourceInfo(
     // 2. Resources which failed to download
     const QDir failedToDownloadResourcesDir{
         lastSyncResourcesDir.absoluteFilePath(
-            gFailedToDownloadResourcesDirName)};
+            QString::fromUtf8(gFailedToDownloadResourcesDirName))};
 
     const QFileInfo failedToDownloadResourceFileInfo{
         getResourceFileInfo(failedToDownloadResourcesDir)};
@@ -602,7 +599,7 @@ void writeProcessedResourceInfo(
     // 3. Resources which failed to process
     const QDir failedToProcessResourcesDir{
         lastSyncResourcesDir.absoluteFilePath(
-            gFailedToProcessResourcesDirName)};
+            QString::fromUtf8(gFailedToProcessResourcesDirName))};
 
     const QFileInfo failedToProcessResourceFileInfo{
         getResourceFileInfo(failedToProcessResourcesDir)};
@@ -624,7 +621,7 @@ void writeFailedToDownloadResource(
     writeResource(
         resource,
         QDir{lastSyncResourcesDir.absoluteFilePath(
-            gFailedToDownloadResourcesDirName)});
+            QString::fromUtf8(gFailedToDownloadResourcesDirName))});
 }
 
 void writeFailedToProcessResource(
@@ -633,7 +630,7 @@ void writeFailedToProcessResource(
     writeResource(
         resource,
         QDir{lastSyncResourcesDir.absoluteFilePath(
-            gFailedToProcessResourcesDirName)});
+            QString::fromUtf8(gFailedToProcessResourcesDirName))});
 }
 
 void writeCancelledResource(
@@ -641,8 +638,8 @@ void writeCancelledResource(
 {
     writeResource(
         resource,
-        QDir{
-            lastSyncResourcesDir.absoluteFilePath(gCancelledResourcesDirName)});
+        QDir{lastSyncResourcesDir.absoluteFilePath(
+            QString::fromUtf8(gCancelledResourcesDirName))});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -651,35 +648,37 @@ QHash<qevercloud::Guid, qint32> processedNotesInfoFromLastSync(
     const QDir & lastSyncNotesDir)
 {
     return processedItemsInfoFromLastSync(
-        lastSyncNotesDir, QStringLiteral("note"), gProcessedNotesIniFileName);
+        lastSyncNotesDir, QStringLiteral("note"),
+        QString::fromUtf8(gProcessedNotesIniFileName));
 }
 
 QList<qevercloud::Note> notesWhichFailedToDownloadDuringLastSync(
     const QDir & lastSyncNotesDir)
 {
-    return readNotes(
-        QDir{lastSyncNotesDir.absoluteFilePath(gFailedToDownloadNotesDirName)});
+    return readNotes(QDir{lastSyncNotesDir.absoluteFilePath(
+        QString::fromUtf8(gFailedToDownloadNotesDirName))});
 }
 
 QList<qevercloud::Note> notesWhichFailedToProcessDuringLastSync(
     const QDir & lastSyncNotesDir)
 {
-    return readNotes(
-        QDir{lastSyncNotesDir.absoluteFilePath(gFailedToProcessNotesDirName)});
+    return readNotes(QDir{lastSyncNotesDir.absoluteFilePath(
+        QString::fromUtf8(gFailedToProcessNotesDirName))});
 }
 
 QList<qevercloud::Note> notesCancelledDuringLastSync(
     const QDir & lastSyncNotesDir)
 {
-    return readNotes(
-        QDir{lastSyncNotesDir.absoluteFilePath(gCancelledNotesDirName)});
+    return readNotes(QDir{lastSyncNotesDir.absoluteFilePath(
+        QString::fromUtf8(gCancelledNotesDirName))});
 }
 
 QList<qevercloud::Guid> noteGuidsExpungedDuringLastSync(
     const QDir & lastSyncNotesDir)
 {
     QSettings expungedNotes{
-        lastSyncNotesDir.absoluteFilePath(gExpungeNotesIniFileName),
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gExpungeNotesIniFileName)),
         QSettings::IniFormat};
 
     // NOTE: implicitly converting QStringList to QList<qevercloud::Guid> here.
@@ -694,7 +693,8 @@ QList<qevercloud::Guid> noteGuidsWhichFailedToExpungeDuringLastSync(
     const QDir & lastSyncNotesDir)
 {
     QSettings notesWhichFailedToExpunge{
-        lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gFailedToExpungeNotesIniFileName)),
         QSettings::IniFormat};
 
     // NOTE: implicitly converting QStringList to QList<qevercloud::Guid> here.
@@ -710,28 +710,28 @@ QHash<qevercloud::Guid, qint32> processedResourcesInfoFromLastSync(
 {
     return processedItemsInfoFromLastSync(
         lastSyncResourcesDir, QStringLiteral("resource"),
-        gProcessedResourcesIniFileName);
+        QString::fromUtf8(gProcessedResourcesIniFileName));
 }
 
 QList<qevercloud::Resource> resourcesWhichFailedToDownloadDuringLastSync(
     const QDir & lastSyncResourcesDir)
 {
     return readResources(QDir{lastSyncResourcesDir.absoluteFilePath(
-        gFailedToDownloadResourcesDirName)});
+        QString::fromUtf8(gFailedToDownloadResourcesDirName))});
 }
 
 QList<qevercloud::Resource> resourcesWhichFailedToProcessDuringLastSync(
     const QDir & lastSyncResourcesDir)
 {
     return readResources(QDir{lastSyncResourcesDir.absoluteFilePath(
-        gFailedToProcessResourcesDirName)});
+        QString::fromUtf8(gFailedToProcessResourcesDirName))});
 }
 
 QList<qevercloud::Resource> resourcesCancelledDuringLastSync(
     const QDir & lastSyncResourcesDir)
 {
-    return readResources(QDir{
-        lastSyncResourcesDir.absoluteFilePath(gCancelledResourcesDirName)});
+    return readResources(QDir{lastSyncResourcesDir.absoluteFilePath(
+        QString::fromUtf8(gCancelledResourcesDirName))});
 }
 
 } // namespace quentier::synchronization::utils

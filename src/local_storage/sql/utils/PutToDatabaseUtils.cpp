@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2910,10 +2910,7 @@ bool putResourceRecognitionData(
     QString recognitionData;
 
     const auto items = recoIndices.items();
-    const int numItems = items.size();
-    for (int i = 0; i < numItems; ++i) {
-        const ResourceRecognitionIndexItem & item = std::as_const(items)[i];
-
+    for (const auto & item: std::as_const(items)) {
         auto textItems = item.textItems();
         for (const auto & textItem: std::as_const(textItems)) {
             recognitionData += textItem.m_text + QStringLiteral(" ");

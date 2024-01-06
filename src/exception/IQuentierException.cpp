@@ -26,7 +26,7 @@ namespace quentier {
 
 #define INIT_WHAT_MESSAGE()                                                    \
     const QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit();     \
-    const int size = bytes.size();                                             \
+    const auto size = bytes.size();                                            \
     if (size >= 0) {                                                           \
         std::size_t usize = static_cast<std::size_t>(size);                    \
         m_whatMessage = new char[usize + 1];                                   \

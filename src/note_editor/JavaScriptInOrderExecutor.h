@@ -39,7 +39,7 @@ public:
 
     void append(const QString & script, Callback callback = {});
 
-    [[nodiscard]] int size() const noexcept
+    [[nodiscard]] qsizetype size() const noexcept
     {
         return m_javaScriptsQueue.size();
     }

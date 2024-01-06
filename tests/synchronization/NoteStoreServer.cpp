@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,7 +49,7 @@ namespace {
 
 [[nodiscard]] QString nextName(const QString & name)
 {
-    int lastIndex = name.lastIndexOf(QStringLiteral("_"));
+    auto lastIndex = name.lastIndexOf(QStringLiteral("_"));
     if (lastIndex >= 0) {
         QString numStr = name.mid(lastIndex, name.size() - lastIndex - 1);
         bool conversionResult = false;
@@ -517,7 +517,7 @@ void NoteStoreServer::removeTag(const qevercloud::Guid & guid)
 
         QStringList tagGuids = *note.tagGuids();
         Q_ASSERT(note.tagLocalIds().size() == tagGuids.size());
-        int tagGuidIndex = tagGuids.indexOf(guid);
+        auto tagGuidIndex = tagGuids.indexOf(guid);
         if (tagGuidIndex >= 0) {
             tagGuids.removeAt(tagGuidIndex);
             auto noteCopy = note;

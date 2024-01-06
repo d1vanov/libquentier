@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -297,8 +297,8 @@ void Sender::sendNotes(
     noteProcessingFutures.reserve(notes.size());
 
     QFuture<void> previousNoteFuture = threading::makeReadyFuture();
-    for (int index = 0, size = notes.size(); index < size; ++index) {
-        auto & note = notes[index];
+    for (auto it = notes.begin(), end = notes.end(); it != end; ++it) {
+        auto & note = *it;
 
         bool containsFailedToSendTags = false;
         {
@@ -351,7 +351,7 @@ void Sender::sendNotes(
             }
         }
 
-        if (index != 0 && !noteProcessingFutures.isEmpty()) {
+        if (it != notes.begin() && !noteProcessingFutures.isEmpty()) {
             previousNoteFuture = noteProcessingFutures.constLast();
         }
 
@@ -869,8 +869,8 @@ void Sender::sendTags(
     tagProcessingFutures.reserve(tags.size());
 
     QFuture<void> previousTagFuture = threading::makeReadyFuture();
-    for (int index = 0, size = tags.size(); index < size; ++index) {
-        auto & tag = tags[index];
+    for (auto it = tags.begin(), end = tags.end(); it != end; ++it) {
+        auto & tag = *it;
 
         auto tagParentLocalId = tag.parentTagLocalId();
         if (!tagParentLocalId.isEmpty()) {
@@ -901,7 +901,7 @@ void Sender::sendTags(
             }
         }
 
-        if (index != 0 && !tagProcessingFutures.isEmpty()) {
+        if (it != tags.begin() && !tagProcessingFutures.isEmpty()) {
             previousTagFuture = tagProcessingFutures.constLast();
         }
 
@@ -1266,9 +1266,9 @@ void Sender::sendNotebooks(
     notebookProcessingFutures.reserve(notebooks.size());
 
     QFuture<void> previousNotebookFuture = threading::makeReadyFuture();
-    for (int index = 0, size = notebooks.size(); index < size; ++index) {
-        const auto & notebook = notebooks[index];
-        if (index != 0) {
+    for (auto it = notebooks.begin(), end = notebooks.end(); it != end; ++it) {
+        const auto & notebook = *it;
+        if (it != notebooks.begin()) {
             Q_ASSERT(!notebookProcessingFutures.isEmpty());
             previousNotebookFuture = notebookProcessingFutures.constLast();
         }
@@ -1613,9 +1613,11 @@ void Sender::sendSavedSearches(
     savedSearchProcessingFutures.reserve(savedSearches.size());
 
     QFuture<void> previousSavedSearchFuture = threading::makeReadyFuture();
-    for (int index = 0, size = savedSearches.size(); index < size; ++index) {
-        const auto & savedSearch = savedSearches[index];
-        if (index != 0) {
+    for (auto it = savedSearches.begin(), end = savedSearches.end(); it != end;
+         ++it)
+    {
+        const auto & savedSearch = *it;
+        if (it != savedSearches.begin()) {
             Q_ASSERT(!savedSearchProcessingFutures.isEmpty());
             previousSavedSearchFuture =
                 savedSearchProcessingFutures.constLast();

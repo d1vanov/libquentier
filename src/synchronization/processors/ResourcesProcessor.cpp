@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -100,7 +100,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
             std::make_shared<DownloadResourcesStatus>());
     }
 
-    const int resourceCount = resources.size();
+    const auto resourceCount = resources.size();
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();

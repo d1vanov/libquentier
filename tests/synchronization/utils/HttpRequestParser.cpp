@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -64,7 +64,7 @@ void HttpRequestParser::tryParseData()
 
     // The first line of a HTTP request should be the request line:
     // method<space>request-uri<space>http-version<crlf>
-    int methodEndIndex = m_data.indexOf(" ");
+    auto methodEndIndex = m_data.indexOf(" ");
     if (methodEndIndex < 0) {
         // No first space symbol, probably not all data has arrived yet
         return;
@@ -78,7 +78,7 @@ void HttpRequestParser::tryParseData()
         m_requestData.method = HttpRequestData::Method::POST;
     }
 
-    int resourceUriEndIndex = m_data.indexOf(" ", methodEndIndex + 1);
+    auto resourceUriEndIndex = m_data.indexOf(" ", methodEndIndex + 1);
     if (resourceUriEndIndex < 0) {
         // No resource URI end index, probably not all data has arrived yet
         return;
@@ -92,7 +92,7 @@ void HttpRequestParser::tryParseData()
         // GET requests don't include Content-Length header so we need to look
         // for two consequent carriage returns with nothing in between them
         // to determine that the whole HTTP request has been received.
-        const int requestEndIndex =
+        const auto requestEndIndex =
             m_data.indexOf("\r\n\r\n", resourceUriEndIndex + 1);
         if (requestEndIndex < 0) {
             return;
@@ -105,21 +105,21 @@ void HttpRequestParser::tryParseData()
 
     // For POST request will parse headers, find Content-Length one to figure
     // out the size of request body
-    int contentLengthIndex =
+    auto contentLengthIndex =
         m_data.indexOf("Content-Length:", resourceUriEndIndex + 1);
     if (contentLengthIndex < 0) {
         // No Content-Length header, probably not all data has arrived yet
         return;
     }
 
-    int contentLengthLineEndIndex = m_data.indexOf("\r\n", contentLengthIndex);
+    auto contentLengthLineEndIndex = m_data.indexOf("\r\n", contentLengthIndex);
     if (contentLengthLineEndIndex < 0) {
         // No line end after Content-Length header, probably not all data
         // has arrived yet
         return;
     }
 
-    int contentLengthLen = contentLengthLineEndIndex - contentLengthIndex - 15;
+    auto contentLengthLen = contentLengthLineEndIndex - contentLengthIndex - 15;
     QString contentLengthStr = QString::fromUtf8(
         m_data.mid(contentLengthIndex + 15, contentLengthLen));
 
@@ -136,7 +136,7 @@ void HttpRequestParser::tryParseData()
     }
 
     // Now see whether whole body data is present
-    int headersEndIndex = m_data.indexOf("\r\n\r\n", contentLengthLineEndIndex);
+    auto headersEndIndex = m_data.indexOf("\r\n\r\n", contentLengthLineEndIndex);
     if (headersEndIndex < 0) {
         // No empty line after http headers, probably not all data has
         // arrived yet

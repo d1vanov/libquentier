@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -128,10 +128,10 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
         return threading::makeReadyFuture();
     }
 
-    const qint32 totalLinkedNotebooks = linkedNotebooks.size();
-    const qint32 totalExpungedLinkedNotebooks = expungedLinkedNotebooks.size();
+    const auto totalLinkedNotebooks = linkedNotebooks.size();
+    const auto totalExpungedLinkedNotebooks = expungedLinkedNotebooks.size();
 
-    const qint32 totalItemCount =
+    const auto totalItemCount =
         totalLinkedNotebooks + totalExpungedLinkedNotebooks;
 
     QList<QFuture<void>> linkedNotebookFutures;

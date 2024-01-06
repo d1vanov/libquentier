@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -184,9 +184,9 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         return threading::makeReadyFuture();
     }
 
-    const qint32 totalSavedSearches = savedSearches.size();
-    const qint32 totalSavedSearchesToExpunge = expungedSavedSearches.size();
-    const qint32 totalItemCount =
+    const auto totalSavedSearches = savedSearches.size();
+    const auto totalSavedSearchesToExpunge = expungedSavedSearches.size();
+    const auto totalItemCount =
         totalSavedSearches + totalSavedSearchesToExpunge;
 
     const auto selfWeak = weak_from_this();

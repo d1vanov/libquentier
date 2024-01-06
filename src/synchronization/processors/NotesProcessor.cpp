@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -163,9 +163,9 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
             std::make_shared<DownloadNotesStatus>());
     }
 
-    const int noteCount = notes.size();
-    const int expungedNoteCount = expungedNotes.size();
-    const int totalItemCount = noteCount + expungedNoteCount;
+    const auto noteCount = notes.size();
+    const auto expungedNoteCount = expungedNotes.size();
+    const auto totalItemCount = noteCount + expungedNoteCount;
     Q_ASSERT(totalItemCount > 0);
 
     const auto selfWeak = weak_from_this();

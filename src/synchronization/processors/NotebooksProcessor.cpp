@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -139,9 +139,9 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         return threading::makeReadyFuture();
     }
 
-    const qint32 totalNotebooks = notebooks.size();
-    const qint32 totalExpungedNotebooks = expungedNotebooks.size();
-    const qint32 totalItemCount = totalNotebooks + totalExpungedNotebooks;
+    const auto totalNotebooks = notebooks.size();
+    const auto totalExpungedNotebooks = expungedNotebooks.size();
+    const auto totalItemCount = totalNotebooks + totalExpungedNotebooks;
 
     const auto selfWeak = weak_from_this();
     QList<QFuture<void>> notebookFutures;

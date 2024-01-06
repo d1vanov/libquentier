@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,20 +52,19 @@ namespace quentier::local_storage::sql {
 
 namespace {
 
-const QString gUpgrade1To2Persistence =
-    QStringLiteral("LocalStorageDatabaseUpgradeFromVersion1ToVersion2");
+const char * gUpgrade1To2Persistence =
+    "LocalStorageDatabaseUpgradeFromVersion1ToVersion2";
 
-const QString gUpgrade1To2AllResourceDataCopiedFromTablesToFilesKey =
-    QStringLiteral("AllResourceDataCopiedFromTableToFiles");
+const char * gUpgrade1To2AllResourceDataCopiedFromTablesToFilesKey =
+    "AllResourceDataCopiedFromTableToFiles";
 
-const QString gUpgrade1To2LocalIdsForResourcesCopiedToFilesKey =
-    QStringLiteral("LocalUidsOfResourcesCopiedToFiles");
+const char * gUpgrade1To2LocalIdsForResourcesCopiedToFilesKey =
+    "LocalUidsOfResourcesCopiedToFiles";
 
-const QString gUpgrade1To2AllResourceDataRemovedFromTables =
-    QStringLiteral("AllResourceDataRemovedFromResourceTable");
+const char * gUpgrade1To2AllResourceDataRemovedFromTables =
+    "AllResourceDataRemovedFromResourceTable";
 
-const QString gResourceLocalIdColumn = QStringLiteral("resourceLocalUid");
-const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
+const char * gResourceLocalIdColumn = "resourceLocalUid";
 
 template <typename T>
 bool extractEntry(const QSqlRecord & rec, const QString & name, T & entry)
@@ -194,7 +193,8 @@ bool Patch1To2::applySync(
 {
     QNDEBUG("local_storage::sql::patches", "Patch1To2::applySync");
 
-    ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade1To2Persistence};
+    ApplicationSettings databaseUpgradeInfo{
+        m_account, QString::fromUtf8(gUpgrade1To2Persistence)};
 
     ErrorString errorPrefix{QStringLiteral(
         "failed to upgrade local storage from version 1 to version 2")};
@@ -634,7 +634,8 @@ void Patch1To2::filterResourceLocalIds(QStringList & resourceLocalIds) const
 {
     QNDEBUG("local_storage:patches", "Patch1To2::filterResourceLocalIds");
 
-    ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade1To2Persistence};
+    ApplicationSettings databaseUpgradeInfo{
+        m_account, QString::fromUtf8(gUpgrade1To2Persistence)};
 
     const int numEntries = databaseUpgradeInfo.beginReadArray(
         gUpgrade1To2LocalIdsForResourcesCopiedToFilesKey);

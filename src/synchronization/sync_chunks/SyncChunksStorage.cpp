@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -714,7 +714,7 @@ void SyncChunksStorage::initLowAndHighUsnsLists() const
         m_rootDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
 
     m_linkedNotebookSyncChunkLowAndHighUsns.reserve(
-        std::max<int>(entries.size() - 1, 0));
+        std::max<decltype(entries.size())>(entries.size() - 1, 0));
 
     for (const auto & entry: std::as_const(entries)) {
         if (entry.absoluteFilePath() == m_userOwnSyncChunksDir.absolutePath()) {

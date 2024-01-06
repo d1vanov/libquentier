@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,7 +33,7 @@ namespace quentier::local_storage::sql::utils {
 
 namespace {
 
-const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
+const char * gDbFileName = "qn.storage.sqlite";
 
 } // namespace
 
@@ -174,10 +174,10 @@ bool backupLocalStorageDatabaseFiles(
         });
 
     const QString sourceDbFilePath =
-        localStorageDirPath + QStringLiteral("/") + gDbFileName;
+        localStorageDirPath + QString::fromUtf8("/%1").arg(gDbFileName);
 
     const QString backupDbFilePath =
-        backupDirPath + QStringLiteral("/") + gDbFileName;
+        backupDirPath + QString::fromUtf8("/%1").arg(gDbFileName);
 
     pFileCopier->copyFile(sourceDbFilePath, backupDbFilePath);
     return !detectedError;
@@ -292,10 +292,10 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
         });
 
     const QString sourceDbFilePath =
-        localStorageDirPath + QStringLiteral("/") + gDbFileName;
+        localStorageDirPath + QString::fromUtf8("/%1").arg(gDbFileName);
 
     const QString backupDbFilePath =
-        backupDirPath + QStringLiteral("/") + gDbFileName;
+        backupDirPath + QString::fromUtf8("/%1").arg(gDbFileName);
 
     pFileCopier->copyFile(backupDbFilePath, sourceDbFilePath);
     return !detectedError;

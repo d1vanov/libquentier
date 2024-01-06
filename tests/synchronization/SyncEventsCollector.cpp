@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -412,21 +412,23 @@ bool SyncEventsCollector::checkSyncChunksDownloadProgressOrderImpl(
             messages[0], errorMessage);
     }
 
-    for (int i = 1, size = messages.size(); i < size; ++i) {
-        const auto & currentProgress = messages[i];
+    for (auto it = std::next(messages.constBegin()), end = messages.constEnd();
+         it != end; ++it)
+    {
+        const auto & currentProgress = *it;
 
         if (!checkSingleSyncChunkDownloadProgressMessage(
                 currentProgress, errorMessage)) {
             return false;
         }
 
-        const auto & previousProgress = messages[i - 1];
-        if (i == 1) {
-            if (!checkSingleSyncChunkDownloadProgressMessage(
-                    previousProgress, errorMessage))
-            {
-                return false;
-            }
+        const auto prevIt = std::prev(it);
+        const auto & previousProgress = *prevIt;
+        if (prevIt == messages.constBegin() &&
+            !checkSingleSyncChunkDownloadProgressMessage(
+                previousProgress, errorMessage))
+        {
+            return false;
         }
 
         if (previousProgress.m_highestDownloadedUsn >
@@ -510,15 +512,18 @@ bool SyncEventsCollector::checkNotesDownloadProgressOrderImpl(
             messages[0], errorMessage);
     }
 
-    for (int i = 1, size = messages.size(); i < size; ++i) {
-        const auto & currentProgress = messages[i];
+    for (auto it = std::next(messages.constBegin()), end = messages.constEnd();
+         it != end; ++it)
+    {
+        const auto & currentProgress = *it;
         if (!checkSingleNoteDownloadProgressMessage(
                 currentProgress, errorMessage)) {
             return false;
         }
 
-        const auto & previousProgress = messages[i - 1];
-        if ((i == 1) &&
+        const auto prevIt = std::prev(it);
+        const auto & previousProgress = *prevIt;
+        if (prevIt == messages.constBegin() &&
             !checkSingleNoteDownloadProgressMessage(
                 previousProgress, errorMessage))
         {
@@ -593,20 +598,23 @@ bool SyncEventsCollector::checkResourcesDownloadProgressOrderImpl(
             messages[0], errorMessage);
     }
 
-    for (int i = 1, size = messages.size(); i < size; ++i) {
-        const auto & currentProgress = messages[i];
+    for (auto it = std::next(messages.constBegin()), end = messages.constEnd();
+         it != end; ++it)
+    {
+        const auto & currentProgress = *it;
 
         if (!checkSingleResourceDownloadProgressMessage(
                 currentProgress, errorMessage)) {
             return false;
         }
 
-        const auto & previousProgress = messages[i - 1];
-        if (i == 1) {
-            if (!checkSingleResourceDownloadProgressMessage(
-                    previousProgress, errorMessage)) {
-                return false;
-            }
+        const auto prevIt = std::prev(it);
+        const auto & previousProgress = *prevIt;
+        if (prevIt == messages.constBegin() &&
+            !checkSingleResourceDownloadProgressMessage(
+                previousProgress, errorMessage))
+        {
+            return false;
         }
 
         if (previousProgress.m_resourcesDownloaded >=

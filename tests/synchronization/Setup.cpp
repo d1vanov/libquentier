@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -1367,7 +1367,7 @@ void setupLocalStorage(
 
             item.setLinkedNotebookGuid(linkedNotebook.guid());
             Q_ASSERT(item.name());
-            const int index =
+            const auto index =
                 item.name()->indexOf(QStringLiteral("linked notebook"));
             Q_ASSERT(index >= 0);
             QString itemNewName = item.name()->left(index) +
