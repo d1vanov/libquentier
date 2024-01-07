@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,22 +28,25 @@ namespace quentier::synchronization {
 
 namespace {
 
-const QString gSynchronizationPersistenceName =
-    QStringLiteral("SynchronizationPersistence");
+const char * gSynchronizationPersistenceName = "SynchronizationPersistence";
+const char * gLastSyncUpdateCount = "last_sync_update_count";
+const char * gLastSyncTime = "last_sync_time";
+const char * gLinkedNotebookGuid = "linked_notebook_guid";
 
-const QString gLastSyncParamsGroup = QStringLiteral("last_sync_params");
-const QString gLastSyncUpdateCount = QStringLiteral("last_sync_update_count");
-const QString gLastSyncTime = QStringLiteral("last_sync_time");
-const QString gLinkedNotebookGuid = QStringLiteral("linked_notebook_guid");
+const char * gLastSyncLinkedNotebookParams =
+    "last_sync_linked_notebooks_params";
 
-const QString gLastSyncLinkedNotebookParams =
-    QStringLiteral("last_sync_linked_notebooks_params");
+const char * gLinkedNotebookLastUpdateCount =
+    "linked_notebook_last_update_count";
 
-const QString gLinkedNotebookLastUpdateCount =
-    QStringLiteral("linked_notebook_last_update_count");
+const char * gLinkedNotebookLastSyncTime = "linked_notebook_last_sync_time";
 
-const QString gLinkedNotebookLastSyncTime =
-    QStringLiteral("linked_notebook_last_sync_time");
+[[nodiscard]] QString lastSyncParamsGroupKey(const Account & account)
+{
+    return QString::fromUtf8("Synchronization/%1/%2/last_sync_params/")
+        .arg(account.evernoteHost())
+        .arg(account.id());
+}
 
 } // namespace
 
@@ -59,15 +62,13 @@ ISyncStatePtr SyncStateStorage::getSyncState(
 
     auto syncState = std::make_shared<synchronization::SyncState>();
 
-    ApplicationSettings appSettings{account, gSynchronizationPersistenceName};
+    ApplicationSettings appSettings{
+        account, QString::fromUtf8(gSynchronizationPersistenceName)};
 
-    const QString keyGroup = QStringLiteral("Synchronization/") +
-        account.evernoteHost() + QStringLiteral("/") +
-        QString::number(account.id()) + QStringLiteral("/") +
-        gLastSyncParamsGroup + QStringLiteral("/");
+    const QString keyGroup = lastSyncParamsGroupKey(account);
 
     const QVariant lastUpdateCountVar =
-        appSettings.value(keyGroup + gLastSyncUpdateCount);
+        appSettings.value(keyGroup + QString::fromUtf8(gLastSyncUpdateCount));
 
     if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
@@ -86,8 +87,8 @@ ISyncStatePtr SyncStateStorage::getSyncState(
         }
     }
 
-    const QVariant lastSyncTimeVar =
-        appSettings.value(keyGroup + gLastSyncTime);
+    const QVariant lastSyncTimeVar = appSettings.value(
+        keyGroup + QString::fromUtf8(gLastSyncTime));
 
     if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
@@ -107,7 +108,7 @@ ISyncStatePtr SyncStateStorage::getSyncState(
     }
 
     const int numLinkedNotebooksSyncParams = appSettings.beginReadArray(
-        keyGroup + gLastSyncLinkedNotebookParams);
+        keyGroup + QString::fromUtf8(gLastSyncLinkedNotebookParams));
 
     for (int i = 0; i < numLinkedNotebooksSyncParams; ++i) {
         appSettings.setArrayIndex(i);
@@ -165,19 +166,18 @@ void SyncStateStorage::setSyncState(
 {
     QUENTIER_CHECK_PTR("synchronization: state_storage", syncState.get())
 
-    ApplicationSettings appSettings{account, gSynchronizationPersistenceName};
+    ApplicationSettings appSettings{
+        account, QString::fromUtf8(gSynchronizationPersistenceName)};
 
-    const QString keyGroup = QStringLiteral("Synchronization/") +
-        account.evernoteHost() + QStringLiteral("/") +
-        QString::number(account.id()) + QStringLiteral("/") +
-        gLastSyncParamsGroup + QStringLiteral("/");
+    const QString keyGroup = lastSyncParamsGroupKey(account);
 
     appSettings.setValue(
-        keyGroup + gLastSyncUpdateCount,
+        keyGroup + QString::fromUtf8(gLastSyncUpdateCount),
         syncState->userDataUpdateCount());
 
     appSettings.setValue(
-        keyGroup + gLastSyncTime, syncState->userDataLastSyncTime());
+        keyGroup + QString::fromUtf8(gLastSyncTime),
+        syncState->userDataLastSyncTime());
 
     const auto updateCountsByLinkedNotebookGuid =
         syncState->linkedNotebookUpdateCounts();
@@ -185,11 +185,11 @@ void SyncStateStorage::setSyncState(
     const auto lastSyncTimesByLinkedNotebookGuid =
         syncState->linkedNotebookLastSyncTimes();
 
-    const int numLinkedNotebooksSyncParams =
+    const auto numLinkedNotebooksSyncParams =
         updateCountsByLinkedNotebookGuid.size();
 
     appSettings.beginWriteArray(
-        keyGroup + gLastSyncLinkedNotebookParams,
+        keyGroup + QString::fromUtf8(gLastSyncLinkedNotebookParams),
         numLinkedNotebooksSyncParams);
 
     int counter = 0;

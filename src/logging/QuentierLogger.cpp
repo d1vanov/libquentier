@@ -128,7 +128,7 @@ void QuentierAddLogEntry(
 
     QString relativeSourceFileName = sourceFileName;
 
-    int prefixIndex = relativeSourceFileName.indexOf(
+    auto prefixIndex = relativeSourceFileName.indexOf(
         QStringLiteral("libquentier"), Qt::CaseInsensitive);
 
     if (prefixIndex < 0) {

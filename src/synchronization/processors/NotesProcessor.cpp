@@ -181,7 +181,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
 
     context->status = std::make_shared<DownloadNotesStatus>();
     context->status->m_totalExpungedNotes =
-        static_cast<quint64>(std::max(expungedNoteCount, 0));
+        static_cast<quint64>(std::max<qint64>(expungedNoteCount, 0));
 
     context->statusMutex = std::make_shared<QMutex>();
 

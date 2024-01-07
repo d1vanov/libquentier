@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,9 +19,11 @@
 #include "NoteSearchQueryData.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QDateTime>
+#include <QRegularExpression>
+
+#include <utility>
 
 namespace quentier::local_storage {
 
@@ -121,10 +123,11 @@ bool NoteSearchQuery::Data::parseQueryString(
 
     QStringList words = splitSearchQueryString(queryString);
 
-    QRegExp notebookModifierRegex(QStringLiteral("notebook:*"));
-    notebookModifierRegex.setPatternSyntax(QRegExp::Wildcard);
+    const QRegularExpression notebookModifierRegex{
+        QRegularExpression::wildcardToRegularExpression(
+            QStringLiteral("notebook:*"))};
 
-    int notebookScopeModifierPosition = words.indexOf(notebookModifierRegex);
+    auto notebookScopeModifierPosition = words.indexOf(notebookModifierRegex);
     if (notebookScopeModifierPosition > 0) {
         error.setBase(QT_TRANSLATE_NOOP(
             "NoteSearchQueryData",
@@ -143,7 +146,7 @@ bool NoteSearchQuery::Data::parseQueryString(
 
     // NOTE: "any:" scope modifier is not position dependent and affects
     // the whole query
-    int anyScopeModifierPosition = words.indexOf(QStringLiteral("any:"));
+    auto anyScopeModifierPosition = words.indexOf(QStringLiteral("any:"));
     m_hasAnyModifier = (anyScopeModifierPosition >= 0);
 
     bool res = convertAbsoluteAndRelativeDateTimesToTimestamps(words, error);
@@ -353,11 +356,9 @@ bool NoteSearchQuery::Data::parseQueryString(
      * forcing all words to the lower case
      */
 
-    QRegExp asteriskFilter(QStringLiteral("[*]"));
+    const QRegularExpression asteriskFilter{QStringLiteral("[*]")};
 
-    for (int i = 0, size = words.size(); i < size; ++i) {
-        QString searchTerm = words[i];
-
+    for (auto searchTerm: std::as_const(words)) {
         if (searchTerm.startsWith(QStringLiteral("notebook:"))) {
             continue;
         }
@@ -628,7 +629,7 @@ QStringList NoteSearchQuery::Data::splitSearchQueryString(
     // between quotes a single word
     bool insideQuotedText = false;
     bool insideUnquotedWord = false;
-    int length = searchQueryString.length();
+    auto length = searchQueryString.length();
     const QChar space = QChar::fromLatin1(' ');
     const QChar quote = QChar::fromLatin1('\"');
     const QChar backslash = QChar::fromLatin1('\\');
@@ -714,9 +715,7 @@ QStringList NoteSearchQuery::Data::splitSearchQueryString(
 
     // Now we can remove any quotes from the words from the splitted query
     // string
-    int numWords = words.size();
-    for (int i = 0; i < numWords; ++i) {
-        QString & word = words[i];
+    for (auto & word: words) {
         removeBoundaryQuotesFromWord(word);
     }
 
@@ -728,14 +727,17 @@ void NoteSearchQuery::Data::parseStringValue(
     QStringList & negatedContainer, bool & hasAnyValue,
     bool & hasNegatedAnyValue) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     int keyIndex = 0;
+#else
+    qsizetype keyIndex = 0;
+#endif
+
     QChar negation = QChar::fromLatin1('-');
     QStringList processedWords;
 
-    QString asterisk = QStringLiteral("*");
-
-    QRegExp regexp(asterisk + key + QStringLiteral(":*"));
-    regexp.setPatternSyntax(QRegExp::Wildcard);
+    const QRegularExpression regexp{
+        QString::fromUtf8(".*%1:.*").arg(QRegularExpression::escape(key))};
 
     while (keyIndex >= 0) {
         keyIndex = words.indexOf(regexp, keyIndex);
@@ -750,7 +752,7 @@ void NoteSearchQuery::Data::parseStringValue(
 
         processedWords << word;
 
-        int positionInWord = word.indexOf(key + QStringLiteral(":"));
+        auto positionInWord = word.indexOf(key + QStringLiteral(":"));
         if (positionInWord < 0) {
             continue;
         }
@@ -771,7 +773,7 @@ void NoteSearchQuery::Data::parseStringValue(
         }
         removeBoundaryQuotesFromWord(word);
 
-        if (word == asterisk) {
+        if (word == QStringLiteral("*")) {
             if (isNegated) {
                 hasNegatedAnyValue = true;
             }
@@ -788,8 +790,7 @@ void NoteSearchQuery::Data::parseStringValue(
         }
     }
 
-    for (int i = 0, size = processedWords.size(); i < size; ++i) {
-        const QString & word = processedWords[i];
+    for (const auto & word: std::as_const(processedWords)) {
         words.removeAll(word);
     }
 }
@@ -803,10 +804,8 @@ bool NoteSearchQuery::Data::parseIntValue(
     QChar negation = QChar::fromLatin1('-');
     QStringList processedWords;
 
-    QString asterisk = QStringLiteral("*");
-
-    QRegExp regexp(asterisk + key + QStringLiteral(":*"));
-    regexp.setPatternSyntax(QRegExp::Wildcard);
+    const QRegularExpression regexp{
+        QString::fromUtf8(".*%1:.*").arg(QRegularExpression::escape(key))};
 
     while (keyIndex >= 0) {
         keyIndex = words.indexOf(regexp, keyIndex);
@@ -821,7 +820,7 @@ bool NoteSearchQuery::Data::parseIntValue(
 
         processedWords << word;
 
-        int positionInWord = word.indexOf(key + QStringLiteral(":"));
+        auto positionInWord = word.indexOf(key + QStringLiteral(":"));
         if (positionInWord < 0) {
             continue;
         }
@@ -842,7 +841,7 @@ bool NoteSearchQuery::Data::parseIntValue(
         }
         removeBoundaryQuotesFromWord(word);
 
-        if (word == asterisk) {
+        if (word == QStringLiteral("*")) {
             if (isNegated) {
                 hasNegatedAnyValue = true;
             }
@@ -892,10 +891,8 @@ bool NoteSearchQuery::Data::parseDoubleValue(
     QChar negation = QChar::fromLatin1('-');
     QStringList processedWords;
 
-    QString asterisk = QStringLiteral("*");
-
-    QRegExp regexp(asterisk + key + QStringLiteral(":*"));
-    regexp.setPatternSyntax(QRegExp::Wildcard);
+    const QRegularExpression regexp{
+        QString::fromUtf8(".*%1:.*").arg(QRegularExpression::escape(key))};
 
     while (keyIndex >= 0) {
         keyIndex = words.indexOf(regexp, keyIndex);
@@ -910,7 +907,7 @@ bool NoteSearchQuery::Data::parseDoubleValue(
 
         processedWords << word;
 
-        int positionInWord = word.indexOf(key + QStringLiteral(":"));
+        auto positionInWord = word.indexOf(key + QStringLiteral(":"));
         if (positionInWord < 0) {
             continue;
         }
@@ -931,7 +928,7 @@ bool NoteSearchQuery::Data::parseDoubleValue(
         }
         removeBoundaryQuotesFromWord(word);
 
-        if (word == asterisk) {
+        if (word == QStringLiteral("*")) {
             if (isNegated) {
                 hasNegatedAnyValue = true;
             }
@@ -1135,11 +1132,8 @@ bool NoteSearchQuery::Data::convertAbsoluteAndRelativeDateTimesToTimestamps(
                      << QStringLiteral("-reminderDoneTime:");
 
     QString asterisk = QStringLiteral("*");
-    int numWords = words.size();
     QString wordCopy;
-    for (int i = 0; i < numWords; ++i) {
-        QString & word = words[i];
-
+    for (auto & word: words) {
         for (const auto & prefix: qAsConst(dateTimePrefixes)) {
             if (word.startsWith(prefix)) {
                 wordCopy = word;
@@ -1172,7 +1166,7 @@ void NoteSearchQuery::Data::removeBoundaryQuotesFromWord(QString & word) const
         word.endsWith(QStringLiteral("\"")))
     {
         // Removing the last character = quote
-        int wordLength = word.length();
+        auto wordLength = word.length();
         word = word.remove(wordLength - 1, 1);
 
         if (word.length() != 0) {
