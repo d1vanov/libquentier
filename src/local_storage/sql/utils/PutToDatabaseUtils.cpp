@@ -2913,7 +2913,9 @@ bool putResourceRecognitionData(
     for (const auto & item: std::as_const(items)) {
         auto textItems = item.textItems();
         for (const auto & textItem: std::as_const(textItems)) {
-            recognitionData += textItem.m_text + QStringLiteral(" ");
+            if (textItem) {
+                recognitionData += textItem->text() + QStringLiteral(" ");
+            }
         }
     }
 

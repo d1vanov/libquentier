@@ -44,8 +44,8 @@ QFuture<void> whenAll(QList<QFuture<void>> futures)
         threading::bindCancellation(future, f);
     }
 
-    const int totalItemCount = futures.size();
-    promise->setProgressRange(0, totalItemCount);
+    const auto totalItemCount = futures.size();
+    promise->setProgressRange(0, static_cast<int>(totalItemCount));
     promise->setProgressValue(0);
 
     promise->start();

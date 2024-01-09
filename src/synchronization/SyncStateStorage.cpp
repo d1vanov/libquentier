@@ -190,7 +190,7 @@ void SyncStateStorage::setSyncState(
 
     appSettings.beginWriteArray(
         keyGroup + QString::fromUtf8(gLastSyncLinkedNotebookParams),
-        numLinkedNotebooksSyncParams);
+        static_cast<int>(numLinkedNotebooksSyncParams));
 
     int counter = 0;
     for (auto it:

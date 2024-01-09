@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,7 +48,7 @@ QString relativePathFromAbsolutePath(
     QNDEBUG(
         "utility:filesystem", "relativePathFromAbsolutePath: " << absolutePath);
 
-    const int position = absolutePath.indexOf(
+    const auto position = absolutePath.indexOf(
         relativePathRootFolder, 0,
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
         Qt::CaseInsensitive

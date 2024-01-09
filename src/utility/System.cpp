@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -133,7 +133,7 @@ QString getCurrentUserFullName()
      * split the values of different kind and the user's full name is the first
      * one
      */
-    const int commaIndex = userFullName.indexOf(QChar::fromLatin1(','));
+    const auto commaIndex = userFullName.indexOf(QChar::fromLatin1(','));
     if (commaIndex > 0) { // NOTE: not >= but >
         userFullName.truncate(commaIndex);
     }

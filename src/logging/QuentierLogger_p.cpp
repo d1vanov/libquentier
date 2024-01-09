@@ -119,7 +119,10 @@ void QuentierFileLogWriter::write(QString message)
     if (Q_UNLIKELY(!m_pStream)) {
         m_pStream = std::make_unique<QTextStream>();
         m_pStream->setDevice(&m_logFile);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+#endif
     }
 
     *m_pStream << message << QStringLiteral("\n");
@@ -159,7 +162,10 @@ void QuentierFileLogWriter::restartLogging()
 
     if (m_pStream) {
         m_pStream->setDevice(&m_logFile);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+#endif
     }
 }
 
@@ -238,7 +244,10 @@ void QuentierFileLogWriter::rotate()
 
     if (m_pStream) {
         m_pStream->setDevice(&m_logFile);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+#endif
     }
 
     // 4) Increase the current count of old log files

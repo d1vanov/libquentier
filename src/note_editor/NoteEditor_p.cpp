@@ -4347,14 +4347,17 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
             bool matchFound = false;
             for (int k = 0; k < numTextItems; ++k) {
                 const auto & textItem = textItems[k];
-                if (textItem.m_text.contains(
+                if (Q_UNLIKELY(!textItem)) {
+                    continue;
+                }
+                if (textItem->text().contains(
                         textToFind,
                         (matchCase ? Qt::CaseSensitive : Qt::CaseInsensitive)))
                 {
                     QNTRACE(
                         "note_editor",
                         "Found text item matching with "
-                            << "the text to find: " << textItem.m_text);
+                            << "the text to find: " << textItem->text());
                     matchFound = true;
                 }
             }

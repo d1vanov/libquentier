@@ -39,12 +39,12 @@ public:
 
     [[nodiscard]] bool decrypt(
         const QString & encryptedText, const QString & passphrase,
-        const QString & cipher, size_t keyLength, QString & decryptedText,
+        const QString & cipher, std::size_t keyLength, QString & decryptedText,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool encrypt(
         const QString & textToEncrypt, const QString & passphrase,
-        QString & cipher, size_t & keyLength, QString & encryptedText,
+        QString & cipher, std::size_t & keyLength, QString & encryptedText,
         ErrorString & errorDescription);
 
 private:
@@ -59,17 +59,20 @@ private:
     friend QDebug & operator<<(QDebug & dbg, SaltKind kind);
     friend QTextStream & operator<<(QTextStream & strm, SaltKind kind);
 
+    template <class T>
+    static void printSaltKind(T & t, SaltKind saltKind);
+
     [[nodiscard]] bool generateSalt(
-        SaltKind saltKind, size_t saltSize,
+        SaltKind saltKind, std::size_t saltSize,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool generateKey(
         const QByteArray & passphraseData, const unsigned char * salt,
-        size_t keySize, ErrorString & errorDescription);
+        std::size_t keySize, ErrorString & errorDescription);
 
     [[nodiscard]] bool calculateHmac(
         const QByteArray & passphraseData, const unsigned char * salt,
-        const QByteArray & encryptedTextData, size_t keySize,
+        const QByteArray & encryptedTextData, std::size_t keySize,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool encyptWithAes(
@@ -81,8 +84,8 @@ private:
         QByteArray & decryptedText, ErrorString & errorDescription);
 
     [[nodiscard]] bool splitEncryptedData(
-        const QString & encryptedData, size_t saltSize,
-        size_t hmacSize, QByteArray & encryptedText,
+        const QString & encryptedData, std::size_t saltSize,
+        std::size_t hmacSize, QByteArray & encryptedText,
         ErrorString & errorDescription);
 
 private:

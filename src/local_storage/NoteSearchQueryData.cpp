@@ -356,7 +356,7 @@ bool NoteSearchQuery::Data::parseQueryString(
      * forcing all words to the lower case
      */
 
-    const QRegularExpression asteriskFilter{QStringLiteral("[*]")};
+    static const QRegularExpression asteriskFilter{QStringLiteral("[*]")};
 
     for (auto searchTerm: std::as_const(words)) {
         if (searchTerm.startsWith(QStringLiteral("notebook:"))) {
@@ -800,7 +800,12 @@ bool NoteSearchQuery::Data::parseIntValue(
     QList<qint64> & negatedContainer, bool & hasAnyValue,
     bool & hasNegatedAnyValue, ErrorString & error) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     int keyIndex = 0;
+#else
+    qsizetype keyIndex = 0;
+#endif
+
     QChar negation = QChar::fromLatin1('-');
     QStringList processedWords;
 
@@ -887,7 +892,12 @@ bool NoteSearchQuery::Data::parseDoubleValue(
     QList<double> & negatedContainer, bool & hasAnyValue,
     bool & hasNegatedAnyValue, ErrorString & error) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     int keyIndex = 0;
+#else
+    qsizetype keyIndex = 0;
+#endif
+
     QChar negation = QChar::fromLatin1('-');
     QStringList processedWords;
 

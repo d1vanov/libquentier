@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,14 +16,16 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDEX_ITEM_H
-#define LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDEX_ITEM_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
 #include <QByteArray>
+#include <QList>
 #include <QSharedDataPointer>
+
+#include <memory>
 
 namespace quentier {
 
@@ -67,120 +69,60 @@ public:
     [[nodiscard]] int duration() const;
     void setDuration(int duration);
 
-    [[nodiscard]] QVector<int> strokeList() const;
-    [[nodiscard]] int numStrokes() const;
-    [[nodiscard]] bool strokeAt(int strokeIndex, int & stroke) const;
-    [[nodiscard]] bool setStrokeAt(int strokeIndex, int stroke);
-    void setStrokeList(const QVector<int> & strokeList);
-    void reserveStrokeListSpace(int numItems);
-    void addStroke(int stroke);
-    [[nodiscard]] bool removeStroke(int stroke);
-    [[nodiscard]] bool removeStrokeAt(int strokeIndex);
+    [[nodiscard]] QList<int> strokes() const;
+    void setStrokes(QList<int> strokes);
 
-    struct TextItem
+    struct QUENTIER_EXPORT ITextItem
     {
-        [[nodiscard]] bool operator==(const TextItem & other) const
-        {
-            return (m_text == other.m_text) && (m_weight == other.m_weight);
-        }
+        virtual ~ITextItem();
 
-        QString m_text;
-        int m_weight = -1;
+        [[nodiscard]] virtual QString text() const = 0;
+        [[nodiscard]] virtual int weight() const = 0;
     };
 
-    [[nodiscard]] QVector<TextItem> textItems() const;
-    [[nodiscard]] int numTextItems() const;
-    [[nodiscard]] bool textItemAt(int textItemIndex, TextItem & textItem) const;
+    using ITextItemPtr = std::shared_ptr<ITextItem>;
 
-    [[nodiscard]] bool setTextItemAt(
-        int textItemIndex, const TextItem & textItem);
+    [[nodiscard]] QList<ITextItemPtr> textItems() const;
+    void setTextItems(QList<ITextItemPtr> textItems);
 
-    void setTextItems(const QVector<TextItem> & textItems);
-    void reserveTextItemsSpace(int numItems);
-    void addTextItem(const TextItem & item);
-    [[nodiscard]] bool removeTextItem(const TextItem & item);
-    [[nodiscard]] bool removeTextItemAt(int textItemIndex);
-
-    struct ObjectItem
+    struct QUENTIER_EXPORT IObjectItem
     {
-        [[nodiscard]] bool operator==(const ObjectItem & other) const
-        {
-            return (m_objectType == other.m_objectType) &&
-                (m_weight == other.m_weight);
-        }
+        virtual ~IObjectItem();
 
-        QString m_objectType;
-        int m_weight = -1;
+        [[nodiscard]] virtual QString objectType() const = 0;
+        [[nodiscard]] virtual int weight() const = 0;
     };
 
-    [[nodiscard]] QVector<ObjectItem> objectItems() const;
-    [[nodiscard]] int numObjectItems() const;
+    using IObjectItemPtr = std::shared_ptr<IObjectItem>;
 
-    [[nodiscard]] bool objectItemAt(
-        int objectItemIndex, ObjectItem & objectItem) const;
+    [[nodiscard]] QList<IObjectItemPtr> objectItems() const;
+    void setObjectItems(QList<IObjectItemPtr> objectItems);
 
-    [[nodiscard]] bool setObjectItemAt(
-        int objectItemIndex, const ObjectItem & objectItem);
-
-    void setObjectItems(const QVector<ObjectItem> & objectItems);
-    void reserveObjectItemsSpace(int numItems);
-    void addObjectItem(const ObjectItem & item);
-    [[nodiscard]] bool removeObjectItem(const ObjectItem & item);
-    [[nodiscard]] bool removeObjectItemAt(int objectItemIndex);
-
-    struct ShapeItem
+    struct QUENTIER_EXPORT IShapeItem
     {
-        [[nodiscard]] bool operator==(const ShapeItem & other) const
-        {
-            return (m_shapeType == other.m_shapeType) &&
-                (m_weight == other.m_weight);
-        }
+        virtual ~IShapeItem();
 
-        QString m_shapeType;
-        int m_weight = -1;
+        [[nodiscard]] virtual QString shape() const = 0;
+        [[nodiscard]] virtual int weight() const = 0;
     };
 
-    [[nodiscard]] QVector<ShapeItem> shapeItems() const;
-    [[nodiscard]] int numShapeItems() const;
+    using IShapeItemPtr = std::shared_ptr<IShapeItem>;
 
-    [[nodiscard]] bool shapeItemAt(
-        int shapeItemIndex, ShapeItem & shapeItem) const;
+    [[nodiscard]] QList<IShapeItemPtr> shapeItems() const;
+    void setShapeItems(QList<IShapeItemPtr> shapeItems);
 
-    [[nodiscard]] bool setShapeItemAt(
-        int shapeItemIndex, const ShapeItem & shapeItem);
-
-    void setShapeItems(const QVector<ShapeItem> & shapeItems);
-    void reserveShapeItemsSpace(int numItems);
-    void addShapeItem(const ShapeItem & item);
-    [[nodiscard]] bool removeShapeItem(const ShapeItem & item);
-    [[nodiscard]] bool removeShapeItemAt(int shapeItemIndex);
-
-    struct BarcodeItem
+    struct QUENTIER_EXPORT IBarcodeItem
     {
-        [[nodiscard]] bool operator==(const BarcodeItem & other) const
-        {
-            return (m_barcode == other.m_barcode) &&
-                (m_weight == other.m_weight);
-        }
+        virtual ~IBarcodeItem();
 
-        QString m_barcode;
-        int m_weight = -1;
+        [[nodiscard]] virtual QString barcode() const = 0;
+        [[nodiscard]] virtual int weight() const = 0;
     };
 
-    [[nodiscard]] QVector<BarcodeItem> barcodeItems() const;
-    [[nodiscard]] int numBarcodeItems() const;
+    using IBarcodeItemPtr = std::shared_ptr<IBarcodeItem>;
 
-    [[nodiscard]] bool barcodeItemAt(
-        int barcodeItemIndex, BarcodeItem & barcodeItem) const;
-
-    [[nodiscard]] bool setBarcodeItemAt(
-        int barcodeItemIndex, const BarcodeItem & barcodeItem);
-
-    void setBarcodeItems(const QVector<BarcodeItem> & barcodeItems);
-    void reserveBarcodeItemsSpace(int numItems);
-    void addBarcodeItem(const BarcodeItem & item);
-    [[nodiscard]] bool removeBarcodeItem(const BarcodeItem & item);
-    [[nodiscard]] bool removeBarcodeItemAt(int barcodeItemIndex);
+    [[nodiscard]] QList<IBarcodeItemPtr> barcodeItems() const;
+    void setBarcodeItems(QList<IBarcodeItemPtr> barcodeItems);
 
     QTextStream & print(QTextStream & strm) const override;
 
@@ -189,5 +131,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDEX_ITEM_H

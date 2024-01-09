@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,7 +43,7 @@ bool validateNoteTitle(
         return false;
     }
 
-    const int len = noteTitle.length();
+    const auto len = noteTitle.length();
     if (len < qevercloud::EDAM_NOTE_TITLE_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
@@ -82,7 +82,7 @@ bool validateNotebookName(
         return false;
     }
 
-    const int len = notebookName.length();
+    const auto len = notebookName.length();
     if (len < qevercloud::EDAM_NOTEBOOK_NAME_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
@@ -125,7 +125,7 @@ bool validateSavedSearchName(
         return false;
     }
 
-    const int len = savedSearchName.length();
+    const auto len = savedSearchName.length();
     if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
@@ -166,7 +166,7 @@ bool validateTagName(
         return false;
     }
 
-    const int len = tagName.length();
+    const auto len = tagName.length();
     if (len < qevercloud::EDAM_TAG_NAME_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(

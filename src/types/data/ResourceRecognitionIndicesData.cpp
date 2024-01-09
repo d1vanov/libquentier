@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,8 @@
 
 #include <QStringList>
 #include <QXmlStreamReader>
+
+#include <utility>
 
 namespace quentier {
 
@@ -248,9 +250,9 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
         "types:data",
         "ResourceRecognitionIndicesData::parseRecoIndexAttributes");
 
-    for (const auto & attribute: qAsConst(attributes)) {
-        const QStringRef & name = attribute.name();
-        const QStringRef & value = attribute.value();
+    for (const auto & attribute: std::as_const(attributes)) {
+        const auto & name = attribute.name();
+        const auto & value = attribute.value();
 
         if (name == QStringLiteral("objID")) {
             m_objectId = value.toString();
@@ -295,9 +297,9 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         "types:data",
         "ResourceRecognitionIndicesData::parseCommonItemAttributes");
 
-    for (const auto & attribute: qAsConst(attributes)) {
-        const QStringRef & name = attribute.name();
-        const QStringRef & value = attribute.value();
+    for (const auto & attribute: std::as_const(attributes)) {
+        const auto & name = attribute.name();
+        const auto & value = attribute.value();
 
         if (name == QStringLiteral("x")) {
             bool conversionResult = false;
@@ -350,13 +352,13 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
 #else
                 QString::SkipEmptyParts);
 #endif
-            const int numValues = valueList.size();
-            for (int i = 0; i < numValues; ++i) {
-                const QString & strokeStr = valueList[i];
+            for (const auto & strokeStr: std::as_const(valueList)) {
                 bool conversionResult = false;
                 const int stroke = strokeStr.toInt(&conversionResult);
                 if (conversionResult) {
-                    item.addStroke(stroke);
+                    auto strokes = item.strokes();
+                    strokes << stroke;
+                    item.setStrokes(std::move(strokes));
                 }
             }
         }
@@ -374,9 +376,9 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
 
     int weight = -1;
 
-    for (const auto & attribute: qAsConst(attributes)) {
-        const QStringRef & name = attribute.name();
-        const QStringRef & value = attribute.value();
+    for (const auto & attribute: std::as_const(attributes)) {
+        const auto & name = attribute.name();
+        const auto & value = attribute.value();
 
         if (name == QStringLiteral("w")) {
             bool conversionResult = false;
@@ -391,10 +393,14 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
         return;
     }
 
-    ResourceRecognitionIndexItem::TextItem textItem;
-    textItem.m_weight = weight;
-    textItem.m_text = data;
-    item.addTextItem(textItem);
+    auto textItem =
+        std::make_shared<ResourceRecognitionIndexItemData::TextItem>();
+    textItem->m_weight = weight;
+    textItem->m_text = data;
+
+    auto textItems = item.textItems();
+    textItems << textItem;
+    item.setTextItems(std::move(textItems));
 
     QNTRACE(
         "types:data",
@@ -413,8 +419,8 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
     int weight = -1;
 
     for (const auto & attribute: qAsConst(attributes)) {
-        const QStringRef & name = attribute.name();
-        const QStringRef & value = attribute.value();
+        const auto & name = attribute.name();
+        const auto & value = attribute.value();
 
         if (name == QStringLiteral("type")) {
             objectType = value.toString();
@@ -432,10 +438,14 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
         return;
     }
 
-    ResourceRecognitionIndexItem::ObjectItem objectItem;
-    objectItem.m_objectType = objectType;
-    objectItem.m_weight = weight;
-    item.addObjectItem(objectItem);
+    auto objectItem =
+        std::make_shared<ResourceRecognitionIndexItemData::ObjectItem>();
+    objectItem->m_objectType = objectType;
+    objectItem->m_weight = weight;
+
+    auto objectItems = item.objectItems();
+    objectItems << objectItem;
+    item.setObjectItems(std::move(objectItems));
 
     QNTRACE(
         "types:data",
@@ -450,15 +460,15 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
         "types:data",
         "ResourceRecognitionIndicesData::parseShapeItemAttributes");
 
-    QString shapeType;
+    QString shape;
     int weight = -1;
 
     for (const auto & attribute: qAsConst(attributes)) {
-        const QStringRef & name = attribute.name();
-        const QStringRef & value = attribute.value();
+        const auto & name = attribute.name();
+        const auto & value = attribute.value();
 
         if (name == QStringLiteral("type")) {
-            shapeType = value.toString();
+            shape = value.toString();
         }
         else if (name == QStringLiteral("w")) {
             bool conversionResult = false;
@@ -473,14 +483,18 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
         return;
     }
 
-    ResourceRecognitionIndexItem::ShapeItem shapeItem;
-    shapeItem.m_shapeType = shapeType;
-    shapeItem.m_weight = weight;
-    item.addShapeItem(shapeItem);
+    auto shapeItem =
+        std::make_shared<ResourceRecognitionIndexItemData::ShapeItem>();
+    shapeItem->m_shape = shape;
+    shapeItem->m_weight = weight;
+
+    auto shapeItems = item.shapeItems();
+    shapeItems << shapeItem;
+    item.setShapeItems(std::move(shapeItems));
 
     QNTRACE(
         "types:data",
-        "Added shape item: type = " << shapeType << ", weight = " << weight);
+        "Added shape item: type = " << shape << ", weight = " << weight);
 }
 
 void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
@@ -495,8 +509,8 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
     int weight = -1;
 
     for (const auto & attribute: qAsConst(attributes)) {
-        const QStringRef & name = attribute.name();
-        const QStringRef & value = attribute.value();
+        const auto & name = attribute.name();
+        const auto & value = attribute.value();
 
         if (name == QStringLiteral("w")) {
             bool conversionResult = false;
@@ -511,10 +525,14 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
         return;
     }
 
-    ResourceRecognitionIndexItem::BarcodeItem barcodeItem;
-    barcodeItem.m_weight = weight;
-    barcodeItem.m_barcode = data;
-    item.addBarcodeItem(barcodeItem);
+    auto barcodeItem =
+        std::make_shared<ResourceRecognitionIndexItemData::BarcodeItem>();
+    barcodeItem->m_weight = weight;
+    barcodeItem->m_barcode = data;
+
+    auto barcodeItems = item.barcodeItems();
+    barcodeItems << barcodeItem;
+    item.setBarcodeItems(std::move(barcodeItems));
 
     QNTRACE(
         "types:data",

@@ -32,10 +32,81 @@ public:
     [[nodiscard]] bool isValid() const;
 
 public:
-    using TextItem = ResourceRecognitionIndexItem::TextItem;
-    using ObjectItem = ResourceRecognitionIndexItem::ObjectItem;
-    using ShapeItem = ResourceRecognitionIndexItem::ShapeItem;
-    using BarcodeItem = ResourceRecognitionIndexItem::BarcodeItem;
+    using ITextItem = ResourceRecognitionIndexItem::ITextItem;
+    using ITextItemPtr = ResourceRecognitionIndexItem::ITextItemPtr;
+
+    using IObjectItem = ResourceRecognitionIndexItem::IObjectItem;
+    using IObjectItemPtr = ResourceRecognitionIndexItem::IObjectItemPtr;
+
+    using IShapeItem = ResourceRecognitionIndexItem::IShapeItem;
+    using IShapeItemPtr = ResourceRecognitionIndexItem::IShapeItemPtr;
+
+    using IBarcodeItem = ResourceRecognitionIndexItem::IBarcodeItem;
+    using IBarcodeItemPtr = ResourceRecognitionIndexItem::IBarcodeItemPtr;
+
+    struct TextItem : public ResourceRecognitionIndexItem::ITextItem
+    {
+        [[nodiscard]] QString text() const override
+        {
+            return m_text;
+        }
+
+        [[nodiscard]] int weight() const noexcept override
+        {
+            return m_weight;
+        }
+
+        QString m_text;
+        int m_weight = 0;
+    };
+
+    struct ObjectItem : public ResourceRecognitionIndexItem::IObjectItem
+    {
+        [[nodiscard]] QString objectType() const override
+        {
+            return m_objectType;
+        }
+
+        [[nodiscard]] int weight() const noexcept override
+        {
+            return m_weight;
+        }
+
+        QString m_objectType;
+        int m_weight = 0;
+    };
+
+    struct ShapeItem : public ResourceRecognitionIndexItem::IShapeItem
+    {
+        [[nodiscard]] QString shape() const override
+        {
+            return m_shape;
+        }
+
+        [[nodiscard]] int weight() const noexcept override
+        {
+            return m_weight;
+        }
+
+        QString m_shape;
+        int m_weight = 0;
+    };
+
+    struct BarcodeItem : public ResourceRecognitionIndexItem::IBarcodeItem
+    {
+        [[nodiscard]] QString barcode() const override
+        {
+            return m_barcode;
+        }
+
+        [[nodiscard]] int weight() const noexcept override
+        {
+            return m_weight;
+        }
+
+        QString m_barcode;
+        int m_weight = 0;
+    };
 
 public:
     int m_x = -1;
@@ -46,11 +117,11 @@ public:
     int m_offset;
     int m_duration;
 
-    QVector<int> m_strokeList;
-    QVector<TextItem> m_textItems;
-    QVector<ObjectItem> m_objectItems;
-    QVector<ShapeItem> m_shapeItems;
-    QVector<BarcodeItem> m_barcodeItems;
+    QList<int> m_strokes;
+    QList<ITextItemPtr> m_textItems;
+    QList<IObjectItemPtr> m_objectItems;
+    QList<IShapeItemPtr> m_shapeItems;
+    QList<IBarcodeItemPtr> m_barcodeItems;
 };
 
 } // namespace quentier

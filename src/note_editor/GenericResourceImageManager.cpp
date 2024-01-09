@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,10 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+
+#include <algorithm>
 #include <memory>
+#include <utility>
 
 namespace quentier {
 
@@ -222,12 +225,9 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
         ErrorString(), requestId);
 
     if (!existingResourceImageFileInfos.isEmpty()) {
-        const int numStaleResourceImageFiles =
-            existingResourceImageFileInfos.size();
-        for (int i = 0; i < numStaleResourceImageFiles; ++i) {
-            QFileInfo & staleResourceImageFileInfo =
-                existingResourceImageFileInfos[i];
-
+        for (const auto & staleResourceImageFileInfo:
+             std::as_const(existingResourceImageFileInfos))
+        {
             QFile staleResourceImageFile{
                 staleResourceImageFileInfo.absoluteFilePath()};
 
@@ -304,18 +304,14 @@ void GenericResourceImageManager::
          ? *m_pCurrentNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-
     const QFileInfoList fileInfoList = storageDir.entryInfoList(QDir::Files);
-    const int numFiles = fileInfoList.size();
 
     QNTRACE(
         "note_editor",
-        "Will check " << numFiles
+        "Will check " << fileInfoList.size()
                       << " generic resource image files for staleness");
 
-    for (int i = 0; i < numFiles; ++i) {
-        const QFileInfo & fileInfo = fileInfoList[i];
+    for (const auto & fileInfo: std::as_const(fileInfoList)) {
         const QString filePath = fileInfo.absoluteFilePath();
 
         const QString fullSuffix = fileInfo.completeSuffix();
@@ -327,26 +323,14 @@ void GenericResourceImageManager::
         const QString baseName = fileInfo.baseName();
         QNTRACE("note_editor", "Checking file with base name " << baseName);
 
-        int resourceIndex = -1;
-        for (int j = 0; j < numResources; ++j) {
-            QNTRACE(
-                "note_editor",
-                "checking against resource with local id "
-                    << resources[j].localId());
-
-            if (baseName.startsWith(resources[j].localId())) {
-                QNTRACE(
-                    "note_editor",
-                    "File " << fileInfo.fileName()
-                            << " appears to correspond to resource "
-                            << resources[j].localId());
-                resourceIndex = j;
-                break;
-            }
-        }
-
-        if (resourceIndex >= 0) {
-            const auto & resource = resources[resourceIndex];
+        const auto resourceIt = std::find_if(
+            resources.constBegin(),
+            resources.constEnd(),
+            [&baseName](const qevercloud::Resource & resource) {
+                return baseName.startsWith(resource.localId());
+            });
+        if (resourceIt != resources.constEnd()) {
+            const auto & resource = *resourceIt;
             if (resource.data() && resource.data()->bodyHash()) {
                 QFileInfo helperHashFileInfo{
                     fileInfo.absolutePath() + QStringLiteral("/") +
@@ -384,7 +368,7 @@ void GenericResourceImageManager::
                 QNTRACE(
                     "note_editor",
                     "Resource at index "
-                        << resourceIndex
+                        << std::distance(resources.constBegin(), resourceIt)
                         << " doesn't have the data hash, will remove "
                         << "its resource file just in case");
             }

@@ -27,6 +27,7 @@
 #include <QXmlStreamReader>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier {
 
@@ -79,13 +80,12 @@ bool isInkNote(const qevercloud::Note & note)
 
     // NOTE: it is not known for sure how many resources there might be within
     // an ink note. Probably just one in most cases.
-    const int numResources = resources.size();
+    const auto numResources = resources.size();
     if (numResources == 0) {
         return false;
     }
 
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = resources[i];
+    for (const auto & resource: std::as_const(resources)) {
         if (!resource.mime()) {
             return false;
         }

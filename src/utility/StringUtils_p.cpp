@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Compat.h>
 
-#include <QRegExp>
+#include <QRegularExpression>
 
 namespace quentier {
 
@@ -43,7 +43,7 @@ void StringUtilsPrivate::removePunctuation(
         }
     }
 
-    QRegExp punctuationFilter(filterStr);
+    static const QRegularExpression punctuationFilter{filterStr};
     str.remove(punctuationFilter);
 }
 
@@ -78,7 +78,8 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
 
 void StringUtilsPrivate::removeNewlines(QString & str) const
 {
-    str.replace(QRegExp(QStringLiteral("[\n\r\v\f]")), QStringLiteral(" "));
+    static const QRegularExpression regexp{QStringLiteral("[\n\r\v\f]")};
+    str.replace(regexp, QStringLiteral(" "));
 }
 
 void StringUtilsPrivate::initialize()
