@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2928,7 +2928,7 @@ class NotesHandlerNoteSearchQueryTest :
         m_notes.reserve(noteCount);
 
         Q_ASSERT(!m_notebooks.isEmpty());
-        const int notebookCount = m_notebooks.size();
+        const int notebookCount = static_cast<int>(m_notebooks.size());
 
         for (int i = 0; i < noteCount; ++i) {
             m_notes << qevercloud::Note();
@@ -3029,7 +3029,7 @@ class NotesHandlerNoteSearchQueryTest :
 
             if (i != (noteCount - 1)) {
                 int k = 0;
-                const int tagCount = m_tags.size();
+                const int tagCount = static_cast<int>(m_tags.size());
                 while (((i + k) < tagCount) && (k < 3)) {
                     if (!note.tagGuids()) {
                         note.setTagGuids(
@@ -3455,7 +3455,7 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
     }
     else {
         QSet<int> containedNoteIndices;
-        const int originalNoteCount = m_notes.size();
+        const int originalNoteCount = static_cast<int>(m_notes.size());
         for (int i = 0; i < originalNoteCount; ++i) {
             if (notes.contains(m_notes.at(i))) {
                 containedNoteIndices.insert(i);

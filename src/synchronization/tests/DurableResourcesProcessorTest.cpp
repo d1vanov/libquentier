@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -635,7 +635,7 @@ TEST_P(
 
     DownloadResourcesStatus currentResourcesStatus;
     currentResourcesStatus.m_totalNewResources =
-        static_cast<quint64>(std::max<int>(resources.size(), 0));
+        static_cast<quint64>(std::max<qsizetype>(resources.size(), 0));
     for (const auto & resource: std::as_const(resources)) {
         EXPECT_TRUE(resource.guid());
         if (!resource.guid()) {
@@ -666,7 +666,7 @@ TEST_P(
 
         previousResourcesStatus.emplace();
         previousResourcesStatus->m_totalUpdatedResources = static_cast<quint64>(
-            std::max<int>(resourcesFromPreviousSync.size(), 0));
+            std::max<qsizetype>(resourcesFromPreviousSync.size(), 0));
 
         for (const auto & resource: std::as_const(resourcesFromPreviousSync)) {
             EXPECT_TRUE(resource.guid());

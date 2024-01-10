@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <utility>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -148,8 +149,8 @@ namespace {
                 return Result<void, QString>{std::move(error)};
             }
 
-            const QStringRef originalName = readerOriginal.name();
-            const QStringRef processedName = readerProcessed.name();
+            const auto originalName = readerOriginal.name();
+            const auto processedName = readerProcessed.name();
             if (originalName != processedName) {
                 QString error = QStringLiteral(
                     "Found a tag in the original ENML which name doesn't match "
@@ -170,7 +171,7 @@ namespace {
                 bool originalChecked = false;
                 if (originalAttributes.hasAttribute(QStringLiteral("checked")))
                 {
-                    const QStringRef originalCheckedStr =
+                    const auto originalCheckedStr =
                         originalAttributes.value(QStringLiteral("checked"));
                     if (originalCheckedStr == QStringLiteral("true")) {
                         originalChecked = true;
@@ -180,7 +181,7 @@ namespace {
                 bool processedChecked = false;
                 if (processedAttributes.hasAttribute(QStringLiteral("checked")))
                 {
-                    const QStringRef processedCheckedStr =
+                    const auto processedCheckedStr =
                         processedAttributes.value(QStringLiteral("checked"));
                     if (processedCheckedStr == QStringLiteral("true")) {
                         processedChecked = true;
@@ -198,8 +199,8 @@ namespace {
                 }
             }
             else if (originalName == QStringLiteral("td")) {
-                const int numOriginalAttributes = originalAttributes.size();
-                const int numProcessedAttributes = processedAttributes.size();
+                const auto numOriginalAttributes = originalAttributes.size();
+                const auto numProcessedAttributes = processedAttributes.size();
 
                 if (numOriginalAttributes != numProcessedAttributes) {
                     QString error = QStringLiteral(
@@ -211,9 +212,9 @@ namespace {
                     return Result<void, QString>{std::move(error)};
                 }
 
-                for (int i = 0; i < numOriginalAttributes; ++i) {
-                    const QXmlStreamAttribute & originalAttribute =
-                        originalAttributes[i];
+                for (const auto & originalAttribute:
+                     std::as_const(originalAttributes))
+                {
                     if (originalAttribute.name() == QStringLiteral("style")) {
                         QNTRACE(
                             "tests::enml",
@@ -240,7 +241,6 @@ namespace {
                                    "original ENML: "
                                 << originalSimplified
                                 << "\nProcessed ENML: " << processedSimplified
-                                << ", index within attributes = " << i
                                 << "\nOriginal attribute: name = "
                                 << originalAttribute.name()
                                 << ", namespace uri = "
@@ -258,8 +258,8 @@ namespace {
                 }
             }
             else {
-                const int numOriginalAttributes = originalAttributes.size();
-                const int numProcessedAttributes = processedAttributes.size();
+                const auto numOriginalAttributes = originalAttributes.size();
+                const auto numProcessedAttributes = processedAttributes.size();
 
                 if (numOriginalAttributes != numProcessedAttributes) {
                     QString error = QStringLiteral(
@@ -271,10 +271,9 @@ namespace {
                     return Result<void, QString>{std::move(error)};
                 }
 
-                for (int i = 0; i < numOriginalAttributes; ++i) {
-                    const QXmlStreamAttribute & originalAttribute =
-                        originalAttributes[i];
-
+                for (const auto & originalAttribute:
+                     std::as_const(originalAttributes))
+                {
                     if (!processedAttributes.contains(originalAttribute)) {
                         QString error = QStringLiteral(
                             "The corresponding attributes within "
@@ -290,7 +289,6 @@ namespace {
                                    "original ENML: "
                                 << originalSimplified
                                 << "\nProcessed ENML: " << processedSimplified
-                                << ", index within attributes = " << i
                                 << "\nOriginal attribute: name = "
                                 << originalAttribute.name()
                                 << ", namespace uri = "
@@ -321,7 +319,7 @@ namespace {
 
         if (readerOriginal.isCharacters()) {
             if (!readerProcessed.isCharacters()) {
-                QStringRef textOriginal = readerOriginal.text();
+                auto textOriginal = readerOriginal.text();
                 if (textOriginal.toString().simplified().isEmpty()) {
                     continue;
                 }

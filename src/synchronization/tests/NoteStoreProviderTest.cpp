@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 #include <synchronization/NoteStoreProvider.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/UidGenerator.h>

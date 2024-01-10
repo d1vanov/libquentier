@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -145,7 +145,7 @@ Q_DECLARE_FLAGS(
                                QStringList tagLocalIds) {
         const QByteArray sampleBodyData =
             QString::fromUtf8("some_data").toUtf8();
-        const qint32 sampleBodyDataSize = sampleBodyData.size();
+        const auto sampleBodyDataSize = sampleBodyData.size();
         const auto sampleBodyDataHash =
             QCryptographicHash::hash(sampleBodyData, QCryptographicHash::Md5);
         return qevercloud::NoteBuilder{}
@@ -165,7 +165,8 @@ Q_DECLARE_FLAGS(
                        .setLocalId(UidGenerator::Generate())
                        .setData(qevercloud::DataBuilder{}
                                     .setBody(sampleBodyData)
-                                    .setSize(sampleBodyDataSize)
+                                    .setSize(
+                                        static_cast<qint32>(sampleBodyDataSize))
                                     .setBodyHash(sampleBodyDataHash)
                                     .build())
                        .setUpdateSequenceNum(counter + 100)
@@ -1209,7 +1210,10 @@ TEST_P(FullSyncStaleDataExpungerDataTest, ProcessData)
             ASSERT_EQ(
                 putNote.resources()->size(), originalNote.resources()->size());
 
-            for (int i = 0, size = putNote.resources()->size(); i < size; ++i) {
+            for (int i = 0,
+                     size = static_cast<int>(putNote.resources()->size());
+                 i < size; ++i)
+            {
                 const auto & src = (*putNote.resources())[i];
                 auto & dst = (*originalNote.mutableResources())[i];
                 dst.setLocalId(src.localId());

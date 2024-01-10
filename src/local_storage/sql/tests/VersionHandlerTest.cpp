@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,7 @@ namespace quentier::local_storage::sql::tests {
 
 namespace {
 
-const QString gTestAccountName = QStringLiteral("testAccountName");
+const char * gTestAccountName = "testAccountName";
 
 class VersionHandlerTest : public testing::Test
 {
@@ -56,7 +56,8 @@ protected:
                 QThreadPool::globalInstance(), std::move(nullDeleter));
         }
 
-        m_account = Account{gTestAccountName, Account::Type::Local};
+        m_account =
+            Account{QString::fromUtf8(gTestAccountName), Account::Type::Local};
     }
 
     void TearDown() override

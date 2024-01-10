@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -90,7 +90,7 @@ TEST_F(LinkedNotebookTagsCleanerTest, ClearTags)
         .WillOnce(Return(threading::makeReadyFuture(tags)));
 
     EXPECT_CALL(*m_mockLocalStorage, expungeTagByLocalId)
-        .Times(tags.size())
+        .Times(static_cast<int>(tags.size()))
         .WillRepeatedly([&tags](const QString & localId) {
             const auto it = std::find_if(
                 tags.constBegin(), tags.constEnd(),

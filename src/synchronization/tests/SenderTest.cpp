@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -683,7 +683,7 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_newSavedSearches.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, createSearchAsync)
-            .Times(AtMost(testData.m_newSavedSearches.size()))
+            .Times(AtMost(static_cast<int>(testData.m_newSavedSearches.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newSavedSearches.size(),
                              noteStoreBehaviour, getNewUserOwnUsn](
@@ -756,7 +756,8 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_updatedSavedSearches.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, updateSearchAsync)
-            .Times(AtMost(testData.m_updatedSavedSearches.size()))
+            .Times(AtMost(
+                static_cast<int>(testData.m_updatedSavedSearches.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_updatedSavedSearches.size(),
                              noteStoreBehaviour, getNewUserOwnUsn](
@@ -822,7 +823,8 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_newUserOwnNotebooks.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, createNotebookAsync)
-            .Times(AtMost(testData.m_newUserOwnNotebooks.size()))
+            .Times(
+                AtMost(static_cast<int>(testData.m_newUserOwnNotebooks.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newUserOwnNotebooks.size(),
                              noteStoreBehaviour, getNewUserOwnUsn](
@@ -893,7 +895,8 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_updatedUserOwnNotebooks.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, updateNotebookAsync)
-            .Times(AtMost(testData.m_updatedUserOwnNotebooks.size()))
+            .Times(AtMost(
+                static_cast<int>(testData.m_updatedUserOwnNotebooks.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount =
                                  testData.m_updatedUserOwnNotebooks.size(),
@@ -958,7 +961,7 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_newUserOwnTags.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, createTagAsync)
-            .Times(AtMost(testData.m_newUserOwnTags.size()))
+            .Times(AtMost(static_cast<int>(testData.m_newUserOwnTags.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newUserOwnTags.size(),
                              noteStoreBehaviour, getNewUserOwnUsn](
@@ -1036,7 +1039,8 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_updatedUserOwnTags.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, updateTagAsync)
-            .Times(AtMost(testData.m_updatedUserOwnTags.size()))
+            .Times(
+                AtMost(static_cast<int>(testData.m_updatedUserOwnTags.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_updatedUserOwnTags.size(),
                              noteStoreBehaviour, getNewUserOwnUsn](
@@ -1114,7 +1118,7 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_newUserOwnNotes.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, createNoteAsync)
-            .Times(AtMost(testData.m_newUserOwnNotes.size()))
+            .Times(AtMost(static_cast<int>(testData.m_newUserOwnNotes.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_newUserOwnNotes.size(),
                              noteStoreBehaviour, setNoteNotebookGuid,
@@ -1187,7 +1191,8 @@ void setupUserOwnNoteStoreMock(
 
     if (!testData.m_updatedUserOwnNotes.isEmpty()) {
         EXPECT_CALL(*mockNoteStore, updateNoteAsync)
-            .Times(AtMost(testData.m_updatedUserOwnNotes.size()))
+            .Times(
+                AtMost(static_cast<int>(testData.m_updatedUserOwnNotes.size())))
             .WillRepeatedly([&, i = std::make_shared<int>(0),
                              itemCount = testData.m_updatedUserOwnNotes.size(),
                              noteStoreBehaviour, setNoteNotebookGuid,
@@ -3545,7 +3550,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentNotes() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendNotes().size(), 0)),
         result.userOwnResult->totalAttemptedToSendNotes());
 
@@ -3564,7 +3569,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
 
     EXPECT_EQ(
         result.userOwnResult->totalSuccessfullySentNotebooks() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendNotebooks().size(), 0)),
         result.userOwnResult->totalAttemptedToSendNotebooks());
 
@@ -3583,7 +3588,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentTags() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendTags().size(), 0)),
         result.userOwnResult->totalAttemptedToSendTags());
 
@@ -3603,7 +3608,7 @@ TEST_P(SenderDataTest, TolerateSendingFailures)
 
     EXPECT_EQ(
         result.userOwnResult->totalSuccessfullySentSavedSearches() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendSavedSearches().size(), 0)),
         result.userOwnResult->totalAttemptedToSendSavedSearches());
 
@@ -3764,7 +3769,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentNotes() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendNotes().size(), 0)),
         result.userOwnResult->totalAttemptedToSendNotes());
 
@@ -3783,7 +3788,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
 
     EXPECT_EQ(
         result.userOwnResult->totalSuccessfullySentNotebooks() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendNotebooks().size(), 0)),
         result.userOwnResult->totalAttemptedToSendNotebooks());
 
@@ -3802,7 +3807,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentTags() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendTags().size(), 0)),
         result.userOwnResult->totalAttemptedToSendTags());
 
@@ -3822,7 +3827,7 @@ TEST_P(SenderDataTest, ToleratePutToLocalStorageFailures)
 
     EXPECT_EQ(
         result.userOwnResult->totalSuccessfullySentSavedSearches() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendSavedSearches().size(), 0)),
         result.userOwnResult->totalAttemptedToSendSavedSearches());
 
@@ -4161,7 +4166,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentNotes() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendNotes().size(), 0)),
         result.userOwnResult->totalAttemptedToSendNotes());
 
@@ -4190,7 +4195,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentNotebooks() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendNotebooks().size(), 0)),
         result.userOwnResult->totalAttemptedToSendNotebooks());
 
@@ -4215,7 +4220,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentTags() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendTags().size(), 0)),
         result.userOwnResult->totalAttemptedToSendTags());
 
@@ -4245,7 +4250,7 @@ TEST_P(SenderStopSynchronizationTest, StopSynchronizationOnRelevantError)
 
     EXPECT_GE(
         result.userOwnResult->totalSuccessfullySentSavedSearches() +
-            static_cast<quint64>(std::max<int>(
+            static_cast<quint64>(std::max<qsizetype>(
                 result.userOwnResult->failedToSendSavedSearches().size(), 0)),
         result.userOwnResult->totalAttemptedToSendSavedSearches());
 

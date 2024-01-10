@@ -252,7 +252,7 @@ namespace {
         auto leftResources = *lhs.resources();
         auto rightResources = *rhs.resources();
 
-        const int numResources = leftResources.size();
+        const auto numResources = leftResources.size();
         if (numResources != rightResources.size()) {
             error = QStringLiteral("left note has ") +
                 QString::number(numResources) +
@@ -262,9 +262,14 @@ namespace {
             return false;
         }
 
-        for (int i = 0; i < numResources; ++i) {
-            const auto & leftResource = leftResources.at(i);
-            const auto & rightResource = rightResources.at(i);
+        for (auto lit = leftResources.constBegin(),
+                  lend = leftResources.constEnd(),
+                  rit = rightResources.constBegin(),
+                  rend = rightResources.constEnd();
+             lit != lend && rit != rend; ++lit, ++rit)
+        {
+            const auto & leftResource = *lit;
+            const auto & rightResource = *rit;
 
             if (Q_UNLIKELY(!leftResource.mime())) {
                 error = QStringLiteral("left note's resource has no mime");
@@ -518,7 +523,7 @@ namespace {
                     if (leftLazyMap.fullMap().has_value() !=
                         rightLazyMap.fullMap().has_value())
                     {
-                        QTextStream strm(&error);
+                        QTextStream strm{&error};
                         strm << "left resource: application data "
                              << "full map is set = "
                              << (leftLazyMap.fullMap() ? "true" : "false")
@@ -548,18 +553,19 @@ namespace {
     const QList<qevercloud::Note> & originalNotes,
     const QList<qevercloud::Note> & importedNotes, QString & error)
 {
-    const int numNotes = originalNotes.size();
-
+    const auto numNotes = originalNotes.size();
     if (numNotes != importedNotes.size()) {
         error = QStringLiteral(
             "The number of original and imported notes doesn't match");
         return false;
     }
 
-    for (int i = 0; i < numNotes; ++i) {
-        const auto & originalNote = originalNotes[i];
-        const auto & importedNote = importedNotes[i];
-
+    for (auto oit = originalNotes.constBegin(), oend = originalNotes.constEnd(),
+              iit = importedNotes.constBegin(), iend = importedNotes.constEnd();
+         oit != oend && iit != iend; ++oit, ++iit)
+    {
+        const auto & originalNote = *oit;
+        const auto & importedNote = *iit;
         if (!compareNoteContents(originalNote, importedNote, error)) {
             return false;
         }

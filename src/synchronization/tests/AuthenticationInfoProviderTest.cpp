@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,6 +25,7 @@
 #include <synchronization/types/AuthenticationInfo.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/synchronization/tests/mocks/MockIAuthenticator.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>

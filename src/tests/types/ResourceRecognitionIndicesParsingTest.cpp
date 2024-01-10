@@ -87,7 +87,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     }
 
     QVector<ResourceRecognitionIndexItem> items = recoIndices.items();
-    int numItems = items.size();
+    auto numItems = items.size();
     if (numItems != 2) {
         error = QStringLiteral("Incorrectly parsed reco indices items: ") +
             QStringLiteral("expected 2 items, got ") +

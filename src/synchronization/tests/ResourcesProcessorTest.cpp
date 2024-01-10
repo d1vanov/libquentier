@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,6 +25,7 @@
 #include <synchronization/types/DownloadResourcesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/threading/Factory.h>
 #include <quentier/threading/Future.h>
@@ -1600,7 +1601,7 @@ TEST_F(
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         QList<qevercloud::Resource> res{resources};
         res.removeAt(1);
-        for (int i = 0, size = res.size(); i < size; ++i) {
+        for (int i = 0, size = static_cast<int>(res.size()); i < size; ++i) {
             res[i] = addDataToResource(res[i], i < 1 ? i : i + 1);
         }
         return res;
@@ -1819,7 +1820,7 @@ TEST_F(
     const QList<qevercloud::Resource> expectedProcessedResources = [&] {
         QList<qevercloud::Resource> res{resources};
         res.removeAt(1);
-        for (int i = 0, size = res.size(); i < size; ++i) {
+        for (int i = 0, size = static_cast<int>(res.size()); i < size; ++i) {
             res[i] = addDataToResource(res[i], i < 1 ? i : i + 1);
         }
         return res;

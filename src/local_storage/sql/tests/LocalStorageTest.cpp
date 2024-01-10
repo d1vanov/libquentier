@@ -1363,7 +1363,7 @@ TEST_F(LocalStorageTest, ForwardPutSavedSearchToSavedSearchesHandler)
 
     const auto savedSearch = qevercloud::SavedSearch{};
     EXPECT_CALL(*m_mockSavedSearchesHandler, putSavedSearch(savedSearch))
-        .WillOnce(Return(threading::makeReadyFuture(savedSearch)));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->putSavedSearch(savedSearch);
     ASSERT_TRUE(res.isFinished());

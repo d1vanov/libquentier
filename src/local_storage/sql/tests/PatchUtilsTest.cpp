@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,31 +45,32 @@ namespace quentier::local_storage::sql::tests {
 
 namespace {
 
-const QString gTestDbConnectionName =
-    QStringLiteral("libquentier_local_storage_sql_patch_utils_test_db");
+const char * gTestDbConnectionName =
+    "libquentier_local_storage_sql_patch_utils_test_db";
 
-const QString gTestDatabaseFileName = QStringLiteral("qn.storage.sqlite");
+const char * gTestDatabaseFileName = "qn.storage.sqlite";
 
-const QString gTestAccountName = QStringLiteral("testAccountName");
+const char * gTestAccountName = "testAccountName";
 
 } // namespace
 
 TEST(PatchUtilsTest, BackupLocalStorageTest)
 {
-    Account account{gTestAccountName, Account::Type::Local};
+    Account account{QString::fromUtf8(gTestAccountName), Account::Type::Local};
 
     QTemporaryDir testLocalStorageDir{
-        QDir::tempPath() + QStringLiteral("/") + gTestDbConnectionName};
+        QDir::tempPath() + QString::fromUtf8("/%1").arg(gTestDbConnectionName)};
 
     Q_ASSERT(testLocalStorageDir.isValid());
 
     auto connectionPool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), gTestAccountName,
-        gTestAccountName, testLocalStorageDir.filePath(gTestDatabaseFileName),
+        QStringLiteral("localhost"), QString::fromUtf8(gTestAccountName),
+        QString::fromUtf8(gTestAccountName),
+        testLocalStorageDir.filePath(QString::fromUtf8(gTestDatabaseFileName)),
         QStringLiteral("QSQLITE"));
 
     const QString localStorageDirPath = testLocalStorageDir.path() +
-        QStringLiteral("/LocalAccounts/") + gTestAccountName;
+        QString::fromUtf8("/LocalAccounts/%1").arg(gTestAccountName);
 
     utils::prepareLocalStorage(localStorageDirPath, *connectionPool);
 
@@ -118,7 +119,8 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     // Now ensure the ability to restore the backup
 
     EXPECT_TRUE(removeFile(
-        localStorageDirPath + QStringLiteral("/") + gTestDatabaseFileName));
+        localStorageDirPath +
+        QString::fromUtf8("/%1").arg(gTestDatabaseFileName)));
 
     res = sql::utils::restoreLocalStorageDatabaseFilesFromBackup(
         localStorageDirPath, backupDir.absolutePath(), promise,
@@ -131,7 +133,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     bool foundRestoredFromBackupLocalStorage = false;
 
     for (const auto & fileInfo: std::as_const(fileInfos)) {
-        if (fileInfo.fileName() == gTestDatabaseFileName) {
+        if (fileInfo.fileName() == QString::fromUtf8(gTestDatabaseFileName)) {
             foundRestoredFromBackupLocalStorage = true;
             break;
         }
@@ -147,7 +149,8 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
             EXPECT_FALSE(files.isEmpty());
 
             for (const auto & file: std::as_const(files)) {
-                EXPECT_TRUE(file.fileName().startsWith(gTestDatabaseFileName));
+                EXPECT_TRUE(file.fileName().startsWith(
+                    QString::fromUtf8(gTestDatabaseFileName)));
             }
 
             foundLocalStorageBackup = true;
@@ -177,7 +180,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
             break;
         }
 
-        if (entryInfo.fileName() == gTestDatabaseFileName) {
+        if (entryInfo.fileName() == QString::fromUtf8(gTestDatabaseFileName)) {
             foundRestoredFromBackupLocalStorage = true;
         }
     }

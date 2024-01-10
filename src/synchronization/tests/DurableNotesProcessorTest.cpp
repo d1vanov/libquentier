@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -792,7 +792,7 @@ TEST_P(
         result << testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync;
 
         for (auto it = result.begin(); it != result.end();) {
-            const int i = testData.m_expungedNoteGuids.indexOf(*it);
+            const auto i = testData.m_expungedNoteGuids.indexOf(*it);
             if (i >= 0) {
                 it = result.erase(it);
                 continue;
@@ -806,7 +806,7 @@ TEST_P(
 
     DownloadNotesStatus currentNotesStatus;
     currentNotesStatus.m_totalNewNotes =
-        static_cast<quint64>(std::max<int>(notes.size(), 0));
+        static_cast<quint64>(std::max<qsizetype>(notes.size(), 0));
     for (const auto & note: std::as_const(notes)) {
         EXPECT_TRUE(note.guid());
         if (!note.guid()) {
@@ -835,8 +835,8 @@ TEST_P(
 
         previousExpungedNotesStatus = std::make_shared<DownloadNotesStatus>();
         previousExpungedNotesStatus->m_totalExpungedNotes =
-            static_cast<quint64>(
-                std::max<int>(expungedNoteGuidsFromPreviousSync.size(), 0));
+            static_cast<quint64>(std::max<qsizetype>(
+                expungedNoteGuidsFromPreviousSync.size(), 0));
 
         previousExpungedNotesStatus->m_expungedNoteGuids =
             expungedNoteGuidsFromPreviousSync;
@@ -885,7 +885,7 @@ TEST_P(
 
         previousNotesStatus.emplace();
         previousNotesStatus->m_totalUpdatedNotes = static_cast<quint64>(
-            std::max<int>(notesFromPreviousSync.size(), 0));
+            std::max<qsizetype>(notesFromPreviousSync.size(), 0));
 
         for (const auto & note: std::as_const(notesFromPreviousSync)) {
             EXPECT_TRUE(note.guid());

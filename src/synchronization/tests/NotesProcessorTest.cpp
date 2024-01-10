@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2509,7 +2509,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         const QList<qevercloud::Note> expectedProcessedNotes = [&] {
             QList<qevercloud::Note> res;
             res.reserve(notes.size());
-            for (int i = 0, size = notes.size(); i < size; ++i) {
+            for (int i = 0, size = static_cast<int>(notes.size()); i < size;
+                 ++i)
+            {
                 res << addContentToNote(notes[i], i + 1);
             }
             return res;
@@ -2526,7 +2528,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         const QList<qevercloud::Note> expectedProcessedNotes = [&] {
             QList<qevercloud::Note> res;
             res.reserve(notes.size() - 1);
-            for (int i = 1, size = notes.size(); i < size; ++i) {
+            for (int i = 1, size = static_cast<int>(notes.size()); i < size;
+                 ++i)
+            {
                 res << addContentToNote(notes[i], i - 1);
             }
             return res;

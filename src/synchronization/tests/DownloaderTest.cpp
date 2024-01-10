@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -194,7 +194,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 QByteArray dataBody =
                     QString::fromUtf8("Resource #%1").arg(j + 1).toUtf8();
-                const int dataBodySize = dataBody.size();
+                const auto dataBodySize = dataBody.size();
                 QByteArray dataBodyHash =
                     QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
 
@@ -205,7 +205,8 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                                  .setData(
                                      qevercloud::DataBuilder{}
                                          .setBody(std::move(dataBody))
-                                         .setSize(dataBodySize)
+                                         .setSize(
+                                             static_cast<qint32>(dataBodySize))
                                          .setBodyHash(std::move(dataBodyHash))
                                          .build())
                                  .build();

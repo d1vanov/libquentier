@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,16 +42,13 @@ namespace quentier::local_storage::sql::tests {
 
 namespace {
 
-const QString gTestAccountName = QStringLiteral("testAccountName");
-
-const QString gTestDbConnectionName =
-    QStringLiteral("libquentier_local_storage_sql_patch1to2_test_db");
+const char * gTestAccountName = "testAccountName";
 
 } // namespace
 
 TEST(Patch1To2Test, Ctor)
 {
-    Account account{gTestAccountName, Account::Type::Local};
+    Account account{QString::fromUtf8(gTestAccountName), Account::Type::Local};
 
     auto connectionPool = utils::createConnectionPool();
     auto pWriterThread = std::make_shared<QThread>();
@@ -74,7 +71,7 @@ TEST(Patch1To2Test, CtorEmptyAccount)
 
 TEST(Patch1To2Test, CtorNullConnectionPool)
 {
-    Account account{gTestAccountName, Account::Type::Local};
+    Account account{QString::fromUtf8(gTestAccountName), Account::Type::Local};
 
     auto pWriterThread = std::make_shared<QThread>();
 
@@ -86,7 +83,7 @@ TEST(Patch1To2Test, CtorNullConnectionPool)
 
 TEST(Patch1To2Test, CtorNullWriterThread)
 {
-    Account account{gTestAccountName, Account::Type::Local};
+    Account account{QString::fromUtf8(gTestAccountName), Account::Type::Local};
 
     auto connectionPool = utils::createConnectionPool();
     EXPECT_THROW(
