@@ -1231,7 +1231,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
             [this, promise, authenticationInfo = std::move(authenticationInfo),
              account = std::move(account),
              linkedNotebookGuid = std::move(linkedNotebookGuid)] {
-                const QWriteLocker locker{
+                QWriteLocker locker{
                     &m_linkedNotebookAuthenticationInfosRWLock};
 
                 ApplicationSettings settings{
@@ -1277,6 +1277,9 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
                         << ", authentication time = "
                         << printableDateTimeFromTimestamp(
                                authenticationInfo->authenticationTime()));
+
+                locker.unlock();
+                promise->finish();
             }});
 
     return future;
