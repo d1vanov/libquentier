@@ -339,7 +339,28 @@ bool EncryptionManagerPrivate::encyptWithAes(
         reinterpret_cast<const unsigned char *>(textToEncryptData.constData());
 
     const auto rawTextToEncryptSize = textToEncryptData.size();
-    Q_ASSERT(rawTextToEncryptSize >= 0);
+    if (Q_UNLIKELY(rawTextToEncryptSize < 0)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't generate cryptographic key: invalid length of text to "
+            "encrypt"));
+        errorDescription.details() = QString::number(rawTextToEncryptSize);
+        QNWARNING("utility::encryption", errorDescription);
+        return false;
+    }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if (Q_UNLIKELY(rawTextToEncryptSize >
+                   std::numeric_limits<int>::max()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't generate cryptographic key: text to encrypt is too long"));
+        errorDescription.details() = QString::number(rawTextToEncryptSize);
+        QNWARNING("utility::encryption", errorDescription);
+        return false;
+    }
+#endif
 
     constexpr std::size_t maxPadding = 16;
     auto * cipherText = reinterpret_cast<unsigned char *>(
@@ -370,7 +391,7 @@ bool EncryptionManagerPrivate::encyptWithAes(
 
     res = EVP_EncryptUpdate(
         pContext, cipherText, &bytesWritten, rawTextToEncrypt,
-        rawTextToEncryptSize);
+        static_cast<int>(rawTextToEncryptSize));
 
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
@@ -433,11 +454,30 @@ bool EncryptionManagerPrivate::decryptAes(
         return false;
     }
 
+    const auto rawCipherTextSize = cipherText.size();
+    if (Q_UNLIKELY(rawCipherTextSize < 0)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't decrypt text: invalid cipher text length"));
+        errorDescription.details() = QString::number(rawCipherTextSize);
+        QNWARNING("utility::encryption", errorDescription);
+        return false;
+    }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if (Q_UNLIKELY(rawCipherTextSize > std::numeric_limits<int>::max())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't decrypt text: cipher text is too large"));
+        errorDescription.details() = QString::number(rawCipherTextSize);
+        QNWARNING("utility::encryption", errorDescription);
+        return false;
+    }
+#endif
+
     QByteArray passphraseData = passphrase.toUtf8();
 
     // Validate HMAC
-    QNTRACE("utility::encryption", "Validating hmac");
-
     std::array<unsigned char, s_aes_hmacsize> parsedHmac;
     for (std::size_t i = 0; i < s_aes_hmacsize; ++i) {
         parsedHmac[i] = m_hmac[i];
@@ -481,16 +521,11 @@ bool EncryptionManagerPrivate::decryptAes(
         }
     }
 
-    QNTRACE("utility::encryption", "Successfully validated hmac");
-
     if (!generateKey(
             passphraseData, m_salt.data(), s_aes_keysize, errorDescription))
     {
         return false;
     }
-
-    const auto rawCipherTextSize = cipherText.size();
-    Q_ASSERT(rawCipherTextSize >= 0);
 
     const auto * rawCipherText =
         reinterpret_cast<const unsigned char *>(cipherText.constData());
@@ -522,7 +557,7 @@ bool EncryptionManagerPrivate::decryptAes(
 
     res = EVP_DecryptUpdate(
         pContext, decipheredText, &bytesWritten, rawCipherText,
-        rawCipherTextSize);
+        static_cast<int>(rawCipherTextSize));
 
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
@@ -585,6 +620,7 @@ bool EncryptionManagerPrivate::splitEncryptedData(
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
             "encrypted data is too short for being valid"));
+        errorDescription.details() = QString::number(encryptedDataSize);
 
         QNWARNING(
             "utility::encryption",
@@ -593,6 +629,17 @@ bool EncryptionManagerPrivate::splitEncryptedData(
                              << " bytes");
         return false;
     }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if (Q_UNLIKELY(encryptedDataSize > std::numeric_limits<int>::max())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "encrypted data is too large"));
+        errorDescription.details() = QString::number(encryptedDataSize);
+        QNWARNING("utility::encryption", errorDescription);
+        return false;
+    }
+#endif
 
     const auto * decodedEncryptedDataPtr =
         reinterpret_cast<const unsigned char *>(
@@ -617,7 +664,7 @@ bool EncryptionManagerPrivate::splitEncryptedData(
     encryptedText.resize(0);
 
     int encryptedDataWithoutHmacSize =
-        encryptedDataSize - static_cast<int>(hmacSize);
+        static_cast<int>(encryptedDataSize) - static_cast<int>(hmacSize);
 
     for (int i = static_cast<int>(cursor); i < encryptedDataWithoutHmacSize;
          ++i) {
@@ -900,7 +947,11 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
     crc ^= (-1);
 
     const QByteArray strData = str.toUtf8();
-    const int size = strData.size();
+    const auto size = strData.size();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    Q_ASSERT(size <= std::numeric_limits<int>::max());
+#endif
 
     QVector<int> convertedCharCodes;
     convertedCharCodes.resize(size);

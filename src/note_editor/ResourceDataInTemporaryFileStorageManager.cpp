@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,9 +35,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
+#include <iterator>
+#include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 
 // 4 megabytes
 #define RESOURCE_DATA_BATCH_SIZE_IN_BYTES (4194304)
@@ -217,7 +221,7 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
                             ? *m_pCurrentNote->resources()
                             : QList<qevercloud::Resource>());
     const qevercloud::Resource * pResource = nullptr;
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.localId() == resourceLocalId) {
             pResource = &resource;
             break;
@@ -354,7 +358,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(
     }
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(m_resourceLocalIdByFilePath)))
+         qevercloud::toRange(std::as_const(m_resourceLocalIdByFilePath)))
     {
         m_fileSystemWatcher.removePath(it.key());
         QNTRACE("note_editor", "Stopped watching for file " << it.key());
@@ -378,7 +382,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(
 
     QList<qevercloud::Resource> imageResources;
     const auto resources = *m_pCurrentNote->resources();
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (!resource.mime() ||
             !resource.mime()->startsWith(QStringLiteral("image"))) {
             continue;
@@ -418,22 +422,21 @@ void ResourceDataInTemporaryFileStorageManager::onRequestDiagnostics(
             << "::onRequestDiagnostics: request id = " << requestId);
 
     QString diagnostics;
-    QTextStream strm(&diagnostics);
+    QTextStream strm{&diagnostics};
 
     strm << "ResourceDataInTemporaryFileStorageManager diagnostics: {\n";
 
     strm << "  Resource local ids by file paths: \n";
     for (const auto it:
-         qevercloud::toRange(qAsConst(m_resourceLocalIdByFilePath)))
+         qevercloud::toRange(std::as_const(m_resourceLocalIdByFilePath)))
     {
         strm << "    [" << it.key() << "]: " << it.value() << "\n";
     }
 
     strm << "  Watched files: \n";
-    QStringList watchedFiles = m_fileSystemWatcher.files();
-    const int numWatchedFiles = watchedFiles.size();
-    for (int i = 0; i < numWatchedFiles; ++i) {
-        strm << "    " << watchedFiles[i] << "\n";
+    const QStringList watchedFiles = m_fileSystemWatcher.files();
+    for (const auto & watchedFile: std::as_const(watchedFiles)) {
+        strm << "    " << watchedFile << "\n";
     }
 
     strm << "}\n";
@@ -487,7 +490,7 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(
     QNTRACE(
         "note_editor",
         "Size of new resource data: " << humanReadableSize(
-            static_cast<quint64>(std::max(data.size(), 0))));
+            static_cast<quint64>(std::max<qsizetype>(data.size(), 0))));
 
     const QByteArray dataHash = calculateHash(data);
 
@@ -909,10 +912,7 @@ void ResourceDataInTemporaryFileStorageManager::
          ? *m_pCurrentNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-
     QFileInfoList fileInfoList;
-    int numFiles = -1;
 
     QDir imageResourceFilesFolder(
         m_imageResourceFileStorageLocation + QStringLiteral("/") +
@@ -920,11 +920,9 @@ void ResourceDataInTemporaryFileStorageManager::
 
     if (imageResourceFilesFolder.exists()) {
         fileInfoList = imageResourceFilesFolder.entryInfoList(QDir::Files);
-        numFiles = fileInfoList.size();
-
         QNTRACE(
             "note_editor",
-            "Found " << numFiles
+            "Found " << fileInfoList.size()
                      << " files wihin the image resource files folder "
                      << "for note with local id "
                      << m_pCurrentNote->localId());
@@ -935,10 +933,10 @@ void ResourceDataInTemporaryFileStorageManager::
         m_pCurrentNote->localId());
 
     if (genericResourceImagesFolder.exists()) {
-        QFileInfoList genericResourceImageFileInfos =
+        const QFileInfoList genericResourceImageFileInfos =
             genericResourceImagesFolder.entryInfoList(QDir::Files);
 
-        int numGenericResourceImageFileInfos =
+        const auto numGenericResourceImageFileInfos =
             genericResourceImageFileInfos.size();
 
         QNTRACE(
@@ -949,13 +947,13 @@ void ResourceDataInTemporaryFileStorageManager::
                      << m_pCurrentNote->localId());
 
         fileInfoList.append(genericResourceImageFileInfos);
-        numFiles = fileInfoList.size();
     }
 
-    QNTRACE("note_editor", "Total " << numFiles << " to check for staleness");
+    QNTRACE(
+        "note_editor",
+        "Total " << fileInfoList.size() << " files to check for staleness");
 
-    for (int i = 0; i < numFiles; ++i) {
-        const QFileInfo & fileInfo = fileInfoList[i];
+    for (const auto & fileInfo: std::as_const(fileInfoList)) {
         const QString filePath = fileInfo.absoluteFilePath();
 
         if (fileInfo.isSymLink()) {
@@ -974,25 +972,14 @@ void ResourceDataInTemporaryFileStorageManager::
         const QString baseName = fileInfo.baseName();
         QNTRACE("note_editor", "Checking file with base name " << baseName);
 
-        int resourceIndex = -1;
-        for (int j = 0; j < numResources; ++j) {
-            QNTRACE(
-                "note_editor",
-                "Checking against resource with local id "
-                    << resources[j].localId());
-            if (baseName.startsWith(resources[j].localId())) {
-                QNTRACE(
-                    "note_editor",
-                    "File " << fileInfo.fileName()
-                            << " appears to correspond to resource "
-                            << resources[j].localId());
-                resourceIndex = j;
-                break;
-            }
-        }
-
-        if (resourceIndex >= 0) {
-            const auto & resource = resources[resourceIndex];
+        auto resourceIt = std::find_if(
+            resources.constBegin(),
+            resources.constEnd(),
+            [&baseName](const qevercloud::Resource & resource) {
+                return baseName.startsWith(resource.localId());
+            });
+        if (resourceIt != resources.constEnd()) {
+            const auto & resource = *resourceIt;
             if (resource.data() && resource.data()->bodyHash()) {
                 const bool actual = checkIfResourceFileExistsAndIsActual(
                     noteLocalId, resource.localId(), filePath,
@@ -1010,7 +997,8 @@ void ResourceDataInTemporaryFileStorageManager::
                 QNTRACE(
                     "note_editor",
                     "Resource at index "
-                        << resourceIndex << " doesn't have the data hash, will "
+                        << std::distance(resources.constBegin(), resourceIt)
+                        << " doesn't have the data hash, will "
                         << "remove its resource file just in case");
             }
         }
@@ -1054,7 +1042,7 @@ ResourceDataInTemporaryFileStorageManager::
          ? *m_pCurrentNote->resources()
          : QList<qevercloud::Resource>());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         const QString & resourceLocalId = resource.localId();
 
         QNTRACE(
@@ -1062,7 +1050,7 @@ ResourceDataInTemporaryFileStorageManager::
             "Examining resource with local id " << resourceLocalId);
 
         const qevercloud::Resource * pPreviousResource = nullptr;
-        for (const auto & previousResource: qAsConst(previousResources)) {
+        for (const auto & previousResource: std::as_const(previousResources)) {
             if (previousResource.localId() == resourceLocalId) {
                 pPreviousResource = &previousResource;
                 break;
@@ -1148,7 +1136,7 @@ ResourceDataInTemporaryFileStorageManager::
         }
     }
 
-    for (const auto & previousResource: qAsConst(previousResources)) {
+    for (const auto & previousResource: std::as_const(previousResources)) {
         const QString & resourceLocalId = previousResource.localId();
 
         const qevercloud::Resource * pResource = nullptr;
@@ -1186,22 +1174,22 @@ ResourceDataInTemporaryFileStorageManager::
         << (m_nonImageResourceFileStorageLocation + QStringLiteral("/") +
             noteLocalId);
 
-    for (const auto & dirPath: qAsConst(dirsToCheck)) {
-        QDir dir(dirPath);
+    for (const auto & dirPath: std::as_const(dirsToCheck)) {
+        QDir dir{dirPath};
         if (!dir.exists()) {
             continue;
         }
 
-        QDirIterator dirIterator(dir);
+        QDirIterator dirIterator{dir};
         while (dirIterator.hasNext()) {
             QString entry = dirIterator.next();
-            QFileInfo entryInfo(entry);
+            QFileInfo entryInfo{entry};
             if (!entryInfo.isFile()) {
                 continue;
             }
 
             for (const auto & localId:
-                 qAsConst(removedAndStaleResourceLocalIds)) {
+                 std::as_const(removedAndStaleResourceLocalIds)) {
                 if (!entry.startsWith(localId) ||
                     (entryInfo.completeSuffix() == (QStringLiteral("hash"))))
                 {
@@ -1288,10 +1276,14 @@ ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(
         return ResultType::Error;
     }
 
-    size_t numResourcesPendingDataFromLocalStorage = 0;
-    const int numNewAndUpdatedResources = resources.size();
+    std::size_t numResourcesPendingDataFromLocalStorage = 0;
+    const auto numNewAndUpdatedResources = resources.size();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    Q_ASSERT(numNewAndUpdatedResources <= std::numeric_limits<int>::max());
+#endif
+
     int newOrUpdatedResourceIndex = 0;
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         if (!resource.data() || !resource.data()->body()) {
             Q_UNUSED(m_resourceLocalIdsPendingFindInLocalStorage.insert(
                 resource.localId()))
@@ -1307,7 +1299,8 @@ ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(
 
         WriteResourceDataCallback callback =
             PartialUpdateResourceFilesForCurrentNoteProgressFunctor(
-                newOrUpdatedResourceIndex, numNewAndUpdatedResources, *this);
+                newOrUpdatedResourceIndex,
+                static_cast<int>(numNewAndUpdatedResources), *this);
 
         const bool res = writeResourceDataToTemporaryFile(
             m_pCurrentNote->localId(), resource.localId(),
@@ -1514,7 +1507,8 @@ bool ResourceDataInTemporaryFileStorageManager::
             rawData += writeRes;
 
             if (callback) {
-                progress = static_cast<double>(offset) / data.size();
+                progress = static_cast<double>(offset) /
+                    static_cast<double>(data.size());
                 callback(progress);
             }
         }

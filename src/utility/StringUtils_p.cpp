@@ -37,7 +37,11 @@ void StringUtilsPrivate::removePunctuation(
         QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
 
     for (const auto & chr: qAsConst(charactersToPreserve)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         int pos = -1;
+#else
+        qsizetype pos = -1;
+#endif
         while ((pos = filterStr.indexOf(chr)) >= 0) {
             filterStr.remove(pos, 1);
         }
@@ -64,7 +68,7 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
             continue;
         }
 
-        const int diacriticIndex = m_diacriticLetters.indexOf(currentCharacter);
+        const auto diacriticIndex = m_diacriticLetters.indexOf(currentCharacter);
         if (diacriticIndex < 0) {
             continue;
         }

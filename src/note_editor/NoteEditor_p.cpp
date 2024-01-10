@@ -112,7 +112,6 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDesktopServices>
-#include <QDesktopWidget>
 #include <QDropEvent>
 #include <QFile>
 #include <QFileInfo>
@@ -128,6 +127,7 @@
 #include <QPageLayout>
 #include <QPainter>
 #include <QPixmap>
+#include <QRegularExpression>
 #include <QThread>
 #include <QTimer>
 #include <QTransform>
@@ -139,6 +139,7 @@
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <utility>
 
 #define NOTE_EDITOR_PAGE_HEADER                                                \
     QStringLiteral(                                                            \
@@ -534,8 +535,8 @@ void NoteEditorPrivate::onResourceFileChanged(
             << "resource local id = " << resourceLocalId
             << ", file storage path: " << fileStoragePath
             << ", new resource data size = "
-            << humanReadableSize(
-                   static_cast<quint64>(std::max(resourceData.size(), 0)))
+            << humanReadableSize(static_cast<quint64>(
+                   std::max<qsizetype>(resourceData.size(), 0)))
             << ", resource data hash = " << resourceDataHash.toHex());
 
     if (Q_UNLIKELY(!m_pNote)) {
@@ -551,17 +552,13 @@ void NoteEditorPrivate::onResourceFileChanged(
          ? *m_pNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-    int targetResourceIndex = -1;
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources)[i];
-        if (resource.localId() == resourceLocalId) {
-            targetResourceIndex = i;
-            break;
-        }
-    }
+    const auto resourceIt = std::find_if(
+        resources.begin(), resources.end(),
+        [&resourceLocalId](const qevercloud::Resource & resource) {
+            return resource.localId() == resourceLocalId;
+        });
 
-    if (Q_UNLIKELY(targetResourceIndex < 0)) {
+    if (Q_UNLIKELY(resourceIt == resources.end())) {
         QNDEBUG(
             "note_editor",
             "Can't process resource file change: can't find "
@@ -569,7 +566,7 @@ void NoteEditorPrivate::onResourceFileChanged(
         return;
     }
 
-    auto resource = qAsConst(resources)[targetResourceIndex];
+    auto & resource = *resourceIt;
 
     const QByteArray previousResourceHash =
         (resource.data() && resource.data()->bodyHash())
@@ -613,12 +610,7 @@ void NoteEditorPrivate::onResourceFileChanged(
         humanReadableSize(static_cast<quint64>(resourceData.size()));
 
     QNTRACE(
-        "note_editor", "Updating the resource within the note: " << resource);
-
-    Q_ASSERT(m_pNote->resources());
-    Q_ASSERT(m_pNote->resources()->size() > targetResourceIndex);
-
-    (*m_pNote->mutableResources())[targetResourceIndex] = resource;
+        "note_editor", "Updating resource within the note: " << resource);
 
     setModified();
 
@@ -3034,16 +3026,12 @@ void NoteEditorPrivate::onFoundResourceData(
              ? *m_pNote->resources()
              : QList<qevercloud::Resource>());
 
-        int resourceIndex = -1;
-        for (int i = 0, size = resources.size(); i < size; ++i) {
-            const auto & currentResource = qAsConst(resources)[i];
-            if (currentResource.localId() == resourceLocalId) {
-                resourceIndex = i;
-                break;
-            }
-        }
-
-        if (Q_UNLIKELY(resourceIndex < 0)) {
+        auto resourceIt = std::find_if(
+            resources.begin(), resources.end(),
+            [&resourceLocalId](const qevercloud::Resource & resource) {
+                return resource.localId() == resourceLocalId;
+            });
+        if (Q_UNLIKELY(resourceIt == resources.end())) {
             ErrorString errorDescription(
                 QT_TR_NOOP("Can't save attachment data to a file: "
                            "the attachment to be saved was not found "
@@ -3057,7 +3045,7 @@ void NoteEditorPrivate::onFoundResourceData(
         }
 
         QNTRACE("note_editor", "Updating the resource within the note");
-        resources[resourceIndex] = resource;
+        *resourceIt = resource;
         m_pNote->setResources(resources);
         Q_EMIT currentNoteChanged(*m_pNote);
 
@@ -3102,16 +3090,12 @@ void NoteEditorPrivate::onFoundResourceData(
              ? *m_pNote->resources()
              : QList<qevercloud::Resource>());
 
-        int resourceIndex = -1;
-        for (int i = 0, size = resources.size(); i < size; ++i) {
-            const auto & currentResource = qAsConst(resources)[i];
-            if (currentResource.localId() == resourceLocalId) {
-                resourceIndex = i;
-                break;
-            }
-        }
-
-        if (Q_UNLIKELY(resourceIndex < 0)) {
+        auto resourceIt = std::find_if(
+            resources.begin(), resources.end(),
+            [&resourceLocalId](const qevercloud::Resource & resource) {
+                return resource.localId() == resourceLocalId;
+            });
+        if (Q_UNLIKELY(resourceIt == resources.end())) {
             ErrorString errorDescription(
                 QT_TR_NOOP("Can't rotate image attachment: the attachment to "
                            "be rotated was not found within the note"));
@@ -3123,7 +3107,7 @@ void NoteEditorPrivate::onFoundResourceData(
             return;
         }
 
-        resources[resourceIndex] = resource;
+        *resourceIt = resource;
         m_pNote->setResources(resources);
 
         const QByteArray dataHash =
@@ -3684,13 +3668,18 @@ void NoteEditorPrivate::onNoteUpdated(qevercloud::Note note) // NOLINT
         const auto currentResources = *m_pNote->resources();
         const auto updatedResources = *note.resources();
 
-        int size = currentResources.size();
-        noteChanged = (size != updatedResources.size());
+        noteChanged = (currentResources.size() != updatedResources.size());
         if (!noteChanged) {
             // NOTE: clearing out data bodies before comparing resources
             // to speed up the comparison
-            for (int i = 0; i < size; ++i) {
-                auto currentResource = qAsConst(currentResources).at(i);
+            for (auto it = currentResources.constBegin(),
+                      uit = updatedResources.constBegin(),
+                      end = currentResources.constEnd(),
+                      uend = updatedResources.constEnd();
+                 it != end && uit != uend; ++it, ++uit)
+            {
+                auto currentResource = *it;
+
                 if (currentResource.data()) {
                     currentResource.mutableData()->setBody(std::nullopt);
                 }
@@ -3699,7 +3688,7 @@ void NoteEditorPrivate::onNoteUpdated(qevercloud::Note note) // NOLINT
                         std::nullopt);
                 }
 
-                auto updatedResource = qAsConst(updatedResources).at(i);
+                auto updatedResource = *uit;
                 if (updatedResource.data()) {
                     updatedResource.mutableData()->setBody(std::nullopt);
                 }
@@ -3910,11 +3899,11 @@ bool NoteEditorPrivate::parseInAppLink(
     noteGuid.resize(0);
     errorDescription.clear();
 
-    QRegExp regex(
-        QStringLiteral("evernote:///view/([^/]+)/([^/]+)/([^/]+)(/.*)?"));
+    static const QRegularExpression regex{
+        QStringLiteral("evernote:///view/([^/]+)/([^/]+)/([^/]+)(/.*)?")};
 
-    const int pos = regex.indexIn(urlString);
-    if (pos < 0) {
+    const auto match = regex.match(urlString);
+    if (!match.hasMatch()) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't process the in-app note link: "
                        "failed to parse the note guid from the link"));
@@ -3922,7 +3911,7 @@ bool NoteEditorPrivate::parseInAppLink(
         return false;
     }
 
-    const QStringList capturedTexts = regex.capturedTexts();
+    const QStringList capturedTexts = match.capturedTexts();
     if (capturedTexts.size() != 5) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't process the in-app note link: "
@@ -4156,14 +4145,14 @@ void NoteEditorPrivate::changeFontSize(const bool increase)
         fontSizes = QFontDatabase::standardSizes();
     }
 
-    int fontSizeIndex = fontSizes.indexOf(fontSize);
+    auto fontSizeIndex = fontSizes.indexOf(fontSize);
     if (fontSizeIndex < 0) {
         QNTRACE(
             "note_editor",
             "Couldn't find font size "
                 << fontSize << " within the available sizes, will take "
                 << "the closest one instead");
-        const int numFontSizes = fontSizes.size();
+        const auto numFontSizes = fontSizes.size();
         int currentSmallestDiscrepancy = 1e5;
         int currentClosestIndex = -1;
         for (int i = 0; i < numFontSizes; ++i) {
@@ -4338,31 +4327,26 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
                 << resourceHash.toHex());
 
         const auto recoIndexItems = recoIndices.items();
-        const int numIndexItems = recoIndexItems.size();
-        for (int j = 0; j < numIndexItems; ++j) {
-            const auto & recoIndexItem = recoIndexItems[j];
-            auto textItems = recoIndexItem.textItems();
-            const int numTextItems = textItems.size();
-
-            bool matchFound = false;
-            for (int k = 0; k < numTextItems; ++k) {
-                const auto & textItem = textItems[k];
-                if (Q_UNLIKELY(!textItem)) {
-                    continue;
-                }
-                if (textItem->text().contains(
-                        textToFind,
-                        (matchCase ? Qt::CaseSensitive : Qt::CaseInsensitive)))
+        for (const auto & recoIndexItem: std::as_const(recoIndexItems)) {
+            const auto textItems = recoIndexItem.textItems();
+            const auto textItemIt = std::find_if(
+                textItems.constBegin(),
+                textItems.constEnd(),
+                [&](const ResourceRecognitionIndexItem::ITextItemPtr & textItem)
                 {
-                    QNTRACE(
-                        "note_editor",
-                        "Found text item matching with "
-                            << "the text to find: " << textItem->text());
-                    matchFound = true;
-                }
-            }
+                    if (Q_UNLIKELY(!textItem)) {
+                        QNWARNING(
+                            "note_editor",
+                            "Detected null resource recognition indeex item");
+                        return false;
+                    }
 
-            if (matchFound) {
+                    return textItem->text().contains(
+                        textToFind,
+                        matchCase ? Qt::CaseSensitive : Qt::CaseInsensitive);
+                });
+
+            if (textItemIt != textItems.constEnd()) {
                 page->executeJavaScript(
                     QStringLiteral("imageAreasHilitor.hiliteImageArea('") +
                     QString::fromLocal8Bit(resourceHash.toHex()) +
@@ -4479,7 +4463,9 @@ void NoteEditorPrivate::noteToEditorContent()
 
     m_htmlCachedMemory = htmlData->html();
 
-    const int bodyTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("<body"));
+    const auto bodyTagIndex =
+        m_htmlCachedMemory.indexOf(QStringLiteral("<body"));
+
     if (bodyTagIndex < 0) {
         ErrorString error{
             QT_TR_NOOP("Can't find <body> tag in the result of note "
@@ -4496,7 +4482,7 @@ void NoteEditorPrivate::noteToEditorContent()
     QString pagePrefix = noteEditorPagePrefix();
     m_htmlCachedMemory.replace(0, bodyTagIndex, pagePrefix);
 
-    const int bodyClosingTagIndex =
+    const auto bodyClosingTagIndex =
         m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
 
     if (bodyClosingTagIndex < 0) {
@@ -4559,14 +4545,10 @@ void NoteEditorPrivate::inkNoteToEditorContent()
          ? *m_pNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-
     QString inkNoteHtml = noteEditorPagePrefix();
     inkNoteHtml += QStringLiteral("<body>");
 
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources).at(i);
-
+    for (const auto & resource: std::as_const(resources)) {
         if (!resource.guid()) {
             QNWARNING(
                 "note_editor",
@@ -4800,10 +4782,8 @@ void NoteEditorPrivate::manualSaveResourceToFile(
         if (!resourcePreferredSuffix.isEmpty() &&
             !suffixes.contains(resourcePreferredSuffix))
         {
-            const int numSuffixes = suffixes.size();
-            for (int i = 0; i < numSuffixes; ++i) {
-                const auto & currentSuffix = suffixes[i];
-                if (resourcePreferredSuffix.contains(currentSuffix)) {
+            for (const auto & suffix: std::as_const(suffixes)) {
+                if (resourcePreferredSuffix.contains(suffix)) {
                     shouldSkipResourcePreferredSuffix = true;
                     break;
                 }
@@ -4842,7 +4822,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(
 
         ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
         const QStringList childGroups = appSettings.childGroups();
-        const int attachmentsSaveLocGroupIndex =
+        const auto attachmentsSaveLocGroupIndex =
             childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
         if (attachmentsSaveLocGroupIndex >= 0) {
             QNTRACE(
@@ -4852,11 +4832,9 @@ void NoteEditorPrivate::manualSaveResourceToFile(
 
             appSettings.beginGroup(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
             const auto cachedFileSuffixes = appSettings.childKeys();
-            const int numPreferredSuffixes = preferredSuffixes.size();
-            for (int i = 0; i < numPreferredSuffixes; ++i) {
-                preferredSuffix = preferredSuffixes[i];
-
-                const int indexInCache =
+            for (const auto & preferredSuffix: std::as_const(preferredSuffixes))
+            {
+                const auto indexInCache =
                     cachedFileSuffixes.indexOf(preferredSuffix);
 
                 if (indexInCache < 0) {
@@ -4878,7 +4856,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(
                     continue;
                 }
 
-                const QFileInfo dirInfo(dirValue.toString());
+                const QFileInfo dirInfo{dirValue.toString()};
                 if (!dirInfo.exists()) {
                     QNTRACE(
                         "note_editor",
@@ -4932,9 +4910,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(
     }
 
     bool foundSuffix = false;
-    const int numPreferredSuffixes = preferredSuffixes.size();
-    for (int i = 0; i < numPreferredSuffixes; ++i) {
-        const auto & currentSuffix = preferredSuffixes[i];
+    for (const auto & currentSuffix: std::as_const(preferredSuffixes)) {
         if (absoluteFilePath.endsWith(currentSuffix, Qt::CaseInsensitive)) {
             foundSuffix = true;
             break;
@@ -5011,11 +4987,11 @@ QImage NoteEditorPrivate::buildGenericResourceImage(
         const int numCharsToSkip =
             (widthOverflow + ellipsisWidth) / singleCharWidth + 1;
 
-        const int dotIndex = displayName.lastIndexOf(QStringLiteral("."));
+        const auto dotIndex = displayName.lastIndexOf(QStringLiteral("."));
         if (dotIndex != 0 && (dotIndex > displayName.size() / 2)) {
             // Try to shorten the name while preserving the file extension.
             // Need to skip some chars before the dot index
-            int startSkipPos = dotIndex - numCharsToSkip;
+            auto startSkipPos = dotIndex - numCharsToSkip;
             if (startSkipPos >= 0) {
                 displayName.replace(
                     startSkipPos, numCharsToSkip, QStringLiteral("..."));
@@ -5238,9 +5214,7 @@ void NoteEditorPrivate::setupGenericResourceImages()
     bool shouldWaitForResourceImagesToSave = false;
 
     auto resources = *m_pNote->resources();
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources).at(i);
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.mime()) {
             mimeTypeName = *resource.mime();
             if (mimeTypeName.startsWith(QStringLiteral("image/"))) {
@@ -5649,14 +5623,13 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
 
     // See if extraData contains the misspelled word
     QString misSpelledWord;
-    const int extraDataSize = extraData.size();
-    for (int i = 0; i < extraDataSize; ++i) {
-        const QString & item = extraData[i];
+    for (const auto & item: std::as_const(extraData)) {
         if (!item.startsWith(QStringLiteral("MisSpelledWord_"))) {
             continue;
         }
 
         misSpelledWord = item.mid(15);
+        break;
     }
 
     if (!misSpelledWord.isEmpty()) {
@@ -5669,9 +5642,9 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
         }
 
         if (!correctionSuggestions.isEmpty()) {
-            const int numCorrectionSuggestions = correctionSuggestions.size();
-            for (int i = 0; i < numCorrectionSuggestions; ++i) {
-                const auto & correctionSuggestion = correctionSuggestions[i];
+            for (const auto & correctionSuggestion:
+                 std::as_const(correctionSuggestions))
+            {
                 if (Q_UNLIKELY(correctionSuggestion.isEmpty())) {
                     continue;
                 }
@@ -7159,14 +7132,16 @@ int NoteEditorPrivate::resourceIndexByHash(
         "NoteEditorPrivate::resourceIndexByHash: hash = "
             << resourceHash.toHex());
 
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources)[i];
-        if (resource.data() && resource.data()->bodyHash() &&
-            (*resource.data()->bodyHash() == resourceHash))
-        {
-            return i;
-        }
+    const auto resourceIt = std::find_if(
+        resources.constBegin(), resources.constEnd(),
+        [&resourceHash](const qevercloud::Resource & resource) {
+            return resource.data() && resource.data()->bodyHash() &&
+                *resource.data()->bodyHash() == resourceHash;
+        });
+    if (resourceIt != resources.constEnd()) {
+        // FIXME: switch to qsizetype after full migration to Qt6
+        return static_cast<int>(
+            std::distance(resources.constBegin(), resourceIt));
     }
 
     return -1;
@@ -7199,7 +7174,7 @@ bool NoteEditorPrivate::parseEncryptedTextContextMenuExtraData(
         return false;
     }
 
-    const int extraDataSize = extraData.size();
+    const auto extraDataSize = extraData.size();
     if (Q_UNLIKELY(extraDataSize != 5) && Q_UNLIKELY(extraDataSize != 6)) {
         errorDescription.setBase(
             QT_TR_NOOP("Extra data from JavaScript has wrong size"));
@@ -7457,9 +7432,7 @@ void NoteEditorPrivate::rebuildRecognitionIndicesCache()
     }
 
     const auto resources = *m_pNote->resources();
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources)[i];
+    for (const auto & resource: std::as_const(resources)) {
         if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor",
@@ -7474,8 +7447,8 @@ void NoteEditorPrivate::rebuildRecognitionIndicesCache()
             continue;
         }
 
-        const ResourceRecognitionIndices recoIndices(
-            *resource.recognition()->body());
+        const ResourceRecognitionIndices recoIndices{
+            *resource.recognition()->body()};
 
         if (recoIndices.isNull() || !recoIndices.isValid()) {
             QNTRACE(
@@ -8674,17 +8647,13 @@ void NoteEditorPrivate::replaceResourceInNote(
     }
 
     const auto resources = *m_pNote->resources();
-    int resourceIndex = -1;
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & currentResource = qAsConst(resources)[i];
-        if (currentResource.localId() == resource.localId()) {
-            resourceIndex = i;
-            break;
-        }
-    }
-
-    if (Q_UNLIKELY(resourceIndex < 0)) {
+    const auto resourceIt = std::find_if(
+        resources.constBegin(),
+        resources.constEnd(),
+        [resourceLocalId = resource.localId()](const qevercloud::Resource & r) {
+            return r.localId() == resourceLocalId;
+        });
+    if (Q_UNLIKELY(resourceIt == resources.constEnd())) {
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
                        "can't find the resource to be replaced"));
@@ -8694,7 +8663,7 @@ void NoteEditorPrivate::replaceResourceInNote(
         return;
     }
 
-    const auto & targetResource = qAsConst(resources)[resourceIndex];
+    const auto & targetResource = *resourceIt;
     QByteArray previousResourceHash;
     if (targetResource.data()->bodyHash()) {
         previousResourceHash = *targetResource.data()->bodyHash();
@@ -8819,21 +8788,17 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(
     const QFileInfoList entryList =
         dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
-    const int numEntries = entryList.size();
     QNTRACE(
         "note_editor",
-        "Found " << numEntries << " files in the image resources folder: "
+        "Found " << entryList.size() << " files in the image resources folder: "
                  << QDir::toNativeSeparators(fileStorageDirPath));
 
-    QString entryFilePath;
-    for (int i = 0; i < numEntries; ++i) {
-        const QFileInfo & entry = qAsConst(entryList)[i];
-
+    for (const auto & entry: std::as_const(entryList)) {
         if (!entry.isSymLink()) {
             continue;
         }
 
-        entryFilePath = entry.absoluteFilePath();
+        const auto entryFilePath = entry.absoluteFilePath();
         QNTRACE(
             "note_editor",
             "See if we need to remove the symlink to "
@@ -10680,9 +10645,8 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
          ? *m_pNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources).at(i);
+    // FIXME: rewrite this with std::find_if
+    for (const auto & resource: std::as_const(resources)) {
         if (resource.data() && resource.data()->bodyHash() &&
             (*resource.data()->bodyHash() == resourceHash))
         {
@@ -10796,26 +10760,18 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
         return;
     }
 
-    int targetResourceIndex = -1;
     auto resources =
         (m_pNote->resources()
          ? *m_pNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources)[i];
-        if (!resource.data() || !resource.data()->bodyHash() ||
-            (*resource.data()->bodyHash() != resourceHash))
-        {
-            continue;
-        }
-
-        targetResourceIndex = i;
-        break;
-    }
-
-    if (Q_UNLIKELY(targetResourceIndex < 0)) {
+    const auto resourceIt = std::find_if(
+        resources.begin(), resources.end(),
+        [&resourceHash](const qevercloud::Resource & resource) {
+            return resource.data() && resource.data()->bodyHash() &&
+                *resource.data()->bodyHash() == resourceHash;
+        });
+    if (Q_UNLIKELY(resourceIt == resources.end())) {
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("Can't find the corresponding resource in the note"));
@@ -10824,21 +10780,12 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
         return;
     }
 
-    auto & resource = resources[targetResourceIndex];
+    auto & resource = *resourceIt;
     if (Q_UNLIKELY(!(resource.data() && resource.data()->body()))) {
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("The resource doesn't have the data body set"));
         QNWARNING("note_editor", error);
-        Q_EMIT notifyError(error);
-        return;
-    }
-
-    if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
-        ErrorString error = errorPrefix;
-        error.appendBase(
-            QT_TR_NOOP("The resource doesn't have the data hash set"));
-        QNWARNING("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10871,47 +10818,19 @@ void NoteEditorPrivate::rotateImageAttachment(
         return;
     }
 
-    int targetResourceIndex = -1;
     auto resources =
         (m_pNote->resources()
          ? *m_pNote->resources()
          : QList<qevercloud::Resource>());
 
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources)[i];
-        if (!resource.data() || !resource.data()->bodyHash() ||
-            (*resource.data()->bodyHash() != resourceHash))
-        {
-            continue;
-        }
+    const auto resourceIt = std::find_if(
+        resources.begin(), resources.end(),
+        [&resourceHash](const qevercloud::Resource & resource) {
+            return resource.data() && resource.data()->bodyHash() &&
+                *resource.data()->bodyHash() == resourceHash;
+        });
 
-        if (Q_UNLIKELY(!resource.mime())) {
-            ErrorString error = errorPrefix;
-            error.appendBase(
-                QT_TR_NOOP("The corresponding attachment's "
-                           "mime type is not set"));
-            QNWARNING("note_editor", error << ", resource: " << resource);
-            Q_EMIT notifyError(error);
-            return;
-        }
-
-        if (Q_UNLIKELY(!resource.mime()->startsWith(QStringLiteral("image/")))) {
-            ErrorString error = errorPrefix;
-            error.appendBase(
-                QT_TR_NOOP("The corresponding attachment's mime type "
-                           "indicates it is not an image"));
-            error.details() = *resource.mime();
-            QNWARNING("note_editor", error << ", resource: " << resource);
-            Q_EMIT notifyError(error);
-            return;
-        }
-
-        targetResourceIndex = i;
-        break;
-    }
-
-    if (Q_UNLIKELY(targetResourceIndex < 0)) {
+    if (Q_UNLIKELY(resourceIt == resources.end())) {
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("Can't find the corresponding attachment "
@@ -10921,7 +10840,28 @@ void NoteEditorPrivate::rotateImageAttachment(
         return;
     }
 
-    auto & resource = resources[targetResourceIndex];
+    auto & resource = *resourceIt;
+
+    if (Q_UNLIKELY(!resource.mime())) {
+        ErrorString error = errorPrefix;
+        error.appendBase(
+            QT_TR_NOOP("The corresponding attachment's mime type is not set"));
+        QNWARNING("note_editor", error << ", resource: " << resource);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    if (Q_UNLIKELY(!resource.mime()->startsWith(QStringLiteral("image/")))) {
+        ErrorString error = errorPrefix;
+        error.appendBase(
+            QT_TR_NOOP("The corresponding attachment's mime type "
+                       "indicates it is not an image"));
+        error.details() = *resource.mime();
+        QNWARNING("note_editor", error << ", resource: " << resource);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
     if (!(resource.data() && resource.data()->body())) {
         QNDEBUG(
             "note_editor",
@@ -10934,15 +10874,6 @@ void NoteEditorPrivate::rotateImageAttachment(
             [resourceLocalId] = rotationDirection;
 
         Q_EMIT findResourceData(resourceLocalId);
-        return;
-    }
-
-    if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
-        ErrorString error = errorPrefix;
-        error.appendBase(
-            QT_TR_NOOP("The attachment doesn't have the data hash set"));
-        QNWARNING("note_editor", error << ", resource: " << resource);
-        Q_EMIT notifyError(error);
         return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@ namespace quentier {
 
 namespace {
 
-const QString gShortcutSettingsName = QStringLiteral("Shortcuts");
+const char * gShortcutSettingsName = "Shortcuts";
 
 } // namespace
 
@@ -104,7 +104,8 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         return {};
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -131,7 +132,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
                 "utility:shortcut",
                 "Returning the platform-specific "
                     << "default from QKeySequence");
-            return QKeySequence(key);
+            return QKeySequence{key};
         }
 
         QNTRACE("utility:shortcut", "Returning empty shortcut");
@@ -156,7 +157,8 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         return {};
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -198,7 +200,8 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
         return {};
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -214,7 +217,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
             "utility:shortcut",
             "Couldn't find user shortcut for standard "
                 << "key " << keyString << " (" << key << ")");
-        return QKeySequence();
+        return {};
     }
 
     const QKeySequence keySequence{
@@ -235,10 +238,11 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
             << ", context = " << context << ", account: " << account.name());
 
     if (Q_UNLIKELY(nonStandardKey.isEmpty())) {
-        return QKeySequence();
+        return {};
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -281,7 +285,8 @@ void ShortcutManagerPrivate::setUserShortcut(
         return;
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -313,7 +318,8 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(
         return;
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -351,7 +357,8 @@ void ShortcutManagerPrivate::setDefaultShortcut(
         return;
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -401,7 +408,8 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(
         return;
     }
 
-    ApplicationSettings settings{account, gShortcutSettingsName};
+    ApplicationSettings settings{
+        account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
         context,

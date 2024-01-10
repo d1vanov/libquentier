@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 namespace quentier {
 
@@ -117,40 +118,15 @@ void ImageResourceRotationDelegate::rotateImageResource()
         return;
     }
 
-    int targetResourceIndex = -1;
-    QList<qevercloud::Resource> resources = *m_pNote->resources();
-    const int numResources = resources.size();
-    for (int i = 0; i < numResources; ++i) {
-        const auto & resource = qAsConst(resources)[i];
-        if (!resource.data() || !resource.data()->bodyHash() ||
-            *resource.data()->bodyHash() != m_resourceHashBefore)
-        {
-            continue;
-        }
+    const auto resources = *m_pNote->resources();
+    const auto resourceIt = std::find_if(
+        resources.constBegin(), resources.constEnd(),
+        [this](const qevercloud::Resource & resource) {
+            return resource.data() && resource.data()->bodyHash() &&
+                *resource.data()->bodyHash() == m_resourceHashBefore;
+        });
 
-        if (Q_UNLIKELY(!resource.mime())) {
-            error.appendBase(QT_TR_NOOP("The mime type is missing"));
-            QNWARNING(
-                "note_editor:delegate", error << ", resource: " << resource);
-            Q_EMIT notifyError(error);
-            return;
-        }
-
-        if (!resource.mime()->startsWith(QStringLiteral("image/"))) {
-            error.appendBase(
-                QT_TR_NOOP("The mime type indicates the attachment "
-                           "is not an image"));
-            QNWARNING(
-                "note_editor:delegate", error << ", resource: " << resource);
-            Q_EMIT notifyError(error);
-            return;
-        }
-
-        targetResourceIndex = i;
-        break;
-    }
-
-    if (Q_UNLIKELY(targetResourceIndex < 0)) {
+    if (Q_UNLIKELY(resourceIt == resources.constEnd())) {
         error.appendBase(
             QT_TR_NOOP("Can't find the attachment within the note"));
         QNWARNING("note_editor:delegate", error);
@@ -158,7 +134,27 @@ void ImageResourceRotationDelegate::rotateImageResource()
         return;
     }
 
-    m_rotatedResource = qAsConst(resources)[targetResourceIndex];
+    const auto & resource = *resourceIt;
+
+    if (Q_UNLIKELY(!resource.mime())) {
+        error.appendBase(QT_TR_NOOP("The mime type is missing"));
+        QNWARNING(
+            "note_editor:delegate", error << ", resource: " << resource);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    if (!resource.mime()->startsWith(QStringLiteral("image/"))) {
+        error.appendBase(
+            QT_TR_NOOP("The mime type indicates the attachment "
+                        "is not an image"));
+        QNWARNING(
+            "note_editor:delegate", error << ", resource: " << resource);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    m_rotatedResource = resource;
     if (Q_UNLIKELY(!(m_rotatedResource.data() &&
                      m_rotatedResource.data()->body())))
     {

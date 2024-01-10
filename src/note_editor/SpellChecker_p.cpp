@@ -460,8 +460,9 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 #endif
             Qt::CaseInsensitive);
 
-        const int numDictionaries = ownDictionaryNamesList.size();
+        const auto numDictionaries = ownDictionaryNamesList.size();
         if (numDictionaries == ownDictionaryPathsList.size()) {
+            // FIXME: change to qsizetype after full migration to Qt6
             for (int i = 0; i < numDictionaries; ++i) {
                 addSystemDictionary(
                     QDir::fromNativeSeparators(ownDictionaryPathsList[i]),
@@ -498,7 +499,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     {
         // These environment variables are intended to specify the only one
         // dictionary
-        const int nameSeparatorIndex =
+        const auto nameSeparatorIndex =
             hunspellDictionaryName.indexOf(envVarSeparator);
 
         if (nameSeparatorIndex >= 0) {
@@ -506,7 +507,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
                 hunspellDictionaryName.left(nameSeparatorIndex);
         }
 
-        const int nameColonIndex =
+        const auto nameColonIndex =
             hunspellDictionaryName.indexOf(QStringLiteral(","));
 
         if (nameColonIndex >= 0) {
@@ -516,7 +517,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 
         hunspellDictionaryName = hunspellDictionaryName.trimmed();
 
-        const int pathSeparatorIndex =
+        const auto pathSeparatorIndex =
             hunspellDictionaryPath.indexOf(envVarSeparator);
 
         if (pathSeparatorIndex >= 0) {
@@ -558,7 +559,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     for (const auto & standardPath: qAsConst(standardPaths)) {
         QNTRACE("note_editor", "Inspecting standard path " << standardPath);
 
-        QDir dir(standardPath);
+        QDir dir{standardPath};
         if (!dir.exists()) {
             QNTRACE(
                 "note_editor",
@@ -647,7 +648,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     ApplicationSettings settings;
     const QStringList childGroups = settings.childGroups();
 
-    const int foundDictionariesGroupIndex =
+    const auto foundDictionariesGroupIndex =
         childGroups.indexOf(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
 
     if (foundDictionariesGroupIndex >= 0) {
@@ -1112,8 +1113,12 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(
     if (Q_LIKELY(success)) {
         QBuffer buffer(&data);
         if (buffer.open(QIODevice::ReadOnly)) {
-            QTextStream stream(&buffer);
+            QTextStream stream{&buffer};
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             stream.setCodec("UTF-8");
+#endif
+
             QString word;
             while (true) {
                 word = stream.readLine();

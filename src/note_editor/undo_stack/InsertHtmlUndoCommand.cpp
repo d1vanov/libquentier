@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,6 +29,8 @@
 #include <QCryptographicHash>
 #include <QMimeDatabase>
 #include <QMimeType>
+
+#include <utility>
 
 namespace quentier {
 
@@ -81,18 +83,13 @@ void InsertHtmlUndoCommand::undoImpl()
 {
     QNDEBUG("note_editor:undo", "InsertHtmlUndoCommand::undoImpl");
 
-    const auto & addedResources = m_addedResources;
-    const int numResources = addedResources.size();
-
-    for (int i = 0; i < numResources; ++i) {
-        const auto * pResource = &(addedResources.at(i));
-
-        if (Q_UNLIKELY(!pResource->data() || !pResource->data()->bodyHash())) {
+    for (auto & resource: m_addedResources) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no data hash: " << *pResource);
+                "One of added resources has no data hash: " << resource);
 
-            if (!pResource->data() || !pResource->data()->body()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
                     "This resource has no data body as well, skipping it");
@@ -100,19 +97,15 @@ void InsertHtmlUndoCommand::undoImpl()
             }
 
             const QByteArray hash = QCryptographicHash::hash(
-                *pResource->data()->body(), QCryptographicHash::Md5);
+                *resource.data()->body(), QCryptographicHash::Md5);
 
-            m_addedResources[i].mutableData()->setBodyHash(hash);
-
-            // This might have caused detach, need to update the pointer to
-            // the resource
-            pResource = &(addedResources.at(i));
+            resource.mutableData()->setBodyHash(hash);
         }
 
-        m_noteEditorPrivate.removeResourceFromNote(*pResource);
+        m_noteEditorPrivate.removeResourceFromNote(resource);
 
         const auto rit = m_resourceFileStoragePathsByResourceLocalId.find(
-            pResource->localId());
+            resource.localId());
 
         if (Q_LIKELY(rit != m_resourceFileStoragePathsByResourceLocalId.end()))
         {
@@ -120,7 +113,7 @@ void InsertHtmlUndoCommand::undoImpl()
         }
 
         Q_UNUSED(
-            m_resourceInfo.removeResourceInfo(*pResource->data()->bodyHash()))
+            m_resourceInfo.removeResourceInfo(*resource.data()->bodyHash()))
     }
 
     GET_PAGE()
@@ -132,17 +125,17 @@ void InsertHtmlUndoCommand::redoImpl()
 {
     QNDEBUG("note_editor:undo", "InsertHtmlUndoCommand::redoImpl");
 
-    const auto & addedResources = m_addedResources;
-    const int numResources = addedResources.size();
-
     QMimeDatabase mimeDatabase;
 
-    for (int i = 0; i < numResources; ++i) {
-        const auto * pResource = &(addedResources.at(i));
+    for (auto it = m_addedResources.begin(), end = m_addedResources.end();
+         it != end; ++it)
+    {
+        auto & resource = *it;
+        auto index = std::distance(m_addedResources.begin(), it);
 
         QMimeType mimeType;
-        if (pResource->mime()) {
-            mimeType = mimeDatabase.mimeTypeForName(*pResource->mime());
+        if (resource.mime()) {
+            mimeType = mimeDatabase.mimeTypeForName(*resource.mime());
         }
 
         if (Q_UNLIKELY(!mimeType.isValid())) {
@@ -152,13 +145,13 @@ void InsertHtmlUndoCommand::redoImpl()
                     << "mime type from the mime type name or resource has "
                     << "no declared mime type");
 
-            if (pResource->data() && pResource->data()->body()) {
+            if (resource.data() && resource.data()->body()) {
                 QNDEBUG(
                     "note_editor:undo",
                     "Trying to deduce the mime type from the resource data");
 
                 mimeType = mimeDatabase.mimeTypeForData(
-                    *pResource->data()->body());
+                    *resource.data()->body());
             }
         }
 
@@ -172,30 +165,27 @@ void InsertHtmlUndoCommand::redoImpl()
                 mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
         }
 
-        if (Q_UNLIKELY(!pResource->mime())) {
+        if (Q_UNLIKELY(!resource.mime())) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no mime type: " << *pResource);
+                "One of added resources has no mime type: " << resource);
 
-            if (!pResource->data() || !pResource->data()->body()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
                     "This resource has no data body as well, skipping it");
                 continue;
             }
 
-            m_addedResources[i].setMime(mimeType.name());
-            // This might have caused resize, need to update the pointer
-            // to the resource
-            pResource = &(addedResources.at(i));
+            resource.setMime(mimeType.name());
         }
 
-        if (Q_UNLIKELY(!pResource->data() || !pResource->data()->bodyHash())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no data hash: " << *pResource);
+                "One of added resources has no data hash: " << resource);
 
-            if (!pResource->data() || !pResource->data()->body()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
                     "This resource has no data body as well, skipping it");
@@ -203,52 +193,45 @@ void InsertHtmlUndoCommand::redoImpl()
             }
 
             const QByteArray hash = QCryptographicHash::hash(
-                *pResource->data()->body(), QCryptographicHash::Md5);
+                *resource.data()->body(), QCryptographicHash::Md5);
 
-            m_addedResources[i].mutableData()->setBodyHash(hash);
-
-            // This might have caused resize, need to update the pointer
-            // to the resource
-            pResource = &(addedResources.at(i));
+            resource.mutableData()->setBodyHash(hash);
         }
 
-        if (Q_UNLIKELY(!pResource->data() || !pResource->data()->size())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->size()))) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no data size: " << *pResource);
+                "One of added resources has no data size: " << resource);
 
-            if (!pResource->data() || !pResource->data()->body()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
                     "This resource has no data body as well, skipping it");
                 continue;
             }
 
-            m_addedResources[i].mutableData()->setSize(
-                m_addedResources[i].data()->body()->size());
-
-            // This might have caused resize, need to update the pointer
-            // to the resource
-            pResource = &(addedResources.at(i));
+            resource.mutableData()->setSize(
+                static_cast<qint32>(resource.data()->body()->size()));
         }
 
-        m_noteEditorPrivate.addResourceToNote(*pResource);
+        m_noteEditorPrivate.addResourceToNote(resource);
 
-        if (Q_LIKELY(m_resourceFileStoragePaths.size() > i)) {
-            m_resourceFileStoragePathsByResourceLocalId[pResource->localId()] =
-                m_resourceFileStoragePaths[i];
+        if (Q_LIKELY(m_resourceFileStoragePaths.size() > index)) {
+            m_resourceFileStoragePathsByResourceLocalId[resource.localId()] =
+                m_resourceFileStoragePaths[static_cast<int>(index)];
 
             QSize resourceImageSize;
-            if (pResource->height() && pResource->width()) {
-                resourceImageSize.setHeight(*pResource->height());
-                resourceImageSize.setWidth(*pResource->width());
+            if (resource.height() && resource.width()) {
+                resourceImageSize.setHeight(*resource.height());
+                resourceImageSize.setWidth(*resource.width());
             }
 
             m_resourceInfo.cacheResourceInfo(
-                *pResource->data()->bodyHash(), resourceDisplayName(*pResource),
+                *resource.data()->bodyHash(), resourceDisplayName(resource),
                 humanReadableSize(
-                    static_cast<quint64>(*pResource->data()->size())),
-                m_resourceFileStoragePaths[i], resourceImageSize);
+                    static_cast<quint64>(*resource.data()->size())),
+                m_resourceFileStoragePaths[static_cast<int>(index)],
+                resourceImageSize);
         }
         else {
             QNWARNING(
@@ -257,7 +240,7 @@ void InsertHtmlUndoCommand::redoImpl()
                     << "resources: the number of resource file storage path is "
                     << "less than or equal to the index: paths = "
                     << m_resourceFileStoragePaths.join(QStringLiteral(", "))
-                    << "; resource: " << pResource);
+                    << "; resource: " << resource);
         }
     }
 

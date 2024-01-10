@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,8 @@
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QStringList>
+
+#include <utility>
 
 namespace quentier {
 
@@ -55,12 +57,9 @@ void SpellCheckerDictionariesFinder::run()
         return;                                                                \
     }
 
-    QFileInfoList rootDirs = QDir::drives();
-    const int numRootDirs = rootDirs.size();
-    for (int i = 0; i < numRootDirs; ++i) {
+    const QFileInfoList rootDirInfos = QDir::drives();
+    for (const auto & rootDirInfo: std::as_const(rootDirInfos)) {
         CHECK_AND_STOP()
-
-        const QFileInfo & rootDirInfo = rootDirs[i];
 
         if (Q_UNLIKELY(!rootDirInfo.isDir())) {
             QNTRACE(
@@ -69,9 +68,9 @@ void SpellCheckerDictionariesFinder::run()
             continue;
         }
 
-        QDirIterator it(
+        QDirIterator it{
             rootDirInfo.absolutePath(), fileFilters, QDir::Files,
-            QDirIterator::Subdirectories);
+            QDirIterator::Subdirectories};
 
         while (it.hasNext()) {
             CHECK_AND_STOP()

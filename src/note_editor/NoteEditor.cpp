@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,7 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
 {
     auto * pLayout = new QVBoxLayout;
     pLayout->addWidget(m_backend->widget());
-    pLayout->setMargin(0);
+    pLayout->setContentsMargins(0, 0, 0, 0);
     setLayout(pLayout);
     setAcceptDrops(true);
 }

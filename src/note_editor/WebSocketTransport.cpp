@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -91,7 +91,7 @@ bool WebSocketTransport::parseMessage(
      * FIXME: need to have a better understanding of how this thing is supposed
      * to work
      */
-    const int lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
+    const auto lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
     if (lastOpeningCurvyBraceIndex <= 0) {
         QNWARNING(
             "note_editor",

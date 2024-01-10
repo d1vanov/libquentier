@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -223,7 +223,7 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         return;
     }
 
-    const int numResources = m_imgDataBySourceUrl.size();
+    const auto numResources = m_imgDataBySourceUrl.size();
 
     QList<qevercloud::Resource> resources;
     resources.reserve(numResources);
@@ -265,8 +265,8 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
                 continue;
             }
 
-            const int dataSize = resource.data()->body()->size();
-            resource.mutableData()->setSize(dataSize);
+            const auto dataSize = resource.data()->body()->size();
+            resource.mutableData()->setSize(static_cast<qint32>(dataSize));
         }
 
         m_resourceFileStoragePathsByResourceLocalId[resource.localId()] =
@@ -329,7 +329,10 @@ void InsertHtmlDelegate::doStart()
     QString secondRoundCleanedUpHtml;
     QXmlStreamWriter writer(&secondRoundCleanedUpHtml);
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
 
     int writeElementCounter = 0;
     size_t skippedElementWithPreservedContentsNestingCounter = 0;
@@ -583,7 +586,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
         QString format;
         const QString urlString = url.toString();
 
-        const int dotIndex =
+        const auto dotIndex =
             urlString.lastIndexOf(QStringLiteral("."), -1, Qt::CaseInsensitive);
 
         bool res = false;
@@ -740,7 +743,10 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
     QString htmlWithAlteredImgTags;
     QXmlStreamWriter writer(&htmlWithAlteredImgTags);
     writer.setAutoFormatting(false);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     writer.setCodec("UTF-8");
+#endif
 
     int writeElementCounter = 0;
     QString lastElementName;
