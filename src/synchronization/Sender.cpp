@@ -111,6 +111,7 @@ QFuture<ISender::Result> Sender::send(
 
     sendContext->callbackWeak = std::move(callbackWeak);
     sendContext->userOwnSendStatus = std::make_shared<SendStatus>();
+    sendContext->sendStatusMutex = std::make_shared<QMutex>();
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
