@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,16 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/utility/TagSortByParentChildRelations.h>
+
+#include "tag_topological_sort/TagDirectedGraphDepthFirstSearch.h"
+
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/TagSortByParentChildRelations.h>
 
 #include <qevercloud/types/Tag.h>
 
-#include "tag_topological_sort/TagDirectedGraphDepthFirstSearch.h"
+#include <utility>
 
 namespace quentier {
 
@@ -31,14 +34,14 @@ bool sortTagsByParentChildRelations(
 {
     if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QString log;
-        QTextStream strm(&log);
+        QTextStream strm{&log};
         strm << "Tags list before performing the topological sort: ";
 
-        for (const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: ::std::as_const(tagList)) {
             strm << tag << ", ";
         }
         strm.flush();
-        QNTRACE("utility:tar_sort", log);
+        QNTRACE("utility::tag_sort", log);
     }
 
     if (tagList.isEmpty() || (tagList.size() == 1)) {
@@ -53,11 +56,11 @@ bool sortTagsByParentChildRelations(
 
     bool allTagsHaveGuids = true;
 
-    for (const auto & tag: ::qAsConst(tagList)) {
+    for (const auto & tag: std::as_const(tagList)) {
         if (!tag.guid()) {
             allTagsHaveGuids = false;
             QNDEBUG(
-                "utility:tar_sort",
+                "utility::tag_sort",
                 "Not all tags have guids, won't use "
                     << "guids to track parent-child relations");
             break;
@@ -67,7 +70,7 @@ bool sortTagsByParentChildRelations(
     if (!allTagsHaveGuids) {
         bool allTagsHaveLocalIds = true;
 
-        for (const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: std::as_const(tagList)) {
             if (tag.localId().isEmpty()) {
                 allTagsHaveLocalIds = false;
                 break;
@@ -87,7 +90,7 @@ bool sortTagsByParentChildRelations(
 
     TagDirectedGraph graph;
 
-    for (const auto & tag: ::qAsConst(tagList)) {
+    for (const auto & tag: std::as_const(tagList)) {
         if (allTagsHaveGuids && tag.guid()) {
             const QString & guid = *tag.guid();
             const QString parentTagGuid =
@@ -96,16 +99,16 @@ bool sortTagsByParentChildRelations(
         }
         else if (!tag.localId().isEmpty()) {
             const QString & localId = tag.localId();
-            const QString parentTagLocalId = tag.parentTagLocalId();
+            const QString & parentTagLocalId = tag.parentTagLocalId();
             QNTRACE(
-                "utility:tar_sort",
+                "utility::tag_sort",
                 "Adding tag local id " << localId << " and tag parent local id "
                                        << parentTagLocalId << " to the graph");
             graph.addChild(parentTagLocalId, localId);
         }
         else {
             QNTRACE(
-                "utility:tar_sort",
+                "utility::tag_sort",
                 "Skipping tag without either guid or local id: " << tag);
         }
     }
@@ -154,7 +157,7 @@ bool sortTagsByParentChildRelations(
 
         if (Q_UNLIKELY(it == tagList.end())) {
             QNDEBUG(
-                "utility:tar_sort",
+                "utility::tag_sort",
                 "Skipping the tag guid or local id not found within "
                     << "the original set (probably the guid of some parent tag "
                     << "not present within the sorted subset): " << id);
@@ -169,14 +172,14 @@ bool sortTagsByParentChildRelations(
 
     if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QString log;
-        QTextStream strm(&log);
+        QTextStream strm{&log};
         strm << "Tags list after performing the topological sort: ";
 
-        for (const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: std::as_const(tagList)) {
             strm << tag << "\n";
         }
         strm.flush();
-        QNTRACE("utility:tar_sort", log);
+        QNTRACE("utility::tag_sort", log);
     }
 
     return true;

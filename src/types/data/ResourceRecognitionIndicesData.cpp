@@ -418,7 +418,7 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
     QString objectType;
     int weight = -1;
 
-    for (const auto & attribute: qAsConst(attributes)) {
+    for (const auto & attribute: std::as_const(attributes)) {
         const auto & name = attribute.name();
         const auto & value = attribute.value();
 
@@ -463,7 +463,7 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
     QString shape;
     int weight = -1;
 
-    for (const auto & attribute: qAsConst(attributes)) {
+    for (const auto & attribute: std::as_const(attributes)) {
         const auto & name = attribute.name();
         const auto & value = attribute.value();
 
@@ -508,7 +508,7 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
 
     int weight = -1;
 
-    for (const auto & attribute: qAsConst(attributes)) {
+    for (const auto & attribute: std::as_const(attributes)) {
         const auto & name = attribute.name();
         const auto & value = attribute.value();
 

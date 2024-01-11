@@ -23,6 +23,8 @@
 
 #include <QRegularExpression>
 
+#include <utility>
+
 namespace quentier {
 
 StringUtilsPrivate::StringUtilsPrivate()
@@ -36,7 +38,7 @@ void StringUtilsPrivate::removePunctuation(
     QString filterStr =
         QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
 
-    for (const auto & chr: qAsConst(charactersToPreserve)) {
+    for (const auto & chr: std::as_const(charactersToPreserve)) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         int pos = -1;
 #else

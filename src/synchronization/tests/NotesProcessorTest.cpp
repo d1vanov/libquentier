@@ -1653,7 +1653,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
             caughtEdamSystemExceptionWithRateLimit = true;
         }
     }
-    catch (...) {
+    catch (...) { // NOLINT
     }
 
     EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
@@ -1706,7 +1706,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
             caughtEdamSystemExceptionWithRateLimit = true;
         }
     }
-    catch (...) {
+    catch (...) { // NOLINT
     }
 
     EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);

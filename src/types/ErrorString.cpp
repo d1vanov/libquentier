@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,11 +17,14 @@
  */
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include "data/ErrorStringData.h"
 
+#include <quentier/utility/Compat.h>
+
 #include <QCoreApplication>
+
+#include <utility>
 
 namespace quentier {
 
@@ -137,7 +140,7 @@ QString ErrorString::localizedString() const
     }
 
     QString additionalBasesStr;
-    for (const auto & additionalBase: qAsConst(d->m_additionalBases)) {
+    for (const auto & additionalBase: std::as_const(d->m_additionalBases)) {
         if (additionalBase.isEmpty()) {
             continue;
         }
@@ -199,7 +202,7 @@ QString ErrorString::nonLocalizedString() const
 {
     QString result = d->m_base;
 
-    for (const auto & additionalBase: qAsConst(d->m_additionalBases)) {
+    for (const auto & additionalBase: std::as_const(d->m_additionalBases)) {
         if (additionalBase.isEmpty()) {
             continue;
         }

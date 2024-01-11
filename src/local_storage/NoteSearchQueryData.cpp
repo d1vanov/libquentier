@@ -272,7 +272,7 @@ bool NoteSearchQuery::Data::parseQueryString(
     const QString negatedAnyToDo = QStringLiteral("-todo:*");
     const QString anyToDo = QStringLiteral("todo:*");
 
-    for (const auto & searchTerm: qAsConst(words)) {
+    for (const auto & searchTerm: std::as_const(words)) {
         if (searchTerm == negatedFinishedToDo) {
             if (m_hasFinishedToDo) {
                 error.setBase(QT_TRANSLATE_NOOP(
@@ -337,7 +337,7 @@ bool NoteSearchQuery::Data::parseQueryString(
     QString negatedEncryption = QStringLiteral("-encryption:");
     QString encryption = QStringLiteral("encryption:");
 
-    for (const auto & searchTerm: qAsConst(words)) {
+    for (const auto & searchTerm: std::as_const(words)) {
         if (searchTerm == negatedEncryption) {
             m_hasNegatedEncryption = true;
         }
@@ -425,7 +425,7 @@ QTextStream & NoteSearchQuery::Data::print(QTextStream & strm) const
     }                                                                          \
     else {                                                                     \
         strm << indent << #name ": { \n";                                      \
-        for (const auto & value: qAsConst(m_##name)) {                         \
+        for (const auto & value: std::as_const(m_##name)) {                    \
             strm << indent << indent << __VA_ARGS__(value) << "; \n";          \
         }                                                                      \
         strm << indent << "}; \n";                                             \
@@ -1144,7 +1144,7 @@ bool NoteSearchQuery::Data::convertAbsoluteAndRelativeDateTimesToTimestamps(
     QString asterisk = QStringLiteral("*");
     QString wordCopy;
     for (auto & word: words) {
-        for (const auto & prefix: qAsConst(dateTimePrefixes)) {
+        for (const auto & prefix: std::as_const(dateTimePrefixes)) {
             if (word.startsWith(prefix)) {
                 wordCopy = word;
 

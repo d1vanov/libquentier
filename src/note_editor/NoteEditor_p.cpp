@@ -980,7 +980,7 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
         return;
     }
 
-    const auto & resource = qAsConst(resources)[resourceIndex];
+    const auto & resource = std::as_const(resources)[resourceIndex];
     const QString & resourceLocalId = resource.localId();
 
     const auto it = std::find_if(
@@ -1045,7 +1045,7 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
         return;
     }
 
-    const auto & resource = qAsConst(resources)[resourceIndex];
+    const auto & resource = std::as_const(resources)[resourceIndex];
 
     if ((!resource.data() || !resource.data()->body()) &&
         (!resource.alternateData() || !resource.alternateData()->body())) {
@@ -2593,12 +2593,12 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(
 
     if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QNTRACE("note_editor", "Added resources: ");
-        for (const auto & resource: qAsConst(addedResources)) {
+        for (const auto & resource: std::as_const(addedResources)) {
             QNTRACE("note_editor", resource);
         }
 
         QNTRACE("note_editor", "Resource file storage paths: ");
-        for (const auto & path: qAsConst(resourceFileStoragePaths)) {
+        for (const auto & path: std::as_const(resourceFileStoragePaths)) {
             QNTRACE("note_editor", path);
         }
     }
@@ -3287,7 +3287,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(
          : QList<qevercloud::Resource>());
 
     const QString imageResourceMimePrefix = QStringLiteral("image/");
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         QNTRACE("note_editor", "Processing resource: " << resource);
 
         if (!resource.mime() ||
@@ -3552,7 +3552,7 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(
         auto resources = *m_pNote->resources();
         int numImageResources = 0;
         QString imageResourcePrefix = QStringLiteral("image");
-        for (const auto & resource: qAsConst(resources)) {
+        for (const auto & resource: std::as_const(resources)) {
             if (!resource.mime()) {
                 continue;
             }
@@ -7399,7 +7399,7 @@ void NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu()
     auto * pSpellCheckerDictionariesSubMenu =
         m_pGenericTextContextMenu->addMenu(tr("Spell checker dictionaries"));
 
-    for (const auto & pair: qAsConst(availableDictionaries)) {
+    for (const auto & pair: std::as_const(availableDictionaries)) {
         const QString & name = pair.first;
 
         auto * pAction = new QAction(name, pSpellCheckerDictionariesSubMenu);
@@ -7514,7 +7514,7 @@ void NoteEditorPrivate::refreshMisSpelledWordsList()
         return;
     }
 
-    for (const auto & originalWord: qAsConst(words)) {
+    for (const auto & originalWord: std::as_const(words)) {
         QNTRACE("note_editor", "Checking word \"" << originalWord << "\"");
 
         QString word = originalWord;
@@ -7587,7 +7587,7 @@ void NoteEditorPrivate::applySpellCheck(const bool applyToSelection)
     }
 
     javascript += QStringLiteral("('");
-    for (const auto & word: qAsConst(m_currentNoteMisSpelledWords)) {
+    for (const auto & word: std::as_const(m_currentNoteMisSpelledWords)) {
         javascript += word;
         javascript += QStringLiteral("', '");
     }
@@ -8871,7 +8871,7 @@ void NoteEditorPrivate::onDropEvent(QDropEvent * pEvent)
     }
 
     const auto urls = pMimeData->urls();
-    for (const auto & url: qAsConst(urls)) {
+    for (const auto & url: std::as_const(urls)) {
         if (Q_UNLIKELY(!url.isLocalFile())) {
             continue;
         }
@@ -9103,7 +9103,7 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
          ? *m_pNote->resources()
          : QList<qevercloud::Resource>());
 
-    for (const auto & resource: qAsConst(resources)) {
+    for (const auto & resource: std::as_const(resources)) {
         QNTRACE(
             "note_editor",
             "Computing size contributions for resource: " << resource);
@@ -9353,7 +9353,7 @@ void NoteEditorPrivate::onSpellCheckerDynamicHelperUpdate(QStringList words)
         return;
     }
 
-    for (auto word: qAsConst(words)) {
+    for (auto word: std::as_const(words)) {
         word = word.trimmed();
         m_stringUtils.removePunctuation(word);
 
@@ -10552,7 +10552,7 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
         return;
     }
 
-    const auto & resource = qAsConst(resources).at(resourceIndex);
+    const auto & resource = std::as_const(resources).at(resourceIndex);
 
     if (Q_UNLIKELY(!(
             (resource.data() && resource.data()->body()) ||

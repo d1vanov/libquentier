@@ -30,6 +30,7 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <utility>
 
 #ifdef Q_OS_WIN
 
@@ -111,7 +112,7 @@ bool removeDirImpl(const QString & dirPath)
                 QDir::Files,
             QDir::DirsFirst);
 
-        for (const auto & info: qAsConst(dirContents)) {
+        for (const auto & info: std::as_const(dirContents)) {
             if (info.isDir()) {
                 result = removeDirImpl(info.absoluteFilePath());
             }

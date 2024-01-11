@@ -24,6 +24,8 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 namespace {
@@ -194,7 +196,7 @@ void SyncStateStorage::setSyncState(
 
     int counter = 0;
     for (auto it:
-         qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid))) {
+         qevercloud::toRange(std::as_const(updateCountsByLinkedNotebookGuid))) {
         const QString & guid = it.key();
 
         const auto syncTimeIt =

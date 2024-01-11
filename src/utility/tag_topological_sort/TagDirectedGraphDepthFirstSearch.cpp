@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,8 @@
 
 #include "TagDirectedGraphDepthFirstSearch.h"
 
+#include <utility>
+
 namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
@@ -25,7 +27,7 @@ TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
     m_graph(std::move(graph))
 {
     const auto allTagIds = m_graph.allTagIds();
-    for (const auto & tagId: qAsConst(allTagIds)) {
+    for (const auto & tagId: std::as_const(allTagIds)) {
         if (!reached(tagId)) {
             depthFirstSearch(tagId);
         }
@@ -63,7 +65,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
     const auto childTagIds = m_graph.childTagIds(sourceTagId);
-    for (const auto & childTagId: qAsConst(childTagIds)) {
+    for (const auto & childTagId: std::as_const(childTagIds)) {
         if (hasCycle()) {
             return;
         }

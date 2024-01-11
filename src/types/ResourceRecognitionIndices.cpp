@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,8 @@
 #include <quentier/types/ResourceRecognitionIndices.h>
 
 #include "data/ResourceRecognitionIndicesData.h"
+
+#include <utility>
 
 namespace quentier {
 
@@ -175,7 +177,7 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
 
     if (!d->m_items.isEmpty()) {
         strm << "  recognition items: \n";
-        for (const auto & item: qAsConst(d->m_items)) {
+        for (const auto & item: std::as_const(d->m_items)) {
             strm << item << "\n";
         }
         strm << "\n";

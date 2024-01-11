@@ -66,7 +66,7 @@ QStringList TagDirectedGraph::allTagIds() const
         result << it.key();
 
         const auto & childTagIds = it.value();
-        for (const auto & childTagId: ::qAsConst(childTagIds)) {
+        for (const auto & childTagId: std::as_const(childTagIds)) {
             result << childTagId;
         }
     }

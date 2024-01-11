@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <utility>
 
 #define SPELL_CHECKER_FOUND_DICTIONARIES_GROUP                                 \
     QStringLiteral("SpellCheckerFoundDictionaries")
@@ -224,7 +225,8 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
     CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
     // clang-format on
     QByteArray dataToWrite;
-    for (const auto & it: qevercloud::toRange(qAsConst(m_userDictionary))) {
+    for (const auto & it: qevercloud::toRange(std::as_const(m_userDictionary)))
+    {
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
     RESTORE_WARNINGS
@@ -556,7 +558,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     // NOTE: look only for ".dic" files, ".aff" ones would be checked separately
     filter << QStringLiteral("*.dic");
 
-    for (const auto & standardPath: qAsConst(standardPaths)) {
+    for (const auto & standardPath: std::as_const(standardPaths)) {
         QNTRACE("note_editor", "Inspecting standard path " << standardPath);
 
         QDir dir{standardPath};
@@ -570,7 +572,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
         dir.setNameFilters(filter);
 
         const QFileInfoList fileInfos = dir.entryInfoList(QDir::Files);
-        for (const auto & fileInfo: qAsConst(fileInfos)) {
+        for (const auto & fileInfo: std::as_const(fileInfos)) {
             QString fileName = fileInfo.fileName();
             QNTRACE("note_editor", "Inspecting file name " << fileName);
 
@@ -956,7 +958,7 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
     }
 
     QByteArray dataToWrite;
-    for (const auto & part: qAsConst(m_userDictionaryPartPendingWriting)) {
+    for (const auto & part: std::as_const(m_userDictionaryPartPendingWriting)) {
         m_userDictionary << part;
         dataToWrite.append(QString(part + QStringLiteral("\n")).toUtf8());
     }

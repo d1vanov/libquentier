@@ -44,6 +44,7 @@
 #include <QXmlStreamWriter>
 
 #include <limits>
+#include <utility>
 
 namespace quentier {
 
@@ -507,7 +508,7 @@ void InsertHtmlDelegate::doStart()
 
     m_pendingImageUrls = m_imageUrls;
 
-    for (const auto & url: qAsConst(m_imageUrls)) {
+    for (const auto & url: std::as_const(m_imageUrls)) {
         QNetworkRequest request(url);
         Q_UNUSED(m_networkAccessManager.get(request))
         QNTRACE("note_editor:delegate", "Issued get request for url " << url);
@@ -1124,7 +1125,7 @@ void InsertHtmlDelegate::removeAddedResourcesFromNote()
         "note_editor:delegate",
         "InsertHtmlDelegate::removeAddedResourcesFromNote");
 
-    for (auto it: qevercloud::toRange(qAsConst(m_imgDataBySourceUrl))) {
+    for (auto it: qevercloud::toRange(std::as_const(m_imgDataBySourceUrl))) {
         m_noteEditor.removeResourceFromNote(it.value().m_resource);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -352,7 +352,8 @@ void NoteEditorLocalStorageBroker::onNoteExpunged(const QString & noteLocalId)
         }
     }
 
-    for (const auto & localId: qAsConst(resourceLocalIdsToRemoveFromCache)) {
+    for (const auto & localId: std::as_const(resourceLocalIdsToRemoveFromCache))
+    {
         Q_UNUSED(m_resourcesCache.remove(localId))
     }
 
@@ -385,7 +386,7 @@ void NoteEditorLocalStorageBroker::onNotebookExpunged(
         }
     }
 
-    for (const auto & localId: qAsConst(noteLocalIdsToRemoveFromCache)) {
+    for (const auto & localId: std::as_const(noteLocalIdsToRemoveFromCache)) {
         Q_UNUSED(m_notesCache.remove(localId))
     }
 

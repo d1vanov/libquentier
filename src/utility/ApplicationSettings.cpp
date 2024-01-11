@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,10 +19,11 @@
 #include <quentier/exception/ApplicationSettingsInitializationException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/StandardPaths.h>
 
 #include <QApplication>
+
+#include <utility>
 
 namespace quentier {
 
@@ -206,7 +207,7 @@ QVariant ApplicationSettings::value(
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
     const auto allStoredKeys = QSettings::allKeys();
-    for (const auto & key: qAsConst(allStoredKeys)) {
+    for (const auto & key: std::as_const(allStoredKeys)) {
         const auto value = QSettings::value(key);
         strm << QStringLiteral("Key: ") << key << QStringLiteral("; Value: ")
              << value.toString() << QStringLiteral("\n;");

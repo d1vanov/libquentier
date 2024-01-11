@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,8 @@
 
 #include <QDebug>
 #include <QTextStream>
+
+#include <utility>
 
 namespace quentier::local_storage {
 
@@ -236,7 +238,7 @@ T & printListNotebooksOptions(
       << ", affiliation = " << options.m_affiliation
       << ", linked notebook guids: ";
     for (const auto & linkedNotebookGuid:
-         qAsConst(options.m_linkedNotebookGuids)) {
+         std::as_const(options.m_linkedNotebookGuids)) {
         t << linkedNotebookGuid;
         if (&linkedNotebookGuid != &options.m_linkedNotebookGuids.constLast()) {
             t << ", ";

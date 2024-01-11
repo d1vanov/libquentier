@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,8 @@
 #include <QSet>
 #include <QTextStream>
 
+#include <utility>
+
 namespace quentier::test {
 
 namespace {
@@ -36,7 +38,7 @@ namespace {
 {
     QSet<QString> encounteredTagGuids;
 
-    for (const auto & tag: ::qAsConst(tags)) {
+    for (const auto & tag: std::as_const(tags)) {
         if (Q_UNLIKELY(!tag.guid())) {
             continue;
         }

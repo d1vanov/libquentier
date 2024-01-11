@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,8 @@
 #include <quentier/threading/TrackedTask.h>
 
 #include <QThread>
+
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -179,7 +181,7 @@ void NotebookFinder::init()
 
 NotebookFinder::~NotebookFinder()
 {
-    for (const auto & connection: qAsConst(m_localStorageConnections)) {
+    for (const auto & connection: std::as_const(m_localStorageConnections)) {
         QObject::disconnect(connection);
     }
 }

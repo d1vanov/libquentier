@@ -20,6 +20,8 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
+#include <utility>
+
 namespace quentier {
 
 bool ResourceRecognitionIndexItemData::isValid() const
@@ -31,7 +33,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
         return false;
     }
 
-    for (const auto & textItem: qAsConst(m_textItems)) {
+    for (const auto & textItem: std::as_const(m_textItems)) {
         if (Q_UNLIKELY(!textItem)) {
             QNTRACE(
                 "types::data",
@@ -49,7 +51,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
         }
     }
 
-    for (const auto & objectItem: qAsConst(m_objectItems)) {
+    for (const auto & objectItem: std::as_const(m_objectItems)) {
         if (Q_UNLIKELY(!objectItem)) {
             QNTRACE(
                 "types::data",
@@ -91,7 +93,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
         }
     }
 
-    for (const auto & shapeItem: qAsConst(m_shapeItems)) {
+    for (const auto & shapeItem: std::as_const(m_shapeItems)) {
         if (Q_UNLIKELY(!shapeItem)) {
             QNTRACE(
                 "types::data",
@@ -126,7 +128,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
         }
     }
 
-    for (const auto & barcodeItem: qAsConst(m_barcodeItems)) {
+    for (const auto & barcodeItem: std::as_const(m_barcodeItems)) {
         if (Q_UNLIKELY(!barcodeItem)) {
             QNTRACE(
                 "types::data",
