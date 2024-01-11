@@ -149,11 +149,11 @@ void bindCancellation(const QFuture<T> & from, QFuture<U> to)
  */
 template <class T>
 [[nodiscard]] std::enable_if_t<
-    !std::is_void_v<T>, QFuture<QList<std::decay_t<T>>>>
+    !std::is_void_v<std::decay_t<T>>, QFuture<QList<std::decay_t<T>>>>
     whenAll(QList<QFuture<std::decay_t<T>>> futures)
 {
     if (Q_UNLIKELY(futures.isEmpty())) {
-        return makeReadyFuture<QList<T>>({});
+        return makeReadyFuture<QList<std::decay_t<T>>>({});
     }
 
     auto promise = std::make_shared<QPromise<QList<std::decay_t<T>>>>();
