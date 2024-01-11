@@ -32,31 +32,6 @@
 
 namespace quentier::synchronization {
 
-namespace {
-
-[[nodiscard]] bool isNotebookFutureValid(
-    const QFuture<std::optional<qevercloud::Notebook>> & future)
-{
-    if (!future.isFinished()) {
-        return true;
-    }
-
-    if (future.resultCount() != 1) {
-        return false;
-    }
-
-    try {
-        Q_UNUSED(future.result());
-    }
-    catch (...) {
-        return false;
-    }
-
-    return true;
-}
-
-} // namespace
-
 NotebookFinder::NotebookFinder(local_storage::ILocalStoragePtr localStorage) :
     m_localStorage{std::move(localStorage)}
 {
@@ -79,10 +54,10 @@ void NotebookFinder::init()
                 return;
             }
 
-            removeFutureByNoteLocalId(note.localId());
+            removeCachedNotebookByNoteLocalId(note.localId());
 
             if (note.guid()) {
-                removeFutureByNoteGuid(*note.guid());
+                removeCachedNotebookByNoteGuid(*note.guid());
             }
         });
 
@@ -99,10 +74,10 @@ void NotebookFinder::init()
                 return;
             }
 
-            removeFutureByNoteLocalId(note.localId());
+            removeCachedNotebookByNoteLocalId(note.localId());
 
             if (note.guid()) {
-                removeFutureByNoteGuid(*note.guid());
+                removeCachedNotebookByNoteGuid(*note.guid());
             }
         });
 
@@ -119,7 +94,7 @@ void NotebookFinder::init()
                 return;
             }
 
-            removeFutureByNoteLocalId(noteLocalId);
+            removeCachedNotebookByNoteLocalId(noteLocalId);
 
             // As we don't know for sure which note was changed,
             // will clear the cache of notebook searches by note guid
@@ -140,7 +115,7 @@ void NotebookFinder::init()
                 return;
             }
 
-            removeFutureByNoteLocalId(noteLocalId);
+            removeCachedNotebookByNoteLocalId(noteLocalId);
 
             // As we don't know for sure which note was expunged,
             // will clear the cache of notebook searches by note guid
@@ -162,7 +137,7 @@ void NotebookFinder::init()
                 return;
             }
 
-            removeFuturesByNotebookLocalId(notebook.localId());
+            removeCachedNotebooksByNotebookLocalId(notebook.localId());
         });
 
     m_localStorageConnections << QObject::connect(
@@ -175,7 +150,7 @@ void NotebookFinder::init()
                 return;
             }
 
-            removeFuturesByNotebookLocalId(notebookLocalId);
+            removeCachedNotebooksByNotebookLocalId(notebookLocalId);
         });
 }
 
@@ -190,46 +165,65 @@ QFuture<std::optional<qevercloud::Notebook>>
     NotebookFinder::findNotebookByNoteLocalId(const QString & noteLocalId)
 {
     const QMutexLocker locker{&m_notebooksByNoteLocalIdMutex};
-    auto it = m_notebooksByNoteLocalId.find(noteLocalId);
-    if (it != m_notebooksByNoteLocalId.end() &&
-        isNotebookFutureValid(it.value()))
+    if (const auto it = m_notebooksByNoteLocalId.find(noteLocalId);
+        it != m_notebooksByNoteLocalId.end())
     {
-        return it.value();
+        return threading::makeReadyFuture(it.value());
     }
 
-    it = m_notebooksByNoteLocalId.insert(
-        noteLocalId, findNotebookByNoteLocalIdImpl(noteLocalId));
-    return it.value();
+    return findNotebookByNoteLocalIdImpl(noteLocalId);
 }
 
 QFuture<std::optional<qevercloud::Notebook>>
     NotebookFinder::findNotebookByNoteGuid(const qevercloud::Guid & noteGuid)
 {
     const QMutexLocker locker{&m_notebooksByNoteGuidMutex};
-    auto it = m_notebooksByNoteGuid.find(noteGuid);
-    if (it != m_notebooksByNoteGuid.end() && isNotebookFutureValid(it.value()))
+    if (const auto it = m_notebooksByNoteGuid.find(noteGuid);
+        it != m_notebooksByNoteGuid.end())
     {
-        return it.value();
+        return threading::makeReadyFuture(it.value());
     }
 
-    it = m_notebooksByNoteGuid.insert(
-        noteGuid, findNotebookByNoteGuidImpl(noteGuid));
-    return it.value();
+    return findNotebookByNoteGuidImpl(noteGuid);
 }
 
 QFuture<std::optional<qevercloud::Notebook>>
     NotebookFinder::findNotebookByLocalId(const QString & notebookLocalId)
 {
-    const QMutexLocker locker{&m_notebooksByLocalIdMutex};
-    auto it = m_notebooksByLocalId.find(notebookLocalId);
-    if (it != m_notebooksByLocalId.end() && isNotebookFutureValid(it.value())) {
-        return it.value();
+    {
+        const QMutexLocker locker{&m_notebooksByLocalIdMutex};
+        if (const auto it = m_notebooksByLocalId.find(notebookLocalId);
+            it != m_notebooksByLocalId.end())
+        {
+            return threading::makeReadyFuture(it.value());
+        }
     }
 
-    it = m_notebooksByLocalId.insert(
-        notebookLocalId,
-        m_localStorage->findNotebookByLocalId(notebookLocalId));
-    return it.value();
+    auto promise =
+        std::make_shared<QPromise<std::optional<qevercloud::Notebook>>>();
+    auto future = promise->future();
+    promise->start();
+
+    auto localStorageFuture =
+        m_localStorage->findNotebookByLocalId(notebookLocalId);
+
+    const auto selfWeak = weak_from_this();
+    auto * currentThread = QThread::currentThread();
+
+    threading::thenOrFailed(
+        std::move(localStorageFuture), currentThread, promise,
+        [this, promise, notebookLocalId,
+         selfWeak](std::optional<qevercloud::Notebook> notebook) {
+            if (const auto self = selfWeak.lock()) {
+                const QMutexLocker locker{&m_notebooksByLocalIdMutex};
+                m_notebooksByLocalId[notebookLocalId] = notebook;
+            }
+
+            promise->addResult(std::move(notebook));
+            promise->finish();
+        });
+
+    return future;
 }
 
 QFuture<std::optional<qevercloud::Notebook>>
@@ -258,6 +252,13 @@ QFuture<std::optional<qevercloud::Notebook>>
                         "synchronization::NotebookFinder",
                         "Could not find note by local id in the local storage: "
                             << noteLocalId);
+
+                    {
+                        const QMutexLocker locker{
+                            &m_notebooksByNoteLocalIdMutex};
+                        m_notebooksByNoteLocalId[noteLocalId] = std::nullopt;
+                    }
+
                     promise->addResult(std::nullopt);
                     promise->finish();
                     return;
@@ -296,6 +297,12 @@ QFuture<std::optional<qevercloud::Notebook>>
                         "synchronization::NotebookFinder",
                         "Could not find note by guid in the local storage: "
                             << noteGuid);
+
+                    {
+                        const QMutexLocker locker{&m_notebooksByNoteGuidMutex};
+                        m_notebooksByNoteGuid[noteGuid] = std::nullopt;
+                    }
+
                     promise->addResult(std::nullopt);
                     promise->finish();
                     return;
@@ -312,58 +319,33 @@ void NotebookFinder::onNoteFound(
     const std::shared_ptr<QPromise<std::optional<qevercloud::Notebook>>> &
         promise)
 {
-    auto notebookLocalId = note.notebookLocalId();
-
-    QFuture<std::optional<qevercloud::Notebook>> notebookFuture = [&] {
-        const QMutexLocker locker{&m_notebooksByLocalIdMutex};
-
-        auto it = m_notebooksByLocalId.find(notebookLocalId);
-        if (it != m_notebooksByLocalId.end() &&
-            isNotebookFutureValid(it.value()))
-        {
-            return it.value();
-        }
-
-        it = m_notebooksByLocalId.insert(
-            notebookLocalId,
-            m_localStorage->findNotebookByLocalId(notebookLocalId));
-        return it.value();
-    }();
-
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
 
+    auto notebookFuture = findNotebookByLocalId(note.notebookLocalId());
     threading::thenOrFailed(
         std::move(notebookFuture), currentThread, promise,
-        threading::TrackedTask{
-            selfWeak,
-            [this, promise, notebookLocalId = std::move(notebookLocalId)](
-                std::optional<qevercloud::Notebook> notebook) {
-                if (Q_UNLIKELY(!notebook)) {
-                    QNDEBUG(
-                        "synchronization::NotebookFinder",
-                        "Could not find notebook by local id in the "
-                            << "local storage: notebook local id = "
-                            << notebookLocalId);
-                    promise->addResult(std::nullopt);
-                    promise->finish();
-                    return;
-                }
-
+        [this, promise, selfWeak, noteLocalId = note.localId(),
+         noteGuid = note.guid()](std::optional<qevercloud::Notebook> notebook) {
+            if (const auto self = selfWeak.lock()) {
                 {
-                    const QMutexLocker locker{&m_notebooksByLocalIdMutex};
-
-                    m_notebooksByLocalId[notebookLocalId] =
-                        threading::makeReadyFuture<
-                            std::optional<qevercloud::Notebook>>(notebook);
+                    const QMutexLocker locker{&m_notebooksByNoteLocalIdMutex};
+                    m_notebooksByNoteLocalId[noteLocalId] = notebook;
                 }
 
-                promise->addResult(std::move(notebook));
-                promise->finish();
-            }});
+                if (noteGuid) {
+                    const QMutexLocker locker{&m_notebooksByNoteGuidMutex};
+                    m_notebooksByNoteGuid[*noteGuid] = notebook;
+                }
+            }
+
+            promise->addResult(std::move(notebook));
+            promise->finish();
+        });
 }
 
-void NotebookFinder::removeFutureByNoteLocalId(const QString & noteLocalId)
+void NotebookFinder::removeCachedNotebookByNoteLocalId(
+    const QString & noteLocalId)
 {
     const QMutexLocker locker{&m_notebooksByNoteLocalIdMutex};
     const auto it = m_notebooksByNoteLocalId.constFind(noteLocalId);
@@ -372,7 +354,8 @@ void NotebookFinder::removeFutureByNoteLocalId(const QString & noteLocalId)
     }
 }
 
-void NotebookFinder::removeFutureByNoteGuid(const qevercloud::Guid & noteGuid)
+void NotebookFinder::removeCachedNotebookByNoteGuid(
+    const qevercloud::Guid & noteGuid)
 {
     const QMutexLocker locker{&m_notebooksByNoteGuidMutex};
     const auto it = m_notebooksByNoteGuid.constFind(noteGuid);
@@ -381,7 +364,7 @@ void NotebookFinder::removeFutureByNoteGuid(const qevercloud::Guid & noteGuid)
     }
 }
 
-void NotebookFinder::removeFuturesByNotebookLocalId(
+void NotebookFinder::removeCachedNotebooksByNotebookLocalId(
     const QString & notebookLocalId)
 {
     {
@@ -394,31 +377,12 @@ void NotebookFinder::removeFuturesByNotebookLocalId(
 
     const auto shouldKeepNotebook =
         [&notebookLocalId](
-            const QFuture<std::optional<qevercloud::Notebook>> & f) {
-            if (!f.isFinished()) {
-                return true;
-            }
-
-            if (Q_UNLIKELY(f.resultCount() != 1)) {
-                return true;
-            }
-
-            std::optional<qevercloud::Notebook> notebook;
-            try {
-                notebook = f.result();
-            }
-            catch (...) {
-            }
-
+            const std::optional<qevercloud::Notebook> & notebook) {
             if (!notebook) {
                 return true;
             }
 
-            if (notebook->localId() == notebookLocalId) {
-                return false;
-            }
-
-            return true;
+            return notebook->localId() != notebookLocalId;
         };
 
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -77,24 +77,23 @@ private:
         const std::shared_ptr<QPromise<std::optional<qevercloud::Notebook>>> &
             promise);
 
-    void removeFutureByNoteLocalId(const QString & noteLocalId);
-    void removeFutureByNoteGuid(const qevercloud::Guid & noteGuid);
+    void removeCachedNotebookByNoteLocalId(const QString & noteLocalId);
+    void removeCachedNotebookByNoteGuid(const qevercloud::Guid & noteGuid);
 
-    void removeFuturesByNotebookLocalId(const QString & notebookLocalId);
+    void removeCachedNotebooksByNotebookLocalId(
+        const QString & notebookLocalId);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
 
-    QHash<QString, QFuture<std::optional<qevercloud::Notebook>>>
+    QHash<QString, std::optional<qevercloud::Notebook>>
         m_notebooksByNoteLocalId;
     QMutex m_notebooksByNoteLocalIdMutex;
 
-    QHash<QString, QFuture<std::optional<qevercloud::Notebook>>>
-        m_notebooksByNoteGuid;
+    QHash<QString, std::optional<qevercloud::Notebook>> m_notebooksByNoteGuid;
     QMutex m_notebooksByNoteGuidMutex;
 
-    QHash<QString, QFuture<std::optional<qevercloud::Notebook>>>
-        m_notebooksByLocalId;
+    QHash<QString, std::optional<qevercloud::Notebook>> m_notebooksByLocalId;
     QMutex m_notebooksByLocalIdMutex;
 
     QList<QMetaObject::Connection> m_localStorageConnections;
