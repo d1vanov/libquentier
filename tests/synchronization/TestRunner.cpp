@@ -862,6 +862,7 @@ void TestRunner::runTestScenario()
     bool caughtException = false;
     try {
         while (!syncResultPair.first.isFinished()) {
+            QCoreApplication::sendPostedEvents();
             QCoreApplication::processEvents();
         }
         syncResultPair.first.waitForFinished();
