@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -62,8 +62,7 @@ public: // ILinkedNotebookFinder
         findLinkedNotebookByNotebookGuid(const QString & notebookGuid) override;
 
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
-        findLinkedNotebookByGuid(
-            const qevercloud::Guid & guid) override;
+        findLinkedNotebookByGuid(const qevercloud::Guid & guid) override;
 
 private:
     [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
@@ -76,26 +75,30 @@ private:
 
     void onNotebookFound(
         const qevercloud::Notebook & notebook,
-        const std::shared_ptr<QPromise<std::optional<qevercloud::LinkedNotebook>>> & promise);
+        const std::shared_ptr<
+            QPromise<std::optional<qevercloud::LinkedNotebook>>> & promise);
 
-    void removeFutureByNotebookLocalId(const QString & notebookLocalId);
-    void removeFutureByNotebookGuid(const qevercloud::Guid & notebookGuid);
+    void removeCachedLinkedNotebookByNotebookLocalId(
+        const QString & notebookLocalId);
 
-    void removeFuturesByLinkedNotebookGuid(
+    void removeCachedLinkedNotebookByNotebookGuid(
+        const qevercloud::Guid & notebookGuid);
+
+    void removeCachedLinkedNotebookByLinkedNotebookGuid(
         const qevercloud::Guid & linkedNotebookGuid);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
 
-    QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
+    QHash<QString, std::optional<qevercloud::LinkedNotebook>>
         m_linkedNotebooksByNotebookLocalId;
     QMutex m_linkedNotebooksByNotebookLocalIdMutex;
 
-    QHash<QString, QFuture<std::optional<qevercloud::LinkedNotebook>>>
+    QHash<QString, std::optional<qevercloud::LinkedNotebook>>
         m_linkedNotebooksByGuid;
     QMutex m_linkedNotebooksByGuidMutex;
 
-    QHash<qevercloud::Guid, QFuture<std::optional<qevercloud::LinkedNotebook>>>
+    QHash<qevercloud::Guid, std::optional<qevercloud::LinkedNotebook>>
         m_linkedNotebooksByNotebookGuid;
     QMutex m_linkedNotebooksByNotebookGuidMutex;
 
