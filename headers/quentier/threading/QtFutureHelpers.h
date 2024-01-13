@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,12 +18,15 @@
 
 #pragma once
 
-#include "Qt5Promise.h"
-
 #include <QFuture>
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include "Qt5Promise.h"
+#endif
 
 #include <type_traits>
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 // Backports of some helpers for QFuture continuations from Qt6 to Qt5
 namespace QtFuture {
 
@@ -136,6 +139,7 @@ struct ArgResolver<R (Class::*const)(Args...) const noexcept> :
 {};
 
 } // namespace QtPrivate
+#endif // QT_VERSION
 
 namespace quentier::threading::detail {
 

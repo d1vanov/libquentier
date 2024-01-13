@@ -20,29 +20,33 @@
 
 #include <QtGlobal>
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QFutureWatcher>
 #include <QRunnable>
 #include <QThreadPool>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Post.h>
-#include <quentier/threading/Qt5FutureHelpers.h>
+#include <quentier/threading/QtFutureHelpers.h>
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <quentier/threading/Qt5Promise.h>
+#endif // QT_VERSION
+
 #include <quentier/threading/Runnable.h>
 
 #include <boost/core/demangle.hpp>
 
-#include <typeinfo>
-
-#endif // QT_VERSION
-
 #include <memory>
 #include <type_traits>
+#include <typeinfo>
 
 namespace quentier::threading {
 
-// implementation for Qt6
-
+// NOTE: "native" implementation of continuations for Qt6 is currently disabled
+// due to bugs in their implementation, in particular (but not limited to)
+// https://bugreports.qt.io/browse/QTBUG-119579 and
+// https://bugreports.qt.io/browse/QTBUG-117918. It's a shame but it is what it
+// is.
+/*
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 
 template <class T, class Function>
@@ -90,6 +94,7 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
 #else // QT_VERSION
 
 // implementation for Qt5
+*/
 
 namespace detail {
 
@@ -475,7 +480,7 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
     return result;
 }
 
-#endif // QT_VERSION
+// #endif // QT_VERSION
 
 // Convenience functions for both Qt versions
 

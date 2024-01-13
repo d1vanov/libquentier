@@ -134,8 +134,8 @@ set(THREADING_HEADERS
 
 if(NOT BUILD_WITH_QT6)
   list(APPEND THREADING_HEADERS
-    headers/quentier/threading/Qt5FutureHelpers.h
-    headers/quentier/threading/Qt5Promise.h)
+    headers/quentier/threading/Qt5Promise.h
+    headers/quentier/threading/QtFutureHelpers.h)
 endif()
 
 set(LOGGING_HEADERS
