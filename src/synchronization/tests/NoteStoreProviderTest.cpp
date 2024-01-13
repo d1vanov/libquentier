@@ -53,6 +53,16 @@ using testing::StrictMock;
 class NoteStoreProviderTest : public testing::Test
 {
 protected:
+    void TearDown() override
+    {
+        // Required for some tests to run some lambdas attached to events in
+        // which mock objects might be captured. The test won't exit clearly
+        // if it detects some mock objects are leaked.
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+    }
+
+protected:
     const Account m_account = Account{
         QStringLiteral("Full Name"),
         Account::Type::Evernote,
