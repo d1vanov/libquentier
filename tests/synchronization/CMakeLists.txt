@@ -52,4 +52,4 @@ add_executable(${TESTS_NAME}
 
 target_link_libraries(${TESTS_NAME} ${TESTS_LIB_NAME} ${LIBNAME})
 
-add_test(${TESTS_NAME} ${TESTS_NAME})
+add_test(NAME ${TESTS_NAME} COMMAND ${TESTS_NAME})

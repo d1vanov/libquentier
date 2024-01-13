@@ -45,7 +45,7 @@ target_link_libraries(${TESTS_NAME}
     Qt${LIBQUENTIER_QT_VERSION}::Core
     Qt${LIBQUENTIER_QT_VERSION}::Sql)
 
-add_test(${TESTS_NAME} ${TESTS_NAME})
+add_test(NAME ${TESTS_NAME} COMMAND ${TESTS_NAME})
 
 include(GoogleTest)
 

@@ -693,6 +693,7 @@ if(NOT INSTALL_CMAKE_DIR)
   set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 endif()
 
+enable_testing()
 find_package(GMock)
 find_package(GTest)
 
@@ -811,7 +812,7 @@ target_compile_definitions(test_${PROJECT_NAME}
 )
 
 add_sanitizers(test_${PROJECT_NAME})
-add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
+add_test(NAME test_${PROJECT_NAME} COMMAND test_${PROJECT_NAME})
 
 target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} Qt${LIBQUENTIER_QT_VERSION}::Test)
 
@@ -910,6 +911,5 @@ install(FILES ${PROJECT_BINARY_DIR}/Libquentier-qt${LIBQUENTIER_QT_VERSION}Confi
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-qt${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-enable_testing()
 
 add_custom_target(check COMMAND "${CMAKE_CTEST_COMMAND}" "--verbose")
