@@ -22,7 +22,6 @@
 #include "NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 
 #include <QAction>
 #include <QMessageBox>
@@ -33,8 +32,6 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
     QWebEnginePage(&parent), m_parent(&parent),
     m_pJavaScriptInOrderExecutor(new JavaScriptInOrderExecutor(parent, this))
 {
-    QUENTIER_CHECK_PTR("note_editor", m_parent);
-
     QObject::connect(
         this, &NoteEditorPage::noteLoadCancelled, &parent,
         &NoteEditorPrivate::onNoteLoadCancelled);

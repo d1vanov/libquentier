@@ -18,7 +18,7 @@
 
 #include "../ConnectionPool.h"
 
-#include <quentier/exception/DatabaseRequestException.h>
+#include <quentier/local_storage/LocalStorageOpenException.h>
 
 #include <QCoreApplication>
 #include <QDeadlineTimer>
@@ -59,7 +59,7 @@ TEST(ConnectionPoolTest, CtorThrowOnMissingSqlDriver)
             QStringLiteral("localhost"), QStringLiteral("user"),
             QStringLiteral("password"), QStringLiteral("database"),
             QStringLiteral("NonexistentDatabaseDriver")),
-        DatabaseRequestException);
+        LocalStorageOpenException);
 }
 
 TEST(ConnectionPoolTest, CreateConnectionForCurrentThread)

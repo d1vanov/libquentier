@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <quentier/exception/DatabaseRequestException.h>
+#include <quentier/local_storage/LocalStorageOperationException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
@@ -33,7 +33,7 @@
         error.details() += lastQueryError.nativeErrorCode();                   \
         error.details() += QStringLiteral(")");                                \
         QNWARNING(component, error);                                           \
-        throw DatabaseRequestException{error};                                 \
+        throw LocalStorageOperationException{error};                           \
     }
 
 #define ENSURE_DB_REQUEST_RETURN(res, query, component, message, retval)       \

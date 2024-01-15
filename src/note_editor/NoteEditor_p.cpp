@@ -84,8 +84,7 @@
 #include <quentier/enml/IHtmlData.h>
 #include <quentier/enml/conversion_rules/Factory.h>
 #include <quentier/enml/conversion_rules/ISkipRuleBuilder.h>
-#include <quentier/exception/NoteEditorInitializationException.h>
-#include <quentier/exception/NoteEditorPluginInitializationException.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/types/Account.h>
@@ -101,7 +100,6 @@
 #include <quentier/utility/ShortcutManager.h>
 #include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <QApplication>
@@ -4004,9 +4002,13 @@ void NoteEditorPrivate::pushNoteContentEditUndoCommand()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::pushNoteTextEditUndoCommand");
 
-    QUENTIER_CHECK_PTR(
-        "note_editor", m_pUndoStack,
-        QStringLiteral("Undo stack for note editor wasn't initialized"));
+    if (Q_UNLIKELY(!m_pUndoStack)) {
+        QNWARNING(
+            "note_editor",
+            "Ignoring the content changed signal as the undo stack "
+                << "is not set");
+        return;
+    }
 
     if (Q_UNLIKELY(!m_pNote)) {
         QNINFO(
@@ -5341,7 +5343,7 @@ void NoteEditorPrivate::setupWebSocketServer()
         ErrorString error(QT_TR_NOOP("Can't open web socket server"));
         error.details() = m_pWebSocketServer->errorString();
         QNERROR("note_editor", error);
-        throw NoteEditorInitializationException(error);
+        throw RuntimeError(error);
     }
 
     m_webSocketServerPort = m_pWebSocketServer->serverPort();
@@ -6080,9 +6082,12 @@ void NoteEditorPrivate::setupSpellChecker()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::setupSpellChecker");
 
-    QUENTIER_CHECK_PTR(
-        "note_editor", m_pSpellChecker,
-        QStringLiteral("no spell checker was passed to note editor"));
+    if (Q_UNLIKELY(!m_pSpellChecker)) {
+        QNWARNING(
+            "note_editor",
+            "Cannot setup spell checker as it was not passed to note editor");
+        return;
+    }
 
     if (!m_pSpellChecker->isReady()) {
         QObject::connect(
@@ -8024,11 +8029,6 @@ void NoteEditorPrivate::setAccount(const Account & account)
 void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::setUndoStack");
-
-    QUENTIER_CHECK_PTR(
-        "note_editor", pUndoStack,
-        QStringLiteral("null undo stack passed to note editor"));
-
     m_pUndoStack = pUndoStack;
 }
 

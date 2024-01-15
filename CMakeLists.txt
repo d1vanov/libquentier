@@ -95,10 +95,12 @@ set(ENML_HEADERS
 
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/Factory.h
+    headers/quentier/local_storage/Fwd.h
     headers/quentier/local_storage/ILocalStorage.h
     headers/quentier/local_storage/ILocalStorageNotifier.h
     headers/quentier/local_storage/IPatch.h
-    headers/quentier/local_storage/Fwd.h
+	headers/quentier/local_storage/LocalStorageOpenException.h
+	headers/quentier/local_storage/LocalStorageOperationException.h
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
@@ -142,19 +144,8 @@ set(LOGGING_HEADERS
     headers/quentier/logging/QuentierLogger.h)
 
 set(EXCEPTION_HEADERS
-    headers/quentier/exception/ApplicationSettingsInitializationException.h
-    headers/quentier/exception/DatabaseLockedException.h
-    headers/quentier/exception/DatabaseLockFailedException.h
-    headers/quentier/exception/DatabaseOpeningException.h
-    headers/quentier/exception/DatabaseRequestException.h
-    headers/quentier/exception/EmptyDataElementException.h
     headers/quentier/exception/InvalidArgument.h
     headers/quentier/exception/IQuentierException.h
-    headers/quentier/exception/LocalStorageCacheManagerException.h
-    headers/quentier/exception/LoggerInitializationException.h
-    headers/quentier/exception/NoteEditorInitializationException.h
-    headers/quentier/exception/NoteEditorPluginInitializationException.h
-    headers/quentier/exception/NullPtrException.h
     headers/quentier/exception/OperationCanceled.h
     headers/quentier/exception/RuntimeError.h)
 
@@ -177,7 +168,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/MessageBox.h
     headers/quentier/utility/Printable.h
     headers/quentier/utility/QuentierApplication.h
-    headers/quentier/utility/QuentierCheckPtr.h
     headers/quentier/utility/QuentierUndoCommand.h
     headers/quentier/utility/ShortcutManager.h
     headers/quentier/utility/Size.h
@@ -322,25 +312,16 @@ set(${PROJECT_NAME}_SOURCES
     src/enml/IDecryptedTextCache.cpp
     src/enml/IENMLTagsConverter.cpp
     src/enml/IHtmlData.cpp
-    src/exception/ApplicationSettingsInitializationException.cpp
-    src/exception/EmptyDataElementException.cpp
-    src/exception/DatabaseLockedException.cpp
-    src/exception/DatabaseLockFailedException.cpp
-    src/exception/DatabaseOpeningException.cpp
-    src/exception/DatabaseRequestException.cpp
     src/exception/InvalidArgument.cpp
     src/exception/IQuentierException.cpp
-    src/exception/NoteEditorInitializationException.cpp
-    src/exception/NoteEditorPluginInitializationException.cpp
-    src/exception/NullPtrException.cpp
-    src/exception/LocalStorageCacheManagerException.cpp
-    src/exception/LoggerInitializationException.cpp
     src/exception/OperationCanceled.cpp
     src/exception/RuntimeError.cpp
     src/local_storage/Factory.cpp
     src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageNotifier.cpp
     src/local_storage/IPatch.cpp
+	src/local_storage/LocalStorageOpenException.cpp
+	src/local_storage/LocalStorageOperationException.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/logging/QuentierLogger.cpp

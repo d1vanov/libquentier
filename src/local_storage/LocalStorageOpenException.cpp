@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,25 +16,28 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_EXCEPTION_DATABASE_LOCK_FAILED_EXCEPTION_H
-#define LIB_QUENTIER_EXCEPTION_DATABASE_LOCK_FAILED_EXCEPTION_H
+#include <quentier/local_storage/LocalStorageOpenException.h>
 
-#include <quentier/exception/IQuentierException.h>
+namespace quentier::local_storage {
 
-namespace quentier {
+LocalStorageOpenException::LocalStorageOpenException(
+    const ErrorString & message) :
+    IQuentierException(message)
+{}
 
-class QUENTIER_EXPORT DatabaseLockFailedException : public IQuentierException
+QString LocalStorageOpenException::exceptionDisplayName() const
 {
-public:
-    explicit DatabaseLockFailedException(const ErrorString & message);
+    return QStringLiteral("LocalStorageOpenException");
+}
 
-    [[nodiscard]] DatabaseLockFailedException * clone() const override;
-    void raise() const override;
+LocalStorageOpenException * LocalStorageOpenException::clone() const
+{
+    return new LocalStorageOpenException{errorMessage()};
+}
 
-protected:
-    [[nodiscard]] QString exceptionDisplayName() const override;
-};
+void LocalStorageOpenException::raise() const
+{
+    throw *this;
+}
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_EXCEPTION_DATABASE_LOCK_FAILED_EXCEPTION_H
+} // namespace quentier::local_storage

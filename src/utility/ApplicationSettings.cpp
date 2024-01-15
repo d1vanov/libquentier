@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/exception/ApplicationSettingsInitializationException.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/StandardPaths.h>
@@ -35,7 +35,7 @@ QString defaultApplicationStoragePath(const QString & settingsName)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(
+        throw RuntimeError(
             ErrorString(QT_TRANSLATE_NOOP(
                 "ApplicationSettings",
                 "Can't create ApplicationSettings instance: "
@@ -70,7 +70,7 @@ QString accountApplicationStoragePath(
             "utility",
             "Detected attempt to create ApplicationSettings "
             "for account with empty name");
-        throw ApplicationSettingsInitializationException(
+        throw RuntimeError(
             ErrorString(QT_TRANSLATE_NOOP(
                 "ApplicationSettings",
                 "Can't create ApplicationSettings instance: "
@@ -79,7 +79,7 @@ QString accountApplicationStoragePath(
 
     QString storagePath = accountPersistentStoragePath(account);
     if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(
+        throw RuntimeError(
             ErrorString(QT_TRANSLATE_NOOP(
                 "ApplicationSettings",
                 "Can't create ApplicationSettings instance: "

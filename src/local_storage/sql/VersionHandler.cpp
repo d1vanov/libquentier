@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/local_storage/LocalStorageOperationException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/Runnable.h>
@@ -95,7 +96,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
             if (currentVersion < 0) {
                 promise->setException(
-                    DatabaseRequestException{errorDescription});
+                    LocalStorageOperationException{errorDescription});
                 promise->finish();
                 return;
             }
@@ -136,7 +137,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
 
             if (currentVersion < 0) {
                 promise->setException(
-                    DatabaseRequestException{errorDescription});
+                    LocalStorageOperationException{errorDescription});
                 promise->finish();
                 return;
             }
@@ -177,7 +178,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 
             if (currentVersion < 0) {
                 promise->setException(
-                    DatabaseRequestException{errorDescription});
+                    LocalStorageOperationException{errorDescription});
                 promise->finish();
                 return;
             }
@@ -222,7 +223,7 @@ QFuture<qint32> VersionHandler::version() const
 
             if (currentVersion < 0) {
                 promise->setException(
-                    DatabaseRequestException{errorDescription});
+                    LocalStorageOperationException{errorDescription});
                 promise->finish();
                 return;
             }

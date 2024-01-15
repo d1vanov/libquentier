@@ -22,7 +22,6 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/DateTime.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 
 #include <utility>
 
@@ -166,7 +165,7 @@ ISyncStatePtr SyncStateStorage::getSyncState(
 void SyncStateStorage::setSyncState(
     const Account & account, ISyncStatePtr syncState)
 {
-    QUENTIER_CHECK_PTR("synchronization: state_storage", syncState.get())
+    Q_ASSERT(syncState);
 
     ApplicationSettings appSettings{
         account, QString::fromUtf8(gSynchronizationPersistenceName)};

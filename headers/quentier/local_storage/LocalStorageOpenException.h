@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,28 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/exception/EmptyDataElementException.h>
+#pragma once
 
-namespace quentier {
+#include <quentier/exception/IQuentierException.h>
 
-EmptyDataElementException::EmptyDataElementException(
-    const ErrorString & message) :
-    IQuentierException(message)
-{}
+namespace quentier::local_storage {
 
-QString EmptyDataElementException::exceptionDisplayName() const
+/**
+ * @brief The LocalStorageOpenException is thrown on failure to open the local
+ * storage database.
+ */
+class QUENTIER_EXPORT LocalStorageOpenException : public IQuentierException
 {
-    return QStringLiteral("EmptyDataElementException");
-}
+public:
+    explicit LocalStorageOpenException(const ErrorString & message);
 
-EmptyDataElementException * EmptyDataElementException::clone() const
-{
-    return new EmptyDataElementException{errorMessage()};
-}
+    [[nodiscard]] LocalStorageOpenException * clone() const override;
+    void raise() const override;
 
-void EmptyDataElementException::raise() const
-{
-    throw *this;
-}
+protected:
+    [[nodiscard]] QString exceptionDisplayName() const override;
+};
 
-} // namespace quentier
+} // namespace quentier::local_storage

@@ -18,8 +18,7 @@
 
 #include "ConnectionPool.h"
 
-#include <quentier/exception/DatabaseOpeningException.h>
-#include <quentier/exception/DatabaseRequestException.h>
+#include <quentier/local_storage/LocalStorageOpenException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/SysInfo.h>
@@ -71,7 +70,7 @@ ConnectionPool::ConnectionPool(
         }
 
         QNWARNING("local_storage::sql::connection_pool", error);
-        throw DatabaseRequestException(error);
+        throw LocalStorageOpenException(error);
     }
 }
 
@@ -164,7 +163,7 @@ QSqlDatabase ConnectionPool::database()
         error.details() += lastError.nativeErrorCode();
 
         QNWARNING("local_storage:sql:connection_pool", error);
-        throw DatabaseOpeningException(error);
+        throw LocalStorageOpenException(error);
     }
 
     QSqlQuery query{database};
@@ -179,7 +178,7 @@ QSqlDatabase ConnectionPool::database()
         error.details() += lastError.nativeErrorCode();
 
         QNWARNING("local_storage::sql::connection_pool", error);
-        throw DatabaseRequestException(error);
+        throw LocalStorageOpenException(error);
     }
 
     if (Q_UNLIKELY(!query.exec(
@@ -195,7 +194,7 @@ QSqlDatabase ConnectionPool::database()
         error.details() += lastError.nativeErrorCode();
 
         QNWARNING("local_storage::sql::connection_pool", error);
-        throw DatabaseRequestException(error);
+        throw LocalStorageOpenException(error);
     }
 
     return database;

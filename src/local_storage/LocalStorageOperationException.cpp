@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,28 +16,28 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/exception/DatabaseOpeningException.h>
+#include <quentier/local_storage/LocalStorageOperationException.h>
 
-namespace quentier {
+namespace quentier::local_storage {
 
-DatabaseOpeningException::DatabaseOpeningException(
-    const ErrorString & message) :
-    IQuentierException(message)
+LocalStorageOperationException::LocalStorageOperationException(
+    ErrorString message) :
+    IQuentierException(std::move(message))
 {}
 
-QString DatabaseOpeningException::exceptionDisplayName() const
+QString LocalStorageOperationException::exceptionDisplayName() const
 {
-    return QStringLiteral("DatabaseOpeningException");
+    return QStringLiteral("LocalStorageOperationException");
 }
 
-DatabaseOpeningException * DatabaseOpeningException::clone() const
+LocalStorageOperationException * LocalStorageOperationException::clone() const
 {
-    return new DatabaseOpeningException{errorMessage()};
+    return new LocalStorageOperationException{errorMessage()};
 }
 
-void DatabaseOpeningException::raise() const
+void LocalStorageOperationException::raise() const
 {
     throw *this;
 }
 
-} // namespace quentier
+} // namespace quentier::local_storage

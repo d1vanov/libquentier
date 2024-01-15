@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,25 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_EXCEPTION_DATABASE_OPENING_EXCEPTION_H
-#define LIB_QUENTIER_EXCEPTION_DATABASE_OPENING_EXCEPTION_H
+#pragma once
 
 #include <quentier/exception/IQuentierException.h>
 
-namespace quentier {
+namespace quentier::local_storage {
 
-class QUENTIER_EXPORT DatabaseOpeningException : public IQuentierException
+/**
+ * @brief The LocalStorageOperationException is thrown when the local storage
+ * encounters some internal error during the attemt to process some operation
+ */
+class QUENTIER_EXPORT LocalStorageOperationException : public IQuentierException
 {
 public:
-    explicit DatabaseOpeningException(const ErrorString & message);
+    explicit LocalStorageOperationException(ErrorString message);
 
-    [[nodiscard]] DatabaseOpeningException * clone() const override;
+    [[nodiscard]] LocalStorageOperationException * clone() const override;
     void raise() const override;
 
 protected:
     [[nodiscard]] QString exceptionDisplayName() const override;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_EXCEPTION_DATABASE_OPENING_EXCEPTION_H
+} // namespace quentier::local_storage

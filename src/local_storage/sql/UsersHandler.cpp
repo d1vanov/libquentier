@@ -29,7 +29,6 @@
 #include "utils/PutToDatabaseUtils.h"
 #include "utils/RemoveFromDatabaseUtils.h"
 
-#include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>

@@ -20,8 +20,6 @@
 #include "ErrorHandling.h"
 #include "TablesInitializer.h"
 
-#include <quentier/exception/DatabaseOpeningException.h>
-#include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 

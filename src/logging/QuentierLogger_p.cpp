@@ -18,7 +18,7 @@
 
 #include "QuentierLogger_p.h"
 
-#include <quentier/exception/LoggerInitializationException.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/StandardPaths.h>
 
@@ -52,9 +52,10 @@ QuentierFileLogWriter::QuentierFileLogWriter(
     QDir logFileDir{logFileDirPath};
     if (Q_UNLIKELY(!logFileDir.exists())) {
         if (Q_UNLIKELY(!logFileDir.mkpath(QStringLiteral(".")))) {
-            ErrorString error(QT_TR_NOOP("Can't create the log file path"));
+            ErrorString error(
+                QT_TR_NOOP("Can't create directory for log files"));
             error.details() = logFileDirPath;
-            throw LoggerInitializationException(error);
+            throw RuntimeError(error);
         }
     }
 
@@ -73,7 +74,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(
         error.details() = m_logFile.errorString();
         error.details() += QStringLiteral(", error code = ");
         error.details() += QString::number(m_logFile.error());
-        throw LoggerInitializationException(error);
+        throw RuntimeError(error);
     }
 
     m_currentLogFileSize = m_logFile.size();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,8 +21,8 @@
 #include "ConnectionPool.h"
 #include "Fwd.h"
 
-#include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/local_storage/LocalStorageOperationException.h>
 #include <quentier/threading/Fwd.h>
 #include <quentier/threading/Post.h>
 #include <quentier/threading/Runnable.h>
@@ -121,7 +121,7 @@ QFuture<ResultType> makeReadTask(
                 }
                 else {
                     promise->setException(
-                        DatabaseRequestException{errorDescription});
+                        LocalStorageOperationException{errorDescription});
                 }
             }
             else {
@@ -136,7 +136,7 @@ QFuture<ResultType> makeReadTask(
                 }
                 else if (!errorDescription.isEmpty()) {
                     promise->setException(
-                        DatabaseRequestException{errorDescription});
+                        LocalStorageOperationException{errorDescription});
                 }
             }
 
@@ -179,7 +179,7 @@ QFuture<ResultType> makeWriteTask(
 
             if (!res) {
                 promise->setException(
-                    DatabaseRequestException{errorDescription});
+                    LocalStorageOperationException{errorDescription});
             }
 
             promise->finish();
