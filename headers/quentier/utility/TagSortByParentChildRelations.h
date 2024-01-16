@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_TAG_SORT_BY_PARENT_CHILD_RELATIONS_H
-#define LIB_QUENTIER_UTILITY_TAG_SORT_BY_PARENT_CHILD_RELATIONS_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
@@ -48,5 +47,3 @@ bool QUENTIER_EXPORT sortTagsByParentChildRelations(
     QList<qevercloud::Tag> & tagList, ErrorString & errorDescription);
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_TAG_SORT_BY_PARENT_CHILD_RELATIONS_H

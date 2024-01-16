@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_STRING_UTILS_H
-#define LIB_QUENTIER_UTILITY_STRING_UTILS_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
@@ -41,25 +40,9 @@ public:
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
 
-    struct StringFilterPredicate
-    {
-        StringFilterPredicate(QSet<QString> & filteredStrings) :
-            m_filteredStrings(filteredStrings)
-        {}
-
-        [[nodiscard]] bool operator()(const QString & str) const
-        {
-            return m_filteredStrings.contains(str);
-        }
-
-        QSet<QString> & m_filteredStrings;
-    };
-
 private:
     StringUtilsPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(StringUtils);
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_STRING_UTILS_H

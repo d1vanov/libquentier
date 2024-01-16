@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,25 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_NOTE_UTILS_H
-#define LIB_QUENTIER_TYPES_NOTE_UTILS_H
+#pragma once
 
+#include <quentier/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
+
+#include <qevercloud/types/Fwd.h>
 
 #include <QStringList>
 
 #include <utility>
 
-namespace qevercloud {
-
-class Note;
-class Resource;
-
-} // namespace qevercloud
-
 namespace quentier {
-
-class ErrorString;
 
 [[nodiscard]] QUENTIER_EXPORT bool isInkNote(const qevercloud::Note & note);
 
@@ -61,5 +54,3 @@ noteContentToPlainTextAndListOfWords(
     const QString & noteContent, ErrorString * errorDescription = nullptr);
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_NOTE_UTILS_H

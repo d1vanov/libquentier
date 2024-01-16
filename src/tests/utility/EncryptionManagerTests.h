@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_ENCRYPTION_MANAGER_TESTS_H
-#define LIB_QUENTIER_TESTS_ENCRYPTION_MANAGER_TESTS_H
+#pragma once
 
 #include <QString>
 
@@ -28,5 +27,3 @@ namespace quentier::test {
 [[nodiscard]] bool decryptRc2Test(QString & error);
 
 } // namespace quentier::test
-
-#endif // LIB_QUENTIER_TESTS_ENCRYPTION_MANAGER_TESTS_H

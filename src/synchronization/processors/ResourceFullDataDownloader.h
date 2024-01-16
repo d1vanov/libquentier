@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "IResourceFullDataDownloader.h"
 
 #include <QMutex>

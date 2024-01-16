@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H
-#define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H
+#pragma once
 
 #include <QObject>
 
@@ -44,5 +43,3 @@ public Q_SLOTS:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_FORWARD_DECLARATIONS_H
-#define LIB_QUENTIER_UTILITY_FORWARD_DECLARATIONS_H
+#pragma once
 
 #include <memory>
 
@@ -27,5 +26,3 @@ class IKeychainService;
 using IKeychainServicePtr = std::shared_ptr<IKeychainService>;
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_FORWARD_DECLARATIONS_H

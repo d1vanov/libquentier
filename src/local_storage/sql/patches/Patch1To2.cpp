@@ -653,7 +653,9 @@ void Patch1To2::filterResourceLocalIds(QStringList & resourceLocalIds) const
 
     const auto it = std::remove_if(
         resourceLocalIds.begin(), resourceLocalIds.end(),
-        StringUtils::StringFilterPredicate(processedResourceLocalIds));
+        [&processedResourceLocalIds](const QString & localId) {
+            return processedResourceLocalIds.contains(localId);
+        });
 
     resourceLocalIds.erase(it, resourceLocalIds.end());
 }

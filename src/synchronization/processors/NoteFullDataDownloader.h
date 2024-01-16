@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "INoteFullDataDownloader.h"
 
 #include <qevercloud/services/Fwd.h>

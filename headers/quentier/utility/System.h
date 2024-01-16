@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_SYSTEM_H
-#define LIB_QUENTIER_UTILITY_SYSTEM_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
@@ -42,5 +41,3 @@ namespace quentier {
 void QUENTIER_EXPORT openUrl(const QUrl & url);
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_SYSTEM_H

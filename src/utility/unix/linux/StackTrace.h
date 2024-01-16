@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,8 +27,7 @@
  *
  * Webpage: http://stacktrace.sourceforge.net/
  */
-#ifndef LIB_QUENTIER_UTILITY_UNIX_STACK_TRACE_H
-#define LIB_QUENTIER_UTILITY_UNIX_STACK_TRACE_H
+#pragma once
 
 #ifdef __APPLE__
 #include <AvailabilityMacros.h>
@@ -159,4 +158,3 @@ extern "C" {
  * $State: Exp $
  * $Date: 2009/11/20 00:50:23 $
  */
-#endif

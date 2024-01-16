@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Dmitry Ivanov
+ * Copyright 2019-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_TEST_MACROS_H
-#define LIB_QUENTIER_TESTS_TEST_MACROS_H
+#pragma once
 
 #include <QDebug>
 #include <QTest>
@@ -41,5 +40,3 @@
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000
-
-#endif // LIB_QUENTIER_TESTS_TEST_MACROS_H

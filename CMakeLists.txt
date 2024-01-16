@@ -163,7 +163,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/Fwd.h
     headers/quentier/utility/IKeychainService.h
     headers/quentier/utility/Initialize.h
-    headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/LRUCache.hpp
     headers/quentier/utility/MessageBox.h
     headers/quentier/utility/Printable.h

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_LRU_CACHE_TESTS_H
-#define LIB_QUENTIER_TESTS_LRU_CACHE_TESTS_H
+#pragma once
 
 #include <QString>
 
@@ -35,5 +34,3 @@ namespace quentier::test {
     QString & error);
 
 } // namespace quentier::test
-
-#endif // LIB_QUENTIER_TESTS_LRU_CACHE_TESTS_H

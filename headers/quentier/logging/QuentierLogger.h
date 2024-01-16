@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
-#define LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
@@ -104,11 +103,11 @@ void QUENTIER_EXPORT QuentierRestartLogging();
  * Change the current filter for log components
  */
 void QUENTIER_EXPORT
-QuentierSetLogComponentFilter(const QRegularExpression & filter);
+    QuentierSetLogComponentFilter(const QRegularExpression & filter);
 
 } // namespace quentier
 
-#define __QNLOG_BASE(component, message, level)                                \
+#define QNLOG_PRIVATE_BASE(component, message, level)                          \
     if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level)) {       \
         QString msg;                                                           \
         QDebug dbg(&msg);                                                      \
@@ -119,39 +118,39 @@ QuentierSetLogComponentFilter(const QRegularExpression & filter);
             QStringLiteral(__FILE__), __LINE__, QString::fromUtf8(component),  \
             msg, quentier::LogLevel::level);                                   \
     }                                                                          \
-    // __QNLOG_BASE
+    // QNLOG_PRIVATE_BASE
 
 #define QNTRACE(component, message)                                            \
-    __QNLOG_BASE(component, message, Trace)                                    \
+    QNLOG_PRIVATE_BASE(component, message, Trace)                              \
     // QNTRACE
 
 #define QNDEBUG(component, message)                                            \
-    __QNLOG_BASE(component, message, Debug)                                    \
+    QNLOG_PRIVATE_BASE(component, message, Debug)                              \
     // QNDEBUG
 
 #define QNINFO(component, message)                                             \
-    __QNLOG_BASE(component, message, Info)                                     \
+    QNLOG_PRIVATE_BASE(component, message, Info)                               \
     // QNINFO
 
 #define QNWARNING(component, message)                                          \
-    __QNLOG_BASE(component, message, Warning)                                  \
+    QNLOG_PRIVATE_BASE(component, message, Warning)                            \
     // QNWARNING
 
 #define QNERROR(component, message)                                            \
-    __QNLOG_BASE(component, message, Error)                                    \
+    QNLOG_PRIVATE_BASE(component, message, Error)                              \
     // QNERROR
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \
-    quentier::QuentierSetMinLogLevel(                                          \
-        quentier::LogLevel::level) // QUENTIER_SET_MIN_LOG_LEVEL
+    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level)
+  // QUENTIER_SET_MIN_LOG_LEVEL
 
-#define QUENTIER_INITIALIZE_LOGGING()                                          \
-    quentier::QuentierInitializeLogging() // QUENTIER_INITIALIZE_LOGGING
+#define QUENTIER_INITIALIZE_LOGGING() quentier::QuentierInitializeLogging()
+  // QUENTIER_INITIALIZE_LOGGING
 
+// clang-format off
 #define QUENTIER_ADD_STDOUT_LOG_DESTINATION()                                  \
-    quentier::                                                                 \
-        QuentierAddStdOutLogDestination() // QUENTIER_ADD_STDOUT_LOG_DESTINATION
+    quentier::QuentierAddStdOutLogDestination()                                \
+    // QUENTIER_ADD_STDOUT_LOG_DESTINATION
+// clang-format on
 
 #define QNLOG_FILE_LINENUMBER_DELIMITER ":"
-
-#endif // LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_SUPPRESS_WARNINGS_H
-#define LIB_QUENTIER_UTILITY_SUPPRESS_WARNINGS_H
+#pragma once
 
 ////////////////////////////////////////////////////////////////////////////////
 // Common macros
@@ -100,5 +99,3 @@
 #define RESTORE_WARNINGS __pragma(warning(pop))
 
 #endif // MSVC
-
-#endif // LIB_QUENTIER_UTILITY_SUPPRESS_WARNINGS_H

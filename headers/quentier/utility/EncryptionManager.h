@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_ENCRYPTION_MANAGER_H
-#define LIB_QUENTIER_UTILITY_ENCRYPTION_MANAGER_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
@@ -28,7 +27,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(EncryptionManagerPrivate)
+class EncryptionManagerPrivate;
 
 /**
  * @brief The EncryptionManager class provides both synchronous methods to
@@ -76,5 +75,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_ENCRYPTION_MANAGER_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,16 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_VALIDATIONS_H
-#define LIB_QUENTIER_TYPES_VALIDATIONS_H
+#pragma once
 
+#include <quentier/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 class QString;
 
 namespace quentier {
-
-class ErrorString;
 
 /**
  * @brief checks note title for validity from Evernote service's rules POV
@@ -84,5 +82,3 @@ class ErrorString;
     const QString & tagName, ErrorString * errorDescription = nullptr) noexcept;
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_VALIDATIONS_H

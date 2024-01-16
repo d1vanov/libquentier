@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
-#define LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
+#pragma once
 
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
@@ -73,5 +72,3 @@ namespace quentier {
 [[nodiscard]] QString QUENTIER_EXPORT documentsPath();
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_STANDARD_PATHS_H

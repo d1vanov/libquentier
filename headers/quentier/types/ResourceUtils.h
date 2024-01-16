@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,18 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_RESOURCE_UTILS_H
-#define LIB_QUENTIER_TYPES_RESOURCE_UTILS_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
+#include <qevercloud/types/Fwd.h>
+
 #include <QString>
-
-namespace qevercloud {
-
-class Resource;
-
-} // namespace qevercloud
 
 namespace quentier {
 
@@ -38,5 +33,3 @@ namespace quentier {
     const qevercloud::Resource & resource);
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_RESOURCE_UTILS_H

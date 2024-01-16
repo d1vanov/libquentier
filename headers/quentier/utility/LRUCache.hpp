@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
-#define LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
+#pragma once
 
 #include <QHash>
 
@@ -229,5 +228,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_LRU_CACHE_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_CHECKS_H
-#define LIB_QUENTIER_UTILITY_CHECKS_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
@@ -46,5 +45,3 @@ namespace quentier {
     qint32 updateSequenceNumber);
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_CHECKS_H
