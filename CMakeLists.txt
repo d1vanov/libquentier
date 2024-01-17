@@ -882,7 +882,7 @@ foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})
 endforeach()
 
 # install cmake files
-install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends DESTINATION ${INSTALL_CMAKE_DIR})
+install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends NAMESPACE Libquentier:: DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES cmake/modules/hunspell_new_api_check.cpp DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES cmake/modules/LibquentierFindDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES cmake/modules/LibquentierFindTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
