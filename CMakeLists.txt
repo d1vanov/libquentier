@@ -35,7 +35,6 @@ include(LibquentierAdditionalCompilerWarnings)
 include(LibquentierFindBoost)
 include(LibquentierFindDependencies)
 include(LibquentierUpdateTranslations)
-include(LibquentierFindBoost)
 include(LibquentierSetupDoxygen)
 
 find_package(Sanitizers)
@@ -696,6 +695,7 @@ target_link_libraries(${LIBNAME}
   Qt${LIBQUENTIER_QT_VERSION}::Xml
   Qt${LIBQUENTIER_QT_VERSION}::Sql
   Qt${LIBQUENTIER_QT_VERSION}Keychain::Qt${LIBQUENTIER_QT_VERSION}Keychain
+  Boost::boost
   TidyHtml5::TidyHtml5
   OpenSSL::SSL
   OpenSSL::Crypto
