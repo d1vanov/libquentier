@@ -30,6 +30,8 @@ set(LIBQUENTIER_FIND_DEPS_ARGS REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR "ON")
 
+set(LIBQUENTIER_HAS_NOTE_EDITOR ${BUILD_WITH_NOTE_EDITOR})
+
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
 include(LibquentierFindBoost)
@@ -609,7 +611,7 @@ target_include_directories(${LIBNAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/headers>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:headers>)
+  $<INSTALL_INTERFACE:include>)
 
 # Interface library exposing project's public interface features to internal
 # project parts
@@ -619,7 +621,7 @@ target_include_directories(${LIBNAME}_interface
   INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/headers>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:headers>)
+  $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(${LIBNAME}_interface
   INTERFACE
@@ -810,9 +812,9 @@ set(DOXY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doc")
 ADD_DOCUMENTATION(doc Doxyfile)
 
 if(BUILD_WITH_NOTE_EDITOR)
-  set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR TRUE)")
+  set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIBQUENTIER_HAS_NOTE_EDITOR TRUE)")
 else()
-  set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR FALSE)")
+  set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIBQUENTIER_HAS_NOTE_EDITOR FALSE)")
 endif()
 
 configure_file(cmake/modules/LibquentierConfig.cmake.in
@@ -827,7 +829,7 @@ file(COPY cmake/modules/LibquentierFindHunspell.cmake DESTINATION ${PROJECT_BINA
 
 # install shared library
 install(TARGETS ${LIBNAME}
-        EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends
+        EXPORT Libquentier-qt${LIBQUENTIER_QT_VERSION}LibraryDepends
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -882,7 +884,7 @@ foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})
 endforeach()
 
 # install cmake files
-install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends NAMESPACE Libquentier:: DESTINATION ${INSTALL_CMAKE_DIR})
+install(EXPORT Libquentier-qt${LIBQUENTIER_QT_VERSION}LibraryDepends NAMESPACE Libquentier:: DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES cmake/modules/hunspell_new_api_check.cpp DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES cmake/modules/LibquentierFindDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES cmake/modules/LibquentierFindTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
