@@ -155,7 +155,7 @@ public:
         return (it != m_container.end());
     }
 
-    [[nodiscard]] bool remove(const key_type & key) noexcept
+    bool remove(const key_type & key) noexcept
     {
         const auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
