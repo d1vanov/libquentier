@@ -692,16 +692,16 @@ target_link_libraries(${LIBNAME}
   Qt${LIBQUENTIER_QT_VERSION}::Gui
   Qt${LIBQUENTIER_QT_VERSION}::Widgets
   Qt${LIBQUENTIER_QT_VERSION}::PrintSupport
-  PRIVATE
+  Qt${LIBQUENTIER_QT_VERSION}Keychain::Qt${LIBQUENTIER_QT_VERSION}Keychain
   Qt${LIBQUENTIER_QT_VERSION}::Network
   Qt${LIBQUENTIER_QT_VERSION}::Xml
   Qt${LIBQUENTIER_QT_VERSION}::Sql
-  Qt${LIBQUENTIER_QT_VERSION}Keychain::Qt${LIBQUENTIER_QT_VERSION}Keychain
-  Boost::boost
   TidyHtml5::TidyHtml5
   OpenSSL::SSL
   OpenSSL::Crypto
   Hunspell::Libhunspell
+  PRIVATE
+  Boost::boost
   ${LIBNAME}_enml
   ${LIBNAME}_local_storage_sql
   ${LIBNAME}_synchronization
@@ -796,7 +796,10 @@ target_compile_definitions(test_${PROJECT_NAME}
 add_sanitizers(test_${PROJECT_NAME})
 add_test(NAME test_${PROJECT_NAME} COMMAND test_${PROJECT_NAME})
 
-target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} Qt${LIBQUENTIER_QT_VERSION}::Test)
+target_link_libraries(test_${PROJECT_NAME}
+  PRIVATE
+    ${LIBNAME}
+    Qt${LIBQUENTIER_QT_VERSION}::Test)
 
 include(SetupClangFormat)
 include(SetupClangTidy)

@@ -54,11 +54,31 @@ public:
 
     explicit Result(Error error) : m_valueOrError{std::move(error)} {}
 
-    Result(const Result<T, Error> & other) = default;
-    Result(Result<T, Error> && other) = default;
+    Result(const Result<T, Error> & other) :
+        m_valueOrError{other.m_valueOrError}
+    {}
 
-    Result & operator=(const Result<T, Error> & other) = default;
-    Result & operator=(Result<T, Error> && other) = default;
+    Result(Result<T, Error> && other) :
+        m_valueOrError{std::move(other.m_valueOrError)}
+    {}
+
+    Result & operator=(const Result<T, Error> & other)
+    {
+        if (this != &other) {
+            m_valueOrError = other.m_valueOrError;
+        }
+
+        return *this;
+    }
+
+    Result & operator=(Result<T, Error> && other)
+    {
+        if (this != &other) {
+            m_valueOrError = std::move(other.m_valueOrError);
+        }
+
+        return *this;
+    }
 
     /**
      * @return boolean value indicating whether the result contains a value
