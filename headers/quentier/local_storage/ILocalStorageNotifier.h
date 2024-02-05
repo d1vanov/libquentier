@@ -52,14 +52,6 @@ Q_SIGNALS:
     void noteUpdated(
         qevercloud::Note note, ILocalStorage::UpdateNoteOptions options);
 
-    void noteNotebookChanged(
-        QString noteLocalId, QString previousNotebookLocalId,
-        QString newNotebookLocalId);
-
-    void noteTagListChanged(
-        QString noteLocalId, QStringList previousNoteTagLocalIds,
-        QStringList newNoteTagLocalIds);
-
     void noteExpunged(QString noteLocalId);
 
     // Notifications about tag related events

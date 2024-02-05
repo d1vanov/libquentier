@@ -58,14 +58,6 @@ public:
     void notifyNoteUpdated(
         qevercloud::Note note, ILocalStorage::UpdateNoteOptions options);
 
-    void notifyNoteNotebookChanged(
-        QString noteLocalId, QString previousNotebookLocalId,
-        QString newNotebookLocalId);
-
-    void notifyNoteTagListChanged(
-        QString noteLocalId, QStringList previousNoteTagLocalIds,
-        QStringList newNoteTagLocalIds);
-
     void notifyNoteExpunged(QString noteLocalId);
 
     void notifyTagPut(qevercloud::Tag tag);

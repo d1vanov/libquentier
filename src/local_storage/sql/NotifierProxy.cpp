@@ -164,50 +164,6 @@ void NotifierProxy::notifyNoteUpdated(
         });
 }
 
-void NotifierProxy::notifyNoteNotebookChanged(
-    QString noteLocalId, QString previousNotebookLocalId,
-    QString newNotebookLocalId)
-{
-    if (QThread::currentThread() == m_writerThread.get()) {
-        m_notifier->notifyNoteNotebookChanged(
-            std::move(noteLocalId), std::move(previousNotebookLocalId),
-            std::move(newNotebookLocalId));
-        return;
-    }
-
-    threading::postToObject(
-        m_notifier,
-        [notifier = m_notifier, noteLocalId = std::move(noteLocalId),
-         previousNotebookLocalId = std::move(previousNotebookLocalId),
-         newNotebookLocalId = std::move(newNotebookLocalId)]() mutable {
-            notifier->notifyNoteNotebookChanged(
-                std::move(noteLocalId), std::move(previousNotebookLocalId),
-                std::move(newNotebookLocalId));
-        });
-}
-
-void NotifierProxy::notifyNoteTagListChanged(
-    QString noteLocalId, QStringList previousNoteTagLocalIds,
-    QStringList newNoteTagLocalIds)
-{
-    if (QThread::currentThread() == m_writerThread.get()) {
-        m_notifier->notifyNoteTagListChanged(
-            std::move(noteLocalId), std::move(previousNoteTagLocalIds),
-            std::move(newNoteTagLocalIds));
-        return;
-    }
-
-    threading::postToObject(
-        m_notifier,
-        [notifier = m_notifier, noteLocalId = std::move(noteLocalId),
-         previousNoteTagLocalIds = std::move(previousNoteTagLocalIds),
-         newNoteTagLocalIds = std::move(newNoteTagLocalIds)]() mutable {
-            notifier->notifyNoteTagListChanged(
-                std::move(noteLocalId), std::move(previousNoteTagLocalIds),
-                std::move(newNoteTagLocalIds));
-        });
-}
-
 void NotifierProxy::notifyNoteExpunged(QString noteLocalId)
 {
     if (QThread::currentThread() == m_writerThread.get()) {

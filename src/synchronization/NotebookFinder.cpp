@@ -83,31 +83,6 @@ void NotebookFinder::init()
 
     m_localStorageConnections << QObject::connect(
         localStorageNotifier,
-        &local_storage::ILocalStorageNotifier::noteNotebookChanged,
-        localStorageNotifier,
-        [this, selfWeak](
-            const QString & noteLocalId,
-            [[maybe_unused]] const QString & previousNotebookLocalId,
-            [[maybe_unused]] const QString & newNotebookLocalId) {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
-
-            removeCachedNotebookByNoteLocalId(noteLocalId);
-
-            // As we don't know for sure which note was changed,
-            // will clear the cache of notebook searches by note guid
-            // just in case
-            // FIXME: think of some more efficient approach
-            {
-                QMutexLocker locker{&m_notebooksByNoteGuidMutex};
-                m_notebooksByNoteGuid.clear();
-            }
-        });
-
-    m_localStorageConnections << QObject::connect(
-        localStorageNotifier,
         &local_storage::ILocalStorageNotifier::noteExpunged,
         localStorageNotifier, [this, selfWeak](const QString & noteLocalId) {
             const auto self = selfWeak.lock();

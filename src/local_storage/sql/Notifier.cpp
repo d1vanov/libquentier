@@ -65,24 +65,6 @@ void Notifier::notifyNoteUpdated(
     Q_EMIT noteUpdated(std::move(note), options);
 }
 
-void Notifier::notifyNoteNotebookChanged(
-    QString noteLocalId, QString previousNotebookLocalId,
-    QString newNotebookLocalId)
-{
-    Q_EMIT noteNotebookChanged(
-        std::move(noteLocalId), std::move(previousNotebookLocalId),
-        std::move(newNotebookLocalId));
-}
-
-void Notifier::notifyNoteTagListChanged(
-    QString noteLocalId, QStringList previousNoteTagLocalIds,
-    QStringList newNoteTagLocalIds)
-{
-    Q_EMIT noteTagListChanged(
-        std::move(noteLocalId), std::move(previousNoteTagLocalIds),
-        std::move(newNoteTagLocalIds));
-}
-
 void Notifier::notifyNoteExpunged(QString noteLocalId)
 {
     Q_EMIT noteExpunged(std::move(noteLocalId));
