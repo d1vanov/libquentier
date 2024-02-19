@@ -178,7 +178,9 @@ set(UTILITY_HEADERS
     headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
-    headers/quentier/utility/Unreachable.h
+    headers/quentier/utility/Unreachable.h)
+
+set(UTILITY_CANCELER_HEADERS
     headers/quentier/utility/cancelers/AnyOfCanceler.h
     headers/quentier/utility/cancelers/Fwd.h
     headers/quentier/utility/cancelers/FutureCanceler.h
@@ -194,6 +196,7 @@ list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${THREADING_HEADERS})
 list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
+list(APPEND PUBLIC_HEADERS ${UTILITY_CANCELER_HEADERS})
 
 set(PRIVATE_HEADERS
     src/local_storage/NoteSearchQueryData.h
@@ -870,6 +873,14 @@ endforeach()
 
 foreach(ITEM ${UTILITY_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
+endforeach()
+
+foreach(ITEM ${UTILITY_CANCELER_HEADERS})
+  install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility/cancelers)
+endforeach()
+
+foreach(ITEM ${THREADING_HEADERS})
+  install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/threading)
 endforeach()
 
 install(FILES ${PROJECT_BINARY_DIR}/quentier/utility/Linkage.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
