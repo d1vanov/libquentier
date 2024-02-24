@@ -31,7 +31,8 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-QString defaultApplicationStoragePath(const QString & settingsName)
+[[nodiscard]] QString defaultApplicationStoragePath(
+    const QString & settingsName)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
@@ -61,7 +62,7 @@ QString defaultApplicationStoragePath(const QString & settingsName)
     return storagePath;
 }
 
-QString accountApplicationStoragePath(
+[[nodiscard]] QString accountApplicationStoragePath(
     const Account & account, const QString & settingsName)
 {
     const QString accountName = account.name();
@@ -126,6 +127,12 @@ ApplicationSettings::ApplicationSettings(
         QSettings::IniFormat)
 {}
 
+ApplicationSettings::ApplicationSettings(
+    const Account & account, const std::string_view settingsName) :
+    ApplicationSettings(
+        account, settingsName.data(), static_cast<int>(settingsName.size()))
+{}
+
 ApplicationSettings::~ApplicationSettings() = default;
 
 void ApplicationSettings::beginGroup(const QString & prefix)
@@ -138,6 +145,12 @@ void ApplicationSettings::beginGroup(const char * prefix, const int size)
     QSettings::beginGroup(QString::fromUtf8(prefix, size));
 }
 
+void ApplicationSettings::beginGroup(const std::string_view prefix)
+{
+    QSettings::beginGroup(
+        QString::fromUtf8(prefix.data(), static_cast<int>(prefix.size())));
+}
+
 int ApplicationSettings::beginReadArray(const QString & prefix)
 {
     return QSettings::beginReadArray(prefix);
@@ -146,6 +159,12 @@ int ApplicationSettings::beginReadArray(const QString & prefix)
 int ApplicationSettings::beginReadArray(const char * prefix, const int size)
 {
     return QSettings::beginReadArray(QString::fromUtf8(prefix, size));
+}
+
+int ApplicationSettings::beginReadArray(const std::string_view prefix)
+{
+    return QSettings::beginReadArray(
+        QString::fromUtf8(prefix.data(), static_cast<int>(prefix.size())));
 }
 
 void ApplicationSettings::beginWriteArray(
@@ -161,6 +180,14 @@ void ApplicationSettings::beginWriteArray(
         QString::fromUtf8(prefix, prefixSize), arraySize);
 }
 
+void ApplicationSettings::beginWriteArray(
+    const std::string_view prefix, const int arraySize)
+{
+    QSettings::beginWriteArray(
+        QString::fromUtf8(prefix.data(), static_cast<int>(prefix.size())),
+        arraySize);
+}
+
 bool ApplicationSettings::contains(const QString & key) const
 {
     return QSettings::contains(key);
@@ -169,6 +196,12 @@ bool ApplicationSettings::contains(const QString & key) const
 bool ApplicationSettings::contains(const char * key, const int size) const
 {
     return QSettings::contains(QString::fromUtf8(key, size));
+}
+
+bool ApplicationSettings::contains(const std::string_view key) const
+{
+    return QSettings::contains(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())));
 }
 
 void ApplicationSettings::remove(const QString & key)
@@ -181,6 +214,12 @@ void ApplicationSettings::remove(const char * key, const int size)
     QSettings::remove(QString::fromUtf8(key, size));
 }
 
+void ApplicationSettings::remove(const std::string_view key)
+{
+    QSettings::remove(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())));
+}
+
 void ApplicationSettings::setValue(const QString & key, const QVariant & value)
 {
     QSettings::setValue(key, value);
@@ -190,6 +229,13 @@ void ApplicationSettings::setValue(
     const char * key, const QVariant & value, const int keySize)
 {
     QSettings::setValue(QString::fromUtf8(key, keySize), value);
+}
+
+void ApplicationSettings::setValue(
+    const std::string_view key, const QVariant & value)
+{
+    QSettings::setValue(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())), value);
 }
 
 QVariant ApplicationSettings::value(
@@ -204,13 +250,21 @@ QVariant ApplicationSettings::value(
     return QSettings::value(QString::fromUtf8(key, keySize), defaultValue);
 }
 
+QVariant ApplicationSettings::value(
+    const std::string_view key, const QVariant & defaultValue) const
+{
+    return QSettings::value(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())),
+        defaultValue);
+}
+
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
     const auto allStoredKeys = QSettings::allKeys();
     for (const auto & key: std::as_const(allStoredKeys)) {
         const auto value = QSettings::value(key);
-        strm << QStringLiteral("Key: ") << key << QStringLiteral("; Value: ")
-             << value.toString() << QStringLiteral("\n;");
+        strm << "Key: " << key << "; Value: "
+             << value.toString() << "\n;";
     }
 
     return strm;

@@ -22,6 +22,8 @@
 
 #include <QSettings>
 
+#include <string_view>
+
 namespace quentier {
 
 /**
@@ -42,7 +44,7 @@ public:
      *                      storage; otherwise they would be stored in
      *                      the default settings file for the account
      */
-    ApplicationSettings(const QString & settingsName = {});
+    explicit ApplicationSettings(const QString & settingsName = {});
 
     /**
      * Constructor for application settings specific to the account
@@ -55,7 +57,7 @@ public:
      *                      storage; otherwise they would be stored in
      *                      the default settings file for the account
      */
-    ApplicationSettings(
+    explicit ApplicationSettings(
         const Account & account, const QString & settingsName = {});
 
     /**
@@ -77,6 +79,22 @@ public:
     ApplicationSettings(
         const Account & account, const char * settingsName,
         int settingsNameSize = -1);
+
+    /**
+     * Constructor for application settings specific to the account
+     *
+     * @param account           The account for which the settings are to be
+     *                          stored or read
+     * @param settingsName      If not empty, the created application settings
+     *                          would manage the settings stored in a file with
+     *                          a specific name within the account's settings
+     *                          storage; otherwise they would be stored in
+     *                          the default settings file for the account.
+     *                          Must be UTF-8 encoded as internally it is
+     *                          converted to QString via QString::fromUtf8
+     */
+    ApplicationSettings(
+        const Account & account, std::string_view settingsName);
 
     /**
      * Destructor
@@ -140,6 +158,17 @@ public:
     void beginGroup(const char * prefix, int size = -1);
 
     /**
+     * Appends prefix to the current group.
+     * Overload of beginGroup accepting std::std::string_view
+     * @param prefix    String containing the prefix name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString::fromUtf8
+     * @param size      Size of the prefix sring. If negative (the default),
+     *                  the prefix size is taken to be stren(prefix).
+     */
+    void beginGroup(std::string_view prefix);
+
+    /**
      * Adds prefix to the current group and starts reading from an array.
      * The call is redirected to QSettings::beginReadArray. It is required in
      * this class only to workaround hiding QSettings method due to overloads
@@ -159,6 +188,15 @@ public:
      *                  the prefix size is taken to be stren(prefix)
      */
     [[nodiscard]] int beginReadArray(const char * prefix, int size = -1);
+
+    /**
+     * Adds prefix to the current group and starts reading from an array.
+     * Overload of beginReadArray accepting std::string_view
+     * @param prefix    String containing the prefix name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString::fromUtf8
+     */
+    [[nodiscard]] int beginReadArray(std::string_view prefix);
 
     /**
      * Adds prefix to the current group and starts writing an array of size
@@ -190,6 +228,19 @@ public:
         const char * prefix, int arraySize = -1, int prefixSize = -1);
 
     /**
+     * Adds prefix to the current group and starts writing an array of size
+     * arraySize.
+     * Overload of beginWriteArray accepting std::string_view
+     * @param prefix        String containing the prefix name. Must be UTF-8
+     *                      encoded as internally it is converted to QString via
+     *                      QString::fromUtf8
+     * @param arraySize     Size of the array to be written. If negative
+     *                      (the default), it is automatically determined based
+     *                      on the indexes of the entries written.
+     */
+    void beginWriteArray(std::string_view prefix, int arraySize = -1);
+
+    /**
      * The call is redirected to QSettings::contains. It is required in
      * this class only to workaround hiding QSettings method due to overloads
      * @param key       The key being checked for presence
@@ -212,6 +263,16 @@ public:
     [[nodiscard]] bool contains(const char * key, int size = -1) const;
 
     /**
+     * Overload of contains accepting std::string_view
+     * @param key       String containing the setting name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString::fromUtf8
+     * @return          True if there exists a setting called key; false
+     *                  otherwise
+     */
+    [[nodiscard]] bool contains(std::string_view key) const;
+
+    /**
      * Removes the setting key and any sub-settings of key.
      * The call is redirected to QSettings::remove. It is required in
      * this class only to workaround hiding QSettings method due to overloads
@@ -230,6 +291,15 @@ public:
      *                  the key size is taken to be stren(key).
      */
     void remove(const char * key, int size = -1);
+
+    /**
+     * Removes the setting key and any sub-settings of key.
+     * Overload of remove accepting std::string_view
+     * @param key       String containing the setting name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString::fromUtf8
+     */
+    void remove(std::string_view key);
 
     /**
      * Sets the value of setting.
@@ -253,6 +323,16 @@ public:
      */
     void setValue(
         const char * key, const QVariant & value, int keySize = -1);
+
+    /**
+     * Sets the value of setting.
+     * Overload of setValue accepting std::string_view
+     * @param key       String containing the setting name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString::fromUtf8
+     * @param value     Value for setting key
+     */
+    void setValue(std::string_view key, const QVariant & value);
 
     /**
      * Fetches the value of setting.
@@ -284,6 +364,20 @@ public:
     [[nodiscard]] QVariant value(
         const char * key, const QVariant & defaultValue = {},
         int keySize = -1) const;
+
+    /**
+     * Fetches the value of setting.
+     * Overload of value accepting std::string_view
+     * @param key           String containing the setting name. Must be UTF-8
+     *                      encoded as internally it is converted to QString via
+     *                      QString::fromUtf8
+     * @param defautValue   Default value returned if the setting doesn't exist
+     * @return              The value for setting key. If the setting doesn't
+     *                      exist, returns defaultValue. If no default value is
+     *                      specified, a default QVariant is returned.
+     */
+    [[nodiscard]] QVariant value(
+        std::string_view key, const QVariant & defaultValue = {}) const;
 
 public:
     QTextStream & print(QTextStream & strm) const override;
