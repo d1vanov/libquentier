@@ -369,9 +369,9 @@ bool EncryptionManagerPrivate::encyptWithAes(
     int bytesWritten = 0;
     int cipherTextSize = 0;
 
-    EVP_CIPHER_CTX * pContext = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX * context = EVP_CIPHER_CTX_new();
     int res = EVP_EncryptInit(
-        pContext, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
+        context, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
@@ -385,12 +385,12 @@ bool EncryptionManagerPrivate::encyptWithAes(
                              << ": lib: " << errorLib << "; reason: "
                              << errorReason);
         free(cipherText);
-        EVP_CIPHER_CTX_free(pContext);
+        EVP_CIPHER_CTX_free(context);
         return false;
     }
 
     res = EVP_EncryptUpdate(
-        pContext, cipherText, &bytesWritten, rawTextToEncrypt,
+        context, cipherText, &bytesWritten, rawTextToEncrypt,
         static_cast<int>(rawTextToEncryptSize));
 
     if (res != 1) {
@@ -406,13 +406,13 @@ bool EncryptionManagerPrivate::encyptWithAes(
                              << ": lib: " << errorLib << "; reason: "
                              << errorReason);
         free(cipherText);
-        EVP_CIPHER_CTX_free(pContext);
+        EVP_CIPHER_CTX_free(context);
         return false;
     }
 
     cipherTextSize += bytesWritten;
 
-    res = EVP_EncryptFinal(pContext, cipherText + bytesWritten, &bytesWritten);
+    res = EVP_EncryptFinal(context, cipherText + bytesWritten, &bytesWritten);
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
@@ -426,7 +426,7 @@ bool EncryptionManagerPrivate::encyptWithAes(
                              << ": lib: " << errorLib << "; reason: "
                              << errorReason);
         free(cipherText);
-        EVP_CIPHER_CTX_free(pContext);
+        EVP_CIPHER_CTX_free(context);
         return false;
     }
 
@@ -436,7 +436,7 @@ bool EncryptionManagerPrivate::encyptWithAes(
         reinterpret_cast<const char *>(cipherText), cipherTextSize);
 
     free(cipherText);
-    EVP_CIPHER_CTX_free(pContext);
+    EVP_CIPHER_CTX_free(context);
     return true;
 }
 
@@ -536,9 +536,9 @@ bool EncryptionManagerPrivate::decryptAes(
     int bytesWritten = 0;
     int decipheredTextSize = 0;
 
-    EVP_CIPHER_CTX * pContext = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX * context = EVP_CIPHER_CTX_new();
     int res = EVP_DecryptInit(
-        pContext, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
+        context, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate", "can't decrypt the text"));
@@ -551,12 +551,12 @@ bool EncryptionManagerPrivate::decryptAes(
                              << ": lib: " << errorLib << "; reason: "
                              << errorReason);
         free(decipheredText);
-        EVP_CIPHER_CTX_free(pContext);
+        EVP_CIPHER_CTX_free(context);
         return false;
     }
 
     res = EVP_DecryptUpdate(
-        pContext, decipheredText, &bytesWritten, rawCipherText,
+        context, decipheredText, &bytesWritten, rawCipherText,
         static_cast<int>(rawCipherTextSize));
 
     if (res != 1) {
@@ -571,14 +571,14 @@ bool EncryptionManagerPrivate::decryptAes(
                              << ": lib: " << errorLib << "; reason: "
                              << errorReason);
         free(decipheredText);
-        EVP_CIPHER_CTX_free(pContext);
+        EVP_CIPHER_CTX_free(context);
         return false;
     }
 
     decipheredTextSize += bytesWritten;
 
     res = EVP_DecryptFinal(
-        pContext, decipheredText + bytesWritten, &bytesWritten);
+        context, decipheredText + bytesWritten, &bytesWritten);
 
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
@@ -592,7 +592,7 @@ bool EncryptionManagerPrivate::decryptAes(
                              << ": lib: " << errorLib << "; reason: "
                              << errorReason);
         free(decipheredText);
-        EVP_CIPHER_CTX_free(pContext);
+        EVP_CIPHER_CTX_free(context);
         return false;
     }
 
@@ -601,7 +601,7 @@ bool EncryptionManagerPrivate::decryptAes(
         reinterpret_cast<const char *>(decipheredText), decipheredTextSize);
 
     free(decipheredText);
-    EVP_CIPHER_CTX_free(pContext);
+    EVP_CIPHER_CTX_free(context);
     return true;
 }
 
