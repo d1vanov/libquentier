@@ -641,19 +641,18 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
 
         strm << "SELECT localTag, COUNT(localTag) AS noteCount FROM "
              << "NoteTags LEFT OUTER JOIN Notes "
-             << "ON NoteTags.localNote = Notes.localUid WHERE (localTag IN ";
+             << "ON NoteTags.localNote = Notes.localUid WHERE "
+             << "(NoteTags.localTag IN (";
 
-        int counter = 0;
         for (const qevercloud::Tag & tag: std::as_const(tags)) {
-            strm << ":localTag" << counter;
-            ++counter;
+            strm << "\"" << utils::sqlEscape(tag.localId()) << "\"";
 
             if (&tag != &tags.constLast()) {
                 strm << ", ";
             }
         }
 
-        strm << ") ";
+        strm << ")) ";
 
         const QString condition = noteCountOptionsToSqlQueryPart(options);
         if (!condition.isEmpty()) {
@@ -666,22 +665,7 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
     }();
 
     QSqlQuery query{database};
-    bool res = query.prepare(queryString);
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotesHandler",
-        QStringLiteral("Cannot count notes per tags in the local storage "
-                       "database: failed to prepare query"),
-        std::nullopt);
-
-    int counter = 0;
-    for (const qevercloud::Tag & tag: std::as_const(tags)) {
-        query.bindValue(
-            QStringLiteral(":localTag") + QString::number(counter),
-            tag.localId());
-        ++counter;
-    }
-
-    res = query.exec();
+    bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QStringLiteral(
