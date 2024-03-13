@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,5 +29,7 @@ class ILocalStorageNotifier;
 
 class IPatch;
 using IPatchPtr = std::shared_ptr<IPatch>;
+
+class NoteSearchQuery;
 
 } // namespace quentier::local_storage
