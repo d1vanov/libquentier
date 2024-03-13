@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "NotesHandler.h"
 #include "Notifier.h"
@@ -750,11 +749,9 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
         if (!notebookLocalIds.isEmpty()) {
             strm << " (notebookLocalUid IN (";
 
-            int notebookCounter = 0;
             for (const auto & notebookLocalId: std::as_const(notebookLocalIds))
             {
-                strm << ":notebookLocalUid" << notebookCounter;
-                ++notebookCounter;
+                strm << "\"" << utils::sqlEscape(notebookLocalId) << "\"";
                 if (&notebookLocalId != &notebookLocalIds.constLast()) {
                     strm << ", ";
                 }
@@ -771,10 +768,8 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
             strm << "(localUid IN (SELECT DISTINCT localNote "
                     "FROM NoteTags WHERE localTag IN (";
 
-            int tagCounter = 0;
             for (const auto & tagLocalId: tagLocalIds) {
-                strm << ":tagLocalUid" << tagCounter;
-                ++tagCounter;
+                strm << "\"" << utils::sqlEscape(tagLocalId) << "\"";
                 if (&tagLocalId != &tagLocalIds.constLast()) {
                     strm << ", ";
                 }
@@ -799,32 +794,7 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
     }();
 
     QSqlQuery query{database};
-    bool res = query.prepare(queryString);
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotesHandler",
-        QStringLiteral(
-            "Cannot count notes per notebooks and tags in the local storage "
-            "database: failed to prepare query"),
-        std::nullopt);
-
-    int notebookCounter = 0;
-    for (const QString & notebookLocalId: std::as_const(notebookLocalIds)) {
-        query.bindValue(
-            QStringLiteral(":notebookLocalUid") +
-                QString::number(notebookCounter),
-            notebookLocalId);
-        ++notebookCounter;
-    }
-
-    int tagCounter = 0;
-    for (const QString & tagLocalId: std::as_const(tagLocalIds)) {
-        query.bindValue(
-            QStringLiteral(":tagLocalUid") + QString::number(tagCounter),
-            tagLocalId);
-        ++tagCounter;
-    }
-
-    res = query.exec();
+    bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QStringLiteral(
