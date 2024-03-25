@@ -87,7 +87,9 @@ set(ENML_HEADERS
     headers/quentier/enml/IConverter.h
     headers/quentier/enml/IDecryptedTextCache.h
     headers/quentier/enml/IENMLTagsConverter.h
-    headers/quentier/enml/IHtmlData.h
+    headers/quentier/enml/IHtmlData.h)
+
+set(ENML_CONVERSION_RULES_HEADERS
     headers/quentier/enml/conversion_rules/Factory.h
     headers/quentier/enml/conversion_rules/Fwd.h
     headers/quentier/enml/conversion_rules/ISkipRule.h
@@ -100,8 +102,8 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/ILocalStorage.h
     headers/quentier/local_storage/ILocalStorageNotifier.h
     headers/quentier/local_storage/IPatch.h
-	headers/quentier/local_storage/LocalStorageOpenException.h
-	headers/quentier/local_storage/LocalStorageOperationException.h
+    headers/quentier/local_storage/LocalStorageOpenException.h
+    headers/quentier/local_storage/LocalStorageOperationException.h
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
@@ -188,6 +190,7 @@ set(UTILITY_CANCELER_HEADERS
     headers/quentier/utility/cancelers/ManualCanceler.h)
 
 set(PUBLIC_HEADERS ${ENML_HEADERS})
+list(APPEND PUBLIC_HEADERS ${ENML_CONVERSION_RULES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${LOCAL_STORAGE_HEADERS})
 list(APPEND PUBLIC_HEADERS ${LOGGING_HEADERS})
@@ -853,6 +856,10 @@ endforeach()
 
 foreach(ITEM ${ENML_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/enml)
+endforeach()
+
+foreach(ITEM ${ENML_CONVERSION_RULES_HEADERS})
+  install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/enml/conversion_rules)
 endforeach()
 
 foreach(ITEM ${LOCAL_STORAGE_HEADERS})
