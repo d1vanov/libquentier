@@ -302,30 +302,28 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
         return result;
     }
 
-    auto watcher = std::make_unique<QFutureWatcher<T>>();
+    auto watcher = std::shared_ptr<QFutureWatcher<T>>(
+        new QFutureWatcher<T>, [](QFutureWatcher<T> * w) { w->deleteLater(); });
+
     watcher->setFuture(std::move(future));
     auto * rawWatcher = watcher.get();
+
     QObject::connect(
-        rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
-        [rawWatcher, function = std::forward<decltype(function)>(function),
-         promise = std::move(promise), context]() mutable {
+        rawWatcher, &QFutureWatcher<T>::finished, context,
+        [context, watcher = std::move(watcher),
+         function = std::forward<decltype(function)>(function),
+         promise = std::move(promise)]() mutable {
             postToObject(
                 context,
                 [function = std::forward<decltype(function)>(function),
                  promise = std::move(promise),
-                 future = rawWatcher->future()]() mutable {
+                 future = watcher->future()]() mutable {
                     detail::processParentFuture(
                         std::move(promise), std::move(future),
                         std::forward<decltype(function)>(function));
                 });
-            rawWatcher->deleteLater();
         });
 
-    QObject::connect(
-        rawWatcher, &QFutureWatcher<T>::canceled, rawWatcher,
-        [rawWatcher] { rawWatcher->deleteLater(); });
-
-    Q_UNUSED(watcher.release())
     return result;
 }
 
@@ -457,26 +455,28 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
         return result;
     }
 
-    auto watcher = std::make_unique<QFutureWatcher<T>>();
+    auto watcher = std::shared_ptr<QFutureWatcher<T>>(
+        new QFutureWatcher<T>, [](QFutureWatcher<T> * w) { w->deleteLater(); });
+
     watcher->setFuture(std::move(future));
     auto * rawWatcher = watcher.get();
+
     QObject::connect(
-        rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
-        [rawWatcher, promise = std::move(promise), future = std::move(future),
-         context,
+        rawWatcher, &QFutureWatcher<T>::finished, context,
+        [context, watcher = std::move(watcher), promise = std::move(promise),
+         future = std::move(future),
          handler = std::forward<decltype(handler)>(handler)]() mutable {
-            rawWatcher->deleteLater();
             postToObject(
                 context,
                 [promise = std::move(promise), future = std::move(future),
-                 handler = std::forward<decltype(handler)>(handler)]() mutable {
+                 handler =
+                     std::forward<decltype(handler)>(handler)]() mutable {
                     detail::processPossibleFutureException(
                         std::move(promise), std::move(future),
                         std::forward<decltype(handler)>(handler));
                 });
         });
 
-    Q_UNUSED(watcher.release())
     return result;
 }
 
