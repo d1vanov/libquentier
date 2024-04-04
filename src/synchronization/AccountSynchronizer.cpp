@@ -110,11 +110,13 @@ void merge(const IDownloadNotesStatus & from, DownloadNotesStatus & to)
         from.noteGuidsWhichFailedToExpunge(),
         to.m_noteGuidsWhichFailedToExpunge);
 
-    for (const auto it: qevercloud::toRange(from.processedNoteGuidsAndUsns())) {
+    const auto processedNoteGuidsAndUsns = from.processedNoteGuidsAndUsns();
+    for (const auto it: qevercloud::toRange(processedNoteGuidsAndUsns)) {
         to.m_processedNoteGuidsAndUsns[it.key()] = it.value();
     }
 
-    for (const auto it: qevercloud::toRange(from.cancelledNoteGuidsAndUsns())) {
+    const auto cancelledNoteGuidsAndUsns = from.cancelledNoteGuidsAndUsns();
+    for (const auto it: qevercloud::toRange(cancelledNoteGuidsAndUsns)) {
         to.m_cancelledNoteGuidsAndUsns[it.key()] = it.value();
     }
 
@@ -137,13 +139,15 @@ void merge(const IDownloadResourcesStatus & from, DownloadResourcesStatus & to)
         from.resourcesWhichFailedToProcess(),
         to.m_resourcesWhichFailedToProcess);
 
-    for (const auto it:
-         qevercloud::toRange(from.processedResourceGuidsAndUsns())) {
+    const auto processedResourceGuidsAndUsns =
+        from.processedResourceGuidsAndUsns();
+    for (const auto it: qevercloud::toRange(processedResourceGuidsAndUsns)) {
         to.m_processedResourceGuidsAndUsns[it.key()] = it.value();
     }
 
-    for (const auto it:
-         qevercloud::toRange(from.cancelledResourceGuidsAndUsns())) {
+    const auto cancelledResourceGuidsAndUsns =
+        from.cancelledResourceGuidsAndUsns();
+    for (const auto it: qevercloud::toRange(cancelledResourceGuidsAndUsns)) {
         to.m_cancelledResourceGuidsAndUsns[it.key()] = it.value();
     }
 
@@ -186,13 +190,13 @@ void merge(const ISyncState & from, SyncState & to)
     to.m_userDataUpdateCount = from.userDataUpdateCount();
     to.m_userDataLastSyncTime = from.userDataLastSyncTime();
 
-    for (const auto it: qevercloud::toRange(from.linkedNotebookUpdateCounts()))
-    {
+    const auto linkedNotebookUpdateCounts = from.linkedNotebookUpdateCounts();
+    for (const auto it: qevercloud::toRange(linkedNotebookUpdateCounts)) {
         to.m_linkedNotebookUpdateCounts[it.key()] = it.value();
     }
 
-    for (const auto it: qevercloud::toRange(from.linkedNotebookLastSyncTimes()))
-    {
+    const auto linkedNotebookLastSyncTimes = from.linkedNotebookLastSyncTimes();
+    for (const auto it: qevercloud::toRange(linkedNotebookLastSyncTimes)) {
         to.m_linkedNotebookLastSyncTimes[it.key()] = it.value();
     }
 }
@@ -587,9 +591,10 @@ void AccountSynchronizer::onDownloadFailed(
                 std::move(counters);
         }
 
+        const auto linkedNotebookSyncChunksDataCounters =
+            context->callbackWrapper->linkedNotebookSyncChunksDataCounters();
         for (const auto it:
-             qevercloud::toRange(context->callbackWrapper
-                                     ->linkedNotebookSyncChunksDataCounters()))
+             qevercloud::toRange(linkedNotebookSyncChunksDataCounters))
         {
             const auto & linkedNotebookGuid = it.key();
             auto counters = it.value();

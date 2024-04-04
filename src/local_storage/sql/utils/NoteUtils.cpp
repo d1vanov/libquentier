@@ -676,7 +676,7 @@ void contentSearchTermToSqlQueryParts(
     const auto processListQueryItem = [&](const auto & listItemAccessor,
                                           const Negated negated,
                                           const QString & column) {
-        const auto & items =
+        const auto items =
             std::bind(listItemAccessor, noteSearchQuery)(); // NOLINT
         if (items.isEmpty()) {
             return;
@@ -708,7 +708,7 @@ void contentSearchTermToSqlQueryParts(
     const auto processNumericListQueryItem = [&](const auto & listItemAccessor,
                                                  const Negated negated,
                                                  const QString & column) {
-        const auto & items =
+        const auto items =
             std::bind(listItemAccessor, noteSearchQuery)(); // NOLINT
         if (items.isEmpty()) {
             return;
