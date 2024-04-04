@@ -24,22 +24,22 @@
 
 namespace quentier {
 
-[[nodiscard]] int QUENTIER_EXPORT genericMessageBox(
+int QUENTIER_EXPORT genericMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
     QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
-[[nodiscard]] int QUENTIER_EXPORT informationMessageBox(
+int QUENTIER_EXPORT informationMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
     QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
-[[nodiscard]] int QUENTIER_EXPORT warningMessageBox(
+int QUENTIER_EXPORT warningMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
     QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
-[[nodiscard]] int QUENTIER_EXPORT criticalMessageBox(
+int QUENTIER_EXPORT criticalMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
     QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
