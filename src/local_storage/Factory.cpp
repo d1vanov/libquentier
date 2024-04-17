@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include <quentier/local_storage/Factory.h>
+#include <quentier/threading/Factory.h>
 
 #include <local_storage/sql/ConnectionPool.h>
 #include <local_storage/sql/LinkedNotebooksHandler.h>
@@ -41,6 +42,10 @@ ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
     threading::QThreadPoolPtr threadPool)
 {
+    if (!threadPool) {
+        threadPool = threading::globalThreadPool();
+    }
+
     auto localStorageMainFilePath =
         localStorageDir.absoluteFilePath(QStringLiteral("qn.storage.sqlite"));
 

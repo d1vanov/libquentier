@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,6 +31,6 @@ namespace quentier::local_storage {
 
 [[nodiscard]] QUENTIER_EXPORT ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
-    threading::QThreadPoolPtr threadPool);
+    threading::QThreadPoolPtr threadPool = {});
 
 } // namespace quentier::local_storage
