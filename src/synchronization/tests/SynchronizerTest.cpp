@@ -137,14 +137,26 @@ TEST_F(SynchronizerTest, AuthenticateNewAccount)
 
     const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
+    const Account account{
+        QStringLiteral("username"),
+        Account::Type::Evernote,
+        authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        QStringLiteral("wwww.evernote.com"),
+        authenticationInfo->shardId()};
+
     EXPECT_CALL(*m_mockAuthenticationInfoProvider, authenticateNewAccount)
-        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            authenticationInfo)));
+        .WillOnce(Return(threading::makeReadyFuture<
+                         std::pair<Account, IAuthenticationInfoPtr>>(
+            std::pair{account, authenticationInfo})));
 
     auto future = synchronizer->authenticateNewAccount();
     waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
-    EXPECT_EQ(future.result(), authenticationInfo);
+
+    const auto pair = future.result();
+    EXPECT_EQ(pair.first, account);
+    EXPECT_EQ(pair.second, authenticationInfo);
 }
 
 TEST_F(SynchronizerTest, AuthenticateAccount)

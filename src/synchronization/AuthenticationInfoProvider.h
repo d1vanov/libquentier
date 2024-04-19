@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,8 +57,8 @@ public:
 
 public:
     // IAuthenticationInfoProvider
-    [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateNewAccount()
-        override;
+    [[nodiscard]] QFuture<std::pair<Account, IAuthenticationInfoPtr>>
+        authenticateNewAccount() override;
 
     [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account, Mode mode = Mode::Cache) override;

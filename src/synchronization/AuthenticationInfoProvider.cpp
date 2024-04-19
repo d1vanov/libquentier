@@ -177,10 +177,11 @@ AuthenticationInfoProvider::AuthenticationInfoProvider(
     }
 }
 
-QFuture<IAuthenticationInfoPtr>
+QFuture<std::pair<Account, IAuthenticationInfoPtr>>
     AuthenticationInfoProvider::authenticateNewAccount()
 {
-    auto promise = std::make_shared<QPromise<IAuthenticationInfoPtr>>();
+    auto promise = std::make_shared<
+        QPromise<std::pair<Account, IAuthenticationInfoPtr>>>();
     auto future = promise->future();
 
     promise->start();
@@ -197,8 +198,9 @@ QFuture<IAuthenticationInfoPtr>
             [this, promise, currentThread,
              selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
+                const auto userId = authenticationInfo->userId();
                 auto accountFuture = findAccountForUserId(
-                    authenticationInfo->userId(),
+                    userId,
                     authenticationInfo->authToken(),
                     authenticationInfo->shardId(),
                     authenticationInfo->userStoreCookies());
@@ -208,7 +210,8 @@ QFuture<IAuthenticationInfoPtr>
                     threading::TrackedTask{
                         selfWeak,
                         [this, promise, currentThread,
-                         authenticationInfo](Account account) mutable {
+                         authenticationInfo = std::move(authenticationInfo)](
+                            Account account) mutable {
                             {
                                 const QWriteLocker locker{
                                     &m_authenticationInfosRWLock};
@@ -219,13 +222,16 @@ QFuture<IAuthenticationInfoPtr>
                             }
 
                             auto storeAuthInfoFuture = storeAuthenticationInfo(
-                                authenticationInfo, std::move(account));
+                                authenticationInfo, account);
 
                             auto storeAuthInfoThenFuture = threading::then(
                                 std::move(storeAuthInfoFuture), currentThread,
-                                [promise, authenticationInfo]() mutable {
-                                    promise->addResult(
-                                        std::move(authenticationInfo));
+                                [promise,
+                                 authenticationInfo = authenticationInfo,
+                                 account = account]() mutable {
+                                    promise->addResult(std::pair{
+                                        std::move(account),
+                                        std::move(authenticationInfo)});
                                     promise->finish();
                                 });
 
@@ -234,7 +240,8 @@ QFuture<IAuthenticationInfoPtr>
                                 currentThread,
                                 [promise,
                                  authenticationInfo =
-                                     std::move(authenticationInfo)](
+                                     std::move(authenticationInfo),
+                                 account = std::move(account)](
                                     const QException & e) mutable {
                                     QNWARNING(
                                         "synchronization::"
@@ -246,8 +253,9 @@ QFuture<IAuthenticationInfoPtr>
                                     // authentication info locally, we still got
                                     // it from Evernote so it should be returned
                                     // to the original caller.
-                                    promise->addResult(
-                                        std::move(authenticationInfo));
+                                    promise->addResult(std::pair{
+                                        std::move(account),
+                                        std::move(authenticationInfo)});
                                     promise->finish();
                                 });
                         }});
@@ -255,20 +263,15 @@ QFuture<IAuthenticationInfoPtr>
                 threading::onFailed(
                     std::move(accountThenFuture), currentThread,
                     [promise = std::move(promise),
-                     authenticationInfo = std::move(authenticationInfo)](
-                        const QException & e) mutable {
+                     userId](const QException & e) mutable {
                         QNWARNING(
                             "synchronization::AuthenticationInfoProvider",
                             "Failed to find account for user id: "
-                                << e.what() << ", user id = "
-                                << authenticationInfo->userId());
+                                << e.what() << ", user id = " << userId);
 
-                        // Even though we failed to find account info for
-                        // the authenticated user and thus failed to save
-                        // the authentication info locally, we still got the
-                        // info from Evernote and should return it to the
-                        // original caller.
-                        promise->addResult(std::move(authenticationInfo));
+                        // Since we need to return both authentication info
+                        // and account, the end result is a failure.
+                        promise->setException(e);
                         promise->finish();
                     });
             }});
@@ -1056,16 +1059,14 @@ QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
 
             Q_ASSERT(user.id() && *user.id() == userId);
 
-            QString name = user.name() ? *user.name()
-                                       : user.username().value_or(QString{});
-
+            QString name = user.username().value_or(QString{});
             if (Q_UNLIKELY(name.isEmpty())) {
                 QNWARNING(
                     "synchronization::AuthenticationInfoProvider",
                     "User for id " << userId
-                                   << " has no name or username: " << user);
+                                   << " has no username: " << user);
                 promise->setException(RuntimeError{ErrorString{QStringLiteral(
-                    "Authenticated user has no name or username")}});
+                    "Authenticated user has no username")}});
                 promise->finish();
                 return;
             }

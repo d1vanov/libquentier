@@ -278,7 +278,7 @@ private:
     void clearPersistence()
     {
         const Account account{
-            QStringLiteral("Full Name"),
+            QStringLiteral("username"),
             Account::Type::Evernote,
             m_authenticationInfo->userId(),
             Account::EvernoteAccountType::Free,
@@ -411,12 +411,6 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
             m_mockNoteStoreFactory, qevercloud::newRequestContext(),
             qevercloud::nullRetryPolicy(), m_host);
 
-    InSequence s;
-
-    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
-        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            m_authenticationInfo)));
-
     const auto user = qevercloud::UserBuilder{}
                           .setId(m_authenticationInfo->userId())
                           .setUsername(QStringLiteral("username"))
@@ -426,6 +420,21 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
                           .setActive(true)
                           .setShardId(m_authenticationInfo->shardId())
                           .build();
+
+    Account account{
+        *user.username(),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+    account.setDisplayName(*user.name());
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
 
     EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
         .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
@@ -475,15 +484,10 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateNewAccount)
     waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
-    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
-
-    const Account account{
-        *user.name(),
-        Account::Type::Evernote,
-        m_authenticationInfo->userId(),
-        Account::EvernoteAccountType::Free,
-        m_host,
-        m_authenticationInfo->shardId()};
+    const auto pair = future.result();
+    EXPECT_EQ(
+        pair.first.toString().toStdString(), account.toString().toStdString());
+    EXPECT_EQ(pair.second.get(), m_authenticationInfo.get());
 
     checkAuthenticationInfoPartPersistence(
         m_authenticationInfo, account, m_host);
@@ -522,7 +526,7 @@ TEST_F(AuthenticationInfoProviderTest, PropagateErrorWhenAuthNewAccount)
 
 TEST_F(
     AuthenticationInfoProviderTest,
-    TolerateErrorOfFindingUserInfoWhenAuthenticatingNewAccount)
+    ReturnErrorIfFailingToFindUserInfoWhenAuthenticatingNewAccount)
 {
     const auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
@@ -530,11 +534,22 @@ TEST_F(
             m_mockNoteStoreFactory, qevercloud::newRequestContext(),
             qevercloud::nullRetryPolicy(), m_host);
 
+    const Account account{
+        QStringLiteral("username"),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+
     InSequence s;
 
     EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
         .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
             m_authenticationInfo)));
+
+    const ErrorString exceptionMessage =
+        ErrorString{QStringLiteral("some error")};
 
     EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
         .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
@@ -543,14 +558,22 @@ TEST_F(
                 ctx->authenticationToken(), m_authenticationInfo->authToken());
             EXPECT_EQ(ctx->cookies(), m_authenticationInfo->userStoreCookies());
             return threading::makeExceptionalFuture<qevercloud::User>(
-                RuntimeError{ErrorString{QStringLiteral("some error")}});
+                RuntimeError{exceptionMessage});
         });
 
     auto future = authenticationInfoProvider->authenticateNewAccount();
     waitForFuture(future);
-    ASSERT_EQ(future.resultCount(), 1);
 
-    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
+    bool caughtException = false;
+    try {
+        future.waitForFinished();
+    }
+    catch (const RuntimeError & e) {
+        caughtException = true;
+        EXPECT_EQ(e.errorMessage(), exceptionMessage);
+    }
+
+    EXPECT_TRUE(caughtException);
 }
 
 TEST_F(
@@ -563,12 +586,6 @@ TEST_F(
             m_mockNoteStoreFactory, qevercloud::newRequestContext(),
             qevercloud::nullRetryPolicy(), m_host);
 
-    InSequence s;
-
-    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
-        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            m_authenticationInfo)));
-
     const auto user = qevercloud::UserBuilder{}
                           .setId(m_authenticationInfo->userId())
                           .setUsername(QStringLiteral("username"))
@@ -578,6 +595,21 @@ TEST_F(
                           .setActive(true)
                           .setShardId(m_authenticationInfo->shardId())
                           .build();
+
+    Account account{
+        *user.username(),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+    account.setDisplayName(*user.name());
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
 
     EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
         .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
@@ -627,15 +659,9 @@ TEST_F(
     waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
-    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
-
-    const Account account{
-        *user.name(),
-        Account::Type::Evernote,
-        m_authenticationInfo->userId(),
-        Account::EvernoteAccountType::Free,
-        m_host,
-        m_authenticationInfo->shardId()};
+    const auto pair = future.result();
+    EXPECT_EQ(pair.first, account);
+    EXPECT_EQ(pair.second.get(), m_authenticationInfo.get());
 
     ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
@@ -659,12 +685,6 @@ TEST_F(
             m_mockNoteStoreFactory, qevercloud::newRequestContext(),
             qevercloud::nullRetryPolicy(), m_host);
 
-    InSequence s;
-
-    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
-        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            m_authenticationInfo)));
-
     const auto user = qevercloud::UserBuilder{}
                           .setId(m_authenticationInfo->userId())
                           .setUsername(QStringLiteral("username"))
@@ -674,6 +694,21 @@ TEST_F(
                           .setActive(true)
                           .setShardId(m_authenticationInfo->shardId())
                           .build();
+
+    Account account{
+        *user.username(),
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
+    account.setDisplayName(*user.name());
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateNewAccount)
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
 
     EXPECT_CALL(*m_mockUserInfoProvider, userInfo)
         .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
@@ -723,15 +758,9 @@ TEST_F(
     waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
 
-    EXPECT_EQ(future.result().get(), m_authenticationInfo.get());
-
-    const Account account{
-        *user.name(),
-        Account::Type::Evernote,
-        m_authenticationInfo->userId(),
-        Account::EvernoteAccountType::Free,
-        m_host,
-        m_authenticationInfo->shardId()};
+    const auto pair = future.result();
+    EXPECT_EQ(pair.first, account);
+    EXPECT_EQ(pair.second.get(), m_authenticationInfo.get());
 
     ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
@@ -755,7 +784,7 @@ TEST_F(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -824,7 +853,7 @@ TEST_F(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -892,7 +921,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateAccountWithCache)
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -973,7 +1002,7 @@ TEST_F(AuthenticationInfoProviderTest, RefuseToAuthenticateNonEvernoteAccount)
             m_mockNoteStoreFactory, qevercloud::newRequestContext(),
             qevercloud::nullRetryPolicy(), m_host);
 
-    const Account account{QStringLiteral("Full Name"), Account::Type::Local};
+    const Account account{QStringLiteral("username"), Account::Type::Local};
 
     auto future = authenticationInfoProvider->authenticateAccount(
         account, AuthenticationInfoProvider::Mode::Cache);
@@ -997,7 +1026,7 @@ TEST_F(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1101,7 +1130,7 @@ TEST_F(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1205,7 +1234,7 @@ TEST_F(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1286,7 +1315,7 @@ TEST_F(
             m_mockNoteStoreFactory, qevercloud::newRequestContext(),
             qevercloud::nullRetryPolicy(), m_host);
 
-    const Account account{QStringLiteral("Full Name"), Account::Type::Local};
+    const Account account{QStringLiteral("username"), Account::Type::Local};
 
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account,
@@ -1309,7 +1338,7 @@ TEST_F(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1332,7 +1361,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1386,7 +1415,7 @@ TEST_F(
             m_mockNoteStoreFactory, requestContext, retryPolicy, m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1540,7 +1569,7 @@ TEST_F(
             m_mockNoteStoreFactory, requestContext, retryPolicy, m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1692,7 +1721,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToLinkedNotebookWithCache)
             m_mockNoteStoreFactory, requestContext, retryPolicy, m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1785,7 +1814,7 @@ TEST_F(
             m_mockNoteStoreFactory, requestContext, retryPolicy, m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -1960,7 +1989,7 @@ TEST_F(
             m_mockNoteStoreFactory, requestContext, retryPolicy, m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -2148,7 +2177,7 @@ TEST_P(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -2338,7 +2367,7 @@ TEST_P(
             qevercloud::nullRetryPolicy(), m_host);
 
     const Account account{
-        QStringLiteral("Full Name"),
+        QStringLiteral("username"),
         Account::Type::Evernote,
         m_authenticationInfo->userId(),
         Account::EvernoteAccountType::Free,
@@ -2493,8 +2522,7 @@ TEST_P(
     EXPECT_CALL(
         *m_mockNoteStore,
         authenticateToSharedNotebookAsync(
-            linkedNotebook.sharedNotebookGlobalId().value(),
-            _))
+            linkedNotebook.sharedNotebookGlobalId().value(), _))
         .WillOnce([this](
                       [[maybe_unused]] const QString & shareKeyOrGlobalId,
                       const qevercloud::IRequestContextPtr & ctx) {

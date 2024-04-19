@@ -174,7 +174,8 @@ Synchronizer::Synchronizer(
     }
 }
 
-QFuture<IAuthenticationInfoPtr> Synchronizer::authenticateNewAccount()
+QFuture<std::pair<Account, IAuthenticationInfoPtr>>
+    Synchronizer::authenticateNewAccount()
 {
     return m_authenticationInfoProvider->authenticateNewAccount();
 }

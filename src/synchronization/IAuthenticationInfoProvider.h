@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,6 +26,7 @@
 #include <QFuture>
 
 #include <variant>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -64,11 +65,11 @@ public:
      * Provides authentication info for a new account. The authentication
      * info is requested from Evernote directy as there is no local cache.
      *
-     * @return                          QFuture with authentication info for a
-     *                                  new account or with exception in case of
-     *                                  error.
+     * @return                          QFuture with account and its
+     *                                  authentication info or with exception
+     *                                  in case of error.
      */
-    [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
+    [[nodiscard]] virtual QFuture<std::pair<Account, IAuthenticationInfoPtr>>
         authenticateNewAccount() = 0;
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,8 +28,8 @@ class MockIAuthenticationInfoProvider : public IAuthenticationInfoProvider
 {
 public:
     MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
-        (override));
+        (QFuture<std::pair<Account, IAuthenticationInfoPtr>>),
+        authenticateNewAccount, (), (override));
 
     MOCK_METHOD(
         QFuture<IAuthenticationInfoPtr>, authenticateAccount,

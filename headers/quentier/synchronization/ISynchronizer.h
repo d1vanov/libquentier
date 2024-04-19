@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/types/Fwd.h>
+#include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
@@ -44,7 +45,7 @@ class QUENTIER_EXPORT ISynchronizer
 public:
     virtual ~ISynchronizer() noexcept;
 
-    [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
+    [[nodiscard]] virtual QFuture<std::pair<Account, IAuthenticationInfoPtr>>
         authenticateNewAccount() = 0;
 
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr> authenticateAccount(

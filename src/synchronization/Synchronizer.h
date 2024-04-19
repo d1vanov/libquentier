@@ -43,8 +43,8 @@ public:
         IProtocolVersionCheckerPtr protocolVersionChecker);
 
 public: // ISynchronizer
-    [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateNewAccount()
-        override;
+    [[nodiscard]] QFuture<std::pair<Account, IAuthenticationInfoPtr>>
+        authenticateNewAccount() override;
 
     [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account) override;
