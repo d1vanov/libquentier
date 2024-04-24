@@ -114,6 +114,9 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISyncEventsNotifier.h
     headers/quentier/synchronization/ISynchronizer.h
+)
+
+set(SYNCHRONIZATION_TYPES_HEADERS
     headers/quentier/synchronization/types/Errors.h
     headers/quentier/synchronization/types/Fwd.h
     headers/quentier/synchronization/types/IAuthenticationInfo.h
@@ -196,6 +199,7 @@ list(APPEND PUBLIC_HEADERS ${LOCAL_STORAGE_HEADERS})
 list(APPEND PUBLIC_HEADERS ${LOGGING_HEADERS})
 list(APPEND PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
 list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_HEADERS})
+list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_TYPES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${THREADING_HEADERS})
 list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
@@ -868,6 +872,10 @@ endforeach()
 
 foreach(ITEM ${SYNCHRONIZATION_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/synchronization)
+endforeach()
+
+foreach(ITEM ${SYNCHRONIZATION_TYPES_HEADERS})
+  install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/synchronization/types)
 endforeach()
 
 foreach(ITEM ${LOGGING_HEADERS})
