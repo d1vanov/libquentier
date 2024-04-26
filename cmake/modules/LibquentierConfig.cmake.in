@@ -1,6 +1,6 @@
 # - Try to find libquentier
 # Once done this will define
-#  libqt5quentier::libqt5quentier or libqt6quentier::libqt6quentier - imported target for libquentier library
+#  Libquentier::libqt5quentier or Libquentier::libqt6quentier - imported target for libquentier library
 #  LIBQUENTIER_HAS_NOTE_EDITOR - Boolean set to true if libquentier was built with NoteEditor
 
 @LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION@
