@@ -45,7 +45,6 @@
 #include <QMutexLocker>
 #include <QThread>
 
-#include <algorithm>
 #include <utility>
 
 namespace quentier::synchronization {
