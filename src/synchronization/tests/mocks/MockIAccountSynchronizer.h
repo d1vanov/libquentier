@@ -103,6 +103,9 @@ public: // ISender::ICallback
         (const qevercloud::Guid & linkedNotebookGuid,
          SendStatusPtr sendStatus),
         (override));
+
+public: // ICallback
+    MOCK_METHOD(void, onDownloadFinished, (bool dataDownloaded), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

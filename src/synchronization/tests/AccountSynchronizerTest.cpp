@@ -729,6 +729,8 @@ TEST_F(AccountSynchronizerTest, NothingToDownloadOrSend)
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -771,12 +773,14 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
 
     expectSetSyncState(downloadResult.syncState);
 
-    EXPECT_CALL(*m_mockSender, send)
-        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -815,14 +819,16 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
     expectSetSyncState(sendResult.syncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -871,14 +877,16 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
 
     expectSetSyncState(downloadResult.syncState);
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
     expectSetSyncState(sendResult.syncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -925,6 +933,12 @@ TEST_F(
 
     expectSetSyncState(downloadResult.syncState);
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
@@ -951,10 +965,6 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
     expectSetSyncState(downloadSecondSyncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1014,6 +1024,12 @@ TEST_F(
 
     expectSetSyncState(downloadResult.syncState);
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
@@ -1050,10 +1066,6 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
     expectSetSyncState(downloadSecondSyncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1142,12 +1154,14 @@ TEST_F(
 
     expectSetSyncState(downloadResult.syncState);
 
-    EXPECT_CALL(*m_mockSender, send)
-        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1219,12 +1233,14 @@ TEST_F(
 
     expectSetSyncState(downloadSecondResult.syncState);
 
-    EXPECT_CALL(*m_mockSender, send)
-        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1300,12 +1316,14 @@ TEST_F(
 
     expectSetSyncState(downloadSecondResult.syncState);
 
-    EXPECT_CALL(*m_mockSender, send)
-        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1391,12 +1409,14 @@ TEST_F(
 
     expectSetSyncState(downloadSecondResult.syncState);
 
-    EXPECT_CALL(*m_mockSender, send)
-        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1490,12 +1510,14 @@ TEST_F(
 
     expectSetSyncState(downloadSecondResult.syncState);
 
-    EXPECT_CALL(*m_mockSender, send)
-        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
     const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
         mockCallback = std::make_shared<
             StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
+    EXPECT_CALL(*m_mockSender, send)
+        .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1548,6 +1570,12 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
@@ -1566,6 +1594,8 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     auto sendSecondResult = sendResult;
     sendSecondResult.userOwnResult =
         std::make_shared<SendStatus>(*sendResult.userOwnResult);
@@ -1576,10 +1606,6 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(sendSecondResult)));
 
     expectSetSyncState(sendSecondResult.syncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1638,6 +1664,12 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
@@ -1657,6 +1689,8 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     auto sendSecondResult = sendResult;
     {
         auto & linkedNotebookResult =
@@ -1672,10 +1706,6 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(sendSecondResult)));
 
     expectSetSyncState(sendSecondResult.syncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -2004,14 +2034,16 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
     expectSetSyncState(sendResult.syncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -2070,14 +2102,16 @@ TEST_F(
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
     expectSetSyncState(sendResult.syncState);
-
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -2289,6 +2323,8 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
 
     expectSetSyncState(downloadResult.syncState);
 
+    EXPECT_CALL(*mockCallback, onDownloadFinished(true));
+
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
@@ -2331,6 +2367,8 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
 
     EXPECT_CALL(*m_mockDownloader, download)
         .WillOnce(Return(threading::makeReadyFuture(IDownloader::Result{})));
+
+    EXPECT_CALL(*mockCallback, onDownloadFinished(false));
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce([&]([[maybe_unused]] const utility::cancelers::ICancelerPtr &

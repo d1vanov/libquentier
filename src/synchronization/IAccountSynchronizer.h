@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,10 @@ public:
     virtual ~IAccountSynchronizer() noexcept = default;
 
     class ICallback : public IDownloader::ICallback, public ISender::ICallback
-    {};
+    {
+    public:
+        virtual void onDownloadFinished(bool dataDownloaded) = 0;
+    };
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 

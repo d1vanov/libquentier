@@ -144,6 +144,12 @@ public: // ISender::ICallback
             linkedNotebookGuid, std::move(sendStatus));
     }
 
+public:
+    void onDownloadFinished(const bool dataDownloaded) override
+    {
+        m_notifier->notifyDownloadFinished(dataDownloaded);
+    }
+
 private:
     const std::shared_ptr<SyncEventsNotifier> m_notifier;
 };

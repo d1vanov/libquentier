@@ -67,6 +67,8 @@ public:
         quint32 resourcesDownloaded, quint32 totalResourcesToDownload,
         const qevercloud::LinkedNotebook & linkedNotebook);
 
+    void notifyDownloadFinished(bool dataDownloaded);
+
     void notifyUserOwnSendStatusUpdate(ISendStatusPtr sendStatus);
 
     void notifyLinkedNotebookSendStatusUpdate(

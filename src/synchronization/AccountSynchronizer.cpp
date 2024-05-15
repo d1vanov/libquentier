@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -228,6 +228,58 @@ void merge(const ISyncChunksDataCounters & from, SyncChunksDataCounters & to)
     to.m_expungedNotebooks += from.expungedNotebooks();
 }
 
+[[nodiscard]] bool somethingDownloaded(
+    const ISyncChunksDataCounters & counters) noexcept
+{
+    return counters.totalSavedSearches() != 0 ||
+        counters.totalExpungedSavedSearches() != 0 ||
+        counters.totalTags() != 0 || counters.totalExpungedTags() != 0 ||
+        counters.totalLinkedNotebooks() != 0 ||
+        counters.totalExpungedLinkedNotebooks() != 0 ||
+        counters.totalNotebooks() != 0 ||
+        counters.totalExpungedNotebooks() != 0;
+}
+
+[[nodiscard]] bool somethingDownloaded(
+    const IDownloadNotesStatus & status) noexcept
+{
+    return status.totalNewNotes() != 0 || status.totalUpdatedNotes() != 0 ||
+        status.totalExpungedNotes() != 0;
+}
+
+[[nodiscard]] bool somethingDownloaded(
+    const IDownloadResourcesStatus & status) noexcept
+{
+    return status.totalNewResources() != 0 ||
+        status.totalUpdatedResources() != 0;
+}
+
+[[nodiscard]] bool somethingDownloaded(
+    const IDownloader::LocalResult & localResult) noexcept
+{
+    return (localResult.syncChunksDataCounters &&
+            somethingDownloaded(*localResult.syncChunksDataCounters)) ||
+        (localResult.downloadNotesStatus &&
+         somethingDownloaded(*localResult.downloadNotesStatus)) ||
+        (localResult.downloadResourcesStatus &&
+         somethingDownloaded(*localResult.downloadResourcesStatus));
+}
+
+[[nodiscard]] bool somethingDownloaded(
+    const IDownloader::Result & result) noexcept
+{
+    if (somethingDownloaded(result.userOwnResult)) {
+        return true;
+    }
+
+    return std::any_of(
+        result.linkedNotebookResults.constBegin(),
+        result.linkedNotebookResults.constEnd(),
+        [](const IDownloader::LocalResult & result) {
+            return somethingDownloaded(result);
+        });
+}
+
 } // namespace
 
 class AccountSynchronizer::CallbackWrapper :
@@ -404,6 +456,14 @@ public: // ISender::ICallback
         }
     }
 
+public: // ICallback
+    void onDownloadFinished(const bool dataDownloaded) override
+    {
+        if (const auto callback = m_callbackWeak.lock()) {
+            callback->onDownloadFinished(dataDownloaded);
+        }
+    }
+
 private:
     const IAccountSynchronizer::ICallbackWeakPtr m_callbackWeak;
     const AccountSynchronizer::ContextWeakPtr m_contextWeak;
@@ -546,6 +606,9 @@ void AccountSynchronizer::onDownloadFinished(
     updateStoredSyncState(downloadResult);
 
     if (sendAfterDownload == SendAfterDownload::Yes) {
+        context->callbackWrapper->onDownloadFinished(
+            somethingDownloaded(downloadResult));
+
         send(std::move(context));
         return;
     }

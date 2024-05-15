@@ -107,6 +107,11 @@ void SyncEventsNotifier::notifyUserOwnSendStatusUpdate(
     Q_EMIT userOwnSendStatusUpdate(std::move(sendStatus));
 }
 
+void SyncEventsNotifier::notifyDownloadFinished(const bool dataDownloaded)
+{
+    Q_EMIT downloadFinished(dataDownloaded);
+}
+
 void SyncEventsNotifier::notifyLinkedNotebookSendStatusUpdate(
     const qevercloud::Guid & linkedNotebookGuid, ISendStatusPtr sendStatus)
 {

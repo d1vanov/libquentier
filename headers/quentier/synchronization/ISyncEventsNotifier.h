@@ -182,6 +182,16 @@ Q_SIGNALS:
         const qevercloud::LinkedNotebook & linkedNotebook);
 
     /**
+     * This signal is emitted when the initial download step is finished.
+     * @param dataDownloaded            True if some data was actually
+     *                                  downloaded during this step i.e. there
+     *                                  were some updates on Evernote servers
+     *                                  compared to local state, false
+     *                                  otherwise.
+     */
+    void downloadFinished(bool dataDownloaded);
+
+    /**
      * This signal is emitted on each successful or unsuccessful attempt to
      * send some new or locally modified data item from user's own account to
      * Evernote.
