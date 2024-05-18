@@ -2,8 +2,10 @@
 # Once done this will define
 #  Libquentier::libqt5quentier or Libquentier::libqt6quentier - imported target for libquentier library
 #  LIBQUENTIER_HAS_NOTE_EDITOR - Boolean set to true if libquentier was built with NoteEditor
+#  LIBQUENTIER_USE_QT6 - Boolean set to true if this version of libquentier was built with Qt6
 
 @LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION@
+@LIB_QUENTIER_USE_QT6@
 
 unset(LIBQUENTIER_FIND_DEPS_ARGS)
 if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
