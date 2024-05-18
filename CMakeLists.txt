@@ -137,13 +137,13 @@ set(THREADING_HEADERS
     headers/quentier/threading/Fwd.h
     headers/quentier/threading/Post.h
     headers/quentier/threading/QtFutureContinuations.h
+    headers/quentier/threading/QtFutureHelpers.h
     headers/quentier/threading/Runnable.h
     headers/quentier/threading/TrackedTask.h)
 
 if(NOT BUILD_WITH_QT6)
   list(APPEND THREADING_HEADERS
-    headers/quentier/threading/Qt5Promise.h
-    headers/quentier/threading/QtFutureHelpers.h)
+    headers/quentier/threading/Qt5Promise.h)
 endif()
 
 set(LOGGING_HEADERS
