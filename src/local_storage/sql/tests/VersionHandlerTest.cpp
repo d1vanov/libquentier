@@ -22,6 +22,7 @@
 #include "../TablesInitializer.h"
 #include "../VersionHandler.h"
 #include "../patches/Patch1To2.h"
+#include "../patches/Patch2To3.h"
 
 #include <quentier/exception/IQuentierException.h>
 
@@ -31,6 +32,8 @@
 #include <QThreadPool>
 
 #include <gtest/gtest.h>
+
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -140,12 +143,12 @@ TEST_F(VersionHandlerTest, HandleEmptyNewlyCreatedDatabase)
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
-    EXPECT_EQ(versionFuture.result(), 2);
+    EXPECT_EQ(versionFuture.result(), 3);
 
     auto highestSupportedVersionFuture =
         versionHandler->highestSupportedVersion();
     highestSupportedVersionFuture.waitForFinished();
-    EXPECT_EQ(highestSupportedVersionFuture.result(), 2);
+    EXPECT_EQ(highestSupportedVersionFuture.result(), 3);
 }
 
 TEST_F(VersionHandlerTest, HandleDatabaseOfVersion1)
@@ -154,7 +157,7 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfVersion1)
         auto database = m_connectionPool->database();
         QSqlQuery query{database};
         const bool res = query.exec(QStringLiteral(
-            "UPDATE Auxiliary SET version = 1 WHERE version = 2"));
+            "UPDATE Auxiliary SET version = 1 WHERE version = 3"));
         EXPECT_TRUE(res);
     }
 
@@ -173,11 +176,15 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfVersion1)
     auto requiredPatchesFuture = versionHandler->requiredPatches();
     requiredPatchesFuture.waitForFinished();
     const auto requiredPatches = requiredPatchesFuture.result();
-    EXPECT_EQ(requiredPatches.size(), 1);
+    ASSERT_EQ(requiredPatches.size(), 2);
 
     const auto patch1to2 =
         std::dynamic_pointer_cast<Patch1To2>(requiredPatches[0]);
     EXPECT_TRUE(patch1to2);
+
+    const auto patch2to3 =
+        std::dynamic_pointer_cast<Patch2To3>(requiredPatches[1]);
+    EXPECT_TRUE(patch2to3);
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
@@ -186,7 +193,48 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfVersion1)
     auto highestSupportedVersionFuture =
         versionHandler->highestSupportedVersion();
     highestSupportedVersionFuture.waitForFinished();
-    EXPECT_EQ(highestSupportedVersionFuture.result(), 2);
+    EXPECT_EQ(highestSupportedVersionFuture.result(), 3);
+}
+
+TEST_F(VersionHandlerTest, HandleDatabaseOfVersion2)
+{
+    {
+        auto database = m_connectionPool->database();
+        QSqlQuery query{database};
+        const bool res = query.exec(QStringLiteral(
+            "UPDATE Auxiliary SET version = 2 WHERE version = 3"));
+        EXPECT_TRUE(res);
+    }
+
+    const auto versionHandler = std::make_shared<VersionHandler>(
+        m_account, m_connectionPool, m_threadPool,
+        m_writerThread);
+
+    auto isVersionTooHighFuture = versionHandler->isVersionTooHigh();
+    isVersionTooHighFuture.waitForFinished();
+    EXPECT_FALSE(isVersionTooHighFuture.result());
+
+    auto requiresUpgradeFuture = versionHandler->requiresUpgrade();
+    requiresUpgradeFuture.waitForFinished();
+    EXPECT_TRUE(requiresUpgradeFuture.result());
+
+    auto requiredPatchesFuture = versionHandler->requiredPatches();
+    requiredPatchesFuture.waitForFinished();
+    const auto requiredPatches = requiredPatchesFuture.result();
+    ASSERT_EQ(requiredPatches.size(), 1);
+
+    const auto patch2to3 =
+        std::dynamic_pointer_cast<Patch2To3>(requiredPatches[0]);
+    EXPECT_TRUE(patch2to3);
+
+    auto versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 2);
+
+    auto highestSupportedVersionFuture =
+        versionHandler->highestSupportedVersion();
+    highestSupportedVersionFuture.waitForFinished();
+    EXPECT_EQ(highestSupportedVersionFuture.result(), 3);
 }
 
 TEST_F(VersionHandlerTest, HandleDatabaseOfTooHighVersion)
@@ -195,7 +243,7 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfTooHighVersion)
         auto database = m_connectionPool->database();
         QSqlQuery query{database};
         const bool res = query.exec(QStringLiteral(
-            "UPDATE Auxiliary SET version = 999 WHERE version = 2"));
+            "UPDATE Auxiliary SET version = 999 WHERE version = 3"));
         EXPECT_TRUE(res);
     }
 
@@ -222,7 +270,7 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfTooHighVersion)
     auto highestSupportedVersionFuture =
         versionHandler->highestSupportedVersion();
     highestSupportedVersionFuture.waitForFinished();
-    EXPECT_EQ(highestSupportedVersionFuture.result(), 2);
+    EXPECT_EQ(highestSupportedVersionFuture.result(), 3);
 }
 
 } // namespace quentier::local_storage::sql::tests

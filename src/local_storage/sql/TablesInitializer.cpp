@@ -82,7 +82,7 @@ void TablesInitializer::initializeAuxiliaryTable(
             "Cannot create Auxiliary table in the local storage database"));
 
     res =
-        query.exec(QStringLiteral("INSERT INTO Auxiliary (version) VALUES(2)"));
+        query.exec(QStringLiteral("INSERT INTO Auxiliary (version) VALUES(3)"));
 
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",

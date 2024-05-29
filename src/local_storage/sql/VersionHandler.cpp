@@ -21,6 +21,7 @@
 #include "VersionHandler.h"
 
 #include "patches/Patch1To2.h"
+#include "patches/Patch2To3.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -184,8 +185,14 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
             }
 
             QList<IPatchPtr> patches;
-            if (currentVersion == 1) {
+            if (currentVersion < 2) {
                 patches.append(std::make_shared<Patch1To2>(
+                    self->m_account, self->m_connectionPool,
+                    self->m_writerThread));
+            }
+
+            if (currentVersion < 3) {
+                patches.append(std::make_shared<Patch2To3>(
                     self->m_account, self->m_connectionPool,
                     self->m_writerThread));
             }
@@ -283,7 +290,7 @@ qint32 VersionHandler::versionImpl(
 
 qint32 VersionHandler::highestSupportedVersionImpl() const noexcept
 {
-    return 2;
+    return 3;
 }
 
 } // namespace quentier::local_storage::sql
