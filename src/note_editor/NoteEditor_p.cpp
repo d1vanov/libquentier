@@ -8458,9 +8458,7 @@ void NoteEditorPrivate::setTagIds(
             return;
         }
 
-        m_pNote->mutableLocalData()[QStringLiteral("tagLocalIds")] =
-            tagLocalIds;
-
+        m_pNote->setTagLocalIds(tagLocalIds);
         m_pNote->setTagGuids(tagGuids);
         setModified();
 
@@ -8475,10 +8473,8 @@ void NoteEditorPrivate::setTagIds(
             return;
         }
 
-        m_pNote->mutableLocalData()[QStringLiteral("tagLocalIds")] =
-            tagLocalIds;
-
-        m_pNote->setTagGuids(QStringList());
+        m_pNote->setTagLocalIds(tagLocalIds);
+        m_pNote->setTagGuids(std::nullopt);
         setModified();
 
         return;
@@ -8493,7 +8489,7 @@ void NoteEditorPrivate::setTagIds(
         }
 
         m_pNote->setTagGuids(tagGuids);
-        m_pNote->mutableLocalData().remove(QStringLiteral("tagLocalIds"));
+        m_pNote->setTagLocalIds(QStringList{});
         setModified();
 
         return;
@@ -8507,8 +8503,8 @@ void NoteEditorPrivate::setTagIds(
         return;
     }
 
-    m_pNote->mutableLocalData().remove(QStringLiteral("tagLocalIds"));
-    m_pNote->setTagGuids(QStringList());
+    m_pNote->setTagLocalIds(QStringList{});
+    m_pNote->setTagGuids(std::nullopt);
     setModified();
 }
 
