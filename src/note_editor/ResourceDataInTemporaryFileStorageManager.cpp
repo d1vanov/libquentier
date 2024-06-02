@@ -1403,15 +1403,15 @@ bool ResourceDataInTemporaryFileStorageManager::
     }
 
     QString fileStoragePath =
-        ((resourceType == ResourceType::Image)
+        (resourceType == ResourceType::Image
              ? m_imageResourceFileStorageLocation
              : m_nonImageResourceFileStorageLocation);
 
     fileStoragePath += QStringLiteral("/") + noteLocalId +
         QStringLiteral("/") + resourceLocalId + QStringLiteral(".dat");
 
-    const QFileInfo fileStoragePathInfo(fileStoragePath);
-    QDir fileStorageDir(fileStoragePathInfo.absoluteDir());
+    const QFileInfo fileStoragePathInfo{fileStoragePath};
+    QDir fileStorageDir{fileStoragePathInfo.absoluteDir()};
     if (!fileStorageDir.exists()) {
         if (!fileStorageDir.mkpath(fileStorageDir.absolutePath())) {
             errorDescription.setBase(
@@ -1441,7 +1441,7 @@ bool ResourceDataInTemporaryFileStorageManager::
         }
     }
 
-    QFile file(fileStoragePath);
+    QFile file{fileStoragePath};
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't open resource file for writing"));

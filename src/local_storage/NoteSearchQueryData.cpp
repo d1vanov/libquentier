@@ -123,11 +123,12 @@ bool NoteSearchQuery::Data::parseQueryString(
 
     QStringList words = splitSearchQueryString(queryString);
 
-    const QRegularExpression notebookModifierRegex{
+    static const QRegularExpression notebookModifierRegex{
         QRegularExpression::wildcardToRegularExpression(
             QStringLiteral("notebook:*"))};
 
-    auto notebookScopeModifierPosition = words.indexOf(notebookModifierRegex);
+    const auto notebookScopeModifierPosition =
+        words.indexOf(notebookModifierRegex);
     if (notebookScopeModifierPosition > 0) {
         error.setBase(QT_TRANSLATE_NOOP(
             "NoteSearchQueryData",
