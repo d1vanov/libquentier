@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/synchronization/types/Fwd.h>
+#include <quentier/utility/Printable.h>
 #include <quentier/utility/cancelers/Fwd.h>
 
 #include <synchronization/types/Fwd.h>
@@ -52,8 +53,10 @@ public:
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
-    struct Result
+    struct Result : public Printable
     {
+        QTextStream & print(QTextStream & strm) const override;
+
         // Send status for user own account
         SendStatusPtr userOwnResult;
 

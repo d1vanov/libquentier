@@ -35,6 +35,7 @@ target_sources(${LIBRARY_NAME}
   INoteStoreProvider.h
   INoteThumbnailDownloaderFactory.h
   IProtocolVersionChecker.h
+  ISender.cpp
   ISender.h
   IUserInfoProvider.h
   LinkedNotebookFinder.cpp

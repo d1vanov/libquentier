@@ -39,6 +39,8 @@
 
 #include <memory>
 
+class QDebug;
+
 namespace quentier::synchronization {
 
 class AccountSynchronizer final :
@@ -83,6 +85,9 @@ private:
         Yes,
         No
     };
+
+    friend QDebug & operator<<(
+        QDebug & dbg, SendAfterDownload sendAfterDownload);
 
     void synchronizeImpl(
         ContextPtr context,
