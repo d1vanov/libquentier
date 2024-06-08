@@ -75,6 +75,13 @@ public:
         const qint32 highestDownloadedUsn, const qint32 highestServerUsn,
         const qint32 lastPreviousUsn) override
     {
+        QNDEBUG(
+            "synchronization::Downloader",
+            "SyncChunksProviderCallback::onUserOwnSyncChunksDownloadProgress: "
+                << "highest downloaded usn = " << highestDownloadedUsn
+                << ", highest server usn = " << highestServerUsn
+                << ", last previous usn = " << lastPreviousUsn);
+
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn, lastPreviousUsn);
@@ -86,6 +93,15 @@ public:
         const qint32 lastPreviousUsn,
         const qevercloud::LinkedNotebook & linkedNotebook) override
     {
+        QNDEBUG(
+            "synchronization::Downloader",
+            "SyncChunksProviderCallback::"
+                << "onLinkedNotebookSyncChunksDownloadProgress: "
+                << "highest downloaded usn = " << highestDownloadedUsn
+                << ", highest server usn = " << highestServerUsn
+                << ", last previous usn = " << lastPreviousUsn
+                << ", linked notebook: " << linkedNotebookInfo(linkedNotebook));
+
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn, lastPreviousUsn,
@@ -154,8 +170,8 @@ private:
             continue;
         }
 
-        result += static_cast<quint64>(
-            std::max<decltype(syncChunk.notes()->size())>(
+        result +=
+            static_cast<quint64>(std::max<decltype(syncChunk.notes()->size())>(
                 syncChunk.notes()->size(), 0));
     }
     return result;
@@ -912,8 +928,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                     downloadContext->serverSyncState = std::move(syncState);
 
                     if (downloadContext->serverSyncState->fullSyncBefore() >
-                        downloadContext->lastSyncState
-                            ->m_userDataLastSyncTime)
+                        downloadContext->lastSyncState->m_userDataLastSyncTime)
                     {
                         QNDEBUG(
                             "synchronization::Downloader",
@@ -926,8 +941,7 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
                     }
                     else if (
                         downloadContext->serverSyncState->updateCount() ==
-                        downloadContext->lastSyncState
-                            ->m_userDataUpdateCount)
+                        downloadContext->lastSyncState->m_userDataUpdateCount)
                     {
                         QNDEBUG(
                             "synchronization::Downloader",
@@ -1333,8 +1347,7 @@ void Downloader::startLinkedNotebookDataDownload(
                 if (const auto callback = downloadContext->callbackWeak.lock())
                 {
                     callback->onLinkedNotebookSyncChunksDownloaded(
-                        *downloadContext->linkedNotebook,
-                        syncChunks);
+                        *downloadContext->linkedNotebook, syncChunks);
                 }
 
                 downloadContext->syncChunks = syncChunks;
@@ -1347,15 +1360,14 @@ void Downloader::startLinkedNotebookDataDownload(
                     *downloadContext->linkedNotebookAuthToken);
 
                 if (downloadContext->ctx) {
-                    ctxBuilder
-                        .setCookies(downloadContext->ctx->cookies())
+                    ctxBuilder.setCookies(downloadContext->ctx->cookies())
                         .setConnectionTimeout(
                             downloadContext->ctx->connectionTimeout())
                         .setMaxConnectionTimeout(
                             downloadContext->ctx->maxConnectionTimeout())
                         .setIncreaseConnectionTimeoutExponentially(
                             downloadContext->ctx
-                            ->increaseConnectionTimeoutExponentially())
+                                ->increaseConnectionTimeoutExponentially())
                         .setMaxRetryCount(
                             downloadContext->ctx->maxRequestRetryCount());
                 }
@@ -1436,6 +1448,11 @@ void Downloader::processSyncChunks(
         if (!isFirstSync && (syncMode == SynchronizationMode::Full)) {
             auto preservedGuids =
                 collectPreservedGuids(downloadContext->syncChunks);
+
+            QNDEBUG(
+                "synchronization::Downloader",
+                "Downloader::processSyncChunks: guids which need to be "
+                    << "preserved: " << preservedGuids);
 
             auto future = m_fullSyncStaleDataExpunger->expungeStaleData(
                 std::move(preservedGuids), downloadContext->canceler,
@@ -1532,6 +1549,17 @@ void Downloader::processSyncChunks(
             selfWeak,
             [this, downloadContext = std::move(downloadContext),
              callbacks = std::move(callbacks), syncMode]() mutable {
+                QNDEBUG(
+                    "synchronization::Downloader",
+                    "Downloader::processSyncChunks: "
+                        << (downloadContext->linkedNotebook
+                                ? linkedNotebookInfo(
+                                      *downloadContext->linkedNotebook)
+                                : QStringLiteral("user own account"))
+                        << ", finished processing "
+                        << "notebooks, tags, saved searches and linked "
+                        << "notebooks, start notes downloading");
+
                 downloadNotes(std::move(downloadContext), syncMode);
             }});
 }
@@ -1607,6 +1635,12 @@ void Downloader::initializeTotalsInSyncChunksDataCounters(
     syncChunksDataCounters.m_totalNotebooks = toCounter(totalNotebooks);
     syncChunksDataCounters.m_totalExpungedNotebooks =
         toCounter(totalExpungedNotebooks);
+
+    QNDEBUG(
+        "synchronization::Downloader",
+        "Downloader::initializeTotalsInSyncChunksDataCounters: initialized "
+            << "totals in sync chunks data counters: "
+            << syncChunksDataCounters);
 }
 
 void Downloader::updateSyncState(const DownloadContext & downloadContext)
@@ -1652,7 +1686,7 @@ void Downloader::updateSyncState(const DownloadContext & downloadContext)
             const auto it =
                 updateCounts.find(*downloadContext.linkedNotebook->guid());
 
-            qint32 lastUpdateCount =
+            const qint32 lastUpdateCount =
                 (it == updateCounts.end() ? 0 : it.value());
             if (lastUpdateCount < *chunkHighUsn) {
                 if (it != updateCounts.end()) {
@@ -1669,7 +1703,8 @@ void Downloader::updateSyncState(const DownloadContext & downloadContext)
         }
 
         if (downloadContext.lastSyncState->m_userDataUpdateCount <
-            *chunkHighUsn) {
+            *chunkHighUsn)
+        {
             downloadContext.lastSyncState->m_userDataUpdateCount =
                 *chunkHighUsn;
 
@@ -1683,6 +1718,14 @@ void Downloader::downloadNotes(
     DownloadContextPtr downloadContext, const SynchronizationMode syncMode)
 {
     Q_ASSERT(downloadContext);
+
+    QNDEBUG(
+        "synchronization::Downloader",
+        "Downloader::downloadNotes: "
+            << (downloadContext->linkedNotebook
+                    ? linkedNotebookInfo(*downloadContext->linkedNotebook)
+                    : QStringLiteral("user own account"))
+            << ", sync mode = " << syncMode);
 
     if (downloadContext->canceler->isCanceled()) {
         Downloader::cancel(*downloadContext->promise);
@@ -1713,6 +1756,17 @@ void Downloader::downloadNotes(
             [this, downloadContext = std::move(downloadContext), syncMode,
              notesProcessorCallback = std::move(notesProcessorCallback)](
                 DownloadNotesStatusPtr notesStatus) mutable {
+                QNDEBUG(
+                    "synchronization::Downloader",
+                    "Downloader::downloadNotes: "
+                        << (downloadContext->linkedNotebook
+                                ? linkedNotebookInfo(
+                                      *downloadContext->linkedNotebook)
+                                : QStringLiteral("user own account"))
+                        << ", finished downloading notes, status: "
+                        << (notesStatus ? notesStatus->toString()
+                                        : QStringLiteral("<null>")));
+
                 downloadContext->downloadNotesStatus = std::move(notesStatus);
                 downloadResources(std::move(downloadContext), syncMode);
             }});
@@ -1722,6 +1776,14 @@ void Downloader::downloadResources(
     DownloadContextPtr downloadContext, const SynchronizationMode syncMode)
 {
     Q_ASSERT(downloadContext);
+
+    QNDEBUG(
+        "synchronization::Downloader",
+        "Downloader::downloadResources: "
+            << (downloadContext->linkedNotebook
+                    ? linkedNotebookInfo(*downloadContext->linkedNotebook)
+                    : QStringLiteral("user own account"))
+            << ", sync mode = " << syncMode);
 
     if (downloadContext->canceler->isCanceled()) {
         Downloader::cancel(*downloadContext->promise);
@@ -1755,8 +1817,20 @@ void Downloader::downloadResources(
              resourcesProcessorCallback =
                  std::move(resourcesProcessorCallback)](
                 DownloadResourcesStatusPtr resourcesStatus) mutable {
+                QNDEBUG(
+                    "synchronization::Downloader",
+                    "Downloader::downloadResources: "
+                        << (downloadContext->linkedNotebook
+                                ? linkedNotebookInfo(
+                                      *downloadContext->linkedNotebook)
+                                : QStringLiteral("user own account"))
+                        << ", finished downloading resources, status: "
+                        << (resourcesStatus ? resourcesStatus->toString()
+                                            : QStringLiteral("<null>")));
+
                 downloadContext->downloadResourcesStatus =
                     std::move(resourcesStatus);
+
                 if (downloadContext->linkedNotebook) {
                     Downloader::finalize(downloadContext);
                     return;
@@ -1773,6 +1847,8 @@ void Downloader::finalize(
 {
     Q_ASSERT(downloadContext);
 
+    QNDEBUG("synchronization::Downloader", "Downloader::finalize");
+
     Downloader::updateSyncState(*downloadContext);
     downloadContext->promise->addResult(Result{
         LocalResult{
@@ -1780,7 +1856,7 @@ void Downloader::finalize(
             std::move(downloadContext->downloadNotesStatus),
             std::move(
                 downloadContext->downloadResourcesStatus)}, // userOwnResult
-        std::move(linkedNotebookResults), // linkedNotebookResults
+        std::move(linkedNotebookResults),          // linkedNotebookResults
         std::move(downloadContext->lastSyncState), // syncState
     });
     downloadContext->promise->finish();
@@ -1788,6 +1864,8 @@ void Downloader::finalize(
 
 void Downloader::cancel(QPromise<IDownloader::Result> & promise)
 {
+    QNDEBUG("synchronization::Downloader", "Downloader::cancel");
+
     promise.setException(OperationCanceled{});
     promise.finish();
 }
