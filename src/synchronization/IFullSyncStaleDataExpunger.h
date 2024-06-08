@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,6 +26,9 @@
 #include <QSet>
 
 #include <optional>
+
+class QDebug;
+class QTextStream;
 
 namespace quentier::synchronization {
 
@@ -76,6 +79,12 @@ public:
         QSet<qevercloud::Guid> noteGuids;
         QSet<qevercloud::Guid> savedSearchGuids;
     };
+
+    friend QTextStream & operator<<(
+        QTextStream & strm, const PreservedGuids & preservedGuids);
+
+    friend QDebug & operator<<(
+        QDebug & dbg, const PreservedGuids & preservedGuids);
 
     /**
      * Expunge relevant data items not matching the guids meant to be preserved.
