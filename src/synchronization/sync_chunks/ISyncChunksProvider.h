@@ -48,7 +48,7 @@ public:
         virtual void onLinkedNotebookSyncChunksDownloadProgress(
             qint32 highestDownloadedUsn, qint32 highestServerUsn,
             qint32 lastPreviousUsn,
-            qevercloud::LinkedNotebook linkedNotebook) = 0;
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
     };
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;

@@ -33,6 +33,7 @@
 #include <synchronization/ILinkedNotebookTagsCleaner.h>
 #include <synchronization/INoteStoreProvider.h>
 #include <synchronization/IProtocolVersionChecker.h>
+#include <synchronization/Utils.h>
 #include <synchronization/processors/IDurableNotesProcessor.h>
 #include <synchronization/processors/IDurableResourcesProcessor.h>
 #include <synchronization/processors/ILinkedNotebooksProcessor.h>
@@ -71,8 +72,8 @@ public:
 
     // ISyncChunksProvider::ICallback
     void onUserOwnSyncChunksDownloadProgress(
-        qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn) override
+        const qint32 highestDownloadedUsn, const qint32 highestServerUsn,
+        const qint32 lastPreviousUsn) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onSyncChunksDownloadProgress(
@@ -81,9 +82,9 @@ public:
     }
 
     void onLinkedNotebookSyncChunksDownloadProgress(
-        qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn,
-        qevercloud::LinkedNotebook linkedNotebook) override
+        const qint32 highestDownloadedUsn, const qint32 highestServerUsn,
+        const qint32 lastPreviousUsn,
+        const qevercloud::LinkedNotebook & linkedNotebook) override
     {
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
