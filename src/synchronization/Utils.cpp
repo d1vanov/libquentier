@@ -21,7 +21,10 @@
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/Account.h>
 
+#include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/types/SyncState.h>
+
+#include <qevercloud/types/SyncChunk.h>
 
 namespace quentier::synchronization {
 
@@ -71,8 +74,44 @@ QString linkedNotebookInfo(
     else {
         strm << "<no guid>";
     }
+
+    strm << ", ";
+    if (linkedNotebook.sharedNotebookGlobalId()) {
+        strm << *linkedNotebook.sharedNotebookGlobalId();
+    }
+    else {
+        strm << "<no shared notebook global id>";
+    }
+
     strm << ")";
 
+    return res;
+}
+
+QString syncChunksUsnInfo(
+    const QList<qevercloud::SyncChunk> & syncChunks)
+{
+    if (syncChunks.isEmpty()) {
+        return QStringLiteral("<empty>");
+    }
+
+    QString res;
+    QTextStream strm{&res};
+
+    strm << "(" << syncChunks.size() << "):\n";
+
+    const auto printOptNum = [](const std::optional<qint32> & num) {
+        return num ? QString::number(*num) : QStringLiteral("<none>");
+    };
+
+    for (const auto & syncChunk: std::as_const(syncChunks)) {
+        const auto lowUsn = utils::syncChunkLowUsn(syncChunk);
+        const auto & highUsn = syncChunk.chunkHighUSN();
+        strm << "    [" << printOptNum(*lowUsn) << " => "
+             << printOptNum(*highUsn) << "];\n";
+    }
+
+    strm.flush();
     return res;
 }
 

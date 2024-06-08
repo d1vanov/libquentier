@@ -25,6 +25,8 @@
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
+#include <QList>
+
 namespace quentier {
 
 class Account;
@@ -41,5 +43,8 @@ namespace quentier::synchronization {
 
 [[nodiscard]] QString linkedNotebookInfo(
     const qevercloud::LinkedNotebook & linkedNotebook);
+
+[[nodiscard]] QString syncChunksUsnInfo(
+    const QList<qevercloud::SyncChunk> & syncChunks);
 
 } // namespace quentier::synchronization

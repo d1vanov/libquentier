@@ -32,6 +32,7 @@
 #include <synchronization/IAuthenticationInfoProvider.h>
 #include <synchronization/IDownloader.h>
 #include <synchronization/ISender.h>
+#include <synchronization/Utils.h>
 #include <synchronization/sync_chunks/ISyncChunksStorage.h>
 #include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/types/DownloadNotesStatus.h>
@@ -282,52 +283,6 @@ void merge(const ISyncChunksDataCounters & from, SyncChunksDataCounters & to)
         });
 }
 
-[[nodiscard]] QString printSyncChunksUsns(
-    const QList<qevercloud::SyncChunk> & syncChunks)
-{
-    if (syncChunks.isEmpty()) {
-        return QStringLiteral("<empty>");
-    }
-
-    QString res;
-    QTextStream strm{&res};
-
-    strm << "(" << syncChunks.size() << "):\n";
-
-    const auto printOptNum = [](const std::optional<qint32> & num) {
-        return num ? QString::number(*num) : QStringLiteral("<none>");
-    };
-
-    for (const auto & syncChunk: std::as_const(syncChunks)) {
-        const auto lowUsn = utils::syncChunkLowUsn(syncChunk);
-        const auto & highUsn = syncChunk.chunkHighUSN();
-        strm << "    [" << printOptNum(*lowUsn) << " => "
-             << printOptNum(*highUsn) << "];\n";
-    }
-
-    strm.flush();
-    return res;
-}
-
-[[nodiscard]] QString printLinkedNotebookInfo(
-    const qevercloud::LinkedNotebook & linkedNotebook)
-{
-    QString res;
-    QTextStream strm{&res};
-
-    const auto printOptStr = [](const std::optional<QString> & str) {
-        return str.value_or(QStringLiteral("<none>"));
-    };
-
-    strm << "guid = " << printOptStr(linkedNotebook.guid())
-         << ", username = " << printOptStr(linkedNotebook.username())
-         << ", shared notebook global id = "
-         << printOptStr(linkedNotebook.sharedNotebookGlobalId());
-
-    strm.flush();
-    return res;
-}
-
 [[nodiscard]] QString printLinkedNotebooksInfo(
     const QList<qevercloud::LinkedNotebook> & linkedNotebooks)
 {
@@ -340,7 +295,7 @@ void merge(const ISyncChunksDataCounters & from, SyncChunksDataCounters & to)
 
     strm << "(" << linkedNotebooks.size() << "):\n";
     for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
-        strm << "   [" << printLinkedNotebookInfo(linkedNotebook) << "];\n";
+        strm << "   [" << linkedNotebookInfo(linkedNotebook) << "];\n";
     }
 
     strm.flush();
@@ -398,7 +353,7 @@ public: // IDownloader::ICallback
         QNDEBUG(
             "synchronization::AccountSynchronizer::CallbackWrapper",
             "AccountSynchronizer::CallbackWrapper::onSyncChunksDownloaded: "
-                << printSyncChunksUsns(syncChunks));
+                << syncChunksUsnInfo(syncChunks));
 
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onSyncChunksDownloaded(syncChunks);
@@ -455,8 +410,7 @@ public: // IDownloader::ICallback
                 << "highest downloaded usn = " << highestDownloadedUsn
                 << ", highest server usn = " << highestServerUsn
                 << ", last previous usn = " << lastPreviousUsn
-                << ", linked notebook: "
-                << printLinkedNotebookInfo(linkedNotebook));
+                << ", linked notebook: " << linkedNotebookInfo(linkedNotebook));
 
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
@@ -473,8 +427,8 @@ public: // IDownloader::ICallback
             "synchronization::AccountSynchronizer::CallbackWrapper",
             "AccountSynchronizer::CallbackWrapper::"
                 << "onLinkedNotebookSyncChunksDownloaded: linked notebook: "
-                << printLinkedNotebookInfo(linkedNotebook)
-                << ", sync chunks: " << printSyncChunksUsns(syncChunks));
+                << linkedNotebookInfo(linkedNotebook)
+                << ", sync chunks: " << syncChunksUsnInfo(syncChunks));
 
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloaded(
@@ -501,8 +455,7 @@ public: // IDownloader::ICallback
             "synchronization::AccountSynchronizer::CallbackWrapper",
             "AccountSynchronizer::CallbackWrapper::"
                 << "onLinkedNotebookSyncChunksDataProcessingProgress: "
-                << "linked notebook: "
-                << printLinkedNotebookInfo(linkedNotebook)
+                << "linked notebook: " << linkedNotebookInfo(linkedNotebook)
                 << ", sync chunk data counters: " << *counters);
 
         if (const auto callback = m_callbackWeak.lock()) {
@@ -539,7 +492,7 @@ public: // IDownloader::ICallback
             "synchronization::AccountSynchronizer::CallbackWrapper",
             "AccountSynchronizer::CallbackWrapper::"
                 << "onLinkedNotebookNotesDownloadProgress: linked notebook: "
-                << printLinkedNotebookInfo(linkedNotebook)
+                << linkedNotebookInfo(linkedNotebook)
                 << ", notes downloaded: " << notesDownloaded
                 << ", total notes to download: " << totalNotesToDownload);
 
@@ -575,8 +528,7 @@ public: // IDownloader::ICallback
             "synchronization::AccountSynchronizer::CallbackWrapper",
             "AccountSynchronizer::CallbackWrapper::"
                 << "onLinkedNotebookResourcesDownloadProgress: "
-                << "linked notebook: "
-                << printLinkedNotebookInfo(linkedNotebook)
+                << "linked notebook: " << linkedNotebookInfo(linkedNotebook)
                 << ", resources downloaded: " << resourcesDownloaded
                 << ", total resources to download: "
                 << totalResourcesToDownload);
@@ -647,8 +599,7 @@ AccountSynchronizer::AccountSynchronizer(
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
     ISyncStateStoragePtr syncStateStorage,
     ISyncChunksStoragePtr syncChunksStorage) :
-    m_account{std::move(account)},
-    m_downloader{std::move(downloader)},
+    m_account{std::move(account)}, m_downloader{std::move(downloader)},
     // clang-format off
     m_sender{std::move(sender)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
