@@ -19,6 +19,7 @@
 #include "SyncChunksProvider.h"
 #include "Utils.h"
 
+#include <synchronization/Utils.h>
 #include <synchronization/sync_chunks/ISyncChunksDownloader.h>
 #include <synchronization/sync_chunks/ISyncChunksStorage.h>
 
@@ -57,9 +58,16 @@ public:
     {}
 
     void onUserOwnSyncChunksDownloadProgress(
-        qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn) override
+        const qint32 highestDownloadedUsn, const qint32 highestServerUsn,
+        const qint32 lastPreviousUsn) override
     {
+        QNDEBUG(
+            "synchronization::SyncChunksProvider",
+            "SyncChunksDownloaderCallback::onUserOwnSyncChunksDownloadProgress:"
+                << " highest downloaded usn = " << highestDownloadedUsn
+                << ", highest server usn = " << highestServerUsn
+                << ", last previous usn = " << lastPreviousUsn);
+
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onUserOwnSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn,
@@ -68,10 +76,19 @@ public:
     }
 
     void onLinkedNotebookSyncChunksDownloadProgress(
-        qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn,
+        const qint32 highestDownloadedUsn, const qint32 highestServerUsn,
+        const qint32 lastPreviousUsn,
         const qevercloud::LinkedNotebook & linkedNotebook) override
     {
+        QNDEBUG(
+            "synchronization::SyncChunksProvider",
+            "SyncChunksDownloaderCallback::"
+                << "onLinkedNotebookSyncChunksDownloadProgress: "
+                << "highest downloaded usn = " << highestDownloadedUsn
+                << ", highest server usn = " << highestServerUsn
+                << ", last previous usn = " << lastPreviousUsn
+                << ", linked notebook: " << linkedNotebookInfo(linkedNotebook));
+
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onLinkedNotebookSyncChunksDownloadProgress(
                 highestDownloadedUsn, highestServerUsn,
@@ -176,6 +193,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
             threading::onFailed(
                 std::move(thenFuture), currentThread,
                 [promise](const QException & e) {
+                    QNWARNING(
+                        "synchronization::SyncChunksProvider",
+                        "Failed to download sync chunks: " << e.what());
+
                     promise->setException(e);
                     promise->finish();
                 });
@@ -317,6 +338,10 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 
     threading::onFailed(
         std::move(thenFuture), currentThread, [promise](const QException & e) {
+        QNWARNING(
+            "synchronization::SyncChunksProvider",
+            "Failed to download sync chunks: " << e.what());
+
         promise->setException(e);
         promise->finish();
     });
@@ -398,6 +423,13 @@ QFuture<QList<qevercloud::SyncChunk>>
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksProvider",
+        "SyncChunksProvider::fetchLinkedNotebookSyncChunks: after usn = "
+            << afterUsn << ", update count = " << updateCount
+            << ", sync mode = " << syncMode
+            << ", linked notebook: " << linkedNotebookInfo(linkedNotebook));
+
     const auto linkedNotebookGuid = linkedNotebook.guid(); // NOLINT
     if (!linkedNotebookGuid) {
         return threading::makeExceptionalFuture<QList<qevercloud::SyncChunk>>(
