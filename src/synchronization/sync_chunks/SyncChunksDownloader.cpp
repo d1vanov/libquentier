@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -72,7 +72,7 @@ namespace {
         filter.setIncludeResources(true);
     }
 
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
 
     auto promise = std::make_shared<QPromise<qevercloud::SyncChunk>>();
     auto future = promise->future();
@@ -123,7 +123,7 @@ namespace {
 
     Q_ASSERT(linkedNotebook.guid());
 
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
 
     auto promise = std::make_shared<QPromise<qevercloud::SyncChunk>>();
     auto future = promise->future();
@@ -336,7 +336,7 @@ SyncChunksDownloader::SyncChunksDownloader(
 
 QFuture<ISyncChunksDownloader::SyncChunksResult>
     SyncChunksDownloader::downloadSyncChunks(
-        qint32 afterUsn, SynchronizationMode syncMode,
+        const qint32 afterUsn, const SynchronizationMode syncMode,
         qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
@@ -390,8 +390,8 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 
 QFuture<ISyncChunksDownloader::SyncChunksResult>
     SyncChunksDownloader::downloadLinkedNotebookSyncChunks(
-        qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-        SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
+        qevercloud::LinkedNotebook linkedNotebook, const qint32 afterUsn,
+        const SynchronizationMode syncMode, qevercloud::IRequestContextPtr ctx,
         utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak)
 {

@@ -268,7 +268,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
@@ -391,7 +391,7 @@ TEST_P(
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
@@ -475,7 +475,7 @@ TEST_F(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     qevercloud::EDAMSystemExceptionRateLimitReached e;
@@ -567,7 +567,7 @@ TEST_F(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     const RuntimeError e{ErrorString{QStringLiteral("Error")}};
@@ -657,7 +657,7 @@ TEST_F(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
@@ -761,7 +761,7 @@ TEST_F(
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     qevercloud::EDAMSystemExceptionRateLimitReached e;
@@ -866,7 +866,7 @@ TEST_F(
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     const RuntimeError e{ErrorString{QStringLiteral("Error")}};
@@ -969,7 +969,7 @@ TEST_F(
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
-    constexpr qint32 maxEntries = 50;
+    constexpr qint32 maxEntries = 200;
     qint32 afterUsn = afterUsnInitial;
 
     InSequence s;
