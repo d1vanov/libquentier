@@ -221,7 +221,7 @@ void downloadSyncChunksList(
              std::move(noteStore)](qevercloud::SyncChunk syncChunk) mutable {
             QNDEBUG(
                 "synchronization::SyncChunksDownloader",
-                "Downloaded single sync chunk: lastPreviousUsn = "
+                "Downloaded single sync chunk: last previous usn = "
                     << lastPreviousUsn << ", chunk high usn = "
                     << (syncChunk.chunkHighUSN()
                         ? QString::number(*syncChunk.chunkHighUSN())
@@ -285,9 +285,9 @@ void processSingleDownloadedSyncChunk(
 
     QNDEBUG(
         "synchronization::SyncChunksDownloader",
-        "Downloaded sync chunk: high USN = " << *syncChunk.chunkHighUSN()
+        "Downloaded sync chunk: high usn = " << *syncChunk.chunkHighUSN()
             << ", update count = " << syncChunk.updateCount()
-            << ", last previous USN = " << lastPreviousUsn);
+            << ", last previous usn = " << lastPreviousUsn);
 
     if (const auto callback = callbackWeak.lock()) {
         if (linkedNotebook) {
