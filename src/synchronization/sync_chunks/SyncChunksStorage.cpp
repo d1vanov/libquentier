@@ -52,6 +52,49 @@ namespace quentier::synchronization {
 
 namespace {
 
+[[nodiscard]] QString printUsnRanges(
+    const QList<std::pair<qint32, qint32>> & ranges)
+{
+    QString res;
+    QTextStream strm{&res};
+
+    if (ranges.isEmpty()) {
+        strm << "<empty>";
+        return res;
+    }
+
+    strm << "(" << ranges.size() << "):\n";
+    for (const auto & range: std::as_const(ranges)) {
+        strm << "    [" << range.first << " => " << range.second << "];\n";
+    }
+
+    return res;
+}
+
+[[nodiscard]] QString printLinkedNotebookUsnRanges(
+    const QHash<qevercloud::Guid, QList<std::pair<qint32, qint32>>> & ranges)
+{
+    QString res;
+    QTextStream strm{&res};
+
+    if (ranges.isEmpty()) {
+        strm << "<empty>";
+        return res;
+    }
+
+    for (const auto it: qevercloud::toRange(std::as_const(ranges))) {
+        strm << "{\n"
+             << "    Linked notebook guid = " << it.key() << ":\n";
+
+        for (const auto & range: it.value()) {
+            strm << "        [" << range.first << " => " << range.second
+                 << "];\n";
+        }
+    }
+
+    return res;
+}
+
 [[nodiscard]] std::optional<std::pair<qint32, qint32>>
     splitSyncChunkFileNameIntoUsns(const QString & syncChunkFileName)
 {
@@ -392,7 +435,7 @@ QList<std::pair<qint32, qint32>>
 }
 
 QList<qevercloud::SyncChunk> SyncChunksStorage::fetchRelevantUserOwnSyncChunks(
-    qint32 afterUsn) const
+    const qint32 afterUsn) const
 {
     initLowAndHighUsnsLists();
 
@@ -459,6 +502,12 @@ void SyncChunksStorage::putUserOwnSyncChunks(
 
     auto syncChunksInfo = toSyncChunksInfo(std::move(syncChunks));
     auto usns = toUsns(syncChunksInfo);
+
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::putUserOwnSyncChunks: "
+            << printUsnRanges(usns));
+
     m_userOwnSyncChunksPendingPersistence << syncChunksInfo;
 
     if (!m_userOwnSyncChunkLowAndHighUsns.isEmpty()) {
@@ -481,6 +530,12 @@ void SyncChunksStorage::putUserOwnSyncChunks(
     std::sort(
         m_userOwnSyncChunkLowAndHighUsns.begin(),
         m_userOwnSyncChunkLowAndHighUsns.end());
+
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::putUserOwnSyncChunks: updated user own sync chunks "
+            << "usn ranges: "
+            << printUsnRanges(m_userOwnSyncChunkLowAndHighUsns));
 }
 
 void SyncChunksStorage::putLinkedNotebookSyncChunks(
@@ -493,6 +548,12 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
 
     auto syncChunksInfo = toSyncChunksInfo(std::move(syncChunks));
     auto usns = toUsns(syncChunksInfo);
+
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::putLinkedNotebookSyncChunks: "
+            << "linked notebook guid = " << linkedNotebookGuid
+            << ", usn ranges: " << printUsnRanges(usns));
 
     auto & syncChunksPendingPersistence =
         m_linkedNotebookSyncChunksPendingPersistence[linkedNotebookGuid];
@@ -522,10 +583,21 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
 
     lowAndHighUsnsData << usns;
     std::sort(lowAndHighUsnsData.begin(), lowAndHighUsnsData.end());
+
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::putLinkedNotebookSyncChunks: "
+            << "linked notebook guid = " << linkedNotebookGuid
+            << ", updated sync chunks usn ranges: "
+            << printUsnRanges(lowAndHighUsnsData));
 }
 
 void SyncChunksStorage::clearUserOwnSyncChunks()
 {
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::clearUserOwnSyncChunks");
+
     const QWriteLocker locker{&m_dataLock};
     clearUserOwnSyncChunksImpl();
 }
@@ -554,6 +626,11 @@ void SyncChunksStorage::clearUserOwnSyncChunksImpl()
 void SyncChunksStorage::clearLinkedNotebookSyncChunks(
     const qevercloud::Guid & linkedNotebookGuid)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::clearLinkedNotebookSyncChunks: linked notebook "
+            << "guid = " << linkedNotebookGuid);
+
     const QWriteLocker locker{&m_dataLock};
     clearLinkedNotebookSyncChunksImpl(linkedNotebookGuid);
 }
@@ -574,6 +651,10 @@ void SyncChunksStorage::clearLinkedNotebookSyncChunksImpl(
 
 void SyncChunksStorage::clearAllSyncChunks()
 {
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::clearAllSyncChunks");
+
     const QWriteLocker locker{&m_dataLock};
 
     m_userOwnSyncChunksPendingPersistence.clear();
@@ -596,6 +677,8 @@ void SyncChunksStorage::clearAllSyncChunks()
 
 void SyncChunksStorage::flush()
 {
+    QNDEBUG("synchronization::SyncChunksStorage", "SyncChunksStorage::flush");
+
     const QWriteLocker locker{&m_dataLock};
 
     for (const auto & syncChunkInfo:
@@ -705,7 +788,11 @@ void SyncChunksStorage::initLowAndHighUsnsLists() const
         return;
     }
 
-    const QWriteLocker locker{&m_dataLock};
+    QWriteLocker locker{&m_dataLock};
+
+    if (m_initializedLowAndHighUsns.load(std::memory_order_acquire)) {
+        return;
+    }
 
     m_userOwnSyncChunkLowAndHighUsns =
         detectSyncChunkUsns(m_userOwnSyncChunksDir);
@@ -733,6 +820,17 @@ void SyncChunksStorage::initLowAndHighUsnsLists() const
     }
 
     m_initializedLowAndHighUsns.store(true, std::memory_order_release);
+
+    locker.unlock();
+
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "SyncChunksStorage::initLowAndHighUsnsLists: initialized usn lists: "
+            << "user own stored sync chunks usn ranges: "
+            << printUsnRanges(m_userOwnSyncChunkLowAndHighUsns)
+            << ", linked notebook sync chunks usn ranges: "
+            << printLinkedNotebookUsnRanges(
+                   m_linkedNotebookSyncChunkLowAndHighUsns));
 }
 
 } // namespace quentier::synchronization

@@ -28,8 +28,6 @@
 #include <QReadWriteLock>
 
 #include <atomic>
-#include <memory>
-#include <optional>
 #include <utility>
 
 namespace quentier::synchronization {

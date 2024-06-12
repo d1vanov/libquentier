@@ -7,7 +7,6 @@ Checks: >
         -clang-analyzer-cplusplus.NewDelete,
         boost-*,
         performance*,
-        -performance-no-automatic-move,
         readability*,
         -readability-implicit-bool-conversion,
         -readability-convert-member-functions-to-static,
