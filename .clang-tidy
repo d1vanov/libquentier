@@ -8,6 +8,7 @@ Checks: >
         boost-*,
         performance*,
         readability*,
+        -readability-named-parameter,
         -readability-implicit-bool-conversion,
         -readability-convert-member-functions-to-static,
         -readability-isolate-declaration,
