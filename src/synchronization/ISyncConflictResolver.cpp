@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,8 +18,131 @@
 
 #include <quentier/synchronization/ISyncConflictResolver.h>
 
+#include <QDebug>
+#include <QTextStream>
+
 namespace quentier::synchronization {
 
+namespace {
+
+template <class Stream, class Resolution>
+void printConflictResolution(Stream & strm, const Resolution & resolution)
+{
+    using ConflictResolution = ISyncConflictResolver::ConflictResolution;
+
+    struct Visitor
+    {
+        Visitor(Stream & strm) : m_strm{strm} {};
+
+        void operator()(const ConflictResolution::UseTheirs &)
+        {
+            m_strm << "Use theirs";
+        }
+
+        void operator()(const ConflictResolution::UseMine &)
+        {
+            m_strm << "Use mine";
+        }
+
+        void operator()(const ConflictResolution::IgnoreMine &)
+        {
+            m_strm << "Ignore mine";
+        }
+
+        void operator()(
+            const ConflictResolution::MoveMine<qevercloud::Notebook> &)
+        {
+            m_strm << "Move mine (notebook)";
+        }
+
+        void operator()(const ConflictResolution::MoveMine<qevercloud::Note> &)
+        {
+            m_strm << "Move mine (note)";
+        }
+
+        void operator()(
+            const ConflictResolution::MoveMine<qevercloud::SavedSearch> &)
+        {
+            m_strm << "Move mine (saved search)";
+        }
+
+        void operator()(const ConflictResolution::MoveMine<qevercloud::Tag> &)
+        {
+            m_strm << "Move mine (tag)";
+        }
+
+        Stream & m_strm;
+    };
+
+    std::visit(Visitor{strm}, resolution);
+}
+
+} // namespace
+
 ISyncConflictResolver::~ISyncConflictResolver() noexcept = default;
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::NotebookConflictResolution & resolution)
+{
+    printConflictResolution(dbg, resolution);
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::NotebookConflictResolution & resolution)
+{
+    printConflictResolution(strm, resolution);
+    return strm;
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::NoteConflictResolution & resolution)
+{
+    printConflictResolution(dbg, resolution);
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::NoteConflictResolution & resolution)
+{
+    printConflictResolution(strm, resolution);
+    return strm;
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::SavedSearchConflictResolution & resolution)
+{
+    printConflictResolution(dbg, resolution);
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::SavedSearchConflictResolution & resolution)
+{
+    printConflictResolution(strm, resolution);
+    return strm;
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::TagConflictResolution & resolution)
+{
+    printConflictResolution(dbg, resolution);
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::TagConflictResolution & resolution)
+{
+    printConflictResolution(strm, resolution);
+    return strm;
+}
 
 } // namespace quentier::synchronization

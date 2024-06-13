@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,14 +20,17 @@
 
 #include <quentier/utility/Linkage.h>
 
-#include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/SavedSearch.h>
 #include <qevercloud/types/Tag.h>
 
 #include <QFuture>
 
 #include <variant>
+
+class QDebug;
+class QTextStream;
 
 namespace quentier::synchronization {
 
@@ -77,6 +80,8 @@ public:
         template <class T>
         struct MoveMine
         {
+            using value_type = T;
+
             /**
              * The changed value of mine data item.
              */
@@ -100,8 +105,8 @@ public:
         ConflictResolution::MoveMine<qevercloud::SavedSearch>>;
 
     using TagConflictResolution = std::variant<
-        ConflictResolution::IgnoreMine,
-        ConflictResolution::UseTheirs, ConflictResolution::UseMine,
+        ConflictResolution::IgnoreMine, ConflictResolution::UseTheirs,
+        ConflictResolution::UseMine,
         ConflictResolution::MoveMine<qevercloud::Tag>>;
 
 public:
@@ -121,5 +126,37 @@ public:
     [[nodiscard]] virtual QFuture<TagConflictResolution> resolveTagConflict(
         qevercloud::Tag theirs, qevercloud::Tag mine) = 0;
 };
+
+QUENTIER_EXPORT QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::NotebookConflictResolution & resolution);
+
+QUENTIER_EXPORT QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::NotebookConflictResolution & resolution);
+
+QUENTIER_EXPORT QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::NoteConflictResolution & resolution);
+
+QUENTIER_EXPORT QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::NoteConflictResolution & resolution);
+
+QUENTIER_EXPORT QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::SavedSearchConflictResolution & resolution);
+
+QUENTIER_EXPORT QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::SavedSearchConflictResolution & resolution);
+
+QUENTIER_EXPORT QTextStream & operator<<(
+    QTextStream & strm,
+    const ISyncConflictResolver::TagConflictResolution & resolution);
+
+QUENTIER_EXPORT QDebug & operator<<(
+    QDebug & dbg,
+    const ISyncConflictResolver::TagConflictResolution & resolution);
 
 } // namespace quentier::synchronization
