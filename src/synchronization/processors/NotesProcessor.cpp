@@ -45,11 +45,13 @@
 #include <qevercloud/services/INoteStore.h>
 #include <qevercloud/types/SyncChunk.h>
 
+#include <QDebug>
 #include <QFile>
 #include <QFutureWatcher>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QPointer>
+#include <QTextStream>
 #include <QThread>
 
 #include <algorithm>
@@ -165,6 +167,13 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
 
     const auto noteCount = notes.size();
     const auto expungedNoteCount = expungedNotes.size();
+
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::processNotes: " << noteCount << " notes to process, "
+                                         << expungedNoteCount
+                                         << " notes to expunge");
+
     const auto totalItemCount = noteCount + expungedNoteCount;
     Q_ASSERT(totalItemCount > 0);
 
@@ -361,6 +370,12 @@ void NotesProcessor::onFoundDuplicate(
     Q_ASSERT(updatedNote.guid());
     Q_ASSERT(updatedNote.updateSequenceNum());
 
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::onFoundDuplicate: found local note which matches "
+            << "with the updated note by guid: " << *updatedNote.guid()
+            << ", local id = " << localNoteLocalId);
+
     auto thenFuture = threading::then(
         std::move(statusFuture), currentThread,
         [this, selfWeak, promise, context, updatedNote, localNoteLocalId,
@@ -388,6 +403,10 @@ void NotesProcessor::onFoundDuplicate(
                 promise->finish();
                 return;
             }
+
+            QNDEBUG(
+                "synchronization::NotesProcessor",
+                "Notes conflict resolution: " << resolution);
 
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
                     resolution)) {
@@ -508,11 +527,17 @@ void NotesProcessor::onFoundDuplicate(
 void NotesProcessor::downloadFullNoteData(
     const ContextPtr & context,
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
-    qevercloud::Note note, NoteKind noteKind)
+    qevercloud::Note note, const NoteKind noteKind)
 {
     Q_ASSERT(context);
     Q_ASSERT(note.guid());
     Q_ASSERT(note.notebookGuid());
+
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::downloadFullNoteData: note guid = "
+            << *note.guid() << ", notebook guid = " << *note.notebookGuid()
+            << ", note kind = " << noteKind);
 
     auto noteStoreFuture = m_noteStoreProvider->noteStoreForNotebookGuid(
         *note.notebookGuid(), m_ctx, m_retryPolicy);
@@ -542,7 +567,7 @@ void NotesProcessor::downloadFullNoteData(
 void NotesProcessor::downloadFullNoteDataImpl(
     const ContextPtr & context,
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
-    const qevercloud::Note & note, NoteKind noteKind,
+    const qevercloud::Note & note, const NoteKind noteKind,
     qevercloud::INoteStorePtr noteStore)
 {
     Q_ASSERT(noteStore);
@@ -555,6 +580,12 @@ void NotesProcessor::downloadFullNoteDataImpl(
         NotesProcessor::cancelNoteProcessing(context, promise, note);
         return;
     }
+
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::downloadFullNoteDataImpl: note guid = "
+            << noteGuid << ", note usn = " << *note.updateSequenceNum()
+            << ", note local id = " << note.localId());
 
     auto noteFuture = m_noteFullDataDownloader->downloadFullNoteData(
         noteGuid, std::move(noteStore));
@@ -584,6 +615,12 @@ void NotesProcessor::downloadFullNoteDataImpl(
              noteLocalId = std::move(noteLocalId),
              resourceLocalIdsByGuids = std::move(resourceLocalIdsByGuids)](
                 qevercloud::Note note) mutable {
+                QNDEBUG(
+                    "synchronization::NotesProcessor",
+                    "Successfully downloaded note: guid = "
+                        << note.guid().value_or(QStringLiteral("<none>"))
+                        << ", local id = " << noteLocalId);
+
                 note.setLocalId(std::move(noteLocalId));
                 if (note.resources() && !note.resources()->isEmpty()) {
                     for (auto & resource: *note.mutableResources()) {
@@ -617,8 +654,14 @@ void NotesProcessor::downloadFullNoteDataImpl(
 void NotesProcessor::processDownloadedFullNoteData(
     const ContextPtr & context,
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
-    qevercloud::Note note, NoteKind noteKind)
+    qevercloud::Note note, const NoteKind noteKind)
 {
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::processDownloadedFullNoteData: note guid = "
+            << note.guid().value_or(QStringLiteral("<none>"))
+            << ", local id = " << note.localId());
+
     auto * currentThread = QThread::currentThread();
 
     QFuture<qevercloud::Note> noteFuture = [&] {
@@ -727,6 +770,11 @@ void NotesProcessor::cancelNoteProcessing(
     Q_ASSERT(note.guid());
     Q_ASSERT(note.updateSequenceNum());
 
+    QNDEBUG(
+        "synchonization::NotesProcessor",
+        "NotesProcessor::cancelNoteProcessing: note guid = "
+            << *note.guid() << ", usn = " << *note.updateSequenceNum());
+
     if (const auto callback = context->callbackWeak.lock()) {
         callback->onNoteProcessingCancelled(note);
     }
@@ -764,12 +812,21 @@ void NotesProcessor::processNoteDownloadingError(
     }
     catch (const qevercloud::EDAMSystemException & se) {
         if (se.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            QNINFO(
+                "synchronization::NotesProcessor",
+                "Caught rate limit reached exception: duration = "
+                    << (se.rateLimitDuration()
+                            ? QString::number(*se.rateLimitDuration())
+                            : QStringLiteral("<none>")));
             context->status->m_stopSynchronizationError =
                 StopSynchronizationError{
                     RateLimitReachedError{se.rateLimitDuration()}};
             shouldCancelProcessing = true;
         }
         else if (se.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
+            QNINFO(
+                "synchronization::NotesProcessor",
+                "Caught authentication expired error");
             context->status->m_stopSynchronizationError =
                 StopSynchronizationError{AuthenticationExpiredError{}};
             shouldCancelProcessing = true;
@@ -794,9 +851,16 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
     Q_ASSERT(resource.height());
     Q_ASSERT(resource.width());
 
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::downloadInkNoteImage: resource guid = "
+            << *resource.guid() << ", height = " << *resource.height()
+            << ", width = " << *resource.width());
+
     if (!inkNoteImagesStorageDir.exists()) {
         if (!inkNoteImagesStorageDir.mkpath(
-                inkNoteImagesStorageDir.absolutePath())) {
+                inkNoteImagesStorageDir.absolutePath()))
+        {
             return threading::makeExceptionalFuture<void>(
                 RuntimeError{ErrorString{
                     QStringLiteral("Failed to create directory for ink note "
@@ -846,6 +910,11 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
                         promise->finish();
                     }
 
+                    QNDEBUG(
+                        "synchronization::NotesProcessor",
+                        "Successfully downloaded in note image: resource guid "
+                            << "= " << resourceGuid);
+
                     QFile inkNoteImageFile{inkNoteImagesStorageDir.filePath(
                         resourceGuid + QStringLiteral(".png"))};
 
@@ -871,6 +940,12 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
 QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
     qevercloud::Note note)
 {
+    Q_ASSERT(note.guid());
+
+    QNDEBUG(
+        "synchronization::NotesProcessor",
+        "NotesProcessor::downloadNoteThumbnail: note guid = " << *note.guid());
+
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
     promise->start();
@@ -883,7 +958,7 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
 
     threading::thenOrFailed(
         std::move(noteThumbnailDownloaderFuture), currentThread, promise,
-        [note, promise, currentThread,
+        [note = std::move(note), promise, currentThread,
          ctx = m_ctx](const qevercloud::INoteThumbnailDownloaderPtr &
                           noteThumbnailDownloader) mutable {
             Q_ASSERT(noteThumbnailDownloader);
@@ -911,6 +986,13 @@ void NotesProcessor::putNoteToLocalStorage(
     qevercloud::Note note, NoteKind putNoteKind)
 {
     Q_ASSERT(context);
+    Q_ASSERT(note.guid());
+    Q_ASSERT(note.updateSequenceNum());
+
+    QNDEBUG(
+        "synchronization:NotesProcessor",
+        "NotesProcessor::putNoteToLocalStorage: note guid = "
+            << *note.guid() << ", usn = " << *note.updateSequenceNum());
 
     auto putNoteFuture = m_localStorage->putNote(note);
 
@@ -943,6 +1025,11 @@ void NotesProcessor::putNoteToLocalStorage(
         std::move(thenFuture), currentThread,
         [promise, context,
          note = std::move(note)](const QException & e) mutable {
+            QNWARNING(
+                "synchronization::NotesProcessor",
+                "Failed to put note with guid "
+                    << *note.guid() << " to local storage: " << e.what());
+
             if (const auto callback = context->callbackWeak.lock()) {
                 callback->onNoteFailedToProcess(note, e);
             }
@@ -960,6 +1047,32 @@ void NotesProcessor::putNoteToLocalStorage(
 
             promise->finish();
         });
+}
+
+template <class T>
+void NotesProcessor::printNoteKind(T & t, const NoteKind noteKind)
+{
+    switch (noteKind) {
+    case NoteKind::NewNote:
+        t << "New note";
+        break;
+    case NoteKind::UpdatedNote:
+        t << "Updated note";
+        break;
+    }
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const NotesProcessor::NoteKind noteKind)
+{
+    NotesProcessor::printNoteKind(strm, noteKind);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const NotesProcessor::NoteKind noteKind)
+{
+    NotesProcessor::printNoteKind(dbg, noteKind);
+    return dbg;
 }
 
 } // namespace quentier::synchronization

@@ -37,7 +37,9 @@
 
 #include <memory>
 
+class QDebug;
 class QDir;
+class QTextStream;
 
 namespace quentier::synchronization {
 
@@ -97,6 +99,12 @@ private:
         NewNote,
         UpdatedNote
     };
+
+    friend QTextStream & operator<<(QTextStream & strm, NoteKind noteKind);
+    friend QDebug & operator<<(QDebug & dbg, NoteKind noteKind);
+
+    template <class T>
+    static void printNoteKind(T & t, NoteKind noteKind);
 
     void downloadFullNoteData(
         const ContextPtr & context,
