@@ -516,6 +516,13 @@ void SyncChunksStorage::putUserOwnSyncChunks(
 
         for (const auto & usnRange: std::as_const(usns)) {
             if (usnRange.first <= lastExistingUsnRange.second) {
+                QNDEBUG(
+                    "synchronization::SyncChunksStorage",
+                    "Detected interleaving between usn ranges of already "
+                        << "stored sync chunks and sync chunks put into the "
+                        << "storage now -> removing previously stored user own "
+                        << "sync chunks");
+
                 // At least one of new sync chunks put to the storage has
                 // USN range which is interleaving with existing stored sync
                 // chunks; the storage doesn't allow that, hence will clear
@@ -571,6 +578,14 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
 
         for (const auto & usnRange: std::as_const(usns)) {
             if (usnRange.first <= lastExistingUsnRange.second) {
+                QNDEBUG(
+                    "synchronization::SyncChunksStorage",
+                    "Detected interleaving between usn ranges of already "
+                        << "stored sync chunks and sync chunks put into the "
+                        << "storage now -> removing previously stored sync "
+                        << "chunks for linked notebook with guid "
+                        << linkedNotebookGuid);
+
                 // At least one of new sync chunks put to the storage has
                 // USN range which is interleaving with existing stored sync
                 // chunks; the storage doesn't allow that, hence will clear
