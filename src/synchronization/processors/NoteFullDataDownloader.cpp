@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #include "NoteFullDataDownloader.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 
@@ -30,7 +31,8 @@
 
 namespace quentier::synchronization {
 
-NoteFullDataDownloader::NoteFullDataDownloader(quint32 maxInFlightDownloads) :
+NoteFullDataDownloader::NoteFullDataDownloader(
+    const quint32 maxInFlightDownloads) :
     m_maxInFlightDownloads{maxInFlightDownloads}
 {
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
@@ -44,6 +46,11 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
     qevercloud::Guid noteGuid, qevercloud::INoteStorePtr noteStore,
     qevercloud::IRequestContextPtr ctx)
 {
+    QNDEBUG(
+        "synchronization::NoteFullDataDownloader",
+        "NoteFullDataDownloader::downloadFullNoteData: note guid = "
+            << noteGuid);
+
     if (Q_UNLIKELY(!noteStore)) {
         return threading::makeExceptionalFuture<qevercloud::Note>(
             InvalidArgument{ErrorString{
@@ -53,15 +60,26 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
 
-    if (m_inFlightDownloads.load(std::memory_order_acquire) >=
-        m_maxInFlightDownloads)
-    {
-        // Already have too much requests in flight, will enqueue this one
+    const auto inFlightDownloads =
+        m_inFlightDownloads.load(std::memory_order_acquire);
+    if (inFlightDownloads >= m_maxInFlightDownloads) {
+        QNDEBUG(
+            "synchronization::NoteFullDataDownloader",
+            "Already have " << inFlightDownloads << " current downloads, "
+                            << "delaying this note download request");
+
+        // Already have too many requests in flight, will enqueue this one
         // and execute it later, when some of the previous requests are finished
         const QMutexLocker lock{&m_queuedRequestsMutex};
         m_queuedRequests.append(QueuedRequest{
             std::move(noteGuid), std::move(ctx), std::move(noteStore),
             std::move(promise)});
+
+        QNDEBUG(
+            "synchronization::NoteFullDataDownloader",
+            "Got " << m_queuedRequests.size() << " delayed note download "
+                << "requests now");
+
         return future;
     }
 
@@ -77,14 +95,19 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
     const std::shared_ptr<QPromise<qevercloud::Note>> & promise)
 {
     Q_ASSERT(noteStore);
-
     Q_ASSERT(promise);
+
+    QNDEBUG(
+        "synchronization::NoteFullDataDownloader",
+        "NoteFullDataDownloader::downloadFullNoteDataImpl: note guid = "
+            << noteGuid);
+
     promise->start();
 
     m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
     auto getNoteFuture = noteStore->getNoteWithResultSpecAsync(
-        std::move(noteGuid),
+        noteGuid,
         qevercloud::NoteResultSpecBuilder{}
             .setIncludeContent(true)
             .setIncludeResourcesData(true)
@@ -103,7 +126,12 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
 
     auto processedNoteFuture = threading::then(
         std::move(getNoteFuture), currentThread,
-        [promise, selfWeak](const qevercloud::Note & note) {
+        [promise, noteGuid, selfWeak](const qevercloud::Note & note) {
+            QNDEBUG(
+                "synchronization::NoteFullDataDownloader",
+                "Successfully downloaded full note data for note guid "
+                    << noteGuid);
+
             promise->addResult(note);
             promise->finish();
 
@@ -115,7 +143,12 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
 
     threading::onFailed(
         std::move(processedNoteFuture), currentThread,
-        [promise, selfWeak](const QException & e) {
+        [promise, selfWeak,
+         noteGuid = std::move(noteGuid)](const QException & e) {
+            QNWARNING(
+                "synchronization::NoteFullDataDownloader",
+                "Failed to download full note data for note guid " << noteGuid);
+
             promise->setException(e);
             promise->finish();
 
@@ -139,6 +172,12 @@ void NoteFullDataDownloader::onNoteFullDataDownloadFinished()
         }
 
         request = m_queuedRequests.dequeue();
+
+        QNDEBUG(
+            "synchronization::NoteFullDataDownloader",
+            "Processing pending request from note download requests queue, "
+                << "got " << m_queuedRequests.size()
+                << " delayed requests left");
     }
 
     downloadFullNoteDataImpl(
