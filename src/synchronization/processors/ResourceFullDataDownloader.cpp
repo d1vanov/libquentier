@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #include "ResourceFullDataDownloader.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 
@@ -29,8 +30,7 @@
 namespace quentier::synchronization {
 
 ResourceFullDataDownloader::ResourceFullDataDownloader(
-    quint32 maxInFlightDownloads) :
-    m_maxInFlightDownloads{maxInFlightDownloads}
+    const quint32 maxInFlightDownloads) : m_maxInFlightDownloads{maxInFlightDownloads}
 {
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -44,6 +44,11 @@ QFuture<qevercloud::Resource>
         qevercloud::Guid resourceGuid, qevercloud::INoteStorePtr noteStore,
         qevercloud::IRequestContextPtr ctx)
 {
+    QNDEBUG(
+        "synchronization::ResourceFullDataDownloader",
+        "ResourceFullDataDownloader::downloadFullResourceData: resource guid = "
+            << resourceGuid);
+
     if (Q_UNLIKELY(!noteStore)) {
         return threading::makeExceptionalFuture<qevercloud::Resource>(
             InvalidArgument{ErrorString{QStringLiteral(
@@ -53,15 +58,26 @@ QFuture<qevercloud::Resource>
     auto promise = std::make_shared<QPromise<qevercloud::Resource>>();
     auto future = promise->future();
 
-    if (m_inFlightDownloads.load(std::memory_order_acquire) >=
-        m_maxInFlightDownloads)
-    {
-        // Already have too much requests in flight, will enqueue this one
+    const auto inFlightDownloads =
+        m_inFlightDownloads.load(std::memory_order_acquire);
+    if (inFlightDownloads >= m_maxInFlightDownloads) {
+        QNDEBUG(
+            "synchronization::ResourceFullDataDownloader",
+            "Already have " << inFlightDownloads << " current downloads, "
+                            << "delaying this resource download request");
+
+        // Already have too many requests in flight, will enqueue this one
         // and execute it later, when some of the previous requests are finished
         const QMutexLocker lock{&m_queuedRequestsMutex};
         m_queuedRequests.append(QueuedRequest{
             std::move(resourceGuid), std::move(ctx), std::move(noteStore),
             std::move(promise)});
+
+        QNDEBUG(
+            "synchronization::ResourceFullDataDownloader",
+            "Got " << m_queuedRequests.size() << " delayed resource download "
+                   << "requests now");
+
         return future;
     }
 
@@ -77,14 +93,19 @@ void ResourceFullDataDownloader::downloadFullResourceDataImpl(
     const std::shared_ptr<QPromise<qevercloud::Resource>> & promise)
 {
     Q_ASSERT(noteStore);
-
     Q_ASSERT(promise);
+
+    QNDEBUG(
+        "synchronization::ResourceFullDataDownloader",
+        "ResourceFullDataDownloader::downloadFullResourceDataImpl: resource "
+            << "guid = " << resourceGuid);
+
     promise->start();
 
     m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
     auto getResourceFuture = noteStore->getResourceAsync(
-        std::move(resourceGuid),
+        resourceGuid,
         /* withData = */ true,
         /* withRecognition = */ true,
         /* withAttributes = */ true,
@@ -94,7 +115,13 @@ void ResourceFullDataDownloader::downloadFullResourceDataImpl(
 
     auto processedResourceFuture = threading::then(
         std::move(getResourceFuture),
-        [promise, selfWeak](const qevercloud::Resource & resource) {
+        [promise, resourceGuid,
+         selfWeak](const qevercloud::Resource & resource) {
+            QNDEBUG(
+                "synchronization::ResourceFullDataDownloader",
+                "Successfully downloaded full resource data for resource guid "
+                    << resourceGuid);
+
             promise->addResult(resource);
             promise->finish();
 
@@ -106,7 +133,13 @@ void ResourceFullDataDownloader::downloadFullResourceDataImpl(
 
     threading::onFailed(
         std::move(processedResourceFuture),
-        [promise, selfWeak](const QException & e) {
+        [promise, selfWeak,
+         resourceGuid = std::move(resourceGuid)](const QException & e) {
+            QNWARNING(
+                "synchronization::ResourceFullDataDownloader",
+                "Failed to download full resource data for resource guid "
+                    << resourceGuid);
+
             promise->setException(e);
             promise->finish();
 
@@ -130,6 +163,12 @@ void ResourceFullDataDownloader::onResourceFullDataDownloadFinished()
         }
 
         request = m_queuedRequests.dequeue();
+
+        QNDEBUG(
+            "synchronization::ResourceFullDataDownloader",
+            "Processing pending request from resource download requests queue, "
+                << "got " << m_queuedRequests.size()
+                << " delayed requests left");
     }
 
     downloadFullResourceDataImpl(
