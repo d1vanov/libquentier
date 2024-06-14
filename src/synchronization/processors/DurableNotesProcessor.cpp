@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,12 +54,17 @@ public:
     // INotesProcessor::ICallback
     void onProcessedNote(
         const qevercloud::Guid & noteGuid,
-        qint32 noteUpdateSequenceNum) noexcept override
+        const qint32 noteUpdateSequenceNum) noexcept override
     {
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
             return;
         }
+
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "Callback::onProcessedNote: note guid = " << noteGuid << ", usn = "
+                                                      << noteUpdateSequenceNum);
 
         try {
             utils::writeProcessedNoteInfo(
@@ -87,6 +92,10 @@ public:
 
     void onExpungedNote(const qevercloud::Guid & noteGuid) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "Callback::onExpungedNote: note guid = " << noteGuid);
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
             return;
@@ -117,6 +126,11 @@ public:
         const qevercloud::Guid & noteGuid,
         const QException & e) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "Callback::onFailedToExpungeNote: note guid = " << noteGuid
+                << ", error: " << e.what());
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
             return;
@@ -146,6 +160,12 @@ public:
     void onNoteFailedToDownload(
         const qevercloud::Note & note, const QException & e) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "Callback::onNoteFailedToDownload: note guid = "
+                << note.guid().value_or(QStringLiteral("<none>"))
+                << ", error: " << e.what());
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
             return;
@@ -174,8 +194,14 @@ public:
 
     void onNoteFailedToProcess(
         const qevercloud::Note & note,
-        [[maybe_unused]] const QException & e) noexcept override
+        const QException & e) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "Callback::onNoteFailedToProcess: note guid = "
+                << note.guid().value_or(QStringLiteral("<none>"))
+                << ", error: " << e.what());
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
             return;
@@ -205,6 +231,11 @@ public:
     void onNoteProcessingCancelled(
         const qevercloud::Note & note) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "Callback::onNoteProcessingCancelled: note guid = "
+                << note.guid().value_or(QStringLiteral("<none>")));
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
             return;
@@ -327,6 +358,11 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
                     alreadyExpungedNoteGuids.end(),
                     [it](const auto & guid) { return guid == *it; });
                 if (expungedNoteIt != alreadyExpungedNoteGuids.end()) {
+                    QNDEBUG(
+                        "synchronization::DurableNotesProcessor",
+                        "Already expunged note guid "
+                            << *expungedNoteIt
+                            << ", erasing it from the sync chunk");
                     it = expungedNotes.erase(it);
                     continue;
                 }
@@ -385,6 +421,11 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     const QDir dir = syncNotesDir(linkedNotebookGuid);
 
     if (previousNotes.isEmpty() && previousExpungedNotes.isEmpty()) {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "DurableNotesProcessor::processNotesImpl: trying to process "
+                << previousNotes.size() << " previous notes");
+
         auto callback =
             std::make_shared<Callback>(std::move(callbackWeak), selfWeak, dir);
 
@@ -395,6 +436,11 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
             std::move(processSyncChunksFuture), currentThread, promise,
             [promise,
              callback = std::move(callback)](DownloadNotesStatusPtr status) {
+                QNDEBUG(
+                    "synchronization::DurableNotesProcessor",
+                    "Processed previous notes, status: "
+                        << (status ? status->toString()
+                                   : QStringLiteral("<null>")));
                 promise->addResult(std::move(status));
                 promise->finish();
             });
@@ -403,6 +449,12 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     }
 
     if (!previousExpungedNotes.isEmpty()) {
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "DurableNotesProcessor::processNotesImpl: trying to process "
+                << previousExpungedNotes.size() << " previous expunged "
+                << "notes");
+
         const auto pseudoSyncChunks = QList<qevercloud::SyncChunk>{}
             << qevercloud::SyncChunkBuilder{}
                    .setExpungedNotes(std::move(previousExpungedNotes))
@@ -424,6 +476,19 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                  callbackWeak = std::move(callbackWeak),
                  callback = std::move(callback)](
                     DownloadNotesStatusPtr expungeNotesStatus) mutable {
+                    QNDEBUG(
+                        "synchronization::DurableNotesProcessor",
+                        "Processed previous expunged note, status: "
+                            << (expungeNotesStatus
+                                    ? expungeNotesStatus->toString()
+                                    : QStringLiteral("<null>")));
+
+                    QNDEBUG(
+                        "synchronization::DurableNotesProcessor",
+                        "DurableNotesProcessor::processNotesImpl: trying to "
+                            << "process " << previousNotes.size()
+                            << " previous notes");
+
                     auto processNotesFuture = processNotesImpl(
                         syncChunks, std::move(canceler),
                         std::move(previousNotes), {}, linkedNotebookGuid,
@@ -437,6 +502,12 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                              expungeNotesStatus = std::move(expungeNotesStatus),
                              syncChunks = std::move(syncChunks)](
                                 DownloadNotesStatusPtr status) mutable {
+                                QNDEBUG(
+                                    "synchronization::DurableNotesProcessor",
+                                    "Processed previous notes, status: "
+                                        << (status ? status->toString()
+                                                   : QStringLiteral("<null>")));
+
                                 *status = utils::mergeDownloadNotesStatuses(
                                     std::move(*status), *expungeNotesStatus);
 
@@ -454,6 +525,11 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                    .setNotes(std::move(previousNotes))
                    .build();
 
+        QNDEBUG(
+            "synchronization::DurableNotesProcessor",
+            "DurableNotesProcessor::processNotesImpl: trying to process "
+                << previousNotes.size() << " previous notes");
+
         auto callback = std::make_shared<Callback>(callbackWeak, selfWeak, dir);
 
         auto notesFuture = m_notesProcessor->processNotes(
@@ -468,6 +544,12 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                  callbackWeak = std::move(callbackWeak),
                  callback = std::move(callback)](
                     DownloadNotesStatusPtr status) mutable {
+                    QNDEBUG(
+                        "synchronization::DurableNotesProcessor",
+                        "Processed previous notes, status: "
+                            << (status ? status->toString()
+                                       : QStringLiteral("<null>")));
+
                     auto processNotesFuture = processNotesImpl(
                         syncChunks, canceler, {}, {}, linkedNotebookGuid,
                         std::move(callbackWeak));
@@ -489,6 +571,10 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
 
         return future;
     }
+
+    QNDEBUG(
+        "synchronization::DurableNotesProcessor",
+        "No previous notes or expunged note guids");
 
     auto callback =
         std::make_shared<Callback>(std::move(callbackWeak), selfWeak, dir);
