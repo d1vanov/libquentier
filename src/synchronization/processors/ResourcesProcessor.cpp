@@ -102,6 +102,11 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
 
     const auto resourceCount = resources.size();
 
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::processResources: " << resourceCount
+                                                 << " resources to process");
+
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
 
@@ -550,7 +555,7 @@ void ResourcesProcessor::handleResourceConflict(
 void ResourcesProcessor::downloadFullResourceData(
     ContextPtr context,
     std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
-    qevercloud::Resource resource, ResourceKind resourceKind)
+    qevercloud::Resource resource, const ResourceKind resourceKind)
 {
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
@@ -607,7 +612,7 @@ void ResourcesProcessor::downloadFullResourceData(
 void ResourcesProcessor::downloadFullResourceData(
     ContextPtr context,
     std::shared_ptr<QPromise<ProcessResourceStatus>> promise,
-    qevercloud::Resource resource, ResourceKind resourceKind,
+    qevercloud::Resource resource, const ResourceKind resourceKind,
     const qevercloud::INoteStorePtr & noteStore)
 {
     Q_ASSERT(context);
@@ -699,7 +704,7 @@ void ResourcesProcessor::downloadFullResourceData(
 void ResourcesProcessor::putResourceToLocalStorage(
     const ContextPtr & context,
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & promise,
-    qevercloud::Resource resource, ResourceKind putResourceKind)
+    qevercloud::Resource resource, const ResourceKind putResourceKind)
 {
     Q_ASSERT(context);
     Q_ASSERT(resource.guid());
