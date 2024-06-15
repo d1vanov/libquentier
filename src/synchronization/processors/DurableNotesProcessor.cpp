@@ -56,15 +56,18 @@ public:
         const qevercloud::Guid & noteGuid,
         const qint32 noteUpdateSequenceNum) noexcept override
     {
-        const auto durableProcessor = m_durableProcessorWeak.lock();
-        if (!durableProcessor) {
-            return;
-        }
-
         QNDEBUG(
             "synchronization::DurableNotesProcessor",
             "Callback::onProcessedNote: note guid = " << noteGuid << ", usn = "
                                                       << noteUpdateSequenceNum);
+
+        const auto durableProcessor = m_durableProcessorWeak.lock();
+        if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableNotesProcessor",
+                "Durable processor has expired");
+            return;
+        }
 
         try {
             utils::writeProcessedNoteInfo(
@@ -98,6 +101,9 @@ public:
 
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableNotesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -133,6 +139,9 @@ public:
 
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableNotesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -168,6 +177,9 @@ public:
 
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableNotesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -204,6 +216,9 @@ public:
 
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableNotesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -238,6 +253,9 @@ public:
 
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableNotesProcessor",
+                "Durable processor has expired");
             return;
         }
 
