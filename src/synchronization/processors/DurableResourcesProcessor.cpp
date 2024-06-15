@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,10 +54,18 @@ public:
     // IResourcesProcessor::ICallback
     void onProcessedResource(
         const qevercloud::Guid & resourceGuid,
-        qint32 resourceUpdateSequenceNum) noexcept override
+        const qint32 resourceUpdateSequenceNum) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableResourcesProcessor",
+            "Callback::onProcessedResource: resource guid = "
+                << resourceGuid << ", usn = " << resourceUpdateSequenceNum);
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableResourcesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -90,8 +98,17 @@ public:
         const qevercloud::Resource & resource,
         const QException & e) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableResourcesProcessor",
+            "Callback::onResourceFailedToDownload: resource guid = "
+                << resource.guid().value_or(QStringLiteral("<none>"))
+                << ", error: " << e.what());
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableResourcesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -121,8 +138,17 @@ public:
         const qevercloud::Resource & resource,
         const QException & e) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableResourcesProcessor",
+            "Callback::onResourceFailedToProcess: resource guid = "
+                << resource.guid().value_or(QStringLiteral("<none>"))
+                << ", error: " << e.what());
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableResourcesProcessor",
+                "Durable processor has expired");
             return;
         }
 
@@ -151,8 +177,16 @@ public:
     void onResourceProcessingCancelled(
         const qevercloud::Resource & resource) noexcept override
     {
+        QNDEBUG(
+            "synchronization::DurableResourcesProcessor",
+            "Callback::onResourceProcessingCancelled: resource guid = "
+                << resource.guid().value_or(QStringLiteral("<none>")));
+
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
+            QNDEBUG(
+                "synchronization::DurableResourcesProcessor",
+                "Durable processor has expired");
             return;
         }
 
