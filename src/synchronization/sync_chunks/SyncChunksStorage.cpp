@@ -443,21 +443,22 @@ QList<qevercloud::SyncChunk> SyncChunksStorage::fetchRelevantUserOwnSyncChunks(
 
     auto result = fetchRelevantSyncChunks(m_userOwnSyncChunksDir, afterUsn);
 
-    if (m_userOwnSyncChunksPendingPersistence.isEmpty()) {
-        return result;
-    }
-
     // It is guaranteed that not yet flushed user own sync chunks would not
     // interleave in their USN ranges with actually persisted sync chunks.
     appendPendingSyncChunks(
         m_userOwnSyncChunksPendingPersistence, afterUsn, result);
 
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "Fetched relevant user own sync chunks after usn "
+            << afterUsn << ": " << utils::briefSyncChunksInfo(result));
     return result;
 }
 
 QList<qevercloud::SyncChunk>
     SyncChunksStorage::fetchRelevantLinkedNotebookSyncChunks(
-        const qevercloud::Guid & linkedNotebookGuid, qint32 afterUsn) const
+        const qevercloud::Guid & linkedNotebookGuid,
+        const qint32 afterUsn) const
 {
     initLowAndHighUsnsLists();
 
@@ -490,6 +491,11 @@ QList<qevercloud::SyncChunk>
     appendPendingSyncChunks(
         linkedNotebookSyncChunksPendingPersistence, afterUsn, result);
 
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "Fetched relevant linked notebook sync chunks after usn "
+            << afterUsn << " for linked notebook guid " << linkedNotebookGuid
+            << ": " << utils::briefSyncChunksInfo(result));
     return result;
 }
 
@@ -506,7 +512,7 @@ void SyncChunksStorage::putUserOwnSyncChunks(
     QNDEBUG(
         "synchronization::SyncChunksStorage",
         "SyncChunksStorage::putUserOwnSyncChunks: "
-            << printUsnRanges(usns));
+            << utils::briefSyncChunksInfo(syncChunks));
 
     m_userOwnSyncChunksPendingPersistence << syncChunksInfo;
 
@@ -559,8 +565,8 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
     QNDEBUG(
         "synchronization::SyncChunksStorage",
         "SyncChunksStorage::putLinkedNotebookSyncChunks: "
-            << "linked notebook guid = " << linkedNotebookGuid
-            << ", usn ranges: " << printUsnRanges(usns));
+            << "linked notebook guid = " << linkedNotebookGuid << ", "
+            << utils::briefSyncChunksInfo(syncChunks));
 
     auto & syncChunksPendingPersistence =
         m_linkedNotebookSyncChunksPendingPersistence[linkedNotebookGuid];

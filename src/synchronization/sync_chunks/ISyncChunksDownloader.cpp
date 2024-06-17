@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -58,6 +58,10 @@ void printSyncChunksResult(
       << ", high usn = "
       << (chunksHighUsn ? QString::number(*chunksHighUsn)
                         : QStringLiteral("<none>"));
+
+    for (const auto & syncChunk: std::as_const(result.m_syncChunks)) {
+        t << "SyncChunk: " << utils::briefSyncChunkInfo(syncChunk) << "\n\n";
+    }
 }
 
 } // namespace

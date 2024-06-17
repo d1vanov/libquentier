@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -75,5 +75,8 @@ void setLinkedNotebookGuidToSyncChunkEntries(
 
 [[nodiscard]] QString briefSyncChunkInfo(
     const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QString briefSyncChunksInfo(
+    const QList<qevercloud::SyncChunk> & syncChunks);
 
 } // namespace quentier::synchronization::utils
