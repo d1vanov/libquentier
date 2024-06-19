@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,11 +18,13 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
 #include <qevercloud/types/TypeAliases.h>
 
+#include <QJsonObject>
 #include <QList>
 #include <QNetworkCookie>
 #include <QString>
@@ -80,6 +82,20 @@ public:
      * https://discussion.evernote.com/forums/topic/124257-calls-to-userstore-from-evernote-api-stopped-working/#comment-562695
      */
     [[nodiscard]] virtual QList<QNetworkCookie> userStoreCookies() const = 0;
+
+    /**
+     * Serialize IAuthenticationInfo instance to json object.
+     */
+    [[nodiscard]] QJsonObject serializeToJson() const;
+
+    /**
+     * Factory method to create IAuthenticationInfo instance from serialized
+     * json object.
+     * @return nonnull pointer to IAuthenticationInfo in case of success or null
+     *         pointer in case of deserialization failure.
+     */
+    [[nodiscard]] static IAuthenticationInfoPtr deserializeFromJson(
+        const QJsonObject & json);
 };
 
 } // namespace quentier::synchronization

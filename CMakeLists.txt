@@ -224,6 +224,7 @@ set(PRIVATE_HEADERS
     src/synchronization/types/SyncOptions.h
     src/synchronization/types/SyncOptionsBuilder.h
     src/synchronization/types/SyncStateBuilder.h
+    src/synchronization/types/Utils.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/EncryptionManager_p.h
@@ -330,8 +331,8 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageNotifier.cpp
     src/local_storage/IPatch.cpp
-	src/local_storage/LocalStorageOpenException.cpp
-	src/local_storage/LocalStorageOperationException.cpp
+	  src/local_storage/LocalStorageOpenException.cpp
+	  src/local_storage/LocalStorageOperationException.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/logging/QuentierLogger.cpp
@@ -343,6 +344,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/ISyncStateStorage.cpp
     src/synchronization/SyncStateStorage.cpp
     src/synchronization/types/Errors.cpp
+    src/synchronization/types/IAuthenticationInfo.cpp
     src/synchronization/types/IAuthenticationInfoBuilder.cpp
     src/synchronization/types/IDownloadNotesStatus.cpp
     src/synchronization/types/IDownloadResourcesStatus.cpp
@@ -353,6 +355,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncOptionsBuilder.cpp
     src/synchronization/types/SyncStateBuilder.cpp
+    src/synchronization/types/Utils.cpp
     src/threading/Factory.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp
