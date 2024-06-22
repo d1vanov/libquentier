@@ -136,7 +136,8 @@ QString ErrorString::localizedString() const
 
     QString baseStr;
     if (!d->m_base.isEmpty()) {
-        baseStr = qApp->translate("", d->m_base.toLocal8Bit().constData());
+        const auto baseBytes = d->m_base.toUtf8();
+        baseStr = qApp->translate("", baseBytes.constData());
     }
 
     QString additionalBasesStr;
@@ -145,8 +146,9 @@ QString ErrorString::localizedString() const
             continue;
         }
 
+        const auto additionalBaseBytes = additionalBase.toUtf8();
         const QString translatedStr =
-            qApp->translate("", additionalBase.toLocal8Bit().constData());
+            qApp->translate("", additionalBaseBytes.constData());
 
         if (additionalBasesStr.isEmpty()) {
             additionalBasesStr = translatedStr;
