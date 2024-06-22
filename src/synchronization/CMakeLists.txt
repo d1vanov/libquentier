@@ -135,9 +135,13 @@ target_sources(${LIBRARY_NAME}
   types/DownloadNotesStatus.h
   types/DownloadResourcesStatus.cpp
   types/DownloadResourcesStatus.h
+  types/ExceptionUtils.cpp
+  types/ExceptionUtils.h
   types/Fwd.h
   types/SendStatus.cpp
   types/SendStatus.h
+  types/SerializationUtils.cpp
+  types/SerializationUtils.h
   types/SyncChunksDataCounters.cpp
   types/SyncChunksDataCounters.h
   types/SyncOptions.cpp
