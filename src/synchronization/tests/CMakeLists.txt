@@ -40,7 +40,9 @@ add_executable(${TESTS_NAME}
   TagsProcessorTest.cpp
   UserInfoProviderTest.cpp
   Utils.cpp
-  Utils.h)
+  Utils.h
+  serialization/IAuthenticationInfoSerializationTest.cpp
+)
 
 target_link_libraries(${TESTS_NAME}
   PRIVATE
