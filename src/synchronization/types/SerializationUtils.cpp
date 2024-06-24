@@ -94,7 +94,8 @@ std::shared_ptr<QException> deserializeException(const QJsonObject & json)
 
     const auto exceptionMessageIt =
         json.constFind(toString(gExceptionMessageKey));
-    if (exceptionMessageIt == json.constEnd() || exceptionMessageIt->isString())
+    if (exceptionMessageIt == json.constEnd() ||
+        !exceptionMessageIt->isString())
     {
         return nullptr;
     }
