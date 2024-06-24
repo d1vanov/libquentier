@@ -37,7 +37,7 @@ namespace quentier::synchronization {
         return ExceptionInfo{&typeid(InvalidArgument), exc.errorMessage()};
     }
     catch (const OperationCanceled & exc) {
-        return ExceptionInfo{&typeid(OperationCanceled), ErrorString{}};
+        return ExceptionInfo{&typeid(OperationCanceled), exc.errorMessage()};
     }
     catch (const RuntimeError & exc) {
         return ExceptionInfo{&typeid(RuntimeError), exc.errorMessage()};
