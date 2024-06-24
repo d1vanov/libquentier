@@ -12,6 +12,7 @@ add_executable(${TESTS_NAME}
   DownloaderTest.cpp
   DurableNotesProcessorTest.cpp
   DurableResourcesProcessorTest.cpp
+  ExceptionUtilsTest.cpp
   FullSyncStaleDataExpungerTest.cpp
   InkNoteImageDownloaderFactoryTest.cpp
   LinkedNotebookFinderTest.cpp
@@ -28,6 +29,7 @@ add_executable(${TESTS_NAME}
   ResourcesProcessorTest.cpp
   SavedSearchesProcessorTest.cpp
   SenderTest.cpp
+  SerializationUtilsTest.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
   SimpleNoteSyncConflictResolverTest.cpp
   SimpleSavedSearchSyncConflictResolverTest.cpp
