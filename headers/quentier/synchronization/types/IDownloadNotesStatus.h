@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/synchronization/types/Errors.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
@@ -26,6 +27,7 @@
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QException>
+#include <QJsonObject>
 #include <QList>
 
 #include <memory>
@@ -33,6 +35,10 @@
 
 namespace quentier::synchronization {
 
+/**
+ * @brief The IDownloadNotesStatus interface presents information about the
+ * status of notes downloading process
+ */
 class QUENTIER_EXPORT IDownloadNotesStatus : public Printable
 {
 public:
@@ -66,6 +72,20 @@ public:
 
     [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
         const = 0;
+
+    /**
+     * Serialize IDownloadNotesStatus instance to json object.
+     */
+    [[nodiscard]] QJsonObject serialize() const;
+
+    /**
+     * Factory method to create IDownloadNotesStatus instance from serialized
+     * json object.
+     * @return nonnull pointer to IDownloadNotesStatus in case of success or
+     *         null pointer in case of deserialization failure.
+     */
+    [[nodiscard]] static IDownloadNotesStatusPtr deserialize(
+        const QJsonObject & json);
 };
 
 } // namespace quentier::synchronization
