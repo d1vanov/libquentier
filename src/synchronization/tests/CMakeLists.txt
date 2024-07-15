@@ -44,6 +44,7 @@ add_executable(${TESTS_NAME}
   Utils.cpp
   Utils.h
   serialization/IAuthenticationInfoSerializationTest.cpp
+  serialization/IDownloadNotesStatusSerializationTest.cpp
 )
 
 target_link_libraries(${TESTS_NAME}
