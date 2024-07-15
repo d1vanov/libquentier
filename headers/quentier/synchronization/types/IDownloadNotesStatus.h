@@ -76,7 +76,7 @@ public:
     /**
      * Serialize IDownloadNotesStatus instance to json object.
      */
-    [[nodiscard]] QJsonObject serialize() const;
+    [[nodiscard]] QJsonObject serializeToJson() const;
 
     /**
      * Factory method to create IDownloadNotesStatus instance from serialized
@@ -84,7 +84,7 @@ public:
      * @return nonnull pointer to IDownloadNotesStatus in case of success or
      *         null pointer in case of deserialization failure.
      */
-    [[nodiscard]] static IDownloadNotesStatusPtr deserialize(
+    [[nodiscard]] static IDownloadNotesStatusPtr deserializeFromJson(
         const QJsonObject & json);
 };
 

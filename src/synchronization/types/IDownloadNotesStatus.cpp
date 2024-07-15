@@ -21,6 +21,8 @@
 #include "SerializationUtils.h"
 #include "Utils.h"
 
+#include <synchronization/types/DownloadNotesStatus.h>
+
 #include <qevercloud/serialization/json/Note.h>
 #include <qevercloud/utility/ToRange.h>
 
@@ -68,7 +70,7 @@ constexpr auto gRateLimitDurationKey = "rateLimitSeconds"sv;
 
 IDownloadNotesStatus::~IDownloadNotesStatus() noexcept = default;
 
-QJsonObject IDownloadNotesStatus::serialize() const
+QJsonObject IDownloadNotesStatus::serializeToJson() const
 {
     QJsonObject object;
 
@@ -189,9 +191,7 @@ QJsonObject IDownloadNotesStatus::serialize() const
             m_object[toStr(gStopSynchronizationErrorKey)] = obj;
         }
 
-        void operator()(const std::monostate &)
-        {
-        }
+        void operator()(const std::monostate &) {}
 
     private:
         QJsonObject & m_object;
@@ -203,7 +203,7 @@ QJsonObject IDownloadNotesStatus::serialize() const
     return object;
 }
 
-IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
+IDownloadNotesStatusPtr IDownloadNotesStatus::deserializeFromJson(
     const QJsonObject & json)
 {
     const auto totalNewNotesIt = json.constFind(toStr(gTotalNewNotesKey));
@@ -215,7 +215,7 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
     {
         bool totalNewNotesOk = false;
         totalNewNotes =
-            totalNewNotesIt->toString().toLongLong(&totalNewNotesOk);
+            totalNewNotesIt->toString().toULongLong(&totalNewNotesOk);
         if (!totalNewNotesOk) {
             return nullptr;
         }
@@ -233,7 +233,7 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
     {
         bool totalUpdatedNotesOk = false;
         totalUpdatedNotes =
-            totalUpdatedNotesIt->toString().toLongLong(&totalUpdatedNotesOk);
+            totalUpdatedNotesIt->toString().toULongLong(&totalUpdatedNotesOk);
         if (!totalUpdatedNotesOk) {
             return nullptr;
         }
@@ -251,7 +251,7 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
     {
         bool totalExpungedNotesOk = false;
         totalExpungedNotes =
-            totalExpungedNotesIt->toString().toLongLong(&totalExpungedNotesOk);
+            totalExpungedNotesIt->toString().toULongLong(&totalExpungedNotesOk);
         if (!totalExpungedNotesOk) {
             return nullptr;
         }
@@ -261,10 +261,7 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
         [&json](const std::string_view key)
         -> std::optional<QList<NoteWithException>> {
         QList<NoteWithException> notesWithExceptions;
-        if (const auto it =
-                json.constFind(toStr(gNotesWhichFailedToDownloadKey));
-            it != json.constEnd())
-        {
+        if (const auto it = json.constFind(toStr(key)); it != json.constEnd()) {
             if (!it->isArray()) {
                 return std::nullopt;
             }
@@ -321,7 +318,8 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
     }
 
     QList<GuidWithException> failedToExpungeNoteGuids;
-    if (const auto it = json.constFind(toStr(gNoteGuidsWhichFailedToExpungeKey));
+    if (const auto it =
+            json.constFind(toStr(gNoteGuidsWhichFailedToExpungeKey));
         it != json.constEnd())
     {
         if (!it->isArray()) {
@@ -330,8 +328,7 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
 
         const auto array = it->toArray();
         failedToExpungeNoteGuids.reserve(array.size());
-        for (auto ait = array.constBegin(); ait != array.constEnd(); ++ait)
-        {
+        for (auto ait = array.constBegin(); ait != array.constEnd(); ++ait) {
             if (!ait->isObject()) {
                 return nullptr;
             }
@@ -357,8 +354,129 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserialize(
         }
     }
 
-    // TODO: implement further
-    return nullptr;
+    const auto deserializeUsnsByGuids = [&json](const std::string_view key)
+        -> std::optional<UpdateSequenceNumbersByGuid> {
+        UpdateSequenceNumbersByGuid usns;
+        if (const auto it = json.constFind(toStr(key)); it != json.constEnd()) {
+            if (!it->isArray()) {
+                return std::nullopt;
+            }
+
+            const auto array = it->toArray();
+            for (auto ait = array.constBegin(); ait != array.constEnd(); ++ait)
+            {
+                if (!ait->isObject()) {
+                    return std::nullopt;
+                }
+
+                const auto entry = ait->toObject();
+
+                const auto guidIt = entry.constFind(toStr(gGuidKey));
+                if (guidIt == entry.constEnd() || !guidIt->isString()) {
+                    return std::nullopt;
+                }
+
+                const auto usnIt = entry.constFind(toStr(gUsnKey));
+                if (usnIt == entry.constEnd() || !usnIt->isDouble()) {
+                    return std::nullopt;
+                }
+
+                usns[guidIt->toString()] =
+                    static_cast<qint32>(usnIt->toDouble());
+            }
+        }
+        return usns;
+    };
+
+    auto processedNoteUsns =
+        deserializeUsnsByGuids(gProcessedNoteGuidsAndUsnsKey);
+    if (!processedNoteUsns) {
+        return nullptr;
+    }
+
+    auto cancelledNoteUsns =
+        deserializeUsnsByGuids(gCancelledNoteGuidsAndUsnsKey);
+    if (!cancelledNoteUsns) {
+        return nullptr;
+    }
+
+    QList<qevercloud::Guid> expungedNotes;
+    if (const auto it = json.constFind(toStr(gExpungedNoteGuidsKey));
+        it != json.constEnd())
+    {
+        if (!it->isArray()) {
+            return nullptr;
+        }
+
+        const auto array = it->toArray();
+        expungedNotes.reserve(array.size());
+        for (auto ait = array.constBegin(); ait != array.constEnd(); ++ait) {
+            if (!ait->isString()) {
+                return nullptr;
+            }
+
+            expungedNotes << ait->toString();
+        }
+    }
+
+    StopSynchronizationError stopSynchronizationError{std::monostate{}};
+    if (const auto it = json.constFind(toStr(gStopSynchronizationErrorKey));
+        it != json.constEnd())
+    {
+        if (!it->isObject()) {
+            return nullptr;
+        }
+
+        const auto entry = it->toObject();
+        const auto typeIt =
+            entry.constFind(toStr(gStopSynchronizationErrorTypeKey));
+        if (typeIt == entry.constEnd() || !typeIt->isString()) {
+            return nullptr;
+        }
+
+        const auto errorType = typeIt->toString();
+        if (errorType == toStr(gRateLimitReachedErrorTypeKey)) {
+            std::optional<qint32> rateLimitDurationSec;
+            if (const auto durationIt =
+                    entry.constFind(toStr(gRateLimitDurationKey));
+                durationIt != entry.constEnd())
+            {
+                if (!durationIt->isDouble()) {
+                    return nullptr;
+                }
+
+                rateLimitDurationSec =
+                    static_cast<qint32>(durationIt->toDouble());
+            }
+
+            stopSynchronizationError =
+                RateLimitReachedError{rateLimitDurationSec};
+        }
+        else if (errorType == toStr(gAuthenticationExpiredErrorKey)) {
+            stopSynchronizationError = AuthenticationExpiredError{};
+        }
+        else {
+            return nullptr;
+        }
+    }
+
+    auto status = std::make_shared<DownloadNotesStatus>();
+    status->m_totalNewNotes = totalNewNotes;
+    status->m_totalUpdatedNotes = totalUpdatedNotes;
+    status->m_totalExpungedNotes = totalExpungedNotes;
+
+    status->m_notesWhichFailedToDownload = std::move(*failedToDownloadNotes);
+    status->m_notesWhichFailedToProcess = std::move(*failedToProcessNotes);
+    status->m_noteGuidsWhichFailedToExpunge =
+        std::move(failedToExpungeNoteGuids);
+
+    status->m_processedNoteGuidsAndUsns = std::move(*processedNoteUsns);
+    status->m_cancelledNoteGuidsAndUsns = std::move(*cancelledNoteUsns);
+    status->m_expungedNoteGuids = std::move(expungedNotes);
+
+    status->m_stopSynchronizationError = stopSynchronizationError;
+
+    return status;
 }
 
 } // namespace quentier::synchronization
