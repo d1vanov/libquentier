@@ -124,7 +124,8 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
     }
     else {
         for (const auto & guidWithException:
-             std::as_const(m_noteGuidsWhichFailedToExpunge)) {
+             std::as_const(m_noteGuidsWhichFailedToExpunge))
+        {
             strm << "{" << guidWithException.first;
             strm << ": ";
 
@@ -176,7 +177,8 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
     }
 
     if (std::holds_alternative<RateLimitReachedError>(
-            m_stopSynchronizationError)) {
+            m_stopSynchronizationError))
+    {
         const auto & rateLimitReachedError =
             std::get<RateLimitReachedError>(m_stopSynchronizationError);
         strm << "stopSynchronizationError = RateLimitReachedError{";
@@ -198,13 +200,80 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
 bool operator==(
     const DownloadNotesStatus & lhs, const DownloadNotesStatus & rhs) noexcept
 {
+    const auto compareExceptionPtrs =
+        [](const DownloadNotesStatus::QExceptionPtr & lhs,
+           const DownloadNotesStatus::QExceptionPtr & rhs) {
+            if (!lhs && !rhs) {
+                return true;
+            }
+
+            if (lhs && !rhs) {
+                return false;
+            }
+
+            if (!lhs && rhs) {
+                return false;
+            }
+
+            const auto lhsMsg = QString::fromUtf8(lhs->what());
+            const auto rhsMsg = QString::fromUtf8(rhs->what());
+            return lhsMsg == rhsMsg;
+        };
+
+    const auto compareNotesWithExceptions =
+        [&](const IDownloadNotesStatus::NoteWithException & lhs,
+            const IDownloadNotesStatus::NoteWithException & rhs) {
+            return lhs.first == rhs.first &&
+                compareExceptionPtrs(lhs.second, rhs.second);
+        };
+
+    const auto compareNoteListsWithExceptions =
+        [&](const QList<IDownloadNotesStatus::NoteWithException> & lhs,
+            const QList<IDownloadNotesStatus::NoteWithException> & rhs) {
+            if (lhs.size() != rhs.size()) {
+                return false;
+            }
+
+            for (int i = 0; i < lhs.size(); ++i) {
+                if (!compareNotesWithExceptions(lhs[i], rhs[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+    const auto compareGuidsWithExceptions =
+        [&](const QList<IDownloadNotesStatus::GuidWithException> & lhs,
+            const QList<IDownloadNotesStatus::GuidWithException> & rhs) {
+            if (lhs.size() != rhs.size()) {
+                return false;
+            }
+
+            for (int i = 0; i < lhs.size(); ++i) {
+                if (lhs[i].first != rhs[i].first) {
+                    return false;
+                }
+
+                if (!compareExceptionPtrs(lhs[i].second, rhs[i].second)) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
     if (lhs.m_totalNewNotes != rhs.m_totalNewNotes ||
         lhs.m_totalUpdatedNotes != rhs.m_totalUpdatedNotes ||
         lhs.m_totalExpungedNotes != rhs.m_totalExpungedNotes ||
-        lhs.m_notesWhichFailedToDownload != rhs.m_notesWhichFailedToDownload ||
-        lhs.m_notesWhichFailedToProcess != rhs.m_notesWhichFailedToProcess ||
-        lhs.m_noteGuidsWhichFailedToExpunge !=
-            rhs.m_noteGuidsWhichFailedToExpunge ||
+        !compareNoteListsWithExceptions(
+            lhs.m_notesWhichFailedToDownload,
+            rhs.m_notesWhichFailedToDownload) ||
+        !compareNoteListsWithExceptions(
+            lhs.m_notesWhichFailedToProcess, rhs.m_notesWhichFailedToProcess) ||
+        !compareGuidsWithExceptions(
+            lhs.m_noteGuidsWhichFailedToExpunge,
+            rhs.m_noteGuidsWhichFailedToExpunge) ||
         lhs.m_processedNoteGuidsAndUsns != rhs.m_processedNoteGuidsAndUsns ||
         lhs.m_cancelledNoteGuidsAndUsns != rhs.m_cancelledNoteGuidsAndUsns ||
         lhs.m_expungedNoteGuids != rhs.m_expungedNoteGuids)
