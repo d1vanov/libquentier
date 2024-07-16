@@ -129,7 +129,9 @@ set(SYNCHRONIZATION_TYPES_HEADERS
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncResult.h
     headers/quentier/synchronization/types/ISyncState.h
-    headers/quentier/synchronization/types/ISyncStateBuilder.h)
+    headers/quentier/synchronization/types/ISyncStateBuilder.h
+    headers/quentier/synchronization/types/serialization/json/AuthenticationInfo.h
+    headers/quentier/synchronization/types/serialization/json/DownloadNotesStatus.h)
 
 set(THREADING_HEADERS
     headers/quentier/threading/Factory.h
@@ -224,7 +226,6 @@ set(PRIVATE_HEADERS
     src/synchronization/types/SyncOptions.h
     src/synchronization/types/SyncOptionsBuilder.h
     src/synchronization/types/SyncStateBuilder.h
-    src/synchronization/types/Utils.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/EncryptionManager_p.h
@@ -344,9 +345,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/ISyncStateStorage.cpp
     src/synchronization/SyncStateStorage.cpp
     src/synchronization/types/Errors.cpp
-    src/synchronization/types/IAuthenticationInfo.cpp
     src/synchronization/types/IAuthenticationInfoBuilder.cpp
-    src/synchronization/types/IDownloadNotesStatus.cpp
     src/synchronization/types/IDownloadResourcesStatus.cpp
     src/synchronization/types/ISyncOptions.cpp
     src/synchronization/types/ISyncOptionsBuilder.cpp
@@ -355,7 +354,8 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncOptionsBuilder.cpp
     src/synchronization/types/SyncStateBuilder.cpp
-    src/synchronization/types/Utils.cpp
+    src/synchronization/types/serialization/json/AuthenticationInfo.cpp
+    src/synchronization/types/serialization/json/DownloadNotesStatus.cpp
     src/threading/Factory.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp

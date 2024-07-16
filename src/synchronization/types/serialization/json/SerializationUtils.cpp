@@ -18,8 +18,8 @@
 
 #include "SerializationUtils.h"
 
-#include "ExceptionUtils.h"
-#include "Utils.h"
+#include "../Utils.h"
+#include "../../ExceptionUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>

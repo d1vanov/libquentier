@@ -140,8 +140,6 @@ target_sources(${LIBRARY_NAME}
   types/Fwd.h
   types/SendStatus.cpp
   types/SendStatus.h
-  types/SerializationUtils.cpp
-  types/SerializationUtils.h
   types/SyncChunksDataCounters.cpp
   types/SyncChunksDataCounters.h
   types/SyncOptions.cpp
@@ -152,8 +150,10 @@ target_sources(${LIBRARY_NAME}
   types/SyncResult.h
   types/SyncState.cpp
   types/SyncState.h
-  types/Utils.cpp
-  types/Utils.h)
+  types/serialization/Utils.cpp
+  types/serialization/Utils.h
+  types/serialization/json/SerializationUtils.cpp
+  types/serialization/json/SerializationUtils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

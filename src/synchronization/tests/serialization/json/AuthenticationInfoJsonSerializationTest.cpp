@@ -1,3 +1,5 @@
+#include <quentier/synchronization/types/serialization/json/AuthenticationInfo.h>
+
 #include <synchronization/types/AuthenticationInfo.h>
 #include <synchronization/types/AuthenticationInfoBuilder.h>
 
@@ -16,7 +18,7 @@ enum class WithNetworkCookies
     No
 };
 
-class IAuthenticationInfoSerializationTest :
+class AuthenticationInfoSerializationJsonTest :
     public testing::TestWithParam<WithNetworkCookies>
 {};
 
@@ -26,12 +28,12 @@ constexpr std::array gWithNetworkCookiesParams{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    IAuthenticationInfoSerializationTestInstance,
-    IAuthenticationInfoSerializationTest,
+    AuthenticationInfoSerializationJsonTestInstance,
+    AuthenticationInfoSerializationJsonTest,
     testing::ValuesIn(gWithNetworkCookiesParams));
 
 TEST_P(
-    IAuthenticationInfoSerializationTest,
+    AuthenticationInfoSerializationJsonTest,
     SerializeAndDeserializeWithoutNetworkCookies)
 {
     const auto testData = GetParam();
@@ -66,10 +68,10 @@ TEST_P(
         std::dynamic_pointer_cast<AuthenticationInfo>(authenticationInfo);
     ASSERT_TRUE(concreteAuthenticationInfo);
 
-    const auto serialized = authenticationInfo->serializeToJson();
+    const auto serialized =
+        serializeAuthenticationInfoToJson(*authenticationInfo);
 
-    const auto deserialized =
-        IAuthenticationInfo::deserializeFromJson(serialized);
+    const auto deserialized = deserializeAuthenticationInfoFromJson(serialized);
     ASSERT_TRUE(deserialized);
 
     const auto concreteDeserializedAuthenticationInfo =

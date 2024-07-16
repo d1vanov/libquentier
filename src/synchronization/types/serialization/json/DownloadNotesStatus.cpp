@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,11 +17,12 @@
  */
 
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
-
-#include "SerializationUtils.h"
-#include "Utils.h"
+#include <quentier/synchronization/types/serialization/json/DownloadNotesStatus.h>
 
 #include <synchronization/types/DownloadNotesStatus.h>
+
+#include "../Utils.h"
+#include "SerializationUtils.h"
 
 #include <qevercloud/serialization/json/Note.h>
 #include <qevercloud/utility/ToRange.h>
@@ -68,20 +69,21 @@ constexpr auto gRateLimitDurationKey = "rateLimitSeconds"sv;
 
 } // namespace
 
-IDownloadNotesStatus::~IDownloadNotesStatus() noexcept = default;
-
-QJsonObject IDownloadNotesStatus::serializeToJson() const
+QJsonObject QUENTIER_EXPORT
+    serializeDownloadNotesStatusToJson(const IDownloadNotesStatus & status)
 {
     QJsonObject object;
 
-    object[toStr(gTotalNewNotesKey)] = QString::number(totalNewNotes());
-    object[toStr(gTotalUpdatedNotesKey)] = QString::number(totalUpdatedNotes());
+    object[toStr(gTotalNewNotesKey)] = QString::number(status.totalNewNotes());
+    object[toStr(gTotalUpdatedNotesKey)] =
+        QString::number(status.totalUpdatedNotes());
     object[toStr(gTotalExpungedNotesKey)] =
-        QString::number(totalExpungedNotes());
+        QString::number(status.totalExpungedNotes());
 
     const auto serializeNotesWithExceptions =
         [&object](
-            const QList<NoteWithException> & notesWithExceptions,
+            const QList<IDownloadNotesStatus::NoteWithException> &
+                notesWithExceptions,
             const std::string_view key) {
             if (notesWithExceptions.isEmpty()) {
                 return;
@@ -103,15 +105,16 @@ QJsonObject IDownloadNotesStatus::serializeToJson() const
             object[toStr(key)] = array;
         };
 
-    const auto failedToDownloadNotes = notesWhichFailedToDownload();
+    const auto failedToDownloadNotes = status.notesWhichFailedToDownload();
     serializeNotesWithExceptions(
         failedToDownloadNotes, gNotesWhichFailedToDownloadKey);
 
-    const auto failedToProcessNotes = notesWhichFailedToProcess();
+    const auto failedToProcessNotes = status.notesWhichFailedToProcess();
     serializeNotesWithExceptions(
         failedToProcessNotes, gNotesWhichFailedToProcessKey);
 
-    if (const auto failedToExpungeNoteGuids = noteGuidsWhichFailedToExpunge();
+    if (const auto failedToExpungeNoteGuids =
+            status.noteGuidsWhichFailedToExpunge();
         !failedToExpungeNoteGuids.isEmpty())
     {
         QJsonArray array;
@@ -131,7 +134,8 @@ QJsonObject IDownloadNotesStatus::serializeToJson() const
 
     const auto serializeUsnsByGuids =
         [&object](
-            const UpdateSequenceNumbersByGuid & usnsByGuids,
+            const IDownloadNotesStatus::UpdateSequenceNumbersByGuid &
+                usnsByGuids,
             const std::string_view key) {
             if (usnsByGuids.isEmpty()) {
                 return;
@@ -147,15 +151,16 @@ QJsonObject IDownloadNotesStatus::serializeToJson() const
             object[toStr(key)] = array;
         };
 
-    const auto processedNoteGuidsWithUsns = processedNoteGuidsAndUsns();
+    const auto processedNoteGuidsWithUsns = status.processedNoteGuidsAndUsns();
     serializeUsnsByGuids(
         processedNoteGuidsWithUsns, gProcessedNoteGuidsAndUsnsKey);
 
-    const auto cancelledNoteGuidsWithUsns = cancelledNoteGuidsAndUsns();
+    const auto cancelledNoteGuidsWithUsns = status.cancelledNoteGuidsAndUsns();
     serializeUsnsByGuids(
         cancelledNoteGuidsWithUsns, gCancelledNoteGuidsAndUsnsKey);
 
-    if (const auto noteGuids = expungedNoteGuids(); !noteGuids.isEmpty()) {
+    if (const auto noteGuids = status.expungedNoteGuids(); !noteGuids.isEmpty())
+    {
         QJsonArray array;
         for (const auto & noteGuid: std::as_const(noteGuids)) {
             array << noteGuid;
@@ -198,13 +203,13 @@ QJsonObject IDownloadNotesStatus::serializeToJson() const
     };
 
     StopSynchronizationErrorVisitor visitor{object};
-    std::visit(visitor, stopSynchronizationError());
+    std::visit(visitor, status.stopSynchronizationError());
 
     return object;
 }
 
-IDownloadNotesStatusPtr IDownloadNotesStatus::deserializeFromJson(
-    const QJsonObject & json)
+IDownloadNotesStatusPtr QUENTIER_EXPORT
+    deserializeDownloadNotesStatusFromJson(const QJsonObject & json)
 {
     const auto totalNewNotesIt = json.constFind(toStr(gTotalNewNotesKey));
     if (totalNewNotesIt == json.constEnd() || !totalNewNotesIt->isString()) {
@@ -259,8 +264,8 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserializeFromJson(
 
     const auto deserializeNotesWithExceptions =
         [&json](const std::string_view key)
-        -> std::optional<QList<NoteWithException>> {
-        QList<NoteWithException> notesWithExceptions;
+        -> std::optional<QList<IDownloadNotesStatus::NoteWithException>> {
+        QList<IDownloadNotesStatus::NoteWithException> notesWithExceptions;
         if (const auto it = json.constFind(toStr(key)); it != json.constEnd()) {
             if (!it->isArray()) {
                 return std::nullopt;
@@ -317,7 +322,7 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserializeFromJson(
         return nullptr;
     }
 
-    QList<GuidWithException> failedToExpungeNoteGuids;
+    QList<IDownloadNotesStatus::GuidWithException> failedToExpungeNoteGuids;
     if (const auto it =
             json.constFind(toStr(gNoteGuidsWhichFailedToExpungeKey));
         it != json.constEnd())
@@ -355,8 +360,8 @@ IDownloadNotesStatusPtr IDownloadNotesStatus::deserializeFromJson(
     }
 
     const auto deserializeUsnsByGuids = [&json](const std::string_view key)
-        -> std::optional<UpdateSequenceNumbersByGuid> {
-        UpdateSequenceNumbersByGuid usns;
+        -> std::optional<IDownloadNotesStatus::UpdateSequenceNumbersByGuid> {
+        IDownloadNotesStatus::UpdateSequenceNumbersByGuid usns;
         if (const auto it = json.constFind(toStr(key)); it != json.constEnd()) {
             if (!it->isArray()) {
                 return std::nullopt;

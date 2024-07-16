@@ -1,3 +1,5 @@
+#include <quentier/synchronization/types/serialization/json/DownloadNotesStatus.h>
+
 #include <synchronization/types/DownloadNotesStatus.h>
 
 #include <quentier/exception/RuntimeError.h>
@@ -14,7 +16,7 @@
 
 namespace quentier::synchronization::tests {
 
-class IDownloadNotesStatusSerializationTest :
+class DownloadNotesStatusJsonSerializationTest :
     public testing::TestWithParam<StopSynchronizationError>
 {};
 
@@ -26,11 +28,11 @@ constexpr std::array gStopSynchronizationErrors{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    IDownloadNotesStatusSerializationTestInstance,
-    IDownloadNotesStatusSerializationTest,
+    DownloadNotesStatusJsonSerializationTestInstance,
+    DownloadNotesStatusJsonSerializationTest,
     testing::ValuesIn(gStopSynchronizationErrors));
 
-TEST_P(IDownloadNotesStatusSerializationTest, SerializeAndDeserialize)
+TEST_P(DownloadNotesStatusJsonSerializationTest, SerializeAndDeserialize)
 {
     qint32 updateSequenceNumber = 300;
     qint32 noteCounter = 1;
@@ -97,19 +99,17 @@ TEST_P(IDownloadNotesStatusSerializationTest, SerializeAndDeserialize)
 
     status->m_stopSynchronizationError = GetParam();
 
-    const auto serialized = status->serializeToJson();
+    const auto serialized = serializeDownloadNotesStatusToJson(*status);
 
     const auto deserialized =
-        IDownloadNotesStatus::deserializeFromJson(serialized);
+        deserializeDownloadNotesStatusFromJson(serialized);
     ASSERT_TRUE(deserialized);
 
     const auto concreteDeserializedDownloadNotesStatus =
         std::dynamic_pointer_cast<DownloadNotesStatus>(deserialized);
     ASSERT_TRUE(concreteDeserializedDownloadNotesStatus);
 
-    EXPECT_EQ(*concreteDeserializedDownloadNotesStatus, *status)
-        << "Lhs: " << concreteDeserializedDownloadNotesStatus->toString().toStdString()
-        << "\nRhs: " << status->toString().toStdString();
+    EXPECT_EQ(*concreteDeserializedDownloadNotesStatus, *status);
 }
 
 } // namespace quentier::synchronization::tests

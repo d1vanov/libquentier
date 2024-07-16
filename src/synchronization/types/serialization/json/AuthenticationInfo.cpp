@@ -16,10 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/IAuthenticationInfo.h>
+#include <quentier/synchronization/types/serialization/json/AuthenticationInfo.h>
 
-#include "AuthenticationInfo.h"
-#include "Utils.h"
+#include <synchronization/types/AuthenticationInfo.h>
+
+#include "../Utils.h"
+#include "SerializationUtils.h"
 
 #include <QJsonArray>
 
@@ -50,21 +52,21 @@ constexpr auto gUserStoreCookieValueKey = "value"sv;
 
 } // namespace
 
-QJsonObject IAuthenticationInfo::serializeToJson() const
+QJsonObject serializeAuthenticationInfoToJson(const IAuthenticationInfo & info)
 {
     QJsonObject object;
 
-    object[toStr(gUserIdKey)] = userId();
-    object[toStr(gAuthTokenKey)] = authToken();
+    object[toStr(gUserIdKey)] = info.userId();
+    object[toStr(gAuthTokenKey)] = info.authToken();
     object[toStr(gAuthTokenExpirationTimeKey)] =
-        QString::number(authTokenExpirationTime());
+        QString::number(info.authTokenExpirationTime());
     object[toStr(gAuthenticationTimeKey)] =
-        QString::number(authenticationTime());
-    object[toStr(gShardIdKey)] = shardId();
-    object[toStr(gNoteStoreUrlKey)] = noteStoreUrl();
-    object[toStr(gWebApiUrlPrefixKey)] = webApiUrlPrefix();
+        QString::number(info.authenticationTime());
+    object[toStr(gShardIdKey)] = info.shardId();
+    object[toStr(gNoteStoreUrlKey)] = info.noteStoreUrl();
+    object[toStr(gWebApiUrlPrefixKey)] = info.webApiUrlPrefix();
 
-    const auto & cookies = userStoreCookies();
+    const auto & cookies = info.userStoreCookies();
     if (!cookies.isEmpty()) {
         QJsonArray cookiesArray;
         for (const auto & cookie: std::as_const(cookies)) {
@@ -81,7 +83,7 @@ QJsonObject IAuthenticationInfo::serializeToJson() const
     return object;
 }
 
-IAuthenticationInfoPtr IAuthenticationInfo::deserializeFromJson(
+IAuthenticationInfoPtr deserializeAuthenticationInfoFromJson(
     const QJsonObject & json)
 {
     const auto userIdIt = json.constFind(toStr(gUserIdKey));
@@ -195,4 +197,4 @@ IAuthenticationInfoPtr IAuthenticationInfo::deserializeFromJson(
     return authenticationInfo;
 }
 
-} // namespace quentier::synchronization
+} // quentier::synchronization

@@ -27,7 +27,6 @@
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QException>
-#include <QJsonObject>
 #include <QList>
 
 #include <memory>
@@ -42,8 +41,6 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT IDownloadNotesStatus : public Printable
 {
 public:
-    ~IDownloadNotesStatus() noexcept override;
-
     using QExceptionPtr = std::shared_ptr<QException>;
     using NoteWithException = std::pair<qevercloud::Note, QExceptionPtr>;
     using GuidWithException = std::pair<qevercloud::Guid, QExceptionPtr>;
@@ -72,20 +69,6 @@ public:
 
     [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
         const = 0;
-
-    /**
-     * Serialize IDownloadNotesStatus instance to json object.
-     */
-    [[nodiscard]] QJsonObject serializeToJson() const;
-
-    /**
-     * Factory method to create IDownloadNotesStatus instance from serialized
-     * json object.
-     * @return nonnull pointer to IDownloadNotesStatus in case of success or
-     *         null pointer in case of deserialization failure.
-     */
-    [[nodiscard]] static IDownloadNotesStatusPtr deserializeFromJson(
-        const QJsonObject & json);
 };
 
 } // namespace quentier::synchronization

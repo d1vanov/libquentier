@@ -29,7 +29,6 @@ add_executable(${TESTS_NAME}
   ResourcesProcessorTest.cpp
   SavedSearchesProcessorTest.cpp
   SenderTest.cpp
-  SerializationUtilsTest.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
   SimpleNoteSyncConflictResolverTest.cpp
   SimpleSavedSearchSyncConflictResolverTest.cpp
@@ -43,8 +42,9 @@ add_executable(${TESTS_NAME}
   UserInfoProviderTest.cpp
   Utils.cpp
   Utils.h
-  serialization/IAuthenticationInfoSerializationTest.cpp
-  serialization/IDownloadNotesStatusSerializationTest.cpp
+  serialization/json/AuthenticationInfoJsonSerializationTest.cpp
+  serialization/json/DownloadNotesStatusJsonSerializationTest.cpp
+  serialization/json/SerializationUtilsTest.cpp
 )
 
 target_link_libraries(${TESTS_NAME}

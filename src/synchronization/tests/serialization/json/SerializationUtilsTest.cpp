@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/types/SerializationUtils.h>
+#include <synchronization/types/serialization/json/SerializationUtils.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>
