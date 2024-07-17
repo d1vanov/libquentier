@@ -18,10 +18,13 @@
 
 #pragma once
 
+#include <quentier/synchronization/types/Errors.h>
+
 #include <QException>
 #include <QJsonObject>
 
 #include <memory>
+#include <optional>
 
 namespace quentier::synchronization {
 
@@ -29,5 +32,11 @@ namespace quentier::synchronization {
 
 [[nodiscard]] std::shared_ptr<QException> deserializeException(
     const QJsonObject & json);
+
+[[nodiscard]] QJsonObject serializeStopSynchronizationError(
+    const StopSynchronizationError & error);
+
+[[nodiscard]] std::optional<StopSynchronizationError>
+    deserializeStopSyncronizationError(const QJsonObject & json);
 
 } // namespace quentier::synchronization

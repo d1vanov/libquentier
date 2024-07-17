@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/serialization/json/DownloadNotesStatus.h>
 
 #include <synchronization/types/DownloadNotesStatus.h>
@@ -55,12 +54,8 @@ constexpr auto gNoteGuidsWhichFailedToExpungeKey =
 constexpr auto gProcessedNoteGuidsAndUsnsKey = "processedNoteGuidsAndUsns"sv;
 constexpr auto gCancelledNoteGuidsAndUsnsKey = "cancelledNoteGuidsAndUsns"sv;
 constexpr auto gExpungedNoteGuidsKey = "expungedNoteGuids"sv;
-constexpr auto gStopSynchronizationErrorKey = "stopSynchronizationError"sv;
 
-constexpr auto gStopSynchronizationErrorTypeKey = "type"sv;
-constexpr auto gAuthenticationExpiredErrorKey = "authenticationExpired"sv;
-constexpr auto gRateLimitReachedErrorTypeKey = "rateLimitReached"sv;
-constexpr auto gRateLimitDurationKey = "rateLimitSeconds"sv;
+constexpr auto gStopSynchronizationErrorKey = "stopSynchronizationError"sv;
 
 [[nodiscard]] QString toStr(const std::string_view key)
 {
@@ -69,8 +64,8 @@ constexpr auto gRateLimitDurationKey = "rateLimitSeconds"sv;
 
 } // namespace
 
-QJsonObject QUENTIER_EXPORT
-    serializeDownloadNotesStatusToJson(const IDownloadNotesStatus & status)
+QJsonObject serializeDownloadNotesStatusToJson(
+    const IDownloadNotesStatus & status)
 {
     QJsonObject object;
 
@@ -168,48 +163,17 @@ QJsonObject QUENTIER_EXPORT
         object[toStr(gExpungedNoteGuidsKey)] = array;
     }
 
-    class StopSynchronizationErrorVisitor
-    {
-    public:
-        explicit StopSynchronizationErrorVisitor(QJsonObject & object) :
-            m_object{object}
-        {}
-
-        void operator()(const RateLimitReachedError & e)
-        {
-            QJsonObject obj;
-            obj[toStr(gStopSynchronizationErrorTypeKey)] =
-                toStr(gRateLimitReachedErrorTypeKey);
-
-            if (e.rateLimitDurationSec) {
-                obj[toStr(gRateLimitDurationKey)] = *e.rateLimitDurationSec;
-            }
-
-            m_object[toStr(gStopSynchronizationErrorKey)] = obj;
-        }
-
-        void operator()(const AuthenticationExpiredError &)
-        {
-            QJsonObject obj;
-            obj[toStr(gStopSynchronizationErrorTypeKey)] =
-                toStr(gAuthenticationExpiredErrorKey);
-            m_object[toStr(gStopSynchronizationErrorKey)] = obj;
-        }
-
-        void operator()(const std::monostate &) {}
-
-    private:
-        QJsonObject & m_object;
-    };
-
-    StopSynchronizationErrorVisitor visitor{object};
-    std::visit(visitor, status.stopSynchronizationError());
+    const auto stopSynchronizationError = status.stopSynchronizationError();
+    if (!std::holds_alternative<std::monostate>(stopSynchronizationError)) {
+        object[toStr(gStopSynchronizationErrorKey)] =
+            serializeStopSynchronizationError(stopSynchronizationError);
+    }
 
     return object;
 }
 
-IDownloadNotesStatusPtr QUENTIER_EXPORT
-    deserializeDownloadNotesStatusFromJson(const QJsonObject & json)
+IDownloadNotesStatusPtr deserializeDownloadNotesStatusFromJson(
+    const QJsonObject & json)
 {
     const auto totalNewNotesIt = json.constFind(toStr(gTotalNewNotesKey));
     if (totalNewNotesIt == json.constEnd() || !totalNewNotesIt->isString()) {
@@ -433,35 +397,9 @@ IDownloadNotesStatusPtr QUENTIER_EXPORT
         }
 
         const auto entry = it->toObject();
-        const auto typeIt =
-            entry.constFind(toStr(gStopSynchronizationErrorTypeKey));
-        if (typeIt == entry.constEnd() || !typeIt->isString()) {
-            return nullptr;
-        }
-
-        const auto errorType = typeIt->toString();
-        if (errorType == toStr(gRateLimitReachedErrorTypeKey)) {
-            std::optional<qint32> rateLimitDurationSec;
-            if (const auto durationIt =
-                    entry.constFind(toStr(gRateLimitDurationKey));
-                durationIt != entry.constEnd())
-            {
-                if (!durationIt->isDouble()) {
-                    return nullptr;
-                }
-
-                rateLimitDurationSec =
-                    static_cast<qint32>(durationIt->toDouble());
-            }
-
-            stopSynchronizationError =
-                RateLimitReachedError{rateLimitDurationSec};
-        }
-        else if (errorType == toStr(gAuthenticationExpiredErrorKey)) {
-            stopSynchronizationError = AuthenticationExpiredError{};
-        }
-        else {
-            return nullptr;
+        const auto error = deserializeStopSyncronizationError(entry);
+        if (error) {
+            stopSynchronizationError = *error;
         }
     }
 

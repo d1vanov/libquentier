@@ -173,7 +173,8 @@ private:
     const std::shared_ptr<QException> m_exception;
 };
 
-class SerializationUtilsTest : public testing::TestWithParam<ExceptionVariant>
+class SerializationUtilsExceptionTest :
+    public testing::TestWithParam<ExceptionVariant>
 {};
 
 const std::array gExceptionVariants{
@@ -188,10 +189,10 @@ const std::array gExceptionVariants{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    SerializationUtilsTestInstance, SerializationUtilsTest,
+    SerializationUtilsTestInstance, SerializationUtilsExceptionTest,
     testing::ValuesIn(gExceptionVariants));
 
-TEST_P(SerializationUtilsTest, SerializeAndDeserializeException)
+TEST_P(SerializationUtilsExceptionTest, SerializeAndDeserializeException)
 {
     const auto & testData = GetParam();
 
@@ -205,6 +206,37 @@ TEST_P(SerializationUtilsTest, SerializeAndDeserializeException)
         deserializedException};
 
     std::visit(deserializeVisitor, testData);
+}
+
+class SerializationUtilsStopSynchronizationErrorTest :
+    public testing::TestWithParam<StopSynchronizationError>
+{};
+
+const std::array gStopSynchronizationErrors{
+    StopSynchronizationError{std::monostate{}},
+    StopSynchronizationError{RateLimitReachedError{}},
+    StopSynchronizationError{RateLimitReachedError{42}},
+    StopSynchronizationError{AuthenticationExpiredError{}},
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    SerializationUtilsStopSynchronizationErrorTestInstance,
+    SerializationUtilsStopSynchronizationErrorTest,
+    testing::ValuesIn(gStopSynchronizationErrors));
+
+TEST_P(
+    SerializationUtilsStopSynchronizationErrorTest,
+    SerializeAndDeserializeStopSynchronizationError)
+{
+    const auto & testData = GetParam();
+
+    const auto jsonObject = serializeStopSynchronizationError(testData);
+
+    const auto deserializedStopSynchronizationError =
+        deserializeStopSyncronizationError(jsonObject);
+    ASSERT_TRUE(deserializedStopSynchronizationError);
+
+    EXPECT_EQ(*deserializedStopSynchronizationError, testData);
 }
 
 } // namespace quentier::synchronization::tests

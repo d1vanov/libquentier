@@ -18,8 +18,8 @@
 
 #include "SerializationUtils.h"
 
-#include "../Utils.h"
 #include "../../ExceptionUtils.h"
+#include "../Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/OperationCanceled.h>
@@ -29,6 +29,7 @@
 #include <quentier/types/ErrorString.h>
 
 #include <string_view>
+#include <variant>
 
 namespace quentier::synchronization {
 
@@ -45,6 +46,45 @@ constexpr auto gRuntimeErrorName = "RuntimeError"sv;
 constexpr auto gLocalStorageOpenExceptionName = "LocalStorageOpenException"sv;
 constexpr auto gLocalStorageOperationExceptionName =
     "LocalStorageOperationException"sv;
+
+constexpr auto gStopSynchronizationErrorTypeKey = "type"sv;
+constexpr auto gAuthenticationExpiredErrorKey = "authenticationExpired"sv;
+constexpr auto gRateLimitReachedErrorTypeKey = "rateLimitReached"sv;
+constexpr auto gRateLimitDurationKey = "rateLimitSeconds"sv;
+
+[[nodiscard]] QString toStr(const std::string_view key)
+{
+    return synchronization::toString(key);
+}
+
+class StopSynchronizationErrorVisitor
+{
+public:
+    explicit StopSynchronizationErrorVisitor(QJsonObject & object) :
+        m_object{object}
+    {}
+
+    void operator()(const RateLimitReachedError & e)
+    {
+        m_object[toStr(gStopSynchronizationErrorTypeKey)] =
+            toStr(gRateLimitReachedErrorTypeKey);
+
+        if (e.rateLimitDurationSec) {
+            m_object[toStr(gRateLimitDurationKey)] = *e.rateLimitDurationSec;
+        }
+    }
+
+    void operator()(const AuthenticationExpiredError &)
+    {
+        m_object[toStr(gStopSynchronizationErrorTypeKey)] =
+            toStr(gAuthenticationExpiredErrorKey);
+    }
+
+    void operator()(const std::monostate &) {}
+
+private:
+    QJsonObject & m_object;
+};
 
 [[nodiscard]] std::string_view exceptionTypeName(const ExceptionInfo & info)
 {
@@ -126,6 +166,48 @@ std::shared_ptr<QException> deserializeException(const QJsonObject & json)
     }
 
     return nullptr;
+}
+
+QJsonObject serializeStopSynchronizationError(
+    const StopSynchronizationError & error)
+{
+    QJsonObject json;
+    StopSynchronizationErrorVisitor visitor{json};
+    std::visit(visitor, error);
+    return json;
+}
+
+std::optional<StopSynchronizationError> deserializeStopSyncronizationError(
+    const QJsonObject & json)
+{
+    const auto typeIt = json.constFind(toStr(gStopSynchronizationErrorTypeKey));
+    if (typeIt == json.constEnd() || !typeIt->isString()) {
+        return StopSynchronizationError{std::monostate{}};
+    }
+
+    const auto errorType = typeIt->toString();
+    if (errorType == toStr(gRateLimitReachedErrorTypeKey)) {
+        std::optional<qint32> rateLimitDurationSec;
+        if (const auto durationIt =
+                json.constFind(toStr(gRateLimitDurationKey));
+            durationIt != json.constEnd())
+        {
+            if (!durationIt->isDouble()) {
+                return std::nullopt;
+            }
+
+            rateLimitDurationSec = static_cast<qint32>(durationIt->toDouble());
+        }
+
+        return StopSynchronizationError{
+            RateLimitReachedError{rateLimitDurationSec}};
+    }
+
+    if (errorType == toStr(gAuthenticationExpiredErrorKey)) {
+        return StopSynchronizationError{AuthenticationExpiredError{}};
+    }
+
+    return std::nullopt;
 }
 
 } // namespace quentier::synchronization
