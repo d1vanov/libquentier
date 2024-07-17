@@ -418,7 +418,6 @@ IDownloadNotesStatusPtr deserializeDownloadNotesStatusFromJson(
     status->m_expungedNoteGuids = std::move(expungedNotes);
 
     status->m_stopSynchronizationError = stopSynchronizationError;
-
     return status;
 }
 

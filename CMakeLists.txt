@@ -131,7 +131,8 @@ set(SYNCHRONIZATION_TYPES_HEADERS
     headers/quentier/synchronization/types/ISyncState.h
     headers/quentier/synchronization/types/ISyncStateBuilder.h
     headers/quentier/synchronization/types/serialization/json/AuthenticationInfo.h
-    headers/quentier/synchronization/types/serialization/json/DownloadNotesStatus.h)
+    headers/quentier/synchronization/types/serialization/json/DownloadNotesStatus.h
+    headers/quentier/synchronization/types/serialization/json/DownloadResourcesStatus.h)
 
 set(THREADING_HEADERS
     headers/quentier/threading/Factory.h
@@ -356,6 +357,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncStateBuilder.cpp
     src/synchronization/types/serialization/json/AuthenticationInfo.cpp
     src/synchronization/types/serialization/json/DownloadNotesStatus.cpp
+    src/synchronization/types/serialization/json/DownloadResourcesStatus.cpp
     src/threading/Factory.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp
