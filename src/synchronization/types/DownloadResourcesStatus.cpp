@@ -149,12 +149,57 @@ bool operator==(
     const DownloadResourcesStatus & lhs,
     const DownloadResourcesStatus & rhs) noexcept
 {
+    const auto compareExceptionPtrs =
+        [](const DownloadResourcesStatus::QExceptionPtr & lhs,
+           const DownloadResourcesStatus::QExceptionPtr & rhs) {
+            if (!lhs && !rhs) {
+                return true;
+            }
+
+            if (lhs && !rhs) {
+                return false;
+            }
+
+            if (!lhs && rhs) {
+                return false;
+            }
+
+            const auto lhsMsg = QString::fromUtf8(lhs->what());
+            const auto rhsMsg = QString::fromUtf8(rhs->what());
+            return lhsMsg == rhsMsg;
+        };
+
+    const auto compareResourcesWithExceptions =
+        [&](const IDownloadResourcesStatus::ResourceWithException & lhs,
+            const IDownloadResourcesStatus::ResourceWithException & rhs) {
+            return lhs.first == rhs.first &&
+                compareExceptionPtrs(lhs.second, rhs.second);
+        };
+
+    const auto compareResourceListsWithExceptions =
+        [&](const QList<IDownloadResourcesStatus::ResourceWithException> & lhs,
+            const QList<IDownloadResourcesStatus::ResourceWithException> & rhs) {
+            if (lhs.size() != rhs.size()) {
+                return false;
+            }
+
+            for (int i = 0; i < lhs.size(); ++i) {
+                if (!compareResourcesWithExceptions(lhs[i], rhs[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
     if (lhs.m_totalNewResources != rhs.m_totalNewResources ||
         lhs.m_totalUpdatedResources != rhs.m_totalUpdatedResources ||
-        lhs.m_resourcesWhichFailedToDownload !=
-            rhs.m_resourcesWhichFailedToDownload ||
-        lhs.m_resourcesWhichFailedToProcess !=
-            rhs.m_resourcesWhichFailedToProcess ||
+        !compareResourceListsWithExceptions(
+            lhs.m_resourcesWhichFailedToDownload,
+            rhs.m_resourcesWhichFailedToDownload) ||
+        !compareResourceListsWithExceptions(
+            lhs.m_resourcesWhichFailedToProcess,
+            rhs.m_resourcesWhichFailedToProcess) ||
         lhs.m_processedResourceGuidsAndUsns !=
             rhs.m_processedResourceGuidsAndUsns ||
         lhs.m_cancelledResourceGuidsAndUsns !=
