@@ -150,6 +150,8 @@ target_sources(${LIBRARY_NAME}
   types/SyncResult.h
   types/SyncState.cpp
   types/SyncState.h
+  types/SyncStateBuilder.cpp
+  types/SyncStateBuilder.h
   types/serialization/Utils.cpp
   types/serialization/Utils.h
   types/serialization/json/SerializationUtils.cpp

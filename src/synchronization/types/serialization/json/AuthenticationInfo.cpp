@@ -21,7 +21,6 @@
 #include <synchronization/types/AuthenticationInfo.h>
 
 #include "../Utils.h"
-#include "SerializationUtils.h"
 
 #include <QJsonArray>
 

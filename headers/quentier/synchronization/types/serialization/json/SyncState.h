@@ -18,35 +18,25 @@
 
 #pragma once
 
-#include <quentier/synchronization/types/Errors.h>
+#include <quentier/synchronization/types/Fwd.h>
+#include <quentier/utility/Linkage.h>
 
-#include <QException>
 #include <QJsonObject>
-
-#include <algorithm>
-#include <memory>
-#include <limits>
-#include <optional>
 
 namespace quentier::synchronization {
 
-[[nodiscard]] QJsonObject serializeException(const QException & e);
+/**
+ * Serialize ISyncState instance to json object.
+ */
+[[nodiscard]] QJsonObject QUENTIER_EXPORT
+    serializeSyncStateToJson(const ISyncState & syncState);
 
-[[nodiscard]] std::shared_ptr<QException> deserializeException(
-    const QJsonObject & json);
-
-[[nodiscard]] QJsonObject serializeStopSynchronizationError(
-    const StopSynchronizationError & error);
-
-[[nodiscard]] std::optional<StopSynchronizationError>
-    deserializeStopSyncronizationError(const QJsonObject & json);
-
-template <class From, class To>
-[[nodiscard]] To safeCast(const From value)
-{
-    return static_cast<To>(std::clamp<From>(
-        value, static_cast<From>(std::numeric_limits<To>::lowest()),
-        static_cast<From>(std::numeric_limits<To>::max())));
-}
+/**
+ * Create ISyncState instance from serialized json object.
+ * @return nonnull pointer to ISyncState in case of success or null pointer in
+ *         case of deserialization failure.
+ */
+[[nodiscard]] ISyncStatePtr QUENTIER_EXPORT
+    deserializeSyncStateFromJson(const QJsonObject & json);
 
 } // namespace quentier::synchronization

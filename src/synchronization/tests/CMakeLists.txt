@@ -46,6 +46,7 @@ add_executable(${TESTS_NAME}
   serialization/json/DownloadNotesStatusJsonSerializationTest.cpp
   serialization/json/DownloadResourcesStatusJsonSerializationTest.cpp
   serialization/json/SerializationUtilsTest.cpp
+  serialization/json/SyncStateTest.cpp
 )
 
 target_link_libraries(${TESTS_NAME}
@@ -55,6 +56,7 @@ target_link_libraries(${TESTS_NAME}
     ${LIBRARY_NAME}_testing_mocks
     ${LIBNAME}
     ${LIBNAME}_local_storage_sql
+    ${LIBNAME}_synchronization
     ${GMOCK_LIBRARIES}
     GTest::GTest
     Qt${LIBQUENTIER_QT_VERSION}::Core)
