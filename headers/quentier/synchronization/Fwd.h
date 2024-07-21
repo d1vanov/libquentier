@@ -25,9 +25,6 @@ namespace quentier::synchronization {
 class IAuthenticator;
 using IAuthenticatorPtr = std::shared_ptr<IAuthenticator>;
 
-struct ISyncChunksDataCounters;
-using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
-
 class ISyncConflictResolver;
 using ISyncConflictResolverPtr = std::shared_ptr<ISyncConflictResolver>;
 

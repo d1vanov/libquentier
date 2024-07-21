@@ -38,6 +38,9 @@ using IDownloadResourcesStatusPtr = std::shared_ptr<IDownloadResourcesStatus>;
 class ISendStatus;
 using ISendStatusPtr = std::shared_ptr<ISendStatus>;
 
+struct ISyncChunksDataCounters;
+using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
+
 class ISyncOptions;
 using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 
