@@ -49,4 +49,38 @@ QTextStream & SyncChunksDataCounters::print(QTextStream & strm) const
     return strm;
 }
 
+bool operator==(
+    const SyncChunksDataCounters & lhs,
+    const SyncChunksDataCounters & rhs) noexcept
+{
+    return lhs.m_totalSavedSearches == rhs.m_totalSavedSearches &&
+        lhs.m_totalExpungedSavedSearches == rhs.m_totalExpungedSavedSearches &&
+        lhs.m_addedSavedSearches == rhs.m_addedSavedSearches &&
+        lhs.m_updatedSavedSearches == rhs.m_updatedSavedSearches &&
+        lhs.m_expungedSavedSearches == rhs.m_expungedSavedSearches &&
+        lhs.m_totalTags == rhs.m_totalTags &&
+        lhs.m_totalExpungedTags == rhs.m_totalExpungedTags &&
+        lhs.m_addedTags == rhs.m_addedTags &&
+        lhs.m_updatedTags == rhs.m_updatedTags &&
+        lhs.m_expungedTags == rhs.m_expungedTags &&
+        lhs.m_totalLinkedNotebooks == rhs.m_totalLinkedNotebooks &&
+        lhs.m_totalExpungedLinkedNotebooks ==
+        rhs.m_totalExpungedLinkedNotebooks &&
+        lhs.m_addedLinkedNotebooks == rhs.m_addedLinkedNotebooks &&
+        lhs.m_updatedLinkedNotebooks == rhs.m_updatedLinkedNotebooks &&
+        lhs.m_expungedLinkedNotebooks == rhs.m_expungedLinkedNotebooks &&
+        lhs.m_totalNotebooks == rhs.m_totalNotebooks &&
+        lhs.m_totalExpungedNotebooks == rhs.m_totalExpungedNotebooks &&
+        lhs.m_addedNotebooks == rhs.m_addedNotebooks &&
+        lhs.m_updatedNotebooks == rhs.m_updatedNotebooks &&
+        lhs.m_expungedNotebooks == rhs.m_expungedNotebooks;
+}
+
+bool operator!=(
+    const SyncChunksDataCounters & lhs,
+    const SyncChunksDataCounters & rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
 } // namespace quentier::synchronization

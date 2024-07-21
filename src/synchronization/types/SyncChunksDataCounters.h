@@ -152,4 +152,12 @@ struct SyncChunksDataCounters final : public ISyncChunksDataCounters
     quint64 m_expungedNotebooks = 0UL;
 };
 
+[[nodiscard]] bool operator==(
+    const SyncChunksDataCounters & lhs,
+    const SyncChunksDataCounters & rhs) noexcept;
+
+[[nodiscard]] bool operator!=(
+    const SyncChunksDataCounters & lhs,
+    const SyncChunksDataCounters & rhs) noexcept;
+
 } // namespace quentier::synchronization
