@@ -133,6 +133,7 @@ set(SYNCHRONIZATION_TYPES_HEADERS
     headers/quentier/synchronization/types/serialization/json/AuthenticationInfo.h
     headers/quentier/synchronization/types/serialization/json/DownloadNotesStatus.h
     headers/quentier/synchronization/types/serialization/json/DownloadResourcesStatus.h
+    headers/quentier/synchronization/types/serialization/json/SendStatus.h
     headers/quentier/synchronization/types/serialization/json/SyncChunksDataCounters.h
     headers/quentier/synchronization/types/serialization/json/SyncState.h)
 
@@ -360,6 +361,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/serialization/json/AuthenticationInfo.cpp
     src/synchronization/types/serialization/json/DownloadNotesStatus.cpp
     src/synchronization/types/serialization/json/DownloadResourcesStatus.cpp
+    src/synchronization/types/serialization/json/SendStatus.cpp
     src/synchronization/types/serialization/json/SyncChunksDataCounters.cpp
     src/synchronization/types/serialization/json/SyncState.cpp
     src/threading/Factory.cpp
