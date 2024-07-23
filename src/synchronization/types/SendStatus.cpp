@@ -161,7 +161,8 @@ QTextStream & SendStatus::print(QTextStream & strm) const
         m_failedToSendTags, QStringLiteral("tag"), strm);
 
     if (std::holds_alternative<RateLimitReachedError>(
-            m_stopSynchronizationError)) {
+            m_stopSynchronizationError))
+    {
         const auto & rateLimitReachedError =
             std::get<RateLimitReachedError>(m_stopSynchronizationError);
         strm << "stopSynchronizationError = RateLimitReachedError{";
@@ -185,6 +186,47 @@ QTextStream & SendStatus::print(QTextStream & strm) const
 
 bool operator==(const SendStatus & lhs, const SendStatus & rhs) noexcept
 {
+    const auto compareExceptionPtrs =
+        [](const ISendStatus::QExceptionPtr & lhs,
+           const ISendStatus::QExceptionPtr & rhs) {
+            if (!lhs && !rhs) {
+                return true;
+            }
+
+            if (lhs && !rhs) {
+                return false;
+            }
+
+            if (!lhs && rhs) {
+                return false;
+            }
+
+            const auto lhsMsg = QString::fromUtf8(lhs->what());
+            const auto rhsMsg = QString::fromUtf8(rhs->what());
+            return lhsMsg == rhsMsg;
+        };
+
+    const auto compareItemsWithExceptions = [&](const auto & lhs,
+                                                const auto & rhs) {
+        return lhs.first == rhs.first &&
+            compareExceptionPtrs(lhs.second, rhs.second);
+    };
+
+    const auto compareItemListsWithExceptions = [&](const auto & lhs,
+                                                    const auto & rhs) {
+        if (lhs.size() != rhs.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < lhs.size(); ++i) {
+            if (!compareItemsWithExceptions(lhs[i], rhs[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     return (lhs.m_totalAttemptedToSendNotes ==
             rhs.m_totalAttemptedToSendNotes) &&
         (lhs.m_totalAttemptedToSendNotebooks ==
@@ -194,22 +236,26 @@ bool operator==(const SendStatus & lhs, const SendStatus & rhs) noexcept
         (lhs.m_totalAttemptedToSendTags == rhs.m_totalAttemptedToSendTags) &&
         (lhs.m_totalSuccessfullySentNotes ==
          rhs.m_totalSuccessfullySentNotes) &&
-        (lhs.m_failedToSendNotes == rhs.m_failedToSendNotes) &&
+        compareItemListsWithExceptions(
+               lhs.m_failedToSendNotes, rhs.m_failedToSendNotes) &&
         (lhs.m_totalSuccessfullySentNotebooks ==
          rhs.m_totalSuccessfullySentNotebooks) &&
-        (lhs.m_failedToSendNotebooks == rhs.m_failedToSendNotebooks) &&
+        compareItemListsWithExceptions(
+               lhs.m_failedToSendNotebooks, rhs.m_failedToSendNotebooks) &&
         (lhs.m_totalSuccessfullySentSavedSearches ==
          rhs.m_totalSuccessfullySentSavedSearches) &&
-        (lhs.m_failedToSendSavedSearches == rhs.m_failedToSendSavedSearches) &&
+        compareItemListsWithExceptions(
+               lhs.m_failedToSendSavedSearches,
+               rhs.m_failedToSendSavedSearches) &&
         (lhs.m_totalSuccessfullySentTags == rhs.m_totalSuccessfullySentTags) &&
-        (lhs.m_failedToSendTags == rhs.m_failedToSendTags) &&
+        compareItemListsWithExceptions(
+               lhs.m_failedToSendTags, rhs.m_failedToSendTags) &&
         (lhs.m_stopSynchronizationError == rhs.m_stopSynchronizationError) &&
         (lhs.m_needToRepeatIncrementalSync ==
          rhs.m_needToRepeatIncrementalSync);
 }
 
-bool operator!=(
-    const SendStatus & lhs, const SendStatus & rhs) noexcept
+bool operator!=(const SendStatus & lhs, const SendStatus & rhs) noexcept
 {
     return !(lhs == rhs);
 }
