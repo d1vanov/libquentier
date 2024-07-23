@@ -91,7 +91,7 @@ constexpr auto gExceptionKey = "exception"sv;
 template <class TWithException>
 [[nodiscard]] std::optional<QList<TWithException>>
     deserializeItemsWithExceptions(
-        const std::string_view itemKey, const std::string_view itemsKey,
+        const std::string_view itemsKey, const std::string_view itemKey,
         const QJsonObject & json)
 {
     QList<TWithException> itemsWithExceptions;
@@ -144,7 +144,7 @@ QJsonObject serializeSendStatusToJson(const ISendStatus & sendStatus)
     QJsonObject object;
 
     object[toStr(gTotalAttemptedToSendNotesKey)] =
-        QString::number(sendStatus.totalAttemptedToSendSavedSearches());
+        QString::number(sendStatus.totalAttemptedToSendNotes());
 
     object[toStr(gTotalAttemptedToSendNotebooksKey)] =
         QString::number(sendStatus.totalAttemptedToSendNotebooks());
