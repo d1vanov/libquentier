@@ -45,6 +45,7 @@ add_executable(${TESTS_NAME}
   serialization/json/AuthenticationInfoJsonSerializationTest.cpp
   serialization/json/DownloadNotesStatusJsonSerializationTest.cpp
   serialization/json/DownloadResourcesStatusJsonSerializationTest.cpp
+  serialization/json/SendStatusTest.cpp
   serialization/json/SerializationUtilsTest.cpp
   serialization/json/SyncChunksDataCountersTest.cpp
   serialization/json/SyncStateTest.cpp
