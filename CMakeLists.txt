@@ -135,6 +135,7 @@ set(SYNCHRONIZATION_TYPES_HEADERS
     headers/quentier/synchronization/types/serialization/json/DownloadResourcesStatus.h
     headers/quentier/synchronization/types/serialization/json/SendStatus.h
     headers/quentier/synchronization/types/serialization/json/SyncChunksDataCounters.h
+    headers/quentier/synchronization/types/serialization/json/SyncResult.h
     headers/quentier/synchronization/types/serialization/json/SyncState.h)
 
 set(THREADING_HEADERS
@@ -363,6 +364,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/serialization/json/DownloadResourcesStatus.cpp
     src/synchronization/types/serialization/json/SendStatus.cpp
     src/synchronization/types/serialization/json/SyncChunksDataCounters.cpp
+    src/synchronization/types/serialization/json/SyncResult.cpp
     src/synchronization/types/serialization/json/SyncState.cpp
     src/threading/Factory.cpp
     src/threading/Future.cpp
