@@ -69,7 +69,7 @@ TEST_P(DownloadNotesStatusJsonSerializationTest, SerializeAndDeserialize)
     status->m_totalUpdatedNotes = 43;
     status->m_totalExpungedNotes = 44;
 
-    constexpr int itemCount = 1;
+    constexpr int itemCount = 3;
 
     status->m_notesWhichFailedToDownload.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {

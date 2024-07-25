@@ -67,7 +67,7 @@ TEST_P(DownloadResourcesStatusJsonSerializationTest, SerializeAndDeserialize)
     status->m_totalNewResources = 42;
     status->m_totalUpdatedResources = 43;
 
-    constexpr int itemCount = 1;
+    constexpr int itemCount = 3;
 
     status->m_resourcesWhichFailedToDownload.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
