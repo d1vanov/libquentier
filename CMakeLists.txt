@@ -129,7 +129,9 @@ set(SYNCHRONIZATION_TYPES_HEADERS
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncResult.h
     headers/quentier/synchronization/types/ISyncState.h
-    headers/quentier/synchronization/types/ISyncStateBuilder.h
+    headers/quentier/synchronization/types/ISyncStateBuilder.h)
+
+set(SYNCHRONIZATION_TYPES_SERIALIZATION_JSON_HEADERS
     headers/quentier/synchronization/types/serialization/json/AuthenticationInfo.h
     headers/quentier/synchronization/types/serialization/json/DownloadNotesStatus.h
     headers/quentier/synchronization/types/serialization/json/DownloadResourcesStatus.h
@@ -207,6 +209,7 @@ list(APPEND PUBLIC_HEADERS ${LOGGING_HEADERS})
 list(APPEND PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
 list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_TYPES_HEADERS})
+list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_TYPES_SERIALIZATION_JSON_HEADERS})
 list(APPEND PUBLIC_HEADERS ${THREADING_HEADERS})
 list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
@@ -895,6 +898,10 @@ endforeach()
 
 foreach(ITEM ${SYNCHRONIZATION_TYPES_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/synchronization/types)
+endforeach()
+
+foreach(ITEM ${SYNCHRONIZATION_TYPES_SERIALIZATION_JSON_HEADERS})
+  install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/synchronization/types/serialization/json)
 endforeach()
 
 foreach(ITEM ${LOGGING_HEADERS})
