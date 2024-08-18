@@ -24,6 +24,10 @@ namespace quentier::synchronization {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class IAccountSyncPersistenceDirProvider;
+using IAccountSyncPersistenceDirProviderPtr =
+    std::shared_ptr<IAccountSyncPersistenceDirProvider>;
+
 class IAccountSynchronizer;
 using IAccountSynchronizerPtr = std::shared_ptr<IAccountSynchronizer>;
 

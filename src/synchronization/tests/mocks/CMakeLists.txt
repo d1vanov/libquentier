@@ -12,6 +12,7 @@ target_sources(${MOCKS_NAME}
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockIAuthenticator.h
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncConflictResolver.h
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncStateStorage.h
+    MockIAccountSyncPersistenceDirProvider.h
     MockIAccountSynchronizer.h
     MockIAccountSynchronizerFactory.h
     MockIAuthenticationInfoProvider.h

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,6 +25,7 @@
 #include <synchronization/AccountSynchronizer.h>
 #include <synchronization/Downloader.h>
 #include <synchronization/FullSyncStaleDataExpunger.h>
+#include <synchronization/IAccountSyncPersistenceDirProvider.h>
 #include <synchronization/InkNoteImageDownloaderFactory.h>
 #include <synchronization/LinkedNotebookFinder.h>
 #include <synchronization/LinkedNotebookTagsCleaner.h>
@@ -56,10 +57,11 @@ namespace quentier::synchronization {
 AccountSynchronizerFactory::AccountSynchronizerFactory(
     ISyncStateStoragePtr syncStateStorage,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
-    const QDir & synchronizationPersistenceDir) :
+    IAccountSyncPersistenceDirProviderPtr accountSyncPersistenceDirProvider) :
     m_syncStateStorage{std::move(syncStateStorage)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
-    m_synchronizationPersistenceDir{synchronizationPersistenceDir}
+    m_accountSyncPersistenceDirProvider{
+        std::move(accountSyncPersistenceDirProvider)}
 {
     if (Q_UNLIKELY(!m_syncStateStorage)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -72,29 +74,10 @@ AccountSynchronizerFactory::AccountSynchronizerFactory(
             "is null")}};
     }
 
-    if (!m_synchronizationPersistenceDir.exists()) {
-        if (Q_UNLIKELY(!m_synchronizationPersistenceDir.mkpath(
-                m_synchronizationPersistenceDir.absolutePath())))
-        {
-            throw RuntimeError{ErrorString{QStringLiteral(
-                "Cannot create root dir for synchronization persistene")}};
-        }
-    }
-    else {
-        const QFileInfo rootDirInfo{
-            m_synchronizationPersistenceDir.absolutePath()};
-
-        if (Q_UNLIKELY(!rootDirInfo.isReadable())) {
-            throw InvalidArgument{ErrorString{QStringLiteral(
-                "AccountSynchronizerFactory requires readable synchronization "
-                "persistence dir")}};
-        }
-
-        if (Q_UNLIKELY(!rootDirInfo.isWritable())) {
-            throw InvalidArgument{ErrorString{QStringLiteral(
-                "AccountSynchronizerFactory requires writable synchronization "
-                "persistence dir")}};
-        }
+    if (Q_UNLIKELY(!m_accountSyncPersistenceDirProvider)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "AccountSynchronizerFactory ctor: account sync persistence dir "
+            "provider is null")}};
     }
 }
 
@@ -144,8 +127,11 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto syncChunksDownloader = std::make_shared<SyncChunksDownloader>(
         noteStoreProvider, qevercloud::newRetryPolicy());
 
-    const QDir syncChunksDir{m_synchronizationPersistenceDir.absoluteFilePath(
-        QStringLiteral("sync_chunks"))};
+    const QDir syncPersistenceDataDir =
+        m_accountSyncPersistenceDirProvider->syncPersistenceDir(account);
+
+    const QDir syncChunksDir{
+        syncPersistenceDataDir.absoluteFilePath(QStringLiteral("sync_chunks"))};
 
     if (!syncChunksDir.exists()) {
         if (Q_UNLIKELY(!syncChunksDir.mkpath(syncChunksDir.absolutePath()))) {
@@ -202,7 +188,7 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
         noteThumbnailDownloaderFactory, options, ctx, retryPolicy);
 
     auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
-        std::move(notesProcessor), m_synchronizationPersistenceDir);
+        std::move(notesProcessor), syncPersistenceDataDir);
 
     constexpr quint32 defaultMaxConcurrentResourceDownloads = 100;
     auto resourceFullDataDownloader =
@@ -216,7 +202,7 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
 
     auto durableResourcesProcessor =
         std::make_shared<DurableResourcesProcessor>(
-            std::move(resourcesProcessor), m_synchronizationPersistenceDir);
+            std::move(resourcesProcessor), syncPersistenceDataDir);
 
     auto savedSearchesProcessor = std::make_shared<SavedSearchesProcessor>(
         localStorage, syncConflictResolver);

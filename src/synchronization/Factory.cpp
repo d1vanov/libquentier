@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #include <quentier/synchronization/Factory.h>
 #include <quentier/utility/IKeychainService.h>
 
+#include <synchronization/AccountSyncPersistenceDirProvider.h>
 #include <synchronization/AccountSynchronizerFactory.h>
 #include <synchronization/AuthenticationInfoProvider.h>
 #include <synchronization/Authenticator.h>
@@ -46,10 +47,9 @@ IAuthenticatorPtr createQEverCloudAuthenticator(
 }
 
 ISynchronizerPtr createSynchronizer(
-    const QUrl & userStoreUrl, const QDir & synchronizationPersistenceDir,
-    IAuthenticatorPtr authenticator, ISyncStateStoragePtr syncStateStorage,
-    IKeychainServicePtr keychainService, qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy)
+    const QUrl & userStoreUrl, IAuthenticatorPtr authenticator,
+    ISyncStateStoragePtr syncStateStorage, IKeychainServicePtr keychainService,
+    qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy)
 {
     if (!authenticator) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -79,10 +79,13 @@ ISynchronizerPtr createSynchronizer(
             std::move(userInfoProvider), std::move(noteStoreFactory),
             std::move(ctx), std::move(retryPolicy), std::move(host));
 
+    auto accountSyncPersistenceDirProvider =
+        std::make_shared<AccountSyncPersistenceDirProvider>();
+
     auto accountSynchronizerFactory =
         std::make_shared<AccountSynchronizerFactory>(
             std::move(syncStateStorage), authenticationInfoProvider,
-            synchronizationPersistenceDir);
+            std::move(accountSyncPersistenceDirProvider));
 
     return std::make_shared<Synchronizer>(
         std::move(accountSynchronizerFactory),

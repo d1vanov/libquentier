@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #include <synchronization/AccountSynchronizerFactory.h>
 
 #include <local_storage/sql/Notifier.h>
+#include <synchronization/tests/mocks/MockIAccountSyncPersistenceDirProvider.h>
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/types/SyncOptionsBuilder.h>
 
@@ -39,12 +40,20 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::NiceMock;
 using testing::Return;
 using testing::StrictMock;
 
 class AccountSynchronizerFactoryTest : public testing::Test
 {
 protected:
+    void SetUp() override
+    {
+        QDir dir{m_temporaryDir.path()};
+        ON_CALL(*m_mockAccountSyncPersistenceDirProvider, syncPersistenceDir)
+            .WillByDefault(Return(dir));
+    }
+
     void TearDown() override
     {
         QDir dir{m_temporaryDir.path()};
@@ -85,6 +94,10 @@ protected:
         m_mockLocalStorage = std::make_shared<
             StrictMock<local_storage::tests::mocks::MockILocalStorage>>();
 
+    const std::shared_ptr<mocks::MockIAccountSyncPersistenceDirProvider>
+        m_mockAccountSyncPersistenceDirProvider = std::make_shared<
+            NiceMock<mocks::MockIAccountSyncPersistenceDirProvider>>();
+
     QTemporaryDir m_temporaryDir;
 };
 
@@ -93,7 +106,7 @@ TEST_F(AccountSynchronizerFactoryTest, Ctor)
     EXPECT_NO_THROW(
         const auto factory = std::make_shared<AccountSynchronizerFactory>(
             m_mockSyncStateStorage, m_mockAuthenticationInfoProvider,
-            QDir{m_temporaryDir.path()}));
+            m_mockAccountSyncPersistenceDirProvider));
 }
 
 TEST_F(AccountSynchronizerFactoryTest, CtorNullSyncStateStorage)
@@ -101,7 +114,7 @@ TEST_F(AccountSynchronizerFactoryTest, CtorNullSyncStateStorage)
     EXPECT_THROW(
         const auto factory = std::make_shared<AccountSynchronizerFactory>(
             nullptr, m_mockAuthenticationInfoProvider,
-            QDir{m_temporaryDir.path()}),
+            m_mockAccountSyncPersistenceDirProvider),
         InvalidArgument);
 }
 
@@ -109,7 +122,17 @@ TEST_F(AccountSynchronizerFactoryTest, CtorNullAuthenticationInfoProvider)
 {
     EXPECT_THROW(
         const auto factory = std::make_shared<AccountSynchronizerFactory>(
-            m_mockSyncStateStorage, nullptr, QDir{m_temporaryDir.path()}),
+            m_mockSyncStateStorage, nullptr,
+            m_mockAccountSyncPersistenceDirProvider),
+        InvalidArgument);
+}
+
+TEST_F(AccountSynchronizerFactoryTest, CtorNullAccountSyncPersistenceDirProvider)
+{
+    EXPECT_THROW(
+        const auto factory = std::make_shared<AccountSynchronizerFactory>(
+            m_mockSyncStateStorage, m_mockAuthenticationInfoProvider,
+            nullptr),
         InvalidArgument);
 }
 
@@ -117,7 +140,7 @@ TEST_F(AccountSynchronizerFactoryTest, CreateAccountSynchronizerForEmptyAccount)
 {
     const auto factory = std::make_shared<AccountSynchronizerFactory>(
         m_mockSyncStateStorage, m_mockAuthenticationInfoProvider,
-        QDir{m_temporaryDir.path()});
+        m_mockAccountSyncPersistenceDirProvider);
 
     EXPECT_THROW(
         auto future = factory->createAccountSynchronizer(
@@ -130,7 +153,7 @@ TEST_F(AccountSynchronizerFactoryTest, CreateAccountSynchronizerForLocalAccount)
 {
     const auto factory = std::make_shared<AccountSynchronizerFactory>(
         m_mockSyncStateStorage, m_mockAuthenticationInfoProvider,
-        QDir{m_temporaryDir.path()});
+        m_mockAccountSyncPersistenceDirProvider);
 
     const Account account =
         Account{QStringLiteral("Full Name"), Account::Type::Local};
@@ -146,7 +169,7 @@ TEST_F(AccountSynchronizerFactoryTest, CreateAccountSynchronizer)
 {
     const auto factory = std::make_shared<AccountSynchronizerFactory>(
         m_mockSyncStateStorage, m_mockAuthenticationInfoProvider,
-        QDir{m_temporaryDir.path()});
+        m_mockAccountSyncPersistenceDirProvider);
 
     local_storage::sql::Notifier notifier;
     EXPECT_CALL(*m_mockLocalStorage, notifier)

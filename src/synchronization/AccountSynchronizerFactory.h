@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,33 +20,33 @@
 
 #include <quentier/threading/Fwd.h>
 
+#include <synchronization/Fwd.h>
 #include <synchronization/IAccountSynchronizerFactory.h>
 
 #include <qevercloud/Fwd.h>
 
-#include <QDir>
-
 namespace quentier::synchronization {
 
-class AccountSynchronizerFactory: public IAccountSynchronizerFactory
+class AccountSynchronizerFactory : public IAccountSynchronizerFactory
 {
 public:
     AccountSynchronizerFactory(
         ISyncStateStoragePtr syncStateStorage,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        const QDir & synchronizationPersistenceDir);
+        IAccountSyncPersistenceDirProviderPtr
+            accountSyncPersistenceDirProvider);
 
 public: // IAccountSynchronizerFactory
     [[nodiscard]] IAccountSynchronizerPtr createAccountSynchronizer(
-        Account account,
-        ISyncConflictResolverPtr syncConflictResolver,
+        Account account, ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,
         ISyncOptionsPtr options) override;
 
 private:
     const ISyncStateStoragePtr m_syncStateStorage;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
-    const QDir m_synchronizationPersistenceDir;
+    const IAccountSyncPersistenceDirProviderPtr
+        m_accountSyncPersistenceDirProvider;
 };
 
 } // namespace quentier::synchronization

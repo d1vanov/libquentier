@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,6 @@
 #include <QUrl>
 #include <QtGlobal>
 
-class QDir;
 class QWidget;
 
 namespace quentier::synchronization {
@@ -40,8 +39,7 @@ namespace quentier::synchronization {
     threading::QThreadPtr uiThread, QWidget * parentWidget = nullptr);
 
 [[nodiscard]] QUENTIER_EXPORT ISynchronizerPtr createSynchronizer(
-    const QUrl & userStoreUrl, const QDir & synchronizationPersistenceDir,
-    IAuthenticatorPtr authenticator,
+    const QUrl & userStoreUrl, IAuthenticatorPtr authenticator,
     ISyncStateStoragePtr syncStateStorage = nullptr,
     IKeychainServicePtr keychainService = nullptr,
     qevercloud::IRequestContextPtr ctx = nullptr,

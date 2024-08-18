@@ -42,6 +42,7 @@
 #include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/threading/Factory.h>
+#include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/types/builders/SyncStateBuilder.h>
@@ -848,9 +849,15 @@ void TestRunner::runTestScenario()
         QVERIFY(syncPersistenceDir.mkpath(syncPersistenceDirPath));
     }
 
+    // Using environment variable to alter the default libquentier's persistent
+    // storage path
+    qputenv(
+        LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+        syncPersistenceDirPath.toLocal8Bit());
+
     auto synchronizer = createSynchronizer(
-        userStoreUrl, syncPersistenceDir, m_fakeAuthenticator,
-        m_fakeSyncStateStorage, m_fakeKeychainService);
+        userStoreUrl, m_fakeAuthenticator, m_fakeSyncStateStorage,
+        m_fakeKeychainService);
 
     auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -874,7 +881,8 @@ void TestRunner::runTestScenario()
     bool syncRepeated = false;
     if (!caughtException) {
         QVERIFY2(
-            syncResultPair.first.resultCount() == 1, "Empty sync result future");
+            syncResultPair.first.resultCount() == 1,
+            "Empty sync result future");
 
         const auto syncResult = syncResultPair.first.result();
         QVERIFY(syncResult);
@@ -886,9 +894,7 @@ void TestRunner::runTestScenario()
         if (!std::holds_alternative<std::monostate>(
                 testScenarioData.stopSyncError))
         {
-            QNDEBUG(
-                "tests::synchronization::TestRunner",
-                "Retrying the sync");
+            QNDEBUG("tests::synchronization::TestRunner", "Retrying the sync");
 
             m_noteStoreServer->clearStopSynchronizationError();
             m_syncEventsCollector->clear();
