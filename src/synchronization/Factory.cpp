@@ -56,6 +56,10 @@ ISynchronizerPtr createSynchronizer(
             "Cannot create synchronizer: authenticator is null")}};
     }
 
+    if (!syncStateStorage) {
+        syncStateStorage = std::make_shared<SyncStateStorage>(nullptr);
+    }
+
     if (!keychainService) {
         keychainService = newQtKeychainService();
     }
