@@ -66,8 +66,29 @@ Authenticator::Authenticator(
 QFuture<IAuthenticationInfoPtr> Authenticator::authenticateNewAccount()
 {
     if (QThread::currentThread() == m_uiThread.get()) {
-        return threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            authenticateNewAccountImpl());
+        try {
+            auto result = authenticateNewAccountImpl();
+            return threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                std::move(result));
+        }
+        catch (const QException & e) {
+            return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+                RuntimeError{ErrorString{
+                    QString::fromUtf8("Error authenticating new account: %1")
+                        .arg(QString::fromStdString(e.what()))}});
+        }
+        catch (const std::exception & e) {
+            return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+                RuntimeError{ErrorString{
+                    QString::fromUtf8("Error authenticating new account: %1")
+                        .arg(QString::fromStdString(e.what()))}});
+        }
+        catch (...) {
+            return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+                RuntimeError{ErrorString{
+                    QStringLiteral("Unknown error while authenticating new "
+                                   "account")}});
+        }
     }
 
     auto promise = std::make_shared<QPromise<IAuthenticationInfoPtr>>();
