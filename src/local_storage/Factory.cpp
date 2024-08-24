@@ -17,6 +17,7 @@
  */
 
 #include <quentier/local_storage/Factory.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Factory.h>
 
 #include <local_storage/sql/ConnectionPool.h>
@@ -42,6 +43,11 @@ ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
     threading::QThreadPoolPtr threadPool)
 {
+    QNDEBUG(
+        "local_storage::Factory",
+        "ILocalStoragePtr createSqliteLocalStorage: dir = "
+            << localStorageDir.absolutePath() << ", account: " << account);
+
     if (!threadPool) {
         threadPool = threading::globalThreadPool();
     }
