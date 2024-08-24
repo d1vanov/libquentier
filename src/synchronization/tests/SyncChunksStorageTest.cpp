@@ -446,6 +446,18 @@ TEST_F(SyncChunksStorageTest, PutAndFetchUserOwnSyncChunks)
     EXPECT_EQ(fetchedUsnsRange, usnsRange);
 }
 
+TEST_F(SyncChunksStorageTest, PutEmptyUserOwnSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
+
+    // Should do nothing on empty list of user own sync chunks
+    storage->putUserOwnSyncChunks(QList<qevercloud::SyncChunk>{});
+    storage->flush();
+
+    checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
+}
+
 TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
 {
     QDir temporaryDir{m_temporaryDir.path()};
@@ -549,6 +561,19 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
             EXPECT_EQ(fetchedUsnsRange, it.value());
         }
     }
+}
+
+TEST_F(SyncChunksStorageTest, PutEmptyLinkedNotebookSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    auto storage = std::make_shared<SyncChunksStorage>(temporaryDir);
+
+    // Should do nothing on empty list of linked notebook sync chunks
+    storage->putLinkedNotebookSyncChunks(
+        UidGenerator::Generate(), QList<qevercloud::SyncChunk>{});
+    storage->flush();
+
+    checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
 }
 
 TEST_F(

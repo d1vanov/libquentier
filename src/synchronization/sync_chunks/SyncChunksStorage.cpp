@@ -502,6 +502,10 @@ QList<qevercloud::SyncChunk>
 void SyncChunksStorage::putUserOwnSyncChunks(
     QList<qevercloud::SyncChunk> syncChunks)
 {
+    if (syncChunks.isEmpty()) {
+        return;
+    }
+
     initLowAndHighUsnsLists();
 
     const QWriteLocker locker{&m_dataLock};
@@ -555,6 +559,10 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
     const qevercloud::Guid & linkedNotebookGuid,
     QList<qevercloud::SyncChunk> syncChunks)
 {
+    if (syncChunks.isEmpty()) {
+        return;
+    }
+
     initLowAndHighUsnsLists();
 
     const QWriteLocker locker{&m_dataLock};
