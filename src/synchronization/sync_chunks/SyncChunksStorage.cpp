@@ -315,6 +315,10 @@ void flushSyncChunk(
     const QDir & dir, const qevercloud::SyncChunk & syncChunk,
     const qint32 lowUsn, const qint32 highUsn)
 {
+    QNDEBUG(
+        "synchronization::SyncChunksStorage",
+        "flushSyncChunk: low usn = " << lowUsn << ", high usn = " << highUsn);
+
     const QString fileName = [&] {
         QString fileName;
         QTextStream strm{&fileName};
@@ -531,7 +535,10 @@ void SyncChunksStorage::putUserOwnSyncChunks(
                     "Detected interleaving between usn ranges of already "
                         << "stored sync chunks and sync chunks put into the "
                         << "storage now -> removing previously stored user own "
-                        << "sync chunks");
+                        << "sync chunks. Usn ranges: " << printUsnRanges(usns)
+                        << "\nLast existing usn range: "
+                        << lastExistingUsnRange.first << " - "
+                        << lastExistingUsnRange.second);
 
                 // At least one of new sync chunks put to the storage has
                 // USN range which is interleaving with existing stored sync
@@ -598,7 +605,10 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
                         << "stored sync chunks and sync chunks put into the "
                         << "storage now -> removing previously stored sync "
                         << "chunks for linked notebook with guid "
-                        << linkedNotebookGuid);
+                        << linkedNotebookGuid << "; usn ranges: "
+                        << printUsnRanges(usns) << "\nLast existing usn range: "
+                        << lastExistingUsnRange.first << " - "
+                        << lastExistingUsnRange.second);
 
                 // At least one of new sync chunks put to the storage has
                 // USN range which is interleaving with existing stored sync
