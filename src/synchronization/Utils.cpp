@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -85,6 +85,25 @@ QString linkedNotebookInfo(
 
     strm << ")";
 
+    return res;
+}
+
+QString linkedNotebooksInfo(
+    const QList<qevercloud::LinkedNotebook> & linkedNotebooks)
+{
+    if (linkedNotebooks.isEmpty()) {
+        return QStringLiteral("<empty>");
+    }
+
+    QString res;
+    QTextStream strm{&res};
+
+    strm << "(" << linkedNotebooks.size() << "):\n";
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+        strm << "   [" << linkedNotebookInfo(linkedNotebook) << "];\n";
+    }
+
+    strm.flush();
     return res;
 }
 

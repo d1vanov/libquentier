@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,6 +43,9 @@ namespace quentier::synchronization {
 
 [[nodiscard]] QString linkedNotebookInfo(
     const qevercloud::LinkedNotebook & linkedNotebook);
+
+[[nodiscard]] QString linkedNotebooksInfo(
+    const QList<qevercloud::LinkedNotebook> & linkedNotebooks);
 
 [[nodiscard]] QString syncChunksUsnInfo(
     const QList<qevercloud::SyncChunk> & syncChunks);

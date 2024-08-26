@@ -283,25 +283,6 @@ void merge(const ISyncChunksDataCounters & from, SyncChunksDataCounters & to)
         });
 }
 
-[[nodiscard]] QString printLinkedNotebooksInfo(
-    const QList<qevercloud::LinkedNotebook> & linkedNotebooks)
-{
-    if (linkedNotebooks.isEmpty()) {
-        return QStringLiteral("<empty>");
-    }
-
-    QString res;
-    QTextStream strm{&res};
-
-    strm << "(" << linkedNotebooks.size() << "):\n";
-    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
-        strm << "   [" << linkedNotebookInfo(linkedNotebook) << "];\n";
-    }
-
-    strm.flush();
-    return res;
-}
-
 } // namespace
 
 class AccountSynchronizer::CallbackWrapper :
@@ -391,7 +372,7 @@ public: // IDownloader::ICallback
             "synchronization::AccountSynchronizer::CallbackWrapper",
             "AccountSynchronizer::CallbackWrapper::"
                 << "onStartLinkedNotebooksDataDownloading: "
-                << printLinkedNotebooksInfo(linkedNotebooks));
+                << linkedNotebooksInfo(linkedNotebooks));
 
         if (const auto callback = m_callbackWeak.lock()) {
             callback->onStartLinkedNotebooksDataDownloading(linkedNotebooks);
