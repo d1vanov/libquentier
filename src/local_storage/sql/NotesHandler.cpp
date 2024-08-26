@@ -1049,6 +1049,11 @@ std::optional<qevercloud::Note> NotesHandler::fillNoteData(
     ErrorString & errorDescription) const
 {
     if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::NotesHandler",
+            "Cannot fill note data, no notes were found by the query: "
+                << query.executedQuery()
+                << ", connection name = " << database.connectionName());
         return std::nullopt;
     }
 

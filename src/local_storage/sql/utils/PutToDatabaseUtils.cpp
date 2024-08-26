@@ -3655,7 +3655,8 @@ bool putNote(
             << ", put tag ids: "
             << (putNoteOptions.testFlag(PutNoteOption::PutTagIds) ? "yes"
                                                                   : "no")
-            << ", transaction option = " << transactionOption);
+            << ", transaction option = " << transactionOption
+            << ", connection name = " << database.connectionName());
 
     std::optional<Transaction> transaction;
     if (transactionOption == TransactionOption::UseSeparateTransaction) {
