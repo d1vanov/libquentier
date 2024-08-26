@@ -329,8 +329,9 @@ QFuture<QList<qevercloud::SharedNote>> NotesHandler::listSharedNotes(
         [guid = std::move(guid)](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            return handler.listSharedNotesImpl(
+            auto sharedNotes = handler.listSharedNotesImpl(
                 guid, database, errorDescription);
+            return sharedNotes.value_or(QList<qevercloud::SharedNote>{});
         });
 }
 
@@ -1094,11 +1095,11 @@ bool NotesHandler::fillSharedNotes(
 
     auto sharedNotes =
         listSharedNotesImpl(*note.guid(), database, errorDescription);
-    if (sharedNotes.isEmpty()) {
-        if (!errorDescription.isEmpty()) {
-            return false;
-        }
+    if (!sharedNotes) {
+        return false;
+    }
 
+    if (sharedNotes->isEmpty()) {
         note.setSharedNotes(std::nullopt);
         return true;
     }
@@ -1441,7 +1442,7 @@ QList<qevercloud::Note> NotesHandler::listNotesImpl(
     return notes;
 }
 
-QList<qevercloud::SharedNote> NotesHandler::listSharedNotesImpl(
+std::optional<QList<qevercloud::SharedNote>> NotesHandler::listSharedNotesImpl(
     const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
@@ -1455,14 +1456,14 @@ QList<qevercloud::SharedNote> NotesHandler::listSharedNotesImpl(
         res, query, "local_storage::sql::NotesHandler",
         QStringLiteral(
             "Cannot list shared notes by note guid: failed to prepare query"),
-        {});
+        std::nullopt);
 
     query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
-        QStringLiteral("Cannot list shared notes by note guid"), {});
+        QStringLiteral("Cannot list shared notes by note guid"), std::nullopt);
 
     QMap<int, qevercloud::SharedNote> sharedNotesByIndex;
     while (query.next()) {
@@ -1479,7 +1480,7 @@ QList<qevercloud::SharedNote> NotesHandler::listSharedNotesImpl(
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
-            return {};
+            return std::nullopt;
         }
 
         sharedNotesByIndex[indexInNote] = sharedNote;

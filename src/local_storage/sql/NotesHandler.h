@@ -28,6 +28,7 @@
 #include <QtGlobal>
 
 #include <memory>
+#include <optional>
 
 class QSqlQuery;
 
@@ -187,9 +188,10 @@ private:
         const QString & sqlQueryCondition = {},
         std::optional<Transaction> transaction = std::nullopt) const;
 
-    [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesImpl(
-        const qevercloud::Guid & noteGuid, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+    [[nodiscard]] std::optional<QList<qevercloud::SharedNote>>
+        listSharedNotesImpl(
+            const qevercloud::Guid & noteGuid, QSqlDatabase & database,
+            ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebookLocalIdImpl(
         const QString & notebookLocalId, FetchNoteOptions fetchOptions,
