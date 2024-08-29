@@ -138,11 +138,18 @@ private:
         DownloadContextPtr downloadContext, SynchronizationMode syncMode,
         QList<qevercloud::LinkedNotebook> linkedNotebooks);
 
-    [[nodiscard]] QFuture<Result> fetchAuthInfoAndStartLinkedNotebookDataDownload(
-        const DownloadContextPtr & downloadContext,
-        qevercloud::SyncState linkedNotebookSyncState,
-        SynchronizationMode syncMode,
-        qevercloud::LinkedNotebook linkedNotebook);
+    void launchLinkedNotebookDataDownload(
+        DownloadContextPtr downloadContext, SynchronizationMode syncMode,
+        qevercloud::LinkedNotebook linkedNotebook,
+        const qevercloud::INoteStorePtr & noteStore,
+        const std::shared_ptr<QPromise<Result>> & linkedNotebookResultPromise);
+
+    [[nodiscard]] QFuture<Result>
+        fetchAuthInfoAndStartLinkedNotebookDataDownload(
+            const DownloadContextPtr & downloadContext,
+            qevercloud::SyncState linkedNotebookSyncState,
+            SynchronizationMode syncMode,
+            qevercloud::LinkedNotebook linkedNotebook);
 
     void startLinkedNotebookDataDownload(
         DownloadContextPtr downloadContext, SynchronizationMode syncMode);

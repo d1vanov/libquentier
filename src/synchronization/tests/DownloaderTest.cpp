@@ -36,8 +36,8 @@
 #include <synchronization/tests/mocks/MockIDurableNotesProcessor.h>
 #include <synchronization/tests/mocks/MockIDurableResourcesProcessor.h>
 #include <synchronization/tests/mocks/MockIFullSyncStaleDataExpunger.h>
-#include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>
 #include <synchronization/tests/mocks/MockILinkedNotebookTagsCleaner.h>
+#include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>
 #include <synchronization/tests/mocks/MockINoteStoreProvider.h>
 #include <synchronization/tests/mocks/MockINotebooksProcessor.h>
 #include <synchronization/tests/mocks/MockISavedSearchesProcessor.h>
@@ -727,7 +727,8 @@ void emulateSyncChunksNotesProcessing(
         }
 
         for (const auto & expungedNoteGuid:
-             std::as_const(*syncChunk.expungedNotes())) {
+             std::as_const(*syncChunk.expungedNotes()))
+        {
             if (noteIndex % 2 == 0) {
                 if (callback) {
                     callback->onExpungedNote(expungedNoteGuid);
@@ -1760,6 +1761,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
             linkedNotebookSyncChunks.constLast().chunkHighUSN().value();
 
         EXPECT_CALL(
+            *m_mockNoteStoreProvider,
+            linkedNotebookNoteStore(*linkedNotebook.guid(), _, _))
+            .WillOnce(
+                Return(threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    m_mockNoteStore)));
+
+        EXPECT_CALL(
             *m_mockNoteStore,
             getLinkedNotebookSyncStateAsync(linkedNotebook, _))
             .WillOnce([&, chunksHighUsn](
@@ -1800,8 +1808,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
         EXPECT_CALL(
             *m_mockSyncChunksProvider,
-            fetchLinkedNotebookSyncChunks(
-                linkedNotebook, _, _, _, _, _, _))
+            fetchLinkedNotebookSyncChunks(linkedNotebook, _, _, _, _, _, _))
             .WillOnce([&, linkedNotebookSyncChunks](
                           const qevercloud::LinkedNotebook & ln,
                           [[maybe_unused]] qint32 afterUsn,
@@ -1835,7 +1842,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     const qint32 highestServerUsn =
                         linkedNotebookSyncChunks.last().chunkHighUSN().value();
                     for (const auto & syncChunk:
-                         std::as_const(linkedNotebookSyncChunks)) {
+                         std::as_const(linkedNotebookSyncChunks))
+                    {
                         callback->onLinkedNotebookSyncChunksDownloadProgress(
                             syncChunk.chunkHighUSN().value(), highestServerUsn,
                             lastPreviousUsn, ln);
@@ -1871,7 +1879,8 @@ TEST_P(DownloaderSyncChunksTest, Download)
             .WillRepeatedly(
                 [lastSyncChunksDataCounters = lastSyncChunksDataCounters](
                     const SyncChunksDataCountersPtr & counters,
-                    [[maybe_unused]] const qevercloud::LinkedNotebook & ln) mutable {
+                    [[maybe_unused]] const qevercloud::LinkedNotebook &
+                        ln) mutable {
                     ASSERT_TRUE(counters);
                     if (!lastSyncChunksDataCounters) {
                         lastSyncChunksDataCounters = counters;
@@ -1958,12 +1967,13 @@ TEST_P(DownloaderSyncChunksTest, Download)
                     *m_mockFullSyncStaleDataExpunger,
                     expungeStaleData(_, _, Eq(linkedNotebookGuid)))
                     .WillOnce(
-                        [&, linkedNotebookSyncChunks](const IFullSyncStaleDataExpunger::PreservedGuids &
+                        [&, linkedNotebookSyncChunks](
+                            const IFullSyncStaleDataExpunger::PreservedGuids &
                                 preservedGuids,
                             [[maybe_unused]] const utility::cancelers::
                                 ICancelerPtr & canceler,
-                            [[maybe_unused]] const std::optional<qevercloud::Guid> &
-                                linkedNotebookGuid) {
+                            [[maybe_unused]] const std::optional<
+                                qevercloud::Guid> & linkedNotebookGuid) {
                             const auto expectedPreservedGuids =
                                 collectPreservedGuids(linkedNotebookSyncChunks);
                             EXPECT_EQ(preservedGuids, expectedPreservedGuids);
