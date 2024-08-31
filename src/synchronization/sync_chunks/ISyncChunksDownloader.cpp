@@ -59,8 +59,12 @@ void printSyncChunksResult(
       << (chunksHighUsn ? QString::number(*chunksHighUsn)
                         : QStringLiteral("<none>"));
 
-    for (const auto & syncChunk: std::as_const(result.m_syncChunks)) {
-        t << "SyncChunk: " << utils::briefSyncChunkInfo(syncChunk) << "\n\n";
+    if (!result.m_syncChunks.isEmpty()) {
+        t << ", sync chunks (" << result.m_syncChunks.size() << "):\n";
+        for (const auto & syncChunk: std::as_const(result.m_syncChunks)) {
+            t << "    SyncChunk: " << utils::briefSyncChunkInfo(syncChunk)
+              << "\n\n";
+        }
     }
 }
 
