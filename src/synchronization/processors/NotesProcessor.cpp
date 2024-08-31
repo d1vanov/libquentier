@@ -90,16 +90,14 @@ NotesProcessor::NotesProcessor(
     INoteStoreProviderPtr noteStoreProvider,
     IInkNoteImageDownloaderFactoryPtr inkNoteImageDownloaderFactory,
     INoteThumbnailDownloaderFactoryPtr noteThumbnailDownloaderFactory,
-    ISyncOptionsPtr syncOptions, qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy) :
+    ISyncOptionsPtr syncOptions, qevercloud::IRetryPolicyPtr retryPolicy) :
     m_localStorage{std::move(localStorage)},
     m_syncConflictResolver{std::move(syncConflictResolver)},
     m_noteFullDataDownloader{std::move(noteFullDataDownloader)},
     m_noteStoreProvider{std::move(noteStoreProvider)},
     m_inkNoteImageDownloaderFactory{std::move(inkNoteImageDownloaderFactory)},
     m_noteThumbnailDownloaderFactory{std::move(noteThumbnailDownloaderFactory)},
-    m_syncOptions{std::move(syncOptions)}, m_ctx{std::move(ctx)},
-    m_retryPolicy{std::move(retryPolicy)}
+    m_syncOptions{std::move(syncOptions)}, m_retryPolicy{std::move(retryPolicy)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{
@@ -139,7 +137,9 @@ NotesProcessor::NotesProcessor(
 
 QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks,
-    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
+    utility::cancelers::ICancelerPtr canceler,
+    qevercloud::IRequestContextPtr ctx,
+    ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG("synchronization::NotesProcessor", "NotesProcessor::processNotes");
 
@@ -187,6 +187,7 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     using FetchNoteOption = local_storage::ILocalStorage::FetchNoteOption;
 
     auto context = std::make_shared<Context>();
+    context->ctx = std::move(ctx);
 
     context->status = std::make_shared<DownloadNotesStatus>();
     context->status->m_totalExpungedNotes =
@@ -540,7 +541,7 @@ void NotesProcessor::downloadFullNoteData(
             << ", note kind = " << noteKind);
 
     auto noteStoreFuture = m_noteStoreProvider->noteStoreForNotebookGuid(
-        *note.notebookGuid(), m_ctx, m_retryPolicy);
+        *note.notebookGuid(), context->ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
@@ -588,7 +589,7 @@ void NotesProcessor::downloadFullNoteDataImpl(
             << ", note local id = " << note.localId());
 
     auto noteFuture = m_noteFullDataDownloader->downloadFullNoteData(
-        noteGuid, std::move(noteStore));
+        noteGuid, std::move(noteStore), context->ctx);
 
     const auto selfWeak = weak_from_this();
 
@@ -676,7 +677,7 @@ void NotesProcessor::processDownloadedFullNoteData(
         notePromise->start();
         auto future = notePromise->future();
 
-        auto noteFuture = downloadNoteThumbnail(note);
+        auto noteFuture = downloadNoteThumbnail(context, note);
         auto thenFuture = threading::then(
             std::move(noteFuture), currentThread,
             [notePromise](qevercloud::Note noteWithThumbnail) {
@@ -875,14 +876,14 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
 
     auto downloaderFuture =
         m_inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-            notebookLocalId, m_ctx);
+            notebookLocalId, context->ctx);
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
         std::move(downloaderFuture), currentThread, promise,
-        [this, selfWeak, promise, context, inkNoteImagesStorageDir,
+        [selfWeak, promise, context, inkNoteImagesStorageDir,
          currentThread, resource = std::move(resource)](
             const qevercloud::IInkNoteImageDownloaderPtr & downloader) {
             if (context->canceler->isCanceled()) {
@@ -899,7 +900,7 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
             Q_ASSERT(downloader);
             auto imageDataFuture = downloader->downloadAsync(
                 *resource.guid(), QSize{*resource.width(), *resource.height()},
-                m_ctx);
+                context->ctx);
 
             threading::thenOrFailed(
                 std::move(imageDataFuture), currentThread, promise,
@@ -908,6 +909,11 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
                     if (context->canceler->isCanceled()) {
                         promise->setException(OperationCanceled{});
                         promise->finish();
+                    }
+
+                    const auto self = selfWeak.lock();
+                    if (!self) {
+                        return;
                     }
 
                     QNDEBUG(
@@ -938,8 +944,9 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
 }
 
 QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
-    qevercloud::Note note)
+    const ContextPtr & context, qevercloud::Note note)
 {
+    Q_ASSERT(context);
     Q_ASSERT(note.guid());
 
     QNDEBUG(
@@ -952,14 +959,14 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
 
     auto noteThumbnailDownloaderFuture =
         m_noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-            note.notebookLocalId(), m_ctx);
+            note.notebookLocalId(), context->ctx);
 
     auto * currentThread = QThread::currentThread();
 
     threading::thenOrFailed(
         std::move(noteThumbnailDownloaderFuture), currentThread, promise,
         [note = std::move(note), promise, currentThread,
-         ctx = m_ctx](const qevercloud::INoteThumbnailDownloaderPtr &
+         ctx = context->ctx](const qevercloud::INoteThumbnailDownloaderPtr &
                           noteThumbnailDownloader) mutable {
             Q_ASSERT(noteThumbnailDownloader);
 

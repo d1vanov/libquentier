@@ -1668,10 +1668,11 @@ TEST_P(DownloaderSyncChunksTest, Download)
                 return threading::makeReadyFuture();
             });
 
-        EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _, _, _))
+        EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _, _, _, _))
             .WillOnce(
                 [&](const QList<qevercloud::SyncChunk> & chunks,
                     const utility::cancelers::ICancelerPtr & canceler,
+                    [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
                     [[maybe_unused]] const std::optional<qevercloud::Guid> &
                         linkedNotebookGuid,
                     const IDurableNotesProcessor::ICallbackWeakPtr &
@@ -2040,9 +2041,11 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
             EXPECT_CALL(
                 *m_mockNotesProcessor,
-                processNotes(linkedNotebookSyncChunks, _, _, _))
+                processNotes(linkedNotebookSyncChunks, _, _, _, _))
                 .WillOnce([&](const QList<qevercloud::SyncChunk> & chunks,
                               const utility::cancelers::ICancelerPtr & canceler,
+                              [[maybe_unused]] const qevercloud::
+                                  IRequestContextPtr & ctx,
                               [[maybe_unused]] const std::optional<
                                   qevercloud::Guid> & linkedNotebookGuid,
                               const IDurableNotesProcessor::ICallbackWeakPtr &

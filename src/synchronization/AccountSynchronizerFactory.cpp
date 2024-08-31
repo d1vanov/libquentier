@@ -185,7 +185,7 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     auto notesProcessor = std::make_shared<NotesProcessor>(
         localStorage, syncConflictResolver, noteFullDataDownloader,
         noteStoreProvider, inkNoteImageDownloaderFactory,
-        noteThumbnailDownloaderFactory, options, ctx, retryPolicy);
+        noteThumbnailDownloaderFactory, options, retryPolicy);
 
     auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         std::move(notesProcessor), syncPersistenceDataDir);

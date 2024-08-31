@@ -31,6 +31,7 @@ public:
         QFuture<DownloadNotesStatusPtr>, processNotes,
         (const QList<qevercloud::SyncChunk> & syncChunks,
          utility::cancelers::ICancelerPtr canceler,
+         qevercloud::IRequestContextPtr ctx,
          const std::optional<qevercloud::Guid> & linkedNotebookGuid,
          ICallbackWeakPtr callbackWeak),
         (override));

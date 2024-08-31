@@ -231,7 +231,7 @@ TEST_F(NotesProcessorTest, Ctor)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()));
+            qevercloud::newRetryPolicy()));
 }
 
 TEST_F(NotesProcessorTest, CtorNullLocalStorage)
@@ -241,7 +241,7 @@ TEST_F(NotesProcessorTest, CtorNullLocalStorage)
             nullptr, m_mockSyncConflictResolver, m_mockNoteFullDataDownloader,
             m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -252,7 +252,7 @@ TEST_F(NotesProcessorTest, CtorNullSyncConflictResolver)
             m_mockLocalStorage, nullptr, m_mockNoteFullDataDownloader,
             m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -263,7 +263,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteFullDataDownloader)
             m_mockLocalStorage, m_mockSyncConflictResolver, nullptr,
             m_mockNoteStoreProvider, m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -275,7 +275,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteStoreProvider)
             m_mockNoteFullDataDownloader, nullptr,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -286,7 +286,7 @@ TEST_F(NotesProcessorTest, CtorNullInkNoteImageDownloaderFactory)
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider, nullptr,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -297,7 +297,7 @@ TEST_F(NotesProcessorTest, CtorNullNoteThumbnailDownloaderFactory)
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory, nullptr, m_syncOptions,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
 }
 
@@ -309,19 +309,8 @@ TEST_F(NotesProcessorTest, CtorNullSyncOptions)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, nullptr,
-            qevercloud::newRequestContext(), qevercloud::newRetryPolicy()),
+            qevercloud::newRetryPolicy()),
         InvalidArgument);
-}
-
-TEST_F(NotesProcessorTest, CtorNullRequestContext)
-{
-    EXPECT_NO_THROW(
-        const auto notesProcessor = std::make_shared<NotesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver,
-            m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
-            m_mockInkNoteImageDownloaderFactory,
-            m_mockNoteThumbnailDownloaderFactory, m_syncOptions, nullptr,
-            qevercloud::newRetryPolicy()));
 }
 
 TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
@@ -332,7 +321,7 @@ TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
             m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            qevercloud::newRequestContext(), nullptr));
+            nullptr));
 }
 
 TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
@@ -348,8 +337,9 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
@@ -521,8 +511,9 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -709,8 +700,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -923,8 +915,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -1139,8 +1132,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -1373,8 +1367,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -1604,8 +1599,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullNoteDataCallCount, 0);
@@ -1890,8 +1886,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullNoteDataCallCount, 0);
@@ -2049,8 +2046,9 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2119,8 +2117,9 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2240,8 +2239,9 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2484,8 +2484,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2760,8 +2761,9 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2953,8 +2955,9 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3137,8 +3140,9 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3343,8 +3347,9 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3550,8 +3555,9 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3746,8 +3752,9 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future =
-        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+    auto future = notesProcessor->processNotes(
+        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
+        callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());

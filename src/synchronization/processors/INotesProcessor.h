@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/Fwd.h>
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/TypeAliases.h>
@@ -32,7 +33,6 @@
 #include <QList>
 
 #include <memory>
-#include <utility>
 
 namespace quentier::synchronization {
 
@@ -71,6 +71,7 @@ public:
     [[nodiscard]] virtual QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        qevercloud::IRequestContextPtr ctx,
         ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 

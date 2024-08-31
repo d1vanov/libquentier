@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/Fwd.h>
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
@@ -74,6 +75,7 @@ public:
     [[nodiscard]] virtual QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        qevercloud::IRequestContextPtr ctx,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid =
             std::nullopt,
         ICallbackWeakPtr callbackWeak = {}) = 0;

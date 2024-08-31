@@ -1769,6 +1769,7 @@ void Downloader::downloadNotes(
 
     auto notesFuture = m_notesProcessor->processNotes(
         downloadContext->syncChunks, downloadContext->canceler,
+        downloadContext->ctx,
         downloadContext->linkedNotebook
             ? downloadContext->linkedNotebook->guid()
             : std::nullopt,

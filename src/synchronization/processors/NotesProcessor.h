@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,12 +55,12 @@ public:
         INoteStoreProviderPtr noteStoreProvider,
         IInkNoteImageDownloaderFactoryPtr inkNoteImageDownloaderFactory,
         INoteThumbnailDownloaderFactoryPtr noteThumbnailDownloaderFactory,
-        ISyncOptionsPtr syncOptions, qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {});
+        ISyncOptionsPtr syncOptions, qevercloud::IRetryPolicyPtr retryPolicy = {});
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        qevercloud::IRequestContextPtr ctx,
         ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
@@ -81,6 +81,7 @@ private:
     {
         utility::cancelers::ManualCancelerPtr manualCanceler;
         utility::cancelers::ICancelerPtr canceler;
+        qevercloud::IRequestContextPtr ctx;
         ICallbackWeakPtr callbackWeak;
 
         DownloadNotesStatusPtr status;
@@ -138,7 +139,7 @@ private:
         const QDir & inkNoteImagesStorageDir);
 
     [[nodiscard]] QFuture<qevercloud::Note> downloadNoteThumbnail(
-        qevercloud::Note note);
+        const ContextPtr & context, qevercloud::Note note);
 
     void putNoteToLocalStorage(
         const ContextPtr & context,
@@ -153,7 +154,6 @@ private:
     const IInkNoteImageDownloaderFactoryPtr m_inkNoteImageDownloaderFactory;
     const INoteThumbnailDownloaderFactoryPtr m_noteThumbnailDownloaderFactory;
     const ISyncOptionsPtr m_syncOptions;
-    const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
 
