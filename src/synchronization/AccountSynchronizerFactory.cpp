@@ -198,7 +198,7 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
 
     auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         localStorage, std::move(resourceFullDataDownloader), noteStoreProvider,
-        ctx, retryPolicy);
+        retryPolicy);
 
     auto durableResourcesProcessor =
         std::make_shared<DurableResourcesProcessor>(

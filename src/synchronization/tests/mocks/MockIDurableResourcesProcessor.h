@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,6 +31,7 @@ public:
         QFuture<DownloadResourcesStatusPtr>, processResources,
         (const QList<qevercloud::SyncChunk> & syncChunks,
          utility::cancelers::ICancelerPtr canceler,
+         qevercloud::IRequestContextPtr ctx,
          const std::optional<qevercloud::Guid> & linkedNotebookGuid,
          ICallbackWeakPtr callbackWeak),
         (override));

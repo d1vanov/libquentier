@@ -54,11 +54,11 @@ namespace quentier::synchronization {
 ResourcesProcessor::ResourcesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     IResourceFullDataDownloaderPtr resourceFullDataDownloader,
-    INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
+    INoteStoreProviderPtr noteStoreProvider,
     qevercloud::IRetryPolicyPtr retryPolicy) :
     m_localStorage{std::move(localStorage)},
     m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)},
-    m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
+    m_noteStoreProvider{std::move(noteStoreProvider)},
     m_retryPolicy{std::move(retryPolicy)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
@@ -79,7 +79,8 @@ ResourcesProcessor::ResourcesProcessor(
 
 QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks,
-    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
+    utility::cancelers::ICancelerPtr canceler,
+    qevercloud::IRequestContextPtr ctx, ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG(
         "synchronization::ResourcesProcessor",
@@ -117,6 +118,7 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
         local_storage::ILocalStorage::FetchResourceOptions;
 
     auto context = std::make_shared<Context>();
+    context->ctx = std::move(ctx);
 
     context->status = std::make_shared<DownloadResourcesStatus>();
     context->statusMutex = std::make_shared<QMutex>();
@@ -569,7 +571,7 @@ void ResourcesProcessor::downloadFullResourceData(
             << ", note guid = " << *resource.noteGuid());
 
     auto noteStoreFuture = m_noteStoreProvider->noteStoreForNoteGuid(
-        *resource.noteGuid(), m_ctx, m_retryPolicy);
+        *resource.noteGuid(), context->ctx, m_retryPolicy);
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
@@ -629,7 +631,7 @@ void ResourcesProcessor::downloadFullResourceData(
 
     auto downloadFullResourceDataFuture =
         m_resourceFullDataDownloader->downloadFullResourceData(
-            *resource.guid(), noteStore);
+            *resource.guid(), noteStore, context->ctx);
 
     const auto selfWeak = weak_from_this();
 

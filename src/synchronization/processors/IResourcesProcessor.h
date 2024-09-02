@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <synchronization/types/Fwd.h>
 
+#include <qevercloud/Fwd.h>
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Resource.h>
 #include <qevercloud/types/TypeAliases.h>
@@ -65,6 +66,7 @@ public:
     [[nodiscard]] virtual QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        qevercloud::IRequestContextPtr ctx,
         ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 

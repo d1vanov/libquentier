@@ -1830,6 +1830,7 @@ void Downloader::downloadResources(
 
     auto resourcesFuture = m_resourcesProcessor->processResources(
         downloadContext->syncChunks, downloadContext->canceler,
+        downloadContext->ctx,
         downloadContext->linkedNotebook
             ? downloadContext->linkedNotebook->guid()
             : std::nullopt,

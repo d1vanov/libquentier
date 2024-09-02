@@ -240,6 +240,7 @@ DurableResourcesProcessor::DurableResourcesProcessor(
 QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks,
     utility::cancelers::ICancelerPtr canceler,
+    qevercloud::IRequestContextPtr ctx,
     const std::optional<qevercloud::Guid> & linkedNotebookGuid,
     ICallbackWeakPtr callbackWeak)
 {
@@ -260,8 +261,9 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
 
     if (alreadyProcessedResourcesInfo.isEmpty()) {
         return processResourcesImpl(
-            syncChunks, std::move(canceler), std::move(previousResources),
-            linkedNotebookGuid, std::move(callbackWeak));
+            syncChunks, std::move(canceler), std::move(ctx),
+            std::move(previousResources), linkedNotebookGuid,
+            std::move(callbackWeak));
     }
 
     auto filteredSyncChunks = syncChunks;
@@ -294,8 +296,9 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     }
 
     return processResourcesImpl(
-        filteredSyncChunks, std::move(canceler), std::move(previousResources),
-        linkedNotebookGuid, std::move(callbackWeak));
+        filteredSyncChunks, std::move(canceler), std::move(ctx),
+        std::move(previousResources), linkedNotebookGuid,
+        std::move(callbackWeak));
 }
 
 QList<qevercloud::Resource>
@@ -318,6 +321,7 @@ QFuture<DownloadResourcesStatusPtr>
     DurableResourcesProcessor::processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        qevercloud::IRequestContextPtr ctx,
         QList<qevercloud::Resource> previousResources,
         const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         ICallbackWeakPtr callbackWeak)
@@ -336,7 +340,7 @@ QFuture<DownloadResourcesStatusPtr>
             std::move(callbackWeak), weak_from_this(), dir);
 
         auto processSyncChunksFuture = m_resourcesProcessor->processResources(
-            syncChunks, std::move(canceler), callback);
+            syncChunks, std::move(canceler), std::move(ctx), callback);
 
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), currentThread, promise,
@@ -358,19 +362,19 @@ QFuture<DownloadResourcesStatusPtr>
         std::make_shared<Callback>(callbackWeak, selfWeak, dir);
 
     auto resourcesFuture = m_resourcesProcessor->processResources(
-        pseudoSyncChunks, canceler, callback);
+        pseudoSyncChunks, canceler, ctx, callback);
 
     threading::thenOrFailed(
         std::move(resourcesFuture), currentThread, promise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, promise, currentThread, linkedNotebookGuid,
-             syncChunks, canceler = std::move(canceler),
+             syncChunks, canceler = std::move(canceler), ctx = std::move(ctx),
              callbackWeak = std::move(callbackWeak)](
                 DownloadResourcesStatusPtr status) mutable {
                 auto processResourcesFuture = processResourcesImpl(
-                    syncChunks, std::move(canceler), {}, linkedNotebookGuid,
-                    std::move(callbackWeak));
+                    syncChunks, std::move(canceler), std::move(ctx), {},
+                    linkedNotebookGuid, std::move(callbackWeak));
 
                 threading::thenOrFailed(
                     std::move(processResourcesFuture), currentThread, promise,

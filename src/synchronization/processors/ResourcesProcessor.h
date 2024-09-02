@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,12 +50,12 @@ public:
         local_storage::ILocalStoragePtr localStorage,
         IResourceFullDataDownloaderPtr resourceFullDataDownloader,
         INoteStoreProviderPtr noteStoreProvider,
-        qevercloud::IRequestContextPtr ctx = {},
         qevercloud::IRetryPolicyPtr retryPolicy = {});
 
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
         utility::cancelers::ICancelerPtr canceler,
+        qevercloud::IRequestContextPtr ctx,
         ICallbackWeakPtr callbackWeak) override;
 
 private:
@@ -74,6 +74,7 @@ private:
     {
         utility::cancelers::ManualCancelerPtr manualCanceler;
         utility::cancelers::ICancelerPtr canceler;
+        qevercloud::IRequestContextPtr ctx;
         ICallbackWeakPtr callbackWeak;
 
         DownloadResourcesStatusPtr status;
@@ -126,7 +127,6 @@ private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const IResourceFullDataDownloaderPtr m_resourceFullDataDownloader;
     const INoteStoreProviderPtr m_noteStoreProvider;
-    const qevercloud::IRequestContextPtr m_ctx;
     const qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
 
