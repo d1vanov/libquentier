@@ -157,6 +157,9 @@ protected:
 
     const utility::cancelers::ManualCancelerPtr m_manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
+
+    const qevercloud::IRequestContextPtr m_ctx =
+        qevercloud::newRequestContext();
 };
 
 struct NotesProcessorCallback final : public INotesProcessor::ICallback
@@ -320,8 +323,7 @@ TEST_F(NotesProcessorTest, CtorNullRetryPolicy)
             m_mockLocalStorage, m_mockSyncConflictResolver,
             m_mockNoteFullDataDownloader, m_mockNoteStoreProvider,
             m_mockInkNoteImageDownloaderFactory,
-            m_mockNoteThumbnailDownloaderFactory, m_syncOptions,
-            nullptr));
+            m_mockNoteThumbnailDownloaderFactory, m_syncOptions, nullptr));
 }
 
 TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
@@ -338,8 +340,7 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     EXPECT_NO_THROW(future.waitForFinished());
@@ -462,29 +463,28 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -512,8 +512,7 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -645,35 +644,34 @@ TEST_P(
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                if (it->updateSequenceNum().value() == 2) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{
-                            ErrorString{"Failed to download full note data"}});
-                }
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{
+                        ErrorString{"Failed to download full note data"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -701,8 +699,7 @@ TEST_P(
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -866,29 +863,28 @@ TEST_P(
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -916,8 +912,7 @@ TEST_P(
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -1078,29 +1073,28 @@ TEST_P(
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -1133,8 +1127,7 @@ TEST_P(
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -1303,29 +1296,28 @@ TEST_P(
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -1368,8 +1360,7 @@ TEST_P(
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -1539,40 +1530,39 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
     const qint32 rateLimitDurationSec = 100;
     int downloadFullNoteDataCallCount = 0;
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                ++downloadFullNoteDataCallCount;
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            ++downloadFullNoteDataCallCount;
 
-                EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
+            EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                if (it->updateSequenceNum().value() == 2) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setRateLimitDuration(rateLimitDurationSec)
-                            .build());
-                }
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setRateLimitDuration(rateLimitDurationSec)
+                        .build());
+            }
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -1600,8 +1590,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullNoteDataCallCount, 0);
@@ -1827,39 +1816,37 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
 
     int downloadFullNoteDataCallCount = 0;
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                ++downloadFullNoteDataCallCount;
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            ++downloadFullNoteDataCallCount;
 
-                EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
+            EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                if (it->updateSequenceNum().value() == 2) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-                            .build());
-                }
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+                        .build());
+            }
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {
@@ -1887,8 +1874,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullNoteDataCallCount, 0);
@@ -2047,8 +2033,7 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2118,8 +2103,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2240,8 +2224,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2452,29 +2435,28 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_FALSE(noteStore->linkedNotebookGuid().has_value());
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     const auto notesProcessor = std::make_shared<NotesProcessor>(
         m_mockLocalStorage, m_mockSyncConflictResolver,
@@ -2485,8 +2467,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2695,29 +2676,28 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(
         *m_mockNoteThumbnailDownloaderFactory,
@@ -2762,8 +2742,7 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -2891,29 +2870,28 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(
         *m_mockNoteThumbnailDownloaderFactory,
@@ -2956,8 +2934,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3084,29 +3061,28 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(
         *m_mockNoteThumbnailDownloaderFactory,
@@ -3141,8 +3117,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3275,29 +3250,28 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(
         *m_mockInkNoteImageDownloaderFactory,
@@ -3311,8 +3285,9 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
     EXPECT_CALL(*m_mockInkNoteImageDownloader, downloadAsync)
         .WillOnce(
             [&](const qevercloud::Guid & resourceGuid, const QSize size,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
+                const qevercloud::IRequestContextPtr & ctx) {
                 const auto & resource = notes[1].resources().value()[0];
+                EXPECT_EQ(ctx.get(), m_ctx.get());
 
                 EXPECT_EQ(resourceGuid, resource.guid().value());
                 EXPECT_EQ(resource.height(), size.height());
@@ -3348,8 +3323,7 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3493,29 +3467,28 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(
         *m_mockInkNoteImageDownloaderFactory,
@@ -3556,8 +3529,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
@@ -3696,29 +3668,28 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
                 m_mockNoteStore)));
 
     EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid noteGuid,
-                const qevercloud::INoteStorePtr & noteStore,
-                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const qevercloud::INoteStorePtr & noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(noteStore->linkedNotebookGuid(), linkedNotebookGuid);
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    notes.begin(), notes.end(),
-                    [&](const qevercloud::Note & note) {
-                        return note.guid() && (*note.guid() == noteGuid);
-                    });
-                if (Q_UNLIKELY(it == notes.end())) {
-                    return threading::makeExceptionalFuture<qevercloud::Note>(
-                        RuntimeError{ErrorString{
-                            "Detected attempt to download unrecognized note"}});
-                }
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(notes.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Note>(
-                    addContentToNote(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
 
     EXPECT_CALL(
         *m_mockInkNoteImageDownloaderFactory,
@@ -3753,8 +3724,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
     auto future = notesProcessor->processNotes(
-        syncChunks, m_manualCanceler, qevercloud::newRequestContext(),
-        callback);
+        syncChunks, m_manualCanceler, m_ctx, callback);
 
     waitForFuture(future);
     ASSERT_NO_THROW(future.waitForFinished());
