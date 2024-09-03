@@ -29,6 +29,7 @@ namespace quentier::synchronization {
 QTextStream & AuthenticationInfo::print(QTextStream & strm) const
 {
     strm << "AuthenticationInfo: userId = " << m_userId
+         << ", authToken = " << m_authToken
          << ", authToken size = " << m_authToken.size()
          << ", authTokenExpirationTime = "
          << printableDateTimeFromTimestamp(m_authTokenExpirationTime)

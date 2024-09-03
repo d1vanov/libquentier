@@ -412,33 +412,56 @@ QFuture<IAuthenticationInfoPtr>
 
     const auto & uri = linkedNotebook.uri();
 
+    auto * currentThread = QThread::currentThread();
+
     if ((!sharedNotebookGlobalId || sharedNotebookGlobalId->isEmpty()) && uri &&
         !uri->isEmpty())
     {
         // This appears to be a public notebook and per the official
         // documentation from Evernote
         // (dev.evernote.com/media/pdf/edam-sync.pdf) it doesn't need the
-        // authentication token at all so will use empty string for its
-        // authentication token
-        auto authenticationInfo = std::make_shared<AuthenticationInfo>();
-        authenticationInfo->m_userId = account.id();
-        authenticationInfo->m_authTokenExpirationTime =
-            std::numeric_limits<qint64>::max();
+        // authentication token at all but in practice attempts to use empty
+        // authentication token lead to sync errors but attempts to use user's
+        // own authentication token don't lead to errors. So using user's own
+        // authentication token here.
 
-        authenticationInfo->m_authenticationTime =
-            QDateTime::currentMSecsSinceEpoch();
+        QNDEBUG(
+            "synchronization::AuthenticationInfoProvider",
+            "Using user's own authentication token for public linked notebook: "
+                << linkedNotebook);
 
-        authenticationInfo->m_shardId =
-            linkedNotebook.shardId().value_or(QString{});
+        auto userOwnAuthInfoFuture = authenticateAccount(account, mode);
 
-        authenticationInfo->m_noteStoreUrl =
-            linkedNotebook.noteStoreUrl().value_or(QString{});
+        threading::thenOrFailed(
+            std::move(userOwnAuthInfoFuture), currentThread, promise,
+            [promise, linkedNotebook = std::move(linkedNotebook)](
+                const IAuthenticationInfoPtr & authenticationInfo) {
+                Q_ASSERT(authenticationInfo);
 
-        authenticationInfo->m_webApiUrlPrefix =
-            linkedNotebook.webApiUrlPrefix().value_or(QString{});
+                auto linkedNotebookAuthInfo =
+                    std::make_shared<AuthenticationInfo>();
+                linkedNotebookAuthInfo->m_userId = authenticationInfo->userId();
+                linkedNotebookAuthInfo->m_authToken =
+                    authenticationInfo->authToken();
+                linkedNotebookAuthInfo->m_authTokenExpirationTime =
+                    authenticationInfo->authTokenExpirationTime();
 
-        promise->addResult(std::move(authenticationInfo));
-        promise->finish();
+                linkedNotebookAuthInfo->m_authenticationTime =
+                    authenticationInfo->authenticationTime();
+
+                linkedNotebookAuthInfo->m_shardId =
+                    linkedNotebook.shardId().value_or(QString{});
+
+                linkedNotebookAuthInfo->m_noteStoreUrl =
+                    linkedNotebook.noteStoreUrl().value_or(QString{});
+
+                linkedNotebookAuthInfo->m_webApiUrlPrefix =
+                    linkedNotebook.webApiUrlPrefix().value_or(QString{});
+
+                promise->addResult(std::move(linkedNotebookAuthInfo));
+                promise->finish();
+            });
+
         return future;
     }
 
@@ -494,7 +517,6 @@ QFuture<IAuthenticationInfoPtr>
             m_host, userIdStr, *linkedNotebook.guid()));
 
     const auto selfWeak = weak_from_this();
-    auto * currentThread = QThread::currentThread();
 
     auto readAuthTokenThenFuture = threading::then(
         std::move(readAuthTokenFuture), currentThread,

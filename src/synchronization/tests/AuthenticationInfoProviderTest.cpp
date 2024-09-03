@@ -1378,6 +1378,46 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
             .setShardId(m_authenticationInfo->shardId())
             .build();
 
+    InSequence s;
+
+    EXPECT_CALL(*m_mockAuthenticator, authenticateAccount(account))
+        .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            m_authenticationInfo)));
+
+    static const QString appName = QCoreApplication::applicationName();
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_auth_token"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_auth_token_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->authToken());
+
+            return threading::makeReadyFuture();
+        });
+
+    EXPECT_CALL(*m_mockKeychainService, writePassword)
+        .WillOnce([&](const QString & service, const QString & key,
+                      const QString & password) {
+            EXPECT_EQ(service, appName + QStringLiteral("_shard_id"));
+
+            EXPECT_EQ(
+                key,
+                appName + QStringLiteral("_shard_id_") + m_host +
+                    QStringLiteral("_") +
+                    QString::number(m_authenticationInfo->userId()));
+
+            EXPECT_EQ(password, m_authenticationInfo->shardId());
+
+            return threading::makeReadyFuture();
+        });
+
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account, linkedNotebook, AuthenticationInfoProvider::Mode::NoCache);
 
@@ -1388,7 +1428,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
     EXPECT_EQ(authenticationInfo->userId(), account.id());
     EXPECT_EQ(
         authenticationInfo->authTokenExpirationTime(),
-        std::numeric_limits<qint64>::max());
+        m_authenticationInfo->authTokenExpirationTime());
 
     EXPECT_EQ(authenticationInfo->shardId(), linkedNotebook.shardId().value());
     EXPECT_EQ(
@@ -1399,7 +1439,8 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
         authenticationInfo->webApiUrlPrefix(),
         linkedNotebook.webApiUrlPrefix().value());
 
-    EXPECT_TRUE(authenticationInfo->authToken().isEmpty());
+    EXPECT_EQ(
+        authenticationInfo->authToken(), m_authenticationInfo->authToken());
 }
 
 TEST_F(
