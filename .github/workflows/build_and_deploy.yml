@@ -1435,28 +1435,28 @@ jobs:
 
       - name: Download linux artifact
         id: download_linux_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: libquentier_linux
           path: '${{ github.workspace }}/artifacts'
 
       - name: Download macOS artifact
         id: download_macos_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: libquentier_macos
           path: '${{ github.workspace }}/artifacts'
 
       - name: Download Windows x86 artifact
         id: download_windows_x86_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: libquentier_windows_x86
           path: '${{ github.workspace }}/artifacts'
 
       - name: Download Windows x64 artifact
         id: download_windows_x64_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: libquentier_windows_x64
           path: '${{ github.workspace }}/artifacts'
