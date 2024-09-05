@@ -435,7 +435,7 @@ jobs:
 
       - name: Upload libquentier artifact
         id: upload_artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libquentier_linux
           path: '${{ github.workspace }}/build/installdir/libquentier_linux.zip'
@@ -668,7 +668,7 @@ jobs:
 
       - name: Upload libquentier artifact
         id: upload_artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libquentier_macos
           path: '${{ github.workspace }}/build/installdir/libquentier_macos.zip'
@@ -1342,7 +1342,7 @@ jobs:
 
       - name: Upload x86 libquentier
         id: upload_artifact_x86
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libquentier_windows_x86
           path: '${{ github.workspace }}\build\installdir\libquentier_windows_x86.zip'
@@ -1350,7 +1350,7 @@ jobs:
 
       - name: Upload x64 libquentier
         id: upload_artifact_x64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libquentier_windows_x64
           path: '${{ github.workspace }}\build\installdir\libquentier_windows_x64.zip'
@@ -1435,28 +1435,28 @@ jobs:
 
       - name: Download linux artifact
         id: download_linux_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: libquentier_linux
           path: '${{ github.workspace }}/artifacts'
 
       - name: Download macOS artifact
         id: download_macos_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: libquentier_macos
           path: '${{ github.workspace }}/artifacts'
 
       - name: Download Windows x86 artifact
         id: download_windows_x86_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: libquentier_windows_x86
           path: '${{ github.workspace }}/artifacts'
 
       - name: Download Windows x64 artifact
         id: download_windows_x64_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: libquentier_windows_x64
           path: '${{ github.workspace }}/artifacts'
