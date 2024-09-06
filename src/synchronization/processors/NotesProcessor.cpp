@@ -573,6 +573,7 @@ void NotesProcessor::downloadFullNoteDataImpl(
 {
     Q_ASSERT(noteStore);
     Q_ASSERT(note.guid());
+    Q_ASSERT(note.notebookGuid());
     Q_ASSERT(note.updateSequenceNum());
 
     const auto & noteGuid = *note.guid();
@@ -657,11 +658,13 @@ void NotesProcessor::processDownloadedFullNoteData(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & promise,
     qevercloud::Note note, const NoteKind noteKind)
 {
+    Q_ASSERT(note.guid());
+    Q_ASSERT(note.notebookGuid());
+
     QNDEBUG(
         "synchronization::NotesProcessor",
         "NotesProcessor::processDownloadedFullNoteData: note guid = "
-            << note.guid().value_or(QStringLiteral("<none>"))
-            << ", local id = " << note.localId());
+            << *note.guid() << ", notebook guid = " << *note.notebookGuid());
 
     auto * currentThread = QThread::currentThread();
 
@@ -694,8 +697,7 @@ void NotesProcessor::processDownloadedFullNoteData(
                 QNWARNING(
                     "synchronization::NotesProcessor",
                     "Failed to download thumbnail for note with guid "
-                        << note.guid().value_or(QStringLiteral("<empty>"))
-                        << ": " << e.what());
+                        << *note.guid() << ": " << e.what());
                 notePromise->addResult(std::move(note));
                 notePromise->finish();
             });
@@ -710,13 +712,15 @@ void NotesProcessor::processDownloadedFullNoteData(
             selfWeak,
             [this, selfWeak, context, promise, currentThread,
              noteKind](qevercloud::Note note) mutable {
+                Q_ASSERT(note.guid());
+                Q_ASSERT(note.notebookGuid());
                 const std::optional<QDir> & inkNoteImagesStorageDir =
                     m_syncOptions->inkNoteImagesStorageDir();
                 if (inkNoteImagesStorageDir) {
                     auto inkResource = inkNoteResource(note);
                     if (inkResource) {
                         auto future = downloadInkNoteImage(
-                            context, note.notebookLocalId(),
+                            context, *note.notebookGuid(),
                             std::move(*inkResource), *inkNoteImagesStorageDir);
 
                         auto thenFuture = threading::then(
@@ -845,7 +849,7 @@ void NotesProcessor::processNoteDownloadingError(
 }
 
 QFuture<void> NotesProcessor::downloadInkNoteImage(
-    const ContextPtr & context, const QString & notebookLocalId,
+    const ContextPtr & context, const qevercloud::Guid & notebookGuid,
     qevercloud::Resource resource, const QDir & inkNoteImagesStorageDir)
 {
     Q_ASSERT(resource.guid());
@@ -856,7 +860,8 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
         "synchronization::NotesProcessor",
         "NotesProcessor::downloadInkNoteImage: resource guid = "
             << *resource.guid() << ", height = " << *resource.height()
-            << ", width = " << *resource.width());
+            << ", width = " << *resource.width()
+            << ", notebook guid = " << notebookGuid);
 
     if (!inkNoteImagesStorageDir.exists()) {
         if (!inkNoteImagesStorageDir.mkpath(
@@ -876,7 +881,7 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
 
     auto downloaderFuture =
         m_inkNoteImageDownloaderFactory->createInkNoteImageDownloader(
-            notebookLocalId, context->ctx);
+            notebookGuid, context->ctx);
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
@@ -948,10 +953,12 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
 {
     Q_ASSERT(context);
     Q_ASSERT(note.guid());
+    Q_ASSERT(note.notebookGuid());
 
     QNDEBUG(
         "synchronization::NotesProcessor",
-        "NotesProcessor::downloadNoteThumbnail: note guid = " << *note.guid());
+        "NotesProcessor::downloadNoteThumbnail: note guid = " << *note.guid()
+            << ", notebook guid = " << *note.notebookGuid());
 
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
@@ -959,7 +966,7 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
 
     auto noteThumbnailDownloaderFuture =
         m_noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-            note.notebookLocalId(), context->ctx);
+            *note.notebookGuid(), context->ctx);
 
     auto * currentThread = QThread::currentThread();
 

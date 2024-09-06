@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,7 +48,7 @@ public:
 public: // IInkNoteImageDownloaderFactory
     [[nodiscard]] QFuture<qevercloud::IInkNoteImageDownloaderPtr>
         createInkNoteImageDownloader(
-            QString notebookLocalId,
+            qevercloud::Guid notebookGuid,
             qevercloud::IRequestContextPtr ctx = {}) override;
 
 private:

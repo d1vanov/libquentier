@@ -3918,6 +3918,11 @@ bool putNote(
         }
     }
 
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "Successfully put note into the local storage database: note local id "
+            << "= " << note.localId());
+
     return true;
 }
 

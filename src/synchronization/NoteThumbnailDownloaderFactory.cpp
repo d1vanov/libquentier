@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -81,7 +81,7 @@ NoteThumbnailDownloaderFactory::NoteThumbnailDownloaderFactory(
 
 QFuture<qevercloud::INoteThumbnailDownloaderPtr>
     NoteThumbnailDownloaderFactory::createNoteThumbnailDownloader(
-        QString notebookLocalId, qevercloud::IRequestContextPtr ctx)
+        qevercloud::Guid notebookGuid, qevercloud::IRequestContextPtr ctx)
 {
     auto promise =
         std::make_shared<QPromise<qevercloud::INoteThumbnailDownloaderPtr>>();
@@ -89,8 +89,7 @@ QFuture<qevercloud::INoteThumbnailDownloaderPtr>
     promise->start();
 
     auto linkedNotebookFuture =
-        m_linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
-            notebookLocalId);
+        m_linkedNotebookFinder->findLinkedNotebookByNotebookGuid(notebookGuid);
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();

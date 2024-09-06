@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <qevercloud/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QFuture>
 #include <QString>
@@ -32,7 +33,7 @@ public:
 
     [[nodiscard]] virtual QFuture<qevercloud::INoteThumbnailDownloaderPtr>
         createNoteThumbnailDownloader(
-            QString notebookLocalId,
+            qevercloud::Guid notebookGuid,
             qevercloud::IRequestContextPtr ctx = {}) = 0;
 };
 

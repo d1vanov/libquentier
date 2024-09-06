@@ -134,7 +134,7 @@ private:
         const qevercloud::Note & note, const QException & e);
 
     [[nodiscard]] QFuture<void> downloadInkNoteImage(
-        const ContextPtr & context, const QString & notebookLocalId,
+        const ContextPtr & context, const qevercloud::Guid & notebookGuid,
         qevercloud::Resource inkNoteResource,
         const QDir & inkNoteImagesStorageDir);
 

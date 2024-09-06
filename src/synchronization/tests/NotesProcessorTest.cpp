@@ -2701,7 +2701,7 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
 
     EXPECT_CALL(
         *m_mockNoteThumbnailDownloaderFactory,
-        createNoteThumbnailDownloader(notebookLocalId, _))
+        createNoteThumbnailDownloader(notebookGuid, _))
         .WillOnce(Return(
             threading::makeReadyFuture<qevercloud::INoteThumbnailDownloaderPtr>(
                 m_mockNoteThumbnailDownloader)));
@@ -2895,7 +2895,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
 
     EXPECT_CALL(
         *m_mockNoteThumbnailDownloaderFactory,
-        createNoteThumbnailDownloader(notebookLocalId, _))
+        createNoteThumbnailDownloader(notebookGuid, _))
         .WillOnce(Return(
             threading::makeReadyFuture<qevercloud::INoteThumbnailDownloaderPtr>(
                 m_mockNoteThumbnailDownloader)));
@@ -3086,7 +3086,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
 
     EXPECT_CALL(
         *m_mockNoteThumbnailDownloaderFactory,
-        createNoteThumbnailDownloader(notebookLocalId, _))
+        createNoteThumbnailDownloader(notebookGuid, _))
         .WillOnce(Return(threading::makeExceptionalFuture<
                          qevercloud::INoteThumbnailDownloaderPtr>(
             RuntimeError{ErrorString{QStringLiteral("some error")}})));
@@ -3275,7 +3275,7 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
 
     EXPECT_CALL(
         *m_mockInkNoteImageDownloaderFactory,
-        createInkNoteImageDownloader(notebookLocalId, _))
+        createInkNoteImageDownloader(notebookGuid, _))
         .WillOnce(Return(
             threading::makeReadyFuture<qevercloud::IInkNoteImageDownloaderPtr>(
                 m_mockInkNoteImageDownloader)));
@@ -3492,7 +3492,7 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
 
     EXPECT_CALL(
         *m_mockInkNoteImageDownloaderFactory,
-        createInkNoteImageDownloader(notebookLocalId, _))
+        createInkNoteImageDownloader(notebookGuid, _))
         .WillOnce(Return(
             threading::makeReadyFuture<qevercloud::IInkNoteImageDownloaderPtr>(
                 m_mockInkNoteImageDownloader)));
@@ -3693,7 +3693,7 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
 
     EXPECT_CALL(
         *m_mockInkNoteImageDownloaderFactory,
-        createInkNoteImageDownloader(notebookLocalId, _))
+        createInkNoteImageDownloader(notebookGuid, _))
         .WillOnce(Return(threading::makeExceptionalFuture<
                          qevercloud::IInkNoteImageDownloaderPtr>(
             RuntimeError{ErrorString{QStringLiteral("some error")}})));

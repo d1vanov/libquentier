@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -78,7 +78,7 @@ InkNoteImageDownloaderFactory::InkNoteImageDownloaderFactory(
 
 QFuture<qevercloud::IInkNoteImageDownloaderPtr>
     InkNoteImageDownloaderFactory::createInkNoteImageDownloader(
-        QString notebookLocalId, qevercloud::IRequestContextPtr ctx)
+        qevercloud::Guid notebookGuid, qevercloud::IRequestContextPtr ctx)
 {
     auto promise =
         std::make_shared<QPromise<qevercloud::IInkNoteImageDownloaderPtr>>();
@@ -86,8 +86,7 @@ QFuture<qevercloud::IInkNoteImageDownloaderPtr>
     promise->start();
 
     auto linkedNotebookFuture =
-        m_linkedNotebookFinder->findLinkedNotebookByNotebookLocalId(
-            notebookLocalId);
+        m_linkedNotebookFinder->findLinkedNotebookByNotebookGuid(notebookGuid);
 
     auto selfWeak = weak_from_this();
 

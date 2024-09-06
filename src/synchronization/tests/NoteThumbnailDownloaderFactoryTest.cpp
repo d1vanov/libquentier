@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -108,17 +108,17 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookLocalId = UidGenerator::Generate();
+    const auto notebookGuid = UidGenerator::Generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
-        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        findLinkedNotebookByNotebookGuid(notebookGuid))
         .WillOnce(Return(threading::makeExceptionalFuture<
                          std::optional<qevercloud::LinkedNotebook>>(
             RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-        notebookLocalId);
+        notebookGuid);
 
     waitForFuture(future);
     EXPECT_THROW(future.result(), RuntimeError);
@@ -133,11 +133,11 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookLocalId = UidGenerator::Generate();
+    const auto notebookGuid = UidGenerator::Generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
-        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        findLinkedNotebookByNotebookGuid(notebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
@@ -151,7 +151,7 @@ TEST_F(
                 RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-        notebookLocalId);
+        notebookGuid);
 
     waitForFuture(future);
     EXPECT_THROW(future.result(), RuntimeError);
@@ -164,11 +164,11 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, UserOwnNoteThumbnailDownloader)
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookLocalId = UidGenerator::Generate();
+    const auto notebookGuid = UidGenerator::Generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
-        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        findLinkedNotebookByNotebookGuid(notebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(std::nullopt)));
@@ -181,7 +181,7 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, UserOwnNoteThumbnailDownloader)
             std::make_shared<AuthenticationInfo>())));
 
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-        notebookLocalId);
+        notebookGuid);
 
     waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
@@ -199,7 +199,7 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookLocalId = UidGenerator::Generate();
+    const auto notebookGuid = UidGenerator::Generate();
     const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
@@ -210,7 +210,7 @@ TEST_F(
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
-        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        findLinkedNotebookByNotebookGuid(notebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
@@ -225,7 +225,7 @@ TEST_F(
                 RuntimeError{ErrorString{QStringLiteral("some error")}})));
 
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-        notebookLocalId);
+        notebookGuid);
 
     waitForFuture(future);
     EXPECT_THROW(future.result(), RuntimeError);
@@ -238,7 +238,7 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookLocalId = UidGenerator::Generate();
+    const auto notebookGuid = UidGenerator::Generate();
     const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
@@ -249,7 +249,7 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
-        findLinkedNotebookByNotebookLocalId(notebookLocalId))
+        findLinkedNotebookByNotebookGuid(notebookGuid))
         .WillOnce(
             Return(threading::makeReadyFuture<
                    std::optional<qevercloud::LinkedNotebook>>(linkedNotebook)));
@@ -263,7 +263,7 @@ TEST_F(NoteThumbnailDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
             std::make_shared<AuthenticationInfo>())));
 
     auto future = noteThumbnailDownloaderFactory->createNoteThumbnailDownloader(
-        notebookLocalId);
+        notebookGuid);
 
     waitForFuture(future);
     ASSERT_EQ(future.resultCount(), 1);
