@@ -1002,6 +1002,12 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     QCoreApplication::processEvents();
     ASSERT_EQ(notifierListener.putNotes().size(), 1);
+
+    // If note only has tag guids then put note would contain tag local ids
+    // as well, so the comparison would fail unless we ensure they stay the
+    // same in the compared note
+    note.setTagLocalIds(notifierListener.putNotes()[0].tagLocalIds());
+
     EXPECT_EQ(notifierListener.putNotes()[0], note);
 
     // === Count ===

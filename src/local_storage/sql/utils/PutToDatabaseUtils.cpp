@@ -3683,6 +3683,10 @@ bool putNote(
         return false;
     }
 
+    if (note.notebookLocalId().isEmpty()) {
+        note.setNotebookLocalId(notebookLocalId);
+    }
+
     const auto composeFullError = [&] {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -3799,6 +3803,10 @@ bool putNote(
         if (!tagIds) {
             composeFullError();
             return false;
+        }
+
+        if (note.tagLocalIds().isEmpty()) {
+            note.setTagLocalIds(tagIds->tagLocalIds);
         }
 
         error.clear();
