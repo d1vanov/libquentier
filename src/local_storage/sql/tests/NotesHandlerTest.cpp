@@ -294,13 +294,15 @@ namespace {
 
 enum class CreateNoteOption
 {
-    WithTagLocalIds = 1 << 0,
-    WithTagGuids = 1 << 1,
-    WithSharedNotes = 1 << 2,
-    WithRestrictions = 1 << 3,
-    WithLimits = 1 << 4,
-    WithResources = 1 << 5,
-    Deleted = 1 << 6,
+    WithNotebookLocalId = 1 << 0,
+    WithNotebookGuid = 1 << 1,
+    WithTagLocalIds = 1 << 2,
+    WithTagGuids = 1 << 3,
+    WithSharedNotes = 1 << 4,
+    WithRestrictions = 1 << 5,
+    WithLimits = 1 << 6,
+    WithResources = 1 << 7,
+    Deleted = 1 << 8,
 };
 
 Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
@@ -314,8 +316,13 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
     note.setLocalOnly(false);
     note.setLocallyFavorited(true);
 
-    note.setNotebookLocalId(notebook.localId());
-    note.setNotebookGuid(notebook.guid());
+    if (createNoteOptions.testFlag(CreateNoteOption::WithNotebookLocalId)) {
+        note.setNotebookLocalId(notebook.localId());
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithNotebookGuid)) {
+        note.setNotebookGuid(notebook.guid());
+    }
 
     note.setGuid(UidGenerator::Generate());
     note.setUpdateSequenceNum(1);
@@ -877,53 +884,91 @@ class NotesHandlerSingleNoteTest :
 Q_GLOBAL_STATIC_WITH_ARGS(qevercloud::Notebook, gNotebook, (createNotebook()));
 
 const std::array gNoteTestValues{
-    createNote(*gNotebook),
-    createNote(
-        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds),
-    createNote(
-        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagGuids),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId),
+    createNote(
+        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithNotebookGuid),
+    createNote(
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithTagLocalIds),
+    createNote(
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
             CreateNoteOption::WithTagGuids),
     createNote(
-        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithSharedNotes),
-    createNote(
-        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithRestrictions),
-    createNote(*gNotebook, CreateNoteOptions{} | CreateNoteOption::WithLimits),
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithTagLocalIds | CreateNoteOption::WithTagGuids),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithSharedNotes),
+    createNote(
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
             CreateNoteOption::WithRestrictions),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
-            CreateNoteOption::WithLimits),
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid | CreateNoteOption::WithLimits),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithRestrictions |
-            CreateNoteOption::WithLimits),
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithSharedNotes |
+            CreateNoteOption::WithRestrictions),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithSharedNotes | CreateNoteOption::WithLimits),
+    createNote(
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
             CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
     createNote(
-        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithResources),
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithSharedNotes |
+            CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
             CreateNoteOption::WithResources),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
-            CreateNoteOption::WithTagGuids | CreateNoteOption::WithResources |
-            CreateNoteOption::WithSharedNotes |
-            CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
-    createNote(*gNotebook, CreateNoteOption::Deleted),
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithTagLocalIds |
+            CreateNoteOption::WithResources),
     createNote(
         *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
-            CreateNoteOption::WithTagGuids | CreateNoteOption::WithResources |
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithTagLocalIds | CreateNoteOption::WithTagGuids |
+            CreateNoteOption::WithResources |
+            CreateNoteOption::WithSharedNotes |
+            CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
+    createNote(
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid | CreateNoteOption::Deleted),
+    createNote(
+        *gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithNotebookLocalId |
+            CreateNoteOption::WithNotebookGuid |
+            CreateNoteOption::WithTagLocalIds | CreateNoteOption::WithTagGuids |
+            CreateNoteOption::WithResources |
             CreateNoteOption::WithSharedNotes |
             CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits |
             CreateNoteOption::Deleted),
@@ -964,6 +1009,9 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     auto note = GetParam();
 
+    // Note needs to have either notebook local id or notebook guid (or both)
+    ASSERT_TRUE(note.notebookGuid() || !note.notebookLocalId().isEmpty());
+
     if (!note.tagLocalIds().isEmpty() ||
         (note.tagGuids() && !note.tagGuids()->isEmpty()))
     {
@@ -1003,12 +1051,31 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     QCoreApplication::processEvents();
     ASSERT_EQ(notifierListener.putNotes().size(), 1);
 
-    // If note only has tag guids then put note would contain tag local ids
-    // as well, so the comparison would fail unless we ensure they stay the
-    // same in the compared note
-    note.setTagLocalIds(notifierListener.putNotes()[0].tagLocalIds());
+    const auto & putNote = notifierListener.putNotes()[0];
 
-    EXPECT_EQ(notifierListener.putNotes()[0], note);
+    if (note.notebookGuid() && note.notebookLocalId().isEmpty()) {
+        // If note did not have notebook local id set then put note must have
+        // it set
+        EXPECT_FALSE(putNote.notebookLocalId().isEmpty());
+        note.setNotebookLocalId(putNote.notebookLocalId());
+    }
+    else if (!note.notebookGuid() && !note.notebookLocalId().isEmpty()) {
+        // If note did not have notebook guid set then put note must have it set
+        EXPECT_TRUE(putNote.notebookGuid());
+        note.setNotebookGuid(putNote.notebookGuid());
+    }
+
+    if (note.tagGuids() && !note.tagGuids()->isEmpty() &&
+        note.tagLocalIds().isEmpty())
+    {
+        // If note only has tag guids then put note would contain tag local ids
+        // as well, so the comparison would fail unless we ensure they stay the
+        // same in the compared note
+        EXPECT_FALSE(putNote.tagLocalIds().isEmpty());
+        note.setTagLocalIds(putNote.tagLocalIds());
+    }
+
+    EXPECT_EQ(putNote, note);
 
     // === Count ===
 
@@ -1483,9 +1550,28 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
         ASSERT_TRUE(foundByLocalIdNoteFuture.result());
 
+        if (note.notebookGuid() && note.notebookLocalId().isEmpty()) {
+            // If note did not have notebook local id set then put note must
+            // have it set
+            EXPECT_FALSE(
+                foundByLocalIdNoteFuture.result()->notebookLocalId().isEmpty());
+            note.setNotebookLocalId(
+                foundByLocalIdNoteFuture.result()->notebookLocalId());
+        }
+        else if (!note.notebookGuid() && !note.notebookLocalId().isEmpty()) {
+            // If note did not have notebook guid set then put note must have it
+            // set
+            EXPECT_TRUE(foundByLocalIdNoteFuture.result()->notebookGuid());
+            note.setNotebookGuid(
+                foundByLocalIdNoteFuture.result()->notebookGuid());
+        }
+
         if (note.tagLocalIds().isEmpty() && note.tagGuids() &&
             !note.tagGuids()->isEmpty())
         {
+            // If note only has tag guids then put note would contain tag local
+            // ids as well, so the comparison would fail unless we ensure they
+            // stay the same in the compared note
             EXPECT_FALSE(
                 foundByLocalIdNoteFuture.result()->tagLocalIds().isEmpty());
 
