@@ -1347,7 +1347,18 @@ void Downloader::startLinkedNotebookDataDownload(
             "synchronization::Downloader",
             "Evernote has no updates for linked notebook "
                 << linkedNotebookInfo(*downloadContext->linkedNotebook));
-        Downloader::finalize(downloadContext);
+
+        // NOTE: will nevertheless try to download both notes and
+        // resources with empty sync chunks list so that any notes
+        // or resources which haven't been downloaded/processed
+        // during the last previous sync would be attempted to be
+        // processed now
+        if (!downloadContext->syncChunksDataCounters) {
+            downloadContext->syncChunksDataCounters =
+                std::make_shared<SyncChunksDataCounters>();
+        }
+
+        downloadNotes(std::move(downloadContext), syncMode);
         return;
     }
 
