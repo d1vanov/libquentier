@@ -98,6 +98,25 @@ enum class SyncChunksFlag
 
 Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
+[[nodiscard]] QList<qevercloud::LinkedNotebook> generateLinkedNotebooks(
+    qint32 usn, const qint32 count)
+{
+    QList<qevercloud::LinkedNotebook> linkedNotebooks;
+    linkedNotebooks.reserve(count);
+
+    for (qint32 i = 0; i < count; ++i) {
+        linkedNotebooks
+            << qevercloud::LinkedNotebookBuilder{}
+                   .setGuid(UidGenerator::Generate())
+                   .setUpdateSequenceNum(usn++)
+                   .setUsername(
+                       QString::fromUtf8("Linked notebook #%1").arg(i + 1))
+                   .build();
+    }
+
+    return linkedNotebooks;
+}
+
 [[nodiscard]] QList<qevercloud::SyncChunk> generateSyncChunks(
     const SyncChunksFlags flags, const qint32 afterUsn = 0, // NOLINT
     const qint32 syncChunksCount = 3,
@@ -116,23 +135,17 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
         qevercloud::SyncChunkBuilder builder;
 
         if (flags.testFlag(SyncChunksFlag::WithLinkedNotebooks)) {
-            QList<qevercloud::LinkedNotebook> linkedNotebooks;
-            linkedNotebooks.reserve(itemCountPerSyncChunk);
+            auto linkedNotebooks =
+                generateLinkedNotebooks(usn, itemCountPerSyncChunk);
+            usn += itemCountPerSyncChunk;
 
             QList<qevercloud::Guid> expungedLinkedNotebooks;
             expungedLinkedNotebooks.reserve(itemCountPerSyncChunk);
 
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
-                linkedNotebooks
-                    << qevercloud::LinkedNotebookBuilder{}
-                           .setGuid(UidGenerator::Generate())
-                           .setUpdateSequenceNum(usn++)
-                           .setUsername(QString::fromUtf8("Linked notebook #%1")
-                                            .arg(j + 1))
-                           .build();
-
                 expungedLinkedNotebooks << UidGenerator::Generate();
             }
+
             builder.setChunkHighUSN(
                 linkedNotebooks.last().updateSequenceNum().value());
 
@@ -1159,6 +1172,126 @@ TEST_F(DownloaderTest, CtorNullRetryPolicy)
             m_mockTagsProcessor, m_mockFullSyncStaleDataExpunger,
             m_mockNoteStoreProvider, m_mockLinkedNotebookTagsCleaner,
             m_mockLocalStorage, m_ctx, nullptr));
+}
+
+TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
+{
+    const auto downloader = std::make_shared<Downloader>(
+        m_account, m_mockAuthenticationInfoProvider, m_mockSyncStateStorage,
+        m_mockSyncChunksProvider, m_mockLinkedNotebooksProcessor,
+        m_mockNotebooksProcessor, m_mockNotesProcessor,
+        m_mockResourcesProcessor, m_mockSavedSearchesProcessor,
+        m_mockTagsProcessor, m_mockFullSyncStaleDataExpunger,
+        m_mockNoteStoreProvider, m_mockLinkedNotebookTagsCleaner,
+        m_mockLocalStorage, m_ctx, m_retryPolicy);
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
+    authenticationInfo->m_userId = m_account.id();
+    authenticationInfo->m_authToken = QStringLiteral("authToken");
+    authenticationInfo->m_authTokenExpirationTime = now + 100000000;
+    authenticationInfo->m_authenticationTime = now;
+    authenticationInfo->m_shardId = QStringLiteral("shardId");
+    authenticationInfo->m_noteStoreUrl = QStringLiteral("noteStoreUrl");
+    authenticationInfo->m_webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
+
+    constexpr qint32 userOwnAfterUsn = 42;
+    constexpr qint32 linkedNotebookAfterUsn = 15;
+
+    constexpr qint32 linkedNotebookCount = 3;
+    const auto linkedNotebooks = generateLinkedNotebooks(
+        userOwnAfterUsn - linkedNotebookCount, linkedNotebookCount);
+
+    std::shared_ptr<mocks::MockIDownloaderICallback> mockDownloaderCallback =
+        std::make_shared<StrictMock<mocks::MockIDownloaderICallback>>();
+
+    EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
+        .WillRepeatedly(
+            [noteStoreWeak = std::weak_ptr{
+                 m_mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
+
+    {
+        InSequence s;
+
+        EXPECT_CALL(*m_mockSyncStateStorage, getSyncState(m_account))
+            .WillOnce([&]([[maybe_unused]] const Account & account) {
+                auto syncState = std::make_shared<SyncState>();
+                syncState->m_userDataUpdateCount = userOwnAfterUsn;
+                for (const auto & linkedNotebook:
+                     std::as_const(linkedNotebooks)) {
+                    Q_ASSERT(linkedNotebook.guid());
+                    const auto & guid = *linkedNotebook.guid();
+                    syncState->m_linkedNotebookUpdateCounts[guid] =
+                        linkedNotebookAfterUsn;
+                }
+                return syncState;
+            });
+
+        EXPECT_CALL(
+            *m_mockAuthenticationInfoProvider,
+            authenticateAccount(
+                m_account, IAuthenticationInfoProvider::Mode::Cache))
+            .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                authenticationInfo)));
+
+        EXPECT_CALL(*m_mockNoteStore, getSyncStateAsync)
+            .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
+                EXPECT_TRUE(ctx);
+                if (ctx) {
+                    EXPECT_EQ(
+                        ctx->authenticationToken(),
+                        authenticationInfo->authToken());
+                }
+                return threading::makeReadyFuture<qevercloud::SyncState>(
+                    qevercloud::SyncStateBuilder{}
+                        .setUpdateCount(userOwnAfterUsn)
+                        .setFullSyncBefore(0)
+                        .build());
+            });
+
+        // The test actually needs to check that this method is called so that
+        // even when there are no updates on the server side the notes processor
+        // is still called so that it can retry downloading of notes which
+        // failed to download or process during the previous sync attempt.
+        EXPECT_CALL(
+            *m_mockNotesProcessor,
+            processNotes(QList<qevercloud::SyncChunk>{}, _, _, _, _))
+            .WillOnce(Return(threading::makeReadyFuture<DownloadNotesStatusPtr>(
+                std::make_shared<DownloadNotesStatus>())));
+
+        // Same as for notes, resources processor needs to be called with empty
+        // list of sync chunks if there are no updates on the server side
+        EXPECT_CALL(
+            *m_mockResourcesProcessor,
+            processResources(QList<qevercloud::SyncChunk>{}, _, _, _, _))
+            .WillOnce(
+                Return(threading::makeReadyFuture<DownloadResourcesStatusPtr>(
+                    std::make_shared<DownloadResourcesStatus>())));
+
+        // TODO: return linkedNotebooks here and expand the test to cover
+        // calls to notes processor and resources processor for linked notebooks
+        // as well
+        EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
+            .WillOnce(Return(
+                threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
+                    QList<qevercloud::LinkedNotebook>{})));
+    }
+
+    auto result =
+        downloader->download(m_manualCanceler, mockDownloaderCallback);
+
+    waitForFuture(result);
+
+    // Checking the returned status
+    ASSERT_EQ(result.resultCount(), 1);
+
+    const auto status = result.result();
+    Q_UNUSED(status)
+    // TODO: actually check the status
 }
 
 enum class SyncMode
