@@ -423,6 +423,8 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
 struct SyncChunksItemCounts
 {
+    SyncChunksItemCounts() = default;
+
     SyncChunksItemCounts(const QList<qevercloud::SyncChunk> & syncChunks) :
         totalSavedSearches{syncChunksSavedSearchCount(syncChunks)},
         totalExpungedSavedSearches{
@@ -1214,6 +1216,9 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
                     noteStoreWeak.lock());
             });
 
+    QHash<qevercloud::Guid, std::shared_ptr<mocks::qevercloud::MockINoteStore>>
+        linkedNotebookNoteStores;
+
     {
         InSequence s;
 
@@ -1253,10 +1258,11 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
                         .build());
             });
 
-        // The test actually needs to check that this method is called so that
-        // even when there are no updates on the server side the notes processor
-        // is still called so that it can retry downloading of notes which
-        // failed to download or process during the previous sync attempt.
+        // The test actually checks that this method is called for user's own
+        // account so that even when there are no updates on the server side
+        // the notes processor is still called so that it can retry downloading
+        // of notes which failed to download or process during the previous sync
+        // attempt.
         EXPECT_CALL(
             *m_mockNotesProcessor,
             processNotes(QList<qevercloud::SyncChunk>{}, _, _, _, _))
@@ -1272,13 +1278,95 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
                 Return(threading::makeReadyFuture<DownloadResourcesStatusPtr>(
                     std::make_shared<DownloadResourcesStatus>())));
 
-        // TODO: return linkedNotebooks here and expand the test to cover
-        // calls to notes processor and resources processor for linked notebooks
-        // as well
         EXPECT_CALL(*m_mockLocalStorage, listLinkedNotebooks)
             .WillOnce(Return(
                 threading::makeReadyFuture<QList<qevercloud::LinkedNotebook>>(
-                    QList<qevercloud::LinkedNotebook>{})));
+                    linkedNotebooks)));
+
+        EXPECT_CALL(
+            *mockDownloaderCallback,
+            onStartLinkedNotebooksDataDownloading(linkedNotebooks));
+
+        for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+            const std::shared_ptr<mocks::qevercloud::MockINoteStore> mockNoteStore =
+                std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+            linkedNotebookNoteStores[*linkedNotebook.guid()] = mockNoteStore;
+
+            EXPECT_CALL(
+                *m_mockNoteStoreProvider,
+                linkedNotebookNoteStore(*linkedNotebook.guid(), _, _))
+                .WillOnce(
+                    [noteStoreWeak = std::weak_ptr{
+                         mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
+                        return threading::makeReadyFuture<
+                            qevercloud::INoteStorePtr>(noteStoreWeak.lock());
+                    });
+        }
+
+        for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+            const auto & mockNoteStore =
+                linkedNotebookNoteStores[*linkedNotebook.guid()];
+            ASSERT_TRUE(mockNoteStore);
+
+            EXPECT_CALL(
+                *mockNoteStore,
+                getLinkedNotebookSyncStateAsync(linkedNotebook, _))
+                .WillOnce(
+                    Return(threading::makeReadyFuture<qevercloud::SyncState>(
+                        qevercloud::SyncStateBuilder{}
+                            .setUpdateCount(linkedNotebookAfterUsn)
+                            .build())));
+        }
+
+        for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+            const auto linkedNotebookAuthenticationInfo =
+                std::make_shared<AuthenticationInfo>();
+            linkedNotebookAuthenticationInfo->m_authToken =
+                QString::fromUtf8("%1 authToken")
+                    .arg(linkedNotebook.username().value());
+
+            EXPECT_CALL(
+                *m_mockAuthenticationInfoProvider,
+                authenticateToLinkedNotebook(
+                    m_account, linkedNotebook,
+                    IAuthenticationInfoProvider::Mode::Cache))
+                .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                    linkedNotebookAuthenticationInfo)));
+        }
+
+        for ([[maybe_unused]] const auto & linkedNotebook:
+             std::as_const(linkedNotebooks))
+        {
+            // The test actually checks that this method is called for this
+            // linked notebook so that even when there are no updates on
+            // the server side the notes processor is still called so that it
+            // can retry downloading of notes which failed to download or
+            // process during the previous sync attempt.
+            EXPECT_CALL(
+                *m_mockNotesProcessor,
+                processNotes(QList<qevercloud::SyncChunk>{}, _, _, _, _))
+                .WillOnce(
+                    Return(threading::makeReadyFuture<DownloadNotesStatusPtr>(
+                        std::make_shared<DownloadNotesStatus>())));
+        }
+
+        for ([[maybe_unused]] const auto & linkedNotebook:
+             std::as_const(linkedNotebooks))
+        {
+            // Same as for notes, resources processor needs to be called with
+            // empty list of sync chunks if there are no updates on the server
+            // side
+            EXPECT_CALL(
+                *m_mockResourcesProcessor,
+                processResources(QList<qevercloud::SyncChunk>{}, _, _, _, _))
+                .WillOnce(Return(
+                    threading::makeReadyFuture<DownloadResourcesStatusPtr>(
+                        std::make_shared<DownloadResourcesStatus>())));
+        }
+
+        EXPECT_CALL(
+            *m_mockLinkedNotebookTagsCleaner, clearStaleLinkedNotebookTags)
+            .WillOnce(Return(threading::makeReadyFuture()));
     }
 
     auto result =
@@ -1288,10 +1376,56 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
 
     // Checking the returned status
     ASSERT_EQ(result.resultCount(), 1);
-
     const auto status = result.result();
-    Q_UNUSED(status)
-    // TODO: actually check the status
+
+    const SyncChunksItemCounts emptySyncChunksItemCounts;
+
+    // Check user own data status
+    ASSERT_TRUE(status.userOwnResult.syncChunksDataCounters);
+    checkSyncChunksDataCounters(
+        emptySyncChunksItemCounts,
+        *status.userOwnResult.syncChunksDataCounters);
+
+    // Notes
+    ASSERT_TRUE(status.userOwnResult.downloadNotesStatus);
+    checkDownloadNotesStatus(
+        emptySyncChunksItemCounts, *status.userOwnResult.downloadNotesStatus);
+
+    // Resources
+    ASSERT_TRUE(status.userOwnResult.downloadResourcesStatus);
+    checkDownloadResourcesStatus(
+        emptySyncChunksItemCounts,
+        *status.userOwnResult.downloadResourcesStatus);
+
+    // Check data from linked notebooks status
+    EXPECT_EQ(status.linkedNotebookResults.size(), linkedNotebooks.size());
+
+    for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
+        const auto & linkedNotebookGuid = linkedNotebook.guid().value();
+
+        const auto it =
+            status.linkedNotebookResults.constFind(linkedNotebookGuid);
+        ASSERT_NE(it, status.linkedNotebookResults.constEnd());
+
+        const auto & result = it.value();
+        ASSERT_TRUE(result.syncChunksDataCounters);
+
+        checkSyncChunksDataCounters(
+            emptySyncChunksItemCounts,
+            *result.syncChunksDataCounters);
+
+        // Notes
+        ASSERT_TRUE(result.downloadNotesStatus);
+        checkDownloadNotesStatus(
+            emptySyncChunksItemCounts,
+            *result.downloadNotesStatus);
+
+        // Resources
+        ASSERT_TRUE(result.downloadResourcesStatus);
+        checkDownloadResourcesStatus(
+            emptySyncChunksItemCounts,
+            *result.downloadResourcesStatus);
+    }
 }
 
 enum class SyncMode
