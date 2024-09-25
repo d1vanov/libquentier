@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "VersionHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
-#include "VersionHandler.h"
 
 #include "patches/Patch1To2.h"
 #include "patches/Patch2To3.h"
@@ -28,7 +28,7 @@
 #include <quentier/local_storage/LocalStorageOperationException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
-#include <quentier/threading/Runnable.h>
+#include <quentier/threading/Post.h>
 
 #include <QException>
 
@@ -40,16 +40,14 @@
 
 #include <QSqlQuery>
 #include <QSqlRecord>
-#include <QThreadPool>
 
 namespace quentier::local_storage::sql {
 
 VersionHandler::VersionHandler(
     Account account, ConnectionPoolPtr connectionPool,
-    threading::QThreadPoolPtr threadPool, threading::QThreadPtr writerThread) :
-    m_account{std::move(account)},
-    m_connectionPool{std::move(connectionPool)},
-    m_threadPool{std::move(threadPool)}, m_writerThread{std::move(writerThread)}
+    threading::QThreadPtr thread) :
+    m_account{std::move(account)}, m_connectionPool{std::move(connectionPool)},
+    m_thread{std::move(thread)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{
@@ -61,14 +59,9 @@ VersionHandler::VersionHandler(
             QStringLiteral("VersionHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("VersionHandler ctor: thread pool is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("VersionHandler ctor: writer thread is null")}};
+    if (Q_UNLIKELY(!m_thread)) {
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("VersionHandler ctor: thread is null")}};
     }
 }
 
@@ -79,37 +72,43 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
     promise->start();
 
-    auto * runnable = threading::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
-            const auto self = self_weak.lock();
-            if (!self) {
-                promise->setException(RuntimeError(ErrorString{
-                    QStringLiteral("VersionHandler is already destroyed")}));
-                promise->finish();
-                return;
-            }
-
-            auto databaseConnection = self->m_connectionPool->database();
-
-            ErrorString errorDescription;
-            const qint32 currentVersion =
-                self->versionImpl(databaseConnection, errorDescription);
-
-            if (currentVersion < 0) {
-                promise->setException(
-                    LocalStorageOperationException{errorDescription});
-                promise->finish();
-                return;
-            }
-
-            const qint32 highestSupportedVersion =
-                self->highestSupportedVersionImpl();
-
-            promise->addResult(currentVersion > highestSupportedVersion);
+    auto task = [promise = std::move(promise),
+                 self_weak = weak_from_this()]() mutable {
+        const auto self = self_weak.lock();
+        if (!self) {
+            promise->setException(RuntimeError(ErrorString{
+                QStringLiteral("VersionHandler is already destroyed")}));
             promise->finish();
-        });
+            return;
+        }
 
-    m_threadPool->start(runnable);
+        auto databaseConnection = self->m_connectionPool->database();
+
+        ErrorString errorDescription;
+        const qint32 currentVersion =
+            self->versionImpl(databaseConnection, errorDescription);
+
+        if (currentVersion < 0) {
+            promise->setException(
+                LocalStorageOperationException{errorDescription});
+            promise->finish();
+            return;
+        }
+
+        const qint32 highestSupportedVersion =
+            self->highestSupportedVersionImpl();
+
+        promise->addResult(currentVersion > highestSupportedVersion);
+        promise->finish();
+    };
+
+    if (m_thread.get() == QThread::currentThread()) {
+        task();
+    }
+    else {
+        threading::postToThread(m_thread.get(), std::move(task));
+    }
+
     return future;
 }
 
@@ -120,37 +119,43 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
 
     promise->start();
 
-    auto * runnable = threading::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
-            const auto self = self_weak.lock();
-            if (!self) {
-                promise->setException(RuntimeError(ErrorString{
-                    QStringLiteral("VersionHandler is already destroyed")}));
-                promise->finish();
-                return;
-            }
-
-            auto databaseConnection = self->m_connectionPool->database();
-
-            ErrorString errorDescription;
-            const qint32 currentVersion =
-                self->versionImpl(databaseConnection, errorDescription);
-
-            if (currentVersion < 0) {
-                promise->setException(
-                    LocalStorageOperationException{errorDescription});
-                promise->finish();
-                return;
-            }
-
-            const qint32 highestSupportedVersion =
-                self->highestSupportedVersionImpl();
-
-            promise->addResult(currentVersion < highestSupportedVersion);
+    auto task = [promise = std::move(promise),
+                 self_weak = weak_from_this()]() mutable {
+        const auto self = self_weak.lock();
+        if (!self) {
+            promise->setException(RuntimeError(ErrorString{
+                QStringLiteral("VersionHandler is already destroyed")}));
             promise->finish();
-        });
+            return;
+        }
 
-    m_threadPool->start(runnable);
+        auto databaseConnection = self->m_connectionPool->database();
+
+        ErrorString errorDescription;
+        const qint32 currentVersion =
+            self->versionImpl(databaseConnection, errorDescription);
+
+        if (currentVersion < 0) {
+            promise->setException(
+                LocalStorageOperationException{errorDescription});
+            promise->finish();
+            return;
+        }
+
+        const qint32 highestSupportedVersion =
+            self->highestSupportedVersionImpl();
+
+        promise->addResult(currentVersion < highestSupportedVersion);
+        promise->finish();
+    };
+
+    if (m_thread.get() == QThread::currentThread()) {
+        task();
+    }
+    else {
+        threading::postToThread(m_thread.get(), std::move(task));
+    }
+
     return future;
 }
 
@@ -161,47 +166,51 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 
     promise->start();
 
-    auto * runnable = threading::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
-            const auto self = self_weak.lock();
-            if (!self) {
-                promise->setException(RuntimeError(ErrorString{
-                    QStringLiteral("VersionHandler is already destroyed")}));
-                promise->finish();
-                return;
-            }
-
-            auto databaseConnection = self->m_connectionPool->database();
-
-            ErrorString errorDescription;
-            const qint32 currentVersion =
-                self->versionImpl(databaseConnection, errorDescription);
-
-            if (currentVersion < 0) {
-                promise->setException(
-                    LocalStorageOperationException{errorDescription});
-                promise->finish();
-                return;
-            }
-
-            QList<IPatchPtr> patches;
-            if (currentVersion < 2) {
-                patches.append(std::make_shared<Patch1To2>(
-                    self->m_account, self->m_connectionPool,
-                    self->m_writerThread));
-            }
-
-            if (currentVersion < 3) {
-                patches.append(std::make_shared<Patch2To3>(
-                    self->m_account, self->m_connectionPool,
-                    self->m_writerThread));
-            }
-
-            promise->addResult(patches);
+    auto task = [promise = std::move(promise),
+                 self_weak = weak_from_this()]() mutable {
+        const auto self = self_weak.lock();
+        if (!self) {
+            promise->setException(RuntimeError(ErrorString{
+                QStringLiteral("VersionHandler is already destroyed")}));
             promise->finish();
-        });
+            return;
+        }
 
-    m_threadPool->start(runnable);
+        auto databaseConnection = self->m_connectionPool->database();
+
+        ErrorString errorDescription;
+        const qint32 currentVersion =
+            self->versionImpl(databaseConnection, errorDescription);
+
+        if (currentVersion < 0) {
+            promise->setException(
+                LocalStorageOperationException{errorDescription});
+            promise->finish();
+            return;
+        }
+
+        QList<IPatchPtr> patches;
+        if (currentVersion < 2) {
+            patches.append(std::make_shared<Patch1To2>(
+                self->m_account, self->m_connectionPool, self->m_thread));
+        }
+
+        if (currentVersion < 3) {
+            patches.append(std::make_shared<Patch2To3>(
+                self->m_account, self->m_connectionPool, self->m_thread));
+        }
+
+        promise->addResult(patches);
+        promise->finish();
+    };
+
+    if (m_thread.get() == QThread::currentThread()) {
+        task();
+    }
+    else {
+        threading::postToThread(m_thread.get(), std::move(task));
+    }
+
     return future;
 }
 
@@ -212,34 +221,40 @@ QFuture<qint32> VersionHandler::version() const
 
     promise->start();
 
-    auto * runnable = threading::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this()]() mutable {
-            const auto self = self_weak.lock();
-            if (!self) {
-                promise->setException(RuntimeError(ErrorString{
-                    QStringLiteral("VersionHandler is already destroyed")}));
-                promise->finish();
-                return;
-            }
-
-            auto databaseConnection = self->m_connectionPool->database();
-
-            ErrorString errorDescription;
-            const qint32 currentVersion =
-                self->versionImpl(databaseConnection, errorDescription);
-
-            if (currentVersion < 0) {
-                promise->setException(
-                    LocalStorageOperationException{errorDescription});
-                promise->finish();
-                return;
-            }
-
-            promise->addResult(currentVersion);
+    auto task = [promise = std::move(promise),
+                 self_weak = weak_from_this()]() mutable {
+        const auto self = self_weak.lock();
+        if (!self) {
+            promise->setException(RuntimeError(ErrorString{
+                QStringLiteral("VersionHandler is already destroyed")}));
             promise->finish();
-        });
+            return;
+        }
 
-    m_threadPool->start(runnable);
+        auto databaseConnection = self->m_connectionPool->database();
+
+        ErrorString errorDescription;
+        const qint32 currentVersion =
+            self->versionImpl(databaseConnection, errorDescription);
+
+        if (currentVersion < 0) {
+            promise->setException(
+                LocalStorageOperationException{errorDescription});
+            promise->finish();
+            return;
+        }
+
+        promise->addResult(currentVersion);
+        promise->finish();
+    };
+
+    if (m_thread.get() == QThread::currentThread()) {
+        task();
+    }
+    else {
+        threading::postToThread(m_thread.get(), std::move(task));
+    }
+
     return future;
 }
 

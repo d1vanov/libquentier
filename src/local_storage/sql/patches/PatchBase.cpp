@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,28 +36,27 @@
 namespace quentier::local_storage::sql {
 
 PatchBase::PatchBase(
-    ConnectionPoolPtr connectionPool, threading::QThreadPtr writerThread,
-    const QString & localStorageDirPath, const QString & backupDirPath) : // NOLINT
+    ConnectionPoolPtr connectionPool, threading::QThreadPtr thread,
+    const QString & localStorageDirPath,
+    const QString & backupDirPath) : // NOLINT
     m_connectionPool{std::move(connectionPool)},
-    m_localStorageDir{localStorageDirPath},
-    m_backupDir{backupDirPath},
-    m_writerThread{std::move(writerThread)}
+    m_localStorageDir{localStorageDirPath}, m_backupDir{backupDirPath},
+    m_thread{std::move(thread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("PatchBase ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("PatchBase ctor: writer thread is null")}};
+    if (Q_UNLIKELY(!m_thread)) {
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("PatchBase ctor: thread is null")}};
     }
 }
 
 QFuture<void> PatchBase::backupLocalStorage()
 {
-    QNINFO(
-        "local_storage::sql::patches", "PatchBase::backupLocalStorage");
+    QNINFO("local_storage::sql::patches", "PatchBase::backupLocalStorage");
 
     QPromise<void> promise;
     auto future = promise.future();
@@ -66,9 +65,8 @@ QFuture<void> PatchBase::backupLocalStorage()
     promise.start();
 
     threading::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
+        m_thread.get(),
+        [self_weak = weak_from_this(), promise = std::move(promise)]() mutable {
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QStringLiteral(
@@ -76,19 +74,17 @@ QFuture<void> PatchBase::backupLocalStorage()
                     "destroyed")};
                 QNWARNING("local_storage::sql::patches", errorDescription);
 
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
 
             ErrorString errorDescription;
-            const bool res = self->backupLocalStorageSync(
-                promise, errorDescription);
+            const bool res =
+                self->backupLocalStorageSync(promise, errorDescription);
 
             if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -112,9 +108,8 @@ QFuture<void> PatchBase::restoreLocalStorageFromBackup()
     promise.start();
 
     threading::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
+        m_thread.get(),
+        [self_weak = weak_from_this(), promise = std::move(promise)]() mutable {
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QStringLiteral(
@@ -122,8 +117,7 @@ QFuture<void> PatchBase::restoreLocalStorageFromBackup()
                     "object is destroyed")};
                 QNWARNING("local_storage::sql::patches", errorDescription);
 
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -133,8 +127,7 @@ QFuture<void> PatchBase::restoreLocalStorageFromBackup()
                 promise, errorDescription);
 
             if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -148,17 +141,15 @@ QFuture<void> PatchBase::restoreLocalStorageFromBackup()
 QFuture<void> PatchBase::removeLocalStorageBackup()
 {
     QNDEBUG(
-        "local_storage::sql::patches",
-        "PatchBase::removeLocalStorageBackup");
+        "local_storage::sql::patches", "PatchBase::removeLocalStorageBackup");
 
     QPromise<void> promise;
     auto future = promise.future();
     promise.start();
 
     threading::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
+        m_thread.get(),
+        [self_weak = weak_from_this(), promise = std::move(promise)]() mutable {
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QStringLiteral(
@@ -166,19 +157,17 @@ QFuture<void> PatchBase::removeLocalStorageBackup()
                     "destroyed")};
                 QNWARNING("local_storage:sql:patches", errorDescription);
 
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
 
             ErrorString errorDescription;
-            const bool res = self->removeLocalStorageBackupSync(
-                errorDescription);
+            const bool res =
+                self->removeLocalStorageBackupSync(errorDescription);
 
             if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -200,9 +189,8 @@ QFuture<void> PatchBase::apply()
     promise.start();
 
     threading::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
+        m_thread.get(),
+        [self_weak = weak_from_this(), promise = std::move(promise)]() mutable {
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QStringLiteral(
@@ -210,8 +198,7 @@ QFuture<void> PatchBase::apply()
                     "destroyed")};
                 QNWARNING("local_storage::sql::patches", errorDescription);
 
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -219,8 +206,7 @@ QFuture<void> PatchBase::apply()
             ErrorString errorDescription;
             const bool res = self->applySync(promise, errorDescription);
             if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
+                promise.setException(RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }

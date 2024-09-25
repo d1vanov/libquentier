@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,6 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
-#include <QThreadPool>
 
 #include <gtest/gtest.h>
 
@@ -300,29 +299,22 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
-        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
+        m_thread = std::make_shared<QThread>();
 
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(), &QThread::finished, m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -330,9 +322,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
-    QReadWriteLockPtr m_resourceDataFilesLock;
+    threading::QThreadPtr m_thread;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
 };
@@ -343,25 +333,14 @@ TEST_F(NotebooksHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock));
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path()));
 }
 
 TEST_F(NotebooksHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            nullptr, m_threadPool, m_notifier, m_writerThread,
-            m_temporaryDir.path(), m_resourceDataFilesLock),
-        IQuentierException);
-}
-
-TEST_F(NotebooksHandlerTest, CtorNullThreadPool)
-{
-    EXPECT_THROW(
-        const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, nullptr, m_notifier, m_writerThread,
-            m_temporaryDir.path(), m_resourceDataFilesLock),
+            nullptr, m_notifier, m_thread, m_temporaryDir.path()),
         IQuentierException);
 }
 
@@ -369,34 +348,22 @@ TEST_F(NotebooksHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, m_threadPool, nullptr,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock),
+            m_connectionPool, nullptr, m_thread, m_temporaryDir.path()),
         IQuentierException);
 }
 
-TEST_F(NotebooksHandlerTest, CtorNullWriterThread)
+TEST_F(NotebooksHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            nullptr, m_temporaryDir.path(), m_resourceDataFilesLock),
-        IQuentierException);
-}
-
-TEST_F(NotebooksHandlerTest, CtorNullResourceDataFilesLock)
-{
-    EXPECT_THROW(
-        const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), nullptr),
+            m_connectionPool, m_notifier, nullptr, m_temporaryDir.path()),
         IQuentierException);
 }
 
 TEST_F(NotebooksHandlerTest, ShouldHaveZeroNotebookCountWhenThereAreNoNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
@@ -406,8 +373,7 @@ TEST_F(NotebooksHandlerTest, ShouldHaveZeroNotebookCountWhenThereAreNoNotebooks)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto notebookFuture =
         notebooksHandler->findNotebookByLocalId(UidGenerator::Generate());
@@ -420,8 +386,7 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto notebookFuture =
         notebooksHandler->findNotebookByGuid(UidGenerator::Generate());
@@ -434,8 +399,7 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByName)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto notebookFuture =
         notebooksHandler->findNotebookByName(QStringLiteral("My notebook"));
@@ -448,8 +412,7 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByName)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentDefaultNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto notebookFuture = notebooksHandler->findDefaultNotebook();
     notebookFuture.waitForFinished();
@@ -460,8 +423,7 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentDefaultNotebook)
 TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNotebookFuture =
         notebooksHandler->expungeNotebookByLocalId(UidGenerator::Generate());
@@ -472,8 +434,7 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
 TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNotebookFuture =
         notebooksHandler->expungeNotebookByGuid(UidGenerator::Generate());
@@ -484,8 +445,7 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
 TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByName)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNotebookFuture =
         notebooksHandler->expungeNotebookByName(QStringLiteral("My notebook"));
@@ -496,8 +456,7 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByName)
 TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto listNotebooksOptions = ILocalStorage::ListNotebooksOptions{};
 
@@ -513,8 +472,7 @@ TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
 TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto sharedNotebooksFuture =
         notebooksHandler->listSharedNotebooks(UidGenerator::Generate());
@@ -527,8 +485,7 @@ TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
 TEST_F(NotebooksHandlerTest, ShouldListNoNotebookGuidsWhenThereAreNoNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto listNotebookGuidsFilters = ILocalStorage::ListGuidsFilters{};
     listNotebookGuidsFilters.m_locallyModifiedFilter =
@@ -600,8 +557,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     NotebooksHandlerTestNotifierListener notifierListener;
 
@@ -620,8 +576,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     if (notebook.linkedNotebookGuid()) {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, m_threadPool, m_notifier,
-                m_writerThread, m_temporaryDir.path());
+                m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
         qevercloud::LinkedNotebook linkedNotebook;
         linkedNotebook.setGuid(notebook.linkedNotebookGuid());
@@ -837,8 +792,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     NotebooksHandlerTestNotifierListener notifierListener;
 
@@ -866,7 +820,8 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
             QString::number(notebookCounter));
 
         if (notebook.sharedNotebooks() &&
-            !notebook.sharedNotebooks()->isEmpty()) {
+            !notebook.sharedNotebooks()->isEmpty())
+        {
             for (auto & sharedNotebook: *notebook.mutableSharedNotebooks()) {
                 sharedNotebook.setNotebookGuid(notebook.guid());
                 sharedNotebook.setId(sharedNotebookIdCounter);
@@ -892,8 +847,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         qevercloud::LinkedNotebook linkedNotebook;
@@ -982,8 +936,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     NotebooksHandlerTestNotifierListener notifierListener;
 
@@ -1004,8 +957,7 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook;
     linkedNotebook.setGuid(notebook2.linkedNotebookGuid());
@@ -1110,8 +1062,7 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 TEST_F(NotebooksHandlerTest, FindNotebookByNameWithDiacritics)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook1;
     notebook1.setGuid(UidGenerator::Generate());
@@ -1150,8 +1101,7 @@ TEST_F(NotebooksHandlerTest, FindNotebookByNameWithDiacritics)
 TEST_F(NotebooksHandlerTest, RemoveNotebookFieldsOnUpdate)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
@@ -1279,8 +1229,7 @@ TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook1;
     linkedNotebook1.setGuid(UidGenerator::Generate());
@@ -1301,8 +1250,7 @@ TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
     putLinkedNotebookFuture.waitForFinished();
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook userOwnNotebook1;
     userOwnNotebook1.setGuid(UidGenerator::Generate());
@@ -1819,8 +1767,7 @@ TEST_P(NotebooksHandlerListGuidsTest, ListNotebookGuids)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putLinkedNotebookFuture =
         linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
@@ -1833,8 +1780,7 @@ TEST_P(NotebooksHandlerListGuidsTest, ListNotebookGuids)
     putLinkedNotebookFuture.waitForFinished();
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     for (const auto & notebook: std::as_const(gNotebooksForListGuidsTest)) {
         auto putNotebookFuture = notebooksHandler->putNotebook(notebook);

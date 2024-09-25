@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "LinkedNotebooksHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
-#include "LinkedNotebooksHandler.h"
 #include "Notifier.h"
-#include "Tasks.h"
+#include "Task.h"
 #include "TypeChecks.h"
 
 #include "utils/FillFromSqlRecordUtils.h"
@@ -48,13 +48,11 @@
 namespace quentier::local_storage::sql {
 
 LinkedNotebooksHandler::LinkedNotebooksHandler(
-    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-    Notifier * notifier, threading::QThreadPtr writerThread,
-    const QString & localStorageDirPath) :
+    ConnectionPoolPtr connectionPool, Notifier * notifier,
+    threading::QThreadPtr thread, const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     // clang-format off
-    m_threadPool{std::move(threadPool)},
-    m_writerThread{std::move(writerThread)},
+    m_thread{std::move(thread)},
     m_localStorageDir{localStorageDirPath},
     m_notifier{notifier}
 // clang-format on
@@ -64,19 +62,14 @@ LinkedNotebooksHandler::LinkedNotebooksHandler(
             "LinkedNotebooksHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "LinkedNotebooksHandler ctor: thread pool is null")}};
-    }
-
     if (Q_UNLIKELY(!m_notifier)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("LinkedNotebooksHandler ctor: notifier is null")}};
     }
 
-    if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "LinkedNotebooksHandler ctor: writer thread is null")}};
+    if (Q_UNLIKELY(!m_thread)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("LinkedNotebooksHandler ctor: thread is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
@@ -85,7 +78,7 @@ LinkedNotebooksHandler::LinkedNotebooksHandler(
             "readable")}};
     }
 
-    if (Q_UNLIKELY(
+    if (Q_UNLIKELY( // NOLINT
             !m_localStorageDir.exists() &&
             !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
     {
@@ -368,7 +361,7 @@ QList<qevercloud::LinkedNotebook>
 TaskContext LinkedNotebooksHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool, m_writerThread, m_connectionPool,
+        m_thread, m_connectionPool,
         ErrorString{
             QStringLiteral("LinkedNotebooksHandler is already destroyed")},
         ErrorString{QStringLiteral("Request has been canceled")}};

@@ -31,6 +31,6 @@ namespace quentier::local_storage {
 
 [[nodiscard]] QUENTIER_EXPORT ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
-    threading::QThreadPoolPtr threadPool = {});
+    threading::QThreadPtr thread = {});
 
 } // namespace quentier::local_storage

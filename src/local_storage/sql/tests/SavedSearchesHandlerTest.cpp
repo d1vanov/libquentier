@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,6 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
-#include <QThreadPool>
 
 #include <gtest/gtest.h>
 
@@ -53,8 +52,7 @@ class SavedSearchesHandlerTestNotifierListener : public QObject
     Q_OBJECT
 public:
     explicit SavedSearchesHandlerTestNotifierListener(
-        QObject * parent = nullptr) :
-        QObject(parent)
+        QObject * parent = nullptr) : QObject(parent)
     {}
 
     [[nodiscard]] const QList<qevercloud::SavedSearch> & putSavedSearches()
@@ -97,27 +95,21 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
+        m_thread = std::make_shared<QThread>();
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(), &QThread::finished, m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -125,8 +117,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
+    threading::QThreadPtr m_thread;
     Notifier * m_notifier;
 };
 
@@ -137,8 +128,7 @@ TEST_F(SavedSearchesHandlerTest, Ctor)
     EXPECT_NO_THROW(
         const auto savedSearchesHandler =
             std::make_shared<SavedSearchesHandler>(
-                m_connectionPool, m_threadPool, m_notifier,
-                m_writerThread));
+                m_connectionPool, m_notifier, m_thread));
 }
 
 TEST_F(SavedSearchesHandlerTest, CtorNullConnectionPool)
@@ -146,17 +136,7 @@ TEST_F(SavedSearchesHandlerTest, CtorNullConnectionPool)
     EXPECT_THROW(
         const auto savedSearchesHandler =
             std::make_shared<SavedSearchesHandler>(
-                nullptr, m_threadPool, m_notifier,
-                m_writerThread),
-        IQuentierException);
-}
-
-TEST_F(SavedSearchesHandlerTest, CtorNullThreadPool)
-{
-    EXPECT_THROW(
-        const auto savedSearchesHandler =
-            std::make_shared<SavedSearchesHandler>(
-                m_connectionPool, nullptr, m_notifier, m_writerThread),
+                nullptr, m_notifier, m_thread),
         IQuentierException);
 }
 
@@ -165,18 +145,16 @@ TEST_F(SavedSearchesHandlerTest, CtorNullNotifier)
     EXPECT_THROW(
         const auto savedSearchesHandler =
             std::make_shared<SavedSearchesHandler>(
-                m_connectionPool, m_threadPool, nullptr,
-                m_writerThread),
+                m_connectionPool, nullptr, m_thread),
         IQuentierException);
 }
 
-TEST_F(SavedSearchesHandlerTest, CtorNullWriterThread)
+TEST_F(SavedSearchesHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto savedSearchesHandler =
             std::make_shared<SavedSearchesHandler>(
-                m_connectionPool, m_threadPool, m_notifier,
-                nullptr),
+                m_connectionPool, m_notifier, nullptr),
         IQuentierException);
 }
 
@@ -185,8 +163,7 @@ TEST_F(
     ShouldHaveZeroSavedSearchCountWhenThereAreNoSavedSearches)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     auto savedSearchCountFuture = savedSearchesHandler->savedSearchCount();
     savedSearchCountFuture.waitForFinished();
@@ -196,8 +173,7 @@ TEST_F(
 TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByLocalId)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     auto savedSearchFuture = savedSearchesHandler->findSavedSearchByLocalId(
         UidGenerator::Generate());
@@ -210,8 +186,7 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByLocalId)
 TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     auto savedSearchFuture =
         savedSearchesHandler->findSavedSearchByGuid(UidGenerator::Generate());
@@ -224,8 +199,7 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
 TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByName)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     auto savedSearchFuture =
         savedSearchesHandler->findSavedSearchByName(QStringLiteral("search1"));
@@ -240,8 +214,7 @@ TEST_F(
     IgnoreAttemptToExpungeNonexistentSavedSearchByLocalId)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     auto expungeSavedSearchFuture =
         savedSearchesHandler->expungeSavedSearchByLocalId(
@@ -255,8 +228,7 @@ TEST_F(
     ShouldListNoSavedSearchesWhenThereAreNoSavedSearches)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     const auto listSavedSearchesOptions =
         ILocalStorage::ListSavedSearchesOptions{};
@@ -273,8 +245,7 @@ TEST_F(
     ShouldListNoSavedSearchGuidsWhenThereAreNoSavedSearches)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     auto listSavedSearchGuidsFilters = ILocalStorage::ListGuidsFilters{};
     listSavedSearchGuidsFilters.m_locallyModifiedFilter =
@@ -335,8 +306,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     SavedSearchesHandlerTestNotifierListener notifierListener;
 
@@ -532,8 +502,7 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     SavedSearchesHandlerTestNotifierListener notifierListener;
 
@@ -652,8 +621,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
 TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
 {
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     qevercloud::SavedSearch search1;
     search1.setGuid(UidGenerator::Generate());
@@ -804,8 +772,7 @@ TEST_P(SavedSearchesHandlerListGuidsTest, ListSavedSearchGuids)
 {
     // Set up saved searches
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+        m_connectionPool, m_notifier, m_thread);
 
     for (const auto & savedSearch:
          std::as_const(gSavedSearchesForListGuidsTest))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "NotebooksHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
-#include "NotebooksHandler.h"
 #include "Notifier.h"
-#include "Tasks.h"
+#include "Task.h"
 #include "TypeChecks.h"
 
 #include "utils/Common.h"
@@ -46,8 +46,6 @@
 
 #include <QSqlQuery>
 #include <QSqlRecord>
-#include <QThreadPool>
-#include <QWriteLocker>
 
 #include <algorithm>
 #include <utility>
@@ -55,16 +53,12 @@
 namespace quentier::local_storage::sql {
 
 NotebooksHandler::NotebooksHandler(
-    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-    Notifier * notifier, threading::QThreadPtr writerThread,
-    const QString & localStorageDirPath,
-    QReadWriteLockPtr resourceDataFilesLock) :
+    ConnectionPoolPtr connectionPool, Notifier * notifier,
+    threading::QThreadPtr thread, const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     // clang-format off
-    m_threadPool{std::move(threadPool)},
-    m_writerThread{std::move(writerThread)},
+    m_thread{std::move(thread)},
     m_localStorageDir{localStorageDirPath},
-    m_resourceDataFilesLock{std::move(resourceDataFilesLock)},
     m_notifier{notifier}
 // clang-format on
 {
@@ -73,19 +67,14 @@ NotebooksHandler::NotebooksHandler(
             QStringLiteral("NotebooksHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("NotebooksHandler ctor: thread pool is null")}};
-    }
-
     if (Q_UNLIKELY(!m_notifier)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("NotebooksHandler ctor: notifier is null")}};
     }
 
-    if (Q_UNLIKELY(!m_writerThread)) {
+    if (Q_UNLIKELY(!m_thread)) {
         throw InvalidArgument{ErrorString{
-            QStringLiteral("NotebooksHandler ctor: writer thread is null")}};
+            QStringLiteral("NotebooksHandler ctor: thread is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
@@ -100,11 +89,6 @@ NotebooksHandler::NotebooksHandler(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "NotebooksHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
-    }
-
-    if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "NotebooksHandler ctor: resource data files lock is null")}};
     }
 }
 
@@ -195,7 +179,6 @@ QFuture<void> NotebooksHandler::expungeNotebookByLocalId(QString localId)
         [localId = std::move(localId)](
             NotebooksHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             const bool res = handler.expungeNotebookByLocalIdImpl(
                 localId, database, errorDescription);
             if (res) {
@@ -212,7 +195,6 @@ QFuture<void> NotebooksHandler::expungeNotebookByGuid(qevercloud::Guid guid)
         [guid = std::move(guid)](
             NotebooksHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeNotebookByGuidImpl(
                 guid, database, errorDescription);
         });
@@ -227,7 +209,6 @@ QFuture<void> NotebooksHandler::expungeNotebookByName(
          linkedNotebookGuid = std::move(linkedNotebookGuid)](
             NotebooksHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeNotebookByNameImpl(
                 name, linkedNotebookGuid, database, errorDescription);
         });
@@ -795,7 +776,7 @@ QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
 TaskContext NotebooksHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool, m_writerThread, m_connectionPool,
+        m_thread, m_connectionPool,
         ErrorString{QStringLiteral("NotebooksHandler is already destroyed")},
         ErrorString{QStringLiteral("Request has been canceled")}};
 }

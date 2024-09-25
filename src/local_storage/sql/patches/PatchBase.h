@@ -44,7 +44,7 @@ class PatchBase : public IPatch, public std::enable_shared_from_this<PatchBase>
     Q_DECLARE_TR_FUNCTIONS(PatchBase)
 protected:
     explicit PatchBase(
-        ConnectionPoolPtr connectionPool, threading::QThreadPtr writerThread,
+        ConnectionPoolPtr connectionPool, threading::QThreadPtr thread,
         const QString & localStorageDirPath, const QString & backupDirPath);
 
 public:
@@ -78,7 +78,7 @@ protected:
     ConnectionPoolPtr m_connectionPool;
     QDir m_localStorageDir;
     QDir m_backupDir;
-    threading::QThreadPtr m_writerThread;
+    threading::QThreadPtr m_thread;
 };
 
 } // namespace quentier::local_storage::sql

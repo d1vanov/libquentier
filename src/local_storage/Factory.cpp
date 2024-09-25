@@ -35,22 +35,17 @@
 #include <local_storage/sql/VersionHandler.h>
 
 #include <QDir>
-#include <QReadWriteLock>
 
 namespace quentier::local_storage {
 
 ILocalStoragePtr createSqliteLocalStorage(
     const Account & account, const QDir & localStorageDir,
-    threading::QThreadPoolPtr threadPool)
+    threading::QThreadPtr thread)
 {
     QNDEBUG(
         "local_storage::Factory",
         "ILocalStoragePtr createSqliteLocalStorage: dir = "
             << localStorageDir.absolutePath() << ", account: " << account);
-
-    if (!threadPool) {
-        threadPool = threading::globalThreadPool();
-    }
 
     auto localStorageMainFilePath =
         localStorageDir.absoluteFilePath(QStringLiteral("qn.storage.sqlite"));
@@ -64,70 +59,60 @@ ILocalStoragePtr createSqliteLocalStorage(
         sql::TablesInitializer::initializeTables(database);
     }
 
-    auto resourceDataFilesLock = std::make_shared<QReadWriteLock>();
-
-    threading::QThreadPtr writerThread;
-    {
+    if (!thread) {
         auto deleter = [](QThread * thread) {
             thread->quit();
             thread->wait();
             thread->deleteLater();
         };
-        auto writerThreadUnique = std::make_unique<QThread>();
-
-        writerThread =
-            threading::QThreadPtr{writerThreadUnique.get(), std::move(deleter)};
-
-        Q_UNUSED(writerThreadUnique.release());
+        auto threadUnique = std::make_unique<QThread>();
+        thread = threading::QThreadPtr{threadUnique.get(), std::move(deleter)};
+        Q_UNUSED(threadUnique.release()); // NOLINT
     }
 
     sql::Notifier * notifier = nullptr;
     {
         auto notifierUnique = std::make_unique<sql::Notifier>();
-        notifierUnique->moveToThread(writerThread.get());
+        notifierUnique->moveToThread(thread.get());
 
         QObject::connect(
-            writerThread.get(), &QThread::finished, notifierUnique.get(),
+            thread.get(), &QThread::finished, notifierUnique.get(),
             &QObject::deleteLater);
 
         notifier = notifierUnique.release();
     }
 
-    writerThread->start();
+    thread->start();
 
     const QString localStorageDirPath = localStorageDir.absolutePath();
 
     auto linkedNotebooksHandler = std::make_shared<sql::LinkedNotebooksHandler>(
-        connectionPool, threadPool, notifier, writerThread,
-        localStorageDirPath);
+        connectionPool, notifier, thread, localStorageDirPath);
 
     auto notebooksHandler = std::make_shared<sql::NotebooksHandler>(
-        connectionPool, threadPool, notifier, writerThread, localStorageDirPath,
-        resourceDataFilesLock);
+        connectionPool, notifier, thread, localStorageDirPath);
 
     auto notesHandler = std::make_shared<sql::NotesHandler>(
-        connectionPool, threadPool, notifier, writerThread, localStorageDirPath,
-        resourceDataFilesLock);
+        connectionPool, notifier, thread, localStorageDirPath);
 
     auto resourcesHandler = std::make_shared<sql::ResourcesHandler>(
-        connectionPool, threadPool, notifier, writerThread, localStorageDirPath,
-        resourceDataFilesLock);
+        connectionPool, notifier, thread, localStorageDirPath);
 
     auto savedSearchesHandler = std::make_shared<sql::SavedSearchesHandler>(
-        connectionPool, threadPool, notifier, writerThread);
+        connectionPool, notifier, thread);
 
     auto synchronizationInfoHandler =
         std::make_shared<sql::SynchronizationInfoHandler>(
-            connectionPool, threadPool, writerThread);
+            connectionPool, thread);
 
     auto tagsHandler = std::make_shared<sql::TagsHandler>(
-        connectionPool, threadPool, notifier, writerThread);
+        connectionPool, notifier, thread);
 
     auto versionHandler = std::make_shared<sql::VersionHandler>(
-        account, connectionPool, threadPool, writerThread);
+        account, connectionPool, thread);
 
     auto usersHandler = std::make_shared<sql::UsersHandler>(
-        connectionPool, std::move(threadPool), notifier, writerThread);
+        connectionPool, notifier, std::move(thread));
 
     return std::make_shared<sql::LocalStorage>(
         std::move(linkedNotebooksHandler), std::move(notebooksHandler),

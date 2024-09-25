@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "SynchronizationInfoHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
-#include "SynchronizationInfoHandler.h"
-#include "Tasks.h"
+#include "Task.h"
 #include "utils/SqlUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
@@ -36,7 +36,6 @@
 
 #include <QSqlQuery>
 #include <QSqlRecord>
-#include <QThreadPool>
 
 #include <utility>
 
@@ -65,24 +64,17 @@ struct HighUsnRequestData
 } // namespace
 
 SynchronizationInfoHandler::SynchronizationInfoHandler(
-    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-    threading::QThreadPtr writerThread) :
-    m_connectionPool{std::move(connectionPool)},
-    m_threadPool{std::move(threadPool)}, m_writerThread{std::move(writerThread)}
+    ConnectionPoolPtr connectionPool, threading::QThreadPtr thread) :
+    m_connectionPool{std::move(connectionPool)}, m_thread{std::move(thread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "SynchronizationInfoHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "SynchronizationInfoHandler ctor: thread pool is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "SynchronizationInfoHandler ctor: writer thread is null")}};
+    if (Q_UNLIKELY(!m_thread)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("SynchronizationInfoHandler ctor: thread is null")}};
     }
 }
 
@@ -291,7 +283,7 @@ std::optional<qint32> SynchronizationInfoHandler::updateSequenceNumberFromTable(
 TaskContext SynchronizationInfoHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool, m_writerThread, m_connectionPool,
+        m_thread, m_connectionPool,
         ErrorString{
             QStringLiteral("SynchronizationInfoHandler is already destroyed")},
         ErrorString{QStringLiteral("Request has been canceled")}};

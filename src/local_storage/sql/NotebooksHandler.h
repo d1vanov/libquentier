@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,10 +37,8 @@ class NotebooksHandler final :
 {
 public:
     explicit NotebooksHandler(
-        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-        Notifier * notifier, threading::QThreadPtr writerThread,
-        const QString & localStorageDirPath,
-        QReadWriteLockPtr resourceDataFilesLock);
+        ConnectionPoolPtr connectionPool, Notifier * notifier,
+        threading::QThreadPtr thread, const QString & localStorageDirPath);
 
     [[nodiscard]] QFuture<quint32> notebookCount() const override;
     [[nodiscard]] QFuture<void> putNotebook(
@@ -132,10 +130,8 @@ private:
 
 private:
     const ConnectionPoolPtr m_connectionPool;
-    const threading::QThreadPoolPtr m_threadPool;
-    const threading::QThreadPtr m_writerThread;
+    const threading::QThreadPtr m_thread;
     const QDir m_localStorageDir;
-    const QReadWriteLockPtr m_resourceDataFilesLock;
     Notifier * m_notifier;
 };
 

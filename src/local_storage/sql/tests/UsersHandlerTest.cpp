@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,6 @@
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QThreadPool>
 
 #include <gtest/gtest.h>
 
@@ -94,13 +93,13 @@ namespace {
 
     userAttributes.setViewedPromotions(
         QStringList{} << QStringLiteral("promotion1")
-        << QStringLiteral("promotion2"));
+                      << QStringLiteral("promotion2"));
 
     userAttributes.setIncomingEmailAddress(QStringLiteral("example@mail.com"));
 
     userAttributes.setRecentMailedAddresses(
         QStringList{} << QStringLiteral("recentMailedAddress1@example.com")
-        << QStringLiteral("recentMailedAddress2@example.com"));
+                      << QStringLiteral("recentMailedAddress2@example.com"));
 
     userAttributes.setComments(QStringLiteral("comments"));
     userAttributes.setDateAgreedToTermsOfService(qevercloud::Timestamp{2});
@@ -252,29 +251,21 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
+        m_thread = std::make_shared<QThread>();
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(),
-            &QThread::finished,
-            m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -282,8 +273,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
+    threading::QThreadPtr m_thread;
     Notifier * m_notifier;
 };
 
@@ -293,49 +283,37 @@ TEST_F(UsersHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread));
+            m_connectionPool, m_notifier, m_thread));
 }
 
 TEST_F(UsersHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
-        const auto usersHandler = std::make_shared<UsersHandler>(
-            nullptr, m_threadPool, m_notifier, m_writerThread),
-        IQuentierException);
-}
-
-TEST_F(UsersHandlerTest, CtorNullThreadPool)
-{
-    EXPECT_THROW(
-        const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, nullptr, m_notifier, m_writerThread),
+        const auto usersHandler =
+            std::make_shared<UsersHandler>(nullptr, m_notifier, m_thread),
         IQuentierException);
 }
 
 TEST_F(UsersHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
-        const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, m_threadPool, nullptr,
-            m_writerThread),
+        const auto usersHandler =
+            std::make_shared<UsersHandler>(m_connectionPool, nullptr, m_thread),
         IQuentierException);
 }
 
-TEST_F(UsersHandlerTest, CtorNullWriterThread)
+TEST_F(UsersHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            nullptr),
+            m_connectionPool, m_notifier, nullptr),
         IQuentierException);
 }
 
 TEST_F(UsersHandlerTest, ShouldHaveZeroUserCountWhenThereAreNoUsers)
 {
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto usersHandler =
+        std::make_shared<UsersHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto userCountFuture = usersHandler->userCount();
     userCountFuture.waitForFinished();
@@ -344,9 +322,8 @@ TEST_F(UsersHandlerTest, ShouldHaveZeroUserCountWhenThereAreNoUsers)
 
 TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 {
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto usersHandler =
+        std::make_shared<UsersHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto userFuture = usersHandler->findUserById(qevercloud::UserID{1});
     userFuture.waitForFinished();
@@ -356,9 +333,8 @@ TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 
 TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
 {
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto usersHandler =
+        std::make_shared<UsersHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto expungeUserFuture =
         usersHandler->expungeUserById(qevercloud::UserID{1});
@@ -377,70 +353,64 @@ const std::array gUserTestValues{
     createUser(CreateUserOptions{CreateUserOption::WithAccounting}),
     createUser(CreateUserOptions{CreateUserOption::WithAccountLimits}),
     createUser(CreateUserOptions{CreateUserOption::WithBusinessUserInfo}),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithUserAttributes),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithBusinessUserInfo),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithAccountLimits),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithUserAttributes} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithUserAttributes} |
         CreateUserOption::WithBusinessUserInfo),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithUserAttributes} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithUserAttributes} |
         CreateUserOption::WithAccountLimits),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithBusinessUserInfo} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithBusinessUserInfo} |
         CreateUserOption::WithAccountLimits),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithBusinessUserInfo |
         CreateUserOption::WithUserAttributes),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithBusinessUserInfo |
         CreateUserOption::WithAccountLimits),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithUserAttributes} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithUserAttributes} |
         CreateUserOption::WithBusinessUserInfo |
         CreateUserOption::WithAccountLimits),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithAccountLimits |
         CreateUserOption::WithUserAttributes),
-    createUser(CreateUserOptions{
-        CreateUserOption::WithAccounting} |
+    createUser(
+        CreateUserOptions{CreateUserOption::WithAccounting} |
         CreateUserOption::WithAccountLimits |
         CreateUserOption::WithBusinessUserInfo |
         CreateUserOption::WithUserAttributes),
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    UsersHandlerSingleUserTestInstance,
-    UsersHandlerSingleUserTest,
+    UsersHandlerSingleUserTestInstance, UsersHandlerSingleUserTest,
     testing::ValuesIn(gUserTestValues));
 
 TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 {
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto usersHandler =
+        std::make_shared<UsersHandler>(m_connectionPool, m_notifier, m_thread);
 
     UsersHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::userPut,
-        &notifierListener,
+        m_notifier, &Notifier::userPut, &notifierListener,
         &UsersHandlerTestNotifierListener::onUserPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::userExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::userExpunged, &notifierListener,
         &UsersHandlerTestNotifierListener::onUserExpunged);
 
     const auto user = GetParam();
@@ -480,12 +450,12 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 
 TEST_F(UsersHandlerTest, HandleMultipleUsers)
 {
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto usersHandler =
+        std::make_shared<UsersHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto users = gUserTestValues;
-    for (auto it = std::next(users.begin()); it != users.end(); ++it) { // NOLINT
+    for (auto it = std::next(users.begin()); it != users.end(); ++it) // NOLINT
+    {                                      // NOLINT
         const auto prevIt = std::prev(it); // NOLINT
         it->setId(prevIt->id().value() + 1);
     }
@@ -493,15 +463,11 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
     UsersHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::userPut,
-        &notifierListener,
+        m_notifier, &Notifier::userPut, &notifierListener,
         &UsersHandlerTestNotifierListener::onUserPut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::userExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::userExpunged, &notifierListener,
         &UsersHandlerTestNotifierListener::onUserExpunged);
 
     QFutureSynchronizer<void> putUsersSynchronizer;
@@ -528,7 +494,8 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
     }
 
     for (const auto & user: users) {
-        auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
+        auto expungeUserFuture =
+            usersHandler->expungeUserById(user.id().value());
         expungeUserFuture.waitForFinished();
     }
 
@@ -552,9 +519,8 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
 // the original user
 TEST_F(UsersHandlerTest, RemoveUserFieldsOnUpdate)
 {
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto usersHandler =
+        std::make_shared<UsersHandler>(m_connectionPool, m_notifier, m_thread);
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
@@ -573,12 +539,13 @@ TEST_F(UsersHandlerTest, RemoveUserFieldsOnUpdate)
     userAttributes.setPreferredLanguage(QStringLiteral("English"));
     userAttributes.setViewedPromotions(
         QStringList() << QStringLiteral("Promotion #1")
-        << QStringLiteral("Promotion #2") << QStringLiteral("Promotion #3"));
+                      << QStringLiteral("Promotion #2")
+                      << QStringLiteral("Promotion #3"));
 
     userAttributes.setRecentMailedAddresses(
         QStringList() << QStringLiteral("Recent mailed address #1")
-        << QStringLiteral("Recent mailed address #2")
-        << QStringLiteral("Recent mailed address #3"));
+                      << QStringLiteral("Recent mailed address #2")
+                      << QStringLiteral("Recent mailed address #3"));
 
     user.setAttributes(std::move(userAttributes));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,8 +43,8 @@ class UsersHandler final :
 {
 public:
     explicit UsersHandler(
-        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-        Notifier * notifier, threading::QThreadPtr writerThread);
+        ConnectionPoolPtr connectionPool, Notifier * notifier,
+        threading::QThreadPtr thread);
 
     [[nodiscard]] QFuture<quint32> userCount() const override;
     [[nodiscard]] QFuture<void> putUser(qevercloud::User user) override;
@@ -81,8 +81,7 @@ private:
 
 private:
     const ConnectionPoolPtr m_connectionPool;
-    const threading::QThreadPoolPtr m_threadPool;
-    const threading::QThreadPtr m_writerThread;
+    const threading::QThreadPtr m_thread;
     Notifier * m_notifier;
 };
 

@@ -40,7 +40,7 @@ target_sources(${LIBRARY_NAME}
   TablesInitializer.h
   TagsHandler.cpp
   TagsHandler.h
-  Tasks.h
+  Task.h
   Transaction.cpp
   Transaction.h
   TypeChecks.cpp

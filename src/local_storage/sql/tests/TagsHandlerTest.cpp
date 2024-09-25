@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,6 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
-#include <QThreadPool>
 
 #include <gtest/gtest.h>
 
@@ -127,29 +126,21 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
-        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
-
+        m_thread = std::make_shared<QThread>();
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(), &QThread::finished, m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -157,9 +148,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
-    QReadWriteLockPtr m_resourceDataFilesLock;
+    threading::QThreadPtr m_thread;
     Notifier * m_notifier;
     QTemporaryDir m_temporaryDir;
 };
@@ -170,49 +159,37 @@ TEST_F(TagsHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread));
+            m_connectionPool, m_notifier, m_thread));
 }
 
 TEST_F(TagsHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
-        const auto tagsHandler = std::make_shared<TagsHandler>(
-            nullptr, m_threadPool, m_notifier, m_writerThread),
-        IQuentierException);
-}
-
-TEST_F(TagsHandlerTest, CtorNullThreadPool)
-{
-    EXPECT_THROW(
-        const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, nullptr, m_notifier, m_writerThread),
+        const auto tagsHandler =
+            std::make_shared<TagsHandler>(nullptr, m_notifier, m_thread),
         IQuentierException);
 }
 
 TEST_F(TagsHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
-        const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, m_threadPool, nullptr,
-            m_writerThread),
+        const auto tagsHandler =
+            std::make_shared<TagsHandler>(m_connectionPool, nullptr, m_thread),
         IQuentierException);
 }
 
-TEST_F(TagsHandlerTest, CtorNullWriterThread)
+TEST_F(TagsHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            nullptr),
+            m_connectionPool, m_notifier, nullptr),
         IQuentierException);
 }
 
 TEST_F(TagsHandlerTest, ShouldHaveZeroTagCountWhenThereAreNoTags)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto tagCountFuture = tagsHandler->tagCount();
     tagCountFuture.waitForFinished();
@@ -221,9 +198,8 @@ TEST_F(TagsHandlerTest, ShouldHaveZeroTagCountWhenThereAreNoTags)
 
 TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByLocalId)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto tagFuture = tagsHandler->findTagByLocalId(UidGenerator::Generate());
     tagFuture.waitForFinished();
@@ -233,9 +209,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByLocalId)
 
 TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByGuid)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto tagFuture = tagsHandler->findTagByGuid(UidGenerator::Generate());
     tagFuture.waitForFinished();
@@ -245,9 +220,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByGuid)
 
 TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByName)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto tagFuture = tagsHandler->findTagByName(QStringLiteral("My tag"));
     tagFuture.waitForFinished();
@@ -257,9 +231,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByName)
 
 TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByLocalId)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto expungeTagFuture =
         tagsHandler->expungeTagByLocalId(UidGenerator::Generate());
@@ -269,9 +242,8 @@ TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByLocalId)
 
 TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByGuid)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto expungeTagFuture =
         tagsHandler->expungeTagByGuid(UidGenerator::Generate());
@@ -281,9 +253,8 @@ TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByGuid)
 
 TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByName)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto expungeTagFuture =
         tagsHandler->expungeTagByName(QStringLiteral("My tag"));
@@ -293,9 +264,8 @@ TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByName)
 
 TEST_F(TagsHandlerTest, ShouldListNoTagsWhenThereAreNoTags)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
@@ -308,9 +278,8 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsWhenThereAreNoTags)
 
 TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
@@ -325,9 +294,8 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
 
 TEST_F(TagsHandlerTest, ShouldListNoTagGuidsWhenThereAreNoTags)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto listTagGuidsFilters = ILocalStorage::ListGuidsFilters{};
     listTagGuidsFilters.m_locallyModifiedFilter =
@@ -354,9 +322,8 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     TagsHandlerTestNotifierListener notifierListener;
 
@@ -375,8 +342,7 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     if (tag.linkedNotebookGuid()) {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
-                m_connectionPool, m_threadPool, m_notifier,
-                m_writerThread, m_temporaryDir.path());
+                m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
         qevercloud::LinkedNotebook linkedNotebook;
         linkedNotebook.setGuid(tag.linkedNotebookGuid());
@@ -565,9 +531,8 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
 TEST_F(TagsHandlerTest, HandleMultipleTags)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     TagsHandlerTestNotifierListener notifierListener;
 
@@ -589,8 +554,7 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
         qevercloud::LinkedNotebook linkedNotebook;
@@ -676,9 +640,8 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
 
 TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     TagsHandlerTestNotifierListener notifierListener;
 
@@ -697,8 +660,7 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook;
     linkedNotebook.setGuid(tag2.linkedNotebookGuid());
@@ -799,9 +761,8 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 
 TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     TagsHandlerTestNotifierListener notifierListener;
 
@@ -862,9 +823,8 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
 
 TEST_F(TagsHandlerTest, RefuseToPutTagWithUnknownParent)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto tag = createTag();
     tag.setParentTagLocalId(UidGenerator::Generate());
@@ -878,9 +838,8 @@ TEST_F(TagsHandlerTest, RefuseToPutTagWithUnknownParent)
 // similar and differ only by the presence of diacritics in one of names
 TEST_F(TagsHandlerTest, FindTagByNameWithDiacritics)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
     tag1.setGuid(UidGenerator::Generate());
@@ -917,8 +876,7 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook1;
     linkedNotebook1.setGuid(UidGenerator::Generate());
@@ -938,9 +896,8 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
 
     putLinkedNotebookFuture.waitForFinished();
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag userOwnTag1;
     userOwnTag1.setGuid(UidGenerator::Generate());
@@ -1039,9 +996,8 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
 // listing tags from user's own account
 TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
 {
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
     tag1.setGuid(UidGenerator::Generate());
@@ -1070,8 +1026,7 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
     }
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook1;
     notebook1.setGuid(UidGenerator::Generate());
@@ -1082,8 +1037,7 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Note note;
     note.setGuid(UidGenerator::Generate());
@@ -1167,8 +1121,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
 {
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook1;
     linkedNotebook1.setGuid(UidGenerator::Generate());
@@ -1180,9 +1133,8 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
 
     putLinkedNotebookFuture.waitForFinished();
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
     tag1.setGuid(UidGenerator::Generate());
@@ -1215,8 +1167,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
     }
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook1;
     notebook1.setGuid(UidGenerator::Generate());
@@ -1228,8 +1179,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Note note;
     note.setGuid(UidGenerator::Generate());
@@ -1316,8 +1266,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid2ForListGuidsTest,
     (UidGenerator::Generate()));
 
-const QList<qevercloud::Tag> gTagsForListGuidsTest =
-    QList<qevercloud::Tag>{}
+const QList<qevercloud::Tag> gTagsForListGuidsTest = QList<qevercloud::Tag>{}
     << qevercloud::TagBuilder{}
            .setLocalId(UidGenerator::Generate())
            .setGuid(UidGenerator::Generate())
@@ -1722,8 +1671,7 @@ TEST_P(TagsHandlerListGuidsTest, ListTagGuids)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putLinkedNotebookFuture =
         linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
@@ -1735,9 +1683,8 @@ TEST_P(TagsHandlerListGuidsTest, ListTagGuids)
 
     putLinkedNotebookFuture.waitForFinished();
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     for (const auto & tag: std::as_const(gTagsForListGuidsTest)) {
         auto putTagFuture = tagsHandler->putTag(tag);

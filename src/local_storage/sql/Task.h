@@ -37,7 +37,6 @@
 #include <QFuture>
 #include <QStringList>
 #include <QThread>
-#include <QThreadPool>
 
 #include <memory>
 #include <optional>
@@ -71,8 +70,7 @@ struct isList<QStringList> : std::true_type
 
 struct TaskContext
 {
-    threading::QThreadPoolPtr m_threadPool;
-    threading::QThreadPtr m_writerThread;
+    threading::QThreadPtr m_thread;
     ConnectionPoolPtr m_connectionPool;
     ErrorString m_holderIsDeadErrorMessage;
     ErrorString m_requestCanceledErrorMessage;
@@ -83,7 +81,7 @@ QFuture<ResultType> makeReadTask(
     TaskContext taskContext, std::weak_ptr<HolderType> holder_weak,
     FunctionType f)
 {
-    Q_ASSERT(taskContext.m_threadPool);
+    Q_ASSERT(taskContext.m_thread);
     Q_ASSERT(taskContext.m_connectionPool);
 
     auto promise = std::make_shared<QPromise<ResultType>>();
@@ -91,8 +89,8 @@ QFuture<ResultType> makeReadTask(
 
     promise->start();
 
-    auto threadPool = taskContext.m_threadPool;
-    auto * runnable = threading::createFunctionRunnable(
+    auto * thread = taskContext.m_thread.get();
+    auto processTask =
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
          taskContext = std::move(taskContext), f = std::move(f)]() mutable {
             const auto holder = holder_weak.lock();
@@ -141,9 +139,15 @@ QFuture<ResultType> makeReadTask(
             }
 
             promise->finish();
-        });
+        };
 
-    threadPool->start(runnable);
+    if (thread == QThread::currentThread()) {
+        processTask();
+    }
+    else {
+        threading::postToThread(thread, std::move(processTask));
+    }
+
     return future;
 }
 
@@ -152,7 +156,7 @@ QFuture<ResultType> makeWriteTask(
     TaskContext taskContext, std::weak_ptr<HolderType> holder_weak,
     FunctionType f)
 {
-    Q_ASSERT(taskContext.m_writerThread);
+    Q_ASSERT(taskContext.m_thread);
     Q_ASSERT(taskContext.m_connectionPool);
 
     auto promise = std::make_shared<QPromise<ResultType>>();
@@ -160,9 +164,9 @@ QFuture<ResultType> makeWriteTask(
 
     promise->start();
 
-    auto * writerThread = taskContext.m_writerThread.get();
+    auto * thread = taskContext.m_thread.get();
     auto processTask =
-        [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
+        [promise = std::move(promise), holder_weak,
          taskContext = std::move(taskContext), f = std::move(f)]() mutable {
             const auto holder = holder_weak.lock();
             if (!holder) {
@@ -185,11 +189,11 @@ QFuture<ResultType> makeWriteTask(
             promise->finish();
         };
 
-    if (writerThread == QThread::currentThread()) {
+    if (thread == QThread::currentThread()) {
         processTask();
     }
     else {
-        threading::postToThread(writerThread, std::move(processTask));
+        threading::postToThread(thread, std::move(processTask));
     }
 
     return future;

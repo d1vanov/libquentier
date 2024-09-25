@@ -38,7 +38,7 @@ class Patch2To3 final : public PatchBase
 public:
     explicit Patch2To3(
         Account account, ConnectionPoolPtr connectionPool,
-        threading::QThreadPtr writerThread);
+        threading::QThreadPtr thread);
 
     ~Patch2To3() noexcept override = default;
 

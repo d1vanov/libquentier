@@ -127,23 +127,15 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
-        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
-
+        m_thread = std::make_shared<QThread>();
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(), &QThread::finished, m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
 
         qputenv(gAppPersistentStoragePath, m_temporaryDir.path().toUtf8());
     }
@@ -152,8 +144,8 @@ protected:
     {
         qunsetenv(gAppPersistentStoragePath);
 
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -162,9 +154,7 @@ protected:
 public:
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
-    QReadWriteLockPtr m_resourceDataFilesLock;
+    threading::QThreadPtr m_thread;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
 };
@@ -175,14 +165,14 @@ TEST_F(Patch2To3Test, Ctor)
 
     EXPECT_NO_THROW(
         const auto patch = std::make_shared<Patch2To3>(
-            std::move(account), m_connectionPool, m_writerThread));
+            std::move(account), m_connectionPool, m_thread));
 }
 
 TEST_F(Patch2To3Test, CtorEmptyAccount)
 {
     EXPECT_THROW(
-        const auto patch = std::make_shared<Patch2To3>(
-            Account{}, m_connectionPool, m_writerThread),
+        const auto patch =
+            std::make_shared<Patch2To3>(Account{}, m_connectionPool, m_thread),
         IQuentierException);
 }
 
@@ -191,12 +181,12 @@ TEST_F(Patch2To3Test, CtorNullConnectionPool)
     Account account{gTestAccountName, Account::Type::Local};
 
     EXPECT_THROW(
-        const auto patch = std::make_shared<Patch2To3>(
-            std::move(account), nullptr, m_writerThread),
+        const auto patch =
+            std::make_shared<Patch2To3>(std::move(account), nullptr, m_thread),
         IQuentierException);
 }
 
-TEST_F(Patch2To3Test, CtorNullWriterThread)
+TEST_F(Patch2To3Test, CtorNullThread)
 {
     Account account{gTestAccountName, Account::Type::Local};
 
@@ -529,8 +519,8 @@ Q_DECLARE_FLAGS(
 
 struct Patch2To3ResourcesTestData
 {
-    PrepareLocalStorageForUpgradeFlags flags = {};
-    std::function<void()> prepareFunc = {};
+    PrepareLocalStorageForUpgradeFlags flags;
+    std::function<void()> prepareFunc = {}; // NOLINT
 };
 
 class Patch2To3ResourcesTest :
@@ -603,16 +593,13 @@ TEST_P(Patch2To3ResourcesTest, CheckResourceVersionIdsUpgrade)
         prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     const auto testData = prepareResourcesForVersionsUpgrade(
         localStorageDirPath, data.flags, m_connectionPool, *notebooksHandler,
@@ -621,15 +608,15 @@ TEST_P(Patch2To3ResourcesTest, CheckResourceVersionIdsUpgrade)
         data.prepareFunc();
     }
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, m_threadPool, m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(account, m_connectionPool, m_thread);
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
     EXPECT_EQ(versionFuture.result(), 2);
 
     const auto patch = std::make_shared<Patch2To3>(
-        std::move(account), m_connectionPool, m_writerThread);
+        std::move(account), m_connectionPool, m_thread);
 
     auto applyFuture = patch->apply();
     ASSERT_NO_THROW(applyFuture.waitForFinished());
@@ -829,12 +816,10 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
         prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     for (const auto & notebook: std::as_const(localNotebooks)) {
         auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
@@ -879,15 +864,15 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
 
     changeDatabaseVersionTo2(database);
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, m_threadPool, m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(account, m_connectionPool, m_thread);
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
     EXPECT_EQ(versionFuture.result(), 2);
 
     const auto patch = std::make_shared<Patch2To3>(
-        std::move(account), m_connectionPool, m_writerThread);
+        std::move(account), m_connectionPool, m_thread);
 
     auto applyFuture = patch->apply();
     ASSERT_NO_THROW(applyFuture.waitForFinished());
@@ -1062,8 +1047,8 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
     Q_UNUSED(
         prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool))
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     for (const auto & tag: std::as_const(localParentTags)) {
         auto putTagFuture = tagsHandler->putTag(tag);
@@ -1108,15 +1093,15 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
 
     changeDatabaseVersionTo2(database);
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, m_threadPool, m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(account, m_connectionPool, m_thread);
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
     EXPECT_EQ(versionFuture.result(), 2);
 
     const auto patch = std::make_shared<Patch2To3>(
-        std::move(account), m_connectionPool, m_writerThread);
+        std::move(account), m_connectionPool, m_thread);
 
     auto applyFuture = patch->apply();
     ASSERT_NO_THROW(applyFuture.waitForFinished());
@@ -1185,11 +1170,12 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
 TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
 {
     // Local notebook
-    const auto localNotebook = qevercloud::NotebookBuilder{}
-        .setLocalId(UidGenerator::Generate())
-        .setName(
-            QStringLiteral("Local notebook for resource note guids upgrade"))
-        .build();
+    const auto localNotebook =
+        qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setName(QStringLiteral(
+                "Local notebook for resource note guids upgrade"))
+            .build();
 
     // Local notes and resources - they would have no guids. The patch should
     // not touch them.
@@ -1234,12 +1220,13 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
     qint32 updateSequenceNum = 1;
 
     // Non-local notebook
-    const auto notebook = qevercloud::NotebookBuilder{}
-        .setLocalId(UidGenerator::Generate())
-        .setGuid(UidGenerator::Generate())
-        .setUpdateSequenceNum(updateSequenceNum++)
-        .setName("Notebook for resource note guids upgrade")
-        .build();
+    const auto notebook =
+        qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setUpdateSequenceNum(updateSequenceNum++)
+            .setName("Notebook for resource note guids upgrade")
+            .build();
 
     // Notes with guids and update sequence numbers
     QList<qevercloud::Note> notes = [&] {
@@ -1317,16 +1304,13 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
         prepareAccountLocalStorageDir(m_temporaryDir.path(), *m_connectionPool);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier, m_writerThread,
-        localStorageDirPath, m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, localStorageDirPath);
 
     {
         auto putNotebookFuture = notebooksHandler->putNotebook(localNotebook);
@@ -1368,15 +1352,15 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
 
     changeDatabaseVersionTo2(database);
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, m_threadPool, m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(account, m_connectionPool, m_thread);
 
     auto versionFuture = versionHandler->version();
     versionFuture.waitForFinished();
     EXPECT_EQ(versionFuture.result(), 2);
 
     const auto patch = std::make_shared<Patch2To3>(
-        std::move(account), m_connectionPool, m_writerThread);
+        std::move(account), m_connectionPool, m_thread);
 
     auto applyFuture = patch->apply();
     ASSERT_NO_THROW(applyFuture.waitForFinished());

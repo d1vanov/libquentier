@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,8 +44,7 @@ class SynchronizationInfoHandler final :
 {
 public:
     explicit SynchronizationInfoHandler(
-        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-        threading::QThreadPtr writerThread);
+        ConnectionPoolPtr connectionPool, threading::QThreadPtr thread);
 
     [[nodiscard]] QFuture<qint32> highestUpdateSequenceNumber(
         HighestUsnOption option) const override;
@@ -69,8 +68,7 @@ private:
 
 private:
     const ConnectionPoolPtr m_connectionPool;
-    const threading::QThreadPoolPtr m_threadPool;
-    const threading::QThreadPtr m_writerThread;
+    const threading::QThreadPtr m_thread;
 };
 
 } // namespace quentier::local_storage::sql

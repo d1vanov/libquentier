@@ -30,8 +30,8 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/types/builders/LinkedNotebookBuilder.h>
-#include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
+#include <qevercloud/types/builders/NotebookBuilder.h>
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -398,30 +398,21 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
-        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
-
+        m_thread = std::make_shared<QThread>();
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(), &QThread::finished, m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -429,9 +420,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
-    QReadWriteLockPtr m_resourceDataFilesLock;
+    threading::QThreadPtr m_thread;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
 };
@@ -442,25 +431,14 @@ TEST_F(NotesHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock));
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path()));
 }
 
 TEST_F(NotesHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            nullptr, m_threadPool, m_notifier, m_writerThread,
-            m_temporaryDir.path(), m_resourceDataFilesLock),
-        IQuentierException);
-}
-
-TEST_F(NotesHandlerTest, CtorNullThreadPool)
-{
-    EXPECT_THROW(
-        const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, nullptr, m_notifier, m_writerThread,
-            m_temporaryDir.path(), m_resourceDataFilesLock),
+            nullptr, m_notifier, m_thread, m_temporaryDir.path()),
         IQuentierException);
 }
 
@@ -468,34 +446,22 @@ TEST_F(NotesHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, m_threadPool, nullptr,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock),
+            m_connectionPool, nullptr, m_thread, m_temporaryDir.path()),
         IQuentierException);
 }
 
-TEST_F(NotesHandlerTest, CtorNullWriterThread)
+TEST_F(NotesHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            nullptr, m_temporaryDir.path(), m_resourceDataFilesLock),
-        IQuentierException);
-}
-
-TEST_F(NotesHandlerTest, CtorNullResourceDataFilesLock)
-{
-    EXPECT_THROW(
-        const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), nullptr),
+            m_connectionPool, m_notifier, nullptr, m_temporaryDir.path()),
         IQuentierException);
 }
 
 TEST_F(NotesHandlerTest, ShouldHaveZeroNonDeletedNoteCountWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -510,8 +476,7 @@ TEST_F(NotesHandlerTest, ShouldHaveZeroNonDeletedNoteCountWhenThereAreNoNotes)
 TEST_F(NotesHandlerTest, ShouldHaveZeroDeletedNoteCountWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -526,8 +491,7 @@ TEST_F(NotesHandlerTest, ShouldHaveZeroDeletedNoteCountWhenThereAreNoNotes)
 TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -545,8 +509,7 @@ TEST_F(
     ShouldHaveZeroNonDeletedNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -564,8 +527,7 @@ TEST_F(
     ShouldHaveZeroDeletedNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -583,8 +545,7 @@ TEST_F(
     ShouldHaveZeroNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -603,8 +564,7 @@ TEST_F(
     ShouldHaveZeroNonDeletedNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -622,8 +582,7 @@ TEST_F(
     ShouldHaveZeroDeletedNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -640,8 +599,7 @@ TEST_F(
     NotesHandlerTest, ShouldHaveZeroNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -660,8 +618,7 @@ TEST_F(
     ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotesNorTags)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -680,8 +637,7 @@ TEST_F(
     ShouldHaveZeroNoteCountPerNotebookAndTagLocalidsWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
@@ -698,8 +654,7 @@ TEST_F(
 TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -716,8 +671,7 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
 TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -734,8 +688,7 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
 TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNoteFuture =
         notesHandler->expungeNoteByLocalId(UidGenerator::Generate());
@@ -746,8 +699,7 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
 TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNoteFuture =
         notesHandler->expungeNoteByGuid(UidGenerator::Generate());
@@ -758,8 +710,7 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
 TEST_F(NotesHandlerTest, ShouldNotListSharedNotesForNonexistentNote)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto listSharedNotesFuture =
         notesHandler->listSharedNotes(UidGenerator::Generate());
@@ -771,8 +722,7 @@ TEST_F(NotesHandlerTest, ShouldNotListSharedNotesForNonexistentNote)
 TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -788,8 +738,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
 TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -806,8 +755,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
 TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -824,8 +772,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
 TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -843,8 +790,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
 TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -861,8 +807,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
 TEST_F(NotesHandlerTest, ShouldNotListNoteGuidsWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto listNoteGuidsFilters = ILocalStorage::ListGuidsFilters{};
     listNoteGuidsFilters.m_locallyModifiedFilter =
@@ -981,8 +926,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     NotesHandlerTestNotifierListener notifierListener;
 
@@ -999,8 +943,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         &NotesHandlerTestNotifierListener::onNoteExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     // === Put ===
 
@@ -1016,8 +959,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         (note.tagGuids() && !note.tagGuids()->isEmpty()))
     {
         const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread);
+            m_connectionPool, m_notifier, m_thread);
 
         if (!note.tagLocalIds().isEmpty()) {
             int index = 0;
@@ -1376,8 +1318,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 TEST_F(NotesHandlerTest, HandleMultipleNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     NotesHandlerTestNotifierListener notifierListener;
 
@@ -1394,15 +1335,13 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         &NotesHandlerTestNotifierListener::onNoteExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto notes = gNoteTestValues;
     int noteCounter = 2;
@@ -1647,15 +1586,13 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
 TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag;
     tag.setGuid(UidGenerator::Generate());
@@ -1666,8 +1603,7 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
     putTagFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     // Put note with a tag and a resource to the local storage
     qevercloud::Note note;
@@ -1816,209 +1752,208 @@ Q_GLOBAL_STATIC_WITH_ARGS(
 Q_GLOBAL_STATIC_WITH_ARGS(
     QList<qevercloud::Notebook>, gNotebooksForListGuidsTest,
     (QList<qevercloud::Notebook>{}
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 1"))
-           .setLocallyModified(false)
-           .setLocallyFavorited(false)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 2"))
-           .setLocallyModified(true)
-           .setLocallyFavorited(false)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 3"))
-           .setLocallyModified(false)
-           .setLocallyFavorited(true)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 4"))
-           .setLocallyModified(true)
-           .setLocallyFavorited(true)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 5"))
-           .setLocallyModified(false)
-           .setLocallyFavorited(false)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 6"))
-           .setLocallyModified(true)
-           .setLocallyFavorited(false)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 7"))
-           .setLocallyModified(false)
-           .setLocallyFavorited(true)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 8"))
-           .setLocallyModified(true)
-           .setLocallyFavorited(true)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 9"))
-           .setLocallyModified(false)
-           .setLocallyFavorited(false)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 10"))
-           .setLocallyModified(true)
-           .setLocallyFavorited(false)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 11"))
-           .setLocallyModified(false)
-           .setLocallyFavorited(true)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
-           .build()
-    << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
-           .setName(QString::fromUtf8("Notebook 12"))
-           .setLocallyModified(true)
-           .setLocallyFavorited(true)
-           .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
-           .build()));
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 1"))
+            .setLocallyModified(false)
+            .setLocallyFavorited(false)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 2"))
+            .setLocallyModified(true)
+            .setLocallyFavorited(false)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 3"))
+            .setLocallyModified(false)
+            .setLocallyFavorited(true)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 4"))
+            .setLocallyModified(true)
+            .setLocallyFavorited(true)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 5"))
+            .setLocallyModified(false)
+            .setLocallyFavorited(false)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 6"))
+            .setLocallyModified(true)
+            .setLocallyFavorited(false)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 7"))
+            .setLocallyModified(false)
+            .setLocallyFavorited(true)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 8"))
+            .setLocallyModified(true)
+            .setLocallyFavorited(true)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 9"))
+            .setLocallyModified(false)
+            .setLocallyFavorited(false)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 10"))
+            .setLocallyModified(true)
+            .setLocallyFavorited(false)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 11"))
+            .setLocallyModified(false)
+            .setLocallyFavorited(true)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+            .build()
+     << qevercloud::NotebookBuilder{}
+            .setLocalId(UidGenerator::Generate())
+            .setGuid(UidGenerator::Generate())
+            .setName(QString::fromUtf8("Notebook 12"))
+            .setLocallyModified(true)
+            .setLocallyFavorited(true)
+            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
+            .build()));
 
-const QList<qevercloud::Note> gNotesForListGuidsTest =
-    QList<qevercloud::Note>{}
+const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 1"))
-            .setLocallyModified(false)
-            .setLocallyFavorited(false)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[0].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[0].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 1"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[0].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[0].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 2"))
-            .setLocallyModified(true)
-            .setLocallyFavorited(false)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[1].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[1].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 2"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[1].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[1].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 3"))
-            .setLocallyModified(false)
-            .setLocallyFavorited(true)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[2].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[2].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 3"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[2].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[2].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 4"))
-            .setLocallyModified(true)
-            .setLocallyFavorited(true)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[3].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[3].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 4"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[3].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[3].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 5"))
-            .setLocallyModified(false)
-            .setLocallyFavorited(false)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[4].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[4].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 5"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[4].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[4].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 6"))
-            .setLocallyModified(true)
-            .setLocallyFavorited(false)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[5].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[5].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 6"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[5].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[5].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 7"))
-            .setLocallyModified(false)
-            .setLocallyFavorited(true)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[6].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[6].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 7"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[6].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[6].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 8"))
-            .setLocallyModified(true)
-            .setLocallyFavorited(true)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[7].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[7].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 8"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[7].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[7].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 9"))
-            .setLocallyModified(false)
-            .setLocallyFavorited(false)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[8].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[8].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 9"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(false)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[8].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[8].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 10"))
-            .setLocallyModified(true)
-            .setLocallyFavorited(false)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[9].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[9].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 10"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(false)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[9].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[9].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 11"))
-            .setLocallyModified(false)
-            .setLocallyFavorited(true)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[10].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[10].localId())
-            .build()
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 11"))
+           .setLocallyModified(false)
+           .setLocallyFavorited(true)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[10].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[10].localId())
+           .build()
     << qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
-            .setTitle(QStringLiteral("Note 12"))
-            .setLocallyModified(true)
-            .setLocallyFavorited(true)
-            .setNotebookGuid((*gNotebooksForListGuidsTest)[11].guid())
-            .setNotebookLocalId((*gNotebooksForListGuidsTest)[11].localId())
-            .build();
+           .setLocalId(UidGenerator::Generate())
+           .setGuid(UidGenerator::Generate())
+           .setTitle(QStringLiteral("Note 12"))
+           .setLocallyModified(true)
+           .setLocallyFavorited(true)
+           .setNotebookGuid((*gNotebooksForListGuidsTest)[11].guid())
+           .setNotebookLocalId((*gNotebooksForListGuidsTest)[11].localId())
+           .build();
 
 struct ListNoteGuidsTestData
 {
@@ -2331,8 +2266,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
 
     const auto linkedNotebooksHandler =
         std::make_shared<LinkedNotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path());
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putLinkedNotebookFuture =
         linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
@@ -2345,8 +2279,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
     putLinkedNotebookFuture.waitForFinished();
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     for (const auto & notebook: std::as_const(*gNotebooksForListGuidsTest)) {
         auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
@@ -2354,8 +2287,7 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
     }
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     for (const auto & note: std::as_const(gNotesForListGuidsTest)) {
         auto putNoteFuture = notesHandler->putNote(note);
@@ -2383,7 +2315,6 @@ TEST_P(NotesHandlerListGuidsTest, ListNoteGuids)
     EXPECT_EQ(listNoteGuidsFuture.result(), expectedGuids);
 }
 
-
 enum class ExcludedTagIds
 {
     LocalIds,
@@ -2405,15 +2336,13 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
-    const auto tagsHandler = std::make_shared<TagsHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread);
+    const auto tagsHandler =
+        std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
     tag1.setGuid(UidGenerator::Generate());
@@ -2432,8 +2361,7 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
     putTagFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Note note;
     note.setGuid(UidGenerator::Generate());
@@ -3177,8 +3105,7 @@ class NotesHandlerNoteSearchQueryTest :
         Q_ASSERT(!m_notebooks.isEmpty());
 
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
         for (const auto & notebook: std::as_const(m_notebooks)) {
             auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
@@ -3191,8 +3118,7 @@ class NotesHandlerNoteSearchQueryTest :
         Q_ASSERT(!m_tags.isEmpty());
 
         const auto tagsHandler = std::make_shared<TagsHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread);
+            m_connectionPool, m_notifier, m_thread);
 
         for (const auto & tag: std::as_const(m_tags)) {
             auto putTagFuture = tagsHandler->putTag(tag);
@@ -3205,8 +3131,7 @@ class NotesHandlerNoteSearchQueryTest :
         Q_ASSERT(!m_notes.isEmpty());
 
         const auto notesHandler = std::make_shared<NotesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
         for (const auto & note: std::as_const(m_notes)) {
             auto putNoteFuture = notesHandler->putNote(note);
@@ -3525,8 +3450,7 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
         FetchNoteOption::WithResourceBinaryData;
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto queryNotesFuture =
         notesHandler->queryNotes(noteSearchQuery, fetchNoteOptions);
@@ -3562,7 +3486,8 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
                        << "unexpected result of note search query processing: ";
                    strm << "Expected note indices: ";
                    for (const int i:
-                        std::as_const(testData.expectedContainedNotesIndices)) {
+                        std::as_const(testData.expectedContainedNotesIndices))
+                   {
                        strm << i << "; ";
                    }
                    strm << "received note indices: ";

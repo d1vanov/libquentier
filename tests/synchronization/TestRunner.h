@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,8 +37,7 @@ class TestRunner : public QObject
     Q_OBJECT
 public:
     explicit TestRunner(
-        QObject * parent = nullptr,
-        threading::QThreadPoolPtr threadPool = {});
+        QObject * parent = nullptr);
 
     ~TestRunner() override;
 
@@ -55,7 +54,6 @@ private Q_SLOTS:
 private:
     const FakeAuthenticatorPtr m_fakeAuthenticator;
     const FakeKeychainServicePtr m_fakeKeychainService;
-    const threading::QThreadPoolPtr m_threadPool;
 
     Account m_testAccount;
     std::optional<QTemporaryDir> m_tempDir;

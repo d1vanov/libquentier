@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,9 +52,9 @@ namespace quentier::local_storage::sql {
 
 Patch2To3::Patch2To3(
     Account account, ConnectionPoolPtr connectionPool,
-    threading::QThreadPtr writerThread) :
+    threading::QThreadPtr thread) :
     PatchBase(
-        std::move(connectionPool), std::move(writerThread),
+        std::move(connectionPool), std::move(thread),
         accountPersistentStoragePath(account),
         accountPersistentStoragePath(account) +
             QStringLiteral("/backup_upgrade_2_to_3_") +

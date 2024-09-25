@@ -29,7 +29,6 @@
 #include <QCoreApplication>
 #include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QThreadPool>
 
 #include <gtest/gtest.h>
 
@@ -51,22 +50,16 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        m_writerThread->start();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
+        m_thread = std::make_shared<QThread>();
+        m_thread->start();
         m_account =
             Account{QString::fromUtf8(gTestAccountName), Account::Type::Local};
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -74,8 +67,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
+    threading::QThreadPtr m_thread;
     Account m_account;
 };
 
@@ -85,49 +77,37 @@ TEST_F(VersionHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto versionHandler = std::make_shared<VersionHandler>(
-            m_account, m_connectionPool, m_threadPool,
-            m_writerThread));
+            m_account, m_connectionPool, m_thread));
 }
 
 TEST_F(VersionHandlerTest, CtorEmptyAccount)
 {
     EXPECT_THROW(
         const auto versionHandler = std::make_shared<VersionHandler>(
-            Account{}, m_connectionPool, m_threadPool,
-            m_writerThread),
+            Account{}, m_connectionPool, m_thread),
         IQuentierException);
 }
 
 TEST_F(VersionHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
-        const auto versionHandler = std::make_shared<VersionHandler>(
-            m_account, nullptr, m_threadPool, m_writerThread),
+        const auto versionHandler =
+            std::make_shared<VersionHandler>(m_account, nullptr, m_thread),
         IQuentierException);
 }
 
-TEST_F(VersionHandlerTest, CtorNullThreadPool)
+TEST_F(VersionHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto versionHandler = std::make_shared<VersionHandler>(
-            m_account, m_connectionPool, nullptr, m_writerThread),
-        IQuentierException);
-}
-
-TEST_F(VersionHandlerTest, CtorNullWriterThread)
-{
-    EXPECT_THROW(
-        const auto versionHandler = std::make_shared<VersionHandler>(
-            m_account, m_connectionPool, m_threadPool,
-            nullptr),
+            m_account, m_connectionPool, nullptr),
         IQuentierException);
 }
 
 TEST_F(VersionHandlerTest, HandleEmptyNewlyCreatedDatabase)
 {
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        m_account, m_connectionPool, m_threadPool,
-        m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(m_account, m_connectionPool, m_thread);
 
     auto isVersionTooHighFuture = versionHandler->isVersionTooHigh();
     isVersionTooHighFuture.waitForFinished();
@@ -161,9 +141,8 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfVersion1)
         EXPECT_TRUE(res);
     }
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        m_account, m_connectionPool, m_threadPool,
-        m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(m_account, m_connectionPool, m_thread);
 
     auto isVersionTooHighFuture = versionHandler->isVersionTooHigh();
     isVersionTooHighFuture.waitForFinished();
@@ -206,9 +185,8 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfVersion2)
         EXPECT_TRUE(res);
     }
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        m_account, m_connectionPool, m_threadPool,
-        m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(m_account, m_connectionPool, m_thread);
 
     auto isVersionTooHighFuture = versionHandler->isVersionTooHigh();
     isVersionTooHighFuture.waitForFinished();
@@ -247,9 +225,8 @@ TEST_F(VersionHandlerTest, HandleDatabaseOfTooHighVersion)
         EXPECT_TRUE(res);
     }
 
-    const auto versionHandler = std::make_shared<VersionHandler>(
-        m_account, m_connectionPool, m_threadPool,
-        m_writerThread);
+    const auto versionHandler =
+        std::make_shared<VersionHandler>(m_account, m_connectionPool, m_thread);
 
     auto isVersionTooHighFuture = versionHandler->isVersionTooHigh();
     isVersionTooHighFuture.waitForFinished();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,8 +34,8 @@ class TagsHandler final :
 {
 public:
     explicit TagsHandler(
-        ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-        Notifier * notifier, threading::QThreadPtr writerThread);
+        ConnectionPoolPtr connectionPool, Notifier * notifier,
+        threading::QThreadPtr thread);
 
     [[nodiscard]] QFuture<quint32> tagCount() const override;
     [[nodiscard]] QFuture<void> putTag(qevercloud::Tag tag) override;
@@ -128,8 +128,7 @@ private:
 
 private:
     const ConnectionPoolPtr m_connectionPool;
-    const threading::QThreadPoolPtr m_threadPool;
-    const threading::QThreadPtr m_writerThread;
+    const threading::QThreadPtr m_thread;
     Notifier * m_notifier;
 
     StringUtils m_stringUtils;

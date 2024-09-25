@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,8 +44,7 @@ class VersionHandler final :
 public:
     explicit VersionHandler(
         Account account, ConnectionPoolPtr connectionPool,
-        threading::QThreadPoolPtr threadPool,
-        threading::QThreadPtr writerThread);
+        threading::QThreadPtr thread);
 
     [[nodiscard]] QFuture<bool> isVersionTooHigh() const override;
     [[nodiscard]] QFuture<bool> requiresUpgrade() const override;
@@ -62,11 +61,12 @@ private:
 
     [[nodiscard]] qint32 highestSupportedVersionImpl() const noexcept;
 
+    [[nodiscard]] TaskContext makeTaskContext() const;
+
 private:
     const Account m_account;
     const ConnectionPoolPtr m_connectionPool;
-    const threading::QThreadPoolPtr m_threadPool;
-    const threading::QThreadPtr m_writerThread;
+    const threading::QThreadPtr m_thread;
 };
 
 } // namespace quentier::local_storage::sql

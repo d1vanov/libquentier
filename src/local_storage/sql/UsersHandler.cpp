@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "UsersHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "Notifier.h"
-#include "Tasks.h"
+#include "Task.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
-#include "UsersHandler.h"
 
 #include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
@@ -50,20 +50,14 @@
 namespace quentier::local_storage::sql {
 
 UsersHandler::UsersHandler(
-    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-    Notifier * notifier, threading::QThreadPtr writerThread) :
-    m_connectionPool{std::move(connectionPool)},
-    m_threadPool{std::move(threadPool)},
-    m_writerThread{std::move(writerThread)}, m_notifier{notifier}
+    ConnectionPoolPtr connectionPool, Notifier * notifier,
+    threading::QThreadPtr thread) :
+    m_connectionPool{std::move(connectionPool)}, m_thread{std::move(thread)},
+    m_notifier{notifier}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("UsersHandler ctor: connection pool is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("UsersHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
@@ -71,9 +65,9 @@ UsersHandler::UsersHandler(
             ErrorString{QStringLiteral("UsersHandler ctor: notifier is null")}};
     }
 
-    if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("UsersHandler ctor: writer thread is null")}};
+    if (Q_UNLIKELY(!m_thread)) {
+        throw InvalidArgument{
+            ErrorString{QStringLiteral("UsersHandler ctor: thread is null")}};
     }
 }
 
@@ -367,7 +361,7 @@ bool UsersHandler::expungeUserByIdImpl(
 TaskContext UsersHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool, m_writerThread, m_connectionPool,
+        m_thread, m_connectionPool,
         ErrorString{QStringLiteral("UsersHandler is already destroyed")},
         ErrorString{QStringLiteral("Request has been calceled")}};
 }

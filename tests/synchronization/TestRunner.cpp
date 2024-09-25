@@ -610,14 +610,10 @@ struct ItemListsChecker
 
 } // namespace
 
-TestRunner::TestRunner(QObject * parent, threading::QThreadPoolPtr threadPool) :
+TestRunner::TestRunner(QObject * parent) :
     QObject(parent), m_fakeAuthenticator{std::make_shared<FakeAuthenticator>()},
-    m_fakeKeychainService{std::make_shared<FakeKeychainService>()},
-    m_threadPool{
-        threadPool ? std::move(threadPool) : threading::globalThreadPool()}
-{
-    Q_ASSERT(m_threadPool);
-}
+    m_fakeKeychainService{std::make_shared<FakeKeychainService>()}
+{}
 
 TestRunner::~TestRunner() = default;
 
@@ -634,7 +630,7 @@ void TestRunner::init()
 
     m_tempDir.emplace();
     m_localStorage = local_storage::createSqliteLocalStorage(
-        m_testAccount, QDir{m_tempDir->path()}, m_threadPool);
+        m_testAccount, QDir{m_tempDir->path()});
 
     const QString authToken = QStringLiteral("AuthToken");
     const QString webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");

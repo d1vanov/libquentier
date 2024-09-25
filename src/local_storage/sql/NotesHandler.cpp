@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ErrorHandling.h"
 #include "NotesHandler.h"
+#include "ErrorHandling.h"
 #include "Notifier.h"
-#include "Tasks.h"
+#include "Task.h"
 #include "TypeChecks.h"
 
 #include "utils/Common.h"
@@ -45,12 +45,9 @@
 #include <qevercloud/utility/ToRange.h>
 
 #include <QMap>
-#include <QReadLocker>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QTextStream>
-#include <QThreadPool>
-#include <QWriteLocker>
 
 #include <algorithm>
 #include <utility>
@@ -82,16 +79,12 @@ namespace {
 } // namespace
 
 NotesHandler::NotesHandler(
-    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-    Notifier * notifier, threading::QThreadPtr writerThread,
-    const QString & localStorageDirPath,
-    QReadWriteLockPtr resourceDataFilesLock) :
+    ConnectionPoolPtr connectionPool, Notifier * notifier,
+    threading::QThreadPtr thread, const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     // clang-format off
-    m_threadPool{std::move(threadPool)},
-    m_writerThread{std::move(writerThread)},
+    m_thread{std::move(thread)},
     m_localStorageDir{localStorageDirPath},
-    m_resourceDataFilesLock{std::move(resourceDataFilesLock)},
     m_notifier{notifier}
 // clang-format on
 {
@@ -100,17 +93,12 @@ NotesHandler::NotesHandler(
             QStringLiteral("NotesHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("NotesHandler ctor: thread pool is null")}};
-    }
-
     if (Q_UNLIKELY(!m_notifier)) {
         throw InvalidArgument{
             ErrorString{QStringLiteral("NotesHandler ctor: notifier is null")}};
     }
 
-    if (Q_UNLIKELY(!m_writerThread)) {
+    if (Q_UNLIKELY(!m_thread)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("NotesHandler ctor: writer thread is null")}};
     }
@@ -127,11 +115,6 @@ NotesHandler::NotesHandler(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "NotesHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
-    }
-
-    if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "NotesHandler ctor: resource data files lock is null")}};
     }
 }
 
@@ -208,8 +191,7 @@ QFuture<void> NotesHandler::putNote(qevercloud::Note note)
         [note = std::move(note)](
             NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
-            bool res = utils::putNote(
+            const bool res = utils::putNote(
                 handler.m_localStorageDir, note, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyNotePut(note);
@@ -226,11 +208,7 @@ QFuture<void> NotesHandler::updateNote(
         [note = std::move(note), options](
             NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
-            std::optional<QWriteLocker> locker;
-            if (options.testFlag(UpdateNoteOption::UpdateResourceBinaryData)) {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
-            bool res = handler.updateNoteImpl(
+            const bool res = handler.updateNoteImpl(
                 note, options, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyNoteUpdated(note, options);
@@ -247,10 +225,6 @@ QFuture<std::optional<qevercloud::Note>> NotesHandler::findNoteByLocalId(
         [localId = std::move(localId), options](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (options.testFlag(FetchNoteOption::WithResourceBinaryData)) {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.findNoteByLocalIdImpl(
                 localId, options, database, errorDescription);
         });
@@ -264,10 +238,6 @@ QFuture<std::optional<qevercloud::Note>> NotesHandler::findNoteByGuid(
         [guid = std::move(guid), options](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (options.testFlag(FetchNoteOption::WithResourceBinaryData)) {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.findNoteByGuidImpl(
                 guid, options, database, errorDescription);
         });
@@ -280,8 +250,7 @@ QFuture<void> NotesHandler::expungeNoteByLocalId(QString localId)
         [localId = std::move(localId)](
             NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
-            bool res = handler.expungeNoteByLocalIdImpl(
+            const bool res = handler.expungeNoteByLocalIdImpl(
                 localId, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyNoteExpunged(localId);
@@ -297,7 +266,6 @@ QFuture<void> NotesHandler::expungeNoteByGuid(qevercloud::Guid guid)
         [guid = std::move(guid)](
             NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeNoteByGuidImpl(
                 guid, database, errorDescription);
         });
@@ -311,11 +279,6 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotes(
         [fetchOptions, options](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
-            {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.listNotesImpl(
                 fetchOptions, options, database, errorDescription);
         });
@@ -329,8 +292,8 @@ QFuture<QList<qevercloud::SharedNote>> NotesHandler::listSharedNotes(
         [guid = std::move(guid)](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            auto sharedNotes = handler.listSharedNotesImpl(
-                guid, database, errorDescription);
+            auto sharedNotes =
+                handler.listSharedNotesImpl(guid, database, errorDescription);
             return sharedNotes.value_or(QList<qevercloud::SharedNote>{});
         });
 }
@@ -344,11 +307,6 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerNotebookLocalId(
         [notebookLocalId = std::move(notebookLocalId), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
-            {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.listNotesPerNotebookLocalIdImpl(
                 notebookLocalId, fetchOptions, options, database,
                 errorDescription);
@@ -364,11 +322,6 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerTagLocalId(
         [tagLocalId = std::move(tagLocalId), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
-            {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.listNotesPerTagLocalIdImpl(
                 tagLocalId, fetchOptions, options, database, errorDescription);
         });
@@ -385,11 +338,6 @@ QFuture<QList<qevercloud::Note>>
          tagLocalIds = std::move(tagLocalIds), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
-            {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.listNotesPerNotebookAndTagLocalIdsImpl(
                 notebookLocalIds, tagLocalIds, fetchOptions, options, database,
                 errorDescription);
@@ -405,11 +353,6 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesByLocalIds(
         [noteLocalIds = std::move(noteLocalIds), options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
-            {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.listNotesByLocalIdsImpl(
                 noteLocalIds, fetchOptions, options, database,
                 errorDescription);
@@ -438,11 +381,6 @@ QFuture<QList<qevercloud::Note>> NotesHandler::queryNotes(
         [query = std::move(query), fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            std::optional<QReadLocker> locker;
-            if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
-            {
-                locker.emplace(handler.m_resourceDataFilesLock.get());
-            }
             return handler.queryNotesImpl(
                 query, fetchOptions, database, errorDescription);
         });
@@ -1434,7 +1372,8 @@ QList<qevercloud::Note> NotesHandler::listNotesImpl(
 
         error.clear();
         if (!fillResources(
-                fetchOptions, errorPrefix, note, database, errorDescription)) {
+                fetchOptions, errorPrefix, note, database, errorDescription))
+        {
             errorDescription = errorPrefix;
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -1634,7 +1573,7 @@ QList<qevercloud::Note> NotesHandler::queryNotesImpl(
 TaskContext NotesHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool, m_writerThread, m_connectionPool,
+        m_thread, m_connectionPool,
         ErrorString{QStringLiteral("NotesHandler is already destroyed")},
         ErrorString{QStringLiteral("Request has been canceled")}};
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ResourcesHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "Notifier.h"
-#include "ResourcesHandler.h"
-#include "Tasks.h"
+#include "Task.h"
 #include "TypeChecks.h"
 
 #include "utils/Common.h"
@@ -41,25 +41,18 @@
 #endif
 
 #include <QCryptographicHash>
-#include <QReadLocker>
 #include <QSqlQuery>
 #include <QSqlRecord>
-#include <QThreadPool>
-#include <QWriteLocker>
 
 namespace quentier::local_storage::sql {
 
 ResourcesHandler::ResourcesHandler(
-    ConnectionPoolPtr connectionPool, threading::QThreadPoolPtr threadPool,
-    Notifier * notifier, threading::QThreadPtr writerThread,
-    const QString & localStorageDirPath,
-    QReadWriteLockPtr resourceDataFilesLock) :
+    ConnectionPoolPtr connectionPool, Notifier * notifier,
+    threading::QThreadPtr thread, const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     // clang-format off
-    m_threadPool{std::move(threadPool)},
-    m_writerThread{std::move(writerThread)},
+    m_thread{std::move(thread)},
     m_localStorageDir{localStorageDirPath},
-    m_resourceDataFilesLock{std::move(resourceDataFilesLock)},
     m_notifier{notifier}
 // clang-format on
 {
@@ -68,19 +61,14 @@ ResourcesHandler::ResourcesHandler(
             QStringLiteral("ResourcesHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QStringLiteral("ResourcesHandler ctor: thread pool is null")}};
-    }
-
     if (Q_UNLIKELY(!m_notifier)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("ResourcesHandler ctor: notifier is null")}};
     }
 
-    if (Q_UNLIKELY(!m_writerThread)) {
+    if (Q_UNLIKELY(!m_thread)) {
         throw InvalidArgument{ErrorString{
-            QStringLiteral("ResourcesHandler ctor: writer thread is null")}};
+            QStringLiteral("ResourcesHandler ctor: thread is null")}};
     }
 
     if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
@@ -95,11 +83,6 @@ ResourcesHandler::ResourcesHandler(
         throw InvalidArgument{ErrorString{QStringLiteral(
             "ResourcesHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
-    }
-
-    if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "ResourcesHandler ctor: resource data files lock is null")}};
     }
 }
 
@@ -135,8 +118,7 @@ QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
         [this, resource = std::move(resource)](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
-            bool res = utils::putResource(
+            const bool res = utils::putResource(
                 m_localStorageDir, resource, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyResourcePut(resource);
@@ -153,7 +135,7 @@ QFuture<void> ResourcesHandler::putResourceMetadata(
         [this, resource = std::move(resource)](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
-            bool res = utils::putResource(
+            const bool res = utils::putResource(
                 m_localStorageDir, resource, database, errorDescription,
                 utils::PutResourceBinaryDataOption::WithoutBinaryData);
             if (res) {
@@ -173,11 +155,9 @@ QFuture<std::optional<qevercloud::Resource>>
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             utils::FetchResourceOptions resourceOptions;
-            std::optional<QReadLocker> locker;
             if (options.testFlag(FetchResourceOption::WithBinaryData)) {
                 resourceOptions.setFlag(
                     utils::FetchResourceOption::WithBinaryData);
-                locker.emplace(handler.m_resourceDataFilesLock.get());
             }
             int indexInNote = -1;
             return utils::findResourceByLocalId(
@@ -196,11 +176,9 @@ QFuture<std::optional<qevercloud::Resource>>
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             utils::FetchResourceOptions resourceOptions;
-            std::optional<QReadLocker> locker;
             if (options.testFlag(FetchResourceOption::WithBinaryData)) {
                 resourceOptions.setFlag(
                     utils::FetchResourceOption::WithBinaryData);
-                locker.emplace(handler.m_resourceDataFilesLock.get());
             }
             int indexInNote = -1;
             return utils::findResourceByGuid(
@@ -217,7 +195,6 @@ QFuture<void> ResourcesHandler::expungeResourceByLocalId(
         [resourceLocalId = std::move(resourceLocalId)](
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             const bool res = handler.expungeResourceByLocalIdImpl(
                 resourceLocalId, database, errorDescription);
             if (res) {
@@ -235,7 +212,6 @@ QFuture<void> ResourcesHandler::expungeResourceByGuid(
         [resourceGuid = std::move(resourceGuid)](
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeResourceByGuidImpl(
                 resourceGuid, database, errorDescription);
         });
@@ -432,7 +408,7 @@ bool ResourcesHandler::expungeResourceByGuidImpl(
 TaskContext ResourcesHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool, m_writerThread, m_connectionPool,
+        m_thread, m_connectionPool,
         ErrorString{QStringLiteral("ResourcesHandler is already destroyed")},
         ErrorString{QStringLiteral("Request has been canceled")}};
 }

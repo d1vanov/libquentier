@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,11 +18,11 @@
 
 #include "Utils.h"
 
-#include "../ResourcesHandler.h"
 #include "../ConnectionPool.h"
 #include "../NotebooksHandler.h"
 #include "../NotesHandler.h"
 #include "../Notifier.h"
+#include "../ResourcesHandler.h"
 #include "../TablesInitializer.h"
 
 #include <quentier/exception/IQuentierException.h>
@@ -38,7 +38,6 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
-#include <QThreadPool>
 
 #include <gtest/gtest.h>
 
@@ -174,7 +173,8 @@ Q_DECLARE_FLAGS(CreateResourceOptions, CreateResourceOption);
     resource.setHeight(20);
 
     if (createResourceOptions.testFlag(
-            CreateResourceOption::WithRecognitionData)) {
+            CreateResourceOption::WithRecognitionData))
+    {
         resource.setRecognition(qevercloud::Data{});
         auto & recognition = *resource.mutableRecognition();
         recognition.setBody(QByteArray::fromStdString(
@@ -264,29 +264,21 @@ protected:
         auto database = m_connectionPool->database();
         TablesInitializer::initializeTables(database);
 
-        m_writerThread = std::make_shared<QThread>();
-        {
-            auto nullDeleter = []([[maybe_unused]] QThreadPool * threadPool) {};
-            m_threadPool = std::shared_ptr<QThreadPool>(
-                QThreadPool::globalInstance(), std::move(nullDeleter));
-        }
-
-        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
-
+        m_thread = std::make_shared<QThread>();
         m_notifier = new Notifier;
-        m_notifier->moveToThread(m_writerThread.get());
+        m_notifier->moveToThread(m_thread.get());
 
         QObject::connect(
-            m_writerThread.get(), &QThread::finished, m_notifier,
+            m_thread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
-        m_writerThread->start();
+        m_thread->start();
     }
 
     void TearDown() override
     {
-        m_writerThread->quit();
-        m_writerThread->wait();
+        m_thread->quit();
+        m_thread->wait();
 
         // Give lambdas connected to threads finished signal a chance to fire
         QCoreApplication::processEvents();
@@ -294,9 +286,7 @@ protected:
 
 protected:
     ConnectionPoolPtr m_connectionPool;
-    threading::QThreadPtr m_writerThread;
-    threading::QThreadPoolPtr m_threadPool;
-    QReadWriteLockPtr m_resourceDataFilesLock;
+    threading::QThreadPtr m_thread;
     QTemporaryDir m_temporaryDir;
     Notifier * m_notifier;
 };
@@ -307,25 +297,14 @@ TEST_F(ResourcesHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock));
+            m_connectionPool, m_notifier, m_thread, m_temporaryDir.path()));
 }
 
 TEST_F(ResourcesHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            nullptr, m_threadPool, m_notifier, m_writerThread,
-            m_temporaryDir.path(), m_resourceDataFilesLock),
-        IQuentierException);
-}
-
-TEST_F(ResourcesHandlerTest, CtorNullThreadPool)
-{
-    EXPECT_THROW(
-        const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, nullptr, m_notifier, m_writerThread,
-            m_temporaryDir.path(), m_resourceDataFilesLock),
+            nullptr, m_notifier, m_thread, m_temporaryDir.path()),
         IQuentierException);
 }
 
@@ -333,34 +312,22 @@ TEST_F(ResourcesHandlerTest, CtorNullNotifier)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, m_threadPool, nullptr,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock),
+            m_connectionPool, nullptr, m_thread, m_temporaryDir.path()),
         IQuentierException);
 }
 
-TEST_F(ResourcesHandlerTest, CtorNullWriterThread)
+TEST_F(ResourcesHandlerTest, CtorNullThread)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            nullptr, m_temporaryDir.path(), m_resourceDataFilesLock),
-        IQuentierException);
-}
-
-TEST_F(ResourcesHandlerTest, CtorNullResourceDataFilesLock)
-{
-    EXPECT_THROW(
-        const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            m_connectionPool, m_threadPool, m_notifier,
-            m_writerThread, m_temporaryDir.path(), nullptr),
+            m_connectionPool, m_notifier, nullptr, m_temporaryDir.path()),
         IQuentierException);
 }
 
 TEST_F(ResourcesHandlerTest, ShouldHaveZeroResourceCountWhenThereAreNoResources)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto resourceCountFuture = resourcesHandler->resourceCount(
         ILocalStorage::NoteCountOptions{
@@ -374,8 +341,7 @@ TEST_F(ResourcesHandlerTest, ShouldHaveZeroResourceCountWhenThereAreNoResources)
 TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto resourceFuture =
         resourcesHandler->findResourceByLocalId(UidGenerator::Generate());
@@ -396,8 +362,7 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
 TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto resourceFuture =
         resourcesHandler->findResourceByGuid(UidGenerator::Generate());
@@ -418,8 +383,7 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
 TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeResourceFuture =
         resourcesHandler->expungeResourceByLocalId(UidGenerator::Generate());
@@ -430,8 +394,7 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
 TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByGuid)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeResourceFuture =
         resourcesHandler->expungeResourceByGuid(UidGenerator::Generate());
@@ -489,8 +452,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     ResourcesHandlerTestNotifierListener notifierListener;
 
@@ -507,15 +469,13 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
         &ResourcesHandlerTestNotifierListener::onResourceExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNoteFuture = notesHandler->putNote(*gNote);
     putNoteFuture.waitForFinished();
@@ -668,8 +628,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 {
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     ResourcesHandlerTestNotifierListener notifierListener;
 
@@ -686,15 +645,13 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
         &ResourcesHandlerTestNotifierListener::onResourceExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto notesHandler = std::make_shared<NotesHandler>(
-        m_connectionPool, m_threadPool, m_notifier,
-        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+        m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto putNoteFuture = notesHandler->putNote(*gNote);
     putNoteFuture.waitForFinished();
