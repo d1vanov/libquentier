@@ -59,7 +59,7 @@ void postToThread(QThread * pThread, Function && function)
                 pObj->deleteLater();
                 function();
             });
-        Q_UNUSED(pDummyObj.release())
+        Q_UNUSED(pDummyObj.release()) // NOLINT
         return;
     }
 
