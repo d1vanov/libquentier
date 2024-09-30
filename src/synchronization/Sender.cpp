@@ -494,46 +494,34 @@ void Sender::sendNoteImpl(
 
     auto thenFuture = threading::then(
         std::move(noteFuture), currentThread,
-        [notePromise, containsFailedToSendTags,
-         note = std::move(note)](qevercloud::Note n) mutable {
-            n.setLocalId(note.localId());
-            n.setLocallyFavorited(note.isLocallyFavorited());
-            n.setLocalData(std::move(note.mutableLocalData()));
-            n.setTagLocalIds(std::move(note.mutableTagLocalIds()));
-            n.setLocallyModified(containsFailedToSendTags);
-            n.setNotebookLocalId(note.notebookLocalId());
-            if (n.resources()) {
-                Q_ASSERT(note.resources());
-                Q_ASSERT(note.resources()->size() == n.resources()->size());
-                for (int i = 0; i < n.resources()->size(); ++i) {
-                    auto & resource = (*n.mutableResources())[i];
-                    Q_ASSERT(resource.guid());
-                    if (Q_UNLIKELY(!resource.guid())) {
-                        continue;
-                    }
+        [notePromise, containsFailedToSendTags, note = std::move(note)](
+            const qevercloud::Note & noteMetadata) mutable {
+            note.setGuid(noteMetadata.guid());
+            note.setUpdateSequenceNum(noteMetadata.updateSequenceNum());
+            note.setLocallyModified(containsFailedToSendTags);
+            note.setTagGuids(noteMetadata.tagGuids());
+            note.setNotebookGuid(noteMetadata.notebookGuid());
+            if (note.resources()) {
+                Q_ASSERT(noteMetadata.resources());
+                Q_ASSERT(
+                    noteMetadata.resources()->size() ==
+                    note.resources()->size());
+                for (int i = 0; i < note.resources()->size(); ++i) {
+                    auto & resource = (*note.mutableResources())[i];
+                    const auto & serverNoteResource =
+                        (*noteMetadata.resources())[i];
 
-                    resource.setNoteLocalId(n.localId());
-
-                    auto & originalResource = (*note.mutableResources())[i];
-
-                    Q_ASSERT(
-                        !originalResource.guid() ||
-                        originalResource.guid() == resource.guid());
-
-                    resource.setLocalId(originalResource.localId());
-
-                    resource.setLocallyFavorited(
-                        originalResource.isLocallyFavorited());
-
-                    resource.setLocalData(
-                        std::move(originalResource.mutableLocalData()));
+                    resource.setGuid(serverNoteResource.guid());
+                    resource.setUpdateSequenceNum(serverNoteResource.updateSequenceNum());
+                    resource.setNoteGuid(note.guid());
+                    resource.setLocallyModified(false);
                 }
             }
             QNDEBUG(
                 "synchronization::Sender",
-                "Created or updated note on the server: " << n);
+                "Created or updated note on the server: " << note);
 
-            notePromise->addResult(std::move(n));
+            notePromise->addResult(std::move(note));
             notePromise->finish();
         });
 
