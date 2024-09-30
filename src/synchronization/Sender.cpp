@@ -476,6 +476,10 @@ void Sender::sendNoteImpl(
     const qevercloud::INoteStorePtr & noteStore,
     std::shared_ptr<QPromise<qevercloud::Note>> notePromise) const
 {
+    QNDEBUG(
+        "synchronization::Sender",
+        "Sender::sendNoteImpl: " << note);
+
     Q_ASSERT(noteStore);
 
     const bool newNote = !note.updateSequenceNum().has_value();
@@ -525,6 +529,10 @@ void Sender::sendNoteImpl(
                         std::move(originalResource.mutableLocalData()));
                 }
             }
+            QNDEBUG(
+                "synchronization::Sender",
+                "Created or updated note on the server: " << n);
+
             notePromise->addResult(std::move(n));
             notePromise->finish();
         });
@@ -535,6 +543,9 @@ void Sender::sendNoteImpl(
          sendContext = std::move(sendContext),
          linkedNotebookGuid =
              std::move(linkedNotebookGuid)](const QException & e) {
+            QNWARNING(
+                "synchronization::Sender",
+                "Failed to create or update note on the server: " << e.what());
             Sender::checkForStopSynchronizationException(
                 sendContext, linkedNotebookGuid, e);
             notePromise->setException(e);
@@ -1058,6 +1069,8 @@ void Sender::sendTagImpl(
     const qevercloud::INoteStorePtr & noteStore,
     std::shared_ptr<QPromise<qevercloud::Tag>> tagPromise) const
 {
+    QNDEBUG("synchronization::Sender", "Sender::sendTagImpl: " << tag);
+
     const bool newTag = !tag.updateSequenceNum().has_value();
     std::optional<qevercloud::Guid> linkedNotebookGuid =
         tag.linkedNotebookGuid();
@@ -1091,6 +1104,10 @@ void Sender::sendTagImpl(
                 t.setLocalData(std::move(tag.mutableLocalData()));
                 t.setParentTagLocalId(tag.parentTagLocalId());
                 t.setLocallyModified(false);
+                QNDEBUG(
+                    "synchronization::Sender",
+                    "Created new tag on the server: " << t);
+
                 tagPromise->addResult(std::move(t));
                 tagPromise->finish();
             });
@@ -1103,6 +1120,10 @@ void Sender::sendTagImpl(
              tag = std::move(tag)](const qint32 newUpdateSequenceNum) mutable {
                 tag.setUpdateSequenceNum(newUpdateSequenceNum);
                 tag.setLocallyModified(false);
+                QNDEBUG(
+                    "synchronization::Sender",
+                    "Updated tag on the server: " << tag);
+
                 tagPromise->addResult(std::move(tag));
                 tagPromise->finish();
             });
@@ -1116,7 +1137,7 @@ void Sender::sendTagImpl(
              std::move(linkedNotebookGuid)](const QException & e) {
             QNWARNING(
                 "synchronization::Sender",
-                "Failed to create or update tag: " << e.what());
+                "Failed to create or update tag on the server: " << e.what());
             Sender::checkForStopSynchronizationException(
                 sendContext, linkedNotebookGuid, e);
             tagPromise->setException(e);
@@ -1414,6 +1435,9 @@ void Sender::sendNotebookImpl(
     const qevercloud::INoteStorePtr & noteStore,
     std::shared_ptr<QPromise<qevercloud::Notebook>> notebookPromise) const
 {
+    QNDEBUG(
+        "synchronization::Sender", "Sender::sendNotebookImpl: " << notebook);
+
     const bool newNotebook = !notebook.updateSequenceNum().has_value();
     std::optional<qevercloud::Guid> linkedNotebookGuid =
         notebook.linkedNotebookGuid();
@@ -1431,6 +1455,10 @@ void Sender::sendNotebookImpl(
                 n.setLocallyFavorited(notebook.isLocallyFavorited());
                 n.setLocalData(std::move(notebook.mutableLocalData()));
                 n.setLocallyModified(false);
+                QNDEBUG(
+                    "synchronization::Sender",
+                    "Created new notebook on the server: " << n);
+
                 notebookPromise->addResult(std::move(n));
                 notebookPromise->finish();
             });
@@ -1443,6 +1471,10 @@ void Sender::sendNotebookImpl(
                 const qint32 newUpdateSequenceNum) mutable {
                 notebook.setUpdateSequenceNum(newUpdateSequenceNum);
                 notebook.setLocallyModified(false);
+                QNDEBUG(
+                    "synchronization::Sender",
+                    "Updated notebook on the server: " << notebook);
+
                 notebookPromise->addResult(std::move(notebook));
                 notebookPromise->finish();
             });
@@ -1454,6 +1486,10 @@ void Sender::sendNotebookImpl(
          sendContext = std::move(sendContext),
          linkedNotebookGuid =
              std::move(linkedNotebookGuid)](const QException & e) {
+            QNWARNING(
+                "synchronization::Sender",
+                "Failed to create or update notebook on the server: "
+                    << e.what());
             Sender::checkForStopSynchronizationException(
                 sendContext, linkedNotebookGuid, e);
             notebookPromise->setException(e);
@@ -1754,6 +1790,10 @@ void Sender::sendSavedSearchImpl(
     const qevercloud::INoteStorePtr & noteStore,
     std::shared_ptr<QPromise<qevercloud::SavedSearch>> savedSearchPromise) const
 {
+    QNDEBUG(
+        "synchronization::Sender",
+        "Sender::sendSavedSearchImpl: " << savedSearch);
+
     const bool newSavedSearch = !savedSearch.updateSequenceNum().has_value();
     QFuture<void> thenFuture;
 
@@ -1771,6 +1811,10 @@ void Sender::sendSavedSearchImpl(
                 s.setLocallyFavorited(savedSearch.isLocallyFavorited());
                 s.setLocalData(std::move(savedSearch.mutableLocalData()));
                 s.setLocallyModified(false);
+                QNDEBUG(
+                    "synchronization::Sender",
+                    "Created new saved search on the server: " << s);
+
                 savedSearchPromise->addResult(std::move(s));
                 savedSearchPromise->finish();
             });
@@ -1785,6 +1829,10 @@ void Sender::sendSavedSearchImpl(
                 const qint32 newUpdateSequenceNum) mutable {
                 savedSearch.setUpdateSequenceNum(newUpdateSequenceNum);
                 savedSearch.setLocallyModified(false);
+                QNDEBUG(
+                    "synchronization::Sender",
+                    "Updated saved search on the server: " << savedSearch);
+
                 savedSearchPromise->addResult(std::move(savedSearch));
                 savedSearchPromise->finish();
             });
@@ -1794,6 +1842,10 @@ void Sender::sendSavedSearchImpl(
         std::move(thenFuture), currentThread,
         [savedSearchPromise = std::move(savedSearchPromise),
          sendContext = std::move(sendContext)](const QException & e) {
+            QNWARNING(
+                "synchronization::Sender",
+                "Failed to create or update saved search on the server: "
+                    << e.what());
             Sender::checkForStopSynchronizationException(
                 sendContext, std::nullopt, e);
             savedSearchPromise->setException(e);
