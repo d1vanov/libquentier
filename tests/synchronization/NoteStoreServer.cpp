@@ -47,6 +47,26 @@ namespace quentier::synchronization::tests {
 
 namespace {
 
+// Strips fields with content from the passed in note to mimic the behaviour of
+// qevercloud::INoteStore::createNote and qevercloud::INoteStore::updateNote
+[[nodiscard]] qevercloud::Note noteMetadata(qevercloud::Note note)
+{
+    qevercloud::Note n = std::move(note);
+    n.setContent(std::nullopt);
+    if (n.resources())
+    {
+        for (auto & resource: *n.mutableResources())
+        {
+            if (resource.data())
+            {
+                resource.mutableData()->setBody(std::nullopt);
+            }
+        }
+    }
+
+    return n;
+}
+
 [[nodiscard]] QString nextName(const QString & name)
 {
     auto lastIndex = name.lastIndexOf(QStringLiteral("_"));
@@ -1874,7 +1894,8 @@ void NoteStoreServer::onCreateNoteRequest(
         }
     }
 
-    Q_EMIT createNoteRequestReady(std::move(note), nullptr, ctx->requestId());
+    Q_EMIT createNoteRequestReady(
+        noteMetadata(std::move(note)), nullptr, ctx->requestId());
 }
 
 void NoteStoreServer::onUpdateNoteRequest(
@@ -2058,7 +2079,8 @@ void NoteStoreServer::onUpdateNoteRequest(
     setMaxUsn(*maxUsn, notebook.linkedNotebookGuid());
 
     noteGuidIndex.replace(noteIt, note);
-    Q_EMIT updateNoteRequestReady(std::move(note), nullptr, ctx->requestId());
+    Q_EMIT updateNoteRequestReady(
+        noteMetadata(std::move(note)), nullptr, ctx->requestId());
 }
 
 void NoteStoreServer::onCreateTagRequest(

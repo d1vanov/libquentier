@@ -495,6 +495,26 @@ enum class AddParentToTag
     return result;
 }
 
+// Strips fields with content from the passed in note to mimic the behaviour of
+// qevercloud::INoteStore::createNote and qevercloud::INoteStore::updateNote
+[[nodiscard]] qevercloud::Note noteMetadata(qevercloud::Note note)
+{
+    qevercloud::Note n = std::move(note);
+    n.setContent(std::nullopt);
+    if (n.resources())
+    {
+        for (auto & resource: *n.mutableResources())
+        {
+            if (resource.data())
+            {
+                resource.mutableData()->setBody(std::nullopt);
+            }
+        }
+    }
+
+    return n;
+}
+
 [[nodiscard]] bool findAndSetNoteNotebookGuid(
     qevercloud::Note & note, const QList<qevercloud::Notebook> & notebooks)
 {
@@ -1149,7 +1169,7 @@ void setupUserOwnNoteStoreMock(
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << createdNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(createdNote));
+                        noteMetadata(std::move(createdNote)));
                 case NoteStoreBehaviour::WithFailures:
                     sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
@@ -1159,7 +1179,7 @@ void setupUserOwnNoteStoreMock(
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << createdNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(createdNote));
+                            noteMetadata(std::move(createdNote)));
                     }
                     sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
@@ -1173,7 +1193,7 @@ void setupUserOwnNoteStoreMock(
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << createdNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(createdNote));
+                            noteMetadata(std::move(createdNote)));
                     }
                     sentData.failedToSendNotes << createdNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
@@ -1222,12 +1242,12 @@ void setupUserOwnNoteStoreMock(
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << updatedNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(updatedNote));
+                        noteMetadata(std::move(updatedNote)));
                 case NoteStoreBehaviour::WithFailures:
                     if (counter % 2 == 0) {
                         sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                            noteMetadata(std::move(updatedNote)));
                     }
                     sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
@@ -1237,7 +1257,7 @@ void setupUserOwnNoteStoreMock(
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                            noteMetadata(std::move(updatedNote)));
                     }
                     sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
@@ -1251,7 +1271,7 @@ void setupUserOwnNoteStoreMock(
                     if (counter < itemCount / 2) {
                         sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                            noteMetadata(std::move(updatedNote)));
                     }
                     sentData.failedToSendNotes << updatedNote;
                     return threading::makeExceptionalFuture<qevercloud::Note>(
@@ -1530,7 +1550,7 @@ void setupLinkedNotebookNoteStoreMocks(
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << createdNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(createdNote));
+                        noteMetadata(std::move(createdNote)));
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
@@ -1538,7 +1558,7 @@ void setupLinkedNotebookNoteStoreMocks(
                     if (counter % 2 == 0) {
                         sentData.sentNotes << createdNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(createdNote));
+                            noteMetadata(std::move(createdNote)));
                     }
 
                     sentData.failedToSendNotes << createdNote;
@@ -1587,7 +1607,7 @@ void setupLinkedNotebookNoteStoreMocks(
                 case NoteStoreBehaviour::WithoutFailures:
                     sentData.sentNotes << updatedNote;
                     return threading::makeReadyFuture<qevercloud::Note>(
-                        std::move(updatedNote));
+                        noteMetadata(std::move(updatedNote)));
                 case NoteStoreBehaviour::WithFailures:
                 {
                     const int counter =
@@ -1595,7 +1615,7 @@ void setupLinkedNotebookNoteStoreMocks(
                     if (counter % 2 == 0) {
                         sentData.sentNotes << updatedNote;
                         return threading::makeReadyFuture<qevercloud::Note>(
-                            std::move(updatedNote));
+                            noteMetadata(std::move(updatedNote)));
                     }
 
                     sentData.failedToSendNotes << updatedNote;
@@ -2612,7 +2632,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
             newNote.setUpdateSequenceNum(usn++);
             newNote.setGuid(UidGenerator::Generate());
             return threading::makeReadyFuture<qevercloud::Note>(
-                std::move(newNote));
+                noteMetadata(std::move(newNote)));
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
@@ -2733,7 +2753,7 @@ TEST_F(
             newNote.setUpdateSequenceNum(usn++);
             newNote.setGuid(UidGenerator::Generate());
             return threading::makeReadyFuture<qevercloud::Note>(
-                std::move(newNote));
+                noteMetadata(std::move(newNote)));
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
@@ -2857,7 +2877,7 @@ TEST_F(
             newNote.setUpdateSequenceNum(usn++);
             newNote.setGuid(UidGenerator::Generate());
             return threading::makeReadyFuture<qevercloud::Note>(
-                std::move(newNote));
+                noteMetadata(std::move(newNote)));
         });
 
     EXPECT_CALL(*m_mockLocalStorage, listSavedSearches)
