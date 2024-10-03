@@ -65,30 +65,6 @@ QList<T> sorted(QList<T> lst)
     return lst;
 }
 
-[[nodiscard]] QList<qevercloud::Note> generateTestNotes(
-    const qint32 startUsn, const qint32 endUsn)
-{
-    EXPECT_GE(endUsn, startUsn);
-    if (endUsn < startUsn) {
-        return {};
-    }
-
-    const auto notebookGuid = UidGenerator::Generate();
-
-    QList<qevercloud::Note> result;
-    result.reserve(endUsn - startUsn + 1);
-    for (qint32 i = startUsn; i <= endUsn; ++i) {
-        result << qevercloud::NoteBuilder{}
-                      .setGuid(UidGenerator::Generate())
-                      .setNotebookGuid(notebookGuid)
-                      .setUpdateSequenceNum(i)
-                      .setTitle(QString::fromUtf8("Note #%1").arg(i))
-                      .build();
-    }
-
-    return result;
-}
-
 [[nodiscard]] QList<qevercloud::Guid> generateTestGuids(const qint32 count)
 {
     QList<qevercloud::Guid> result;
@@ -100,18 +76,47 @@ QList<T> sorted(QList<T> lst)
     return result;
 }
 
-[[nodiscard]] QHash<qevercloud::Guid, qint32> generateTestProcessedNotesInfo(
-    const qint32 startUsn, const qint32 endUsn)
+const QList gTestGuidsSet1 = generateTestGuids(4);
+const QList gTestGuidsSet2 = generateTestGuids(3);
+const QList gTestGuidsSet3 = generateTestGuids(3);
+const QList gTestGuidsSet4 = generateTestGuids(3);
+const QList gTestGuidsSet5 = generateTestGuids(3);
+const QList gTestGuidsSet6 = generateTestGuids(3);
+
+[[nodiscard]] QList<qevercloud::Note> generateTestNotes(
+    const QList<qevercloud::Guid> & noteGuids, const qint32 startUsn)
 {
-    EXPECT_GT(endUsn, startUsn);
-    if (endUsn < startUsn) {
+    if (noteGuids.isEmpty()) {
         return {};
     }
 
+    const auto notebookGuid = UidGenerator::Generate();
+
+    QList<qevercloud::Note> result;
+    result.reserve(noteGuids.size());
+    qint32 usn = startUsn;
+    for (const auto & noteGuid: std::as_const(noteGuids)) {
+        result << qevercloud::NoteBuilder{}
+                      .setGuid(noteGuid)
+                      .setNotebookGuid(notebookGuid)
+                      .setUpdateSequenceNum(usn)
+                      .setTitle(QString::fromUtf8("Note #%1").arg(usn))
+                      .build();
+        ++usn;
+    }
+
+    return result;
+}
+
+[[nodiscard]] QHash<qevercloud::Guid, qint32> generateTestProcessedNotesInfo(
+    const QList<qevercloud::Guid> & noteGuids, const qint32 startUsn)
+{
     QHash<qevercloud::Guid, qint32> result;
-    result.reserve(endUsn - startUsn + 1);
-    for (qint32 i = startUsn; i <= endUsn; ++i) {
-        result[UidGenerator::Generate()] = i;
+    result.reserve(noteGuids.size());
+    qint32 usn = startUsn;
+    for (const auto & noteGuid: std::as_const(noteGuids)) {
+        result[noteGuid] = usn;
+        ++usn;
     }
 
     return result;
@@ -231,7 +236,7 @@ TEST_F(DurableNotesProcessorTest, CtorNullNotesProcessor)
 
 TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 {
-    const auto notes = generateTestNotes(1, 4);
+    const auto notes = generateTestNotes(gTestGuidsSet1, 1);
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
@@ -324,8 +329,8 @@ TEST_F(
     DurableNotesProcessorTest,
     HandleDifferentCallbacksDuringSyncChunksProcessing)
 {
-    const auto notes = generateTestNotes(1, 5);
-    const auto expungedNotes = generateTestGuids(4);
+    const auto notes = generateTestNotes(gTestGuidsSet1, 1);
+    const auto expungedNotes = gTestGuidsSet2;
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -358,8 +363,8 @@ TEST_F(
 
             EXPECT_EQ(syncChunkNotes, notes);
 
-            EXPECT_EQ(syncChunkNotes.size(), 5);
-            if (syncChunkNotes.size() != 5) {
+            EXPECT_EQ(syncChunkNotes.size(), 4);
+            if (syncChunkNotes.size() != 4) {
                 return threading::makeExceptionalFuture<DownloadNotesStatusPtr>(
                     RuntimeError{ErrorString{"Invalid note count"}});
             }
@@ -405,16 +410,14 @@ TEST_F(
                     *status->m_notesWhichFailedToDownload.last().second);
             }
 
-            // Fourth and fifth notes are marked as cancelled because, for
+            // Fourth note is marked as cancelled because, for
             // example, the download error was API rate limit exceeding.
-            for (int i = 3; i < 5; ++i) {
-                status->m_cancelledNoteGuidsAndUsns
-                    [syncChunkNotes[i].guid().value()] =
-                    syncChunkNotes[i].updateSequenceNum().value();
+            status->m_cancelledNoteGuidsAndUsns
+                [syncChunkNotes[3].guid().value()] =
+                syncChunkNotes[3].updateSequenceNum().value();
 
-                if (callback) {
-                    callback->onNoteProcessingCancelled(syncChunkNotes[i]);
-                }
+            if (callback) {
+                callback->onNoteProcessingCancelled(syncChunkNotes[3]);
             }
 
             const QList<qevercloud::Guid> syncChunkExpungedNotes = [&] {
@@ -428,8 +431,8 @@ TEST_F(
 
             EXPECT_EQ(syncChunkExpungedNotes, expungedNotes);
 
-            EXPECT_EQ(syncChunkExpungedNotes.size(), 4);
-            if (syncChunkExpungedNotes.size() != 4) {
+            EXPECT_EQ(syncChunkExpungedNotes.size(), 3);
+            if (syncChunkExpungedNotes.size() != 3) {
                 return threading::makeExceptionalFuture<DownloadNotesStatusPtr>(
                     RuntimeError{ErrorString{"Invalid expunged note count"}});
             }
@@ -447,19 +450,17 @@ TEST_F(
                 callback->onExpungedNote(syncChunkExpungedNotes[1]);
             }
 
-            // Other two expunged notes are marked as failed to expunged ones
-            for (int i = 2; i < 4; ++i) {
-                status->m_noteGuidsWhichFailedToExpunge
-                    << DownloadNotesStatus::GuidWithException{
-                           syncChunkExpungedNotes[i],
-                           std::make_shared<RuntimeError>(
-                               ErrorString{"Failed to expunge note"})};
+            // The other expunged note is marked as failed to expunged one
+            status->m_noteGuidsWhichFailedToExpunge
+                << DownloadNotesStatus::GuidWithException{
+                       syncChunkExpungedNotes[2],
+                       std::make_shared<RuntimeError>(
+                           ErrorString{"Failed to expunge note"})};
 
-                if (callback) {
-                    callback->onFailedToExpungeNote(
-                        status->m_noteGuidsWhichFailedToExpunge.last().first,
-                        *status->m_noteGuidsWhichFailedToExpunge.last().second);
-                }
+            if (callback) {
+                callback->onFailedToExpungeNote(
+                    status->m_noteGuidsWhichFailedToExpunge.last().first,
+                    *status->m_noteGuidsWhichFailedToExpunge.last().second);
             }
 
             return threading::makeReadyFuture<DownloadNotesStatusPtr>(
@@ -492,14 +493,14 @@ TEST_F(
     EXPECT_EQ(
         status->m_notesWhichFailedToDownload.constBegin()->first, notes[2]);
 
-    ASSERT_EQ(status->m_cancelledNoteGuidsAndUsns.size(), 2);
-    for (int i = 3; i < 5; ++i) {
+    ASSERT_EQ(status->m_cancelledNoteGuidsAndUsns.size(), 1);
+    {
         const auto it = status->m_cancelledNoteGuidsAndUsns.constFind(
-            notes[i].guid().value());
+            notes[3].guid().value());
         EXPECT_NE(it, status->m_cancelledNoteGuidsAndUsns.constEnd());
 
         if (it != status->m_cancelledNoteGuidsAndUsns.constEnd()) {
-            EXPECT_EQ(it.value(), notes[i].updateSequenceNum().value());
+            EXPECT_EQ(it.value(), notes[3].updateSequenceNum().value());
         }
     }
 
@@ -541,10 +542,8 @@ TEST_F(
         return cancelledNotes;
     }();
 
-    ASSERT_EQ(cancelledNotes.size(), 2);
-    for (int i = 3, j = 0; i < 5 && j < cancelledNotes.size(); ++i, ++j) {
-        EXPECT_EQ(cancelledNotes[j], notes[i]);
-    }
+    ASSERT_EQ(cancelledNotes.size(), 1);
+    EXPECT_EQ(cancelledNotes[0], notes[3]);
 
     const auto expungedNoteGuids =
         utils::noteGuidsExpungedDuringLastSync(lastSyncNotesDir);
@@ -554,10 +553,8 @@ TEST_F(
 
     const auto failedToExpungeNoteGuids =
         utils::noteGuidsWhichFailedToExpungeDuringLastSync(lastSyncNotesDir);
-    ASSERT_EQ(failedToExpungeNoteGuids.size(), 2);
-    for (int i = 2; i < 4; ++i) {
-        EXPECT_TRUE(failedToExpungeNoteGuids.contains(expungedNotes[i]));
-    }
+    ASSERT_EQ(failedToExpungeNoteGuids.size(), 1);
+    EXPECT_TRUE(failedToExpungeNoteGuids.contains(expungedNotes[2]));
 }
 
 struct PreviousNoteSyncTestData
@@ -581,90 +578,105 @@ class DurableNotesProcessorTestWithPreviousSyncData :
 
 const std::array gTestData{
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17), // m_notesToProcess
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
     },
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
     },
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
+        gTestGuidsSet2,         // m_expungedNoteGuids
     },
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
+        gTestGuidsSet2,         // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
     },
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
+        gTestGuidsSet2,         // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
     },
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
+        gTestGuidsSet2,         // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
     },
     PreviousNoteSyncTestData{
-        generateTestNotes(14, 17),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(gTestGuidsSet1, 14), // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
+        gTestGuidsSet2,         // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
     PreviousNoteSyncTestData{
-        {},                                   // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
+        {}, // m_notesToProcess
+        generateTestProcessedNotesInfo(
+            gTestGuidsSet1, 1), // m_processedNotesInfo
+        gTestGuidsSet2,         // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
     PreviousNoteSyncTestData{
-        {},                   // m_notesToProcess
-        {},                   // m_processedNotesInfo
-        generateTestGuids(3), // m_expungedNoteGuids
+        {},             // m_notesToProcess
+        {},             // m_processedNotesInfo
+        gTestGuidsSet2, // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
     PreviousNoteSyncTestData{
         {}, // m_notesToProcess
         {}, // m_processedNotesInfo
         {}, // m_expungedNoteGuids
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet3,
+            5), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
     PreviousNoteSyncTestData{
         {}, // m_notesToProcess
@@ -672,10 +684,10 @@ const std::array gTestData{
         {}, // m_expungedNoteGuids
         {}, // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+            gTestGuidsSet4, 8), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
     PreviousNoteSyncTestData{
         {}, // m_notesToProcess
@@ -683,19 +695,18 @@ const std::array gTestData{
         {}, // m_expungedNoteGuids
         {}, // m_notesWhichFailedToDownloadDuringPreviousSync
         {}, // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+        generateTestNotes(
+            gTestGuidsSet5, 11), // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
     PreviousNoteSyncTestData{
-        {}, // m_notesToProcess
-        {}, // m_processedNotesInfo
-        {}, // m_expungedNoteGuids
-        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
-        {}, // m_notesWhichFailedToProcessDuringPreviousSync
-        {}, // m_notesCancelledDuringPreviousSync
-        generateTestGuids(
-            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+        {},             // m_notesToProcess
+        {},             // m_processedNotesInfo
+        {},             // m_expungedNoteGuids
+        {},             // m_notesWhichFailedToDownloadDuringPreviousSync
+        {},             // m_notesWhichFailedToProcessDuringPreviousSync
+        {},             // m_notesCancelledDuringPreviousSync
+        gTestGuidsSet6, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
 };
 
@@ -999,7 +1010,8 @@ TEST_P(
 
         if (!testData.m_processedNotesInfo.isEmpty()) {
             for (const auto it:
-                 qevercloud::toRange(testData.m_processedNotesInfo)) {
+                 qevercloud::toRange(testData.m_processedNotesInfo))
+            {
                 result.insert(it.key(), it.value());
             }
         }

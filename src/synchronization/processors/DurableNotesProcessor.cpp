@@ -352,15 +352,29 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
                     continue;
                 }
 
+                if (Q_UNLIKELY(!it->updateSequenceNum())) {
+                    QNWARNING(
+                        "synchronization::DurableNotesProcessor",
+                        "Detected note within sync chunks without usn: "
+                            << *it);
+                    it = notes.erase(it);
+                    continue;
+                }
+
                 const auto processedNoteIt =
                     alreadyProcessedNotesInfo.find(*it->guid());
 
-                if (processedNoteIt != alreadyProcessedNotesInfo.end()) {
+                if (processedNoteIt != alreadyProcessedNotesInfo.end() &&
+                    processedNoteIt.value() >= *it->updateSequenceNum())
+                {
                     QNDEBUG(
                         "synchronization::DurableNotesProcessor",
                         "Already processed note with guid "
-                            << *it->guid()
-                            << ", erasing it from the sync chunk");
+                            << *it->guid() << " and usn "
+                            << processedNoteIt.value()
+                            << " while note from sync chunk has usn "
+                            << *it->updateSequenceNum()
+                            << ", erasing this note from the sync chunk");
                     it = notes.erase(it);
                     continue;
                 }
