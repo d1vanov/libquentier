@@ -283,10 +283,29 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
                 continue;
             }
 
+            if (Q_UNLIKELY(!it->updateSequenceNum())) {
+                QNWARNING(
+                    "synchronization::DurableResourcesProcessor",
+                    "Detected resource within sync chunks without usn: "
+                        << *it);
+                it = resources.erase(it);
+                continue;
+            }
+
             const auto processedResourceIt =
                 alreadyProcessedResourcesInfo.find(*it->guid());
 
-            if (processedResourceIt != alreadyProcessedResourcesInfo.end()) {
+            if (processedResourceIt != alreadyProcessedResourcesInfo.end() &&
+                processedResourceIt.value() >= *it->updateSequenceNum())
+            {
+                QNDEBUG(
+                    "synchronization::DurableNotesProcessor",
+                    "Already processed resource with guid "
+                        << *it->guid() << " and usn "
+                        << processedResourceIt.value()
+                        << " while resource from sync chunk has usn "
+                        << *it->updateSequenceNum()
+                        << ", erasing this resource from the sync chunk");
                 it = resources.erase(it);
                 continue;
             }

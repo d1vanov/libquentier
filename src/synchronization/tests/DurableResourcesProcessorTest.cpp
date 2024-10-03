@@ -58,24 +58,41 @@ using testing::StrictMock;
 
 namespace {
 
-[[nodiscard]] QList<qevercloud::Resource> generateTestResources(
-    const qint32 startUsn, const qint32 endUsn)
+[[nodiscard]] QList<qevercloud::Guid> generateTestGuids(const qint32 count)
 {
-    EXPECT_GE(endUsn, startUsn);
-    if (endUsn < startUsn) {
+    QList<qevercloud::Guid> result;
+    result.reserve(count);
+    for (qint32 i = 0; i < count; ++i) {
+        result << UidGenerator::Generate();
+    }
+
+    return result;
+}
+
+const QList gTestGuidsSet1 = generateTestGuids(5);
+const QList gTestGuidsSet2 = generateTestGuids(3);
+const QList gTestGuidsSet3 = generateTestGuids(3);
+const QList gTestGuidsSet4 = generateTestGuids(3);
+
+[[nodiscard]] QList<qevercloud::Resource> generateTestResources(
+    const QList<qevercloud::Guid> & resourceGuids, const qint32 startUsn)
+{
+    if (resourceGuids.isEmpty()) {
         return {};
     }
 
     const auto noteGuid = UidGenerator::Generate();
 
     QList<qevercloud::Resource> result;
-    result.reserve(endUsn - startUsn + 1);
-    for (qint32 i = startUsn; i <= endUsn; ++i) {
+    result.reserve(resourceGuids.size());
+    qint32 usn = startUsn;
+    for (const auto & resourceGuid: std::as_const(resourceGuids)) {
         result << qevercloud::ResourceBuilder{}
-                      .setGuid(UidGenerator::Generate())
+                      .setGuid(resourceGuid)
                       .setNoteGuid(noteGuid)
-                      .setUpdateSequenceNum(i)
+                      .setUpdateSequenceNum(usn)
                       .build();
+        ++usn;
     }
 
     return result;
@@ -83,17 +100,14 @@ namespace {
 
 [[nodiscard]] QHash<qevercloud::Guid, qint32>
     generateTestProcessedResourcesInfo(
-        const qint32 startUsn, const qint32 endUsn)
+        const QList<qevercloud::Guid> & resourceGuids, const qint32 startUsn)
 {
-    EXPECT_GT(endUsn, startUsn);
-    if (endUsn < startUsn) {
-        return {};
-    }
-
     QHash<qevercloud::Guid, qint32> result;
-    result.reserve(endUsn - startUsn + 1);
-    for (qint32 i = startUsn; i <= endUsn; ++i) {
-        result[UidGenerator::Generate()] = i;
+    result.reserve(resourceGuids.size());
+    qint32 usn = startUsn;
+    for (const auto & resourceGuid: std::as_const(resourceGuids)) {
+        result[resourceGuid] = usn;
+        ++usn;
     }
 
     return result;
@@ -186,7 +200,7 @@ TEST_F(DurableResourcesProcessorTest, CtorNullResourcesProcessor)
 
 TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 {
-    const auto resources = generateTestResources(1, 4);
+    const auto resources = generateTestResources(gTestGuidsSet1, 1);
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
@@ -285,7 +299,7 @@ TEST_F(
     DurableResourcesProcessorTest,
     HandleDifferentCallbacksDuringSyncChunksProcessing)
 {
-    const auto resources = generateTestResources(1, 5);
+    const auto resources = generateTestResources(gTestGuidsSet1, 1);
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
@@ -492,67 +506,87 @@ class DurableResourcesProcessorTestWithPreviousSyncData :
 
 const std::array gTestData{
     PreviousResourceSyncTestData{
-        generateTestResources(14, 18), // m_resourcesToProcess
+        generateTestResources(gTestGuidsSet1, 14), // m_resourcesToProcess
     },
     PreviousResourceSyncTestData{
-        generateTestResources(14, 18),            // m_resourcesToProcess
-        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(gTestGuidsSet1, 14), // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(
+            gTestGuidsSet1, 1), // m_processedResourcesInfo
     },
     PreviousResourceSyncTestData{
-        generateTestResources(14, 18),            // m_resourcesToProcess
-        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(gTestGuidsSet1, 14), // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(
+            gTestGuidsSet1, 1), // m_processedResourcesInfo
         generateTestResources(
-            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet2,
+            5), // m_resourcesWhichFailedToDownloadDuringPreviousSync
     },
     PreviousResourceSyncTestData{
-        generateTestResources(14, 18),            // m_resourcesToProcess
-        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(gTestGuidsSet1, 14), // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(
+            gTestGuidsSet1, 1), // m_processedResourcesInfo
         generateTestResources(
-            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet2,
+            5), // m_resourcesWhichFailedToDownloadDuringPreviousSync
         generateTestResources(
-            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
+            gTestGuidsSet3,
+            8), // m_resourcesWhichFailedToProcessDuringPreviousSync
     },
     PreviousResourceSyncTestData{
-        generateTestResources(14, 18),            // m_resourcesToProcess
-        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(gTestGuidsSet1, 14), // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(
+            gTestGuidsSet1, 1), // m_processedResourcesInfo
         generateTestResources(
-            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet2,
+            5), // m_resourcesWhichFailedToDownloadDuringPreviousSync
         generateTestResources(
-            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
-        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+            gTestGuidsSet3,
+            8), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(
+            gTestGuidsSet4, 11), // m_resourcesCancelledDuringPreviousSync
     },
     PreviousResourceSyncTestData{
-        {},                                       // m_resourcesToProcess
-        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        {}, // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(
+            gTestGuidsSet1, 1), // m_processedResourcesInfo
         generateTestResources(
-            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet2,
+            5), // m_resourcesWhichFailedToDownloadDuringPreviousSync
         generateTestResources(
-            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
-        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+            gTestGuidsSet3,
+            8), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(
+            gTestGuidsSet4, 11), // m_resourcesCancelledDuringPreviousSync
     },
     PreviousResourceSyncTestData{
         {}, // m_resourcesToProcess
         {}, // m_processedResourcesInfo
         generateTestResources(
-            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+            gTestGuidsSet2,
+            5), // m_resourcesWhichFailedToDownloadDuringPreviousSync
         generateTestResources(
-            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
-        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+            gTestGuidsSet3,
+            8), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(
+            gTestGuidsSet4, 11), // m_resourcesCancelledDuringPreviousSync
     },
     PreviousResourceSyncTestData{
         {}, // m_resourcesToProcess
         {}, // m_processedResourcesInfo
         {}, // m_resourcesWhichFailedToDownloadDuringPreviousSync
         generateTestResources(
-            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
-        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+            gTestGuidsSet3,
+            8), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(
+            gTestGuidsSet4, 11), // m_resourcesCancelledDuringPreviousSync
     },
     PreviousResourceSyncTestData{
         {}, // m_resourcesToProcess
         {}, // m_processedResourcesInfo
         {}, // m_resourcesWhichFailedToDownloadDuringPreviousSync
         {}, // m_resourcesWhichFailedToProcessDuringPreviousSync
-        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+        generateTestResources(
+            gTestGuidsSet4, 11), // m_resourcesCancelledDuringPreviousSync
     },
 };
 
