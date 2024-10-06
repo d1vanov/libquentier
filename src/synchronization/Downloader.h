@@ -115,6 +115,7 @@ private:
 
         // Running result
         SyncChunksDataCountersPtr syncChunksDataCounters;
+        bool syncChunksDownloaded = false;
         DownloadNotesStatusPtr downloadNotesStatus;
         DownloadResourcesStatusPtr downloadResourcesStatus;
     };

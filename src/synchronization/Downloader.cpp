@@ -1017,6 +1017,7 @@ void Downloader::launchUserOwnDataDownload(
                 }
 
                 downloadContext->syncChunks = syncChunks;
+                downloadContext->syncChunksDownloaded = true;
                 processSyncChunks(std::move(downloadContext), syncMode);
             }});
 }
@@ -1157,6 +1158,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
                 results[linkedNotebookGuids[i]] = LocalResult{
                     std::move(currentResult.syncChunksDataCounters),
+                    currentResult.syncChunksDownloaded,
                     std::move(currentResult.downloadNotesStatus),
                     std::move(currentResult.downloadResourcesStatus)};
             }
@@ -1390,6 +1392,7 @@ void Downloader::startLinkedNotebookDataDownload(
                 }
 
                 downloadContext->syncChunks = syncChunks;
+                downloadContext->syncChunksDownloaded = true;
 
                 // Below calls to NoteStore should use authentication token
                 // corresponding to the linked notebook instead of the
@@ -1894,6 +1897,7 @@ void Downloader::finalize(
     downloadContext->promise->addResult(Result{
         LocalResult{
             std::move(downloadContext->syncChunksDataCounters),
+            downloadContext->syncChunksDownloaded,
             std::move(downloadContext->downloadNotesStatus),
             std::move(
                 downloadContext->downloadResourcesStatus)}, // userOwnResult

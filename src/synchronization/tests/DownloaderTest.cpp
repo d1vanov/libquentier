@@ -2384,6 +2384,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
     // Check user own data status
     ASSERT_TRUE(status.userOwnResult.syncChunksDataCounters);
+    EXPECT_TRUE(status.userOwnResult.syncChunksDownloaded);
     checkSyncChunksDataCounters(
         syncChunksItemCounts, *status.userOwnResult.syncChunksDataCounters);
 
@@ -2414,6 +2415,7 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
         const auto & result = it.value();
         ASSERT_TRUE(result.syncChunksDataCounters);
+        EXPECT_TRUE(result.syncChunksDownloaded);
 
         const auto cit = linkedNotebooksData.constFind(linkedNotebookGuid);
         ASSERT_NE(cit, linkedNotebooksData.constEnd());
