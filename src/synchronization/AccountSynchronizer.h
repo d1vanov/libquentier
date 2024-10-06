@@ -123,6 +123,8 @@ private:
 
     void finalize(Context & context);
 
+    void clearIntermediatePersistence(const ISyncResult & syncResult);
+
 private:
     const Account m_account;
     const IDownloaderPtr m_downloader;

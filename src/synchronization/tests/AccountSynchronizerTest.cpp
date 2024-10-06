@@ -302,19 +302,19 @@ namespace {
     return status;
 }
 
-[[nodiscard]] QList<qevercloud::Guid> generateLinkedNotebookGuids(
+[[nodiscard]] QSet<qevercloud::Guid> generateLinkedNotebookGuids(
     const int linkedNotebookCount = 3)
 {
-    QList<qevercloud::Guid> linkedNotebookGuids;
+    QSet<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids.insert(UidGenerator::Generate());
     }
     return linkedNotebookGuids;
 }
 
 [[nodiscard]] IDownloader::Result generateSampleDownloaderResult(
-    const QList<qevercloud::Guid> & linkedNotebookGuids)
+    const QSet<qevercloud::Guid> & linkedNotebookGuids)
 {
     IDownloader::Result downloadResult;
     downloadResult.userOwnResult.syncChunksDataCounters =
@@ -365,7 +365,7 @@ namespace {
 }
 
 [[nodiscard]] ISender::Result generateSampleSendResult(
-    const QList<qevercloud::Guid> & linkedNotebookGuids)
+    const QSet<qevercloud::Guid> & linkedNotebookGuids)
 {
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
@@ -431,9 +431,21 @@ protected:
                 });
     }
 
+    void expectClearIntermediatePersistence(
+        const QSet<qevercloud::Guid> & linkedNotebookGuids)
+    {
+        EXPECT_CALL(*m_mockSyncChunksStorage, clearUserOwnSyncChunks);
+
+        for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
+            EXPECT_CALL(
+                *m_mockSyncChunksStorage,
+                clearLinkedNotebookSyncChunks(linkedNotebookGuid));
+        }
+    }
+
     void checkResultSyncState(
         const ISyncResult & result, const ISyncState & expectedSyncState,
-        const QList<qevercloud::Guid> & linkedNotebookGuids)
+        const QSet<qevercloud::Guid> & linkedNotebookGuids)
     {
         const auto resultSyncState = result.syncState();
         ASSERT_TRUE(resultSyncState);
@@ -497,7 +509,7 @@ protected:
 
     void checkResultDownloadPart(
         const ISyncResult & result, const IDownloader::Result & downloadResult,
-        const QList<qevercloud::Guid> & linkedNotebookGuids)
+        const QSet<qevercloud::Guid> & linkedNotebookGuids)
     {
         EXPECT_TRUE(result.userAccountSyncChunksDownloaded());
 
@@ -605,7 +617,7 @@ protected:
 
     void checkResultSendPart(
         const ISyncResult & result, const ISender::Result & sendResult,
-        const QList<qevercloud::Guid> & linkedNotebookGuids)
+        const QSet<qevercloud::Guid> & linkedNotebookGuids)
     {
         const auto resultSendStatus = result.userAccountSendStatus();
         ASSERT_TRUE(resultSendStatus);
@@ -755,10 +767,13 @@ TEST_F(AccountSynchronizerTest, NothingToDownloadOrSend)
 
     ASSERT_TRUE(result);
     EXPECT_FALSE(result->syncState());
+    EXPECT_FALSE(result->userAccountSyncChunksDownloaded());
     EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
     EXPECT_FALSE(result->userAccountDownloadNotesStatus());
     EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
     EXPECT_FALSE(result->userAccountSendStatus());
+    EXPECT_TRUE(
+        result->linkedNotebookGuidsWithSyncChunksDownloaded().isEmpty());
     EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
@@ -779,6 +794,10 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
     const auto downloadResult =
         generateSampleDownloaderResult(linkedNotebookGuids);
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
@@ -786,14 +805,12 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
 
     expectSetSyncState(downloadResult.syncState);
 
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
-
     EXPECT_CALL(*mockCallback, onDownloadFinished(true));
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -859,9 +876,12 @@ TEST_F(AccountSynchronizerTest, SendWithNothingToDownload)
     ASSERT_TRUE(sendResult.syncState);
     checkResultSyncState(*result, *sendResult.syncState, linkedNotebookGuids);
 
+    EXPECT_FALSE(result->userAccountSyncChunksDownloaded());
     EXPECT_FALSE(result->userAccountSyncChunksDataCounters());
     EXPECT_FALSE(result->userAccountDownloadNotesStatus());
     EXPECT_FALSE(result->userAccountDownloadResourcesStatus());
+    EXPECT_TRUE(
+        result->linkedNotebookGuidsWithSyncChunksDownloaded().isEmpty());
     EXPECT_TRUE(result->linkedNotebookSyncChunksDataCounters().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadNotesStatuses().isEmpty());
     EXPECT_TRUE(result->linkedNotebookDownloadResourcesStatuses().isEmpty());
@@ -883,6 +903,10 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
 
     const auto sendResult = generateSampleSendResult(linkedNotebookGuids);
 
+    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
+        mockCallback = std::make_shared<
+            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
+
     InSequence s;
 
     EXPECT_CALL(*m_mockDownloader, download)
@@ -890,16 +914,13 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
 
     expectSetSyncState(downloadResult.syncState);
 
-    const std::shared_ptr<mocks::MockIAccountSynchronizerCallback>
-        mockCallback = std::make_shared<
-            StrictMock<mocks::MockIAccountSynchronizerCallback>>();
-
     EXPECT_CALL(*mockCallback, onDownloadFinished(true));
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
     expectSetSyncState(sendResult.syncState);
+    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -958,6 +979,7 @@ TEST_F(
     expectSetSyncState(sendResult.syncState);
 
     auto downloadSecondResult = downloadResult;
+    downloadSecondResult.userOwnResult.syncChunksDownloaded = true;
     downloadSecondResult.userOwnResult.syncChunksDataCounters =
         generateSampleSyncChunksDataCounters(10);
     downloadSecondResult.userOwnResult.downloadNotesStatus =
@@ -978,6 +1000,7 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
     expectSetSyncState(downloadSecondSyncState);
+    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1050,9 +1073,11 @@ TEST_F(
 
     auto downloadSecondResult = downloadResult;
     {
-        const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+        const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
         auto & linkedNotebookResult =
             downloadSecondResult.linkedNotebookResults[linkedNotebookGuid];
+
+        linkedNotebookResult.syncChunksDownloaded = true;
 
         linkedNotebookResult.syncChunksDataCounters =
             generateSampleSyncChunksDataCounters(10);
@@ -1067,7 +1092,7 @@ TEST_F(
     auto downloadSecondSyncState =
         std::make_shared<SyncState>(*downloadResult.syncState);
     {
-        const auto & guid = linkedNotebookGuids.constFirst();
+        const auto & guid = *linkedNotebookGuids.constBegin();
         downloadSecondSyncState->m_linkedNotebookUpdateCounts[guid] = 43;
         downloadSecondSyncState->m_linkedNotebookLastSyncTimes[guid] =
             downloadResult.syncState->m_linkedNotebookLastSyncTimes[guid] + 10;
@@ -1079,6 +1104,7 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
     expectSetSyncState(downloadSecondSyncState);
+    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1176,6 +1202,8 @@ TEST_F(
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
+    expectClearIntermediatePersistence(linkedNotebookGuids);
+
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -1254,6 +1282,8 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1338,6 +1368,8 @@ TEST_F(
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
+    expectClearIntermediatePersistence(linkedNotebookGuids);
+
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -1377,7 +1409,7 @@ TEST_F(
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
     {
         auto & linkedNotebookResult =
@@ -1431,6 +1463,8 @@ TEST_F(
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
+    expectClearIntermediatePersistence(linkedNotebookGuids);
+
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -1475,7 +1509,7 @@ TEST_F(
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
     {
         auto & linkedNotebookResult =
@@ -1531,6 +1565,8 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
+
+    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1661,7 +1697,7 @@ TEST_F(
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     auto sendResult = generateSampleSendResult(linkedNotebookGuids);
     {
         auto & linkedNotebookResult =
@@ -1923,7 +1959,7 @@ TEST_F(
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     const qint32 rateLimitDuration = 1000;
 
     auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
@@ -1981,7 +2017,7 @@ TEST_F(
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     const qint32 rateLimitDuration = 1000;
 
     auto downloadResult = generateSampleDownloaderResult(linkedNotebookGuids);
@@ -2100,7 +2136,7 @@ TEST_F(
     const auto linkedNotebookGuids = generateLinkedNotebookGuids();
     ASSERT_FALSE(linkedNotebookGuids.isEmpty());
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     const qint32 rateLimitDuration = 1000;
     auto sendResult = generateSampleSendResult(linkedNotebookGuids);
     {
@@ -2248,7 +2284,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
             linkedNotebooks);
     }
 
-    const auto & linkedNotebookGuid = linkedNotebookGuids.constFirst();
+    const auto & linkedNotebookGuid = *linkedNotebookGuids.constBegin();
     const auto linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
             .setGuid(linkedNotebookGuid)
@@ -2341,6 +2377,8 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
+    expectClearIntermediatePersistence(linkedNotebookGuids);
+
     downloaderPromise->addResult(downloadResult);
     downloaderPromise->finish();
 
@@ -2397,7 +2435,7 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromSender)
                 callback->onUserOwnSendStatusUpdate(sendResult.userOwnResult);
 
                 const auto & linkedNotebookGuid =
-                    linkedNotebookGuids.constFirst();
+                    *linkedNotebookGuids.constBegin();
 
                 EXPECT_CALL(
                     *mockCallback,

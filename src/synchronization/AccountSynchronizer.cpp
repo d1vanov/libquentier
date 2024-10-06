@@ -1441,8 +1441,41 @@ void AccountSynchronizer::finalize(Context & context)
         "Synchronization finished for account " << m_account.name() << " ("
                                                 << m_account.id() << ")");
 
+    clearIntermediatePersistence(*context.previousSyncResult);
+
     context.promise->addResult(std::move(context.previousSyncResult));
     context.promise->finish();
+}
+
+void AccountSynchronizer::clearIntermediatePersistence(
+    const ISyncResult & syncResult)
+{
+    // If synchronization was stopped due to some error, won't clear
+    // intermediate persistence as it might be needed during the next sync
+    // attempt
+    if (!std::holds_alternative<std::monostate>(
+            syncResult.stopSynchronizationError()))
+    {
+        QNINFO(
+            "synchronization::AccountSynchronizer",
+            "Synchronization was stopped due to an error, won't clear "
+            "intermediate persistence");
+        return;
+    }
+
+    if (syncResult.userAccountSyncChunksDownloaded()) {
+        m_syncChunksStorage->clearUserOwnSyncChunks();
+    }
+
+    const auto linkedNotebookGuidsWithSyncChunksDownloaded =
+        syncResult.linkedNotebookGuidsWithSyncChunksDownloaded();
+    for (const auto & linkedNotebookGuid:
+         std::as_const(linkedNotebookGuidsWithSyncChunksDownloaded))
+    {
+        m_syncChunksStorage->clearLinkedNotebookSyncChunks(linkedNotebookGuid);
+    }
+
+    // TODO: should also clear intermediate persistence for notes and resources
 }
 
 QDebug & operator<<(
