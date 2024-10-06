@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -319,6 +319,7 @@ namespace {
     IDownloader::Result downloadResult;
     downloadResult.userOwnResult.syncChunksDataCounters =
         generateSampleSyncChunksDataCounters(1);
+    downloadResult.userOwnResult.syncChunksDownloaded = true;
     downloadResult.userOwnResult.downloadNotesStatus =
         generateSampleDownloadNotesStatus(1);
     downloadResult.userOwnResult.downloadResourcesStatus =
@@ -332,6 +333,7 @@ namespace {
         result.syncChunksDataCounters = generateSampleSyncChunksDataCounters(
             3 + static_cast<quint64>(counter) * 2);
 
+        result.syncChunksDownloaded = true;
         result.downloadNotesStatus = generateSampleDownloadNotesStatus(
             5 + static_cast<quint64>(counter) * 3);
 
@@ -497,6 +499,8 @@ protected:
         const ISyncResult & result, const IDownloader::Result & downloadResult,
         const QList<qevercloud::Guid> & linkedNotebookGuids)
     {
+        EXPECT_TRUE(result.userAccountSyncChunksDownloaded());
+
         // Checking sync chunks data counters
         const auto resultSyncChunksDataCounters =
             result.userAccountSyncChunksDataCounters();
@@ -513,9 +517,18 @@ protected:
             resultLinkedNotebookSyncChunksDataCounters.size(),
             downloadResult.linkedNotebookResults.size());
 
+        const auto linkedNotebookGuidsWithSyncChunksDownloaded =
+            result.linkedNotebookGuidsWithSyncChunksDownloaded();
+        EXPECT_EQ(
+            linkedNotebookGuidsWithSyncChunksDownloaded.size(),
+            linkedNotebookGuids.size());
+
         for (const auto & linkedNotebookGuid:
              std::as_const(linkedNotebookGuids))
         {
+            EXPECT_TRUE(linkedNotebookGuidsWithSyncChunksDownloaded.contains(
+                linkedNotebookGuid));
+
             const auto it =
                 resultLinkedNotebookSyncChunksDataCounters.constFind(
                     linkedNotebookGuid);

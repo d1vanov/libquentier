@@ -1038,6 +1038,9 @@ void AccountSynchronizer::appendToPreviousSyncResult(
         }
     }
 
+    context.previousSyncResult->m_userAccountSyncChunksDownloaded |=
+        downloadResult.userOwnResult.syncChunksDownloaded;
+
     if (!context.previousSyncResult->m_userAccountDownloadNotesStatus) {
         context.previousSyncResult->m_userAccountDownloadNotesStatus =
             downloadResult.userOwnResult.downloadNotesStatus;
@@ -1074,6 +1077,12 @@ void AccountSynchronizer::appendToPreviousSyncResult(
             else {
                 counters = result.syncChunksDataCounters;
             }
+        }
+
+        if (result.syncChunksDownloaded) {
+            context.previousSyncResult
+                ->m_linkedNotebookGuidsWithSyncChunksDownloaded.insert(
+                    linkedNotebookGuid);
         }
 
         if (result.downloadNotesStatus) {

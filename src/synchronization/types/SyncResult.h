@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,6 +35,12 @@ struct SyncResult final: public ISyncResult
     [[nodiscard]] QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
         linkedNotebookSyncChunksDataCounters() const override;
 
+    [[nodiscard]] bool userAccountSyncChunksDownloaded()
+        const noexcept override;
+
+    [[nodiscard]] QSet<qevercloud::Guid>
+        linkedNotebookGuidsWithSyncChunksDownloaded() const override;
+
     [[nodiscard]] IDownloadNotesStatusPtr
         userAccountDownloadNotesStatus() const noexcept override;
 
@@ -62,6 +68,9 @@ struct SyncResult final: public ISyncResult
     SyncChunksDataCountersPtr m_userAccountSyncChunksDataCounters;
     QHash<qevercloud::Guid, SyncChunksDataCountersPtr>
         m_linkedNotebookSyncChunksDataCounters;
+
+    bool m_userAccountSyncChunksDownloaded = false;
+    QSet<qevercloud::Guid> m_linkedNotebookGuidsWithSyncChunksDownloaded;
 
     DownloadNotesStatusPtr m_userAccountDownloadNotesStatus;
     QHash<qevercloud::Guid, DownloadNotesStatusPtr>

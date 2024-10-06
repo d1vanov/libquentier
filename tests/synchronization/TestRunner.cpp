@@ -1057,6 +1057,14 @@ void TestRunner::runTestScenario()
         }
     }
 
+    QVERIFY(
+        syncResult->userAccountSyncChunksDownloaded() ==
+        testScenarioData.expectSomeUserOwnSyncChunks);
+
+    QVERIFY(
+        syncResult->linkedNotebookGuidsWithSyncChunksDownloaded().isEmpty() ==
+        !testScenarioData.expectSomeLinkedNotebooksSyncChunks);
+
     const auto userOwnCounters =
         syncResult->userAccountSyncChunksDataCounters();
 

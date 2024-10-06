@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,6 +52,17 @@ QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
         result[it.key()] = it.value();
     }
     return result;
+}
+
+bool SyncResult::userAccountSyncChunksDownloaded() const noexcept
+{
+    return m_userAccountSyncChunksDownloaded;
+}
+
+QSet<qevercloud::Guid> SyncResult::linkedNotebookGuidsWithSyncChunksDownloaded()
+    const
+{
+    return m_linkedNotebookGuidsWithSyncChunksDownloaded;
 }
 
 IDownloadNotesStatusPtr SyncResult::userAccountDownloadNotesStatus()
@@ -118,21 +129,24 @@ StopSynchronizationError SyncResult::stopSynchronizationError() const
 
 QTextStream & SyncResult::print(QTextStream & strm) const
 {
-    strm << "SyncResult: ";
+    strm << "SyncResult:\n";
 
     if (m_syncState) {
-        strm << "sync state = ";
+        strm << "  Sync state = ";
         m_syncState->print(strm);
+        strm << "\n";
     }
 
     if (m_userAccountSyncChunksDataCounters) {
-        strm << "userAccountSyncChunksDataCounters = ";
+        strm << "  User account sync chunks data counters = ";
         m_userAccountSyncChunksDataCounters->print(strm);
+        strm << "\n";
     }
 
-    strm << ", linkedNotebookSyncChunksDataCounters = ";
+    strm << "  Linked notebook sync chunks data counters ("
+         << m_linkedNotebookSyncChunksDataCounters.size() << ") = ";
     if (m_linkedNotebookSyncChunksDataCounters.isEmpty()) {
-        strm << "<empty>";
+        strm << "<empty>\n";
     }
     else {
         for (const auto it:
@@ -145,17 +159,30 @@ QTextStream & SyncResult::print(QTextStream & strm) const
             it.value()->print(strm);
             strm << "};";
         }
-        strm << " ";
+        strm << "\n";
+    }
+
+    strm << "  User account sync chunks downloaded = "
+         << (m_userAccountSyncChunksDownloaded ? "true" : "false") << "\n";
+
+    strm << "  Linked notebook guids with sync chunks downloaded ("
+         << m_linkedNotebookGuidsWithSyncChunksDownloaded.size() << ") = ";
+    for (const auto & guid:
+         std::as_const(m_linkedNotebookGuidsWithSyncChunksDownloaded))
+    {
+        strm << "{" << guid << "}; ";
     }
 
     if (m_userAccountDownloadNotesStatus) {
-        strm << "userAccountDownloadNotesStatus = ";
+        strm << "  User account download notes status = ";
         m_userAccountDownloadNotesStatus->print(strm);
+        strm << "\n";
     }
 
-    strm << ", linkedNotebookDownloadNotesStatuses = ";
+    strm << "  Linked notebook download notes statuses ("
+         << m_linkedNotebookDownloadNotesStatuses.size() << ") = ";
     if (m_linkedNotebookDownloadNotesStatuses.isEmpty()) {
-        strm << "<empty>, ";
+        strm << "<empty>\n";
     }
     else {
         for (const auto it:
@@ -168,17 +195,19 @@ QTextStream & SyncResult::print(QTextStream & strm) const
             it.value()->print(strm);
             strm << "};";
         }
-        strm << " ";
+        strm << "\n";
     }
 
     if (m_userAccountDownloadResourcesStatus) {
-        strm << "userAccountDownloadResourcesStatus = ";
+        strm << "  User account download resources status = ";
         m_userAccountDownloadResourcesStatus->print(strm);
+        strm << "\n";
     }
 
-    strm << ", linkedNotebookDownloadResourcesStatuses = ";
+    strm << "  Linked notebook download resources statuses ("
+         << m_linkedNotebookDownloadResourcesStatuses.size() << ")= ";
     if (m_linkedNotebookDownloadResourcesStatuses.isEmpty()) {
-        strm << "<empty>, ";
+        strm << "<empty>\n";
     }
     else {
         for (const auto it:
@@ -192,17 +221,19 @@ QTextStream & SyncResult::print(QTextStream & strm) const
             it.value()->print(strm);
             strm << "};";
         }
-        strm << " ";
+        strm << "\n";
     }
 
     if (m_userAccountSendStatus) {
-        strm << "userAccountSendStatus = ";
+        strm << "  user account send status = ";
         m_userAccountSendStatus->print(strm);
+        strm << "\n";
     }
 
-    strm << ", linkedNotebookSendStatuses = ";
+    strm << "  Linked notebook send statuses ("
+         << m_linkedNotebookSendStatuses.size() << ")= ";
     if (m_linkedNotebookSendStatuses.isEmpty()) {
-        strm << "<empty>";
+        strm << "<empty>\n";
     }
     else {
         for (const auto it: qevercloud::toRange(m_linkedNotebookSendStatuses)) {
@@ -214,7 +245,7 @@ QTextStream & SyncResult::print(QTextStream & strm) const
             it.value()->print(strm);
             strm << "};";
         }
-        strm << " ";
+        strm << "\n";
     }
 
     if (std::holds_alternative<RateLimitReachedError>(

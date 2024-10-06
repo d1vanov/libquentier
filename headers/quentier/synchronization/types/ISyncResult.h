@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,7 @@
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QHash>
+#include <QSet>
 
 namespace quentier::synchronization {
 
@@ -40,6 +41,11 @@ public:
 
     [[nodiscard]] virtual QHash<qevercloud::Guid, ISyncChunksDataCountersPtr>
         linkedNotebookSyncChunksDataCounters() const = 0;
+
+    [[nodiscard]] virtual bool userAccountSyncChunksDownloaded() const = 0;
+
+    [[nodiscard]] virtual QSet<qevercloud::Guid>
+        linkedNotebookGuidsWithSyncChunksDownloaded() const = 0;
 
     [[nodiscard]] virtual IDownloadNotesStatusPtr
         userAccountDownloadNotesStatus() const = 0;
