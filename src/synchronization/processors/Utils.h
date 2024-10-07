@@ -84,6 +84,9 @@ void writeProcessedNoteInfo(
     const qevercloud::Guid & noteGuid, qint32 updateSequenceNum,
     const QDir & lastSyncNotesDir);
 
+// Remove persistent information about processed notes inside the passed in dir
+void clearProcessedNotesInfos(const QDir & lastSyncNotesDir);
+
 // Persists information about note which content and/or resources failed to get
 // downloaded inside the passed in dir
 void writeFailedToDownloadNote(

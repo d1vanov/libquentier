@@ -479,6 +479,17 @@ void writeProcessedNoteInfo(
     notesWhichFailedToExpunge.sync();
 }
 
+void clearProcessedNotesInfos(const QDir & lastSyncNotesDir)
+{
+    QSettings processedNotesSettings{
+        lastSyncNotesDir.absoluteFilePath(
+            QString::fromUtf8(gProcessedNotesIniFileName)),
+        QSettings::IniFormat};
+
+    processedNotesSettings.clear();
+    processedNotesSettings.sync();
+}
+
 void writeFailedToDownloadNote(
     const qevercloud::Note & note, const QDir & lastSyncNotesDir)
 {
