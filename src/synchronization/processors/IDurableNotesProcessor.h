@@ -79,6 +79,8 @@ public:
         const std::optional<qevercloud::Guid> & linkedNotebookGuid =
             std::nullopt,
         ICallbackWeakPtr callbackWeak = {}) = 0;
+
+    virtual void cleanup() = 0;
 };
 
 } // namespace quentier::synchronization

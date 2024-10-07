@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,8 @@
 
 #include <gmock/gmock.h>
 
+// clazy:excludeall=returning-void-expression
+
 namespace quentier::synchronization::tests::mocks {
 
 class MockIDurableNotesProcessor : public IDurableNotesProcessor
@@ -35,6 +37,8 @@ public:
          const std::optional<qevercloud::Guid> & linkedNotebookGuid,
          ICallbackWeakPtr callbackWeak),
         (override));
+
+    MOCK_METHOD(void, cleanup, (), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

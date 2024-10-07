@@ -52,6 +52,8 @@ public:
             std::nullopt,
         ICallbackWeakPtr callbackWeak = {}) override;
 
+    void cleanup() override;
+
 private:
     [[nodiscard]] QList<qevercloud::Note> notesFromPreviousSync(
         const QDir & dir) const;

@@ -323,6 +323,11 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             EXPECT_EQ(sit.value(), it.value());
         }
     }
+
+    durableNotesProcessor->cleanup();
+    const auto emptyProcessedNotesInfo =
+        utils::processedNotesInfoFromLastSync(lastSyncNotesDir);
+    EXPECT_TRUE(emptyProcessedNotesInfo.isEmpty());
 }
 
 TEST_F(

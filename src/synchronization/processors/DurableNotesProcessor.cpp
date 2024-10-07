@@ -411,6 +411,15 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
         linkedNotebookGuid, std::move(callbackWeak));
 }
 
+void DurableNotesProcessor::cleanup()
+{
+    QNDEBUG(
+        "synchronization::DurableNotesProcessor",
+        "DurableNotesProcessor::cleanup");
+
+    utils::clearProcessedNotesInfos(m_syncNotesDir);
+}
+
 QList<qevercloud::Note> DurableNotesProcessor::notesFromPreviousSync(
     const QDir & dir) const
 {
