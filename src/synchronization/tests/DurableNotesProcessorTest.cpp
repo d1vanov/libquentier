@@ -306,7 +306,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
     QDir lastSyncNotesDir = [&] {
         QDir syncPersistentStorageDir{m_temporaryDir.path()};
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
     }();
 
@@ -507,7 +507,7 @@ TEST_F(
     QDir lastSyncNotesDir = [&] {
         QDir syncPersistentStorageDir{m_temporaryDir.path()};
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
     }();
 
@@ -729,7 +729,7 @@ TEST_P(
 
     QDir syncNotesDir = [&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
 
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
     }();

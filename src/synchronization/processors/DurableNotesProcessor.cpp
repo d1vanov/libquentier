@@ -293,7 +293,7 @@ DurableNotesProcessor::DurableNotesProcessor(
     m_notesProcessor{std::move(notesProcessor)},
     m_syncNotesDir{[&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
     }()}
 {

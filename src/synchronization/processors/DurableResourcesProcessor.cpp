@@ -226,7 +226,7 @@ DurableResourcesProcessor::DurableResourcesProcessor(
     m_resourcesProcessor{std::move(resourcesProcessor)},
     m_syncResourcesDir{[&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
         return QDir{
             lastSyncDataDir.absoluteFilePath(QStringLiteral("resources"))};
     }()}

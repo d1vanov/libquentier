@@ -274,7 +274,7 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
     QDir lastSyncResourcesDir = [&] {
         QDir syncPersistentStorageDir{m_temporaryDir.path()};
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
         return QDir{
             lastSyncDataDir.absoluteFilePath(QStringLiteral("resources"))};
     }();
@@ -438,7 +438,7 @@ TEST_F(
     QDir lastSyncResourcesDir = [&] {
         QDir syncPersistentStorageDir{m_temporaryDir.path()};
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
         return QDir{
             lastSyncDataDir.absoluteFilePath(QStringLiteral("resources"))};
     }();
@@ -609,7 +609,7 @@ TEST_P(
 
     QDir syncResourcesDir = [&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
-            QStringLiteral("lastSyncData"))};
+            QStringLiteral("last_sync_data"))};
 
         return QDir{
             lastSyncDataDir.absoluteFilePath(QStringLiteral("resources"))};
