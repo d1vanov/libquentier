@@ -626,6 +626,23 @@ void writeProcessedResourceInfo(
     }
 }
 
+void clearProcessedResourcesInfos(const QDir & lastSyncResourcesDir)
+{
+    QSettings processedResourcesSettings{
+        lastSyncResourcesDir.absoluteFilePath(
+            QString::fromUtf8(gProcessedResourcesIniFileName)),
+        QSettings::IniFormat};
+
+    processedResourcesSettings.clear();
+    processedResourcesSettings.sync();
+}
+
+// Persists information about resource which data failed to get downloaded
+// inside the passed in dir
+void writeFailedToDownloadResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir);
+
+
 void writeFailedToDownloadResource(
     const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir)
 {

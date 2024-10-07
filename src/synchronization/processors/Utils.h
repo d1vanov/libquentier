@@ -116,6 +116,9 @@ void writeProcessedResourceInfo(
     const qevercloud::Guid & resourceGuid, qint32 updateSequenceNum,
     const QDir & lastSyncResourcesDir);
 
+// Remove persistent information about processed resources inside the passed in dir
+void clearProcessedResourcesInfos(const QDir & lastSyncResourcesDir);
+
 // Persists information about resource which data failed to get downloaded
 // inside the passed in dir
 void writeFailedToDownloadResource(
