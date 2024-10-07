@@ -320,6 +320,15 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
         std::move(callbackWeak));
 }
 
+void DurableResourcesProcessor::cleanup()
+{
+    QNDEBUG(
+        "synchronization::DurableResourcesProcessor",
+        "DurableResourcesProcessor::cleanup");
+
+    utils::clearProcessedResourcesInfos(m_syncResourcesDir);
+}
+
 QList<qevercloud::Resource>
     DurableResourcesProcessor::resourcesFromPreviousSync(
         const QDir & dir) const

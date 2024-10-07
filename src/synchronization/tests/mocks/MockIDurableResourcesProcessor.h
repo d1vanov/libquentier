@@ -22,6 +22,8 @@
 
 #include <gmock/gmock.h>
 
+// clazy:excludeall=returning-void-expression
+
 namespace quentier::synchronization::tests::mocks {
 
 class MockIDurableResourcesProcessor : public IDurableResourcesProcessor
@@ -35,6 +37,8 @@ public:
          const std::optional<qevercloud::Guid> & linkedNotebookGuid,
          ICallbackWeakPtr callbackWeak),
         (override));
+
+    MOCK_METHOD(void, cleanup, (), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

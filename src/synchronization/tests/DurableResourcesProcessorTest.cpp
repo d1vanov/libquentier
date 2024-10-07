@@ -293,6 +293,11 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             EXPECT_EQ(sit.value(), it.value());
         }
     }
+
+    durableResourcesProcessor->cleanup();
+    const auto emptyProcessedResourcesInfo =
+        utils::processedResourcesInfoFromLastSync(lastSyncResourcesDir);
+    EXPECT_TRUE(emptyProcessedResourcesInfo.isEmpty());
 }
 
 TEST_F(
