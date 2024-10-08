@@ -41,17 +41,20 @@
 #include <synchronization/processors/ISavedSearchesProcessor.h>
 #include <synchronization/processors/ITagsProcessor.h>
 #include <synchronization/sync_chunks/ISyncChunksProvider.h>
+#include <synchronization/sync_chunks/ISyncChunksStorage.h>
 #include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/types/DownloadResourcesStatus.h>
 #include <synchronization/types/SyncChunksDataCounters.h>
 
 #include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/services/INoteStore.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QMutex>
 #include <QMutexLocker>
 #include <QThread>
 
+#include <algorithm>
 #include <atomic>
 #include <limits>
 #include <utility>
@@ -685,6 +688,7 @@ Downloader::Downloader(
     Account account, IAuthenticationInfoProviderPtr authenticationInfoProvider,
     ISyncStateStoragePtr syncStateStorage,
     ISyncChunksProviderPtr syncChunksProvider,
+    ISyncChunksStoragePtr syncChunksStorage,
     ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
     INotebooksProcessorPtr notebooksProcessor,
     IDurableNotesProcessorPtr notesProcessor,
@@ -701,6 +705,7 @@ Downloader::Downloader(
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
     m_syncStateStorage{std::move(syncStateStorage)},
     m_syncChunksProvider{std::move(syncChunksProvider)},
+    m_syncChunksStorage{std::move(syncChunksStorage)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
     // clang-format does some weird crap here, working around
@@ -741,6 +746,11 @@ Downloader::Downloader(
     if (Q_UNLIKELY(!m_syncChunksProvider)) {
         throw InvalidArgument{ErrorString{
             QStringLiteral("Downloader ctor: sync chunks provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncChunksStorage)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Downloader ctor: sync chunks storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_linkedNotebooksProcessor)) {
@@ -1061,7 +1071,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
     Q_ASSERT(downloadContext->ctx);
 
     if (linkedNotebooks.isEmpty()) {
-        Downloader::finalize(downloadContext);
+        finalize(downloadContext);
         return;
     }
 
@@ -1127,7 +1137,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
     }
 
     if (linkedNotebookFutures.isEmpty()) {
-        Downloader::finalize(downloadContext);
+        finalize(downloadContext);
         return;
     }
 
@@ -1137,7 +1147,7 @@ void Downloader::launchLinkedNotebooksDataDownload(
     auto promise = downloadContext->promise;
     threading::thenOrFailed(
         std::move(allLinkedNotebooksFuture), currentThread, promise,
-        [selfWeak, downloadContext = std::move(downloadContext),
+        [this, selfWeak, downloadContext = std::move(downloadContext),
          linkedNotebookGuids = std::move(linkedNotebookGuids)](
             QList<Result> linkedNotebookResults) {
             const auto size = linkedNotebookResults.size();
@@ -1165,8 +1175,6 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
             const auto self = selfWeak.lock();
             if (!self) {
-                Downloader::finalize(
-                    downloadContext, std::move(results));
                 return;
             }
 
@@ -1178,22 +1186,30 @@ void Downloader::launchLinkedNotebooksDataDownload(
 
             auto clearTagsThenFuture = threading::then(
                 std::move(clearTagsFuture),
-                [downloadContext, results = results]() mutable {
-                    Downloader::finalize(
-                        downloadContext, std::move(results));
-                });
+                threading::TrackedTask{
+                    selfWeak,
+                    [this, downloadContext, results = results]() mutable {
+                        finalize(
+                            downloadContext, std::move(results));
+                    }});
 
             threading::onFailed(
                 std::move(clearTagsThenFuture),
-                [downloadContext, results = std::move(results)](
+                [this, selfWeak, downloadContext, results = std::move(results)](
                     const QException & e) mutable {
                     QNWARNING(
                         "synchronization::Downloader",
                         "Failed to clear linked notebook tags after "
                             << "the download step: " << e.what());
+
+                    const auto self = selfWeak.lock();
+                    if (!self) {
+                        return;
+                    }
+
                     // Will mostly just ignore this failure as it's not
                     // fatal and return the result.
-                    Downloader::finalize(
+                    finalize(
                         downloadContext, std::move(results));
                 });
         });
@@ -1894,7 +1910,8 @@ void Downloader::finalize(
     QNDEBUG("synchronization::Downloader", "Downloader::finalize");
 
     Downloader::updateSyncState(*downloadContext);
-    downloadContext->promise->addResult(Result{
+
+    Result result{
         LocalResult{
             std::move(downloadContext->syncChunksDataCounters),
             downloadContext->syncChunksDownloaded,
@@ -1903,7 +1920,16 @@ void Downloader::finalize(
                 downloadContext->downloadResourcesStatus)}, // userOwnResult
         std::move(linkedNotebookResults),          // linkedNotebookResults
         std::move(downloadContext->lastSyncState), // syncState
-    });
+    };
+
+    // If this download context is not the one for some linked notebook,
+    // it means the overall download is being finalized, so this is a good
+    // time to clear some no longer neeeded intermediate persistence.
+    if (!downloadContext->linkedNotebook) {
+        cleanup(result);
+    }
+
+    downloadContext->promise->addResult(std::move(result));
     downloadContext->promise->finish();
 }
 
@@ -1913,6 +1939,62 @@ void Downloader::cancel(QPromise<IDownloader::Result> & promise)
 
     promise.setException(OperationCanceled{});
     promise.finish();
+}
+
+void Downloader::cleanup(const Result & result)
+{
+    if (result.userOwnResult.syncChunksDownloaded) {
+        m_syncChunksStorage->clearUserOwnSyncChunks();
+    }
+
+    for (const auto it : qevercloud::toRange(result.linkedNotebookResults)) {
+        const auto & linkedNotebookGuid = it.key();
+        const auto & linkedNotebookResult = it.value();
+
+        if (linkedNotebookResult.syncChunksDownloaded) {
+            m_syncChunksStorage->clearLinkedNotebookSyncChunks(
+                linkedNotebookGuid);
+        }
+    }
+
+    const bool hasStopSyncError = [&] {
+        const auto checkLocalResult =
+            [](const LocalResult & localResult) noexcept {
+                if (localResult.downloadNotesStatus &&
+                    !std::holds_alternative<std::monostate>(
+                        localResult.downloadNotesStatus
+                            ->stopSynchronizationError()))
+                {
+                    return true;
+                }
+
+                if (localResult.downloadResourcesStatus &&
+                    !std::holds_alternative<std::monostate>(
+                        localResult.downloadResourcesStatus
+                            ->stopSynchronizationError()))
+                {
+                    return true;
+                }
+
+                return false;
+            };
+
+        if (checkLocalResult(result.userOwnResult)) {
+            return true;
+        }
+
+        return std::any_of(
+            result.linkedNotebookResults.constBegin(),
+            result.linkedNotebookResults.constEnd(),
+            [&](const LocalResult & linkedNotebookResult) {
+                return checkLocalResult(linkedNotebookResult);
+            });
+    }();
+
+    if (!hasStopSyncError) {
+        m_notesProcessor->cleanup();
+        m_resourcesProcessor->cleanup();
+    }
 }
 
 } // namespace quentier::synchronization

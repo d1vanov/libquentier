@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,6 +61,7 @@ public:
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
         ISyncStateStoragePtr syncStateStorage,
         ISyncChunksProviderPtr syncChunksProvider,
+        ISyncChunksStoragePtr syncChunksStorage,
         ILinkedNotebooksProcessorPtr linkedNotebooksProcessor,
         INotebooksProcessorPtr notebooksProcessor,
         IDurableNotesProcessorPtr notesProcessor,
@@ -171,17 +172,20 @@ private:
     void downloadResources(
         DownloadContextPtr downloadContext, SynchronizationMode syncMode);
 
-    static void finalize(
+    void finalize(
         const DownloadContextPtr & downloadContext,
         QHash<qevercloud::Guid, LocalResult> linkedNotebookResults = {});
 
     static void cancel(QPromise<Result> & promise);
+
+    void cleanup(const Result & result);
 
 private:
     const Account m_account;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const ISyncStateStoragePtr m_syncStateStorage;
     const ISyncChunksProviderPtr m_syncChunksProvider;
+    const ISyncChunksStoragePtr m_syncChunksStorage;
     const ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
     const INotebooksProcessorPtr m_notebooksProcessor;
     const IDurableNotesProcessorPtr m_notesProcessor;
