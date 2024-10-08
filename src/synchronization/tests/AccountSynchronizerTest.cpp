@@ -431,18 +431,6 @@ protected:
                 });
     }
 
-    void expectClearIntermediatePersistence(
-        const QSet<qevercloud::Guid> & linkedNotebookGuids)
-    {
-        EXPECT_CALL(*m_mockSyncChunksStorage, clearUserOwnSyncChunks);
-
-        for (const auto & linkedNotebookGuid: std::as_const(linkedNotebookGuids)) {
-            EXPECT_CALL(
-                *m_mockSyncChunksStorage,
-                clearLinkedNotebookSyncChunks(linkedNotebookGuid));
-        }
-    }
-
     void checkResultSyncState(
         const ISyncResult & result, const ISyncState & expectedSyncState,
         const QSet<qevercloud::Guid> & linkedNotebookGuids)
@@ -810,8 +798,6 @@ TEST_F(AccountSynchronizerTest, DownloadWithNothingToSend)
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
-    expectClearIntermediatePersistence(linkedNotebookGuids);
-
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -920,7 +906,6 @@ TEST_F(AccountSynchronizerTest, DownloadAndSend)
         .WillOnce(Return(threading::makeReadyFuture(sendResult)));
 
     expectSetSyncState(sendResult.syncState);
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1000,7 +985,6 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
     expectSetSyncState(downloadSecondSyncState);
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1104,7 +1088,6 @@ TEST_F(
         .WillOnce(Return(threading::makeReadyFuture(downloadSecondResult)));
 
     expectSetSyncState(downloadSecondSyncState);
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1202,8 +1185,6 @@ TEST_F(
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
 
-    expectClearIntermediatePersistence(linkedNotebookGuids);
-
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -1282,8 +1263,6 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1367,8 +1346,6 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1462,8 +1439,6 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -1565,8 +1540,6 @@ TEST_F(
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     const auto canceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
@@ -2376,8 +2349,6 @@ TEST_F(AccountSynchronizerTest, PropagateCallbackCallsFromDownloader)
 
     EXPECT_CALL(*m_mockSender, send)
         .WillOnce(Return(threading::makeReadyFuture(ISender::Result{})));
-
-    expectClearIntermediatePersistence(linkedNotebookGuids);
 
     downloaderPromise->addResult(downloadResult);
     downloaderPromise->finish();
