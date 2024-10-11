@@ -96,7 +96,7 @@ namespace quentier::local_storage::sql::utils {
     ErrorString & errorDescription);
 
 [[nodiscard]] bool putTag(
-    qevercloud::Tag tag, QSqlDatabase & database,
+    qevercloud::Tag & tag, QSqlDatabase & database,
     ErrorString & errorDescription);
 
 [[nodiscard]] bool putLinkedNotebook(

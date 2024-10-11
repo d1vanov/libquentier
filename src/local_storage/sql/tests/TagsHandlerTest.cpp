@@ -777,7 +777,6 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
     auto tag1 = createTag();
     auto tag2 = createTag();
     tag2.setName(tag2.name().value() + QStringLiteral("#2"));
-    tag2.setParentTagLocalId(tag1.localId());
     tag2.setParentGuid(tag1.guid());
 
     auto putTagFuture = tagsHandler->putTag(tag1);
@@ -785,6 +784,21 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
 
     putTagFuture = tagsHandler->putTag(tag2);
     putTagFuture.waitForFinished();
+
+    // Checking that the tag which went to the notifier after putTag call has
+    // parent tag local id set when before the call only parent guid was set
+    QCoreApplication::processEvents();
+    {
+        const auto & putTags = notifierListener.putTags();
+        auto tag2It = std::find_if(
+            putTags.constBegin(), putTags.constEnd(),
+            [&](const qevercloud::Tag & tag) {
+                return tag.localId() == tag2.localId();
+            });
+        ASSERT_NE(tag2It, putTags.constEnd());
+        EXPECT_EQ(tag2It->parentTagLocalId(), tag1.localId());
+    }
+    tag2.setParentTagLocalId(tag1.localId());
 
     auto findTagFuture = tagsHandler->findTagByName(tag1.name().value());
     findTagFuture.waitForFinished();

@@ -2112,7 +2112,7 @@ bool putSharedNotebook(
 }
 
 bool putTag(
-    qevercloud::Tag tag, QSqlDatabase & database,
+    qevercloud::Tag & tag, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
     QNDEBUG("local_storage::sql::utils", "putTag: " << tag);
