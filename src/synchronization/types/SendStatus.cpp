@@ -170,12 +170,12 @@ QTextStream & SendStatus::print(QTextStream & strm) const
             strm << "duration = "
                  << *rateLimitReachedError.rateLimitDurationSec;
         }
-        strm << "}";
+        strm << "}, ";
     }
     else if (std::holds_alternative<AuthenticationExpiredError>(
                  m_stopSynchronizationError))
     {
-        strm << "stopSynchronizationError = AuthenticationExpiredError";
+        strm << "stopSynchronizationError = AuthenticationExpiredError, ";
     }
 
     strm << "need to repeat incremental sync: "
