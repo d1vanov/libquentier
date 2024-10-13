@@ -31,9 +31,12 @@
 
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <QDir>
+#include <QFileInfo>
 #include <QThread>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -418,6 +421,21 @@ void DurableNotesProcessor::cleanup()
         "DurableNotesProcessor::cleanup");
 
     utils::clearProcessedNotesInfos(m_syncNotesDir);
+
+    const QDir linkedNotebooksSubdir = QDir{
+        m_syncNotesDir.absoluteFilePath(QStringLiteral("linkedNotebooks"))};
+    if (!linkedNotebooksSubdir.exists()) {
+        return;
+    }
+
+    const auto linkedNotebookSubdirInfos =
+        linkedNotebooksSubdir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const auto & linkedNotebookSubdirInfo:
+         std::as_const(linkedNotebookSubdirInfos))
+    {
+        utils::clearProcessedNotesInfos(
+            QDir{linkedNotebookSubdirInfo.absoluteFilePath()});
+    }
 }
 
 QList<qevercloud::Note> DurableNotesProcessor::notesFromPreviousSync(

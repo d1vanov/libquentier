@@ -31,9 +31,12 @@
 
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
+#include <QDir>
+#include <QFileInfo>
 #include <QThread>
 
 #include <algorithm>
+#include <utility>
 
 namespace quentier::synchronization {
 
@@ -327,6 +330,21 @@ void DurableResourcesProcessor::cleanup()
         "DurableResourcesProcessor::cleanup");
 
     utils::clearProcessedResourcesInfos(m_syncResourcesDir);
+
+    const QDir linkedNotebooksSubdir = QDir{
+        m_syncResourcesDir.absoluteFilePath(QStringLiteral("linkedNotebooks"))};
+    if (!linkedNotebooksSubdir.exists()) {
+        return;
+    }
+
+    const auto linkedNotebookSubdirInfos =
+        linkedNotebooksSubdir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const auto & linkedNotebookSubdirInfo:
+         std::as_const(linkedNotebookSubdirInfos))
+    {
+        utils::clearProcessedResourcesInfos(
+            QDir{linkedNotebookSubdirInfo.absoluteFilePath()});
+    }
 }
 
 QList<qevercloud::Resource>

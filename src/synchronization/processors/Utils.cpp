@@ -481,6 +481,10 @@ void writeProcessedNoteInfo(
 
 void clearProcessedNotesInfos(const QDir & lastSyncNotesDir)
 {
+    QNDEBUG(
+        "synchronization::utils",
+        "clearProcessedNotesInfos: " << lastSyncNotesDir.absolutePath());
+
     QSettings processedNotesSettings{
         lastSyncNotesDir.absoluteFilePath(
             QString::fromUtf8(gProcessedNotesIniFileName)),
@@ -628,6 +632,11 @@ void writeProcessedResourceInfo(
 
 void clearProcessedResourcesInfos(const QDir & lastSyncResourcesDir)
 {
+    QNDEBUG(
+        "synchronization::utils",
+        "clearProcessedResourcesInfos: "
+            << lastSyncResourcesDir.absolutePath());
+
     QSettings processedResourcesSettings{
         lastSyncResourcesDir.absoluteFilePath(
             QString::fromUtf8(gProcessedResourcesIniFileName)),
@@ -639,10 +648,6 @@ void clearProcessedResourcesInfos(const QDir & lastSyncResourcesDir)
 
 // Persists information about resource which data failed to get downloaded
 // inside the passed in dir
-void writeFailedToDownloadResource(
-    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir);
-
-
 void writeFailedToDownloadResource(
     const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir)
 {
