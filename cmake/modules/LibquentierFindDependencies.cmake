@@ -44,6 +44,10 @@ else()
 
   find_package(QEverCloud-qt5 ${LIBQUENTIER_FIND_DEPS_ARGS})
   find_package(Qt5Keychain ${LIBQUENTIER_FIND_DEPS_ARGS})
+  if(NOT "QUIET" IN_LIST LIBQUENTIER_FIND_DEPS_ARGS)
+    get_property(QTKEYCHAIN_LIBRARY_LOCATION TARGET ${QTKEYCHAIN_LIBRARIES} PROPERTY LOCATION)
+    message(STATUS "Found QtKeychain library: ${QTKEYCHAIN_LIBRARY_LOCATION}")
+  endif()
 endif()
 
 find_package(LibXml2 ${LIBQUENTIER_FIND_DEPS_ARGS})
