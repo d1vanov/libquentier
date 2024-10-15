@@ -1238,8 +1238,10 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
 
     EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
         .WillRepeatedly(
-            [noteStoreWeak = std::weak_ptr{
-                 m_mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) -> QFuture<qevercloud::INoteStorePtr> {
                 return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                     noteStoreWeak.lock());
             });
@@ -1676,8 +1678,10 @@ TEST_P(DownloaderSyncChunksTest, Download)
 
     EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore)
         .WillRepeatedly(
-            [noteStoreWeak = std::weak_ptr{
-                 m_mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) -> QFuture<qevercloud::INoteStorePtr> {
                 return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                     noteStoreWeak.lock());
             });
