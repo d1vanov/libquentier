@@ -21,7 +21,8 @@ target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_private
   ${LIBNAME}_threading
-  Qt${LIBQUENTIER_QT_VERSION}::Core)
+  Qt${LIBQUENTIER_QT_VERSION}::Core
+  Qt${LIBQUENTIER_QT_VERSION}Keychain::Qt${LIBQUENTIER_QT_VERSION}Keychain)
 
 if(GMOCK_FOUND AND GTEST_FOUND)
   add_subdirectory(tests)
