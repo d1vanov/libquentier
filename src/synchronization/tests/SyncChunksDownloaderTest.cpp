@@ -274,10 +274,14 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
     InSequence s;
 
     EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     std::optional<qint32> previousChunkHighUsn;
     for (const auto & syncChunk: std::as_const(testData.m_syncChunks)) {
@@ -399,10 +403,15 @@ TEST_P(
     EXPECT_CALL(
         *m_mockNoteStoreProvider,
         linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::Guid & linkedNotebookGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     std::optional<qint32> previousChunkHighUsn;
     for (const auto & syncChunk: std::as_const(testData.m_syncChunks)) {
@@ -484,7 +493,11 @@ TEST_F(
     InSequence s;
 
     EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
             return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 noteStoreWeak.lock());
         });
@@ -575,7 +588,11 @@ TEST_F(
     InSequence s;
 
     EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
             return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 noteStoreWeak.lock());
         });
@@ -663,7 +680,11 @@ TEST_F(
     InSequence s;
 
     EXPECT_CALL(*m_mockNoteStoreProvider, userOwnNoteStore(ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
             return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
                 noteStoreWeak.lock());
         });
@@ -772,10 +793,15 @@ TEST_F(
     EXPECT_CALL(
         *m_mockNoteStoreProvider,
         linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::Guid & linkedNotebookGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -876,10 +902,15 @@ TEST_F(
     EXPECT_CALL(
         *m_mockNoteStoreProvider,
         linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::Guid & linkedNotebookGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -977,10 +1008,15 @@ TEST_F(
     EXPECT_CALL(
         *m_mockNoteStoreProvider,
         linkedNotebookNoteStore(*linkedNotebook.guid(), ctx, _))
-        .WillOnce([noteStoreWeak = std::weak_ptr{m_mockNoteStore}] {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+        .WillOnce(
+            [noteStoreWeak = std::weak_ptr{m_mockNoteStore}](
+                [[maybe_unused]] const qevercloud::Guid & linkedNotebookGuid,
+                [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
+                [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                    retryPolicy) {
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2

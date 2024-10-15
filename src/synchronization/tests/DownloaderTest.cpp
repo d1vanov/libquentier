@@ -1326,8 +1326,13 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
                 *m_mockNoteStoreProvider,
                 linkedNotebookNoteStore(*linkedNotebook.guid(), _, _))
                 .WillOnce(
-                    [noteStoreWeak = std::weak_ptr{
-                         mockNoteStore}]() -> QFuture<qevercloud::INoteStorePtr> {
+                    [noteStoreWeak = std::weak_ptr{mockNoteStore}](
+                        [[maybe_unused]] const qevercloud::Guid &
+                            linkedNotebookGuid,
+                        [[maybe_unused]] const qevercloud::IRequestContextPtr &
+                            ctx,
+                        [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
+                            retryPolicy) -> QFuture<qevercloud::INoteStorePtr> {
                         return threading::makeReadyFuture<
                             qevercloud::INoteStorePtr>(noteStoreWeak.lock());
                     });
