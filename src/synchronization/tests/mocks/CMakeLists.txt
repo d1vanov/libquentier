@@ -55,6 +55,7 @@ target_link_libraries(${MOCKS_NAME}
   PUBLIC
     ${LIBRARY_NAME}
     ${GMOCK_LIBRARIES}
+    Qt${LIBQUENTIER_QT_VERSION}::Core
   PRIVATE
     ${LIBNAME}
 )
@@ -63,3 +64,8 @@ target_include_directories(${MOCKS_NAME}
   PUBLIC
     ${GMOCK_INCLUDE_DIRS}
 )
+
+# NOTE: this property is set to prevent automoc when building this mock library
+# because automoc works again when building the actual tests using this library
+# and it results in multiple definitions build error
+set_target_properties(${MOCKS_NAME} PROPERTIES AUTOMOC FALSE)
