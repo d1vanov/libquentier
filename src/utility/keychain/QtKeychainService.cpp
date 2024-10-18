@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,11 +18,11 @@
 
 #include "QtKeychainService.h"
 
-#include <qt5keychain/keychain.h>
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <qt6keychain/keychain.h>
 #include <QPromise>
 #else
+#include <qt5keychain/keychain.h>
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
