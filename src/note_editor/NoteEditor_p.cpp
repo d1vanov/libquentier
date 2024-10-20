@@ -5355,7 +5355,7 @@ void NoteEditorPrivate::setupWebSocketServer()
     QObject::connect(
         m_pWebSocketClientWrapper, &WebSocketClientWrapper::clientConnected,
         m_pWebChannel, &QWebChannel::connectTo,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
 }
 
 void NoteEditorPrivate::setupJavaScriptObjects()
