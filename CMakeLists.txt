@@ -256,7 +256,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/ResourceDataInTemporaryFileStorageManager.h
        src/note_editor/ResourceInfo.h
        src/note_editor/SpellChecker_p.h
-       src/note_editor/SpellCheckerDictionariesFinder.h
        src/note_editor/WebSocketClientWrapper.h
        src/note_editor/WebSocketTransport.h
        src/note_editor/dialogs/EncryptionDialog.h
@@ -431,7 +430,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/ResourceInfo.cpp
        src/note_editor/SpellChecker.cpp
        src/note_editor/SpellChecker_p.cpp
-       src/note_editor/SpellCheckerDictionariesFinder.cpp
        src/note_editor/WebSocketClientWrapper.cpp
        src/note_editor/WebSocketTransport.cpp
        src/note_editor/dialogs/EncryptionDialog.cpp

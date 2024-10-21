@@ -18,17 +18,14 @@
 
 #pragma once
 
-#include "SpellCheckerDictionariesFinder.h"
-
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 
-#include <QAtomicInt>
 #include <QHash>
+#include <QList>
 #include <QObject>
 #include <QStringList>
 #include <QUuid>
-#include <QVector>
 
 #include <memory>
 #include <utility>
@@ -44,17 +41,15 @@ class SpellCheckerPrivate final : public QObject
     Q_OBJECT
 public:
     SpellCheckerPrivate(
-        FileIOProcessorAsync * pFileIOProcessorAsync, Account account,
+        FileIOProcessorAsync * fileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
-
-    ~SpellCheckerPrivate() override;
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    [[nodiscard]] QVector<std::pair<QString, bool>> listAvailableDictionaries()
+    [[nodiscard]] QList<std::pair<QString, bool>> listAvailableDictionaries()
         const;
 
-    void setAccount(const Account & account);
+    void setAccount(Account account);
 
     void enableDictionary(const QString & language);
     void disableDictionary(const QString & language);
@@ -81,14 +76,19 @@ Q_SIGNALS:
         QString absoluteFilePath, QByteArray data, QUuid requestId,
         bool append);
 
-private Q_SLOTS:
-    void onDictionariesFound(
-        SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName files);
-
 private:
+    struct HunspellDictionaryData
+    {
+        QString dicFile;
+        QString affFile;
+    };
+
+    using DictionariesByName = QHash<QString, HunspellDictionaryData>;
+
     void checkAndScanSystemDictionaries();
     void scanSystemDictionaries();
     void addSystemDictionary(const QString & path, const QString & name);
+    void persistFoundDictionariesData(const DictionariesByName & dictionaries);
 
     void initializeUserDictionary(const QString & userDictionaryPath);
 
@@ -135,7 +135,7 @@ private:
         void remove(const QByteArray & wordData);
 
     private:
-        std::shared_ptr<Hunspell> m_pHunspell;
+        std::shared_ptr<Hunspell> m_hunspell;
     };
 
     class Dictionary
@@ -150,11 +150,8 @@ private:
     };
 
 private:
-    FileIOProcessorAsync * m_pFileIOProcessorAsync;
-
+    FileIOProcessorAsync * m_fileIOProcessorAsync;
     Account m_currentAccount;
-
-    std::shared_ptr<QAtomicInt> m_pDictionariesFinderStopFlag;
 
     // Hashed by the language code
     QHash<QString, Dictionary> m_systemDictionaries;

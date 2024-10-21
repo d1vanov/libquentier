@@ -20,8 +20,8 @@
 
 #include <quentier/utility/Linkage.h>
 
+#include <QList>
 #include <QObject>
-#include <QVector>
 
 #include <utility>
 
@@ -36,12 +36,12 @@ class QUENTIER_EXPORT SpellChecker : public QObject
     Q_OBJECT
 public:
     SpellChecker(
-        FileIOProcessorAsync * pFileIOProcessorAsync, Account account,
+        FileIOProcessorAsync * fileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    [[nodiscard]] QVector<std::pair<QString, bool>> listAvailableDictionaries()
+    [[nodiscard]] QList<std::pair<QString, bool>> listAvailableDictionaries()
         const;
 
     void setAccount(const Account & account);
