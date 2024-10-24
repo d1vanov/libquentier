@@ -23,28 +23,29 @@ namespace quentier::synchronization {
 QTextStream & SyncChunksDataCounters::print(QTextStream & strm) const
 {
     strm << "SyncChunksDataCounters: {\n"
-        << "  total saved searches = " << m_totalSavedSearches << "\n"
-        << "  total expunged saved searches = " << m_totalExpungedSavedSearches
-        << "\n  added saved searches = " << m_addedSavedSearches << "\n"
-        << "  updated saved searches = " << m_updatedSavedSearches << "\n"
-        << "  expunged saved searches = " << m_expungedSavedSearches << "\n"
-        << "  total tags = " << m_totalTags << "\n"
-        << "  total expunged tags = " << m_totalExpungedTags << "\n"
-        << "  added tags = " << m_addedTags << "\n"
-        << "  updated tags = " << m_updatedTags << "\n"
-        << "  expunged tags = " << m_expungedTags << "\n"
-        << "  total linked notebooks = " << m_totalLinkedNotebooks << "\n"
-        << "  total expunged linked notebooks = "
-        << m_totalExpungedLinkedNotebooks << "\n"
-        << "  added linked notebooks = " << m_addedLinkedNotebooks << "\n"
-        << "  updated linked notebooks = " << m_updatedLinkedNotebooks << "\n"
-        << "  expunged linked notebooks = " << m_expungedLinkedNotebooks << "\n"
-        << "  total notebooks = " << m_totalNotebooks << "\n"
-        << "  total expunged notebooks = " << m_totalExpungedNotebooks << "\n"
-        << "  added notebooks = " << m_addedNotebooks << "\n"
-        << "  updated notebooks = " << m_updatedNotebooks << "\n"
-        << "  expunged notebooks = " << m_expungedNotebooks << "\n"
-        << "}\n";
+         << "  total saved searches = " << m_totalSavedSearches << "\n"
+         << "  total expunged saved searches = " << m_totalExpungedSavedSearches
+         << "\n  added saved searches = " << m_addedSavedSearches << "\n"
+         << "  updated saved searches = " << m_updatedSavedSearches << "\n"
+         << "  expunged saved searches = " << m_expungedSavedSearches << "\n"
+         << "  total tags = " << m_totalTags << "\n"
+         << "  total expunged tags = " << m_totalExpungedTags << "\n"
+         << "  added tags = " << m_addedTags << "\n"
+         << "  updated tags = " << m_updatedTags << "\n"
+         << "  expunged tags = " << m_expungedTags << "\n"
+         << "  total linked notebooks = " << m_totalLinkedNotebooks << "\n"
+         << "  total expunged linked notebooks = "
+         << m_totalExpungedLinkedNotebooks << "\n"
+         << "  added linked notebooks = " << m_addedLinkedNotebooks << "\n"
+         << "  updated linked notebooks = " << m_updatedLinkedNotebooks << "\n"
+         << "  expunged linked notebooks = " << m_expungedLinkedNotebooks
+         << "\n"
+         << "  total notebooks = " << m_totalNotebooks << "\n"
+         << "  total expunged notebooks = " << m_totalExpungedNotebooks << "\n"
+         << "  added notebooks = " << m_addedNotebooks << "\n"
+         << "  updated notebooks = " << m_updatedNotebooks << "\n"
+         << "  expunged notebooks = " << m_expungedNotebooks << "\n"
+         << "}\n";
 
     return strm;
 }

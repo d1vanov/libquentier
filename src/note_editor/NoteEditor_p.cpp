@@ -460,7 +460,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     // Disable the keyboard modifiers to prevent auto-triggering of note editor
     // page actions - they should go through the preprocessing of the note
     // editor
-    page->executeJavaScript(m_disablePasteJs);
+    page->executeJavaScript(m_setupActionsJs);
 
     // NOTE: executing page mutation observer's script last
     // so that it doesn't catch the mutations originating from the above scripts
@@ -896,10 +896,10 @@ void NoteEditorPrivate::onJavaScriptLoaded()
 
     auto * pSenderPage = qobject_cast<NoteEditorPage *>(sender());
     if (Q_UNLIKELY(!pSenderPage)) {
-        QNWARNING(
+        QNDEBUG(
             "note_editor",
-            "Can't get the pointer to NoteEditor page "
-                << "from which the event of JavaScrupt loading came in");
+            "Can't get the pointer to NoteEditor page from which the event of "
+                << "JavaScrupt loading came in, probably it is already dead");
         return;
     }
 
@@ -2833,8 +2833,6 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 
     m_webSocketServerPort = 0;
 
-    clearPrepareNoteImageResourcesProgressDialog();
-
     for (auto & pair: m_prepareResourceForOpeningProgressDialogs) {
         pair.second->accept();
         pair.second->deleteLater();
@@ -2865,21 +2863,6 @@ void NoteEditorPrivate::reloadCurrentNote()
     auto notebook = *m_pNotebook;
     clearCurrentNoteInfo();
     onFoundNoteAndNotebook(note, notebook);
-}
-
-void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
-{
-    QNDEBUG(
-        "note_editor",
-        "NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog");
-
-    if (!m_pPrepareNoteImageResourcesProgressDialog) {
-        return;
-    }
-
-    m_pPrepareNoteImageResourcesProgressDialog->accept();
-    m_pPrepareNoteImageResourcesProgressDialog->deleteLater();
-    m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 }
 
 void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
@@ -3217,23 +3200,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(
         "NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress: "
             << "progress = " << progress << ", note local id = "
             << noteLocalId);
-
-    if (Q_UNLIKELY(!m_pPrepareNoteImageResourcesProgressDialog)) {
-        QNDEBUG(
-            "note_editor",
-            "Unexpectedly missing prepare note image resources progress "
-                << "dialog, won't do anything");
-        return;
-    }
-
-    int normalizedProgress =
-        static_cast<int>(std::floor(progress * 100.0 + 0.5));
-
-    if (normalizedProgress > 100) {
-        normalizedProgress = 100;
-    }
-
-    m_pPrepareNoteImageResourcesProgressDialog->setValue(normalizedProgress);
 }
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
@@ -3249,7 +3215,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
             << "note local id = " << noteLocalId << ", error description: "
             << errorDescription);
 
-    clearPrepareNoteImageResourcesProgressDialog();
     Q_EMIT notifyError(errorDescription);
 }
 
@@ -3353,8 +3318,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(
             m_lastSearchHighlightedText,
             m_lastSearchHighlightedTextCaseSensitivity);
     }
-
-    clearPrepareNoteImageResourcesProgressDialog();
 }
 
 void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(
@@ -3542,39 +3505,6 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(
 
     if (!m_setUpJavaScriptObjects) {
         setupJavaScriptObjects();
-    }
-
-    clearPrepareNoteImageResourcesProgressDialog();
-
-    if (m_pNote->resources() && !m_pNote->resources()->isEmpty()) {
-        auto resources = *m_pNote->resources();
-        int numImageResources = 0;
-        QString imageResourcePrefix = QStringLiteral("image");
-        for (const auto & resource: std::as_const(resources)) {
-            if (!resource.mime()) {
-                continue;
-            }
-
-            if (!resource.mime()->startsWith(imageResourcePrefix)) {
-                continue;
-            }
-
-            ++numImageResources;
-        }
-
-        if (numImageResources > 0) {
-            m_pPrepareNoteImageResourcesProgressDialog = new QProgressDialog(
-                tr("Preparing attachment images") + QStringLiteral("..."),
-                QString(),
-                /* min = */ 0, // NOLINT
-                /* max = */ 100, this, Qt::Dialog); // NOLINT
-
-            m_pPrepareNoteImageResourcesProgressDialog->setWindowModality(
-                Qt::WindowModal);
-
-            m_pPrepareNoteImageResourcesProgressDialog->setMinimumDuration(
-                2000);
-        }
     }
 
     Q_EMIT noteAndNotebookFoundInLocalStorage(*m_pNote, *m_pNotebook);
@@ -6177,7 +6107,7 @@ void NoteEditorPrivate::setupScripts()
         "javascript/scripts/toDoCheckboxAutomaticInserter.js",
         m_toDoCheckboxAutomaticInsertionJs);
 
-    SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
+    SETUP_SCRIPT("javascript/scripts/setupActions.js", m_setupActionsJs);
 
     SETUP_SCRIPT(
         "javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
@@ -6339,6 +6269,14 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
     QObject::connect(
         m_pActionsWatcher, &ActionsWatcher::pasteActionToggled, this,
         &NoteEditorPrivate::paste);
+
+    QObject::connect(
+        m_pActionsWatcher, &ActionsWatcher::undoActionToggled, this,
+        &NoteEditorPrivate::undo);
+
+    QObject::connect(
+        m_pActionsWatcher, &ActionsWatcher::redoActionToggled, this,
+        &NoteEditorPrivate::redo);
 
     // Connect with NoteEditorLocalStorageBroker
 
@@ -8357,19 +8295,7 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
 
     if (m_pendingNoteSavingInLocalStorage) {
         QNDEBUG("note_editor", "Note is already being saved to local storage");
-
-        if (m_needConversionToNote) {
-            QNDEBUG(
-                "note_editor",
-                "It appears the note editor content has "
-                    << "been changed since save note request was last issued; "
-                       "will "
-                    << "repeat the attempt to save the note after the current "
-                    << "attempt is finished");
-
-            m_shouldRepeatSavingNoteInLocalStorage = true;
-        }
-
+        m_shouldRepeatSavingNoteInLocalStorage = true;
         return;
     }
 

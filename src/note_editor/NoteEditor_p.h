@@ -948,8 +948,6 @@ private:
     void clearCurrentNoteInfo();
     void reloadCurrentNote();
 
-    void clearPrepareNoteImageResourcesProgressDialog();
-
     void clearPrepareResourceForOpeningProgressDialog(
         const QString & resourceLocalId);
 
@@ -1130,7 +1128,7 @@ private:
     QString m_managedPageActionJs;
     QString m_setInitialCaretPositionJs;
     QString m_toDoCheckboxAutomaticInsertionJs;
-    QString m_disablePasteJs;
+    QString m_setupActionsJs;
     QString m_findAndReplaceDOMTextJs;
     QString m_tabAndShiftTabIndentAndUnindentReplacerJs;
     QString m_replaceStyleJs;
@@ -1306,13 +1304,6 @@ private:
     enml::IDecryptedTextCachePtr m_decryptedTextCache;
     enml::IENMLTagsConverterPtr m_enmlTagsConverter;
     enml::IConverterPtr m_enmlConverter;
-
-    /**
-     * Dialog to display the progress of putting note's image resources into
-     * temporary files for the sake of being displayed within the note editor
-     * page
-     */
-    QProgressDialog * m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 
     // Progress dialogs for note resources requested to be opened
     std::vector<std::pair<QString, QProgressDialog *>>

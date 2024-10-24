@@ -30,7 +30,9 @@ namespace quentier {
 
 NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
     QWebEnginePage(&parent), m_parent(&parent),
-    m_pJavaScriptInOrderExecutor(new JavaScriptInOrderExecutor(parent, this))
+    m_javaScriptCanceler{std::make_shared<std::atomic<bool>>(false)},
+    m_pJavaScriptInOrderExecutor(
+        new JavaScriptInOrderExecutor(parent, m_javaScriptCanceler, this))
 {
     QObject::connect(
         this, &NoteEditorPage::noteLoadCancelled, &parent,
@@ -44,6 +46,7 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
 NoteEditorPage::~NoteEditorPage() noexcept
 {
     QNDEBUG("note_editor", "NoteEditorPage::~NoteEditorPage");
+    m_javaScriptCanceler->store(true, std::memory_order_release);
 }
 
 bool NoteEditorPage::javaScriptQueueEmpty() const noexcept

@@ -22,6 +22,9 @@
 
 #include <QWebEnginePage>
 
+#include <atomic>
+#include <memory>
+
 namespace quentier {
 
 class NoteEditor;
@@ -95,6 +98,7 @@ private:
 
 private:
     NoteEditorPrivate * m_parent;
+    std::shared_ptr<std::atomic<bool>> m_javaScriptCanceler;
     JavaScriptInOrderExecutor * m_pJavaScriptInOrderExecutor;
     bool m_javaScriptAutoExecution = true;
 };

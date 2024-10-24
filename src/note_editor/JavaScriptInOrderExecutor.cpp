@@ -23,10 +23,12 @@
 namespace quentier {
 
 JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
-    QWebEngineView & view, QObject * parent) :
+    QWebEngineView & view, Canceler canceler, QObject * parent) :
     QObject(parent),
-    m_view(view)
-{}
+    m_view{view}, m_canceler{std::move(canceler)}
+{
+    Q_ASSERT(m_canceler);
+}
 
 void JavaScriptInOrderExecutor::append(
     const QString & script, JavaScriptInOrderExecutor::Callback callback)
@@ -56,6 +58,14 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
 {
     QNTRACE("note_editor", "JavaScriptInOrderExecutor::next");
 
+    if (canceled()) {
+        QNDEBUG("note_editor", "JavaScriptInOrderExecutor: canceled");
+        m_javaScriptsQueue.clear();
+        m_inProgress = false;
+        Q_EMIT finished();
+        return;
+    }
+
     if (m_currentPendingCallback) {
         m_currentPendingCallback(data);
         m_currentPendingCallback = {};
@@ -73,6 +83,11 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
         "JavaScriptInOrderExecutor: " << m_javaScriptsQueue.size()
                                       << " more scripts to execute");
     start();
+}
+
+bool JavaScriptInOrderExecutor::canceled() const
+{
+    return m_canceler->load(std::memory_order_acquire);
 }
 
 void JavaScriptInOrderExecutor::JavaScriptCallback::operator()(

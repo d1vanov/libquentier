@@ -393,14 +393,14 @@ void InsertHtmlDelegate::doStart()
                 if (Q_UNLIKELY(!url.isValid())) {
                     QNDEBUG(
                         "note_editor:delegate",
-                        "Can't convert the 'img' "
-                            << "tag's src to a valid URL, will skip this tag; "
-                               "url = "
-                            << urlString);
+                        "Can't convert the 'img' tag's src to a valid URL, "
+                            << "will skip this tag; url = " << urlString);
                     continue;
                 }
 
-                Q_UNUSED(m_imageUrls.insert(url))
+                if (url.scheme().startsWith(QStringLiteral("http"))) {
+                    Q_UNUSED(m_imageUrls.insert(url))
+                }
             }
             else if (lastElementName == QStringLiteral("a")) {
                 if (!lastElementAttributes.hasAttribute(QStringLiteral("href")))

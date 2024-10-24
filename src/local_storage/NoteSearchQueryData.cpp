@@ -987,7 +987,8 @@ QDateTime NoteSearchQuery::Data::parseDateTime(const QString & str) const
         return dateTime;
     }
 
-    dateTime = QDateTime::fromString(str, QStringLiteral("yyyyMMdd'T'HHmmss'Z'"));
+    dateTime =
+        QDateTime::fromString(str, QStringLiteral("yyyyMMdd'T'HHmmss'Z'"));
     if (dateTime.isValid()) {
         return dateTime;
     }

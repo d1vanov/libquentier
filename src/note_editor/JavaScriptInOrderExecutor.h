@@ -23,7 +23,9 @@
 #include <QQueue>
 #include <QWebEngineView>
 
+#include <atomic>
 #include <functional>
+#include <memory>
 #include <utility>
 
 namespace quentier {
@@ -33,9 +35,10 @@ class JavaScriptInOrderExecutor final : public QObject
     Q_OBJECT
 public:
     using Callback = std::function<void(const QVariant &)>;
+    using Canceler = std::shared_ptr<std::atomic<bool>>;
 
     explicit JavaScriptInOrderExecutor(
-        QWebEngineView & view, QObject * parent = nullptr);
+        QWebEngineView & view, Canceler canceler, QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = {});
 
@@ -82,8 +85,12 @@ private:
 
     void next(const QVariant & data);
 
+    [[nodiscard]] bool canceled() const;
+
 private:
     QWebEngineView & m_view;
+    const Canceler m_canceler;
+
     QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
     Callback m_currentPendingCallback;
     bool m_inProgress = false;
