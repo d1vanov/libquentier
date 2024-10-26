@@ -16,6 +16,4 @@ target_link_libraries(${TESTS_NAME}
     ${GMOCK_LIBRARIES}
     GTest::GTest)
 
-include(GoogleTest)
-
-gtest_discover_tests(${TESTS_NAME})
+add_test(NAME ${TESTS_NAME} COMMAND ${TESTS_NAME})

@@ -20,6 +20,4 @@ target_link_libraries(${TESTS_NAME}
     GTest::GTest
     Qt${LIBQUENTIER_QT_VERSION}::Core)
 
-include(GoogleTest)
-
-gtest_discover_tests(${TESTS_NAME})
+add_test(NAME ${TESTS_NAME} COMMAND ${TESTS_NAME})
