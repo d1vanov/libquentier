@@ -690,12 +690,9 @@ if(NOT CMAKE_INSTALL_TRANSLATIONSDIR)
 endif()
 
 if(NOT INSTALL_CMAKE_DIR)
-  if(WIN32 AND NOT CYGWIN)
-    set(DEF_INSTALL_CMAKE_DIR "CMake")
-  else()
-    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-qt${LIBQUENTIER_QT_VERSION}")
-  endif()
-  set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
+  set(INSTALL_CMAKE_DIR
+    "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-qt${LIBQUENTIER_QT_VERSION}"
+    CACHE PATH "Installation directory for CMake files")
 endif()
 
 enable_testing()
