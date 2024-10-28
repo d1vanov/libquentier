@@ -11,7 +11,8 @@ target_sources(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_interface
-  Qt${LIBQUENTIER_QT_VERSION}::Core)
+  Qt${LIBQUENTIER_QT_VERSION}::Core
+  Boost::boost)
 
 if(GMOCK_FOUND AND GTEST_FOUND)
   add_subdirectory(tests)
