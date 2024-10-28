@@ -45,7 +45,9 @@ target_link_libraries(${TESTS_LIB_NAME}
   PUBLIC
     ${LIBNAME}_interface
     ${QT_LIBRARIES}
-    Qt${LIBQUENTIER_QT_VERSION}::Test)
+    Qt${LIBQUENTIER_QT_VERSION}::Test
+    Boost::boost
+)
 
 add_executable(${TESTS_NAME}
   main.cpp)
