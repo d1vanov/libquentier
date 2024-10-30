@@ -59,7 +59,6 @@ bool decryptAesTest(QString & error)
         return false;
     }
 
-    decryptedText = decryptedText.trimmed();
     if (decryptedText.localeAwareCompare(originalText) != 0) {
         error = QStringLiteral("Decrypted text differs from the original; ") +
             QStringLiteral("original text = ") + originalText +
