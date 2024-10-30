@@ -798,7 +798,7 @@ jobs:
           fi
           if [ "$BRANCH_NAME" = "development" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development
-          elif [ "$BRANCH_NAME" = "development" ]; then
+          elif [ "$BRANCH_NAME" = "integration-0.8.0" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_integration
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
@@ -1484,7 +1484,7 @@ jobs:
           cmake --build . --target check
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
-        if: ${{ matrix.qt_version == '5.15.2' }}
+        if: ${{ matrix.qt_version == '6.7.3' }}
         shell: cmd
 
       - name: Archive installed Qt5 library
