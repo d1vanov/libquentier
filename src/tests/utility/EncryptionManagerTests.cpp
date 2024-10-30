@@ -64,6 +64,91 @@ bool decryptAesTest(QString & error)
             QStringLiteral("original text = ") + originalText +
             QStringLiteral("; decrypted text = ") + decryptedText;
 
+        const QByteArray originalTextUtf8 = originalText.toUtf8();
+        const QByteArray decryptedTextUtf8 = decryptedText.toUtf8();
+
+        if (originalTextUtf8.size() != decryptedTextUtf8.size()) {
+            error += QStringLiteral("\n");
+            error += QStringLiteral(
+                "Sizes of original text and decrypted text in UTF-8 don't "
+                "match: ");
+            error += QString::number(originalTextUtf8.size());
+            error += QStringLiteral(" vs ");
+            error += QString::number(decryptedTextUtf8.size());
+
+            {
+                QString originalTextBytesPrint;
+                QTextStream strm{&originalTextBytesPrint};
+                strm << "Original text characters:\n";
+                int counter = 0;
+                for (const char c: originalTextUtf8) {
+                    strm << "   [" << counter << ": " << QChar::fromLatin1(c)
+                         << " (" << static_cast<int>(c) << ")];\n";
+                    ++counter;
+                }
+                strm.flush();
+                error += originalTextBytesPrint;
+            }
+
+            {
+                QString decryptedTextBytesPrint;
+                QTextStream strm{&decryptedTextBytesPrint};
+                strm << "Decrypted text characters:\n";
+                int counter = 0;
+                for (const char c: decryptedTextUtf8) {
+                    strm << "   [" << counter << ": " << QChar::fromLatin1(c)
+                         << " (" << static_cast<int>(c) << ")];\n";
+                    ++counter;
+                }
+                strm.flush();
+                error += decryptedTextBytesPrint;
+            }
+        }
+        else {
+            for (decltype(originalTextUtf8.size()) i = 0;
+                 i < originalTextUtf8.size(); ++i)
+            {
+                const auto orig = originalTextUtf8.at(i);
+                const auto decr = decryptedTextUtf8.at(i);
+                if (orig != decr) {
+                    error += QStringLiteral("Found diff in bytes at position ");
+                    error += QString::number(i);
+                    error += QStringLiteral("original character: ");
+                    error += QChar::fromLatin1(orig);
+                    error += QStringLiteral(" (");
+                    error += QString::number(static_cast<int>(orig));
+                    error += QStringLiteral("), decrypted text character: ");
+                    error += QChar::fromLatin1(decr);
+                    error += QStringLiteral(" (");
+                    error += QString::number(static_cast<int>(decr));
+                    error += QStringLiteral(")\n");
+                }
+            }
+
+            {
+                QString printedChars;
+                QTextStream strm{&printedChars};
+                strm << "Original vs decrypted text characters:\n";
+                int counter = 0;
+                for (decltype(originalTextUtf8.size()) i = 0;
+                     i < originalTextUtf8.size(); ++i)
+                {
+                    const auto orig = originalTextUtf8.at(i);
+                    const auto decr = decryptedTextUtf8.at(i);
+
+                    strm << "   [" << counter << ": " << QChar::fromLatin1(orig)
+                         << " (" << static_cast<int>(orig) << ") vs "
+                         << QChar::fromLatin1(decr) << " ("
+                         << static_cast<int>(decr) << ")];\n";
+                    ++counter;
+                }
+
+                strm.flush();
+                error += printedChars;
+            }
+        }
+
+        qWarning() << error;
         QNWARNING("tests:utility_encryption", error);
         return false;
     }
