@@ -1430,6 +1430,7 @@ jobs:
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           cmake --build . --target check
+          7z a last_test_qt5_log.zip %RUNNER_WORKSPACE%\Testing\Temporary\LastTest.log
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.qt_version == '5.15.2' }}
@@ -1482,6 +1483,7 @@ jobs:
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           cmake --build . --target check
+          7z a last_test_qt6_log.zip %RUNNER_WORKSPACE%\Testing\Temporary\LastTest.log
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
         if: ${{ matrix.qt_version == '6.7.3' }}
@@ -1517,6 +1519,22 @@ jobs:
         with:
           name: libquentier_windows_qt6
           path: '${{ github.workspace }}\build\installdir\libquentier_windows_qt6.zip'
+        if: ${{ matrix.qt_version == '6.7.3' }}
+
+      - name: Upload Qt5 libquentier test logs
+        id: upload_tests_log_qt5
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_windows_test_logs_qt5
+          path: '${{ github.workspace }}\build\last_test_qt5_log.zip'
+        if: ${{ matrix.qt_version == '5.15.2' }}
+
+      - name: Upload Qt6 libquentier test logs
+        id: upload_tests_log_qt6
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_windows_test_logs_qt6
+          path: '${{ github.workspace }}\build\last_test_qt6_log.zip'
         if: ${{ matrix.qt_version == '6.7.3' }}
 
   create_new_release:
