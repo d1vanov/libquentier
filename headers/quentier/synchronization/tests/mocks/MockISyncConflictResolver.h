@@ -29,7 +29,8 @@ class MockISyncConflictResolver : public ISyncConflictResolver
 public:
     MOCK_METHOD(
         QFuture<NotebookConflictResolution>, resolveNotebookConflict,
-        (::qevercloud::Notebook theirs, ::qevercloud::Notebook mine), (override));
+        (::qevercloud::Notebook theirs, ::qevercloud::Notebook mine),
+        (override));
 
     MOCK_METHOD(
         QFuture<NoteConflictResolution>, resolveNoteConflict,
