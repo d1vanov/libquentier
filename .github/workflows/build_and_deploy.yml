@@ -528,11 +528,11 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           export LD_LIBRARY_PATH=/opt/qt515/lib:$RUNNER_WORKSPACE/tidy_html5/lib:$RUNNER_WORKSPACE/qtkeychain_qt5/lib:$QEVERCLOUD_DIR/lib
           xvfb-run ./bin/test_libquentier -platform minimal
-          xvfb-run ./bin/libqt5quentier_enml_unit_tests -platform minimal
-          xvfb-run ./bin/libqt5quentier_threading_unit_tests -platform minimal
-          xvfb-run ./bin/libqt5quentier_utility_unit_tests -platform minimal
-          xvfb-run ./bin/libqt5quentier_local_storage_sql_unit_tests -platform minimal
-          xvfb-run ./bin/libqt5quentier_synchronization_unit_tests -platform minimal
+          ./bin/libqt5quentier_enml_unit_tests
+          ./bin/libqt5quentier_threading_unit_tests
+          ./bin/libqt5quentier_utility_unit_tests
+          ./bin/libqt5quentier_local_storage_sql_unit_tests
+          ./bin/libqt5quentier_synchronization_unit_tests
           xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests -platform minimal
         if: ${{ matrix.qt_version == '5.15.4' }}
 
@@ -544,11 +544,11 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           export LD_LIBRARY_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.7.3/gcc_64/lib:$RUNNER_WORKSPACE/tidy_html5/lib:$RUNNER_WORKSPACE/qtkeychain_qt6/lib:$QEVERCLOUD_DIR/lib
           xvfb-run ./bin/test_libquentier -platform minimal
-          xvfb-run ./bin/libqt6quentier_enml_unit_tests -platform minimal
-          xvfb-run ./bin/libqt6quentier_threading_unit_tests -platform minimal
-          xvfb-run ./bin/libqt6quentier_utility_unit_tests -platform minimal
-          xvfb-run ./bin/libqt6quentier_local_storage_sql_unit_tests -platform minimal
-          xvfb-run ./bin/libqt6quentier_synchronization_unit_tests -platform minimal
+          ./bin/libqt6quentier_enml_unit_tests
+          ./bin/libqt6quentier_threading_unit_tests
+          ./bin/libqt6quentier_utility_unit_tests
+          ./bin/libqt6quentier_local_storage_sql_unit_tests
+          ./bin/libqt6quentier_synchronization_unit_tests
           xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal
         if: ${{ matrix.qt_version == '6.7.3' }}
 
