@@ -323,6 +323,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     PROPERTIES skip_autoformat ON)
 endif()
 
+set_source_files_properties(
+  headers/quentier/utility/VersionInfo.h.in
+  PROPERTIES skip_autoformat ON)
+
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
 
 set(${PROJECT_NAME}_SOURCES
