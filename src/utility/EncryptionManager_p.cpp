@@ -596,6 +596,17 @@ bool EncryptionManagerPrivate::decryptAes(
     }
 
     decipheredTextSize += bytesWritten;
+
+    // HACK: it appears that with OpenSSL 3.x the decryption suddenly adds
+    // a null byte at the end of the deciphered text. For now I don't quite
+    // understand why it does that but will just remove this null byte.
+    if (decipheredTextSize != 0 &&
+        reinterpret_cast<const char *>(
+            decipheredText)[decipheredTextSize - 1] == '\u0000')
+    {
+        --decipheredTextSize;
+    }
+
     decryptedText = QByteArray(
         reinterpret_cast<const char *>(decipheredText), decipheredTextSize);
 
