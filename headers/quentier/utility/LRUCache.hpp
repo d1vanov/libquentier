@@ -31,9 +31,7 @@ template <
 class LRUCache
 {
 public:
-    LRUCache(const size_t maxSize = 100) :
-        m_maxSize(maxSize)
-    {}
+    LRUCache(const size_t maxSize = 100) : m_maxSize(maxSize) {}
 
     using key_type = Key;
     using mapped_type = Value;
@@ -68,7 +66,7 @@ public:
     {
         return m_container.rbegin();
     }
-    
+
     [[nodiscard]] const_reverse_iterator rbegin() const noexcept
     {
         return m_container.rbegin();

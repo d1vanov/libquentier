@@ -21,8 +21,7 @@
 namespace quentier::local_storage {
 
 LocalStorageOperationException::LocalStorageOperationException(
-    ErrorString message) :
-    IQuentierException(std::move(message))
+    ErrorString message) : IQuentierException(std::move(message))
 {}
 
 QString LocalStorageOperationException::exceptionDisplayName() const

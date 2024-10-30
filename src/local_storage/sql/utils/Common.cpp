@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@ namespace quentier::local_storage::sql::utils {
 
 QDebug & operator<<(QDebug & dbg, const TransactionOption transactionOption)
 {
-    switch (transactionOption)
-    {
+    switch (transactionOption) {
     case TransactionOption::UseSeparateTransaction:
         dbg << "Use separate transaction";
         break;

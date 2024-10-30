@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -56,8 +56,7 @@ QFuture<void> LinkedNotebookTagsCleaner::clearStaleLinkedNotebookTags()
     threading::thenOrFailed(
         std::move(listTagsFuture), promise,
         threading::TrackedTask{
-            selfWeak,
-            [this, promise](const QList<qevercloud::Tag> & tags) {
+            selfWeak, [this, promise](const QList<qevercloud::Tag> & tags) {
                 onListedTags(tags, promise);
             }});
 

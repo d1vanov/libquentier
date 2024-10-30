@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,12 +61,11 @@ namespace {
 } // namespace
 
 ProtocolVersionChecker::ProtocolVersionChecker(
-    qevercloud::IUserStorePtr userStore) :
-    m_userStore{std::move(userStore)}
+    qevercloud::IUserStorePtr userStore) : m_userStore{std::move(userStore)}
 {
     if (Q_UNLIKELY(!m_userStore)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "ProtocolVersionChecker ctor: user store is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("ProtocolVersionChecker ctor: user store is null")}};
     }
 }
 
@@ -109,18 +108,16 @@ QFuture<void> ProtocolVersionChecker::checkProtocolVersion(
 
     threading::thenOrFailed(
         std::move(protocolVersionFuture), currentThread, promise,
-        [promise](bool res)
-        {
+        [promise](bool res) {
             QNDEBUG(
                 "synchronization::ProtocolVersionChecker",
                 "Protocol version check completed: "
                     << (res ? "success" : "failure"));
 
             if (!res) {
-                promise->setException(RuntimeError{ErrorString{
-                    QStringLiteral(
-                        "Protocol version check failed: protocol used by the "
-                        "app is too old to communicate with Evernote")}});
+                promise->setException(RuntimeError{ErrorString{QStringLiteral(
+                    "Protocol version check failed: protocol used by the "
+                    "app is too old to communicate with Evernote")}});
             }
 
             promise->finish();

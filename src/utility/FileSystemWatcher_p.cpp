@@ -29,8 +29,7 @@ namespace quentier {
 
 FileSystemWatcherPrivate::FileSystemWatcherPrivate(
     FileSystemWatcher & parent, const int removalTimeoutMSec) :
-    QObject(&parent),
-    m_parent(parent), m_removalTimeoutMSec(removalTimeoutMSec)
+    QObject(&parent), m_parent(parent), m_removalTimeoutMSec(removalTimeoutMSec)
 {
     createConnections();
 }
@@ -38,8 +37,8 @@ FileSystemWatcherPrivate::FileSystemWatcherPrivate(
 FileSystemWatcherPrivate::FileSystemWatcherPrivate(
     FileSystemWatcher & parent, const QStringList & paths,
     const int removalTimeoutMSec) :
-    QObject(&parent),
-    m_parent(parent), m_watcher(paths), m_removalTimeoutMSec(removalTimeoutMSec)
+    QObject(&parent), m_parent(parent), m_watcher(paths),
+    m_removalTimeoutMSec(removalTimeoutMSec)
 {
     createConnections();
 }

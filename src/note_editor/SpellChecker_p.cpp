@@ -55,16 +55,15 @@ constexpr auto gEnabledSystemDictionariesKey = "EnabledSystemDictionaries"sv;
 SpellCheckerPrivate::SpellCheckerPrivate(
     FileIOProcessorAsync * fileIOProcessorAsync, Account account,
     QObject * parent, const QString & userDictionaryPath) :
-    QObject(parent),
-    m_fileIOProcessorAsync{fileIOProcessorAsync},
+    QObject(parent), m_fileIOProcessorAsync{fileIOProcessorAsync},
     m_currentAccount{std::move(account)}
 {
     initializeUserDictionary(userDictionaryPath);
     checkAndScanSystemDictionaries();
 }
 
-QList<std::pair<QString, bool>>
-SpellCheckerPrivate::listAvailableDictionaries() const
+QList<std::pair<QString, bool>> SpellCheckerPrivate::listAvailableDictionaries()
+    const
 {
     QNDEBUG(
         "note_editor::SpellCheckerPrivate",
@@ -372,8 +371,7 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
 
     DictionariesByName systemDictionaries;
 
-    const int size =
-        appSettings.beginReadArray(gDictionariesKey);
+    const int size = appSettings.beginReadArray(gDictionariesKey);
 
     systemDictionaries.reserve(size);
     for (int i = 0; i < size; ++i) {
@@ -501,8 +499,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     QString hunspellDictionaryName =
         QString::fromLocal8Bit(qgetenv("DICTIONARY"));
 
-    QString hunspellDictionaryPath =
-        QString::fromLocal8Bit(qgetenv("DICPATH"));
+    QString hunspellDictionaryPath = QString::fromLocal8Bit(qgetenv("DICPATH"));
 
     if (!hunspellDictionaryName.isEmpty() && !hunspellDictionaryPath.isEmpty())
     {
@@ -818,7 +815,6 @@ void SpellCheckerPrivate::initializeUserDictionary(
                 << m_readUserDictionaryRequestId);
 
         Q_EMIT readFile(m_userDictionaryPath, m_readUserDictionaryRequestId);
-
     }
     else {
         QNINFO(
@@ -939,8 +935,7 @@ void SpellCheckerPrivate::persistEnabledSystemDictionaries()
 
     ApplicationSettings appSettings{m_currentAccount};
     appSettings.setValue(
-        gEnabledSystemDictionariesKey,
-        enabledSystemDictionaries);
+        gEnabledSystemDictionariesKey, enabledSystemDictionaries);
 }
 
 void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
@@ -956,8 +951,7 @@ void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
         appSettings.contains(gEnabledSystemDictionariesKey);
 
     const QStringList enabledSystemDictionaries =
-        appSettings.value(gEnabledSystemDictionariesKey)
-            .toStringList();
+        appSettings.value(gEnabledSystemDictionariesKey).toStringList();
 
     for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         const QString & name = it.key();
@@ -1037,9 +1031,8 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(
         &FileIOProcessorAsync::onReadFileRequest);
 
     QObject::disconnect(
-        m_fileIOProcessorAsync,
-        &FileIOProcessorAsync::readFileRequestProcessed, this,
-        &SpellCheckerPrivate::onReadFileRequestProcessed);
+        m_fileIOProcessorAsync, &FileIOProcessorAsync::readFileRequestProcessed,
+        this, &SpellCheckerPrivate::onReadFileRequestProcessed);
 
     if (Q_LIKELY(success)) {
         QBuffer buffer{&data};
@@ -1112,9 +1105,8 @@ void SpellCheckerPrivate::onAppendUserDictionaryPartDone(
 {
     QNDEBUG(
         "note_editor::SpellCheckerPrivate",
-        "SpellCheckerPrivate"
-            << "::onAppendUserDictionaryPartDone: success = "
-            << (success ? "true" : "false"));
+        "SpellCheckerPrivate" << "::onAppendUserDictionaryPartDone: success = "
+                              << (success ? "true" : "false"));
 
     Q_UNUSED(errorDescription)
     m_appendUserDictionaryPartToFileRequestId = QUuid{};
@@ -1165,12 +1157,10 @@ void SpellCheckerPrivate::HunspellWrapper::initialize(
     QByteArray affFilePathUtf8 = prefix + affFilePath.toUtf8();
     QByteArray dicFilePathUtf8 = prefix + dicFilePath.toUtf8();
     m_hunspell = std::make_shared<Hunspell>(
-        affFilePathUtf8.constData(),
-        dicFilePathUtf8.constData());
+        affFilePathUtf8.constData(), dicFilePathUtf8.constData());
 #else
     m_hunspell = std::make_shared<Hunspell>(
-        affFilePath.toUtf8().constData(),
-        dicFilePath.toUtf8().constData());
+        affFilePath.toUtf8().constData(), dicFilePath.toUtf8().constData());
 #endif
 }
 

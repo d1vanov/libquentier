@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,10 +42,9 @@ namespace quentier::local_storage::sql {
 ConnectionPool::ConnectionPool(
     QString hostName, QString userName, QString password, QString databaseName,
     QString sqlDriverName, QString connectionOptions) :
-    m_hostName{std::move(hostName)},
-    m_userName{std::move(userName)}, m_password{std::move(password)},
-    m_databaseName{std::move(databaseName)}, m_sqlDriverName{std::move(
-                                                 sqlDriverName)},
+    m_hostName{std::move(hostName)}, m_userName{std::move(userName)},
+    m_password{std::move(password)}, m_databaseName{std::move(databaseName)},
+    m_sqlDriverName{std::move(sqlDriverName)},
     m_connectionOptions{std::move(connectionOptions)}, m_pageSize{[] {
         SysInfo sysInfo;
         return sysInfo.pageSize();
@@ -122,8 +121,8 @@ QSqlDatabase ConnectionPool::database()
         QString result;
         QTextStream strm{&result};
         strm << "quentier_local_storage_db_connection_"
-            << QString::fromStdString(sstrm.str())
-            << "_" << UidGenerator::Generate();
+             << QString::fromStdString(sstrm.str()) << "_"
+             << UidGenerator::Generate();
         return result;
     }();
 

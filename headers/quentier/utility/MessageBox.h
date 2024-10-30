@@ -56,6 +56,6 @@ int QUENTIER_EXPORT criticalMessageBox(
  * needs to provide the detailed text
  */
 void QUENTIER_EXPORT
-internalErrorMessageBox(QWidget * parent, QString detailedText = {});
+    internalErrorMessageBox(QWidget * parent, QString detailedText = {});
 
 } // namespace quentier

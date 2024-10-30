@@ -137,8 +137,8 @@ public:
     {
         QNDEBUG(
             "synchronization::DurableNotesProcessor",
-            "Callback::onFailedToExpungeNote: note guid = " << noteGuid
-                << ", error: " << e.what());
+            "Callback::onFailedToExpungeNote: note guid = "
+                << noteGuid << ", error: " << e.what());
 
         const auto durableProcessor = m_durableProcessorWeak.lock();
         if (!durableProcessor) {
@@ -208,8 +208,7 @@ public:
     }
 
     void onNoteFailedToProcess(
-        const qevercloud::Note & note,
-        const QException & e) noexcept override
+        const qevercloud::Note & note, const QException & e) noexcept override
     {
         QNDEBUG(
             "synchronization::DurableNotesProcessor",
@@ -293,8 +292,7 @@ private:
 
 DurableNotesProcessor::DurableNotesProcessor(
     INotesProcessorPtr notesProcessor, const QDir & syncPersistentStorageDir) :
-    m_notesProcessor{std::move(notesProcessor)},
-    m_syncNotesDir{[&] {
+    m_notesProcessor{std::move(notesProcessor)}, m_syncNotesDir{[&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
             QStringLiteral("last_sync_data"))};
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
@@ -466,8 +464,7 @@ QList<qevercloud::Guid>
 QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     const QList<qevercloud::SyncChunk> & syncChunks,
     utility::cancelers::ICancelerPtr canceler,
-    qevercloud::IRequestContextPtr ctx,
-    QList<qevercloud::Note> previousNotes,
+    qevercloud::IRequestContextPtr ctx, QList<qevercloud::Note> previousNotes,
     QList<qevercloud::Guid> previousExpungedNotes,
     const std::optional<qevercloud::Guid> & linkedNotebookGuid,
     ICallbackWeakPtr callbackWeak)

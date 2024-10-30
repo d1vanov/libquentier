@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,8 +26,7 @@ namespace quentier {
 EditHyperlinkDialog::EditHyperlinkDialog(
     QWidget * parent, const QString & startupText, const QString & startupUrl,
     const quint64 idNumber) :
-    QDialog(parent),
-    m_pUI(new Ui::EditHyperlinkDialog), m_idNumber(idNumber),
+    QDialog(parent), m_pUI(new Ui::EditHyperlinkDialog), m_idNumber(idNumber),
     m_startupUrlWasEmpty(startupUrl.isEmpty())
 {
     m_pUI->setupUi(this);

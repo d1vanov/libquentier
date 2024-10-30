@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,11 +25,9 @@
 namespace quentier {
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
-    QByteArray resourceDataBefore,
-    QByteArray resourceHashBefore,
+    QByteArray resourceDataBefore, QByteArray resourceHashBefore,
     QByteArray resourceRecognitionDataBefore,
-    QByteArray resourceRecognitionDataHashBefore,
-    QSize resourceImageSizeBefore,
+    QByteArray resourceRecognitionDataHashBefore, QSize resourceImageSizeBefore,
     qevercloud::Resource resourceAfter,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
@@ -51,11 +49,9 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
 }
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
-    QByteArray resourceDataBefore,
-    QByteArray resourceHashBefore,
+    QByteArray resourceDataBefore, QByteArray resourceHashBefore,
     QByteArray resourceRecognitionDataBefore,
-    QByteArray resourceRecognitionDataHashBefore,
-    QSize resourceImageSizeBefore,
+    QByteArray resourceRecognitionDataHashBefore, QSize resourceImageSizeBefore,
     qevercloud::Resource resourceAfter,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, const QString & text,

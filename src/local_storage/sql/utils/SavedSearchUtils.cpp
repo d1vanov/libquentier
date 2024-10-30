@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,8 +32,8 @@ QString savedSearchLocalIdByGuid(
     ErrorString & errorDescription)
 {
     QSqlQuery query{database};
-    bool res = query.prepare(
-        QStringLiteral("SELECT localUid FROM SavedSearches WHERE guid = :guid"));
+    bool res = query.prepare(QStringLiteral(
+        "SELECT localUid FROM SavedSearches WHERE guid = :guid"));
 
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",

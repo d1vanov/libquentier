@@ -40,7 +40,8 @@ constexpr std::enable_if_t<std::is_invocable_v<Function, Arguments...>> invoke(
 template <typename LockableObject, typename Function, typename... Arguments>
 constexpr std::enable_if_t<
     !std::is_invocable_v<Function, Arguments...> &&
-    std::is_member_function_pointer_v<Function>> invoke(
+    std::is_member_function_pointer_v<Function>>
+    invoke(
         LockableObject & lockableObject, Function & function,
         Arguments &&... arguments)
 {
@@ -75,13 +76,12 @@ class TrackedTask
 public:
     template <typename SomeLockableObject, typename SomeFunction>
     constexpr TrackedTask(
-        SomeLockableObject && someLockableObject,
-        SomeFunction && function) :
+        SomeLockableObject && someLockableObject, SomeFunction && function) :
         m_lockableObject{std::forward<SomeLockableObject>(someLockableObject)},
         m_function{std::forward<SomeFunction>(function)}
     {}
 
-    template<
+    template <
         typename... Arguments,
         typename = std::enable_if_t<
             std::is_invocable_v<Function, Arguments...> ||
@@ -93,7 +93,7 @@ public:
             std::forward<Arguments>(arguments)...);
     }
 
-    template<
+    template <
         typename... Arguments,
         typename = std::enable_if_t<
             std::is_invocable_v<Function, Arguments...> ||
@@ -111,7 +111,6 @@ private:
 };
 
 template <typename LockableObject, typename Function>
-TrackedTask(LockableObject, Function)
-    -> TrackedTask<LockableObject, Function>;
+TrackedTask(LockableObject, Function) -> TrackedTask<LockableObject, Function>;
 
 } // namespace quentier::threading

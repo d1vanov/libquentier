@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,8 +69,7 @@ Account::Account() : d(new AccountData) {}
 Account::Account(
     QString name, const Type type, const qevercloud::UserID userId,
     const EvernoteAccountType evernoteAccountType, QString evernoteHost,
-    QString shardId) :
-    d(new AccountData)
+    QString shardId) : d(new AccountData)
 {
     d->m_name = std::move(name);
     d->m_accountType = type;

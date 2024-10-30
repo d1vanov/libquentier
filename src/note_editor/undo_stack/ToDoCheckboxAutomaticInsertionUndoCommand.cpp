@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,16 +40,15 @@ ToDoCheckboxAutomaticInsertionUndoCommand::
     ToDoCheckboxAutomaticInsertionUndoCommand(
         NoteEditorPrivate & noteEditor, Callback callback,
         QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(std::move(callback))
+    INoteEditorUndoCommand(noteEditor, parent), m_callback(std::move(callback))
 {
     setText(tr("Insert ToDo checkbox automatically"));
 }
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor, Callback callback,
-        const QString & text, QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditor, Callback callback, const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(std::move(callback))
 {}

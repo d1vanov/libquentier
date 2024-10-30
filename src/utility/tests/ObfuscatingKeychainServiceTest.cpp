@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -66,8 +66,8 @@ TEST_F(ObfuscatingKeychainServiceTest, WritePassword)
 {
     ObfuscatingKeychainService obfuscatingKeychainService;
 
-    auto writeFuture = obfuscatingKeychainService.writePassword(
-        m_service, m_key, m_password);
+    auto writeFuture =
+        obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
 
     ASSERT_TRUE(writeFuture.isFinished());
 
@@ -113,8 +113,8 @@ TEST_F(ObfuscatingKeychainServiceTest, ReadWrittenPassword)
 {
     ObfuscatingKeychainService obfuscatingKeychainService;
 
-    auto writeFuture = obfuscatingKeychainService.writePassword(
-        m_service, m_key, m_password);
+    auto writeFuture =
+        obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
 
     ASSERT_TRUE(writeFuture.isFinished());
 
@@ -128,8 +128,8 @@ TEST_F(ObfuscatingKeychainServiceTest, DeleteNonexistentPassword)
 {
     ObfuscatingKeychainService obfuscatingKeychainService;
 
-    auto deleteFuture = obfuscatingKeychainService.deletePassword(
-        m_service, m_key);
+    auto deleteFuture =
+        obfuscatingKeychainService.deletePassword(m_service, m_key);
 
     ASSERT_TRUE(deleteFuture.isFinished());
 }
@@ -138,13 +138,13 @@ TEST_F(ObfuscatingKeychainServiceTest, DeleteWrittenPassword)
 {
     ObfuscatingKeychainService obfuscatingKeychainService;
 
-    auto writeFuture = obfuscatingKeychainService.writePassword(
-        m_service, m_key, m_password);
+    auto writeFuture =
+        obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
 
     ASSERT_TRUE(writeFuture.isFinished());
 
-    auto deleteFuture = obfuscatingKeychainService.deletePassword(
-        m_service, m_key);
+    auto deleteFuture =
+        obfuscatingKeychainService.deletePassword(m_service, m_key);
 
     ASSERT_TRUE(deleteFuture.isFinished());
 
@@ -160,13 +160,13 @@ TEST_F(ObfuscatingKeychainServiceTest, ReadWrittenThenDeletedPassword)
 {
     ObfuscatingKeychainService obfuscatingKeychainService;
 
-    auto writeFuture = obfuscatingKeychainService.writePassword(
-        m_service, m_key, m_password);
+    auto writeFuture =
+        obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
 
     ASSERT_TRUE(writeFuture.isFinished());
 
-    auto deleteFuture = obfuscatingKeychainService.deletePassword(
-        m_service, m_key);
+    auto deleteFuture =
+        obfuscatingKeychainService.deletePassword(m_service, m_key);
 
     ASSERT_TRUE(deleteFuture.isFinished());
 

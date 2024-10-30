@@ -72,4 +72,3 @@ TEST(SyncChunksDataCountersTest, SerializeAndDeserializeSyncChunksDataCounters)
 }
 
 } // namespace quentier::synchronization::tests
-

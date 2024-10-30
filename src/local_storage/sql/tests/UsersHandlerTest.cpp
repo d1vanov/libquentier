@@ -455,8 +455,8 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
 
     auto users = gUserTestValues;
     for (auto it = std::next(users.begin()); it != users.end(); ++it) // NOLINT
-    {                                      // NOLINT
-        const auto prevIt = std::prev(it); // NOLINT
+    {                                                                 // NOLINT
+        const auto prevIt = std::prev(it);                            // NOLINT
         it->setId(prevIt->id().value() + 1);
     }
 

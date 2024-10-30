@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SqlUtils.h"
 #include "TagUtils.h"
+#include "SqlUtils.h"
 
 #include "../ErrorHandling.h"
 
@@ -188,8 +188,8 @@ bool complementTagParentInfo(
         return true;
     }
 
-    const ErrorString errorPrefix{QStringLiteral(
-        "can't complement the parent info for a tag")};
+    const ErrorString errorPrefix{
+        QStringLiteral("can't complement the parent info for a tag")};
 
     const QString existingColumn =
         (tag.parentGuid() ? QStringLiteral("guid")

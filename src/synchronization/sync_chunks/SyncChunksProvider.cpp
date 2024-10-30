@@ -141,8 +141,8 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 {
     QNDEBUG(
         "synchronization::SyncChunksProvider",
-        "SyncChunksProvider: fetchSyncChunksImpl: afterUsn = " << afterUsn
-            << ", updateCount = " << updateCount);
+        "SyncChunksProvider: fetchSyncChunksImpl: afterUsn = "
+            << afterUsn << ", updateCount = " << updateCount);
 
     Q_ASSERT(storedSyncChunksUsnRangeFetcher);
     Q_ASSERT(syncChunksDownloader);
@@ -338,13 +338,13 @@ using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 
     threading::onFailed(
         std::move(thenFuture), currentThread, [promise](const QException & e) {
-        QNWARNING(
-            "synchronization::SyncChunksProvider",
-            "Failed to download sync chunks: " << e.what());
+            QNWARNING(
+                "synchronization::SyncChunksProvider",
+                "Failed to download sync chunks: " << e.what());
 
-        promise->setException(e);
-        promise->finish();
-    });
+            promise->setException(e);
+            promise->finish();
+        });
 
     return future;
 }
@@ -375,9 +375,9 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
 {
     QNDEBUG(
         "synchronization::SyncChunksProvider",
-        "SyncChunksProvider::fetchSyncChunks: afterUsn = " << afterUsn
-            << ", updateCount = " << updateCount << ", sync mode = "
-            << syncMode);
+        "SyncChunksProvider::fetchSyncChunks: afterUsn = "
+            << afterUsn << ", updateCount = " << updateCount
+            << ", sync mode = " << syncMode);
 
     return fetchSyncChunksImpl(
         afterUsn, updateCount, std::move(ctx), std::move(canceler),

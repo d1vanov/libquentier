@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,7 +52,8 @@ TEST_F(SimpleSavedSearchSyncConflictResolverTest, Ctor)
 
 TEST_F(SimpleSavedSearchSyncConflictResolverTest, CtorNullLocalStorage)
 {
-    EXPECT_THROW(SimpleSavedSearchSyncConflictResolver{nullptr}, InvalidArgument);
+    EXPECT_THROW(
+        SimpleSavedSearchSyncConflictResolver{nullptr}, InvalidArgument);
 }
 
 TEST_F(SimpleSavedSearchSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
@@ -149,9 +150,7 @@ TEST_F(
     const QString newName =
         theirs.name().value() + QStringLiteral(" - conflicting");
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 std::nullopt)));
@@ -195,18 +194,14 @@ TEST_F(
     qevercloud::SavedSearch savedSearch;
     savedSearch.setName(newName1);
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName1))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName1))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 savedSearch)));
 
     const QString newName2 = newName1 + QStringLiteral(" (2)");
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName2))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName2))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 std::nullopt)));
@@ -250,9 +245,7 @@ TEST_F(
     qevercloud::SavedSearch savedSearch;
     savedSearch.setName(newName1);
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName1))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName1))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 savedSearch)));
@@ -260,18 +253,14 @@ TEST_F(
     const QString newName2 = newName1 + QStringLiteral(" (2)");
     savedSearch.setName(newName2);
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName2))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName2))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 savedSearch)));
 
     const QString newName3 = newName1 + QStringLiteral(" (3)");
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName3))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName3))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 std::nullopt)));
@@ -312,8 +301,7 @@ TEST_F(
     mine.setName(QStringLiteral("name2"));
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(theirs.name().value()))
+        *m_mockLocalStorage, findSavedSearchByName(theirs.name().value()))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 std::nullopt)));
@@ -350,8 +338,7 @@ TEST_F(
     savedSearch.setGuid(UidGenerator::Generate());
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(theirs.name().value()))
+        *m_mockLocalStorage, findSavedSearchByName(theirs.name().value()))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 savedSearch)));
@@ -359,9 +346,7 @@ TEST_F(
     const QString newName =
         theirs.name().value() + QStringLiteral(" - conflicting");
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::SavedSearch>>(
                 std::nullopt)));
@@ -416,40 +401,37 @@ TEST_F(
 
     std::weak_ptr<SimpleSavedSearchSyncConflictResolver> resolverWeak{resolver};
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName))
-        .WillOnce([=, signalToResetPromise = std::move(signalToResetPromise)](
-                      QString newName) mutable // NOLINT
-                  {
-                      Q_UNUSED(newName)
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName))
+        .WillOnce(
+            [=, signalToResetPromise = std::move(signalToResetPromise)](
+                QString newName) mutable // NOLINT
+            {
+                Q_UNUSED(newName)
 
-                      EXPECT_FALSE(resolverWeak.expired());
+                EXPECT_FALSE(resolverWeak.expired());
 
-                      threading::then(
-                          waitForResetPromise->future(),
-                          [=] () mutable {
-                              EXPECT_TRUE(resolverWeak.expired());
+                threading::then(waitForResetPromise->future(), [=]() mutable {
+                    EXPECT_TRUE(resolverWeak.expired());
 
-                              // Now can fulfill the promise to find saved
-                              // search
-                              findSavedSearchPromise->start();
-                              findSavedSearchPromise->addResult(std::nullopt);
-                              findSavedSearchPromise->finish();
+                    // Now can fulfill the promise to find saved
+                    // search
+                    findSavedSearchPromise->start();
+                    findSavedSearchPromise->addResult(std::nullopt);
+                    findSavedSearchPromise->finish();
 
-                              // Trigger the execution of lambda attached to the
-                              // fulfilled promise's future via watcher
-                              QCoreApplication::processEvents();
-                          });
+                    // Trigger the execution of lambda attached to the
+                    // fulfilled promise's future via watcher
+                    QCoreApplication::processEvents();
+                });
 
-                      signalToResetPromise->finish();
+                signalToResetPromise->finish();
 
-                      // Trigger the execution of lambda attached to the
-                      // fulfilled promise's future via watcher
-                      QCoreApplication::processEvents();
+                // Trigger the execution of lambda attached to the
+                // fulfilled promise's future via watcher
+                QCoreApplication::processEvents();
 
-                      return findSavedSearchFuture;
-                  });
+                return findSavedSearchFuture;
+            });
 
     auto resultFuture = resolver->resolveSavedSearchConflict(
         std::move(theirs), std::move(mine));
@@ -469,7 +451,8 @@ TEST_F(
 
     threading::then(
         std::move(findSavedSearchFuture),
-        [=](std::optional<qevercloud::SavedSearch> savedSearch) mutable { // NOLINT
+        [=](std::optional<qevercloud::SavedSearch>
+                savedSearch) mutable { // NOLINT
             Q_UNUSED(savedSearch)
             // Trigger the execution of lambda inside
             // SimpleGenericSyncConflictResolver::processConflictByName
@@ -511,41 +494,39 @@ TEST_F(
     std::weak_ptr<SimpleSavedSearchSyncConflictResolver> resolverWeak{resolver};
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(theirs.name().value()))
-        .WillOnce([=, signalToResetPromise = std::move(signalToResetPromise)](
-                      QString name) mutable // NOLINT
-                  {
-                      Q_UNUSED(name)
+        *m_mockLocalStorage, findSavedSearchByName(theirs.name().value()))
+        .WillOnce(
+            [=, signalToResetPromise = std::move(signalToResetPromise)](
+                QString name) mutable // NOLINT
+            {
+                Q_UNUSED(name)
 
-                      EXPECT_FALSE(resolverWeak.expired());
+                EXPECT_FALSE(resolverWeak.expired());
 
-                      threading::then(
-                          waitForResetPromise->future(),
-                          [=] () mutable {
-                              EXPECT_TRUE(resolverWeak.expired());
+                threading::then(waitForResetPromise->future(), [=]() mutable {
+                    EXPECT_TRUE(resolverWeak.expired());
 
-                              // Now can fulfill the promise to find notebook
-                              findSavedSearchPromise->start();
-                              findSavedSearchPromise->addResult(std::nullopt);
-                              findSavedSearchPromise->finish();
+                    // Now can fulfill the promise to find notebook
+                    findSavedSearchPromise->start();
+                    findSavedSearchPromise->addResult(std::nullopt);
+                    findSavedSearchPromise->finish();
 
-                              // Trigger the execution of lambda attached to the
-                              // fulfilled promise's future via watcher
-                              QCoreApplication::processEvents();
-                          });
+                    // Trigger the execution of lambda attached to the
+                    // fulfilled promise's future via watcher
+                    QCoreApplication::processEvents();
+                });
 
-                      signalToResetPromise->finish();
+                signalToResetPromise->finish();
 
-                      // Trigger the execution of lambda attached to the
-                      // fulfilled promise's future via watcher
-                      QCoreApplication::processEvents();
+                // Trigger the execution of lambda attached to the
+                // fulfilled promise's future via watcher
+                QCoreApplication::processEvents();
 
-                      return findSavedSearchFuture;
-                  });
+                return findSavedSearchFuture;
+            });
 
-    auto resultFuture =
-        resolver->resolveSavedSearchConflict(std::move(theirs), std::move(mine));
+    auto resultFuture = resolver->resolveSavedSearchConflict(
+        std::move(theirs), std::move(mine));
 
     threading::then(
         std::move(signalToResetFuture),
@@ -562,7 +543,8 @@ TEST_F(
 
     threading::then(
         std::move(findSavedSearchFuture),
-        [=](std::optional<qevercloud::SavedSearch> savedSearch) mutable { // NOLINT
+        [=](std::optional<qevercloud::SavedSearch>
+                savedSearch) mutable { // NOLINT
             Q_UNUSED(savedSearch)
             // Trigger the execution of lambda inside
             // SimpleGenericSyncConflictResolver::processConflictByName
@@ -590,9 +572,7 @@ TEST_F(
     const QString newName =
         theirs.name().value() + QStringLiteral(" - conflicting");
 
-    EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(newName))
+    EXPECT_CALL(*m_mockLocalStorage, findSavedSearchByName(newName))
         .WillOnce(Return(threading::makeExceptionalFuture<
                          std::optional<qevercloud::SavedSearch>>(
             RuntimeError{ErrorString{QStringLiteral("error")}})));
@@ -620,8 +600,7 @@ TEST_F(
     mine.setName(QStringLiteral("name2"));
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findSavedSearchByName(theirs.name().value()))
+        *m_mockLocalStorage, findSavedSearchByName(theirs.name().value()))
         .WillOnce(Return(threading::makeExceptionalFuture<
                          std::optional<qevercloud::SavedSearch>>(
             RuntimeError{ErrorString{QStringLiteral("error")}})));

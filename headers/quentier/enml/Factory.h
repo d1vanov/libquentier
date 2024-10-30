@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ namespace quentier::enml {
  *                          the default implementation of IENMLTagsConverter is
  *                          used.
  */
-[[nodiscard]] QUENTIER_EXPORT IConverterPtr createConverter(
-    IENMLTagsConverterPtr enmlTagsConverter = nullptr);
+[[nodiscard]] QUENTIER_EXPORT IConverterPtr
+    createConverter(IENMLTagsConverterPtr enmlTagsConverter = nullptr);
 
 } // namespace quentier::enml

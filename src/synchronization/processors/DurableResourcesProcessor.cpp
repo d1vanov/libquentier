@@ -348,8 +348,7 @@ void DurableResourcesProcessor::cleanup()
 }
 
 QList<qevercloud::Resource>
-    DurableResourcesProcessor::resourcesFromPreviousSync(
-        const QDir & dir) const
+    DurableResourcesProcessor::resourcesFromPreviousSync(const QDir & dir) const
 {
     if (!dir.exists()) {
         return {};
@@ -404,8 +403,7 @@ QFuture<DownloadResourcesStatusPtr>
                .setResources(std::move(previousResources))
                .build();
 
-    auto callback =
-        std::make_shared<Callback>(callbackWeak, selfWeak, dir);
+    auto callback = std::make_shared<Callback>(callbackWeak, selfWeak, dir);
 
     auto resourcesFuture = m_resourcesProcessor->processResources(
         pseudoSyncChunks, canceler, ctx, callback);

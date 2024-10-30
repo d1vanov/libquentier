@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,8 +42,7 @@ QString resourceDisplayName(const qevercloud::Resource & resource)
 
 QString preferredFileSuffix(const qevercloud::Resource & resource)
 {
-    if (resource.attributes() &&
-        resource.attributes()->fileName()) {
+    if (resource.attributes() && resource.attributes()->fileName()) {
         const QFileInfo fileInfo(*resource.attributes()->fileName());
         const QString completeSuffix = fileInfo.completeSuffix();
         if (!completeSuffix.isEmpty()) {

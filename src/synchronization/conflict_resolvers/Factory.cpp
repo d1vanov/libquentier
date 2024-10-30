@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,9 +23,8 @@
 
 namespace quentier::synchronization {
 
-ISimpleNotebookSyncConflictResolverPtr
-    createSimpleNotebookSyncConflictResolver(
-        local_storage::ILocalStoragePtr localStorage)
+ISimpleNotebookSyncConflictResolverPtr createSimpleNotebookSyncConflictResolver(
+    local_storage::ILocalStoragePtr localStorage)
 {
     return std::make_shared<SimpleNotebookSyncConflictResolver>(
         std::move(localStorage));
@@ -39,9 +38,8 @@ ISimpleSavedSearchSyncConflictResolverPtr
         std::move(localStorage));
 }
 
-ISimpleTagSyncConflictResolverPtr
-    createSimpleTagSyncConflictResolver(
-        local_storage::ILocalStoragePtr localStorage)
+ISimpleTagSyncConflictResolverPtr createSimpleTagSyncConflictResolver(
+    local_storage::ILocalStoragePtr localStorage)
 {
     return std::make_shared<SimpleTagSyncConflictResolver>(
         std::move(localStorage));

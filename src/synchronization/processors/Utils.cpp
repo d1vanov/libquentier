@@ -374,12 +374,14 @@ DownloadResourcesStatus mergeDownloadResourcesStatuses(
         rhs.m_resourcesWhichFailedToProcess);
 
     for (const auto it:
-         qevercloud::toRange(rhs.m_processedResourceGuidsAndUsns)) {
+         qevercloud::toRange(rhs.m_processedResourceGuidsAndUsns))
+    {
         lhs.m_processedResourceGuidsAndUsns[it.key()] = it.value();
     }
 
     for (const auto it:
-         qevercloud::toRange(rhs.m_cancelledResourceGuidsAndUsns)) {
+         qevercloud::toRange(rhs.m_cancelledResourceGuidsAndUsns))
+    {
         lhs.m_cancelledResourceGuidsAndUsns[it.key()] = it.value();
     }
 
@@ -419,9 +421,8 @@ void writeProcessedNoteInfo(
     };
 
     // 1. Cancelled notes
-    const QDir cancelledNotesDir{
-        lastSyncNotesDir.absoluteFilePath(
-            QString::fromUtf8(gCancelledNotesDirName))};
+    const QDir cancelledNotesDir{lastSyncNotesDir.absoluteFilePath(
+        QString::fromUtf8(gCancelledNotesDirName))};
 
     const QFileInfo cancelledNoteFileInfo{getNoteFileInfo(cancelledNotesDir)};
 

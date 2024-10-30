@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -348,8 +348,7 @@ Q_SIGNALS:
         QUuid requestId);
 
 private Q_SLOTS:
-    void onRequestReady(
-        const QByteArray & responseData, QUuid requestId);
+    void onRequestReady(const QByteArray & responseData, QUuid requestId);
 
     void onCreateNotebookRequest(
         qevercloud::Notebook notebook,
@@ -460,7 +459,7 @@ private:
 
     QTcpServer * m_tcpServer = nullptr;
     qevercloud::NoteStoreServer * m_server = nullptr;
-    QHash<QUuid, QTcpSocket*> m_sockets;
+    QHash<QUuid, QTcpSocket *> m_sockets;
 
     QHash<QUuid, QByteArray> m_uriByRequestId;
 

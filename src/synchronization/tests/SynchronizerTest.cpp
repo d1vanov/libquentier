@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -138,12 +138,9 @@ TEST_F(SynchronizerTest, AuthenticateNewAccount)
     const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
     const Account account{
-        QStringLiteral("username"),
-        Account::Type::Evernote,
-        authenticationInfo->userId(),
-        Account::EvernoteAccountType::Free,
-        QStringLiteral("wwww.evernote.com"),
-        authenticationInfo->shardId()};
+        QStringLiteral("username"),          Account::Type::Evernote,
+        authenticationInfo->userId(),        Account::EvernoteAccountType::Free,
+        QStringLiteral("wwww.evernote.com"), authenticationInfo->shardId()};
 
     EXPECT_CALL(*m_mockAuthenticationInfoProvider, authenticateNewAccount)
         .WillOnce(Return(threading::makeReadyFuture<

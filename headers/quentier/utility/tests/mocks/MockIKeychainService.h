@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,8 +30,8 @@ public:
         (QString service, QString key, QString password), (override));
 
     MOCK_METHOD(
-        QFuture<QString>, readPassword,
-        (QString service, QString key), (const, override));
+        QFuture<QString>, readPassword, (QString service, QString key),
+        (const, override));
 
     MOCK_METHOD(
         QFuture<void>, deletePassword, (QString service, QString key),

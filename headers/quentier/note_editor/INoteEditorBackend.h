@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -95,8 +95,7 @@ public:
 
     virtual void findNext(const QString & text, bool matchCase) const = 0;
 
-    virtual void findPrevious(
-        const QString & text, bool matchCase) const = 0;
+    virtual void findPrevious(const QString & text, bool matchCase) const = 0;
 
     virtual void replace(
         const QString & textToReplace, const QString & replacementText,
@@ -171,8 +170,7 @@ public:
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, Rotation rotation);
 
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, Rotation rotation);
+    friend QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, Rotation rotation);
 
     virtual void rotateImageAttachment(
         const QByteArray & resourceHash, Rotation rotationDirection) = 0;

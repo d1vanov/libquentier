@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FillFromSqlRecordUtils.h"
 #include "ListFromDatabaseUtils.h"
+#include "FillFromSqlRecordUtils.h"
 #include "ResourceUtils.h"
 
 #include "../ErrorHandling.h"
@@ -389,7 +389,8 @@ QList<qevercloud::Resource> listNoteResources(
         int indexInNote = -1;
         ErrorString error;
         if (!fillResourceFromSqlRecord(
-                query.record(), resource, indexInNote, error)) {
+                query.record(), resource, indexInNote, error))
+        {
             errorDescription.setBase(
                 QStringLiteral("Can't list resources by note local id"));
             errorDescription.appendBase(error.base());
@@ -400,7 +401,8 @@ QList<qevercloud::Resource> listNoteResources(
 
         error.clear();
         if (!findResourceAttributesApplicationDataByLocalId(
-                resource, database, error)) {
+                resource, database, error))
+        {
             errorDescription.setBase(
                 QStringLiteral("Can't list resources by note local id"));
             errorDescription.appendBase(error.base());

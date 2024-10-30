@@ -33,22 +33,20 @@ namespace quentier {
 EncryptionDialog::EncryptionDialog(
     QString textToEncrypt, Account account,
     std::shared_ptr<EncryptionManager> encryptionManager,
-    enml::IDecryptedTextCachePtr decryptedTextCache,
-    QWidget * parent) :
-    QDialog{parent},
-    m_encryptionManager{std::move(encryptionManager)},
+    enml::IDecryptedTextCachePtr decryptedTextCache, QWidget * parent) :
+    QDialog{parent}, m_encryptionManager{std::move(encryptionManager)},
     m_decryptedTextCache{std::move(decryptedTextCache)},
     m_pUI{new Ui::EncryptionDialog}, m_textToEncrypt{std::move(textToEncrypt)},
     m_account{std::move(account)}
 {
     if (Q_UNLIKELY(!m_encryptionManager)) {
-        throw InvalidArgument{ErrorString{
-            "EncryptionDialog ctor: encryption manager is null"}};
+        throw InvalidArgument{
+            ErrorString{"EncryptionDialog ctor: encryption manager is null"}};
     }
 
     if (Q_UNLIKELY(!m_decryptedTextCache)) {
-        throw InvalidArgument{ErrorString{
-            "EncryptionDialog ctor: decrypted text cache is null"}};
+        throw InvalidArgument{
+            ErrorString{"EncryptionDialog ctor: decrypted text cache is null"}};
     }
 
     m_pUI->setupUi(this);

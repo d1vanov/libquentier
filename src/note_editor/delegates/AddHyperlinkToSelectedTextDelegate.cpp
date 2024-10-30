@@ -40,8 +40,8 @@ namespace quentier {
 
 AddHyperlinkToSelectedTextDelegate::AddHyperlinkToSelectedTextDelegate(
     NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor), m_hyperlinkId(hyperlinkIdToAdd)
+    QObject(&noteEditor), m_noteEditor(noteEditor),
+    m_hyperlinkId(hyperlinkIdToAdd)
 {}
 
 void AddHyperlinkToSelectedTextDelegate::start()

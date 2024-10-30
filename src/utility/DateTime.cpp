@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -66,8 +66,7 @@ QString printableDateTimeFromTimestamp(
     const size_t size = strftime(
         &buffer[0], buffer.size(), (customFormat ? customFormat : format), tm);
 
-    result += QString::fromLocal8Bit(
-        &buffer[0], static_cast<int>(size));
+    result += QString::fromLocal8Bit(&buffer[0], static_cast<int>(size));
 
     if (options & DateTimePrintOption::IncludeMilliseconds) {
         qint64 msecPart = timestamp - t * 1000;

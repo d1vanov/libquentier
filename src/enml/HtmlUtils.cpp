@@ -139,8 +139,8 @@ private:
         ok = tidyOptSetBool(doc, TidyMergeEmphasis, no);
         QNTRACE(
             "enml::HtmlConverter",
-            "tidyOptSetBool: merge emphasis = no: "
-                << "ok = " << (ok ? "true" : "false"));
+            "tidyOptSetBool: merge emphasis = no: " << "ok = "
+                                                    << (ok ? "true" : "false"));
     }
 
     if (ok) {

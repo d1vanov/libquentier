@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -66,17 +66,14 @@ qint64 SysInfo::freeMemory()
     mach_port = mach_host_self();
     count = sizeof(vm_stats) / sizeof(natural_t);
     if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
-        KERN_SUCCESS == host_statistics(
-            mach_port,
-            HOST_VM_INFO,
-            (host_info_t)&vm_stats,
-            &count))
+        KERN_SUCCESS ==
+            host_statistics(
+                mach_port, HOST_VM_INFO, (host_info_t)&vm_stats, &count))
     {
         return static_cast<qint64>(
             vm_stats.free_count * static_cast<qint64>(page_size));
     }
-    else
-    {
+    else {
         return -1;
     }
 }

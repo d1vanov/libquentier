@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,7 @@
 
 namespace quentier::synchronization {
 
-ISyncEventsNotifier::ISyncEventsNotifier(QObject * parent) :
-    QObject(parent)
-{}
+ISyncEventsNotifier::ISyncEventsNotifier(QObject * parent) : QObject(parent) {}
 
 ISyncEventsNotifier::~ISyncEventsNotifier() = default;
 

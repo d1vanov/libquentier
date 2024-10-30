@@ -105,11 +105,11 @@ ILocalStoragePtr createSqliteLocalStorage(
         std::make_shared<sql::SynchronizationInfoHandler>(
             connectionPool, thread);
 
-    auto tagsHandler = std::make_shared<sql::TagsHandler>(
-        connectionPool, notifier, thread);
+    auto tagsHandler =
+        std::make_shared<sql::TagsHandler>(connectionPool, notifier, thread);
 
-    auto versionHandler = std::make_shared<sql::VersionHandler>(
-        account, connectionPool, thread);
+    auto versionHandler =
+        std::make_shared<sql::VersionHandler>(account, connectionPool, thread);
 
     auto usersHandler = std::make_shared<sql::UsersHandler>(
         connectionPool, notifier, std::move(thread));

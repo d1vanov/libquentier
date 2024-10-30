@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -126,7 +126,8 @@ QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
     printResourceGuidsAndUsns(m_cancelledResourceGuidsAndUsns);
 
     if (std::holds_alternative<RateLimitReachedError>(
-            m_stopSynchronizationError)) {
+            m_stopSynchronizationError))
+    {
         const auto & rateLimitReachedError =
             std::get<RateLimitReachedError>(m_stopSynchronizationError);
         strm << "stopSynchronizationError = RateLimitReachedError{";
@@ -178,7 +179,8 @@ bool operator==(
 
     const auto compareResourceListsWithExceptions =
         [&](const QList<IDownloadResourcesStatus::ResourceWithException> & lhs,
-            const QList<IDownloadResourcesStatus::ResourceWithException> & rhs) {
+            const QList<IDownloadResourcesStatus::ResourceWithException> &
+                rhs) {
             if (lhs.size() != rhs.size()) {
                 return false;
             }

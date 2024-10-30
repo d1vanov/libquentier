@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -182,8 +182,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
     auto sourceKeychainFuture = m_sourceKeychain->deletePassword(service, key);
 
     QFuture<void> allFuture = threading::whenAll(
-        QList<QFuture<void>>{} << sinkKeychainFuture
-                               << sourceKeychainFuture);
+        QList<QFuture<void>>{} << sinkKeychainFuture << sourceKeychainFuture);
 
     auto allThenFuture =
         threading::then(std::move(allFuture), [promise] { promise->finish(); });
@@ -191,8 +190,8 @@ QFuture<void> MigratingKeychainService::deletePassword(
     threading::onFailed(
         std::move(allThenFuture),
         [promise, sinkKeychainFuture, sourceKeychainFuture,
-         service = std::move(service), key = std::move(key)](
-            const QException & e) mutable {
+         service = std::move(service),
+         key = std::move(key)](const QException & e) mutable {
             std::shared_ptr<QException> allFutureError{e.clone()};
 
             auto sinkKeychainThenFuture = threading::then(
@@ -218,7 +217,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
                 std::move(sinkKeychainThenFuture),
                 [promise,
                  sourceKeychainFuture = std::move(sourceKeychainFuture)](
-                     const QException & e) mutable {
+                    const QException & e) mutable {
                     // Deleting from the sink keychain has failed.
                     if (!utility::utils::isNoEntryError(e)) {
                         promise->setException(e);
@@ -233,8 +232,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
                     // So will see what is the result of deleting from the
                     // source keychain.
                     auto sourceKeychainThenFuture = threading::then(
-                        std::move(sourceKeychainFuture),
-                        [promise] {
+                        std::move(sourceKeychainFuture), [promise] {
                             // Deleting from source keychain succeeded, so
                             // considering the overall deletion successful.
                             promise->finish();
@@ -242,8 +240,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
 
                     threading::onFailed(
                         std::move(sourceKeychainThenFuture),
-                        [promise](const QException & e)
-                        {
+                        [promise](const QException & e) {
                             if (utility::utils::isNoEntryError(e)) {
                                 // EntryNotFound when deleting is factually
                                 // equivalent to no error as the net result is

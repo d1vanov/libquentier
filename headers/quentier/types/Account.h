@@ -67,8 +67,7 @@ public:
 
     explicit Account(
         QString name, Type type, qevercloud::UserID userId = -1,
-        EvernoteAccountType evernoteAccountType =
-            EvernoteAccountType::Free,
+        EvernoteAccountType evernoteAccountType = EvernoteAccountType::Free,
         QString evernoteHost = {}, QString shardId = {});
 
     Account(const Account & other);

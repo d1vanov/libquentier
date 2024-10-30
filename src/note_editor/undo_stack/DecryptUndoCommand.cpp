@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,11 +30,11 @@ DecryptUndoCommand::DecryptUndoCommand(
     EncryptDecryptUndoCommandInfo info,
     enml::IDecryptedTextCachePtr decryptedTextCache,
     NoteEditorPrivate & noteEditorPrivate, Callback callback,
-    QUndoCommand * parent) : DecryptUndoCommand(
+    QUndoCommand * parent) :
+    DecryptUndoCommand(
         std::move(info), std::move(decryptedTextCache), noteEditorPrivate,
         std::move(callback), tr("Decrypt text"), parent)
-{
-}
+{}
 
 DecryptUndoCommand::DecryptUndoCommand(
     EncryptDecryptUndoCommandInfo info,
@@ -69,9 +69,8 @@ void DecryptUndoCommand::redoImpl()
 
     if (!m_info.m_decryptPermanently) {
         m_decryptedTextCache->addDecryptexTextInfo(
-            m_info.m_encryptedText, m_info.m_decryptedText,
-            m_info.m_passphrase, m_info.m_cipher,
-            m_info.m_keyLength,
+            m_info.m_encryptedText, m_info.m_decryptedText, m_info.m_passphrase,
+            m_info.m_cipher, m_info.m_keyLength,
             m_info.m_rememberForSession
                 ? enml::IDecryptedTextCache::RememberForSession::Yes
                 : enml::IDecryptedTextCache::RememberForSession::No);

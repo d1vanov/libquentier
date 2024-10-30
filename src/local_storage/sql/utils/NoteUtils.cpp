@@ -455,8 +455,7 @@ void contentSearchTermToSqlQueryParts(
     const auto asterisk = QList<QChar>{} << QChar::fromLatin1('*');
 
     if (!contentSearchTerms.isEmpty()) {
-        for (const auto & searchTerm: std::as_const(contentSearchTerms))
-        {
+        for (const auto & searchTerm: std::as_const(contentSearchTerms)) {
             auto currentSearchTerm = searchTerm;
             stringUtils.removePunctuation(currentSearchTerm, asterisk);
             if (currentSearchTerm.isEmpty()) {
@@ -617,7 +616,8 @@ void contentSearchTermToSqlQueryParts(
 
     ErrorString error;
     if (!notebookNameInNoteSearchQueryToSql(
-            noteSearchQuery, strm, database, error)) {
+            noteSearchQuery, strm, database, error))
+    {
         extendError(error, {}, {});
         QNWARNING("local_storage::sql::utils", errorDescription);
         return {};

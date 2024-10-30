@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,24 +35,18 @@ namespace quentier {
     }
 
 IQuentierException::IQuentierException(ErrorString message) :
-    m_message(std::move(message))
-{
-    INIT_WHAT_MESSAGE()
-}
+    m_message(std::move(message)){INIT_WHAT_MESSAGE()}
 
-IQuentierException::~IQuentierException() noexcept
+    IQuentierException::~IQuentierException() noexcept
 {
     delete[] m_whatMessage;
 }
 
 IQuentierException::IQuentierException(const IQuentierException & other) :
-    m_message(other.m_message)
-{
-    INIT_WHAT_MESSAGE()
-}
+    m_message(other.m_message){INIT_WHAT_MESSAGE()}
 
-IQuentierException & IQuentierException::operator=(
-    const IQuentierException & other)
+    IQuentierException
+    & IQuentierException::operator=(const IQuentierException & other)
 {
     if (this != &other) {
         m_message = other.m_message;

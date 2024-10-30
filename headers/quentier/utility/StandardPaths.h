@@ -38,8 +38,8 @@ namespace quentier {
  * location is overridden via the environment variable, the bool pointed to
  * by pNonStandardLocation (if any) is set to false
  */
-[[nodiscard]] QString QUENTIER_EXPORT applicationPersistentStoragePath(
-    bool * pNonStandardLocation = nullptr);
+[[nodiscard]] QString QUENTIER_EXPORT
+    applicationPersistentStoragePath(bool * pNonStandardLocation = nullptr);
 
 /**
  * accountPersistentStoragePath returns the path to account-specific folder
@@ -50,8 +50,8 @@ namespace quentier {
  * @param account   The account for which the path needs to be returned; if
  *                  empty, the application persistent storage path is returned
  */
-[[nodiscard]] QString QUENTIER_EXPORT accountPersistentStoragePath(
-    const Account & account);
+[[nodiscard]] QString QUENTIER_EXPORT
+    accountPersistentStoragePath(const Account & account);
 
 /**
  * @return          The path to folder in which the application can store

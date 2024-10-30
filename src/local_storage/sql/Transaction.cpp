@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ErrorHandling.h"
 #include "Transaction.h"
+#include "ErrorHandling.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -28,18 +28,15 @@
 namespace quentier::local_storage::sql {
 
 Transaction::Transaction(const QSqlDatabase & database, Type type) :
-    m_database{database},
-    m_type{type}
+    m_database{database}, m_type{type}
 {
     init();
 }
 
 Transaction::Transaction(Transaction && transaction) noexcept :
-    m_database{transaction.m_database},
-    m_type{transaction.m_type},
+    m_database{transaction.m_database}, m_type{transaction.m_type},
     m_committed{transaction.m_committed},
-    m_rolledBack{transaction.m_rolledBack},
-    m_ended{transaction.m_ended}
+    m_rolledBack{transaction.m_rolledBack}, m_ended{transaction.m_ended}
 {
     transaction.m_ended = true;
 }
@@ -47,7 +44,8 @@ Transaction::Transaction(Transaction && transaction) noexcept :
 Transaction::~Transaction()
 {
     if ((m_type != Type::Selection) && !m_committed && !m_rolledBack &&
-        !m_ended) {
+        !m_ended)
+    {
         QSqlQuery query{m_database};
         bool res = query.exec(QStringLiteral("ROLLBACK"));
         if (!res) {
@@ -55,8 +53,8 @@ Transaction::~Transaction()
             QNERROR(
                 "local_storage:sql:Transaction",
                 "Failed to roll back the transaction: "
-                << lastError.text() << " (native error code = "
-                << lastError.nativeErrorCode() << ")");
+                    << lastError.text() << " (native error code = "
+                    << lastError.nativeErrorCode() << ")");
         }
     }
     else if ((m_type == Type::Selection) && !m_ended) {
@@ -67,8 +65,8 @@ Transaction::~Transaction()
             QNERROR(
                 "local_storage:sql:Transaction",
                 "Failed to end the transaction: "
-                << lastError.text() << " (native error code = "
-                << lastError.nativeErrorCode() << ")");
+                    << lastError.text() << " (native error code = "
+                    << lastError.nativeErrorCode() << ")");
         }
     }
 }
@@ -109,9 +107,9 @@ bool Transaction::commit()
         const auto lastError = query.lastError();
         QNWARNING(
             "local_storage::sql::Transaction",
-            "Cannot commit the transaction: " << lastError.text()
-                << " (native error code = " << lastError.nativeErrorCode()
-                << ")");
+            "Cannot commit the transaction: "
+                << lastError.text() << " (native error code = "
+                << lastError.nativeErrorCode() << ")");
         return false;
     }
 
@@ -149,9 +147,9 @@ bool Transaction::rollback()
         const auto lastError = query.lastError();
         QNWARNING(
             "local_storage::sql::Transaction",
-            "Cannot rollback the transaction: " << lastError.text()
-                << " (native error code = " << lastError.nativeErrorCode()
-                << ")");
+            "Cannot rollback the transaction: "
+                << lastError.text() << " (native error code = "
+                << lastError.nativeErrorCode() << ")");
         return false;
     }
 
@@ -163,8 +161,7 @@ bool Transaction::end()
 {
     if (m_ended) {
         QNWARNING(
-            "local_storage:sql:Transaction",
-            "Transaction is already ended");
+            "local_storage:sql:Transaction", "Transaction is already ended");
         return false;
     }
 
@@ -174,9 +171,9 @@ bool Transaction::end()
         const auto lastError = query.lastError();
         QNWARNING(
             "local_storage:sql:Transaction",
-            "Cannot end the transaction: " << lastError.text()
-                << " (native error code = " << lastError.nativeErrorCode()
-                << ")");
+            "Cannot end the transaction: "
+                << lastError.text() << " (native error code = "
+                << lastError.nativeErrorCode() << ")");
         return false;
     }
 
@@ -198,8 +195,7 @@ void Transaction::init()
     const bool res = query.exec(queryString);
     ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::transaction",
-        QStringLiteral(
-            "Failed to begin transaction"));
+        QStringLiteral("Failed to begin transaction"));
 }
 
 } // namespace quentier::local_storage::sql

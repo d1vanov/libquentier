@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -106,7 +106,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
     obfuscatedKeychainStorage.endGroup();
 
     if (!encryptionManager.decrypt(
-        encryptedText, key, cipher, keyLength, password, errorDescription))
+            encryptedText, key, cipher, keyLength, password, errorDescription))
     {
         return IKeychainService::ErrorCode::OtherError;
     }
@@ -159,8 +159,7 @@ QFuture<QString> ObfuscatingKeychainService::readPassword(
     ErrorString errorDescription;
     const auto errorCode = readPasswordImpl(
         m_encryptionManager, service, key, password, errorDescription);
-    if (errorCode == IKeychainService::ErrorCode::NoError)
-    {
+    if (errorCode == IKeychainService::ErrorCode::NoError) {
         return threading::makeReadyFuture<QString>(std::move(password));
     }
 

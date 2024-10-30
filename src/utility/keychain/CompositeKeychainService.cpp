@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -240,7 +240,8 @@ QFuture<QString> CompositeKeychainService::readPassword(
 
                 QFuture<QString> secondaryKeychainFuture = [&] {
                     if (self->isServiceKeyPairAvailableInSecondaryKeychain(
-                            service, key)) {
+                            service, key))
+                    {
                         return self->m_secondaryKeychain->readPassword(
                             service, key);
                     }
@@ -543,24 +544,23 @@ void CompositeKeychainService::checkAndInitializeServiceKeysCaches() const
 }
 
 CompositeKeychainService::ServiceKeyPairsCache
-CompositeKeychainService::readServiceKeyPairsUnavailableInPrimaryKeychain()
-    const
+    CompositeKeychainService::readServiceKeyPairsUnavailableInPrimaryKeychain()
+        const
 {
     return readServiceKeyPairsUnavailableInKeychainImpl(
         keys::unavailablePrimaryKeychainGroup);
 }
 
-CompositeKeychainService::ServiceKeyPairsCache
-CompositeKeychainService::readServiceKeyPairsUnavailableInSecondaryKeychain()
-    const
+CompositeKeychainService::ServiceKeyPairsCache CompositeKeychainService::
+    readServiceKeyPairsUnavailableInSecondaryKeychain() const
 {
     return readServiceKeyPairsUnavailableInKeychainImpl(
         keys::unavailableSecondaryKeychainGroup);
 }
 
 CompositeKeychainService::ServiceKeyPairsCache
-CompositeKeychainService::readServiceKeyPairsUnavailableInKeychainImpl(
-    const char * groupName) const
+    CompositeKeychainService::readServiceKeyPairsUnavailableInKeychainImpl(
+        const char * groupName) const
 {
     ApplicationSettings settings{m_name};
     settings.beginGroup(groupName);

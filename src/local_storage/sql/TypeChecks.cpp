@@ -277,7 +277,8 @@ bool checkNote(
 
                     auto sumSize = keySize + valueSize;
                     if (sumSize >
-                        qevercloud::EDAM_APPLICATIONDATA_ENTRY_LEN_MAX) {
+                        qevercloud::EDAM_APPLICATIONDATA_ENTRY_LEN_MAX)
+                    {
                         errorDescription.setBase(
                             QStringLiteral("Note's attributes application data "
                                            "has invalid sum entry size"));
@@ -361,7 +362,8 @@ bool checkNotebook(
             }
 
             if (sharedNotebook.notebookGuid() &&
-                !checkGuid(*sharedNotebook.notebookGuid())) {
+                !checkGuid(*sharedNotebook.notebookGuid()))
+            {
                 errorDescription.setBase(QStringLiteral(
                     "Notebook has shared notebook with invalid guid"));
 
@@ -824,7 +826,8 @@ bool checkUser(
             }
 
             for (const auto & recentMailedAddress:
-                 std::as_const(recentMailedAddresses)) {
+                 std::as_const(recentMailedAddresses))
+            {
                 auto recentMailedAddressSize = recentMailedAddress.size();
                 if ((recentMailedAddressSize >
                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||

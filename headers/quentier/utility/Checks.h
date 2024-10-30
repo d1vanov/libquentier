@@ -41,7 +41,7 @@ namespace quentier {
  * @return                      True if the passed in update sequence number
  *                              is valid, false otherwise
  */
-[[nodiscard]] bool QUENTIER_EXPORT checkUpdateSequenceNumber(
-    qint32 updateSequenceNumber);
+[[nodiscard]] bool QUENTIER_EXPORT
+    checkUpdateSequenceNumber(qint32 updateSequenceNumber);
 
 } // namespace quentier

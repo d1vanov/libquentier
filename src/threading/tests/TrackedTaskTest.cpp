@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -110,18 +110,17 @@ TEST(TrackedTaskTest, CallLink)
 
     EXPECT_CALL(*object, call0()).Times(1);
 
-    const TrackedTask trackedTask{
-        selfWeak, [&object] { object->call0(); }};
+    const TrackedTask trackedTask{selfWeak, [&object] { object->call0(); }};
 
     trackedTask();
 }
 
 TEST(TrackedTaskTest, PassArgumentsPack)
 {
-	const auto object = std::make_shared<MockCallable>();
-	const std::weak_ptr<MockCallable> selfWeak = object;
+    const auto object = std::make_shared<MockCallable>();
+    const std::weak_ptr<MockCallable> selfWeak = object;
 
-	EXPECT_CALL(*object, call0()).Times(1);
+    EXPECT_CALL(*object, call0()).Times(1);
 
     const TrackedTask trackedTask{
         selfWeak, [&object](auto &&... arguments) {

@@ -168,8 +168,8 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
 
     EXPECT_TRUE(res);
 
-    const auto entries = dir.entryInfoList(
-        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    const auto entries =
+        dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
     foundLocalStorageBackup = false;
     foundRestoredFromBackupLocalStorage = false;

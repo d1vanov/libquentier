@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,20 +29,20 @@ class MockISyncConflictResolver : public ISyncConflictResolver
 public:
     MOCK_METHOD(
         QFuture<NotebookConflictResolution>, resolveNotebookConflict,
-        (qevercloud::Notebook theirs, qevercloud::Notebook mine), (override));
+        (::qevercloud::Notebook theirs, ::qevercloud::Notebook mine), (override));
 
     MOCK_METHOD(
         QFuture<NoteConflictResolution>, resolveNoteConflict,
-        (qevercloud::Note theirs, qevercloud::Note mine), (override));
+        (::qevercloud::Note theirs, ::qevercloud::Note mine), (override));
 
     MOCK_METHOD(
         QFuture<SavedSearchConflictResolution>, resolveSavedSearchConflict,
-        (qevercloud::SavedSearch theirs, qevercloud::SavedSearch mine),
+        (::qevercloud::SavedSearch theirs, ::qevercloud::SavedSearch mine),
         (override));
 
     MOCK_METHOD(
         QFuture<TagConflictResolution>, resolveTagConflict,
-        (qevercloud::Tag theirs, qevercloud::Tag mine), (override));
+        (::qevercloud::Tag theirs, ::qevercloud::Tag mine), (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

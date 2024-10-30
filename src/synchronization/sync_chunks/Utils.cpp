@@ -353,9 +353,8 @@ QString briefSyncChunkInfo(const qevercloud::SyncChunk & syncChunk)
     QTextStream strm{&res};
 
     strm << "Current time = "
-         << printableDateTimeFromTimestamp(syncChunk.currentTime())
-         << " (" << syncChunk.currentTime()
-         << "), chunk high USN = "
+         << printableDateTimeFromTimestamp(syncChunk.currentTime()) << " ("
+         << syncChunk.currentTime() << "), chunk high USN = "
          << (syncChunk.chunkHighUSN()
                  ? QString::number(*syncChunk.chunkHighUSN())
                  : QStringLiteral("<none>"))

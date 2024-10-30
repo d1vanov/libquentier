@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,7 +49,8 @@ FakeAuthenticator::FakeAuthenticator(
     Q_ASSERT(m_threadPool);
 }
 
-QList<FakeAuthenticator::AccountAuthInfo> FakeAuthenticator::accountAuthInfos() const
+QList<FakeAuthenticator::AccountAuthInfo> FakeAuthenticator::accountAuthInfos()
+    const
 {
     const QMutexLocker locker{&m_mutex};
     return m_accountAuthInfos;
@@ -60,12 +61,12 @@ void FakeAuthenticator::putAccountAuthInfo(
 {
     QNDEBUG(
         "tests::synchronization::FakeAuthenticator",
-        "FakeAuthenticator::putAccountAuthInfo: account = " << account
-            << "\nAuth info: " << *authInfo);
+        "FakeAuthenticator::putAccountAuthInfo: account = "
+            << account << "\nAuth info: " << *authInfo);
 
     const QMutexLocker locker{&m_mutex};
-    m_accountAuthInfos
-        << AccountAuthInfo{std::move(account), std::move(authInfo)};
+    m_accountAuthInfos << AccountAuthInfo{
+        std::move(account), std::move(authInfo)};
 }
 
 IAuthenticationInfoPtr FakeAuthenticator::findAuthInfo(
@@ -120,14 +121,13 @@ QFuture<IAuthenticationInfoPtr> FakeAuthenticator::authenticateNewAccount()
     auto authInfoBuilder = createAuthenticationInfoBuilder();
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
-    auto authInfo = authInfoBuilder
-        ->setUserId(account.id())
-        .setAuthToken(QStringLiteral("Auth token"))
-        .setAuthenticationTime(now)
-        .setAuthTokenExpirationTime(now + 1000)
-        .setNoteStoreUrl(QStringLiteral("Note store url"))
-        .setShardId(account.shardId())
-        .build();
+    auto authInfo = authInfoBuilder->setUserId(account.id())
+                        .setAuthToken(QStringLiteral("Auth token"))
+                        .setAuthenticationTime(now)
+                        .setAuthTokenExpirationTime(now + 1000)
+                        .setNoteStoreUrl(QStringLiteral("Note store url"))
+                        .setShardId(account.shardId())
+                        .build();
 
     {
         const QMutexLocker locker{&m_mutex};
@@ -160,7 +160,8 @@ QFuture<IAuthenticationInfoPtr> FakeAuthenticator::authenticateAccount(
     if (authInfo) {
         QNDEBUG(
             "tests::synchronization::FakeAuthenticator",
-            "FakeAuthenticator::authenticateAccount: found authentication info: "
+            "FakeAuthenticator::authenticateAccount: found authentication "
+            "info: "
                 << *authInfo);
     }
 

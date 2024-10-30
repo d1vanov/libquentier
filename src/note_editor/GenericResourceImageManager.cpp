@@ -50,8 +50,8 @@ void GenericResourceImageManager::setStorageFolderPath(
 }
 
 void GenericResourceImageManager::onGenericResourceImageWriteRequest(
-    QString noteLocalId, QString resourceLocalId, // NOLINT
-    QByteArray resourceImageData, QString resourceFileSuffix, // NOLINT
+    QString noteLocalId, QString resourceLocalId,               // NOLINT
+    QByteArray resourceImageData, QString resourceFileSuffix,   // NOLINT
     QByteArray resourceActualHash, QString resourceDisplayName, // NOLINT
     QUuid requestId)
 {
@@ -103,9 +103,8 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
     }
 
     const QStringList nameFilter = QStringList{} << resourceFileNameMask;
-    QFileInfoList existingResourceImageFileInfos =
-        storageDir.entryInfoList(
-            nameFilter, QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+    QFileInfoList existingResourceImageFileInfos = storageDir.entryInfoList(
+        nameFilter, QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
 
     bool resourceHashChanged = true;
     const QFileInfo resourceHashFileInfo{
@@ -136,8 +135,7 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
 
     if (!resourceHashChanged && resourceNameFileInfo.exists()) {
         if (Q_UNLIKELY(!resourceNameFileInfo.isWritable())) {
-            RETURN_WITH_ERROR(
-                QT_TR_NOOP("Resource name file is not writable"));
+            RETURN_WITH_ERROR(QT_TR_NOOP("Resource name file is not writable"));
         }
 
         if (Q_UNLIKELY(!resourceNameFileInfo.isReadable())) {
@@ -300,9 +298,8 @@ void GenericResourceImageManager::
     }
 
     auto resources =
-        (m_pCurrentNote->resources()
-         ? *m_pCurrentNote->resources()
-         : QList<qevercloud::Resource>());
+        (m_pCurrentNote->resources() ? *m_pCurrentNote->resources()
+                                     : QList<qevercloud::Resource>());
 
     const QFileInfoList fileInfoList = storageDir.entryInfoList(QDir::Files);
 
@@ -324,8 +321,7 @@ void GenericResourceImageManager::
         QNTRACE("note_editor", "Checking file with base name " << baseName);
 
         const auto resourceIt = std::find_if(
-            resources.constBegin(),
-            resources.constEnd(),
+            resources.constBegin(), resources.constEnd(),
             [&baseName](const qevercloud::Resource & resource) {
                 return baseName.startsWith(resource.localId());
             });
@@ -343,7 +339,8 @@ void GenericResourceImageManager::
                     if (storedHash == *resource.data()->bodyHash()) {
                         QNTRACE(
                             "note_editor",
-                            "Resource file " << filePath
+                            "Resource file "
+                                << filePath
                                 << " appears to be still actual, will keep it");
                         continue;
                     }

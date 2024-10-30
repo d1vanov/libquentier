@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,8 +25,7 @@ namespace quentier::synchronization {
 SimpleTagSyncConflictResolver::SimpleTagSyncConflictResolver(
     local_storage::ILocalStoragePtr localStorage) :
     m_genericResolver{std::make_shared<GenericResolver>(
-        std::move(localStorage),
-        &local_storage::ILocalStorage::findTagByName,
+        std::move(localStorage), &local_storage::ILocalStorage::findTagByName,
         QStringLiteral("tag"))}
 {}
 

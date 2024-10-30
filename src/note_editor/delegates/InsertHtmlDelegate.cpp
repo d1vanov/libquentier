@@ -54,8 +54,8 @@ InsertHtmlDelegate::InsertHtmlDelegate(
     ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
     QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo, QObject * parent) :
-    QObject(parent),
-    m_noteEditor(noteEditor), m_enmlTagsConverter(std::move(enmlTagsConverter)),
+    QObject(parent), m_noteEditor(noteEditor),
+    m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
     m_resourceFileStoragePathsByResourceLocalId(
         resourceFileStoragePathsByResourceLocalId),
@@ -102,7 +102,8 @@ void InsertHtmlDelegate::onOriginalPageConvertedToNote(
 void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(
     QUuid requestId, QByteArray dataHash, ErrorString errorDescription)
 {
-    const auto it = m_resourceBySaveDataToTemporaryFileRequestId.find(requestId);
+    const auto it =
+        m_resourceBySaveDataToTemporaryFileRequestId.find(requestId);
     if (it == m_resourceBySaveDataToTemporaryFileRequestId.end()) {
         return;
     }
@@ -290,8 +291,8 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
 
     QNDEBUG(
         "note_editor:delegate",
-        "Finished the html insertion, number of "
-            << "added image resources: " << resources.size());
+        "Finished the html insertion, number of " << "added image resources: "
+                                                  << resources.size());
 
     Q_EMIT finished(resources, resourceFileStoragePaths);
 }
@@ -596,8 +597,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
                 urlString.mid(dotIndex + 1, urlString.size() - dotIndex - 1);
             QNTRACE(
                 "note_editor:delegate",
-                "Trying to load the image with "
-                    << "format " << format);
+                "Trying to load the image with " << "format " << format);
 
             res = image.loadFromData(
                 downloadedData, format.toUpper().toLocal8Bit().constData());
@@ -625,8 +625,8 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 
                 QNTRACE(
                     "note_editor:delegate",
-                    "Wrote the downloaded data "
-                        << "into the temporary file: " << file.fileName());
+                    "Wrote the downloaded data " << "into the temporary file: "
+                                                 << file.fileName());
 
                 res = image.load(file.fileName());
                 if (!res) {
@@ -663,8 +663,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 
     QNDEBUG(
         "note_editor:delegate",
-        "Successfully loaded the image from "
-            << "the downloaded data");
+        "Successfully loaded the image from " << "the downloaded data");
 
     QByteArray pngImageData;
     QBuffer buffer(&pngImageData);
@@ -686,8 +685,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
     if (Q_UNLIKELY(!addResource(pngImageData, url))) {
         QNDEBUG(
             "note_editor:delegate",
-            "Wasn't able to add the image to note "
-                << "as a resource");
+            "Wasn't able to add the image to note " << "as a resource");
         Q_UNUSED(m_failingImageUrls.insert(url))
         checkImageResourcesReady();
         return;
@@ -703,8 +701,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 void InsertHtmlDelegate::checkImageResourcesReady()
 {
     QNDEBUG(
-        "note_editor:delegate",
-        "InsertHtmlDelegate::checkImageResourcesReady");
+        "note_editor:delegate", "InsertHtmlDelegate::checkImageResourcesReady");
 
     if (!m_pendingImageUrls.isEmpty()) {
         QNDEBUG(
@@ -856,7 +853,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                 const ImgData & imgData = it.value();
                 ErrorString resourceHtmlComposingError;
 
-                auto res = m_enmlTagsConverter->convertResource(imgData.m_resource);
+                auto res =
+                    m_enmlTagsConverter->convertResource(imgData.m_resource);
                 if (!res.isValid()) {
                     removeAddedResourcesFromNote();
                     ErrorString errorDescription(
@@ -1112,8 +1110,7 @@ bool InsertHtmlDelegate::addResource(
             << ", mime type name = " << mimeType.name());
 
     Q_EMIT saveResourceDataToTemporaryFile(
-        pNote->localId(), resource.localId(), resourceData, dataHash,
-        requestId,
+        pNote->localId(), resource.localId(), resourceData, dataHash, requestId,
         /* is image = */ true);
 
     return true;

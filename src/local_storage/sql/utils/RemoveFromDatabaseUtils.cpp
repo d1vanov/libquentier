@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -87,7 +87,8 @@ bool removeUserAttributes(
     ErrorString & errorDescription)
 {
     if (!removeUserAttributesViewedPromotions(
-            userId, database, errorDescription)) {
+            userId, database, errorDescription))
+    {
         return false;
     }
 

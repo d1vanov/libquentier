@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,14 +39,14 @@ QFuture<ISyncConflictResolver::NoteConflictResolution>
             << "guid = " << theirs.guid().value_or(QStringLiteral("<not set>"))
             << ", update sequence number = "
             << (theirs.updateSequenceNum()
-                ? QString::number(*theirs.updateSequenceNum())
-                : QStringLiteral("<not set>"))
-            << ", mine: local id = " << mine.localId() << ", guid = "
-            << mine.guid().value_or(QStringLiteral("<not set>"))
+                    ? QString::number(*theirs.updateSequenceNum())
+                    : QStringLiteral("<not set>"))
+            << ", mine: local id = " << mine.localId()
+            << ", guid = " << mine.guid().value_or(QStringLiteral("<not set>"))
             << ", update sequence number = "
             << (mine.updateSequenceNum()
-                ? QString::number(*mine.updateSequenceNum())
-                : QStringLiteral("<not set>")));
+                    ? QString::number(*mine.updateSequenceNum())
+                    : QStringLiteral("<not set>")));
 
     using Resolution = ISyncConflictResolver::NoteConflictResolution;
 
@@ -94,9 +94,9 @@ QFuture<ISyncConflictResolver::NoteConflictResolution>
         "Mine note should be considered a local conflicting note");
 
     markAsLocalConflictingNote(*theirs.guid(), mine);
-    return threading::makeReadyFuture<Resolution>(
-        Resolution{ISyncConflictResolver::ConflictResolution::MoveMine<
-            qevercloud::Note>{std::move(mine)}});
+    return threading::makeReadyFuture<Resolution>(Resolution{
+        ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Note>{
+            std::move(mine)}});
 }
 
 void SimpleNoteSyncConflictResolver::markAsLocalConflictingNote(
@@ -112,9 +112,7 @@ void SimpleNoteSyncConflictResolver::markAsLocalConflictingNote(
     mine.mutableAttributes()->setConflictSourceNoteGuid(std::move(theirsGuid));
     mine.setTitle(utils::makeLocalConflictingNoteTitle(mine));
 
-    if (mine.resources() &&
-        !mine.resources()->isEmpty())
-    {
+    if (mine.resources() && !mine.resources()->isEmpty()) {
         for (auto & resource: *mine.mutableResources()) {
             resource.setGuid(std::nullopt);
             resource.setNoteGuid(std::nullopt);

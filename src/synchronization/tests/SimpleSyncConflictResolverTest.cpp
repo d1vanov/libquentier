@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -203,9 +203,8 @@ TEST_F(SimpleSyncConflictResolverTest, DelegateToTagConflictResolver)
     qevercloud::Tag mine;
     mine.setName(QStringLiteral("mine"));
 
-    const auto resolution =
-        ISyncConflictResolver::TagConflictResolution{
-            ISyncConflictResolver::ConflictResolution::UseTheirs{}};
+    const auto resolution = ISyncConflictResolver::TagConflictResolution{
+        ISyncConflictResolver::ConflictResolution::UseTheirs{}};
 
     EXPECT_CALL(*m_mockTagConflictResolver, resolveTagConflict(theirs, mine))
         .WillOnce(Return(threading::makeReadyFuture(resolution)));

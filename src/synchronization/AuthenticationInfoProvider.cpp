@@ -200,8 +200,7 @@ QFuture<std::pair<Account, IAuthenticationInfoPtr>>
                 Q_ASSERT(authenticationInfo);
                 const auto userId = authenticationInfo->userId();
                 auto accountFuture = findAccountForUserId(
-                    userId,
-                    authenticationInfo->authToken(),
+                    userId, authenticationInfo->authToken(),
                     authenticationInfo->shardId(),
                     authenticationInfo->userStoreCookies());
 
@@ -581,7 +580,8 @@ void AuthenticationInfoProvider::clearCaches(
         clearAllLinkedNotebookCaches();
     }
     else if (std::holds_alternative<ClearCacheOption::AllUsers>(
-                 clearCacheOptions)) {
+                 clearCacheOptions))
+    {
         clearAllUserCaches();
     }
     else if (std::holds_alternative<ClearCacheOption::AllLinkedNotebooks>(
@@ -1085,10 +1085,9 @@ QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
             if (Q_UNLIKELY(name.isEmpty())) {
                 QNWARNING(
                     "synchronization::AuthenticationInfoProvider",
-                    "User for id " << userId
-                                   << " has no username: " << user);
-                promise->setException(RuntimeError{ErrorString{QStringLiteral(
-                    "Authenticated user has no username")}});
+                    "User for id " << userId << " has no username: " << user);
+                promise->setException(RuntimeError{ErrorString{
+                    QStringLiteral("Authenticated user has no username")}});
                 promise->finish();
                 return;
             }
@@ -1254,8 +1253,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
             [this, promise, authenticationInfo = std::move(authenticationInfo),
              account = std::move(account),
              linkedNotebookGuid = std::move(linkedNotebookGuid)] {
-                QWriteLocker locker{
-                    &m_linkedNotebookAuthenticationInfosRWLock};
+                QWriteLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
 
                 ApplicationSettings settings{
                     account, QString::fromUtf8(gSynchronizationPersistence)};

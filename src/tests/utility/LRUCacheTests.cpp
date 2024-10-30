@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -267,7 +267,8 @@ bool testRemovalFromLRUCache(QString & error)
     }
 
     if (Q_UNLIKELY(
-            (pSecondItemValue == nullptr) || (pThirdItemValue == nullptr))) {
+            (pSecondItemValue == nullptr) || (pThirdItemValue == nullptr)))
+    {
         error = QStringLiteral(
             "One or some of items inserted into LRU cache and "
             "not removed from it were not found in it");
@@ -818,7 +819,8 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     const int * pSeventhItemValue = cache.get(seventhItemName);
 
     if (Q_UNLIKELY(
-            (pFirstItemValue != nullptr) || (pSecondItemValue != nullptr))) {
+            (pFirstItemValue != nullptr) || (pSecondItemValue != nullptr)))
+    {
         error = QStringLiteral(
             "LRUCache's get method returned non-null pointer for items which "
             "should have been automatically removed from the cache");

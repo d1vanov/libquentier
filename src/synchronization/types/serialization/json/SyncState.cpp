@@ -21,8 +21,8 @@
 #include <synchronization/types/SyncState.h>
 #include <synchronization/types/SyncStateBuilder.h>
 
-#include "SerializationUtils.h"
 #include "../Utils.h"
+#include "SerializationUtils.h"
 
 #include <qevercloud/utility/ToRange.h>
 
@@ -138,7 +138,8 @@ ISyncStatePtr deserializeSyncStateFromJson(const QJsonObject & json)
     QHash<qevercloud::Guid, qint32> linkedNotebookUpdateCounts;
     linkedNotebookUpdateCounts.reserve(linkedNotebookUpdateCountsJson.size());
     for (auto it = linkedNotebookUpdateCountsJson.constBegin(),
-         end = linkedNotebookUpdateCountsJson.constEnd(); it != end; ++it)
+              end = linkedNotebookUpdateCountsJson.constEnd();
+         it != end; ++it)
     {
         const auto & linkedNotebookUpdateCountJson = *it;
         if (!linkedNotebookUpdateCountJson.isObject()) {
@@ -174,7 +175,8 @@ ISyncStatePtr deserializeSyncStateFromJson(const QJsonObject & json)
     QHash<qevercloud::Guid, qevercloud::Timestamp> linkedNotebookLastSyncTimes;
     linkedNotebookLastSyncTimes.reserve(linkedNotebookLastSyncTimesJson.size());
     for (auto it = linkedNotebookLastSyncTimesJson.constBegin(),
-         end = linkedNotebookLastSyncTimesJson.constEnd(); it != end; ++it)
+              end = linkedNotebookLastSyncTimesJson.constEnd();
+         it != end; ++it)
     {
         const auto & linkedNotebookLastSyncTimeJson = *it;
         if (!linkedNotebookLastSyncTimeJson.isObject()) {

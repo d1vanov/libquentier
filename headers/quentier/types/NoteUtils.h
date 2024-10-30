@@ -50,7 +50,7 @@ namespace quentier {
     const QString & noteContent, ErrorString * errorDescription = nullptr);
 
 [[nodiscard]] QUENTIER_EXPORT std::pair<QString, QStringList>
-noteContentToPlainTextAndListOfWords(
-    const QString & noteContent, ErrorString * errorDescription = nullptr);
+    noteContentToPlainTextAndListOfWords(
+        const QString & noteContent, ErrorString * errorDescription = nullptr);
 
 } // namespace quentier

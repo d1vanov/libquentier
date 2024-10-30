@@ -78,7 +78,7 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
         QNDEBUG(
             "synchronization::NoteFullDataDownloader",
             "Got " << m_queuedRequests.size() << " delayed note download "
-                << "requests now");
+                   << "requests now");
 
         return future;
     }

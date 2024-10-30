@@ -306,8 +306,8 @@ void NoteEditorLocalStorageBroker::onNotePut(const qevercloud::Note & note)
 {
     QNDEBUG(
         "note_editor::NoteEditorLocalStorageBroker",
-        "NoteEditorLocalStorageBroker::onNoteUpdated: "
-            << "note local id: " << note.localId());
+        "NoteEditorLocalStorageBroker::onNoteUpdated: " << "note local id: "
+                                                        << note.localId());
 
     onNotePutImpl(note);
 }

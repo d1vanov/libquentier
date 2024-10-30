@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,7 +42,8 @@ class Result
 public:
     template <
         typename T1 = T,
-        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
+            nullptr>
     explicit Result(T1 t) : m_valueOrError{std::move(t)}
     {}
 
@@ -95,7 +96,8 @@ public:
 
     template <
         typename T1 = T,
-        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
+            nullptr>
     [[nodiscard]] T1 & get()
     {
         // NOTE: std::get also performs the check of what is stored inside the
@@ -115,7 +117,8 @@ public:
 
     template <
         typename T1 = T,
-        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
+            nullptr>
     [[nodiscard]] const T1 & get() const
     {
         // NOTE: std::get also performs the check of what is stored inside the
@@ -135,7 +138,8 @@ public:
 
     template <
         typename T1 = T,
-        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
+            nullptr>
     [[nodiscard]] T1 & operator*()
     {
         return get();
@@ -143,7 +147,8 @@ public:
 
     template <
         typename T1 = T,
-        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * = nullptr>
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
+            nullptr>
     [[nodiscard]] const T1 & operator*() const
     {
         return get();

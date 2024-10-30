@@ -30,7 +30,8 @@
 namespace quentier::synchronization {
 
 ResourceFullDataDownloader::ResourceFullDataDownloader(
-    const quint32 maxInFlightDownloads) : m_maxInFlightDownloads{maxInFlightDownloads}
+    const quint32 maxInFlightDownloads) :
+    m_maxInFlightDownloads{maxInFlightDownloads}
 {
     if (Q_UNLIKELY(m_maxInFlightDownloads == 0U)) {
         throw InvalidArgument{ErrorString{QStringLiteral(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,8 +36,7 @@ namespace {
     const IKeychainService::ErrorCode errorCode)
 {
     ErrorString error{QT_TRANSLATE_NOOP(
-        "utility::keychain::IKeychainService",
-        "Keychain job failed")};
+        "utility::keychain::IKeychainService", "Keychain job failed")};
 
     QString errorCodeStr;
     QTextStream strm{&errorCodeStr};
@@ -98,8 +97,7 @@ IKeychainService::Exception::Exception(
 IKeychainService::Exception::Exception(
     IKeychainService::ErrorCode errorCode,
     ErrorString errorDescription) noexcept :
-    IQuentierException{std::move(errorDescription)},
-    m_errorCode{errorCode}
+    IQuentierException{std::move(errorDescription)}, m_errorCode{errorCode}
 {}
 
 IKeychainService::ErrorCode IKeychainService::Exception::errorCode()

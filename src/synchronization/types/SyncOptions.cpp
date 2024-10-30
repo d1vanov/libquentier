@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,7 +69,7 @@ QTextStream & SyncOptions::print(QTextStream & strm) const
         strm << "{timeout = " << m_ctx->connectionTimeout()
              << ", increase connection timeout exponentially = "
              << (m_ctx->increaseConnectionTimeoutExponentially() ? "true"
-                                                              : "false")
+                                                                 : "false")
              << ", max connection timeout = " << m_ctx->maxConnectionTimeout()
              << ", max request retry count = " << m_ctx->maxRequestRetryCount()
              << ", cookies: ";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -144,8 +144,9 @@ TEST_F(
 
     // The following attempt to read password should go to the secondary
     // keychain only
-    EXPECT_CALL(*m_mockSecondaryKeychain, readPassword(service, key)).WillOnce(
-        Return(threading::makeReadyFuture<QString>(QString{password})));
+    EXPECT_CALL(*m_mockSecondaryKeychain, readPassword(service, key))
+        .WillOnce(
+            Return(threading::makeReadyFuture<QString>(QString{password})));
 
     auto readPasswordFuture =
         compositeKeychainService->readPassword(service, key);

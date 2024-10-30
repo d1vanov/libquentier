@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,7 @@
 
 namespace quentier::synchronization {
 
-ISyncStateStorage::ISyncStateStorage(QObject * parent) :
-    QObject(parent)
-{}
+ISyncStateStorage::ISyncStateStorage(QObject * parent) : QObject(parent) {}
 
 ISyncStateStorage::~ISyncStateStorage() = default;
 

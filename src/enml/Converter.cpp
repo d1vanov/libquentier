@@ -1765,8 +1765,7 @@ Result<QString, ErrorString> Converter::validateAndFixupEnml(
     auto elementPrefixSize = elementPrefix.size();
 
     while (true) {
-        auto attributeNameIndex =
-            error.indexOf(attributePrefix, lastIndex);
+        auto attributeNameIndex = error.indexOf(attributePrefix, lastIndex);
         if (attributeNameIndex < 0) {
             break;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,14 +23,12 @@
 
 namespace quentier::synchronization {
 
-namespace
-{
+namespace {
 
 template <class T>
 void printSyncMode(T & t, const SynchronizationMode syncMode)
 {
-    switch (syncMode)
-    {
+    switch (syncMode) {
     case SynchronizationMode::Full:
         t << "Full";
         break;

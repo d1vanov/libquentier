@@ -48,8 +48,7 @@ namespace quentier {
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
     Callback callback, NoteEditorPrivate & noteEditor,
     QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
-    ResourceInfo & resourceInfo,
-    QList<qevercloud::Resource> addedResources,
+    ResourceInfo & resourceInfo, QList<qevercloud::Resource> addedResources,
     QStringList resourceFileStoragePaths, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_addedResources(std::move(addedResources)),
@@ -150,8 +149,8 @@ void InsertHtmlUndoCommand::redoImpl()
                     "note_editor:undo",
                     "Trying to deduce the mime type from the resource data");
 
-                mimeType = mimeDatabase.mimeTypeForData(
-                    *resource.data()->body());
+                mimeType =
+                    mimeDatabase.mimeTypeForData(*resource.data()->body());
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,8 +28,7 @@
 namespace quentier::local_storage::sql::tests::utils {
 
 void prepareLocalStorage(
-    const QString & localStorageDirPath,
-    ConnectionPool & connectionPool)
+    const QString & localStorageDirPath, ConnectionPool & connectionPool)
 {
     QDir dir{localStorageDirPath};
     if (!dir.exists()) {

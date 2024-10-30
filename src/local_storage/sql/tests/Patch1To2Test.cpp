@@ -35,8 +35,8 @@
 #include <QFile>
 #include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QtGlobal>
 #include <QThread>
+#include <QtGlobal>
 
 namespace quentier::local_storage::sql::tests {
 
@@ -53,9 +53,10 @@ TEST(Patch1To2Test, Ctor)
     auto connectionPool = utils::createConnectionPool();
     auto pWriterThread = std::make_shared<QThread>();
 
-    EXPECT_NO_THROW(const auto patch = std::make_shared<Patch1To2>(
-        std::move(account), std::move(connectionPool),
-        std::move(pWriterThread)));
+    EXPECT_NO_THROW(
+        const auto patch = std::make_shared<Patch1To2>(
+            std::move(account), std::move(connectionPool),
+            std::move(pWriterThread)));
 }
 
 TEST(Patch1To2Test, CtorEmptyAccount)

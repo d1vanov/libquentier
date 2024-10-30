@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,8 +27,7 @@ QuentierUndoCommand::QuentierUndoCommand(QUndoCommand * parent) :
 
 QuentierUndoCommand::QuentierUndoCommand(
     const QString & text, QUndoCommand * parent) :
-    QObject(nullptr),
-    QUndoCommand(text, parent)
+    QObject(nullptr), QUndoCommand(text, parent)
 {}
 
 QuentierUndoCommand::~QuentierUndoCommand() noexcept = default;

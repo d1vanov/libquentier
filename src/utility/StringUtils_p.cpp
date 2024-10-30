@@ -70,7 +70,8 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
             continue;
         }
 
-        const auto diacriticIndex = m_diacriticLetters.indexOf(currentCharacter);
+        const auto diacriticIndex =
+            m_diacriticLetters.indexOf(currentCharacter);
         if (diacriticIndex < 0) {
             continue;
         }

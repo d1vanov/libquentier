@@ -960,8 +960,7 @@ TEST_F(
 }
 
 TEST_F(
-    EnexConverterTest,
-    ExportSingleNoteWithTagsAndResourcesToEnexAndImportBack)
+    EnexConverterTest, ExportSingleNoteWithTagsAndResourcesToEnexAndImportBack)
 {
     qevercloud::Note note;
     setupSampleNote(note);
@@ -993,8 +992,7 @@ TEST_F(
 }
 
 TEST_F(
-    EnexConverterTest,
-    ExportSingleNoteWithTagsToEnexButSkipTagsAndImportBack)
+    EnexConverterTest, ExportSingleNoteWithTagsToEnexButSkipTagsAndImportBack)
 {
     qevercloud::Note note;
     setupSampleNote(note);
@@ -1023,9 +1021,7 @@ TEST_F(
     EXPECT_TRUE(res) << error.toStdString();
 }
 
-TEST_F(
-    EnexConverterTest,
-    ExportMultipleNotesWithTagsAndResourcesAndImportBack)
+TEST_F(EnexConverterTest, ExportMultipleNotesWithTagsAndResourcesAndImportBack)
 {
     qevercloud::Note firstNote;
     setupSampleNote(firstNote);
@@ -1049,10 +1045,8 @@ TEST_F(
 
     setupNoteResourcesV2(secondNote);
 
-    auto notes = QList<qevercloud::Note>{}
-        << firstNote
-        << secondNote
-        << thirdNote;
+    auto notes = QList<qevercloud::Note>{} << firstNote << secondNote
+                                           << thirdNote;
 
     auto exportRes = m_converter->exportNotesToEnex(
         notes, tagNamesByTagLocalIds, IConverter::EnexExportTags::Yes);
@@ -1078,8 +1072,7 @@ class ImportEnexTest :
 constexpr std::array gSampleEnexIndexes{1, 2, 3, 4};
 
 INSTANTIATE_TEST_SUITE_P(
-    ImportEnexTestInstance,
-    ImportEnexTest,
+    ImportEnexTestInstance, ImportEnexTest,
     testing::ValuesIn(gSampleEnexIndexes));
 
 TEST_P(ImportEnexTest, ImportEnex)

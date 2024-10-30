@@ -325,30 +325,30 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -492,36 +492,36 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                if (it->updateSequenceNum().value() == 2) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{
                         ErrorString{"Failed to download full resource data"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -702,30 +702,30 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -899,30 +899,30 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1122,30 +1122,30 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1305,30 +1305,30 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1533,30 +1533,30 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1753,30 +1753,30 @@ TEST_F(
             });
 
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {
@@ -1972,42 +1972,41 @@ TEST_F(
     const qint32 rateLimitDurationSec = 100;
     int downloadFullResourceDataCallCount = 0;
     EXPECT_CALL(*m_mockResourceFullDataDownloader, downloadFullResourceData)
-        .WillRepeatedly(
-            [&](qevercloud::Guid resourceGuid,
-                [[maybe_unused]] const qevercloud::INoteStorePtr & noteStore,
-                const qevercloud::IRequestContextPtr & ctx) {
-                ++downloadFullResourceDataCallCount;
+        .WillRepeatedly([&](qevercloud::Guid resourceGuid,
+                            [[maybe_unused]] const qevercloud::INoteStorePtr &
+                                noteStore,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            ++downloadFullResourceDataCallCount;
 
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                const auto it = std::find_if(
-                    resources.begin(), resources.end(),
-                    [&](const qevercloud::Resource & resource) {
-                        return resource.guid() &&
-                            (*resource.guid() == resourceGuid);
-                    });
-                if (Q_UNLIKELY(it == resources.end())) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(RuntimeError{ErrorString{
+            const auto it = std::find_if(
+                resources.begin(), resources.end(),
+                [&](const qevercloud::Resource & resource) {
+                    return resource.guid() &&
+                        (*resource.guid() == resourceGuid);
+                });
+            if (Q_UNLIKELY(it == resources.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    RuntimeError{ErrorString{
                         "Detected attempt to download unrecognized resource"}});
-                }
+            }
 
-                const int index =
-                    static_cast<int>(std::distance(resources.begin(), it));
+            const int index =
+                static_cast<int>(std::distance(resources.begin(), it));
 
-                if (it->updateSequenceNum().value() == 2) {
-                    return threading::makeExceptionalFuture<
-                        qevercloud::Resource>(
-                        qevercloud::EDAMSystemExceptionBuilder{}
-                            .setErrorCode(
-                                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-                            .setRateLimitDuration(rateLimitDurationSec)
-                            .build());
-                }
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Resource>(
+                    qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .setRateLimitDuration(rateLimitDurationSec)
+                        .build());
+            }
 
-                return threading::makeReadyFuture<qevercloud::Resource>(
-                    addDataToResource(*it, index));
-            });
+            return threading::makeReadyFuture<qevercloud::Resource>(
+                addDataToResource(*it, index));
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putResource)
         .WillRepeatedly([&](const qevercloud::Resource & resource) {

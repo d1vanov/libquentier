@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,8 +39,7 @@ namespace quentier {
 RemoveResourceDelegate::RemoveResourceDelegate(
     qevercloud::Resource resourceToRemove, NoteEditorPrivate & noteEditor,
     local_storage::ILocalStoragePtr localStorage) :
-    m_noteEditor{noteEditor},
-    m_localStorage{std::move(localStorage)},
+    m_noteEditor{noteEditor}, m_localStorage{std::move(localStorage)},
     m_resource{std::move(resourceToRemove)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
@@ -109,7 +108,8 @@ void RemoveResourceDelegate::doStart()
     ApplicationSettings appSettings(*account, NOTE_EDITOR_SETTINGS_NAME);
     int resourceDataSizeThreshold = -1;
     if (appSettings.contains(
-            NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD)) {
+            NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD))
+    {
         const QVariant threshold = appSettings.value(
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD);
 
@@ -119,8 +119,7 @@ void RemoveResourceDelegate::doStart()
             QNWARNING(
                 "note_editor::RemoveResourceDelegate",
                 "Failed to convert resource undo data size threshold from "
-                    << "persistent settings to int: "
-                    << threshold);
+                    << "persistent settings to int: " << threshold);
             resourceDataSizeThreshold = -1;
         }
     }
@@ -179,8 +178,8 @@ void RemoveResourceDelegate::doStart()
 
         auto thenFuture = threading::then(
             std::move(future), this,
-            [this, selfWeak](
-                const std::optional<qevercloud::Resource> & resource) {
+            [this,
+             selfWeak](const std::optional<qevercloud::Resource> & resource) {
                 if (selfWeak.isNull()) {
                     return;
                 }
@@ -232,8 +231,8 @@ void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 
     auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());
     if (Q_UNLIKELY(!page)) {
-        ErrorString error{QT_TR_NOOP(
-            "Can't remove the attachment: no note editor page")};
+        ErrorString error{
+            QT_TR_NOOP("Can't remove the attachment: no note editor page")};
         QNWARNING("note_editor::RemoveResourceDelegate", error);
         Q_EMIT notifyError(error);
         return;

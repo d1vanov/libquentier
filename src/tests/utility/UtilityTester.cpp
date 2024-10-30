@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,9 +29,9 @@
 #include <quentier/utility/SysInfo.h>
 
 #include <QApplication>
+#include <QTest>
 #include <QTextStream>
 #include <QTimer>
-#include <QTest>
 
 namespace quentier::test {
 

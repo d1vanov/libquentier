@@ -190,8 +190,8 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 
     threading::thenOrFailed(
         std::move(localStorageFuture), currentThread, promise,
-        [this, promise, guid, selfWeak](
-            std::optional<qevercloud::LinkedNotebook> linkedNotebook) {
+        [this, promise, guid,
+         selfWeak](std::optional<qevercloud::LinkedNotebook> linkedNotebook) {
             if (const auto self = selfWeak.lock()) {
                 const QMutexLocker locker{&m_linkedNotebooksByGuidMutex};
                 m_linkedNotebooksByGuid[guid] = linkedNotebook;
@@ -245,7 +245,8 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
             if (!notebook->linkedNotebookGuid()) {
                 QNDEBUG(
                     "synchronization::LinkedNotebookFinder",
-                    "Notebook found by local id " << notebookLocalId
+                    "Notebook found by local id "
+                        << notebookLocalId
                         << "does not have linked notebook guid: " << *notebook);
 
                 if (const auto self = selfWeak.lock()) {
@@ -289,8 +290,8 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
 
     threading::thenOrFailed(
         std::move(notebookFuture), currentThread, promise,
-        [this, selfWeak, promise, notebookGuid](
-            const std::optional<qevercloud::Notebook> & notebook) {
+        [this, selfWeak, promise,
+         notebookGuid](const std::optional<qevercloud::Notebook> & notebook) {
             if (Q_UNLIKELY(!notebook)) {
                 QNDEBUG(
                     "synchronization::LinkedNotebookFinder",
@@ -318,7 +319,8 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
             if (!notebook->linkedNotebookGuid()) {
                 QNDEBUG(
                     "synchronization::LinkedNotebookFinder",
-                    "Notebook found by guid " << notebookGuid << "does not "
+                    "Notebook found by guid "
+                        << notebookGuid << "does not "
                         << "have linked notebook guid: " << *notebook);
 
                 if (const auto self = selfWeak.lock()) {
@@ -361,9 +363,8 @@ void LinkedNotebookFinder::onNotebookFound(
     threading::thenOrFailed(
         std::move(linkedNotebookFuture), currentThread, promise,
         [this, selfWeak, promise,
-            linkedNotebookGuid = std::move(linkedNotebookGuid),
-            notebookLocalId = notebook.localId(),
-            notebookGuid = notebook.guid()](
+         linkedNotebookGuid = std::move(linkedNotebookGuid),
+         notebookLocalId = notebook.localId(), notebookGuid = notebook.guid()](
             std::optional<qevercloud::LinkedNotebook> linkedNotebook) {
             if (const auto self = selfWeak.lock()) {
                 {
@@ -373,8 +374,7 @@ void LinkedNotebookFinder::onNotebookFound(
                         linkedNotebook;
                 }
 
-                if (notebookGuid)
-                {
+                if (notebookGuid) {
                     const QMutexLocker locker{
                         &m_linkedNotebooksByNotebookGuidMutex};
                     m_linkedNotebooksByNotebookGuid[*notebookGuid] =

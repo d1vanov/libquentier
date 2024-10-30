@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,8 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
     SimpleNotebookSyncConflictResolver::resolveNotebookConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine)
 {
-    return m_genericResolver->resolveConflict(std::move(theirs), std::move(mine));
+    return m_genericResolver->resolveConflict(
+        std::move(theirs), std::move(mine));
 }
 
 } // namespace quentier::synchronization

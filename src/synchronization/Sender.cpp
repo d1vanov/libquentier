@@ -54,8 +54,7 @@ Sender::Sender(
     ISyncStateStoragePtr syncStateStorage,
     INoteStoreProviderPtr noteStoreProvider, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy) :
-    m_account{std::move(account)},
-    m_localStorage{std::move(localStorage)},
+    m_account{std::move(account)}, m_localStorage{std::move(localStorage)},
     // clang-format off
     m_syncStateStorage{std::move(syncStateStorage)},
     m_noteStoreProvider{std::move(noteStoreProvider)}, m_ctx{std::move(ctx)},
@@ -326,7 +325,8 @@ void Sender::sendNotes(
             const QStringList & tagLocalIds = note.tagLocalIds();
             for (const QString & tagLocalId: std::as_const(tagLocalIds)) {
                 if (sendContext->failedToSendNewTagLocalIds.contains(
-                        tagLocalId)) {
+                        tagLocalId))
+                {
                     containsFailedToSendTags = true;
                     break;
                 }
@@ -476,9 +476,7 @@ void Sender::sendNoteImpl(
     const qevercloud::INoteStorePtr & noteStore,
     std::shared_ptr<QPromise<qevercloud::Note>> notePromise) const
 {
-    QNDEBUG(
-        "synchronization::Sender",
-        "Sender::sendNoteImpl: " << note);
+    QNDEBUG("synchronization::Sender", "Sender::sendNoteImpl: " << note);
 
     Q_ASSERT(noteStore);
 
@@ -512,7 +510,8 @@ void Sender::sendNoteImpl(
                         (*noteMetadata.resources())[i];
 
                     resource.setGuid(serverNoteResource.guid());
-                    resource.setUpdateSequenceNum(serverNoteResource.updateSequenceNum());
+                    resource.setUpdateSequenceNum(
+                        serverNoteResource.updateSequenceNum());
                     resource.setNoteGuid(note.guid());
                     resource.setLocallyModified(false);
                 }
@@ -875,7 +874,8 @@ void Sender::sendTags(
         if (!tagParentLocalId.isEmpty()) {
             const QMutexLocker locker{sendContext->sendStatusMutex.get()};
             if (sendContext->failedToSendNewTagLocalIds.contains(
-                    tagParentLocalId)) {
+                    tagParentLocalId))
+            {
                 sendContext->failedToSendNewTagLocalIds.insert(tag.localId());
                 auto status = sendStatus(sendContext, tag.linkedNotebookGuid());
 
@@ -895,7 +895,8 @@ void Sender::sendTags(
                 sendContext->newTagLocalIdsToGuids.constFind(
                     tag.parentTagLocalId());
             if (parentTagGuidIt !=
-                sendContext->newTagLocalIdsToGuids.constEnd()) {
+                sendContext->newTagLocalIdsToGuids.constEnd())
+            {
                 tag.setParentGuid(parentTagGuidIt.value());
             }
         }
@@ -994,7 +995,8 @@ void Sender::sendTag(
                 if (!tagParentLocalId.isEmpty()) {
                     QMutexLocker locker{sendContext->sendStatusMutex.get()};
                     if (sendContext->failedToSendNewTagLocalIds.contains(
-                            tagParentLocalId)) {
+                            tagParentLocalId))
+                    {
                         locker.unlock();
 
                         tagPromise->setException(RuntimeError{ErrorString{
@@ -1008,7 +1010,8 @@ void Sender::sendTag(
                         sendContext->newTagLocalIdsToGuids.constFind(
                             tag.parentTagLocalId());
                     if (parentTagGuidIt !=
-                        sendContext->newTagLocalIdsToGuids.constEnd()) {
+                        sendContext->newTagLocalIdsToGuids.constEnd())
+                    {
                         tag.setParentGuid(parentTagGuidIt.value());
                     }
                 }
@@ -2040,7 +2043,8 @@ void Sender::checkUpdateSequenceNumber(
             lastUpdateCount(*sendContext, linkedNotebookGuid);
 
         if (previousUpdateCount &&
-            (updateSequenceNumber != *previousUpdateCount + 1)) {
+            (updateSequenceNumber != *previousUpdateCount + 1))
+        {
             status->m_needToRepeatIncrementalSync = true;
             QNDEBUG(
                 "synchronization::Sender",

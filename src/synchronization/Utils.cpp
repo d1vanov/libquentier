@@ -54,8 +54,7 @@ bool isAuthenticationTokenAboutToExpire(
         halfAnHourMsec;
 }
 
-QString linkedNotebookInfo(
-    const qevercloud::LinkedNotebook & linkedNotebook)
+QString linkedNotebookInfo(const qevercloud::LinkedNotebook & linkedNotebook)
 {
     QString res;
     QTextStream strm{&res};
@@ -107,8 +106,7 @@ QString linkedNotebooksInfo(
     return res;
 }
 
-QString syncChunksUsnInfo(
-    const QList<qevercloud::SyncChunk> & syncChunks)
+QString syncChunksUsnInfo(const QList<qevercloud::SyncChunk> & syncChunks)
 {
     if (syncChunks.isEmpty()) {
         return QStringLiteral("<empty>");

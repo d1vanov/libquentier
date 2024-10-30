@@ -61,8 +61,8 @@ bool WebSocketTransport::parseMessage(
         if (!document.isObject()) {
             QNWARNING(
                 "note_editor",
-                "Failed to parse JSON message that is "
-                    << "not an object: " << messageData);
+                "Failed to parse JSON message that is " << "not an object: "
+                                                        << messageData);
             return false;
         }
 

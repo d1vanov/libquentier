@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -92,7 +92,8 @@ void FileCopierPrivate::copyFile(
 
             // Check if cancellation is pending first
             if (m_cancelled) {
-                QNDEBUG("utility:file_copier", "File copying has been canceled");
+                QNDEBUG(
+                    "utility:file_copier", "File copying has been canceled");
                 clear();
                 Q_EMIT cancelled(sourcePath, destPath);
                 return;
@@ -102,7 +103,7 @@ void FileCopierPrivate::copyFile(
             if (Q_UNLIKELY(bytesRead <= 0)) {
                 ErrorString error(
                     QT_TR_NOOP("Can't copy file, failed to read data "
-                            "from the source file"));
+                               "from the source file"));
 
                 error.details() = sourcePath;
                 QNWARNING("utility:file_copier", error);
@@ -118,7 +119,7 @@ void FileCopierPrivate::copyFile(
             if (Q_UNLIKELY(bytesWritten < 0)) {
                 ErrorString error(
                     QT_TR_NOOP("Can't copy file, failed to write data "
-                            "to the destination file"));
+                               "to the destination file"));
 
                 error.details() = destPath;
                 QNWARNING("utility:file_copier", error);
@@ -138,8 +139,9 @@ void FileCopierPrivate::copyFile(
                 "File copying progress update: "
                     << "progress = " << m_currentProgress
                     << ", total bytes written = " << totalBytesWritten
-                    << ", source file size = " << fromFileSize << ", source path = "
-                    << sourcePath << ", dest path = " << destPath);
+                    << ", source file size = " << fromFileSize
+                    << ", source path = " << sourcePath
+                    << ", dest path = " << destPath);
 
             Q_EMIT progressUpdate(m_currentProgress);
 

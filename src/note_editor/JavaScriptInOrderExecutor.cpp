@@ -24,8 +24,7 @@ namespace quentier {
 
 JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
     QWebEngineView & view, Canceler canceler, QObject * parent) :
-    QObject(parent),
-    m_view{view}, m_canceler{std::move(canceler)}
+    QObject(parent), m_view{view}, m_canceler{std::move(canceler)}
 {
     Q_ASSERT(m_canceler);
 }

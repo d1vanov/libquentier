@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,8 +26,7 @@ namespace quentier {
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
     NoteEditorPrivate & noteEditorPrivate,
-    QList<qevercloud::Resource> resources,
-    QUndoCommand * parent) :
+    QList<qevercloud::Resource> resources, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resources(std::move(resources))
 {
@@ -36,8 +35,8 @@ NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
     NoteEditorPrivate & noteEditorPrivate,
-    QList<qevercloud::Resource> resources,
-    const QString & text, QUndoCommand * parent) :
+    QList<qevercloud::Resource> resources, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resources(std::move(resources))
 {

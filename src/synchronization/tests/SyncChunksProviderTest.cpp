@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,7 +57,8 @@ struct MockICallback : public ISyncChunksProvider::ICallback
     MOCK_METHOD(
         void, onLinkedNotebookSyncChunksDownloadProgress,
         (qint32 highestDownloadedUsn, qint32 highestServerUsn,
-         qint32 lastPreviousUsn, const qevercloud::LinkedNotebook & linkedNotebook),
+         qint32 lastPreviousUsn,
+         const qevercloud::LinkedNotebook & linkedNotebook),
         (override));
 };
 

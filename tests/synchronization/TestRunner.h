@@ -36,8 +36,7 @@ class TestRunner : public QObject
 {
     Q_OBJECT
 public:
-    explicit TestRunner(
-        QObject * parent = nullptr);
+    explicit TestRunner(QObject * parent = nullptr);
 
     ~TestRunner() override;
 

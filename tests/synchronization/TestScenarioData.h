@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,8 +23,8 @@
 
 #include <quentier/synchronization/types/Errors.h>
 
-#include <qevercloud/exceptions/Fwd.h>
 #include <qevercloud/Constants.h>
+#include <qevercloud/exceptions/Fwd.h>
 
 #include <QMetaType>
 
@@ -74,4 +74,5 @@ struct TestScenarioData
 
 } // namespace quentier::synchronization::tests
 
-Q_DECLARE_METATYPE(quentier::synchronization::tests::TestScenarioData); // NOLINT
+Q_DECLARE_METATYPE(
+    quentier::synchronization::tests::TestScenarioData); // NOLINT

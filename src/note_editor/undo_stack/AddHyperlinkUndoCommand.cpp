@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,17 +37,15 @@ namespace quentier {
     }
 
 AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditor, Callback callback,
-    QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(std::move(callback))
+    NoteEditorPrivate & noteEditor, Callback callback, QUndoCommand * parent) :
+    INoteEditorUndoCommand(noteEditor, parent), m_callback(std::move(callback))
 {
     setText(tr("Add hyperlink"));
 }
 
 AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditor, Callback callback,
-    const QString & text, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, Callback callback, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(std::move(callback))
 {}

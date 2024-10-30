@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,8 +26,8 @@
 #include <quentier/utility/SysInfo.h>
 
 #include <QApplication>
-#include <QTextStream>
 #include <QTest>
+#include <QTextStream>
 
 #define CATCH_EXCEPTION()                                                      \
     catch (const std::exception & exception) {                                 \
@@ -71,7 +71,8 @@ void TypesTester::noteContainsToDoTest()
         const QString error =
             QStringLiteral("Wrong result of Note's containsToDo method");
 
-        QVERIFY2(noteContentContainsCheckedToDo(noteContent), qPrintable(error));
+        QVERIFY2(
+            noteContentContainsCheckedToDo(noteContent), qPrintable(error));
 
         QVERIFY2(
             noteContentContainsUncheckedToDo(noteContent), qPrintable(error));
@@ -150,7 +151,8 @@ void TypesTester::noteContainsEncryptionTest()
             QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
 
         QVERIFY2(
-            !noteContentContainsEncryptedFragments(noteContentWithoutEncryption),
+            !noteContentContainsEncryptedFragments(
+                noteContentWithoutEncryption),
             qPrintable(error));
 
         QVERIFY2(

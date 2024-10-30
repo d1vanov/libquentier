@@ -47,9 +47,8 @@ public:
     TagCounters(
         const qint32 totalTags, const qint32 totalTagsToExpunge,
         ITagsProcessor::ICallbackWeakPtr callbackWeak) :
-        m_totalTags{totalTags},
-        m_totalExpungedTags{totalTagsToExpunge}, m_callbackWeak{
-                                                     std::move(callbackWeak)}
+        m_totalTags{totalTags}, m_totalExpungedTags{totalTagsToExpunge},
+        m_callbackWeak{std::move(callbackWeak)}
     {}
 
     void onAddedTag()
@@ -448,7 +447,8 @@ void TagsProcessor::onFoundDuplicate(
                     resolution))
             {
                 if (std::holds_alternative<ConflictResolution::UseTheirs>(
-                        resolution)) {
+                        resolution))
+                {
                     updatedTag.setLocalId(localTagLocalId);
                     updatedTag.setLocallyFavorited(localTagLocallyFavorited);
                 }

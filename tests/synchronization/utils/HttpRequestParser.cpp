@@ -146,7 +146,8 @@ void HttpRequestParser::tryParseData()
     }
 
     // Now see whether whole body data is present
-    auto headersEndIndex = m_data.indexOf("\r\n\r\n", contentLengthLineEndIndex);
+    auto headersEndIndex =
+        m_data.indexOf("\r\n\r\n", contentLengthLineEndIndex);
     if (headersEndIndex < 0) {
         // No empty line after http headers, probably not all data has
         // arrived yet

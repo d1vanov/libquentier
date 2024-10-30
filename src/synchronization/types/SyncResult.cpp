@@ -150,7 +150,8 @@ QTextStream & SyncResult::print(QTextStream & strm) const
     }
     else {
         for (const auto it:
-             qevercloud::toRange(m_linkedNotebookSyncChunksDataCounters)) {
+             qevercloud::toRange(m_linkedNotebookSyncChunksDataCounters))
+        {
             if (Q_UNLIKELY(!it.value())) {
                 continue;
             }
@@ -186,7 +187,8 @@ QTextStream & SyncResult::print(QTextStream & strm) const
     }
     else {
         for (const auto it:
-             qevercloud::toRange(m_linkedNotebookDownloadNotesStatuses)) {
+             qevercloud::toRange(m_linkedNotebookDownloadNotesStatuses))
+        {
             if (Q_UNLIKELY(!it.value())) {
                 continue;
             }
@@ -249,7 +251,8 @@ QTextStream & SyncResult::print(QTextStream & strm) const
     }
 
     if (std::holds_alternative<RateLimitReachedError>(
-            m_stopSynchronizationError)) {
+            m_stopSynchronizationError))
+    {
         const auto & rateLimitReachedError =
             std::get<RateLimitReachedError>(m_stopSynchronizationError);
         strm << "stopSynchronizationError = RateLimitReachedError{";

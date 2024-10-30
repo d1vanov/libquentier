@@ -99,8 +99,7 @@ bool NoteEditorPage::shouldInterruptJavaScript()
     }
 
     QNINFO(
-        "note_editor",
-        "Note load seems to hang but user wished to wait more");
+        "note_editor", "Note load seems to hang but user wished to wait more");
     return false;
 }
 
@@ -114,7 +113,8 @@ void NoteEditorPage::executeJavaScript(
     m_pJavaScriptInOrderExecutor->append(script, std::move(callback));
 
     if (m_javaScriptAutoExecution &&
-        !m_pJavaScriptInOrderExecutor->inProgress()) {
+        !m_pJavaScriptInOrderExecutor->inProgress())
+    {
         m_pJavaScriptInOrderExecutor->start();
     }
 }

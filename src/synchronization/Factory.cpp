@@ -26,8 +26,8 @@
 #include <synchronization/Authenticator.h>
 #include <synchronization/NoteStoreFactory.h>
 #include <synchronization/ProtocolVersionChecker.h>
-#include <synchronization/Synchronizer.h>
 #include <synchronization/SyncStateStorage.h>
+#include <synchronization/Synchronizer.h>
 #include <synchronization/UserInfoProvider.h>
 #include <synchronization/conflict_resolvers/Factory.h>
 #include <synchronization/conflict_resolvers/SimpleNoteSyncConflictResolver.h>
@@ -66,8 +66,8 @@ ISynchronizerPtr createSynchronizer(
 
     QString host = userStoreUrl.host();
 
-    auto userStore = qevercloud::newUserStore(
-        userStoreUrl.toString(), ctx, retryPolicy);
+    auto userStore =
+        qevercloud::newUserStore(userStoreUrl.toString(), ctx, retryPolicy);
 
     auto protocolVersionChecker =
         std::make_shared<ProtocolVersionChecker>(userStore);
@@ -100,8 +100,8 @@ ISynchronizerPtr createSynchronizer(
 ISyncConflictResolverPtr createSimpleSyncConflictResolver(
     local_storage::ILocalStoragePtr localStorage)
 {
-    auto notebookConflictResolver = createSimpleNotebookSyncConflictResolver(
-        localStorage);
+    auto notebookConflictResolver =
+        createSimpleNotebookSyncConflictResolver(localStorage);
 
     auto savedSearchConflictResolver =
         createSimpleSavedSearchSyncConflictResolver(localStorage);
@@ -113,10 +113,8 @@ ISyncConflictResolverPtr createSimpleSyncConflictResolver(
         std::make_shared<SimpleNoteSyncConflictResolver>();
 
     return std::make_shared<SimpleSyncConflictResolver>(
-        std::move(notebookConflictResolver),
-        std::move(noteConflictResolver),
-        std::move(savedSearchConflictResolver),
-        std::move(tagConflictResolver));
+        std::move(notebookConflictResolver), std::move(noteConflictResolver),
+        std::move(savedSearchConflictResolver), std::move(tagConflictResolver));
 }
 
 ISyncStateStoragePtr createSyncStateStorage(QObject * parent)

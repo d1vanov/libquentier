@@ -44,8 +44,7 @@
 #undef CLANG_SUPPRESS_WARNING
 
 #define CLANG_SUPPRESS_WARNING(warning)                                        \
-    _Pragma(                                                                   \
-        STRINGIFY(clang diagnostic ignored #warning))
+    _Pragma(STRINGIFY(clang diagnostic ignored #warning))
 
 #undef SAVE_WARNINGS
 
@@ -87,8 +86,7 @@
 
 #undef MSVC_SUPPRESS_WARNING
 
-#define MSVC_SUPPRESS_WARNING(number)                                          \
-    __pragma(warning(disable : number))
+#define MSVC_SUPPRESS_WARNING(number) __pragma(warning(disable : number))
 
 #undef SAVE_WARNINGS
 

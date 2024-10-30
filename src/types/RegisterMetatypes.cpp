@@ -49,15 +49,19 @@ void registerMetatypes()
 {
     qRegisterMetaType<Account>("Account");
 
-    qRegisterMetaType<QList<qevercloud::Notebook>>("QList<qevercloud::Notebook>");
+    qRegisterMetaType<QList<qevercloud::Notebook>>(
+        "QList<qevercloud::Notebook>");
     qRegisterMetaType<QList<qevercloud::Note>>("QList<qevercloud::Note>");
     qRegisterMetaType<QList<qevercloud::Tag>>("QList<qevercloud::Tag>");
-    qRegisterMetaType<QList<qevercloud::Resource>>("QList<qevercloud::Resource>");
+    qRegisterMetaType<QList<qevercloud::Resource>>(
+        "QList<qevercloud::Resource>");
     qRegisterMetaType<QList<qevercloud::User>>("QList<qevercloud::User>");
-    qRegisterMetaType<QList<qevercloud::LinkedNotebook>>("QList<qevercloud::LinkedNotebook>");
-    qRegisterMetaType<QList<qevercloud::SavedSearch>>("QList<qevercloud::SavedSearch>");
-    qRegisterMetaType<QList<qevercloud::SharedNotebook>>("QList<qevercloud::SharedNotebook>");
-
+    qRegisterMetaType<QList<qevercloud::LinkedNotebook>>(
+        "QList<qevercloud::LinkedNotebook>");
+    qRegisterMetaType<QList<qevercloud::SavedSearch>>(
+        "QList<qevercloud::SavedSearch>");
+    qRegisterMetaType<QList<qevercloud::SharedNotebook>>(
+        "QList<qevercloud::SharedNotebook>");
 
     qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<QUuid>("QUuid");

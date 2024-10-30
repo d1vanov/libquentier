@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <quentier/threading/Fwd.h>
 #include <quentier/synchronization/IAuthenticator.h>
+#include <quentier/threading/Fwd.h>
 
 #include <QList>
 #include <QMutex>
@@ -52,8 +52,8 @@ public:
     void clear();
 
 public: // IAuthenticator
-    [[nodiscard]] QFuture<IAuthenticationInfoPtr>
-        authenticateNewAccount() override;
+    [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateNewAccount()
+        override;
 
     [[nodiscard]] QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account) override;

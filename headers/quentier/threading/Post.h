@@ -35,8 +35,7 @@ void postToObject(QObject * object, Function && function)
     Q_ASSERT(object);
 
     QMetaObject::invokeMethod(
-        object, std::forward<Function>(function),
-        Qt::QueuedConnection);
+        object, std::forward<Function>(function), Qt::QueuedConnection);
 }
 
 template <typename Function>

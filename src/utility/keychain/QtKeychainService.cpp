@@ -19,8 +19,8 @@
 #include "QtKeychainService.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <qt6keychain/keychain.h>
 #include <QPromise>
+#include <qt6keychain/keychain.h>
 #else
 #include <qt5keychain/keychain.h>
 #include <quentier/threading/Qt5Promise.h>
@@ -75,11 +75,8 @@ QFuture<void> QtKeychainService::writePassword(
     job->setTextData(password);
 
     QObject::connect(
-        job.get(),
-        &QKeychain::WritePasswordJob::finished,
-        job.get(),
-        [promise](QKeychain::Job * job)
-        {
+        job.get(), &QKeychain::WritePasswordJob::finished, job.get(),
+        [promise](QKeychain::Job * job) {
             Q_ASSERT(job);
             const auto errorCode = job->error();
             if (errorCode != QKeychain::NoError) {
@@ -107,15 +104,12 @@ QFuture<QString> QtKeychainService::readPassword(
     job->setKey(key);
 
     QObject::connect(
-        job.get(),
-        &QKeychain::ReadPasswordJob::finished,
-        job.get(),
-        [promise](QKeychain::Job * job)
-        {
+        job.get(), &QKeychain::ReadPasswordJob::finished, job.get(),
+        [promise](QKeychain::Job * job) {
             Q_ASSERT(job);
 
             auto * readPasswordJob =
-                qobject_cast<QKeychain::ReadPasswordJob*>(job);
+                qobject_cast<QKeychain::ReadPasswordJob *>(job);
             Q_ASSERT(readPasswordJob);
 
             const auto errorCode = job->error();
@@ -135,7 +129,8 @@ QFuture<QString> QtKeychainService::readPassword(
     return future;
 }
 
-QFuture<void> QtKeychainService::deletePassword(QString service, QString key) // NOLINT
+QFuture<void> QtKeychainService::deletePassword(
+    QString service, QString key) // NOLINT
 {
     auto promise = std::make_shared<QPromise<void>>();
     auto future = promise->future();
@@ -146,11 +141,8 @@ QFuture<void> QtKeychainService::deletePassword(QString service, QString key) //
     job->setKey(key);
 
     QObject::connect(
-        job.get(),
-        &QKeychain::DeletePasswordJob::finished,
-        job.get(),
-        [promise](QKeychain::Job * job)
-        {
+        job.get(), &QKeychain::DeletePasswordJob::finished, job.get(),
+        [promise](QKeychain::Job * job) {
             Q_ASSERT(job);
             const auto errorCode = job->error();
             if (errorCode != QKeychain::NoError) {

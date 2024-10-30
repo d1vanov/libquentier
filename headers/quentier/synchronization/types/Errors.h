@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,15 +32,15 @@ namespace quentier::synchronization {
  * might return if too much of their API calls were made recently. In case
  * of such error synchronization should be repeated later, after some time
  * passes.
-*/
+ */
 struct QUENTIER_EXPORT RateLimitReachedError
 {
     /**
-      * Number of seconds during which since the current moment during which
-      * any call to Evernote API would again result in "API rate limit
-      * reached" error i.e. the number of seconds to wait for before the next
-      * attempt to run synchronization
-      */
+     * Number of seconds during which since the current moment during which
+     * any call to Evernote API would again result in "API rate limit
+     * reached" error i.e. the number of seconds to wait for before the next
+     * attempt to run synchronization
+     */
     std::optional<qint32> rateLimitDurationSec;
 };
 
@@ -58,8 +58,7 @@ struct QUENTIER_EXPORT RateLimitReachedError
  * synchronization.
  */
 struct QUENTIER_EXPORT AuthenticationExpiredError
-{
-};
+{};
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
     const AuthenticationExpiredError & lhs,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -157,8 +157,8 @@ IAuthenticationInfoPtr Authenticator::authenticateNewAccountImpl()
         return authenticationInfo;
     }
 
-    throw RuntimeError{ErrorString{
-        QStringLiteral("Cannot authenticate to Evernote")}};
+    throw RuntimeError{
+        ErrorString{QStringLiteral("Cannot authenticate to Evernote")}};
 }
 
 } // namespace quentier::synchronization

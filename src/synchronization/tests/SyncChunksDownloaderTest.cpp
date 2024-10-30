@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -498,9 +498,9 @@ TEST_F(
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
                 [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
                     retryPolicy) {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -593,9 +593,9 @@ TEST_F(
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
                 [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
                     retryPolicy) {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
@@ -685,9 +685,9 @@ TEST_F(
                 [[maybe_unused]] const qevercloud::IRequestContextPtr & ctx,
                 [[maybe_unused]] const qevercloud::IRetryPolicyPtr &
                     retryPolicy) {
-            return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
-                noteStoreWeak.lock());
-        });
+                return threading::makeReadyFuture<qevercloud::INoteStorePtr>(
+                    noteStoreWeak.lock());
+            });
 
     const auto syncChunks = adjustSyncChunksUpdateCounts(
         QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2

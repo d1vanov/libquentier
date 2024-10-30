@@ -33,8 +33,7 @@ bool ResourceRecognitionIndicesData::isValid() const
 {
     if (m_objectId.isEmpty()) {
         QNTRACE(
-            "types:data",
-            "Resource recognition indices' object id is not set");
+            "types:data", "Resource recognition indices' object id is not set");
         return false;
     }
 
@@ -76,8 +75,7 @@ bool ResourceRecognitionIndicesData::isValid() const
     if (m_docType.isEmpty()) {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' doc type is not "
-                << "set");
+            "Resource recognition indices' doc type is not " << "set");
         return false;
     }
 

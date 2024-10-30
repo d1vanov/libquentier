@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,8 +28,8 @@ NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & other) = default;
 
 NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && other) noexcept = default;
 
-NoteSearchQuery & NoteSearchQuery::operator=(
-    const NoteSearchQuery & other) = default;
+NoteSearchQuery & NoteSearchQuery::operator=(const NoteSearchQuery & other) =
+    default;
 
 NoteSearchQuery & NoteSearchQuery::operator=(
     NoteSearchQuery && other) noexcept = default;
@@ -494,12 +494,14 @@ QTextStream & NoteSearchQuery::print(QTextStream & strm) const
     return d->print(strm);
 }
 
-bool operator==(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept
+bool operator==(
+    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept
 {
     return lhs.queryString() == rhs.queryString();
 }
 
-bool operator!=(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept
+bool operator!=(
+    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs) noexcept
 {
     return !(lhs == rhs);
 }

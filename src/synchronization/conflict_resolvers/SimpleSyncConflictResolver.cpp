@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ISimpleNotebookSyncConflictResolver.h"
+#include "SimpleSyncConflictResolver.h"
 #include "ISimpleNoteSyncConflictResolver.h"
+#include "ISimpleNotebookSyncConflictResolver.h"
 #include "ISimpleSavedSearchSyncConflictResolver.h"
 #include "ISimpleTagSyncConflictResolver.h"
-#include "SimpleSyncConflictResolver.h"
 
 #include <quentier/exception/InvalidArgument.h>
 

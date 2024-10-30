@@ -54,8 +54,7 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(
     ResourceDataInTemporaryFileStorageManager &
         resourceDataInTemporaryFileStorageManager,
     QHash<QString, QString> & resourceFileStoragePathsByLocalId) :
-    m_noteEditor(noteEditor),
-    m_resourceInfo(resourceInfo),
+    m_noteEditor(noteEditor), m_resourceInfo(resourceInfo),
     m_resourceDataInTemporaryFileStorageManager(
         resourceDataInTemporaryFileStorageManager),
     m_resourceFileStoragePathsByLocalId(resourceFileStoragePathsByLocalId),
@@ -138,8 +137,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
 
     if (Q_UNLIKELY(!resource.mime())) {
         error.appendBase(QT_TR_NOOP("The mime type is missing"));
-        QNWARNING(
-            "note_editor:delegate", error << ", resource: " << resource);
+        QNWARNING("note_editor:delegate", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -147,16 +145,15 @@ void ImageResourceRotationDelegate::rotateImageResource()
     if (!resource.mime()->startsWith(QStringLiteral("image/"))) {
         error.appendBase(
             QT_TR_NOOP("The mime type indicates the attachment "
-                        "is not an image"));
-        QNWARNING(
-            "note_editor:delegate", error << ", resource: " << resource);
+                       "is not an image"));
+        QNWARNING("note_editor:delegate", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
 
     m_rotatedResource = resource;
-    if (Q_UNLIKELY(!(m_rotatedResource.data() &&
-                     m_rotatedResource.data()->body())))
+    if (Q_UNLIKELY(
+            !(m_rotatedResource.data() && m_rotatedResource.data()->body())))
     {
         error.appendBase(QT_TR_NOOP("The data body is missing"));
         QNWARNING("note_editor:delegate", error);
@@ -269,8 +266,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
     QNDEBUG(
         "note_editor:delegate",
         "ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile: "
-            << "hash = " << dataHash.toHex() << ", error description = "
-            << errorDescription);
+            << "hash = " << dataHash.toHex()
+            << ", error description = " << errorDescription);
 
     if (Q_UNLIKELY(!errorDescription.isEmpty())) {
         ErrorString error(
@@ -300,8 +297,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
 
     QString fileStoragePath = ResourceDataInTemporaryFileStorageManager::
                                   imageResourceFileStorageFolderPath() +
-        QStringLiteral("/") + pNote->localId() + QStringLiteral("/") +
-        localId + QStringLiteral(".dat");
+        QStringLiteral("/") + pNote->localId() + QStringLiteral("/") + localId +
+        QStringLiteral(".dat");
 
     QFile rotatedImageResourceFile(fileStoragePath);
     QString linkFilePath = fileStoragePath;
@@ -373,8 +370,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         auto it = std::find_if(
             m_pNote->mutableResources()->begin(),
             m_pNote->mutableResources()->end(),
-            [this](const qevercloud::Resource & resource)
-            {
+            [this](const qevercloud::Resource & resource) {
                 return resource.localId() == m_rotatedResource.localId();
             });
         if (it != m_pNote->mutableResources()->end()) {
@@ -396,7 +392,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         if (Q_UNLIKELY(!oldResourceFile.remove())) {
 #ifdef Q_OS_WIN
             if (m_resourceFileStoragePathBefore.endsWith(
-                    QStringLiteral(".lnk"))) {
+                    QStringLiteral(".lnk")))
+            {
                 // NOTE: there appears to be a bug in Qt for Windows,
                 // QFile::remove returns false for any *.lnk files even though
                 // the files are actually getting removed
@@ -451,9 +448,8 @@ void ImageResourceRotationDelegate::onResourceTagHashUpdated(
         QString::fromLocal8Bit(m_rotatedResource.data()->bodyHash()->toHex()) +
         QStringLiteral("', '") + m_resourceFileStoragePathAfter +
         QStringLiteral("', ") +
-        QString::number(m_rotatedResource.height()
-                            ? *m_rotatedResource.height()
-                            : qint16(0)) +
+        QString::number(m_rotatedResource.height() ? *m_rotatedResource.height()
+                                                   : qint16(0)) +
         QStringLiteral(", ") +
         QString::number(m_rotatedResource.width() ? *m_rotatedResource.width()
                                                   : qint16(0)) +

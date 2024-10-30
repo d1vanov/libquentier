@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -241,8 +241,7 @@ ISynchronizer::SyncResult Synchronizer::synchronizeAccount(
                     promise,
                     threading::TrackedTask{
                         selfWeak,
-                        [this, promise,
-                         notifier = std::move(notifier),
+                        [this, promise, notifier = std::move(notifier),
                          syncConflictResolver = std::move(syncConflictResolver),
                          localStorage = std::move(localStorage),
                          options = std::move(options),

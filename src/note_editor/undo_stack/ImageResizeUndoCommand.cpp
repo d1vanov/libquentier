@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,8 +43,7 @@ ImageResizeUndoCommand::ImageResizeUndoCommand(
 
 ImageResizeUndoCommand::ImageResizeUndoCommand(
     NoteEditorPrivate & noteEditor, const QString & text,
-    QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, text, parent)
+    QUndoCommand * parent) : INoteEditorUndoCommand(noteEditor, text, parent)
 {}
 
 ImageResizeUndoCommand::~ImageResizeUndoCommand() noexcept = default;

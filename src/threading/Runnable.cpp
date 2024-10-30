@@ -23,11 +23,11 @@
 
 namespace quentier::threading {
 
-class FunctionRunnable final: public QRunnable
+class FunctionRunnable final : public QRunnable
 {
 public:
-    explicit FunctionRunnable(std::function<void()> function)
-        : m_function{std::move(function)}
+    explicit FunctionRunnable(std::function<void()> function) :
+        m_function{std::move(function)}
     {
         Q_ASSERT(m_function);
     }

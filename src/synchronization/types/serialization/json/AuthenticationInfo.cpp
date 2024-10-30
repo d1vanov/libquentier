@@ -196,4 +196,4 @@ IAuthenticationInfoPtr deserializeAuthenticationInfoFromJson(
     return authenticationInfo;
 }
 
-} // quentier::synchronization
+} // namespace quentier::synchronization

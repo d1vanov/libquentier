@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -111,9 +111,8 @@ void setupTestData(
     quint16 port, TestData & testData);
 
 void setupNoteStoreServer(
-    TestData & testData, DataItemTypes dataItemTypes,
-    ItemGroups itemGroups, ItemSources itemSources,
-    NoteStoreServer & noteStoreServer);
+    TestData & testData, DataItemTypes dataItemTypes, ItemGroups itemGroups,
+    ItemSources itemSources, NoteStoreServer & noteStoreServer);
 
 void setupLocalStorage(
     const TestData & testData, DataItemTypes dataItemTypes,

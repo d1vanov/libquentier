@@ -35,8 +35,7 @@ SpellChecker::SpellChecker(
         d_ptr, &SpellCheckerPrivate::ready, this, &SpellChecker::ready);
 }
 
-QList<std::pair<QString, bool>> SpellChecker::listAvailableDictionaries()
-    const
+QList<std::pair<QString, bool>> SpellChecker::listAvailableDictionaries() const
 {
     Q_D(const SpellChecker);
     return d->listAvailableDictionaries();

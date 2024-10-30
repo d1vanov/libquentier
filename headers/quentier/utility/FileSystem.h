@@ -76,7 +76,7 @@ class ErrorString;
  *                          empty QByteArray in case of I/O error
  */
 [[nodiscard]] QByteArray QUENTIER_EXPORT
-readFileContents(const QString & filePath, ErrorString & errorDescription);
+    readFileContents(const QString & filePath, ErrorString & errorDescription);
 
 /**
  * renameFile renames file with absolute path "from" to file with absolute

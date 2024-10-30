@@ -116,8 +116,7 @@ public:
      *                      the default one (if present as well)
      */
     [[nodiscard]] QKeySequence shortcut(
-        int key, const Account & account,
-        const QString & context = {}) const;
+        int key, const Account & account, const QString & context = {}) const;
 
     /**
      * @return              Active shortcut for the non-standard key - either
@@ -133,8 +132,7 @@ public:
      *                      otherwise empty key sequence
      */
     [[nodiscard]] QKeySequence defaultShortcut(
-        int key, const Account & account,
-        const QString & context = {}) const;
+        int key, const Account & account, const QString & context = {}) const;
 
     /**
      * @return              Default shortcut for the non-standard key if
@@ -149,8 +147,7 @@ public:
      *                      present, otherwise empty key sequence
      */
     [[nodiscard]] QKeySequence userShortcut(
-        int key, const Account & account,
-        const QString & context = {}) const;
+        int key, const Account & account, const QString & context = {}) const;
 
     /**
      * @return              User defined shortcut for the non-standard key if

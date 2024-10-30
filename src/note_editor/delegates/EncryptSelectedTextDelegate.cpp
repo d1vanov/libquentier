@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -64,8 +64,7 @@ EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
     std::shared_ptr<EncryptionManager> encryptionManager,
     enml::IDecryptedTextCachePtr decryptedTextCache,
     enml::IENMLTagsConverterPtr m_enmlTagsConverter) :
-    QObject(pNoteEditor),
-    m_pNoteEditor(pNoteEditor),
+    QObject(pNoteEditor), m_pNoteEditor(pNoteEditor),
     m_encryptionManager(std::move(encryptionManager)),
     m_decryptedTextCache(std::move(decryptedTextCache)),
     m_enmlTagsConverter(std::move(m_enmlTagsConverter))
@@ -141,13 +140,13 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
     QString selectedText, QString encryptedText, QString cipher, // NOLINT
-    size_t keyLength, QString hint, bool rememberForSession) // NOLINT
+    size_t keyLength, QString hint, bool rememberForSession)     // NOLINT
 {
     QNDEBUG(
         "note_editor::EncryptSelectedTextDelegate",
         "EncryptSelectedTextDelegate::onSelectedTextEncrypted: "
-            << "encrypted text = " << encryptedText
-            << ", hint = " << hint << ", remember for session = "
+            << "encrypted text = " << encryptedText << ", hint = " << hint
+            << ", remember for session = "
             << (rememberForSession ? "true" : "false"));
 
     CHECK_NOTE_EDITOR()
@@ -167,8 +166,8 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
             encryptedText, hint, cipher, keyLength,
             m_pNoteEditor->nextEncryptedTextId());
 
-        m_encryptedTextHtml = enml::utils::htmlEscapeString(
-            m_encryptedTextHtml);
+        m_encryptedTextHtml =
+            enml::utils::htmlEscapeString(m_encryptedTextHtml);
     }
 
     if (m_pNoteEditor->isEditorPageModified()) {

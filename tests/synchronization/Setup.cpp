@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NoteStoreServer.h"
 #include "Setup.h"
+#include "NoteStoreServer.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -886,8 +886,7 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnNotebookGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook))
-        {
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
             testData.m_expungedLinkedNotebookNotebookGuids.reserve(
                 testData.m_baseLinkedNotebooks.size());
 
@@ -909,8 +908,7 @@ void setupTestData(
             generateExpungedGuids(testData.m_expungedUserOwnNoteGuids);
         }
 
-        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook))
-        {
+        if (expungedItemSources.testFlag(ItemSource::LinkedNotebook)) {
             testData.m_expungedLinkedNotebookNoteGuids.reserve(
                 testData.m_baseLinkedNotebooks.size());
 
@@ -1264,9 +1262,9 @@ void setupLocalStorage(
 {
     QNDEBUG(
         "tests::synchronization::Setup",
-        "setupLocalStorage: dataItemTypes = " << dataItemTypes
-            << ", itemGroups = " << itemGroups << ", itemSources = "
-            << itemSources);
+        "setupLocalStorage: dataItemTypes = "
+            << dataItemTypes << ", itemGroups = " << itemGroups
+            << ", itemSources = " << itemSources);
 
     if (dataItemTypes.testFlag(DataItemType::SavedSearch) &&
         itemSources.testFlag(ItemSource::UserOwnAccount))
@@ -2107,8 +2105,8 @@ ISyncStatePtr setupSyncState(
         }
 
         if (expungedDataItemTypes.testFlag(DataItemType::Notebook)) {
-            for (const auto it: qevercloud::toRange(
-                 std::as_const(testData.m_expungedLinkedNotebookNotebookGuids)))
+            for (const auto it: qevercloud::toRange(std::as_const(
+                     testData.m_expungedLinkedNotebookNotebookGuids)))
             {
                 const auto & linkedNotebookGuid = it.key();
                 const auto & expungedNotebookGuids = it.value();
@@ -2124,7 +2122,7 @@ ISyncStatePtr setupSyncState(
 
         if (expungedDataItemTypes.testFlag(DataItemType::Note)) {
             for (const auto it: qevercloud::toRange(
-                 std::as_const(testData.m_expungedLinkedNotebookNoteGuids)))
+                     std::as_const(testData.m_expungedLinkedNotebookNoteGuids)))
             {
                 const auto & linkedNotebookGuid = it.key();
                 const auto & expungedNoteGuids = it.value();

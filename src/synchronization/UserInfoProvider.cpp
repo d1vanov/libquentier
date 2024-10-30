@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,8 +31,8 @@
 #endif
 
 #include <QReadLocker>
-#include <QWriteLocker>
 #include <QThread>
+#include <QWriteLocker>
 
 namespace quentier::synchronization {
 
@@ -40,8 +40,8 @@ UserInfoProvider::UserInfoProvider(qevercloud::IUserStorePtr userStore) :
     m_userStore{std::move(userStore)}
 {
     if (Q_UNLIKELY(!m_userStore)) {
-        throw InvalidArgument{ErrorString{QStringLiteral(
-            "UserInfoProvider ctor: user store is null")}};
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("UserInfoProvider ctor: user store is null")}};
     }
 }
 
@@ -50,8 +50,8 @@ QFuture<qevercloud::User> UserInfoProvider::userInfo(
 {
     if (Q_UNLIKELY(!ctx)) {
         return threading::makeExceptionalFuture<qevercloud::User>(
-            InvalidArgument{ErrorString{QStringLiteral(
-                "Request context is null")}});
+            InvalidArgument{
+                ErrorString{QStringLiteral("Request context is null")}});
     }
 
     QString authToken = ctx->authenticationToken();
@@ -74,9 +74,8 @@ QFuture<qevercloud::User> UserInfoProvider::userInfo(
     auto userFuture = m_userStore->getUserAsync(std::move(ctx));
     threading::thenOrFailed(
         std::move(userFuture), currentThread, promise,
-        [promise, selfWeak, authToken = std::move(authToken)](
-            qevercloud::User user)
-        {
+        [promise, selfWeak,
+         authToken = std::move(authToken)](qevercloud::User user) {
             if (const auto self = selfWeak.lock()) {
                 const QWriteLocker locker{&self->m_userInfoCacheReadWriteLock};
 

@@ -501,12 +501,9 @@ enum class AddParentToTag
 {
     qevercloud::Note n = std::move(note);
     n.setContent(std::nullopt);
-    if (n.resources())
-    {
-        for (auto & resource: *n.mutableResources())
-        {
-            if (resource.data())
-            {
+    if (n.resources()) {
+        for (auto & resource: *n.mutableResources()) {
+            if (resource.data()) {
                 resource.mutableData()->setBody(std::nullopt);
             }
         }

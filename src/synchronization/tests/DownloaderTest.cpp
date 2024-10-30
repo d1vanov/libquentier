@@ -1318,8 +1318,9 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
             onStartLinkedNotebooksDataDownloading(linkedNotebooks));
 
         for (const auto & linkedNotebook: std::as_const(linkedNotebooks)) {
-            const std::shared_ptr<mocks::qevercloud::MockINoteStore> mockNoteStore =
-                std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+            const std::shared_ptr<mocks::qevercloud::MockINoteStore>
+                mockNoteStore = std::make_shared<
+                    StrictMock<mocks::qevercloud::MockINoteStore>>();
             linkedNotebookNoteStores[*linkedNotebook.guid()] = mockNoteStore;
 
             EXPECT_CALL(
@@ -1365,8 +1366,9 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
                 authenticateToLinkedNotebook(
                     m_account, linkedNotebook,
                     IAuthenticationInfoProvider::Mode::Cache))
-                .WillOnce(Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
-                    linkedNotebookAuthenticationInfo)));
+                .WillOnce(
+                    Return(threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                        linkedNotebookAuthenticationInfo)));
         }
 
         for ([[maybe_unused]] const auto & linkedNotebook:
@@ -1449,20 +1451,17 @@ TEST_F(DownloaderTest, HandleNoUpdatesOnServerSide)
         ASSERT_TRUE(result.syncChunksDataCounters);
 
         checkSyncChunksDataCounters(
-            emptySyncChunksItemCounts,
-            *result.syncChunksDataCounters);
+            emptySyncChunksItemCounts, *result.syncChunksDataCounters);
 
         // Notes
         ASSERT_TRUE(result.downloadNotesStatus);
         checkDownloadNotesStatus(
-            emptySyncChunksItemCounts,
-            *result.downloadNotesStatus);
+            emptySyncChunksItemCounts, *result.downloadNotesStatus);
 
         // Resources
         ASSERT_TRUE(result.downloadResourcesStatus);
         checkDownloadResourcesStatus(
-            emptySyncChunksItemCounts,
-            *result.downloadResourcesStatus);
+            emptySyncChunksItemCounts, *result.downloadResourcesStatus);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "LocalStorage.h"
 #include "ILinkedNotebooksHandler.h"
 #include "INotebooksHandler.h"
 #include "INotesHandler.h"
@@ -25,7 +26,6 @@
 #include "ITagsHandler.h"
 #include "IUsersHandler.h"
 #include "IVersionHandler.h"
-#include "LocalStorage.h"
 
 #include <quentier/exception/InvalidArgument.h>
 
@@ -41,12 +41,12 @@ LocalStorage::LocalStorage(
     IUsersHandlerPtr usersHandler, ILocalStorageNotifier * notifier) :
     m_linkedNotebooksHandler{std::move(linkedNotebooksHandler)},
     m_notebooksHandler{std::move(notebooksHandler)},
-    m_notesHandler{std::move(notesHandler)}, m_resourcesHandler{std::move(
-                                                 resourcesHandler)},
+    m_notesHandler{std::move(notesHandler)},
+    m_resourcesHandler{std::move(resourcesHandler)},
     m_savedSearchesHandler{std::move(savedSearchesHandler)},
     m_synchronizationInfoHandler{std::move(synchronizationInfoHandler)},
-    m_tagsHandler{std::move(tagsHandler)}, m_versionHandler{std::move(
-                                               versionHandler)},
+    m_tagsHandler{std::move(tagsHandler)},
+    m_versionHandler{std::move(versionHandler)},
     m_usersHandler{std::move(usersHandler)}, m_notifier{notifier}
 {
     if (Q_UNLIKELY(!m_linkedNotebooksHandler)) {

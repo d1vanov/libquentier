@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "PartialUpdateNoteResources.h"
 #include "Common.h"
 #include "ListFromDatabaseUtils.h"
-#include "PartialUpdateNoteResources.h"
 #include "PutToDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "SqlUtils.h"
@@ -134,7 +134,8 @@ void classifyNoteResources(
 
         const auto & updatedResource = *updatedResourceIt;
         if (!compareResourcesWithoutBinaryData(
-                previousNoteResource, updatedResource)) {
+                previousNoteResource, updatedResource))
+        {
             updatedResources << updatedResource;
         }
     }

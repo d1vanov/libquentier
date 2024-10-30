@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,8 +57,7 @@ Q_SIGNALS:
     // Notifications about tag related events
     void tagPut(qevercloud::Tag tag);
 
-    void tagExpunged(
-        QString tagLocalId, QStringList expungedChildTagLocalIds);
+    void tagExpunged(QString tagLocalId, QStringList expungedChildTagLocalIds);
 
     // Notifications about resource related events
     void resourcePut(qevercloud::Resource resource);

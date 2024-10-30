@@ -238,7 +238,8 @@ T & printListNotebooksOptions(
       << ", affiliation = " << options.m_affiliation
       << ", linked notebook guids: ";
     for (const auto & linkedNotebookGuid:
-         std::as_const(options.m_linkedNotebookGuids)) {
+         std::as_const(options.m_linkedNotebookGuids))
+    {
         t << linkedNotebookGuid;
         if (&linkedNotebookGuid != &options.m_linkedNotebookGuids.constLast()) {
             t << ", ";

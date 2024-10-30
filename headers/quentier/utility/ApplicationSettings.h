@@ -93,8 +93,7 @@ public:
      *                          Must be UTF-8 encoded as internally it is
      *                          converted to QString via QString::fromUtf8
      */
-    ApplicationSettings(
-        const Account & account, std::string_view settingsName);
+    ApplicationSettings(const Account & account, std::string_view settingsName);
 
     /**
      * Destructor
@@ -321,8 +320,7 @@ public:
      * @param keySize   Size of the key string. If negative (the default),
      *                  the key size is taken to be strlen(key).
      */
-    void setValue(
-        const char * key, const QVariant & value, int keySize = -1);
+    void setValue(const char * key, const QVariant & value, int keySize = -1);
 
     /**
      * Sets the value of setting.

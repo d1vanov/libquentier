@@ -359,7 +359,8 @@ void SavedSearchesProcessor::onFoundDuplicate(
                         resolution))
                 {
                     if (std::holds_alternative<ConflictResolution::UseTheirs>(
-                            resolution)) {
+                            resolution))
+                    {
                         QNDEBUG(
                             "synchronization::SavedSearchesProcessor",
                             "Will override local saved search with local id "

@@ -138,8 +138,7 @@ NotesProcessor::NotesProcessor(
 QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks,
     utility::cancelers::ICancelerPtr canceler,
-    qevercloud::IRequestContextPtr ctx,
-    ICallbackWeakPtr callbackWeak)
+    qevercloud::IRequestContextPtr ctx, ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG("synchronization::NotesProcessor", "NotesProcessor::processNotes");
 
@@ -888,8 +887,8 @@ QFuture<void> NotesProcessor::downloadInkNoteImage(
 
     threading::thenOrFailed(
         std::move(downloaderFuture), currentThread, promise,
-        [selfWeak, promise, context, inkNoteImagesStorageDir,
-         currentThread, resource = std::move(resource)](
+        [selfWeak, promise, context, inkNoteImagesStorageDir, currentThread,
+         resource = std::move(resource)](
             const qevercloud::IInkNoteImageDownloaderPtr & downloader) {
             if (context->canceler->isCanceled()) {
                 promise->setException(OperationCanceled{});
@@ -957,8 +956,8 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
 
     QNDEBUG(
         "synchronization::NotesProcessor",
-        "NotesProcessor::downloadNoteThumbnail: note guid = " << *note.guid()
-            << ", notebook guid = " << *note.notebookGuid());
+        "NotesProcessor::downloadNoteThumbnail: note guid = "
+            << *note.guid() << ", notebook guid = " << *note.notebookGuid());
 
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
@@ -974,7 +973,7 @@ QFuture<qevercloud::Note> NotesProcessor::downloadNoteThumbnail(
         std::move(noteThumbnailDownloaderFuture), currentThread, promise,
         [note = std::move(note), promise, currentThread,
          ctx = context->ctx](const qevercloud::INoteThumbnailDownloaderPtr &
-                          noteThumbnailDownloader) mutable {
+                                 noteThumbnailDownloader) mutable {
             Q_ASSERT(noteThumbnailDownloader);
 
             auto noteThumbnailFuture =

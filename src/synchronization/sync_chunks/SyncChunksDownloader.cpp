@@ -53,8 +53,8 @@ namespace {
 {
     QNDEBUG(
         "synchronization::SyncChunksDownloader",
-        "downloadSingleUserOwnSyncChunk: afterUsn = " << afterUsn
-            << ", synchronization mode = " << synchronizationMode);
+        "downloadSingleUserOwnSyncChunk: afterUsn = "
+            << afterUsn << ", synchronization mode = " << synchronizationMode);
 
     qevercloud::SyncChunkFilter filter;
     filter.setIncludeNotebooks(true);
@@ -90,8 +90,8 @@ namespace {
                 "downloadSingleUserOwnSyncChunk: received sync chunk, "
                     << "high USN = "
                     << (syncChunk.chunkHighUSN()
-                        ? QString::number(*syncChunk.chunkHighUSN())
-                        : QStringLiteral("<none>")));
+                            ? QString::number(*syncChunk.chunkHighUSN())
+                            : QStringLiteral("<none>")));
             promise->addResult(std::move(syncChunk));
             promise->finish();
         });
@@ -224,8 +224,8 @@ void downloadSyncChunksList(
                 "Downloaded single sync chunk: last previous usn = "
                     << lastPreviousUsn << ", chunk high usn = "
                     << (syncChunk.chunkHighUSN()
-                        ? QString::number(*syncChunk.chunkHighUSN())
-                        : QStringLiteral("<none>")));
+                            ? QString::number(*syncChunk.chunkHighUSN())
+                            : QStringLiteral("<none>")));
 
             processSingleDownloadedSyncChunk(
                 lastPreviousUsn, synchronizationMode, std::move(noteStore),
@@ -285,7 +285,8 @@ void processSingleDownloadedSyncChunk(
 
     QNDEBUG(
         "synchronization::SyncChunksDownloader",
-        "Downloaded sync chunk: high usn = " << *syncChunk.chunkHighUSN()
+        "Downloaded sync chunk: high usn = "
+            << *syncChunk.chunkHighUSN()
             << ", update count = " << syncChunk.updateCount()
             << ", last previous usn = " << lastPreviousUsn);
 

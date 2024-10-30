@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -60,9 +60,8 @@ void AccountData::setEvernoteAccountLimits(
                                   : resourceSizeMax());
 
     m_linkedNotebookMax =
-        (limits.userLinkedNotebookMax()
-             ? *limits.userLinkedNotebookMax()
-             : linkedNotebookMax());
+        (limits.userLinkedNotebookMax() ? *limits.userLinkedNotebookMax()
+                                        : linkedNotebookMax());
 
     m_noteCountMax =
         (limits.userNoteCountMax() ? *limits.userNoteCountMax()
@@ -73,8 +72,7 @@ void AccountData::setEvernoteAccountLimits(
                                        : notebookCountMax());
 
     m_tagCountMax =
-        (limits.userTagCountMax() ? *limits.userTagCountMax()
-                                  : tagCountMax());
+        (limits.userTagCountMax() ? *limits.userTagCountMax() : tagCountMax());
 
     m_noteTagCountMax =
         (limits.noteTagCountMax() ? *limits.noteTagCountMax()

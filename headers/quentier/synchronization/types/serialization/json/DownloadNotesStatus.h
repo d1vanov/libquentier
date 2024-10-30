@@ -28,8 +28,8 @@ namespace quentier::synchronization {
 /**
  * Serialize IDownloadNotesStatus instance to json object.
  */
-[[nodiscard]] QJsonObject QUENTIER_EXPORT serializeDownloadNotesStatusToJson(
-    const IDownloadNotesStatus & status);
+[[nodiscard]] QJsonObject QUENTIER_EXPORT
+    serializeDownloadNotesStatusToJson(const IDownloadNotesStatus & status);
 
 /**
  * Create IDownloadNotesStatus instance from serialized json object.

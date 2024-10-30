@@ -46,8 +46,8 @@ AddResourceDelegate::AddResourceDelegate(
     FileIOProcessorAsync * pFileIOProcessorAsync,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor), m_enmlTagsConverter(std::move(enmlTagsConverter)),
+    QObject(&noteEditor), m_noteEditor(noteEditor),
+    m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(
@@ -69,8 +69,8 @@ AddResourceDelegate::AddResourceDelegate(
     FileIOProcessorAsync * pFileIOProcessorAsync,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor), m_enmlTagsConverter(std::move(enmlTagsConverter)),
+    QObject(&noteEditor), m_noteEditor(noteEditor),
+    m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(
@@ -231,16 +231,16 @@ void AddResourceDelegate::doStartUsingFile()
     if (!fileInfo.isFile()) {
         QNINFO(
             "note_editor:delegate",
-            "Detected attempt to drop something "
-                << "else rather than file: " << m_filePath);
+            "Detected attempt to drop something " << "else rather than file: "
+                                                  << m_filePath);
         return;
     }
 
     if (!fileInfo.isReadable()) {
         QNINFO(
             "note_editor:delegate",
-            "Detected attempt to drop file which "
-                << "is not readable: " << m_filePath);
+            "Detected attempt to drop file which " << "is not readable: "
+                                                   << m_filePath);
         return;
     }
 
@@ -507,8 +507,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
 }
 
 void AddResourceDelegate::onGenericResourceImageSaved(
-    bool success,
-    QByteArray resourceImageDataHash, QString filePath, // NOLINT
+    bool success, QByteArray resourceImageDataHash, QString filePath, // NOLINT
     ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_saveResourceImageRequestId) {
@@ -527,12 +526,12 @@ void AddResourceDelegate::onGenericResourceImageSaved(
 
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate"
-            << "::onGenericResourceImageSaved: success = "
-            << (success ? "true" : "false") << ", file path = " << filePath);
+        "AddResourceDelegate" << "::onGenericResourceImageSaved: success = "
+                              << (success ? "true" : "false")
+                              << ", file path = " << filePath);
 
-    m_genericResourceImageFilePathsByResourceHash[*m_resource.data()->bodyHash()] =
-        filePath;
+    m_genericResourceImageFilePathsByResourceHash[*m_resource.data()
+                                                       ->bodyHash()] = filePath;
 
     QNDEBUG(
         "note_editor:delegate",
@@ -563,8 +562,7 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate"
-            << "::doGenerateGenericResourceImage");
+        "AddResourceDelegate" << "::doGenerateGenericResourceImage");
 
     const auto * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote)) {
@@ -634,8 +632,7 @@ void AddResourceDelegate::insertNewResourceHtml()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate"
-            << "::insertNewResourceHtml");
+        "AddResourceDelegate" << "::insertNewResourceHtml");
 
     auto res = m_enmlTagsConverter->convertResource(m_resource);
     if (Q_UNLIKELY(!res.isValid())) {
@@ -659,8 +656,8 @@ void AddResourceDelegate::insertNewResourceHtml()
 
     auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());
     if (Q_UNLIKELY(!page)) {
-        ErrorString error{QT_TR_NOOP(
-            "Can't add attachment: no note editor page")};
+        ErrorString error{
+            QT_TR_NOOP("Can't add attachment: no note editor page")};
         QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
@@ -676,8 +673,7 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate"
-            << "::onNewResourceHtmlInserted");
+        "AddResourceDelegate" << "::onNewResourceHtmlInserted");
 
     const auto resultMap = data.toMap();
 
@@ -719,15 +715,14 @@ bool AddResourceDelegate::checkResourceDataSize(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate"
-            << "::checkResourceDataSize: size = "
-            << humanReadableSize(
-                   static_cast<quint64>(std::max(size, qint64(0)))));
+        "AddResourceDelegate" << "::checkResourceDataSize: size = "
+                              << humanReadableSize(static_cast<quint64>(
+                                     std::max(size, qint64(0)))));
 
     if (note.limits()) {
         const auto & limits = *note.limits();
-        bool violatesNoteResourceSizeMax = limits.resourceSizeMax() &&
-            (size > *limits.resourceSizeMax());
+        bool violatesNoteResourceSizeMax =
+            limits.resourceSizeMax() && (size > *limits.resourceSizeMax());
 
         if (Q_UNLIKELY(violatesNoteResourceSizeMax)) {
             ErrorString error(
@@ -747,8 +742,8 @@ bool AddResourceDelegate::checkResourceDataSize(
             ErrorString error(QT_TR_NOOP(
                 "Can't add attachment: the addition of the resource :"
                 "would violate the max resource size which is"));
-            error.details() = humanReadableSize(
-                static_cast<quint64>(*limits.noteSizeMax()));
+            error.details() =
+                humanReadableSize(static_cast<quint64>(*limits.noteSizeMax()));
             Q_EMIT notifyError(error);
             return false;
         }
@@ -756,7 +751,7 @@ bool AddResourceDelegate::checkResourceDataSize(
     else if (pAccount && size > pAccount->resourceSizeMax()) {
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: the resource is "
-                        "too large, max resource size allowed is"));
+                       "too large, max resource size allowed is"));
         error.details() = humanReadableSize(
             static_cast<quint64>(pAccount->resourceSizeMax()));
         Q_EMIT notifyError(error);

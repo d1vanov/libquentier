@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -441,11 +441,9 @@ public Q_SLOTS:
 
     void insertTableDialog();
 
-    void insertFixedWidthTable(
-        int rows, int columns, int widthInPixels);
+    void insertFixedWidthTable(int rows, int columns, int widthInPixels);
 
-    void insertRelativeWidthTable(
-        int rows, int columns, double relativeWidth);
+    void insertRelativeWidthTable(int rows, int columns, double relativeWidth);
 
     void insertTableRow();
     void insertTableColumn();

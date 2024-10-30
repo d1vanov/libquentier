@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../utils/ExceptionUtils.h"
 #include "Checks.h"
+#include "../utils/ExceptionUtils.h"
 
 #include <qevercloud/Constants.h>
 #include <qevercloud/exceptions/builders/EDAMUserExceptionBuilder.h>
@@ -234,14 +234,16 @@ std::optional<qevercloud::EDAMUserException> checkNotebook(
             *notebook.publishing()->publicDescription();
 
         if (description.size() <
-            qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MIN) {
+            qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MIN)
+        {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
                 QStringLiteral("Publishing.publicDescription"));
         }
 
         if (description.size() >
-            qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MAX) {
+            qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MAX)
+        {
             return utils::createUserException(
                 qevercloud::EDAMErrorCode::BAD_DATA_FORMAT,
                 QStringLiteral("Publishing.publicDescription"));
@@ -335,7 +337,8 @@ std::optional<qevercloud::EDAMUserException> checkNote(
             }
 
             if (resource.data()->body()->size() >
-                qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE) {
+                qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE)
+            {
                 return utils::createUserException(
                     qevercloud::EDAMErrorCode::LIMIT_REACHED,
                     QStringLiteral("Resource.data.size"));

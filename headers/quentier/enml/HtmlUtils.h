@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,13 +28,14 @@
 
 namespace quentier::enml::utils {
 
-[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT convertHtmlToXml(
-    const QString & html);
+[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT
+    convertHtmlToXml(const QString & html);
 
-[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT convertHtmlToXhtml(
-    const QString & html);
+[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT
+    convertHtmlToXhtml(const QString & html);
 
-[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT cleanupHtml(const QString & html);
+[[nodiscard]] Result<QString, ErrorString> QUENTIER_EXPORT
+    cleanupHtml(const QString & html);
 
 enum class EscapeStringOption
 {

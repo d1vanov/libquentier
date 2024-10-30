@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -106,7 +106,7 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenGuidsDontMatch)
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::IgnoreMine>(
-                    future.result()));
+        future.result()));
 }
 
 TEST(
@@ -132,7 +132,7 @@ TEST(
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(
-                    future.result()));
+        future.result()));
 }
 
 TEST(
@@ -158,7 +158,7 @@ TEST(
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseMine>(
-                    future.result()));
+        future.result()));
 }
 
 TEST(
@@ -185,7 +185,7 @@ TEST(
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_TRUE(std::holds_alternative<
                 ISyncConflictResolver::ConflictResolution::UseTheirs>(
-                    future.result()));
+        future.result()));
 }
 
 TEST(

@@ -86,8 +86,7 @@ bool validateNotebookName(
     if (len < qevercloud::EDAM_NOTEBOOK_NAME_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
-                "types:validation",
-                "Notebook name's length is too small"));
+                "types:validation", "Notebook name's length is too small"));
 
             errorDescription->details() = notebookName;
         }
@@ -98,8 +97,7 @@ bool validateNotebookName(
     if (len > qevercloud::EDAM_NOTEBOOK_NAME_LEN_MAX) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
-                "types:validation",
-                "Notebook name's length is too large"));
+                "types:validation", "Notebook name's length is too large"));
 
             errorDescription->details() = notebookName;
         }

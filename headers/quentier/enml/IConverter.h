@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,23 +65,23 @@ public:
         const QString & html, QTextDocument & doc,
         const QList<conversion_rules::ISkipRulePtr> & skipRules = {}) const = 0;
 
-	/**
-	 * Convert HTML representation of note content into a valid XML document
-	 * @param html HTML representation of note content
-	 * @return Result with XML in case of success of error string in case of
-	 * 		   failure
-	 */
-	[[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToXml(
-		const QString & html) const = 0;
+    /**
+     * Convert HTML representation of note content into a valid XML document
+     * @param html HTML representation of note content
+     * @return Result with XML in case of success of error string in case of
+     * 		   failure
+     */
+    [[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToXml(
+        const QString & html) const = 0;
 
-	/**
-	 * Convert HTML representation of note content into a valid XHTML document
-	 * @param html HTML representation of note content
-	 * @return Result with XHTML in case of success of error string in case of
-	 * 		   failure
-	 */
-	[[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToXhtml(
-		const QString & html) const = 0;
+    /**
+     * Convert HTML representation of note content into a valid XHTML document
+     * @param html HTML representation of note content
+     * @return Result with XHTML in case of success of error string in case of
+     * 		   failure
+     */
+    [[nodiscard]] virtual Result<QString, ErrorString> convertHtmlToXhtml(
+        const QString & html) const = 0;
 
     /**
      * Converts ENML into HTML representation of note content

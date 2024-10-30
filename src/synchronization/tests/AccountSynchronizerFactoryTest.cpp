@@ -127,12 +127,12 @@ TEST_F(AccountSynchronizerFactoryTest, CtorNullAuthenticationInfoProvider)
         InvalidArgument);
 }
 
-TEST_F(AccountSynchronizerFactoryTest, CtorNullAccountSyncPersistenceDirProvider)
+TEST_F(
+    AccountSynchronizerFactoryTest, CtorNullAccountSyncPersistenceDirProvider)
 {
     EXPECT_THROW(
         const auto factory = std::make_shared<AccountSynchronizerFactory>(
-            m_mockSyncStateStorage, m_mockAuthenticationInfoProvider,
-            nullptr),
+            m_mockSyncStateStorage, m_mockAuthenticationInfoProvider, nullptr),
         InvalidArgument);
 }
 

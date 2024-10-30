@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -70,8 +70,7 @@ DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
     std::shared_ptr<EncryptionManager> encryptionManager,
     enml::IDecryptedTextCachePtr decryptedTextCache,
     enml::IENMLTagsConverterPtr enmlTagsConverter) :
-    QObject(pNoteEditor),
-    m_encryptionManager(std::move(encryptionManager)),
+    QObject(pNoteEditor), m_encryptionManager(std::move(encryptionManager)),
     m_decryptedTextCache(std::move(decryptedTextCache)),
     m_enmlTagsConverter(std::move(enmlTagsConverter)),
     m_encryptedTextId(std::move(encryptedTextId)),
@@ -169,8 +168,8 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
 
     const auto pDecryptionDialog = std::make_unique<DecryptionDialog>(
         m_encryptedText, m_cipher, m_hint, m_length,
-        *m_pNoteEditor->accountPtr(), m_encryptionManager,
-        m_decryptedTextCache, m_pNoteEditor);
+        *m_pNoteEditor->accountPtr(), m_encryptionManager, m_decryptedTextCache,
+        m_pNoteEditor);
 
     pDecryptionDialog->setWindowModality(Qt::WindowModal);
 

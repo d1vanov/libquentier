@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,22 +50,22 @@ protected:
 TEST_F(UserInfoProviderTest, Ctor)
 {
     EXPECT_NO_THROW(
-        const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-            m_mockUserStore));
+        const auto userInfoProvider =
+            std::make_shared<UserInfoProvider>(m_mockUserStore));
 }
 
 TEST_F(UserInfoProviderTest, CtorNullUserStore)
 {
     EXPECT_THROW(
-        const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-            nullptr),
+        const auto userInfoProvider =
+            std::make_shared<UserInfoProvider>(nullptr),
         InvalidArgument);
 }
 
 TEST_F(UserInfoProviderTest, GetUserNullRequestContext)
 {
-    const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-        m_mockUserStore);
+    const auto userInfoProvider =
+        std::make_shared<UserInfoProvider>(m_mockUserStore);
 
     auto future = userInfoProvider->userInfo(nullptr);
     waitForFuture(future);
@@ -74,18 +74,17 @@ TEST_F(UserInfoProviderTest, GetUserNullRequestContext)
 
 TEST_F(UserInfoProviderTest, GetUser)
 {
-    const auto userInfoProvider = std::make_shared<UserInfoProvider>(
-        m_mockUserStore);
+    const auto userInfoProvider =
+        std::make_shared<UserInfoProvider>(m_mockUserStore);
 
     const auto user = qevercloud::UserBuilder{}
-        .setId(qevercloud::UserID{42})
-        .setUsername(QStringLiteral("username"))
-        .setName(QStringLiteral("Full name"))
-        .build();
+                          .setId(qevercloud::UserID{42})
+                          .setUsername(QStringLiteral("username"))
+                          .setName(QStringLiteral("Full name"))
+                          .build();
 
-    EXPECT_CALL(*m_mockUserStore, getUserAsync).WillOnce(
-        [&](const qevercloud::IRequestContextPtr & ctx)
-        {
+    EXPECT_CALL(*m_mockUserStore, getUserAsync)
+        .WillOnce([&](const qevercloud::IRequestContextPtr & ctx) {
             EXPECT_EQ(ctx.get(), m_ctx.get());
             return threading::makeReadyFuture(user);
         });

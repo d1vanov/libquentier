@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FillFromSqlRecordUtils.h"
 #include "NotebookUtils.h"
+#include "FillFromSqlRecordUtils.h"
 
 #include "../ErrorHandling.h"
 

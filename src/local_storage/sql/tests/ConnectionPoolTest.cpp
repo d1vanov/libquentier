@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,10 +46,11 @@ namespace quentier::local_storage::sql::tests {
 
 TEST(ConnectionPoolTest, Ctor)
 {
-    EXPECT_NO_THROW(const auto pool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral("database"),
-        QStringLiteral("QSQLITE")));
+    EXPECT_NO_THROW(
+        const auto pool = std::make_shared<ConnectionPool>(
+            QStringLiteral("localhost"), QStringLiteral("user"),
+            QStringLiteral("password"), QStringLiteral("database"),
+            QStringLiteral("QSQLITE")));
 }
 
 TEST(ConnectionPoolTest, CtorThrowOnMissingSqlDriver)
@@ -101,10 +102,8 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
         promise.start();
     }
 
-    const auto makeThreadFunc = [&](const std::size_t index)
-    {
-        return [&, index]
-        {
+    const auto makeThreadFunc = [&](const std::size_t index) {
+        return [&, index] {
             Q_UNUSED(pool->database());
             ASSERT_TRUE(threadSemaphore.tryAcquire());
 
@@ -113,9 +112,8 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
         };
     };
 
-    std::array<QThread*, threadCount> threads;
-    for (std::size_t i = 0; i < threadCount; ++i)
-    {
+    std::array<QThread *, threadCount> threads;
+    for (std::size_t i = 0; i < threadCount; ++i) {
         threads[i] = QThread::create(makeThreadFunc(i));
         threads[i]->start();
     }
@@ -123,10 +121,13 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     // Wait for all threads to create their DB connections
     QFutureSynchronizer<void> threadReadyFutureSynchronizer;
     for (std::size_t i = 0; i < threadCount; ++i) {
-        threadReadyFutureSynchronizer.addFuture(threadReadyPromises[i].future());
+        threadReadyFutureSynchronizer.addFuture(
+            threadReadyPromises[i].future());
     }
 
-    EXPECT_EQ(threadReadyFutureSynchronizer.futures().size(), static_cast<int>(threadCount));
+    EXPECT_EQ(
+        threadReadyFutureSynchronizer.futures().size(),
+        static_cast<int>(threadCount));
     threadReadyFutureSynchronizer.waitForFinished();
 
     // Now each thread should have its own DB connection
@@ -137,8 +138,7 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     // guts of Qt it is actually asynchronous
     const int maxIterations = 500;
     bool gotExpectedConnectionNames = false;
-    for (int i = 0; i < maxIterations; ++i)
-    {
+    for (int i = 0; i < maxIterations; ++i) {
         auto connectionNames = QSqlDatabase::connectionNames();
         if (connectionNames.size() != static_cast<int>(threadCount)) {
             QThread::msleep(50);
@@ -163,8 +163,7 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     QCoreApplication::processEvents();
 
     // Wait for database connections to close
-    for (int i = 0; i < maxIterations; ++i)
-    {
+    for (int i = 0; i < maxIterations; ++i) {
         const auto connectionNames = QSqlDatabase::connectionNames();
         if (connectionNames.isEmpty()) {
             break;
@@ -198,10 +197,8 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
         promise.start();
     }
 
-    const auto makeThreadFunc = [&](const std::size_t index)
-    {
-        return [&, index]
-        {
+    const auto makeThreadFunc = [&](const std::size_t index) {
+        return [&, index] {
             Q_UNUSED(pool->database());
             ASSERT_TRUE(threadSemaphore.tryAcquire());
 
@@ -210,9 +207,8 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
         };
     };
 
-    std::array<QThread*, threadCount> threads;
-    for (std::size_t i = 0; i < threadCount; ++i)
-    {
+    std::array<QThread *, threadCount> threads;
+    for (std::size_t i = 0; i < threadCount; ++i) {
         threads[i] = QThread::create(makeThreadFunc(i));
         threads[i]->start();
     }
@@ -220,10 +216,13 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     // Wait for all threads to create their DB connections
     QFutureSynchronizer<void> threadReadyFutureSynchronizer;
     for (std::size_t i = 0; i < threadCount; ++i) {
-        threadReadyFutureSynchronizer.addFuture(threadReadyPromises[i].future());
+        threadReadyFutureSynchronizer.addFuture(
+            threadReadyPromises[i].future());
     }
 
-    EXPECT_EQ(threadReadyFutureSynchronizer.futures().size(), static_cast<int>(threadCount));
+    EXPECT_EQ(
+        threadReadyFutureSynchronizer.futures().size(),
+        static_cast<int>(threadCount));
     threadReadyFutureSynchronizer.waitForFinished();
 
     // Now each thread should have its own DB connection
@@ -234,8 +233,7 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     // guts of Qt it is actually asynchronous
     const int maxIterations = 500;
     bool gotExpectedConnectionNames = false;
-    for (int i = 0; i < maxIterations; ++i)
-    {
+    for (int i = 0; i < maxIterations; ++i) {
         auto connectionNames = QSqlDatabase::connectionNames();
         if (connectionNames.size() != static_cast<int>(threadCount)) {
             QThread::msleep(50);
@@ -260,8 +258,7 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     }
 
     // Wait for all threads to finish
-    for (std::size_t i = 0; i < threadCount; ++i)
-    {
+    for (std::size_t i = 0; i < threadCount; ++i) {
         threads[i]->wait();
         threads[i]->deleteLater();
     }

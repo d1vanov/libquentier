@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -142,7 +142,8 @@ public:
      *         Evernote which has prevented further attempts to send anything
      *         to Evernote or std::monostate if no such error has occurred
      */
-    [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError() const = 0;
+    [[nodiscard]] virtual StopSynchronizationError stopSynchronizationError()
+        const = 0;
 
     /**
      * If during the send step of synchronization it was found out that

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,8 +32,7 @@ namespace quentier {
 
 EditHyperlinkDelegate::EditHyperlinkDelegate(
     NoteEditorPrivate & noteEditor, const quint64 hyperlinkId) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor), m_hyperlinkId(hyperlinkId)
+    QObject(&noteEditor), m_noteEditor(noteEditor), m_hyperlinkId(hyperlinkId)
 {}
 
 #define GET_PAGE()                                                             \
@@ -199,16 +198,16 @@ void EditHyperlinkDelegate::onHyperlinkDataEdited(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onHyperlinkDataEdited: text = " << text << ", url = " << url
-            << ", hyperlink id = " << hyperlinkId);
+        "EditHyperlinkDelegate" << "::onHyperlinkDataEdited: text = " << text
+                                << ", url = " << url
+                                << ", hyperlink id = " << hyperlinkId);
 
     Q_UNUSED(hyperlinkId)
     Q_UNUSED(startupUrlWasEmpty)
 
     const QString javascript =
-        QStringLiteral("hyperlinkManager.setHyperlinkData('") +
-        text + QStringLiteral("', '") + url.toString(QUrl::FullyEncoded) +
+        QStringLiteral("hyperlinkManager.setHyperlinkData('") + text +
+        QStringLiteral("', '") + url.toString(QUrl::FullyEncoded) +
         QStringLiteral("', ") + QString::number(m_hyperlinkId) +
         QStringLiteral(");");
 
@@ -222,8 +221,7 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onHyperlinkModified");
+        "EditHyperlinkDelegate" << "::onHyperlinkModified");
 
     const auto resultMap = data.toMap();
 

@@ -50,7 +50,8 @@ public:
     /**
      * Expiration timestamp for the authentication token
      */
-    [[nodiscard]] virtual qevercloud::Timestamp authTokenExpirationTime() const = 0;
+    [[nodiscard]] virtual qevercloud::Timestamp authTokenExpirationTime()
+        const = 0;
 
     /**
      * Timestamp at which authentication info was received from Evernote

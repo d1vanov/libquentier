@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,8 +69,7 @@ QFuture<void> FakeKeychainService::writePassword(
     QNDEBUG(
         "tests::synchronization::FakeKeychainService",
         "FakeKeychainService::writePassword: service = "
-            << service << ", key = " << key
-            << ", password = " << password);
+            << service << ", key = " << key << ", password = " << password);
 
     {
         const QMutexLocker locker{&m_mutex};
@@ -91,7 +90,6 @@ QFuture<void> FakeKeychainService::writePassword(
 QFuture<QString> FakeKeychainService::readPassword(
     QString service, QString key) const
 {
-
     std::optional<QString> result;
     {
         const QMutexLocker locker{&m_mutex};
@@ -107,19 +105,18 @@ QFuture<QString> FakeKeychainService::readPassword(
         }
     }
 
-    if (result)
-    {
+    if (result) {
         QNDEBUG(
             "tests::synchronization::FakeKeychainService",
-            "FakeKeychainService::readPassword: service = " << service
-                << ", key = " << key << ": found result: " << *result);
+            "FakeKeychainService::readPassword: service = "
+                << service << ", key = " << key
+                << ": found result: " << *result);
     }
-    else
-    {
+    else {
         QNDEBUG(
             "tests::synchronization::FakeKeychainService",
-            "FakeKeychainService::readPassword: service = " << service
-                << ", key = " << key << ": no result found");
+            "FakeKeychainService::readPassword: service = "
+                << service << ", key = " << key << ": no result found");
     }
 
     auto promise = std::make_shared<QPromise<QString>>();
@@ -148,7 +145,7 @@ QFuture<void> FakeKeychainService::deletePassword(QString service, QString key)
     QNDEBUG(
         "tests::synchronization::FakeKeychainService",
         "FakeKeychainService::deletePassword: service = " << service
-            << ", key = " << key);
+                                                          << ", key = " << key);
 
     {
         const QMutexLocker locker{&m_mutex};

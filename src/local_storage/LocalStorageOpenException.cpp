@@ -21,8 +21,7 @@
 namespace quentier::local_storage {
 
 LocalStorageOpenException::LocalStorageOpenException(
-    const ErrorString & message) :
-    IQuentierException(message)
+    const ErrorString & message) : IQuentierException(message)
 {}
 
 QString LocalStorageOpenException::exceptionDisplayName() const

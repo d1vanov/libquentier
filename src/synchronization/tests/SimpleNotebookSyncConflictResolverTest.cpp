@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -620,39 +620,38 @@ TEST_F(
     EXPECT_CALL(
         *m_mockLocalStorage,
         findNotebookByName(newName, std::optional<qevercloud::Guid>{}))
-        .WillOnce([=, signalToResetPromise = std::move(signalToResetPromise)](
-                      QString newName, // NOLINT
-                      std::optional<qevercloud::Guid>
-                          linkedNotebookGuid) mutable // NOLINT
-                  {
-                      Q_UNUSED(newName)
-                      Q_UNUSED(linkedNotebookGuid)
+        .WillOnce(
+            [=, signalToResetPromise = std::move(signalToResetPromise)](
+                QString newName, // NOLINT
+                std::optional<qevercloud::Guid>
+                    linkedNotebookGuid) mutable // NOLINT
+            {
+                Q_UNUSED(newName)
+                Q_UNUSED(linkedNotebookGuid)
 
-                      EXPECT_FALSE(resolverWeak.expired());
+                EXPECT_FALSE(resolverWeak.expired());
 
-                      threading::then(
-                          waitForResetPromise->future(),
-                          [=] () mutable {
-                              EXPECT_TRUE(resolverWeak.expired());
+                threading::then(waitForResetPromise->future(), [=]() mutable {
+                    EXPECT_TRUE(resolverWeak.expired());
 
-                              // Now can fulfill the promise to find notebook
-                              findNotebookPromise->start();
-                              findNotebookPromise->addResult(std::nullopt);
-                              findNotebookPromise->finish();
+                    // Now can fulfill the promise to find notebook
+                    findNotebookPromise->start();
+                    findNotebookPromise->addResult(std::nullopt);
+                    findNotebookPromise->finish();
 
-                              // Trigger the execution of lambda attached to the
-                              // fulfilled promise's future via watcher
-                              QCoreApplication::processEvents();
-                          });
+                    // Trigger the execution of lambda attached to the
+                    // fulfilled promise's future via watcher
+                    QCoreApplication::processEvents();
+                });
 
-                      signalToResetPromise->finish();
+                signalToResetPromise->finish();
 
-                      // Trigger the execution of lambda attached to the
-                      // fulfilled promise's future via watcher
-                      QCoreApplication::processEvents();
+                // Trigger the execution of lambda attached to the
+                // fulfilled promise's future via watcher
+                QCoreApplication::processEvents();
 
-                      return findNotebookFuture;
-                  });
+                return findNotebookFuture;
+            });
 
     auto resultFuture =
         resolver->resolveNotebookConflict(std::move(theirs), std::move(mine));
@@ -717,39 +716,38 @@ TEST_F(
         *m_mockLocalStorage,
         findNotebookByName(
             theirs.name().value(), std::optional<qevercloud::Guid>{}))
-        .WillOnce([=, signalToResetPromise = std::move(signalToResetPromise)](
-                      QString name, // NOLINT
-                      std::optional<qevercloud::Guid>
-                          linkedNotebookGuid) mutable // NOLINT
-                  {
-                      Q_UNUSED(name)
-                      Q_UNUSED(linkedNotebookGuid)
+        .WillOnce(
+            [=, signalToResetPromise = std::move(signalToResetPromise)](
+                QString name, // NOLINT
+                std::optional<qevercloud::Guid>
+                    linkedNotebookGuid) mutable // NOLINT
+            {
+                Q_UNUSED(name)
+                Q_UNUSED(linkedNotebookGuid)
 
-                      EXPECT_FALSE(resolverWeak.expired());
+                EXPECT_FALSE(resolverWeak.expired());
 
-                      threading::then(
-                          waitForResetPromise->future(),
-                          [=] () mutable {
-                              EXPECT_TRUE(resolverWeak.expired());
+                threading::then(waitForResetPromise->future(), [=]() mutable {
+                    EXPECT_TRUE(resolverWeak.expired());
 
-                              // Now can fulfill the promise to find notebook
-                              findNotebookPromise->start();
-                              findNotebookPromise->addResult(std::nullopt);
-                              findNotebookPromise->finish();
+                    // Now can fulfill the promise to find notebook
+                    findNotebookPromise->start();
+                    findNotebookPromise->addResult(std::nullopt);
+                    findNotebookPromise->finish();
 
-                              // Trigger the execution of lambda attached to the
-                              // fulfilled promise's future via watcher
-                              QCoreApplication::processEvents();
-                          });
+                    // Trigger the execution of lambda attached to the
+                    // fulfilled promise's future via watcher
+                    QCoreApplication::processEvents();
+                });
 
-                      signalToResetPromise->finish();
+                signalToResetPromise->finish();
 
-                      // Trigger the execution of lambda attached to the
-                      // fulfilled promise's future via watcher
-                      QCoreApplication::processEvents();
+                // Trigger the execution of lambda attached to the
+                // fulfilled promise's future via watcher
+                QCoreApplication::processEvents();
 
-                      return findNotebookFuture;
-                  });
+                return findNotebookFuture;
+            });
 
     auto resultFuture =
         resolver->resolveNotebookConflict(std::move(theirs), std::move(mine));

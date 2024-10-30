@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,15 @@
 #include <QtGlobal>
 
 #ifdef _MSC_VER
-#define UNREACHABLE do { Q_ASSERT(false); __assume(0); } while (false)
+#define UNREACHABLE                                                            \
+    do {                                                                       \
+        Q_ASSERT(false);                                                       \
+        __assume(0);                                                           \
+    } while (false)
 #else
-#define UNREACHABLE do { Q_ASSERT(false); __builtin_unreachable(); } while (false)
+#define UNREACHABLE                                                            \
+    do {                                                                       \
+        Q_ASSERT(false);                                                       \
+        __builtin_unreachable();                                               \
+    } while (false)
 #endif

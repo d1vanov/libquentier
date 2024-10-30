@@ -3283,19 +3283,18 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
     const QByteArray sampleInkNoteImageData =
         QString::fromUtf8("data").toUtf8();
     EXPECT_CALL(*m_mockInkNoteImageDownloader, downloadAsync)
-        .WillOnce(
-            [&](const qevercloud::Guid & resourceGuid, const QSize size,
-                const qevercloud::IRequestContextPtr & ctx) {
-                const auto & resource = notes[1].resources().value()[0];
-                EXPECT_EQ(ctx.get(), m_ctx.get());
+        .WillOnce([&](const qevercloud::Guid & resourceGuid, const QSize size,
+                      const qevercloud::IRequestContextPtr & ctx) {
+            const auto & resource = notes[1].resources().value()[0];
+            EXPECT_EQ(ctx.get(), m_ctx.get());
 
-                EXPECT_EQ(resourceGuid, resource.guid().value());
-                EXPECT_EQ(resource.height(), size.height());
-                EXPECT_EQ(resource.width(), size.width());
+            EXPECT_EQ(resourceGuid, resource.guid().value());
+            EXPECT_EQ(resource.height(), size.height());
+            EXPECT_EQ(resource.width(), size.width());
 
-                return threading::makeReadyFuture<QByteArray>(
-                    sampleInkNoteImageData);
-            });
+            return threading::makeReadyFuture<QByteArray>(
+                sampleInkNoteImageData);
+        });
 
     EXPECT_CALL(*m_mockLocalStorage, putNote)
         .WillRepeatedly([&](const qevercloud::Note & note) {

@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "PutToDatabaseUtils.h"
 #include "Common.h"
 #include "NoteUtils.h"
 #include "NotebookUtils.h"
 #include "PartialUpdateNoteResources.h"
-#include "PutToDatabaseUtils.h"
 #include "RemoveFromDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "ResourceUtils.h"
@@ -689,7 +689,8 @@ bool putUser(
 
     if (user.attributes()) {
         if (!putUserAttributes(
-                *user.attributes(), userId, database, errorDescription)) {
+                *user.attributes(), userId, database, errorDescription))
+        {
             return false;
         }
     }
@@ -699,7 +700,8 @@ bool putUser(
 
     if (user.accounting()) {
         if (!putAccounting(
-                *user.accounting(), userId, database, errorDescription)) {
+                *user.accounting(), userId, database, errorDescription))
+        {
             return false;
         }
     }
@@ -1088,7 +1090,8 @@ bool putUserAttributesViewedPromotions(
     QSqlDatabase & database, ErrorString & errorDescription)
 {
     if (!removeUserAttributesViewedPromotions(
-            userId, database, errorDescription)) {
+            userId, database, errorDescription))
+    {
         return false;
     }
 
@@ -1512,15 +1515,18 @@ bool putNotebook(
 
     if (notebook.guid()) {
         if (!removeSharedNotebooks(
-                *notebook.guid(), database, errorDescription)) {
+                *notebook.guid(), database, errorDescription))
+        {
             return false;
         }
 
         if (notebook.sharedNotebooks() &&
-            !notebook.sharedNotebooks()->isEmpty()) {
+            !notebook.sharedNotebooks()->isEmpty())
+        {
             int indexInNotebook = 0;
             for (const auto & sharedNotebook:
-                 std::as_const(*notebook.sharedNotebooks())) {
+                 std::as_const(*notebook.sharedNotebooks()))
+            {
                 if (!sharedNotebook.id()) {
                     QNWARNING(
                         "local_storage::sql::utils",
@@ -2510,8 +2516,8 @@ bool putResource(
 
     if (resource.noteLocalId().isEmpty()) {
         error.clear();
-        auto noteLocalId = noteLocalIdByResourceLocalId(
-            resource.localId(), database, error);
+        auto noteLocalId =
+            noteLocalIdByResourceLocalId(resource.localId(), database, error);
         if (noteLocalId.isEmpty() && !error.isEmpty()) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -2636,7 +2642,8 @@ bool putResource(
     QString resourceAlternateDataBodyVersionId;
 
     if (putResourceBinaryDataOption ==
-        PutResourceBinaryDataOption::WithBinaryData) {
+        PutResourceBinaryDataOption::WithBinaryData)
+    {
         if (resource.data() && resource.data()->body()) {
             resourceDataBodyVersionId = UidGenerator::Generate();
             if (!putResourceDataBodyVersionId(
@@ -2678,7 +2685,8 @@ bool putResource(
         const bool res = transaction->commit();
         if (!res) {
             if (putResourceBinaryDataOption ==
-                PutResourceBinaryDataOption::WithBinaryData) {
+                PutResourceBinaryDataOption::WithBinaryData)
+            {
                 if (resource.data() && resource.data()->body() &&
                     !removeResourceDataBodyFile(
                         localStorageDir, resource.noteLocalId(), localId,
@@ -3745,7 +3753,8 @@ bool putNote(
     error.clear();
     if (note.restrictions()) {
         if (!putNoteRestrictions(
-                note.localId(), *note.restrictions(), database, error)) {
+                note.localId(), *note.restrictions(), database, error))
+        {
             composeFullError();
             return false;
         }
@@ -3784,7 +3793,8 @@ bool putNote(
         if (note.sharedNotes()) {
             error.clear();
             if (!putSharedNotes(
-                    *note.guid(), *note.sharedNotes(), database, error)) {
+                    *note.guid(), *note.sharedNotes(), database, error))
+            {
                 composeFullError();
                 return false;
             }
@@ -3840,7 +3850,8 @@ bool putNote(
 
             error.clear();
             if (!removeResourceMetadataByNoteLocalId(
-                    note.localId(), database, error)) {
+                    note.localId(), database, error))
+            {
                 composeFullError();
                 return false;
             }
@@ -3896,7 +3907,8 @@ bool putNote(
         const QString & noteLocalId = note.localId();
         if (needToRemoveResourceDataFiles) {
             for (const auto & resourceLocalId:
-                 std::as_const(originalNoteResourceLocalIds)) {
+                 std::as_const(originalNoteResourceLocalIds))
+            {
                 error.clear();
                 if (!removeResourceDataFiles(
                         localStorageDir, noteLocalId, resourceLocalId, error))

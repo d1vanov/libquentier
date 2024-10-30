@@ -54,8 +54,7 @@ const char * gLinkedNotebookLastSyncTime = "linked_notebook_last_sync_time";
 SyncStateStorage::SyncStateStorage(QObject * parent) : ISyncStateStorage(parent)
 {}
 
-ISyncStatePtr SyncStateStorage::getSyncState(
-    const Account & account)
+ISyncStatePtr SyncStateStorage::getSyncState(const Account & account)
 {
     QNDEBUG(
         "synchronization::SyncStateStorage",
@@ -88,8 +87,8 @@ ISyncStatePtr SyncStateStorage::getSyncState(
         }
     }
 
-    const QVariant lastSyncTimeVar = appSettings.value(
-        keyGroup + QString::fromUtf8(gLastSyncTime));
+    const QVariant lastSyncTimeVar =
+        appSettings.value(keyGroup + QString::fromUtf8(gLastSyncTime));
 
     if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
@@ -114,8 +113,7 @@ ISyncStatePtr SyncStateStorage::getSyncState(
     for (int i = 0; i < numLinkedNotebooksSyncParams; ++i) {
         appSettings.setArrayIndex(i);
 
-        const QString guid =
-            appSettings.value(gLinkedNotebookGuid).toString();
+        const QString guid = appSettings.value(gLinkedNotebookGuid).toString();
 
         if (guid.isEmpty()) {
             QNWARNING(
@@ -195,7 +193,8 @@ void SyncStateStorage::setSyncState(
 
     int counter = 0;
     for (auto it:
-         qevercloud::toRange(std::as_const(updateCountsByLinkedNotebookGuid))) {
+         qevercloud::toRange(std::as_const(updateCountsByLinkedNotebookGuid)))
+    {
         const QString & guid = it.key();
 
         const auto syncTimeIt =
@@ -215,8 +214,7 @@ void SyncStateStorage::setSyncState(
         appSettings.setValue(gLinkedNotebookGuid, guid);
         appSettings.setValue(gLinkedNotebookLastUpdateCount, it.value());
 
-        appSettings.setValue(
-            gLinkedNotebookLastSyncTime, syncTimeIt.value());
+        appSettings.setValue(gLinkedNotebookLastSyncTime, syncTimeIt.value());
 
         QNTRACE(
             "synchronization::SyncStateStorage",

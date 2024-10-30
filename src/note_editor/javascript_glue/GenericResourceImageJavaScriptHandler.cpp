@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@ namespace quentier {
 
 GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
     const QHash<QByteArray, QString> & cache, QObject * parent) :
-    QObject(parent),
-    m_cache(cache)
+    QObject(parent), m_cache(cache)
 {}
 
 void GenericResourceImageJavaScriptHandler::findGenericResourceImage(

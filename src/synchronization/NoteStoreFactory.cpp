@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,10 +23,8 @@
 namespace quentier::synchronization {
 
 qevercloud::INoteStorePtr NoteStoreFactory::noteStore(
-    QString noteStoreUrl,
-    std::optional<qevercloud::Guid> linkedNotebookGuid,
-    qevercloud::IRequestContextPtr ctx,
-    qevercloud::IRetryPolicyPtr retryPolicy)
+    QString noteStoreUrl, std::optional<qevercloud::Guid> linkedNotebookGuid,
+    qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy)
 {
     return qevercloud::newNoteStore(
         std::move(noteStoreUrl), std::move(linkedNotebookGuid), std::move(ctx),

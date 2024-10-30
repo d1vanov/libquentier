@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,8 +33,7 @@ RenameResourceUndoCommand::RenameResourceUndoCommand(
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
     QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, parent),
-    m_resource(std::move(resource)),
+    INoteEditorUndoCommand(noteEditor, parent), m_resource(std::move(resource)),
     m_previousResourceName(std::move(previousResourceName)),
     m_newResourceName(resourceDisplayName(resource)),
     m_pGenericResourceImageManager(pGenericResourceImageManager),

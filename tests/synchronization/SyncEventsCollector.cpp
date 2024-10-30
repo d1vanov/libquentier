@@ -418,7 +418,8 @@ bool SyncEventsCollector::checkSyncChunksDownloadProgressOrderImpl(
         const auto & currentProgress = *it;
 
         if (!checkSingleSyncChunkDownloadProgressMessage(
-                currentProgress, errorMessage)) {
+                currentProgress, errorMessage))
+        {
             return false;
         }
 
@@ -439,7 +440,8 @@ bool SyncEventsCollector::checkSyncChunksDownloadProgressOrderImpl(
         }
 
         if (previousProgress.m_highestServerUsn !=
-            currentProgress.m_highestServerUsn) {
+            currentProgress.m_highestServerUsn)
+        {
             errorMessage =
                 "Highest server USN changed between two sync "
                 "chunk download progresses";
@@ -447,7 +449,8 @@ bool SyncEventsCollector::checkSyncChunksDownloadProgressOrderImpl(
         }
 
         if (previousProgress.m_lastPreviousUsn !=
-            currentProgress.m_lastPreviousUsn) {
+            currentProgress.m_lastPreviousUsn)
+        {
             errorMessage =
                 "Last previous USN changed between two sync "
                 "chunk download progresses";
@@ -491,7 +494,8 @@ bool SyncEventsCollector::checkLinkedNotebookNotesDownloadProgressOrder(
              std::as_const(m_linkedNotebookNoteDownloadProgressMessages)))
     {
         if (!checkNotesDownloadProgressOrderImpl(
-                it.value().second, errorMessage)) {
+                it.value().second, errorMessage))
+        {
             return false;
         }
     }
@@ -517,7 +521,8 @@ bool SyncEventsCollector::checkNotesDownloadProgressOrderImpl(
     {
         const auto & currentProgress = *it;
         if (!checkSingleNoteDownloadProgressMessage(
-                currentProgress, errorMessage)) {
+                currentProgress, errorMessage))
+        {
             return false;
         }
 
@@ -531,7 +536,8 @@ bool SyncEventsCollector::checkNotesDownloadProgressOrderImpl(
         }
 
         if (previousProgress.m_notesDownloaded >=
-            currentProgress.m_notesDownloaded) {
+            currentProgress.m_notesDownloaded)
+        {
             errorMessage = "Found non-increasing downloaded notes count";
             return false;
         }
@@ -577,7 +583,8 @@ bool SyncEventsCollector::checkLinkedNotebookResourcesDownloadProgressOrder(
              std::as_const(m_linkedNotebookResourceDownloadProgressMessages)))
     {
         if (!checkResourcesDownloadProgressOrderImpl(
-                it.value().second, errorMessage)) {
+                it.value().second, errorMessage))
+        {
             return false;
         }
     }
@@ -604,7 +611,8 @@ bool SyncEventsCollector::checkResourcesDownloadProgressOrderImpl(
         const auto & currentProgress = *it;
 
         if (!checkSingleResourceDownloadProgressMessage(
-                currentProgress, errorMessage)) {
+                currentProgress, errorMessage))
+        {
             return false;
         }
 
@@ -668,7 +676,8 @@ bool SyncEventsCollector::checkLinkedNotebookSyncChunkDataCountersOrder(
              std::as_const(m_linkedNotebookSyncChunksDataCounters)))
     {
         if (!checkSyncChunksDataCountersOrderImpl(
-                it.value().second, errorMessage)) {
+                it.value().second, errorMessage))
+        {
             return false;
         }
     }
@@ -712,7 +721,8 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->totalTags() !=
-            lastSyncChunksDataCounters->totalTags()) {
+            lastSyncChunksDataCounters->totalTags())
+        {
             errorMessage =
                 "The number of total tags is different in consequent sync "
                 "chunks data counters";
@@ -792,7 +802,8 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->addedTags() <
-            lastSyncChunksDataCounters->addedTags()) {
+            lastSyncChunksDataCounters->addedTags())
+        {
             errorMessage =
                 "The number of added tags is unexpectedly declining in "
                 "consequent sync chunks data counters";
@@ -800,7 +811,8 @@ bool SyncEventsCollector::checkSyncChunksDataCountersOrderImpl(
         }
 
         if (currentCounters->updatedTags() <
-            lastSyncChunksDataCounters->updatedTags()) {
+            lastSyncChunksDataCounters->updatedTags())
+        {
             errorMessage =
                 "The number of updated tags is unexpectedly declining in "
                 "consequent sync chunks data counters";

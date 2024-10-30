@@ -32,8 +32,7 @@ const char * gShortcutSettingsName = "Shortcuts";
 
 ShortcutManagerPrivate::ShortcutManagerPrivate(
     ShortcutManager & shortcutManager) :
-    QObject(&shortcutManager),
-    q_ptr(&shortcutManager)
+    QObject(&shortcutManager), q_ptr(&shortcutManager)
 {
     Q_Q(ShortcutManager);
 
@@ -62,8 +61,7 @@ QKeySequence ShortcutManagerPrivate::shortcut(
 
     QNDEBUG(
         "utility:shortcut",
-        "User shortcut is empty, fallback to "
-            << "the default shortcut");
+        "User shortcut is empty, fallback to " << "the default shortcut");
     return defaultShortcut(key, account, context);
 }
 
@@ -84,8 +82,7 @@ QKeySequence ShortcutManagerPrivate::shortcut(
 
     QNDEBUG(
         "utility:shortcut",
-        "User shortcut is empty, fallback to "
-            << "the default shortcut");
+        "User shortcut is empty, fallback to " << "the default shortcut");
     return defaultShortcut(nonStandardKey, account, context);
 }
 
@@ -124,8 +121,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
     if (keySequence.isEmpty()) {
         QNTRACE(
             "utility:shortcut",
-            "Can't find default shortcut in app "
-                << "settings");
+            "Can't find default shortcut in app " << "settings");
 
         if ((key >= 0) && (key < QKeySequence::UnknownKey)) {
             QNTRACE(
@@ -215,8 +211,8 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
     if (!value.isValid()) {
         QNTRACE(
             "utility:shortcut",
-            "Couldn't find user shortcut for standard "
-                << "key " << keyString << " (" << key << ")");
+            "Couldn't find user shortcut for standard " << "key " << keyString
+                                                        << " (" << key << ")");
         return {};
     }
 
@@ -256,8 +252,8 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
     if (!value.isValid()) {
         QNTRACE(
             "utility:shortcut",
-            "Couldn't find user shortcut for "
-                << "non-standard key " << nonStandardKey);
+            "Couldn't find user shortcut for " << "non-standard key "
+                                               << nonStandardKey);
         return {};
     }
 
@@ -270,7 +266,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
 
 void ShortcutManagerPrivate::setUserShortcut(
     int key, QKeySequence shortcut, const Account & account, // NOLINT
-    QString context) // NOLINT
+    QString context)                                         // NOLINT
 {
     const QString keyString = keyToString(key);
 
@@ -306,7 +302,7 @@ void ShortcutManagerPrivate::setUserShortcut(
 
 void ShortcutManagerPrivate::setNonStandardUserShortcut(
     QString nonStandardKey, QKeySequence shortcut, // NOLINT
-    const Account & account, QString context) // NOLINT
+    const Account & account, QString context)      // NOLINT
 {
     QNDEBUG(
         "utility:shortcut",
@@ -342,7 +338,7 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(
 
 void ShortcutManagerPrivate::setDefaultShortcut(
     int key, QKeySequence shortcut, const Account & account, // NOLINT
-    QString context) // NOLINT
+    QString context)                                         // NOLINT
 {
     const QString keyString = keyToString(key);
 
@@ -387,15 +383,14 @@ void ShortcutManagerPrivate::setDefaultShortcut(
     if (userKeySequence.isEmpty()) {
         QNTRACE(
             "utility:shortcut",
-            "Found no user shortcut overriding "
-                << "the default one");
+            "Found no user shortcut overriding " << "the default one");
         Q_EMIT shortcutChanged(key, shortcut, account, context);
     }
 }
 
 void ShortcutManagerPrivate::setNonStandardDefaultShortcut(
     QString nonStandardKey, QKeySequence shortcut, // NOLINT
-    const Account & account, QString context) // NOLINT
+    const Account & account, QString context)      // NOLINT
 {
     QNDEBUG(
         "utility:shortcut",
@@ -440,8 +435,7 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(
     if (userKeySequence.isEmpty()) {
         QNTRACE(
             "utility:shortcut",
-            "Found no user shortcut overriding "
-                << "the default one");
+            "Found no user shortcut overriding " << "the default one");
 
         Q_EMIT nonStandardShortcutChanged(
             nonStandardKey, shortcut, account, context);

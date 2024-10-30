@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -63,8 +63,7 @@ public:
      */
     [[nodiscard]] virtual QString convertEncryptedText(
         const QString & encryptedText, const QString & hint,
-        const QString & cipher, std::size_t keyLength,
-        quint32 index) const = 0;
+        const QString & cipher, std::size_t keyLength, quint32 index) const = 0;
 
     /**
      * Converts already decrypted en-crypt tag into its HTML counterpart

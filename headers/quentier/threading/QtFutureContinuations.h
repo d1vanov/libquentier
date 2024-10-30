@@ -469,8 +469,7 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
             postToObject(
                 context,
                 [promise = std::move(promise), future = std::move(future),
-                 handler =
-                     std::forward<decltype(handler)>(handler)]() mutable {
+                 handler = std::forward<decltype(handler)>(handler)]() mutable {
                     detail::processPossibleFutureException(
                         std::move(promise), std::move(future),
                         std::forward<decltype(handler)>(handler));
@@ -501,11 +500,10 @@ void thenOrFailed(
 template <class T, class U, class Function>
 void thenOrFailed(
     QFuture<T> && future, QThread * thread,
-    std::shared_ptr<QPromise<U>> promise,
-    Function && function)
+    std::shared_ptr<QPromise<U>> promise, Function && function)
 {
-    auto thenFuture = then(
-        std::move(future), thread, std::forward<Function>(function));
+    auto thenFuture =
+        then(std::move(future), thread, std::forward<Function>(function));
 
     onFailed(std::move(thenFuture), thread, [promise](const QException & e) {
         promise->setException(e);

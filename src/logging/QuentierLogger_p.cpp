@@ -43,8 +43,7 @@ namespace quentier {
 QuentierFileLogWriter::QuentierFileLogWriter(
     const MaxSizeBytes & maxSizeBytes,
     const MaxOldLogFilesCount & maxOldLogFilesCount, QObject * parent) :
-    IQuentierLogWriter(parent),
-    m_maxSizeBytes(maxSizeBytes.size()),
+    IQuentierLogWriter(parent), m_maxSizeBytes(maxSizeBytes.size()),
     m_maxOldLogFilesCount(maxOldLogFilesCount.count())
 {
     const QString logFileDirPath = QuentierLogger::logFilesDirPath();
@@ -408,8 +407,7 @@ LogLevel QuentierLogger::minLogLevel() const
 }
 
 QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
-    QObject(parent),
-    m_minLogLevel(static_cast<int>(LogLevel::Info)),
+    QObject(parent), m_minLogLevel(static_cast<int>(LogLevel::Info)),
     m_pLogWriteThread(new QThread)
 {
     QObject::connect(

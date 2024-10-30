@@ -167,8 +167,7 @@ bool EncryptionManagerPrivate::encrypt(
 
     QByteArray textToEncryptData = textToEncrypt.toUtf8();
 
-    if (!encyptWithAes(
-            textToEncryptData, encryptedTextData, errorDescription))
+    if (!encyptWithAes(textToEncryptData, encryptedTextData, errorDescription))
     {
         return false;
     }
@@ -214,7 +213,8 @@ QDebug & operator<<(QDebug & dbg, const EncryptionManagerPrivate::SaltKind kind)
     return dbg;
 }
 
-QTextStream & operator<<(QTextStream & strm, const EncryptionManagerPrivate::SaltKind kind)
+QTextStream & operator<<(
+    QTextStream & strm, const EncryptionManagerPrivate::SaltKind kind)
 {
     EncryptionManagerPrivate::printSaltKind(strm, kind);
     return strm;
@@ -275,8 +275,9 @@ bool EncryptionManagerPrivate::generateKey(
     const char * rawPassphraseData = passphraseData.constData();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    if (Q_UNLIKELY((passphraseData.size() < std::numeric_limits<int>::min()) ||
-                   (passphraseData.size() > std::numeric_limits<int>::max())))
+    if (Q_UNLIKELY(
+            (passphraseData.size() < std::numeric_limits<int>::min()) ||
+            (passphraseData.size() > std::numeric_limits<int>::max())))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
@@ -300,8 +301,8 @@ bool EncryptionManagerPrivate::generateKey(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl PKCS5_PBKDF2_HMAC failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         return false;
     }
 
@@ -350,9 +351,7 @@ bool EncryptionManagerPrivate::encyptWithAes(
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    if (Q_UNLIKELY(rawTextToEncryptSize >
-                   std::numeric_limits<int>::max()))
-    {
+    if (Q_UNLIKELY(rawTextToEncryptSize > std::numeric_limits<int>::max())) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
             "can't generate cryptographic key: text to encrypt is too long"));
@@ -370,8 +369,8 @@ bool EncryptionManagerPrivate::encyptWithAes(
     int cipherTextSize = 0;
 
     EVP_CIPHER_CTX * context = EVP_CIPHER_CTX_new();
-    int res = EVP_EncryptInit(
-        context, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
+    int res =
+        EVP_EncryptInit(context, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
@@ -382,8 +381,8 @@ bool EncryptionManagerPrivate::encyptWithAes(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl EVP_EnryptInit failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(context);
         return false;
@@ -403,8 +402,8 @@ bool EncryptionManagerPrivate::encyptWithAes(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl EVP_CipherUpdate failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(context);
         return false;
@@ -423,8 +422,8 @@ bool EncryptionManagerPrivate::encyptWithAes(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl EVP_CipherFinal failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(context);
         return false;
@@ -537,8 +536,8 @@ bool EncryptionManagerPrivate::decryptAes(
     int decipheredTextSize = 0;
 
     EVP_CIPHER_CTX * context = EVP_CIPHER_CTX_new();
-    int res = EVP_DecryptInit(
-        context, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
+    int res =
+        EVP_DecryptInit(context, EVP_aes_128_cbc(), m_key.data(), m_iv.data());
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate", "can't decrypt the text"));
@@ -548,8 +547,8 @@ bool EncryptionManagerPrivate::decryptAes(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl EVP_DecryptInit failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         free(decipheredText);
         EVP_CIPHER_CTX_free(context);
         return false;
@@ -568,8 +567,8 @@ bool EncryptionManagerPrivate::decryptAes(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl EVP_DecryptUpdate failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         free(decipheredText);
         EVP_CIPHER_CTX_free(context);
         return false;
@@ -577,8 +576,8 @@ bool EncryptionManagerPrivate::decryptAes(
 
     decipheredTextSize += bytesWritten;
 
-    res = EVP_DecryptFinal(
-        context, decipheredText + bytesWritten, &bytesWritten);
+    res =
+        EVP_DecryptFinal(context, decipheredText + bytesWritten, &bytesWritten);
 
     if (res != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
@@ -589,8 +588,8 @@ bool EncryptionManagerPrivate::decryptAes(
         QNWARNING(
             "utility::encryption",
             errorDescription << ", openssl EVP_DecryptFinal failed: "
-                             << ": lib: " << errorLib << "; reason: "
-                             << errorReason);
+                             << ": lib: " << errorLib
+                             << "; reason: " << errorReason);
         free(decipheredText);
         EVP_CIPHER_CTX_free(context);
         return false;
@@ -633,8 +632,7 @@ bool EncryptionManagerPrivate::splitEncryptedData(
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     if (Q_UNLIKELY(encryptedDataSize > std::numeric_limits<int>::max())) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "EncryptionManagerPrivate",
-            "encrypted data is too large"));
+            "EncryptionManagerPrivate", "encrypted data is too large"));
         errorDescription.details() = QString::number(encryptedDataSize);
         QNWARNING("utility::encryption", errorDescription);
         return false;
@@ -667,7 +665,8 @@ bool EncryptionManagerPrivate::splitEncryptedData(
         static_cast<int>(encryptedDataSize) - static_cast<int>(hmacSize);
 
     for (int i = static_cast<int>(cursor); i < encryptedDataWithoutHmacSize;
-         ++i) {
+         ++i)
+    {
         encryptedText += decodedEncryptedData.at(i);
     }
 
@@ -751,7 +750,8 @@ void EncryptionManagerPrivate::rc2KeyCodesFromPassphrase(
     const auto keyDataSize = keyData.size();
 
     // 256-entry permutation table, probably derived somehow from pi
-    const int rc2_permute[256] = { // NOLINT
+    const int rc2_permute[256] = {
+        // NOLINT
         217, 120, 249, 196, 25,  221, 181, 237, 40,  233, 253, 121, 74,  160,
         216, 157, 198, 126, 55,  131, 43,  118, 83,  142, 98,  76,  100, 136,
         68,  139, 251, 162, 23,  154, 89,  245, 135, 179, 79,  19,  97,  69,

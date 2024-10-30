@@ -241,8 +241,7 @@ void RenameResourceDelegate::buildAndSaveGenericResourceImage()
     Q_EMIT saveGenericResourceImageToFile(
         m_pNote->localId(), m_resource.localId(), imageData,
         QStringLiteral("png"), *m_resource.data()->bodyHash(),
-        resourceDisplayName(m_resource),
-        m_genericResourceImageWriterRequestId);
+        resourceDisplayName(m_resource), m_genericResourceImageWriterRequestId);
 }
 
 void RenameResourceDelegate::onGenericResourceImageWriterFinished(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,10 @@ namespace quentier::enml {
 
 QTextStream & IHtmlData::print(QTextStream & strm) const
 {
-    strm << "HTML: " << html()
-        << "\ntodo nodes: " << numEnToDoNodes()
-        << ", hyperlinks: " << numHyperlinkNodes()
-        << ", en-crypt nodes: " << numEnCryptNodes()
-        << ", decrypted en-crypt nodes: " << numEnDecryptedNodes();
+    strm << "HTML: " << html() << "\ntodo nodes: " << numEnToDoNodes()
+         << ", hyperlinks: " << numHyperlinkNodes()
+         << ", en-crypt nodes: " << numEnCryptNodes()
+         << ", decrypted en-crypt nodes: " << numEnDecryptedNodes();
     return strm;
 }
 

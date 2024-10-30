@@ -23,8 +23,7 @@
 namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
-    TagDirectedGraph graph) :
-    m_graph(std::move(graph))
+    TagDirectedGraph graph) : m_graph(std::move(graph))
 {
     const auto allTagIds = m_graph.allTagIds();
     for (const auto & tagId: std::as_const(allTagIds)) {

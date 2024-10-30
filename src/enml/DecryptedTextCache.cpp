@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,14 +24,14 @@ namespace quentier::enml {
 
 void DecryptedTextCache::addDecryptexTextInfo(
     const QString & encryptedText, const QString & decryptedText,
-    const QString & passphrase, const QString & cipher,
-    std::size_t keyLength, RememberForSession rememberForSession)
+    const QString & passphrase, const QString & cipher, std::size_t keyLength,
+    RememberForSession rememberForSession)
 {
     QNDEBUG(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::addDecryptexTextInfo: encryptedText = "
-            << encryptedText << ", rememberForSession = "
-            << rememberForSession);
+            << encryptedText
+            << ", rememberForSession = " << rememberForSession);
 
     if (passphrase.isEmpty()) {
         QNWARNING(
@@ -50,7 +50,8 @@ void DecryptedTextCache::addDecryptexTextInfo(
 }
 
 std::optional<std::pair<QString, IDecryptedTextCache::RememberForSession>>
-DecryptedTextCache::findDecryptedTextInfo(const QString & encryptedText) const
+    DecryptedTextCache::findDecryptedTextInfo(
+        const QString & encryptedText) const
 {
     QNDEBUG(
         "enml::DecryptedTextCache",

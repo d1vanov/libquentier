@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,7 +54,8 @@ int main(int argc, char * argv[])
 
         QDir evernoteAccountsDir(evernoteAccountsPath);
         if (evernoteAccountsDir.exists() &&
-            !quentier::removeDir(evernoteAccountsPath)) {
+            !quentier::removeDir(evernoteAccountsPath))
+        {
             qWarning() << "Failed to delete the directory with libquentier "
                        << "tests persistence for Evernote accounts: "
                        << QDir::toNativeSeparators(evernoteAccountsPath);
@@ -67,7 +68,8 @@ int main(int argc, char * argv[])
 
         QDir localAccountsDir(localAccountsPath);
         if (localAccountsDir.exists() &&
-            !quentier::removeDir(localAccountsPath)) {
+            !quentier::removeDir(localAccountsPath))
+        {
             qWarning() << "Failed to delete the directory with libquentier "
                        << "tests persistence for local accounts: "
                        << QDir::toNativeSeparators(evernoteAccountsPath);

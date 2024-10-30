@@ -45,8 +45,7 @@ bool rowExists(
             .arg(sqlEscape(tableName), sqlEscape(columnName)));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QStringLiteral(
-            "Cannot check row existence: failed to prepare query"),
+        QStringLiteral("Cannot check row existence: failed to prepare query"),
         false);
 
     query.bindValue(QStringLiteral(":value"), value);
@@ -54,9 +53,7 @@ bool rowExists(
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
-        QStringLiteral(
-            "Cannot check row existence"),
-        false);
+        QStringLiteral("Cannot check row existence"), false);
 
     if (!query.next()) {
         return false;

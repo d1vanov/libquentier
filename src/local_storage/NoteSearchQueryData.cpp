@@ -949,8 +949,7 @@ bool NoteSearchQuery::Data::parseDoubleValue(
         }
         else {
             bool conversionResult = false;
-            auto value =
-                static_cast<double>(word.toDouble(&conversionResult));
+            auto value = static_cast<double>(word.toDouble(&conversionResult));
             if (!conversionResult) {
                 error.setBase(QT_TRANSLATE_NOOP(
                     "NoteSearchQueryData",

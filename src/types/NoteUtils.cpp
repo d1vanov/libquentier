@@ -44,7 +44,8 @@ namespace {
         Q_UNUSED(reader.readNext());
 
         if (reader.isStartElement() &&
-            (reader.name() == QStringLiteral("en-todo"))) {
+            (reader.name() == QStringLiteral("en-todo")))
+        {
             const QXmlStreamAttributes attributes = reader.attributes();
             if (checked && attributes.hasAttribute(QStringLiteral("checked")) &&
                 (attributes.value(QStringLiteral("checked")) ==
@@ -122,7 +123,8 @@ bool noteContentContainsEncryptedFragments(const QString & noteContent)
         Q_UNUSED(reader.readNext());
 
         if (reader.isStartElement() &&
-            (reader.name() == QStringLiteral("en-crypt"))) {
+            (reader.name() == QStringLiteral("en-crypt")))
+        {
             return true;
         }
     }

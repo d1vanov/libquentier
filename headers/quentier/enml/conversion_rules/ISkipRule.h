@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,8 +61,7 @@ public:
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, Target target);
 
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, Target target);
+    friend QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, Target target);
 
     /**
      * Target to be affected by the skip rule
@@ -88,8 +87,7 @@ public:
     /**
      * Case sensitivity for target name/value check
      */
-    [[nodiscard]] virtual Qt::CaseSensitivity caseSensitivity()
-        const = 0;
+    [[nodiscard]] virtual Qt::CaseSensitivity caseSensitivity() const = 0;
 
 public: // Printable
     QTextStream & print(QTextStream & strm) const override;

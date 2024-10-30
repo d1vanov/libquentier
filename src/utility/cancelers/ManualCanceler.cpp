@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,8 +28,8 @@ public:
     std::atomic<bool> m_canceled{false};
 };
 
-ManualCanceler::ManualCanceler()
-    : m_impl{std::make_unique<ManualCanceler::Impl>()}
+ManualCanceler::ManualCanceler() :
+    m_impl{std::make_unique<ManualCanceler::Impl>()}
 {}
 
 ManualCanceler::ManualCanceler(ManualCanceler && other) noexcept = default;

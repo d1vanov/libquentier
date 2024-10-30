@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ResourceUtils.h"
 #include "Common.h"
 #include "FillFromSqlRecordUtils.h"
 #include "ResourceDataFilesUtils.h"
-#include "ResourceUtils.h"
 #include "SqlUtils.h"
 
 #include "../ErrorHandling.h"
@@ -246,7 +246,8 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
     }
 
     if (!fillResourceData(
-            resource, localStorageDir, database, errorDescription)) {
+            resource, localStorageDir, database, errorDescription))
+    {
         return std::nullopt;
     }
 
@@ -336,7 +337,8 @@ std::optional<qevercloud::Resource> findResourceByGuid(
     }
 
     if (!fillResourceData(
-            resource, localStorageDir, database, errorDescription)) {
+            resource, localStorageDir, database, errorDescription))
+    {
         return std::nullopt;
     }
 
@@ -591,8 +593,8 @@ QStringList findResourceLocalIdsByMimeTypes(
         return {};
     }
 
-    const ErrorString errorPrefix{QStringLiteral(
-        "can't get resource mime types for resource local ids")};
+    const ErrorString errorPrefix{
+        QStringLiteral("can't get resource mime types for resource local ids")};
 
     QSqlQuery query{database};
     QString queryString;

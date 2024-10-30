@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,7 @@
 
 namespace quentier::local_storage {
 
-ILocalStorageNotifier::ILocalStorageNotifier(QObject * parent) :
-    QObject(parent)
+ILocalStorageNotifier::ILocalStorageNotifier(QObject * parent) : QObject(parent)
 {}
 
 ILocalStorageNotifier::~ILocalStorageNotifier() = default;

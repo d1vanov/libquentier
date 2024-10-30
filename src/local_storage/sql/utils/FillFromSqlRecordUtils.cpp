@@ -33,57 +33,49 @@ namespace quentier::local_storage::sql::utils {
 namespace {
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingUserFieldErrorMessage,
+    QString, gMissingUserFieldErrorMessage,
     (QString::fromUtf8(
         "User field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingNotebookFieldErrorMessage,
+    QString, gMissingNotebookFieldErrorMessage,
     (QString::fromUtf8(
         "Notebook field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingTagFieldErrorMessage,
+    QString, gMissingTagFieldErrorMessage,
     (QString::fromUtf8(
         "Tag field missing in the record received from the local storage "
         "database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingLinkedNotebookFieldErrorMessage,
+    QString, gMissingLinkedNotebookFieldErrorMessage,
     (QString::fromUtf8(
         "LinkedNotebook field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingResourceFieldErrorMessage,
+    QString, gMissingResourceFieldErrorMessage,
     (QString::fromUtf8(
         "Resource field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingSavedSearchFieldErrorMessage,
+    QString, gMissingSavedSearchFieldErrorMessage,
     (QString::fromUtf8(
         "Saved search field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingNoteFieldErrorMessage,
+    QString, gMissingNoteFieldErrorMessage,
     (QString::fromUtf8(
         "Note field missing in the record received from the local "
         "storage database")));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
-    QString,
-    gMissingSharedNoteFieldErrorMessage,
+    QString, gMissingSharedNoteFieldErrorMessage,
     (QString::fromUtf8(
         "Shared note field missing in the record received from the local "
         "storage database")));
@@ -91,7 +83,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(
 template <class Type, class VariantType, class LocalType = VariantType>
 bool fillValue(
     const QSqlRecord & record, const QString & column, Type & typeValue,
-    std::function<void(Type&, LocalType)> setter,
+    std::function<void(Type &, LocalType)> setter,
     const QString & missingFieldErrorDescription,
     ErrorString * errorDescription = nullptr)
 {
@@ -105,9 +97,7 @@ bool fillValue(
                 (std::is_convertible_v<VariantType, LocalType> &&
                  sizeof(LocalType) >= sizeof(VariantType)))
             {
-                setter(
-                    typeValue,
-                    qvariant_cast<VariantType>(value));
+                setter(typeValue, qvariant_cast<VariantType>(value));
             }
             else {
                 setter(
@@ -131,7 +121,7 @@ bool fillValue(
 template <class VariantType, class LocalType = VariantType>
 bool fillUserValue(
     const QSqlRecord & record, const QString & column, qevercloud::User & user,
-    std::function<void(qevercloud::User&, LocalType)> setter,
+    std::function<void(qevercloud::User &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::User, VariantType, LocalType>(
@@ -143,7 +133,7 @@ template <class VariantType, class LocalType = VariantType>
 bool fillNotebookValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::Notebook & notebook,
-    std::function<void(qevercloud::Notebook&, LocalType)> setter,
+    std::function<void(qevercloud::Notebook &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::Notebook, VariantType, LocalType>(
@@ -155,7 +145,7 @@ template <class VariantType, class LocalType = VariantType>
 bool fillSharedNotebookValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::SharedNotebook & sharedNotebook,
-    std::function<void(qevercloud::SharedNotebook&, LocalType)> setter)
+    std::function<void(qevercloud::SharedNotebook &, LocalType)> setter)
 {
     return fillValue<qevercloud::SharedNotebook, VariantType, LocalType>(
         record, column, sharedNotebook, std::move(setter),
@@ -164,21 +154,20 @@ bool fillSharedNotebookValue(
 
 template <class VariantType, class LocalType = VariantType>
 bool fillTagValue(
-    const QSqlRecord & record, const QString & column,
-    qevercloud::Tag & tag,
-    std::function<void(qevercloud::Tag&, LocalType)> setter,
+    const QSqlRecord & record, const QString & column, qevercloud::Tag & tag,
+    std::function<void(qevercloud::Tag &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::Tag, VariantType, LocalType>(
-        record, column, tag, std::move(setter),
-        *gMissingTagFieldErrorMessage, errorDescription);
+        record, column, tag, std::move(setter), *gMissingTagFieldErrorMessage,
+        errorDescription);
 }
 
 template <class VariantType, class LocalType = VariantType>
 bool fillLinkedNotebookValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::LinkedNotebook & linkedNotebook,
-    std::function<void(qevercloud::LinkedNotebook&, LocalType)> setter,
+    std::function<void(qevercloud::LinkedNotebook &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::LinkedNotebook, VariantType, LocalType>(
@@ -190,7 +179,7 @@ template <class VariantType, class LocalType = VariantType>
 bool fillResourceValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::Resource & resource,
-    std::function<void(qevercloud::Resource&, LocalType)> setter,
+    std::function<void(qevercloud::Resource &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::Resource, VariantType, LocalType>(
@@ -217,7 +206,7 @@ template <class VariantType, class LocalType = VariantType>
 bool fillSavedSearchValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::SavedSearch & savedSearch,
-    std::function<void(qevercloud::SavedSearch&, LocalType)> setter,
+    std::function<void(qevercloud::SavedSearch &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::SavedSearch, VariantType, LocalType>(
@@ -227,21 +216,20 @@ bool fillSavedSearchValue(
 
 template <class VariantType, class LocalType = VariantType>
 bool fillNoteValue(
-    const QSqlRecord & record, const QString & column,
-    qevercloud::Note & note,
-    std::function<void(qevercloud::Note&, LocalType)> setter,
+    const QSqlRecord & record, const QString & column, qevercloud::Note & note,
+    std::function<void(qevercloud::Note &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::Note, VariantType, LocalType>(
-        record, column, note, std::move(setter),
-        *gMissingNoteFieldErrorMessage, errorDescription);
+        record, column, note, std::move(setter), *gMissingNoteFieldErrorMessage,
+        errorDescription);
 }
 
 template <class VariantType, class LocalType = VariantType>
 bool fillSharedNoteValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::SharedNote & sharedNote,
-    std::function<void(qevercloud::SharedNote&, LocalType)> setter,
+    std::function<void(qevercloud::SharedNote &, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
     return fillValue<qevercloud::SharedNote, VariantType, LocalType>(
@@ -253,7 +241,7 @@ template <class VariantType, class LocalType = VariantType>
 void fillNoteAttributeValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::NoteAttributes & attributes,
-    std::function<void(qevercloud::NoteAttributes&, LocalType)> setter)
+    std::function<void(qevercloud::NoteAttributes &, LocalType)> setter)
 {
     fillValue<qevercloud::NoteAttributes, VariantType, LocalType>(
         record, column, attributes, std::move(setter), QString{});
@@ -263,7 +251,7 @@ template <class FieldType, class VariantType, class LocalType = VariantType>
 void fillOptionalFieldValue(
     const QSqlRecord & record, const QString & column,
     std::optional<FieldType> & object,
-    std::function<void(FieldType&, LocalType)> setter)
+    std::function<void(FieldType &, LocalType)> setter)
 {
     const int index = record.indexOf(column);
     if (index < 0) {
@@ -281,15 +269,13 @@ void fillOptionalFieldValue(
 
     if constexpr (
         std::is_same_v<LocalType, VariantType> ||
-        std::is_convertible_v<VariantType, LocalType>) {
-        setter(
-            *object,
-            qvariant_cast<VariantType>(value));
+        std::is_convertible_v<VariantType, LocalType>)
+    {
+        setter(*object, qvariant_cast<VariantType>(value));
     }
     else {
         setter(
-            *object,
-            static_cast<LocalType>(qvariant_cast<VariantType>(value)));
+            *object, static_cast<LocalType>(qvariant_cast<VariantType>(value)));
     }
 }
 
@@ -297,7 +283,7 @@ template <class VariantType, class LocalType = VariantType>
 void fillUserAttributeValue(
     const QSqlRecord & record, const QString & column,
     std::optional<qevercloud::UserAttributes> & userAttributes,
-    std::function<void(qevercloud::UserAttributes&, LocalType)> setter)
+    std::function<void(qevercloud::UserAttributes &, LocalType)> setter)
 {
     fillOptionalFieldValue<qevercloud::UserAttributes, VariantType, LocalType>(
         record, column, userAttributes, std::move(setter));
@@ -307,7 +293,7 @@ template <class VariantType, class LocalType = VariantType>
 void fillAccountingValue(
     const QSqlRecord & record, const QString & column,
     std::optional<qevercloud::Accounting> & accounting,
-    std::function<void(qevercloud::Accounting&, LocalType)> setter)
+    std::function<void(qevercloud::Accounting &, LocalType)> setter)
 {
     fillOptionalFieldValue<qevercloud::Accounting, VariantType, LocalType>(
         record, column, accounting, std::move(setter));
@@ -317,9 +303,10 @@ template <class VariantType, class LocalType = VariantType>
 void fillBusinessUserInfoValue(
     const QSqlRecord & record, const QString & column,
     std::optional<qevercloud::BusinessUserInfo> & businessUserInfo,
-    std::function<void(qevercloud::BusinessUserInfo&, LocalType)> setter)
+    std::function<void(qevercloud::BusinessUserInfo &, LocalType)> setter)
 {
-    fillOptionalFieldValue<qevercloud::BusinessUserInfo, VariantType, LocalType>(
+    fillOptionalFieldValue<
+        qevercloud::BusinessUserInfo, VariantType, LocalType>(
         record, column, businessUserInfo, std::move(setter));
 }
 
@@ -327,7 +314,7 @@ template <class VariantType, class LocalType = VariantType>
 void fillAccountLimitsValue(
     const QSqlRecord & record, const QString & column,
     std::optional<qevercloud::AccountLimits> & accountLimits,
-    std::function<void(qevercloud::AccountLimits&, LocalType)> setter)
+    std::function<void(qevercloud::AccountLimits &, LocalType)> setter)
 {
     fillOptionalFieldValue<qevercloud::AccountLimits, VariantType, LocalType>(
         record, column, accountLimits, std::move(setter));
@@ -485,8 +472,10 @@ void fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
 void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
     const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
 {
-    const int keyIndex = record.indexOf(QStringLiteral("applicationDataKeysMap"));
-    const int valueIndex = record.indexOf(QStringLiteral("applicationDataValues"));
+    const int keyIndex =
+        record.indexOf(QStringLiteral("applicationDataKeysMap"));
+    const int valueIndex =
+        record.indexOf(QStringLiteral("applicationDataValues"));
     if ((keyIndex < 0) || (valueIndex < 0)) {
         return;
     }
@@ -587,7 +576,8 @@ void fillNoteAttributesClassificationsFromSqlRecord(
     const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
 {
     const int keyIndex = record.indexOf(QStringLiteral("classificationKeys"));
-    const int valueIndex = record.indexOf(QStringLiteral("classificationValues"));
+    const int valueIndex =
+        record.indexOf(QStringLiteral("classificationValues"));
     if ((keyIndex < 0) || (valueIndex < 0)) {
         return;
     }
@@ -679,8 +669,8 @@ bool fillUserFromSqlRecord(
     }
 
     if (!fillUserValue<int, bool>(
-            record, QStringLiteral("userIsLocal"), user,
-            &User::setLocalOnly, &errorDescription))
+            record, QStringLiteral("userIsLocal"), user, &User::setLocalOnly,
+            &errorDescription))
     {
         return false;
     }
@@ -765,8 +755,7 @@ void fillUserAttributesFromSqlRecord(
         QStringLiteral("incomingEmailAddress"),
         &UserAttributes::setIncomingEmailAddress);
 
-    fillStringValue(
-        QStringLiteral("comments"), &UserAttributes::setComments);
+    fillStringValue(QStringLiteral("comments"), &UserAttributes::setComments);
 
     fillStringValue(
         QStringLiteral("refererCode"), &UserAttributes::setRefererCode);
@@ -780,14 +769,11 @@ void fillUserAttributesFromSqlRecord(
         &UserAttributes::setPreferredCountry);
 
     fillStringValue(
-        QStringLiteral("twitterUserName"),
-        &UserAttributes::setTwitterUserName);
+        QStringLiteral("twitterUserName"), &UserAttributes::setTwitterUserName);
 
-    fillStringValue(
-        QStringLiteral("twitterId"), &UserAttributes::setTwitterId);
+    fillStringValue(QStringLiteral("twitterId"), &UserAttributes::setTwitterId);
 
-    fillStringValue(
-        QStringLiteral("groupName"), &UserAttributes::setGroupName);
+    fillStringValue(QStringLiteral("groupName"), &UserAttributes::setGroupName);
 
     fillStringValue(
         QStringLiteral("recognitionLanguage"),
@@ -935,16 +921,14 @@ void fillAccountingFromSqlRecord(
         QStringLiteral("premiumSubscriptionNumber"),
         &Accounting::setPremiumSubscriptionNumber);
 
-    fillStringValue(
-        QStringLiteral("currency"), &Accounting::setCurrency);
+    fillStringValue(QStringLiteral("currency"), &Accounting::setCurrency);
 
     const auto fillTimestampValue =
         [&](const QString & column,
             std::function<void(
                 Accounting &, std::optional<qevercloud::Timestamp>)>
                 setter) {
-            fillAccountingValue<
-                qint64, std::optional<qevercloud::Timestamp>>(
+            fillAccountingValue<qint64, std::optional<qevercloud::Timestamp>>(
                 record, column, accounting, std::move(setter));
         };
 
@@ -1089,9 +1073,9 @@ bool fillNotebookFromSqlRecord(
 {
     using qevercloud::BusinessNotebook;
     using qevercloud::Notebook;
-    using qevercloud::Publishing;
     using qevercloud::NotebookRecipientSettings;
     using qevercloud::NotebookRestrictions;
+    using qevercloud::Publishing;
 
     if (!fillNotebookValue<int, bool>(
             record, QStringLiteral("isDirty"), notebook,
@@ -1108,8 +1092,8 @@ bool fillNotebookFromSqlRecord(
     }
 
     if (!fillNotebookValue<QString, QString>(
-            record, QStringLiteral("localUid"), notebook,
-            &Notebook::setLocalId, &errorDescription))
+            record, QStringLiteral("localUid"), notebook, &Notebook::setLocalId,
+            &errorDescription))
     {
         return false;
     }
@@ -1154,87 +1138,69 @@ bool fillNotebookFromSqlRecord(
     fillOptBoolValue(
         QStringLiteral("isDefault"), &Notebook::setDefaultNotebook);
 
-    fillOptBoolValue(
-        QStringLiteral("isPublished"), &Notebook::setPublished);
+    fillOptBoolValue(QStringLiteral("isPublished"), &Notebook::setPublished);
 
     fillNotebookValue<qint32, qint32>(
         record, QStringLiteral("updateSequenceNumber"), notebook,
         &Notebook::setUpdateSequenceNum);
 
-    const auto setNotebookPublishingValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.publishing()) {
-                notebook.setPublishing(Publishing{});
-            }
-            setter(*notebook.mutablePublishing());
-        };
+    const auto setNotebookPublishingValue = [](Notebook & notebook,
+                                               auto setter) {
+        if (!notebook.publishing()) {
+            notebook.setPublishing(Publishing{});
+        }
+        setter(*notebook.mutablePublishing());
+    };
 
     fillOptStringValue(
         QStringLiteral("publishingUri"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
+        [&](Notebook & notebook, std::optional<QString> value) {
             setNotebookPublishingValue(
-                notebook,
-                [&value](Publishing & publishing)
-                {
+                notebook, [&value](Publishing & publishing) {
                     publishing.setUri(std::move(value));
                 });
         });
 
     fillOptStringValue(
         QStringLiteral("publicDescription"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
+        [&](Notebook & notebook, std::optional<QString> value) {
             setNotebookPublishingValue(
-                notebook,
-                [&value](Publishing & publishing)
-                {
+                notebook, [&value](Publishing & publishing) {
                     publishing.setPublicDescription(std::move(value));
                 });
         });
 
     fillNotebookValue<int, qevercloud::NoteSortOrder>(
         record, QStringLiteral("publishingNoteSortOrder"), notebook,
-        [&](Notebook & notebook, std::optional<qevercloud::NoteSortOrder> order)
-        {
+        [&](Notebook & notebook,
+            std::optional<qevercloud::NoteSortOrder> order) {
             setNotebookPublishingValue(
-                notebook,
-                [order](Publishing & publishing)
-                {
+                notebook, [order](Publishing & publishing) {
                     publishing.setOrder(order);
                 });
         });
 
     fillNotebookValue<int, bool>(
         record, QStringLiteral("publishingAscendingSort"), notebook,
-        [&](Notebook & notebook, std::optional<bool> ascendingSort)
-        {
+        [&](Notebook & notebook, std::optional<bool> ascendingSort) {
             setNotebookPublishingValue(
-                notebook,
-                [ascendingSort](Publishing & publishing)
-                {
+                notebook, [ascendingSort](Publishing & publishing) {
                     publishing.setAscending(ascendingSort);
                 });
         });
 
-    const auto setBusinessNotebookValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.businessNotebook()) {
-                notebook.setBusinessNotebook(BusinessNotebook{});
-            }
-            setter(*notebook.mutableBusinessNotebook());
-        };
+    const auto setBusinessNotebookValue = [](Notebook & notebook, auto setter) {
+        if (!notebook.businessNotebook()) {
+            notebook.setBusinessNotebook(BusinessNotebook{});
+        }
+        setter(*notebook.mutableBusinessNotebook());
+    };
 
     fillOptStringValue(
         QStringLiteral("businessNotebookDescription"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
+        [&](Notebook & notebook, std::optional<QString> value) {
             setBusinessNotebookValue(
-                notebook,
-                [&value](BusinessNotebook & businessNotebook)
-                {
+                notebook, [&value](BusinessNotebook & businessNotebook) {
                     businessNotebook.setNotebookDescription(std::move(value));
                 });
         });
@@ -1242,81 +1208,62 @@ bool fillNotebookFromSqlRecord(
     fillNotebookValue<int, qevercloud::SharedNotebookPrivilegeLevel>(
         record, QStringLiteral("businessNotebookPrivilegeLevel"), notebook,
         [&](Notebook & notebook,
-            std::optional<qevercloud::SharedNotebookPrivilegeLevel> level)
-        {
+            std::optional<qevercloud::SharedNotebookPrivilegeLevel> level) {
             setBusinessNotebookValue(
-                notebook,
-                [level](BusinessNotebook & businessNotebook)
-                {
+                notebook, [level](BusinessNotebook & businessNotebook) {
                     businessNotebook.setPrivilege(level);
                 });
         });
 
     fillNotebookValue<int, bool>(
         record, QStringLiteral("businessNotebookIsRecommended"), notebook,
-        [&](Notebook & notebook, std::optional<bool> recommended)
-        {
+        [&](Notebook & notebook, std::optional<bool> recommended) {
             setBusinessNotebookValue(
-                notebook,
-                [recommended](BusinessNotebook & businessNotebook)
-                {
+                notebook, [recommended](BusinessNotebook & businessNotebook) {
                     businessNotebook.setRecommended(recommended);
                 });
         });
 
-    const auto setNotebookRecipientSettingValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.recipientSettings()) {
-                notebook.setRecipientSettings(NotebookRecipientSettings{});
-            }
-            setter(*notebook.mutableRecipientSettings());
-        };
+    const auto setNotebookRecipientSettingValue = [](Notebook & notebook,
+                                                     auto setter) {
+        if (!notebook.recipientSettings()) {
+            notebook.setRecipientSettings(NotebookRecipientSettings{});
+        }
+        setter(*notebook.mutableRecipientSettings());
+    };
 
     fillOptStringValue(
         QStringLiteral("recipientStack"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
+        [&](Notebook & notebook, std::optional<QString> value) {
             setNotebookRecipientSettingValue(
-                notebook,
-                [&value](NotebookRecipientSettings & settings)
-                {
+                notebook, [&value](NotebookRecipientSettings & settings) {
                     settings.setStack(std::move(value));
                 });
         });
 
     fillNotebookValue<int, bool>(
         record, QStringLiteral("recipientReminderNotifyEmail"), notebook,
-        [&](Notebook & notebook, std::optional<bool> value)
-        {
+        [&](Notebook & notebook, std::optional<bool> value) {
             setNotebookRecipientSettingValue(
-                notebook,
-                [value](NotebookRecipientSettings & settings)
-                {
+                notebook, [value](NotebookRecipientSettings & settings) {
                     settings.setReminderNotifyEmail(value);
                 });
         });
 
     fillNotebookValue<int, bool>(
         record, QStringLiteral("recipientReminderNotifyInApp"), notebook,
-        [&](Notebook & notebook, std::optional<bool> value)
-        {
+        [&](Notebook & notebook, std::optional<bool> value) {
             setNotebookRecipientSettingValue(
-                notebook,
-                [value](NotebookRecipientSettings & settings)
-                {
+                notebook, [value](NotebookRecipientSettings & settings) {
                     settings.setReminderNotifyInApp(value);
                 });
         });
 
     fillNotebookValue<int, bool>(
         record, QStringLiteral("recipientInMyList"), notebook,
-        [&](Notebook & notebook, std::optional<bool> value)
-        {
+        [&](Notebook & notebook, std::optional<bool> value) {
             setNotebookRecipientSettingValue(
-                notebook,
-                [value](NotebookRecipientSettings & settings)
-                {
+                notebook, [value](NotebookRecipientSettings & settings) {
                     settings.setInMyList(value);
                 });
         });
@@ -1342,169 +1289,145 @@ bool fillNotebookFromSqlRecord(
         }
     }
 
-    const auto setNotebookRestrictionValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.restrictions()) {
-                notebook.setRestrictions(NotebookRestrictions{});
-            }
-            setter(*notebook.mutableRestrictions());
-        };
+    const auto setNotebookRestrictionValue = [](Notebook & notebook,
+                                                auto setter) {
+        if (!notebook.restrictions()) {
+            notebook.setRestrictions(NotebookRestrictions{});
+        }
+        setter(*notebook.mutableRestrictions());
+    };
 
-    const auto fillNotebookRestrictionBoolValue =
-        [&](const QString & column, auto setter)
-        {
-            fillNotebookValue<int, bool>(
-                record, column, notebook,
-                [&](Notebook & notebook, std::optional<bool> value)
-                {
-                    setNotebookRestrictionValue(
-                        notebook,
-                        [value, setter = std::move(setter)]
-                        (NotebookRestrictions & restrictions)
-                        {
-                            setter(restrictions, value);
-                        });
-                });
-        };
+    const auto fillNotebookRestrictionBoolValue = [&](const QString & column,
+                                                      auto setter) {
+        fillNotebookValue<int, bool>(
+            record, column, notebook,
+            [&](Notebook & notebook, std::optional<bool> value) {
+                setNotebookRestrictionValue(
+                    notebook,
+                    [value, setter = std::move(setter)](
+                        NotebookRestrictions & restrictions) {
+                        setter(restrictions, value);
+                    });
+            });
+    };
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noReadNotes"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoReadNotes(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noCreateNotes"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoCreateNotes(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noUpdateNotes"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoUpdateNotes(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noExpungeNotes"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoExpungeNotes(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noShareNotes"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoShareNotes(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noEmailNotes"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoEmailNotes(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noSendMessageToRecipients"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoSendMessageToRecipients(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noUpdateNotebook"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoUpdateNotebook(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noExpungeNotebook"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoExpungeNotebook(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noSetDefaultNotebook"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoSetDefaultNotebook(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noSetNotebookStack"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoSetNotebookStack(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noPublishToPublic"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoPublishToPublic(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noPublishToBusinessLibrary"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoPublishToBusinessLibrary(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noCreateTags"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoCreateTags(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noUpdateTags"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoUpdateTags(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noExpungeTags"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoExpungeTags(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noSetParentTag"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoSetParentTag(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noCreateSharedNotebooks"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoCreateSharedNotebooks(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noShareNotesWithBusiness"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoShareNotesWithBusiness(value);
         });
 
     fillNotebookRestrictionBoolValue(
         QStringLiteral("noRenameNotebook"),
-        [](NotebookRestrictions & restrictions, std::optional<bool> value)
-        {
+        [](NotebookRestrictions & restrictions, std::optional<bool> value) {
             restrictions.setNoRenameNotebook(value);
         });
 
@@ -1512,12 +1435,10 @@ bool fillNotebookFromSqlRecord(
         record, QStringLiteral("updateWhichSharedNotebookRestrictions"),
         notebook,
         [&](Notebook & notebook,
-            std::optional<qevercloud::SharedNotebookInstanceRestrictions> value)
-        {
+            std::optional<qevercloud::SharedNotebookInstanceRestrictions>
+                value) {
             setNotebookRestrictionValue(
-                notebook,
-                [value](NotebookRestrictions & restrictions)
-                {
+                notebook, [value](NotebookRestrictions & restrictions) {
                     restrictions.setUpdateWhichSharedNotebookRestrictions(
                         value);
                 });
@@ -1527,12 +1448,10 @@ bool fillNotebookFromSqlRecord(
         record, QStringLiteral("expungeWhichSharedNotebookRestrictions"),
         notebook,
         [&](Notebook & notebook,
-            std::optional<qevercloud::SharedNotebookInstanceRestrictions> value)
-        {
+            std::optional<qevercloud::SharedNotebookInstanceRestrictions>
+                value) {
             setNotebookRestrictionValue(
-                notebook,
-                [value](NotebookRestrictions & restrictions)
-                {
+                notebook, [value](NotebookRestrictions & restrictions) {
                     restrictions.setExpungeWhichSharedNotebookRestrictions(
                         value);
                 });
@@ -1603,19 +1522,19 @@ bool fillSharedNotebookFromSqlRecord(
         record, QStringLiteral("sharedNotebookAssignmentTimestamp"),
         sharedNotebook, &SharedNotebook::setServiceAssigned);
 
-    fillOptionalFieldValue<qevercloud::SharedNotebookRecipientSettings, int, bool>(
+    fillOptionalFieldValue<
+        qevercloud::SharedNotebookRecipientSettings, int, bool>(
         record, QStringLiteral("sharedNotebookRecipientReminderNotifyEmail"),
         sharedNotebook.mutableRecipientSettings(),
-        [](qevercloud::SharedNotebookRecipientSettings & settings, bool value)
-        {
+        [](qevercloud::SharedNotebookRecipientSettings & settings, bool value) {
             settings.setReminderNotifyEmail(value);
         });
 
-    fillOptionalFieldValue<qevercloud::SharedNotebookRecipientSettings, int, bool>(
+    fillOptionalFieldValue<
+        qevercloud::SharedNotebookRecipientSettings, int, bool>(
         record, QStringLiteral("sharedNotebookRecipientReminderNotifyInApp"),
         sharedNotebook.mutableRecipientSettings(),
-        [](qevercloud::SharedNotebookRecipientSettings & settings, bool value)
-        {
+        [](qevercloud::SharedNotebookRecipientSettings & settings, bool value) {
             settings.setReminderNotifyInApp(value);
         });
 
@@ -1646,22 +1565,22 @@ bool fillTagFromSqlRecord(
     using qevercloud::Tag;
 
     if (!fillTagValue<QString, QString>(
-            record, QStringLiteral("localUid"), tag,
-            &Tag::setLocalId, &errorDescription))
+            record, QStringLiteral("localUid"), tag, &Tag::setLocalId,
+            &errorDescription))
     {
         return false;
     }
 
     if (!fillTagValue<int, bool>(
-            record, QStringLiteral("isDirty"), tag,
-            &Tag::setLocallyModified, &errorDescription))
+            record, QStringLiteral("isDirty"), tag, &Tag::setLocallyModified,
+            &errorDescription))
     {
         return false;
     }
 
     if (!fillTagValue<int, bool>(
-            record, QStringLiteral("isLocal"), tag,
-            &Tag::setLocalOnly, &errorDescription))
+            record, QStringLiteral("isLocal"), tag, &Tag::setLocalOnly,
+            &errorDescription))
     {
         return false;
     }
@@ -1675,7 +1594,7 @@ bool fillTagFromSqlRecord(
 
     const auto fillOptStringValue =
         [&](const QString & column,
-            std::function<void(Tag&, std::optional<QString>)> setter) {
+            std::function<void(Tag &, std::optional<QString>)> setter) {
             fillTagValue<QString, std::optional<QString>>(
                 record, column, tag, std::move(setter));
         };
@@ -1804,8 +1723,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<int, qint32>(
         record, QStringLiteral("dataSize"), resource,
-        [](Resource & resource, const qint32 dataSize)
-        {
+        [](Resource & resource, const qint32 dataSize) {
             if (!resource.data()) {
                 resource.setData(qevercloud::Data{});
             }
@@ -1814,8 +1732,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<QByteArray, QByteArray>(
         record, QStringLiteral("dataHash"), resource,
-        [](Resource & resource, QByteArray dataHash)
-        {
+        [](Resource & resource, QByteArray dataHash) {
             if (!resource.data()) {
                 resource.setData(qevercloud::Data{});
             }
@@ -1824,8 +1741,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<int, qint32>(
         record, QStringLiteral("recognitionDataSize"), resource,
-        [](Resource & resource, const qint32 dataSize)
-        {
+        [](Resource & resource, const qint32 dataSize) {
             if (!resource.recognition()) {
                 resource.setRecognition(qevercloud::Data{});
             }
@@ -1834,8 +1750,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<QByteArray, QByteArray>(
         record, QStringLiteral("recognitionDataHash"), resource,
-        [](Resource & resource, QByteArray dataHash)
-        {
+        [](Resource & resource, QByteArray dataHash) {
             if (!resource.recognition()) {
                 resource.setRecognition(qevercloud::Data{});
             }
@@ -1844,8 +1759,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<QByteArray, QByteArray>(
         record, QStringLiteral("recognitionDataBody"), resource,
-        [](Resource & resource, QByteArray dataBody)
-        {
+        [](Resource & resource, QByteArray dataBody) {
             if (!resource.recognition()) {
                 resource.setRecognition(qevercloud::Data{});
             }
@@ -1854,8 +1768,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<int, qint32>(
         record, QStringLiteral("alternateDataSize"), resource,
-        [](Resource & resource, const qint32 dataSize)
-        {
+        [](Resource & resource, const qint32 dataSize) {
             if (!resource.alternateData()) {
                 resource.setAlternateData(qevercloud::Data{});
             }
@@ -1864,8 +1777,7 @@ bool fillResourceFromSqlRecord(
 
     fillResourceValue<QByteArray, QByteArray>(
         record, QStringLiteral("alternateDataHash"), resource,
-        [](Resource & resource, QByteArray dataHash)
-        {
+        [](Resource & resource, QByteArray dataHash) {
             if (!resource.alternateData()) {
                 resource.setAlternateData(qevercloud::Data{});
             }
@@ -1921,24 +1833,21 @@ bool fillResourceFromSqlRecord(
     fillResourceAttributeValue<double, double>(
         record, QStringLiteral("resourceLatitude"), resource,
         setResourceAttributeFunction(
-            [](qevercloud::ResourceAttributes & attributes,
-               double latitude) {
+            [](qevercloud::ResourceAttributes & attributes, double latitude) {
                 attributes.setLatitude(latitude);
             }));
 
     fillResourceAttributeValue<double, double>(
         record, QStringLiteral("resourceLongitude"), resource,
         setResourceAttributeFunction(
-            [](qevercloud::ResourceAttributes & attributes,
-               double longitude) {
+            [](qevercloud::ResourceAttributes & attributes, double longitude) {
                 attributes.setLongitude(longitude);
             }));
 
     fillResourceAttributeValue<double, double>(
         record, QStringLiteral("resourceAltitude"), resource,
         setResourceAttributeFunction(
-            [](qevercloud::ResourceAttributes & attributes,
-               double altitude) {
+            [](qevercloud::ResourceAttributes & attributes, double altitude) {
                 attributes.setAltitude(altitude);
             }));
 
@@ -1969,16 +1878,14 @@ bool fillResourceFromSqlRecord(
     fillResourceAttributeValue<QString, QString>(
         record, QStringLiteral("fileName"), resource,
         setResourceAttributeFunction(
-            [](qevercloud::ResourceAttributes & attributes,
-               QString fileName) {
+            [](qevercloud::ResourceAttributes & attributes, QString fileName) {
                 attributes.setFileName(std::move(fileName));
             }));
 
     fillResourceAttributeValue<int, bool>(
         record, QStringLiteral("attachment"), resource,
         setResourceAttributeFunction(
-            [](qevercloud::ResourceAttributes & attributes,
-               bool attachment) {
+            [](qevercloud::ResourceAttributes & attributes, bool attachment) {
                 attributes.setAttachment(attachment);
             }));
 
@@ -2037,47 +1944,37 @@ bool fillSavedSearchFromSqlRecord(
         record, QStringLiteral("updateSequenceNumber"), savedSearch,
         &SavedSearch::setUpdateSequenceNum);
 
-    const auto setSavedSearchScopeValue =
-        [](SavedSearch & savedSearch, auto setter)
-        {
-            if (!savedSearch.scope()) {
-                savedSearch.setScope(qevercloud::SavedSearchScope{});
-            }
-            setter(*savedSearch.mutableScope());
-        };
+    const auto setSavedSearchScopeValue = [](SavedSearch & savedSearch,
+                                             auto setter) {
+        if (!savedSearch.scope()) {
+            savedSearch.setScope(qevercloud::SavedSearchScope{});
+        }
+        setter(*savedSearch.mutableScope());
+    };
 
     fillSavedSearchValue<int, bool>(
         record, QStringLiteral("includeAccount"), savedSearch,
-        [&](SavedSearch & savedSearch, bool value)
-        {
+        [&](SavedSearch & savedSearch, bool value) {
             setSavedSearchScopeValue(
-                savedSearch,
-                [value](qevercloud::SavedSearchScope & scope)
-                {
+                savedSearch, [value](qevercloud::SavedSearchScope & scope) {
                     scope.setIncludeAccount(value);
                 });
         });
 
     fillSavedSearchValue<int, bool>(
         record, QStringLiteral("includePersonalLinkedNotebooks"), savedSearch,
-        [&](SavedSearch & savedSearch, bool value)
-        {
+        [&](SavedSearch & savedSearch, bool value) {
             setSavedSearchScopeValue(
-                savedSearch,
-                [value](qevercloud::SavedSearchScope & scope)
-                {
+                savedSearch, [value](qevercloud::SavedSearchScope & scope) {
                     scope.setIncludePersonalLinkedNotebooks(value);
                 });
         });
 
     fillSavedSearchValue<int, bool>(
         record, QStringLiteral("includeBusinessLinkedNotebooks"), savedSearch,
-        [&](SavedSearch & savedSearch, bool value)
-        {
+        [&](SavedSearch & savedSearch, bool value) {
             setSavedSearchScopeValue(
-                savedSearch,
-                [value](qevercloud::SavedSearchScope & scope)
-                {
+                savedSearch, [value](qevercloud::SavedSearchScope & scope) {
                     scope.setIncludeBusinessLinkedNotebooks(value);
                 });
         });
@@ -2092,15 +1989,15 @@ bool fillNoteFromSqlRecord(
     using qevercloud::Note;
 
     if (!fillNoteValue<int, bool>(
-            record, QStringLiteral("isDirty"), note,
-            &Note::setLocallyModified, &errorDescription))
+            record, QStringLiteral("isDirty"), note, &Note::setLocallyModified,
+            &errorDescription))
     {
         return false;
     }
 
     if (!fillNoteValue<int, bool>(
-            record, QStringLiteral("isLocal"), note,
-            &Note::setLocalOnly, &errorDescription))
+            record, QStringLiteral("isLocal"), note, &Note::setLocalOnly,
+            &errorDescription))
     {
         return false;
     }
@@ -2113,8 +2010,8 @@ bool fillNoteFromSqlRecord(
     }
 
     if (!fillNoteValue<QString, QString>(
-            record, QStringLiteral("localUid"), note,
-            &Note::setLocalId, &errorDescription))
+            record, QStringLiteral("localUid"), note, &Note::setLocalId,
+            &errorDescription))
     {
         return false;
     }
@@ -2166,7 +2063,8 @@ bool fillNoteFromSqlRecord(
         }
     }
 
-    const int hasAttributesIndex = record.indexOf(QStringLiteral("hasAttributes"));
+    const int hasAttributesIndex =
+        record.indexOf(QStringLiteral("hasAttributes"));
     if (hasAttributesIndex >= 0) {
         const QVariant hasAttributesValue = record.value(hasAttributesIndex);
         if (!hasAttributesValue.isNull()) {
@@ -2187,147 +2085,109 @@ bool fillNoteFromSqlRecord(
                 fillNoteAttributesApplicationDataFullMapFromSqlRecord(
                     record, attributes);
 
-                fillNoteAttributesClassificationsFromSqlRecord(record, attributes);
+                fillNoteAttributesClassificationsFromSqlRecord(
+                    record, attributes);
             }
         }
     }
 
-    const auto setNoteRestrictionValue =
-        [](Note & note, auto setter)
-        {
-            if (!note.restrictions()) {
-                note.setRestrictions(qevercloud::NoteRestrictions{});
-            }
-            setter(*note.mutableRestrictions());
-        };
+    const auto setNoteRestrictionValue = [](Note & note, auto setter) {
+        if (!note.restrictions()) {
+            note.setRestrictions(qevercloud::NoteRestrictions{});
+        }
+        setter(*note.mutableRestrictions());
+    };
 
     fillNoteValue<int, bool>(
         record, QStringLiteral("noUpdateNoteTitle"), note,
-        [&](Note & note, bool value)
-        {
+        [&](Note & note, bool value) {
             setNoteRestrictionValue(
-                note,
-                [value](qevercloud::NoteRestrictions & restrictions)
-                {
+                note, [value](qevercloud::NoteRestrictions & restrictions) {
                     restrictions.setNoUpdateTitle(value);
                 });
         });
 
     fillNoteValue<int, bool>(
         record, QStringLiteral("noUpdateNoteContent"), note,
-        [&](Note & note, bool value)
-        {
+        [&](Note & note, bool value) {
             setNoteRestrictionValue(
-                note,
-                [value](qevercloud::NoteRestrictions & restrictions)
-                {
+                note, [value](qevercloud::NoteRestrictions & restrictions) {
                     restrictions.setNoUpdateContent(value);
                 });
         });
 
     fillNoteValue<int, bool>(
         record, QStringLiteral("noEmailNote"), note,
-        [&](Note & note, bool value)
-        {
+        [&](Note & note, bool value) {
             setNoteRestrictionValue(
-                note,
-                [value](qevercloud::NoteRestrictions & restrictions)
-                {
+                note, [value](qevercloud::NoteRestrictions & restrictions) {
                     restrictions.setNoEmail(value);
                 });
         });
 
     fillNoteValue<int, bool>(
         record, QStringLiteral("noShareNote"), note,
-        [&](Note & note, bool value)
-        {
+        [&](Note & note, bool value) {
             setNoteRestrictionValue(
-                note,
-                [value](qevercloud::NoteRestrictions & restrictions)
-                {
+                note, [value](qevercloud::NoteRestrictions & restrictions) {
                     restrictions.setNoShare(value);
                 });
         });
 
     fillNoteValue<int, bool>(
         record, QStringLiteral("noShareNotePublicly"), note,
-        [&](Note & note, bool value)
-        {
+        [&](Note & note, bool value) {
             setNoteRestrictionValue(
-                note,
-                [value](qevercloud::NoteRestrictions & restrictions)
-                {
+                note, [value](qevercloud::NoteRestrictions & restrictions) {
                     restrictions.setNoSharePublicly(value);
                 });
         });
 
-    const auto setNoteLimitValue =
-        [](Note & note, auto setter)
-        {
-            if (!note.limits()) {
-                note.setLimits(qevercloud::NoteLimits{});
-            }
-            setter(*note.mutableLimits());
-        };
+    const auto setNoteLimitValue = [](Note & note, auto setter) {
+        if (!note.limits()) {
+            note.setLimits(qevercloud::NoteLimits{});
+        }
+        setter(*note.mutableLimits());
+    };
 
     fillNoteValue<qint32, qint32>(
         record, QStringLiteral("noteResourceCountMax"), note,
-        [&](Note & note, qint32 value)
-        {
-            setNoteLimitValue(
-                note,
-                [value](qevercloud::NoteLimits & limits)
-                {
-                    limits.setNoteResourceCountMax(value);
-                });
+        [&](Note & note, qint32 value) {
+            setNoteLimitValue(note, [value](qevercloud::NoteLimits & limits) {
+                limits.setNoteResourceCountMax(value);
+            });
         });
 
     fillNoteValue<qint64, qint64>(
         record, QStringLiteral("uploadLimit"), note,
-        [&](Note & note, qint64 value)
-        {
-            setNoteLimitValue(
-                note,
-                [value](qevercloud::NoteLimits & limits)
-                {
-                    limits.setUploadLimit(value);
-                });
+        [&](Note & note, qint64 value) {
+            setNoteLimitValue(note, [value](qevercloud::NoteLimits & limits) {
+                limits.setUploadLimit(value);
+            });
         });
 
     fillNoteValue<qint64, qint64>(
         record, QStringLiteral("resourceSizeMax"), note,
-        [&](Note & note, qint64 value)
-        {
-            setNoteLimitValue(
-                note,
-                [value](qevercloud::NoteLimits & limits)
-                {
-                    limits.setResourceSizeMax(value);
-                });
+        [&](Note & note, qint64 value) {
+            setNoteLimitValue(note, [value](qevercloud::NoteLimits & limits) {
+                limits.setResourceSizeMax(value);
+            });
         });
 
     fillNoteValue<qint64, qint64>(
         record, QStringLiteral("noteSizeMax"), note,
-        [&](Note & note, qint64 value)
-        {
-            setNoteLimitValue(
-                note,
-                [value](qevercloud::NoteLimits & limits)
-                {
-                    limits.setNoteSizeMax(value);
-                });
+        [&](Note & note, qint64 value) {
+            setNoteLimitValue(note, [value](qevercloud::NoteLimits & limits) {
+                limits.setNoteSizeMax(value);
+            });
         });
 
     fillNoteValue<qint64, qint64>(
         record, QStringLiteral("uploaded"), note,
-        [&](Note & note, qint64 value)
-        {
-            setNoteLimitValue(
-                note,
-                [value](qevercloud::NoteLimits & limits)
-                {
-                    limits.setUploaded(value);
-                });
+        [&](Note & note, qint64 value) {
+            setNoteLimitValue(note, [value](qevercloud::NoteLimits & limits) {
+                limits.setUploaded(value);
+            });
         });
 
     return true;
@@ -2363,102 +2223,79 @@ bool fillSharedNoteFromSqlRecord(
         record, QStringLiteral("sharedNoteAssignmentTimestamp"), sharedNote,
         &SharedNote::setServiceAssigned);
 
-    const auto setSharedNoteRecipientIdentityValue =
-        [](SharedNote & sharedNote, auto setter)
-        {
-            if (!sharedNote.recipientIdentity()) {
-                sharedNote.setRecipientIdentity(qevercloud::Identity{});
-            }
-            setter(*sharedNote.mutableRecipientIdentity());
-        };
+    const auto setSharedNoteRecipientIdentityValue = [](SharedNote & sharedNote,
+                                                        auto setter) {
+        if (!sharedNote.recipientIdentity()) {
+            sharedNote.setRecipientIdentity(qevercloud::Identity{});
+        }
+        setter(*sharedNote.mutableRecipientIdentity());
+    };
 
     fillSharedNoteValue<qint64, qevercloud::IdentityID>(
         record, QStringLiteral("sharedNoteRecipientIdentityId"), sharedNote,
-        [&](SharedNote & sharedNote, qevercloud::IdentityID identityId)
-        {
+        [&](SharedNote & sharedNote, qevercloud::IdentityID identityId) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [identityId](qevercloud::Identity & identity)
-                {
+                sharedNote, [identityId](qevercloud::Identity & identity) {
                     identity.setId(identityId);
                 });
         });
 
     fillSharedNoteValue<qint64, qevercloud::UserID>(
         record, QStringLiteral("sharedNoteRecipientUserId"), sharedNote,
-        [&](SharedNote & sharedNote, qevercloud::UserID userId)
-        {
+        [&](SharedNote & sharedNote, qevercloud::UserID userId) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [userId](qevercloud::Identity & identity)
-                {
+                sharedNote, [userId](qevercloud::Identity & identity) {
                     identity.setUserId(userId);
                 });
         });
 
     fillSharedNoteValue<int, bool>(
         record, QStringLiteral("sharedNoteRecipientDeactivated"), sharedNote,
-        [&](SharedNote & sharedNote, bool deactivated)
-        {
+        [&](SharedNote & sharedNote, bool deactivated) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [deactivated](qevercloud::Identity & identity)
-                {
+                sharedNote, [deactivated](qevercloud::Identity & identity) {
                     identity.setDeactivated(deactivated);
                 });
         });
 
     fillSharedNoteValue<int, bool>(
         record, QStringLiteral("sharedNoteRecipientSameBusiness"), sharedNote,
-        [&](SharedNote & sharedNote, bool sameBusiness)
-        {
+        [&](SharedNote & sharedNote, bool sameBusiness) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [sameBusiness](qevercloud::Identity & identity)
-                {
+                sharedNote, [sameBusiness](qevercloud::Identity & identity) {
                     identity.setSameBusiness(sameBusiness);
                 });
         });
 
     fillSharedNoteValue<int, bool>(
         record, QStringLiteral("sharedNoteRecipientBlocked"), sharedNote,
-        [&](SharedNote & sharedNote, bool blocked)
-        {
+        [&](SharedNote & sharedNote, bool blocked) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [blocked](qevercloud::Identity & identity)
-                {
+                sharedNote, [blocked](qevercloud::Identity & identity) {
                     identity.setBlocked(blocked);
                 });
         });
 
     fillSharedNoteValue<int, bool>(
         record, QStringLiteral("sharedNoteRecipientUserConnected"), sharedNote,
-        [&](SharedNote & sharedNote, bool connected)
-        {
+        [&](SharedNote & sharedNote, bool connected) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [connected](qevercloud::Identity & identity)
-                {
+                sharedNote, [connected](qevercloud::Identity & identity) {
                     identity.setUserConnected(connected);
                 });
         });
 
     fillSharedNoteValue<qint64, qevercloud::MessageEventID>(
         record, QStringLiteral("sharedNoteRecipientEventId"), sharedNote,
-        [&](SharedNote & sharedNote, qevercloud::MessageEventID id)
-        {
+        [&](SharedNote & sharedNote, qevercloud::MessageEventID id) {
             setSharedNoteRecipientIdentityValue(
-                sharedNote,
-                [id](qevercloud::Identity & identity)
-                {
+                sharedNote, [id](qevercloud::Identity & identity) {
                     identity.setEventId(id);
                 });
         });
 
     const auto setSharedNoteRecipientIdentityContactValue =
-        [](SharedNote & sharedNote, auto setter)
-        {
+        [](SharedNote & sharedNote, auto setter) {
             if (!sharedNote.recipientIdentity()) {
                 sharedNote.setRecipientIdentity(qevercloud::Identity{});
             }
@@ -2471,49 +2308,36 @@ bool fillSharedNoteFromSqlRecord(
 
     fillSharedNoteValue<QString, QString>(
         record, QStringLiteral("sharedNoteRecipientContactName"), sharedNote,
-        [&](SharedNote & sharedNote, QString name)
-        {
+        [&](SharedNote & sharedNote, QString name) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [&](qevercloud::Contact & contact)
-                {
+                sharedNote, [&](qevercloud::Contact & contact) {
                     contact.setName(std::move(name));
                 });
         });
 
     fillSharedNoteValue<QString, QString>(
         record, QStringLiteral("sharedNoteRecipientContactId"), sharedNote,
-        [&](SharedNote & sharedNote, QString id)
-        {
+        [&](SharedNote & sharedNote, QString id) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [&](qevercloud::Contact & contact)
-                {
+                sharedNote, [&](qevercloud::Contact & contact) {
                     contact.setId(std::move(id));
                 });
         });
 
     fillSharedNoteValue<qint32, qevercloud::ContactType>(
         record, QStringLiteral("sharedNoteRecipientContactType"), sharedNote,
-        [&](SharedNote & sharedNote, qevercloud::ContactType contactType)
-        {
+        [&](SharedNote & sharedNote, qevercloud::ContactType contactType) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [&](qevercloud::Contact & contact)
-                {
+                sharedNote, [&](qevercloud::Contact & contact) {
                     contact.setType(contactType);
                 });
         });
 
     fillSharedNoteValue<QString, QString>(
         record, QStringLiteral("sharedNoteRecipientContactPhotoUrl"),
-        sharedNote,
-        [&](SharedNote & sharedNote, QString photoUrl)
-        {
+        sharedNote, [&](SharedNote & sharedNote, QString photoUrl) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [&](qevercloud::Contact & contact)
-                {
+                sharedNote, [&](qevercloud::Contact & contact) {
                     contact.setPhotoUrl(std::move(photoUrl));
                 });
         });
@@ -2521,25 +2345,18 @@ bool fillSharedNoteFromSqlRecord(
     fillSharedNoteValue<qint64, qevercloud::Timestamp>(
         record, QStringLiteral("sharedNoteRecipientContactPhotoLastUpdated"),
         sharedNote,
-        [&](SharedNote & sharedNote, qevercloud::Timestamp timestamp)
-        {
+        [&](SharedNote & sharedNote, qevercloud::Timestamp timestamp) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [timestamp](qevercloud::Contact & contact)
-                {
+                sharedNote, [timestamp](qevercloud::Contact & contact) {
                     contact.setPhotoLastUpdated(timestamp);
                 });
         });
 
     fillSharedNoteValue<QByteArray, QByteArray>(
         record, QStringLiteral("sharedNoteRecipientContactMessagingPermit"),
-        sharedNote,
-        [&](SharedNote & sharedNote, QByteArray permit)
-        {
+        sharedNote, [&](SharedNote & sharedNote, QByteArray permit) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [&](qevercloud::Contact & contact)
-                {
+                sharedNote, [&](qevercloud::Contact & contact) {
                     contact.setMessagingPermit(std::move(permit));
                 });
         });
@@ -2548,12 +2365,9 @@ bool fillSharedNoteFromSqlRecord(
         record,
         QStringLiteral("sharedNoteRecipientContactMessagingPermitExpires"),
         sharedNote,
-        [&](SharedNote & sharedNote, qevercloud::Timestamp timestamp)
-        {
+        [&](SharedNote & sharedNote, qevercloud::Timestamp timestamp) {
             setSharedNoteRecipientIdentityContactValue(
-                sharedNote,
-                [&](qevercloud::Contact & contact)
-                {
+                sharedNote, [&](qevercloud::Contact & contact) {
                     contact.setMessagingPermitExpires(timestamp);
                 });
         });
@@ -2646,8 +2460,8 @@ bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
 
         const int localIdIndex = rec.indexOf(QStringLiteral("localUid"));
         if (localIdIndex < 0) {
-            errorDescription.setBase(QStringLiteral(
-                "no localUid field in SQL record for notebook"));
+            errorDescription.setBase(
+                QStringLiteral("no localUid field in SQL record for notebook"));
             QNWARNING("local_storage::sql::utils", errorDescription);
             return false;
         }
@@ -2673,11 +2487,10 @@ bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
             return false;
         }
 
-        if (notebook.guid())
-        {
+        if (notebook.guid()) {
             ErrorString error;
-            auto sharedNotebooks = listSharedNotebooks(
-                *notebook.guid(), database, error);
+            auto sharedNotebooks =
+                listSharedNotebooks(*notebook.guid(), database, error);
             if (!error.isEmpty()) {
                 errorDescription.base() = error.base();
                 errorDescription.appendBase(error.additionalBases());

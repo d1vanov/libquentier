@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -246,14 +246,14 @@ protected:
 TEST_F(SyncChunksStorageTest, Ctor)
 {
     EXPECT_NO_THROW(
-        auto storage = std::make_shared<SyncChunksStorage>(
-            QDir{m_temporaryDir.path()}));
+        auto storage =
+            std::make_shared<SyncChunksStorage>(QDir{m_temporaryDir.path()}));
 }
 
 TEST_F(SyncChunksStorageTest, FetchNonexistentUserOwnSyncChunks)
 {
-    auto storage = std::make_shared<SyncChunksStorage>(
-        QDir{m_temporaryDir.path()});
+    auto storage =
+        std::make_shared<SyncChunksStorage>(QDir{m_temporaryDir.path()});
 
     const auto usnsRange = storage->fetchUserOwnSyncChunksLowAndHighUsns();
     EXPECT_TRUE(usnsRange.isEmpty());
@@ -264,8 +264,8 @@ TEST_F(SyncChunksStorageTest, FetchNonexistentUserOwnSyncChunks)
 
 TEST_F(SyncChunksStorageTest, FetchNonexistentLinkedNotebookSyncChunks)
 {
-    auto storage = std::make_shared<SyncChunksStorage>(
-        QDir{m_temporaryDir.path()});
+    auto storage =
+        std::make_shared<SyncChunksStorage>(QDir{m_temporaryDir.path()});
 
     const auto linkedNotebookGuid = UidGenerator::Generate();
 
@@ -720,7 +720,8 @@ TEST_F(
     const auto removeLowUsnItems = [&](auto & items) {
         for (auto it = items.begin(); it != items.end();) {
             if (it->updateSequenceNum() &&
-                (*it->updateSequenceNum() <= afterUsn)) {
+                (*it->updateSequenceNum() <= afterUsn))
+            {
                 it = items.erase(it);
                 continue;
             }
@@ -851,7 +852,8 @@ TEST_F(
     const auto removeLowUsnItems = [&](auto & items) {
         for (auto it = items.begin(); it != items.end();) {
             if (it->updateSequenceNum() &&
-                (*it->updateSequenceNum() <= afterUsn)) {
+                (*it->updateSequenceNum() <= afterUsn))
+            {
                 it = items.erase(it);
                 continue;
             }

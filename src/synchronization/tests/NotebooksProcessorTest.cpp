@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -116,8 +116,8 @@ TEST_F(NotebooksProcessorTest, CtorNullLocalStorage)
 TEST_F(NotebooksProcessorTest, CtorNullSyncConflictResolver)
 {
     EXPECT_THROW(
-        const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
-            m_mockLocalStorage, nullptr),
+        const auto notebooksProcessor =
+            std::make_shared<NotebooksProcessor>(m_mockLocalStorage, nullptr),
         InvalidArgument);
 }
 
@@ -722,9 +722,9 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
                               .build();
 
     const auto localConflict = qevercloud::NotebookBuilder{}
-        .setLocalId(UidGenerator::Generate())
-        .setName(notebook.name())
-        .build();
+                                   .setLocalId(UidGenerator::Generate())
+                                   .setName(notebook.name())
+                                   .build();
 
     QMutex mutex;
     QList<qevercloud::Notebook> notebooksPutIntoLocalStorage;
