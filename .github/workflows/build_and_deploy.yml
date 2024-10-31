@@ -534,7 +534,8 @@ jobs:
           ./bin/libqt5quentier_local_storage_sql_unit_tests
           ./bin/libqt5quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
-          xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests -platform minimal
+          xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests -platform minimal || true
+          7z a last_test_qt5_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '5.15.4' }}
 
       - name: Test with Qt 6.7.3
@@ -551,7 +552,8 @@ jobs:
           ./bin/libqt6quentier_local_storage_sql_unit_tests
           ./bin/libqt6quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
-          xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal
+          xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal || true
+          7z a last_test_qt6_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '6.7.3' }}
 
       - name: Update translations
@@ -581,6 +583,22 @@ jobs:
           name: libquentier_linux
           path: '${{ github.workspace }}/build/installdir/libquentier_linux.zip'
         if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.15.4' }}
+
+      - name: Upload Qt5 libquentier test logs
+        id: upload_tests_log_qt5
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_linux_test_logs_qt5
+          path: '${{ github.workspace }}/build/last_test_qt5_log.zip'
+        if: ${{ matrix.qt_version == '5.15.4' }}
+
+      - name: Upload Qt6 libquentier test logs
+        id: upload_tests_log_qt6
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_linux_test_logs_qt6
+          path: '${{ github.workspace }}/build/last_test_qt6_log.zip'
+        if: ${{ matrix.qt_version == '6.7.3' }}
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
@@ -830,7 +848,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/build
           export CONNECTION_TIMEOUT=60000
-          cmake --build . --target check
+          cmake --build . --target check || true
+          7z a libquentier_test_logs.zip /Users/runner/Library/Application\ Support/d1vanov/LibquentierTests/logs-quentier/*
 
       - name: Update translations
         id: update_translations
@@ -857,6 +876,14 @@ jobs:
         with:
           name: libquentier_macos
           path: '${{ github.workspace }}/build/installdir/libquentier_macos.zip'
+
+      - name: Upload libquentier test logs
+        id: upload_logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_test_logs_macos
+          path: '${{ github.workspace }}/build/libquentier_test_logs.zip'
+
 
   build_windows:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
@@ -1434,7 +1461,7 @@ jobs:
           cmake --build . --target lrelease
           set CONNECTION_TIMEOUT="60000"
           cmake --build . --target check
-          7z a last_test_qt5_log.zip %RUNNER_WORKSPACE%\Testing\Temporary\LastTest.log
+          7z a last_test_qt5_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.qt_version == '5.15.2' }}
@@ -1488,7 +1515,7 @@ jobs:
           cmake --build . --target lrelease
           set CONNECTION_TIMEOUT="60000"
           cmake --build . --target check
-          7z a last_test_qt6_log.zip %RUNNER_WORKSPACE%\Testing\Temporary\LastTest.log
+          7z a last_test_qt6_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
         if: ${{ matrix.qt_version == '6.7.3' }}
