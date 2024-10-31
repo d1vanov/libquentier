@@ -1154,7 +1154,8 @@ void TestRunner::createBaseRequestContext()
 
     if (!connectionTimeoutEnv.isEmpty()) {
         bool conversionResult = false;
-        const qint64 timeout = connectionTimeoutEnv.toLongLong(&conversionResult);
+        const qint64 timeout =
+            connectionTimeoutEnv.toLongLong(&conversionResult);
         if (conversionResult) {
             QNINFO(
                 "tests::synchronization::TestRunner",
