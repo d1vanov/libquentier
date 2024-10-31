@@ -24,6 +24,8 @@
 #include <quentier/threading/Fwd.h>
 #include <quentier/types/Account.h>
 
+#include <qevercloud/Fwd.h>
+
 #include <QObject>
 #include <QTemporaryDir>
 
@@ -51,6 +53,9 @@ private Q_SLOTS:
     void runTestScenario_data();
 
 private:
+    void createBaseRequestContext();
+
+private:
     const FakeAuthenticatorPtr m_fakeAuthenticator;
     const FakeKeychainServicePtr m_fakeKeychainService;
 
@@ -61,6 +66,7 @@ private:
     UserStoreServer * m_userStoreServer = nullptr;
     SyncEventsCollector * m_syncEventsCollector = nullptr;
     std::shared_ptr<FakeSyncStateStorage> m_fakeSyncStateStorage;
+    qevercloud::IRequestContextPtr m_ctx;
 };
 
 } // namespace quentier::synchronization::tests

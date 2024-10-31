@@ -45,6 +45,7 @@
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
+#include <qevercloud/RequestContextBuilder.h>
 #include <qevercloud/types/builders/SyncStateBuilder.h>
 #include <qevercloud/types/builders/UserBuilder.h>
 #include <qevercloud/utility/ToRange.h>
@@ -63,6 +64,10 @@
 namespace quentier::synchronization::tests {
 
 namespace {
+
+using namespace std::string_view_literals;
+
+constexpr auto gConnectionTimeoutEnvVarKey = "CONNECTION_TIMEOUT"sv;
 
 inline void messageHandler(
     QtMsgType type, const QMessageLogContext & /* context */,
@@ -706,6 +711,7 @@ void TestRunner::cleanup()
 void TestRunner::initTestCase()
 {
     qInstallMessageHandler(messageHandler);
+    createBaseRequestContext();
 }
 
 void TestRunner::cleanupTestCase() {}
@@ -853,7 +859,7 @@ void TestRunner::runTestScenario()
 
     auto synchronizer = createSynchronizer(
         userStoreUrl, m_fakeAuthenticator, m_fakeSyncStateStorage,
-        m_fakeKeychainService);
+        m_fakeKeychainService, m_ctx);
 
     auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -1135,6 +1141,37 @@ void TestRunner::runTestScenario_data()
     for (const auto & scenarioData: gTestScenarioData) {
         QTest::newRow(scenarioData.name.data()) << scenarioData;
     }
+}
+
+void TestRunner::createBaseRequestContext()
+{
+    const QByteArray connectionTimeoutEnv =
+        qgetenv(gConnectionTimeoutEnvVarKey.data());
+
+    qevercloud::RequestContextBuilder builder;
+    builder.setMaxRetryCount(0);
+    builder.setIncreaseConnectionTimeoutExponentially(false);
+
+    if (!connectionTimeoutEnv.isEmpty()) {
+        bool conversionResult = false;
+        const qint64 timeout = connectionTimeoutEnv.toLongLong(&conversionResult);
+        if (conversionResult) {
+            QNINFO(
+                "tests::synchronization::TestRunner",
+                "Using connection timeout from the environment variable: "
+                    << timeout);
+            builder.setConnectionTimeout(timeout);
+            builder.setMaxConnectionTimeout(timeout);
+        }
+        else {
+            QNWARNING(
+                "tests::synchronization::TestRunner",
+                "Failed to parse connection timeout from the environment "
+                    << "variable: " << connectionTimeoutEnv);
+        }
+    }
+
+    m_ctx = builder.build();
 }
 
 } // namespace quentier::synchronization::tests
