@@ -552,6 +552,7 @@ jobs:
           ./bin/libqt6quentier_local_storage_sql_unit_tests
           ./bin/libqt6quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
+          export QTEST_FATAL_FAIL=1
           xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal || true
           7z a last_test_qt6_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '6.7.3' }}
@@ -584,21 +585,37 @@ jobs:
           path: '${{ github.workspace }}/build/installdir/libquentier_linux.zip'
         if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.15.4' }}
 
-      - name: Upload Qt5 libquentier test logs
-        id: upload_tests_log_qt5
+      - name: Upload Qt5 gcc libquentier test logs
+        id: upload_tests_log_qt5_gcc
         uses: actions/upload-artifact@v4
         with:
-          name: libquentier_linux_test_logs_qt5
+          name: libquentier_linux_test_logs_qt5_gcc
           path: '${{ github.workspace }}/build/last_test_qt5_log.zip'
-        if: ${{ matrix.qt_version == '5.15.4' }}
+        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.15.4' }}
 
-      - name: Upload Qt6 libquentier test logs
-        id: upload_tests_log_qt6
+      - name: Upload Qt5 clang libquentier test logs
+        id: upload_tests_log_qt5_clang
         uses: actions/upload-artifact@v4
         with:
-          name: libquentier_linux_test_logs_qt6
+          name: libquentier_linux_test_logs_qt5_clang
+          path: '${{ github.workspace }}/build/last_test_qt5_log.zip'
+        if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '5.15.4' }}
+
+      - name: Upload Qt6 gcc libquentier test logs
+        id: upload_tests_log_qt6_gcc
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_linux_test_logs_qt6_gcc
           path: '${{ github.workspace }}/build/last_test_qt6_log.zip'
-        if: ${{ matrix.qt_version == '6.7.3' }}
+        if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '6.7.3' }}
+
+      - name: Upload Qt6 clang libquentier test logs
+        id: upload_tests_log_qt6_clang
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_linux_test_logs_qt6_clang
+          path: '${{ github.workspace }}/build/last_test_qt6_log.zip'
+        if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '6.7.3' }}
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
@@ -825,6 +842,7 @@ jobs:
           fi
           export QTKEYCHAIN_DIR=$RUNNER_WORKSPACE/qtkeychain
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$(pwd)/bin \
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.7.3/clang_64 \
             -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_86_0 \
@@ -847,7 +865,28 @@ jobs:
         id: test
         run: |
           cd $GITHUB_WORKSPACE/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
+          fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development
+          elif [ "$BRANCH_NAME" = "integration-0.8.0" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_integration
+          else
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
+          fi
+          export DYLD_LIBRARY_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.7.3/clang_64/lib:/usr/local/opt/openssl/lib:$QEVERCLOUD_DIR/lib:$RUNNER_WORKSPACE/qtkeychain/lib:/usr/local/opt/tidy-html5/lib:$DYLD_LIBRARY_PATH
+          ./bin/test_libquentier
+          ./bin/libqt6quentier_enml_unit_tests
+          ./bin/libqt6quentier_threading_unit_tests
+          ./bin/libqt6quentier_utility_unit_tests
+          ./bin/libqt6quentier_local_storage_sql_unit_tests
+          ./bin/libqt6quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
+          export QTEST_FATAL_FAIL=1
+          ./bin/libqt6quentier_synchronization_integrational_tests || true
           cmake --build . --target check || true
           7z a libquentier_test_logs.zip /Users/runner/Library/Application\ Support/d1vanov/LibquentierTests/logs-quentier/*
 
@@ -1455,12 +1494,18 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt5" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt5" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
+          bin\test_libquentier.exe
+          bin\libqt5quentier_enml_unit_tests.exe
+          bin\libqt5quentier_threading_unit_tests.exe
+          bin\libqt5quentier_utility_unit_tests.exe
+          bin\libqt5quentier_local_storage_sql_unit_tests.exe
+          bin\libqt5quentier_synchronization_unit_tests.exe
           set CONNECTION_TIMEOUT="60000"
-          cmake --build . --target check
+          bin\libqt5quentier_synchronization_integrational_tests.exe || VER>NUL
           7z a last_test_qt5_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
@@ -1509,12 +1554,19 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DBUILD_WITH_QT6=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt6_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt6" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl ..
+          cmake -G "NMake Makefiles" -DBUILD_WITH_QT6=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt6_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt6" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
+          bin\test_libquentier.exe
+          bin\libqt6quentier_enml_unit_tests.exe
+          bin\libqt6quentier_threading_unit_tests.exe
+          bin\libqt6quentier_utility_unit_tests.exe
+          bin\libqt6quentier_local_storage_sql_unit_tests.exe
+          bin\libqt6quentier_synchronization_unit_tests.exe
           set CONNECTION_TIMEOUT="60000"
-          cmake --build . --target check
+          set QTEST_FATAL_FAIL="1"
+          bin\libqt6quentier_synchronization_integrational_tests.exe || VER>NUL
           7z a last_test_qt6_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
