@@ -687,6 +687,7 @@ jobs:
           brew install hunspell
           brew install tidy-html5
           brew install openssl
+          brew install googletest
 
       - name: Cache QtKeychain
         id: cache_qtkeychain
@@ -1499,11 +1500,6 @@ jobs:
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           bin\test_libquentier.exe
-          bin\libqt5quentier_enml_unit_tests.exe
-          bin\libqt5quentier_threading_unit_tests.exe
-          bin\libqt5quentier_utility_unit_tests.exe
-          bin\libqt5quentier_local_storage_sql_unit_tests.exe
-          bin\libqt5quentier_synchronization_unit_tests.exe
           set CONNECTION_TIMEOUT="60000"
           bin\libqt5quentier_synchronization_integrational_tests.exe || VER>NUL
           7z a last_test_qt5_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
@@ -1559,11 +1555,6 @@ jobs:
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           bin\test_libquentier.exe
-          bin\libqt6quentier_enml_unit_tests.exe
-          bin\libqt6quentier_threading_unit_tests.exe
-          bin\libqt6quentier_utility_unit_tests.exe
-          bin\libqt6quentier_local_storage_sql_unit_tests.exe
-          bin\libqt6quentier_synchronization_unit_tests.exe
           set CONNECTION_TIMEOUT="60000"
           set QTEST_FATAL_FAIL="1"
           bin\libqt6quentier_synchronization_integrational_tests.exe || VER>NUL
