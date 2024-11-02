@@ -58,7 +58,6 @@ target_link_libraries(${TESTS_NAME}
     ${LIBNAME}_private
     ${LIBRARY_NAME}
     ${LIBRARY_NAME}_testing_mocks
-    ${LIBNAME}
     ${LIBNAME}_local_storage_sql
     ${LIBNAME}_synchronization
     ${GMOCK_LIBRARIES}
