@@ -1478,7 +1478,7 @@ jobs:
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="1" 7z x googletest-1.15.2-msvc2019_x64.zip
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" echo "Could not download prebuilt Googletest, will build from source"
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" mkdir %RUNNER_WORKSPACE%\googletest_src
-          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" git clone https://github.com/google/googletest.git -b v1.15.2
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" git clone https://github.com/google/googletest.git -b v1.15.2 %RUNNER_WORKSPACE%\googletest_src
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cd %RUNNER_WORKSPACE%\googletest_src
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" mkdir build
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cd build
