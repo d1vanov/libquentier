@@ -885,11 +885,7 @@ jobs:
           ./bin/libqt6quentier_utility_unit_tests
           ./bin/libqt6quentier_local_storage_sql_unit_tests
           ./bin/libqt6quentier_synchronization_unit_tests
-          export CONNECTION_TIMEOUT=60000
-          export QTEST_FATAL_FAIL=1
-          ./bin/libqt6quentier_synchronization_integrational_tests || true
-          cmake --build . --target check || true
-          7z a libquentier_test_logs.zip /Users/runner/Library/Application\ Support/d1vanov/LibquentierTests/logs-quentier/*
+          echo "Won't run synchronization integrational tests on macOS GH actions runner as it is too slow to run this test properly"
 
       - name: Update translations
         id: update_translations
@@ -916,14 +912,6 @@ jobs:
         with:
           name: libquentier_macos
           path: '${{ github.workspace }}/build/installdir/libquentier_macos.zip'
-
-      - name: Upload libquentier test logs
-        id: upload_logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: libquentier_test_logs_macos
-          path: '${{ github.workspace }}/build/libquentier_test_logs.zip'
-
 
   build_windows:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
