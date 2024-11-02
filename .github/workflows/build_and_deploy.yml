@@ -1453,6 +1453,39 @@ jobs:
           if %DOWNLOAD_BREAKPAD%==1 7z x breakpad-msvc2019_x64.zip
         shell: cmd
 
+      - name: Cache Google test
+        id: cache_google_test
+        env:
+          GOOGLE_TEST_CACHE_VERSION: '1'
+        uses: actions/cache@v4
+        with:
+          path: '${{ runner.workspace }}/googletest'
+          key: googletest-${{ env.GOOGLE_TEST_CACHE_VERSION }}
+
+      - name: Download or build Google test
+        id: download_or_build_googletest
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if not exist %RUNNER_WORKSPACE%\googletest (set GOOGLETEST_CACHED=0) else (set GOOGLETEST_CACHED=1)
+          echo "GOOGLETEST_CACHED=%GOOGLETEST_CACHED%"
+          if %GOOGLETEST_CACHED%==0 mkdir %RUNNER_WORKSPACE%\googletest
+          if %GOOGLETEST_CACHED%==0 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/googletest-1.15.2-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\googletest\googletest-1.15.2-msvc2019_x64.zip
+          if %GOOGLETEST_CACHED%==0 cd %RUNNER_WORKSPACE%\googletest
+          if %GOOGLETEST_CACHED%==0 set GOOGLETEST_DOWNLOADED=0
+          if %GOOGLETEST_CACHED%==0 if exist googletest-1.15.2-msvc2019_x64.zip set GOOGLETEST_DOWNLOADED=1
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="1" echo "Downloaded prebuilt Googletest"
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="1" 7z x googletest-1.15.2-msvc2019_x64.zip
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" echo "Could not download prebuilt Googletest, will build from source"
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" mkdir %RUNNER_WORKSPACE%\googletest_src
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" git clone https://github.com/google/googletest.git -b v1.15.2
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" mkdir build
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cd build
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\googletest" ..
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake --build . --target all
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake --build . --target install
+        shell: cmd
+
       - name: Build, test and install Qt5
         id: build_test_install_qt5
         env:
@@ -1469,18 +1502,21 @@ jobs:
           set PATH=%RUNNER_WORKSPACE%\openssl\bin;%PATH%
           set PATH=%RUNNER_WORKSPACE%\qtkeychain_qt5\bin;%PATH%
           set PATH=%RUNNER_WORKSPACE%\tidy_html5\bin;%PATH%
+          set PATH=%RUNNER_WORKSPACE%\googletest\bin;%PATH%
           set LIB=%RUNNER_WORKSPACE%\libiconv\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\libxml2\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\libhunspell\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\openssl\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\qtkeychain_qt5\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\tidy_html5\lib;%LIB%
+          set LIB=%RUNNER_WORKSPACE%\googletest\lib;%LIB%
           set INCLUDE=%RUNNER_WORKSPACE%\libiconv\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\libxml2\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\libhunspell\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\openssl\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\qtkeychain_qt5\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\tidy_html5\include;%INCLUDE%
+          set INCLUDE=%RUNNER_WORKSPACE%\googletest\include;%INCLUDE%
           set BRANCH_NAME=master
           if "%GITHUB_EVENT_NAME%"=="push" if "%GITHUB_REF%"=="refs/heads/development" set BRANCH_NAME=development
           if "%GITHUB_EVENT_NAME%"=="pull_request" if "%GITHUB_BASE_REF%"=="development" set BRANCH_NAME=development
@@ -1495,13 +1531,25 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt5" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt5" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl -DGTest_DIR="%RUNNER_WORKSPACE%\googletest\lib\cmake\GTest" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
-          bin\test_libquentier.exe
+          bin\test_libquentier.exe > test_libquentier_output.txt 2>&1
+          type test_libquentier_output.txt
+          bin\libqt5quentier_enml_unit_tests.exe > libqt5quentier_enml_unit_tests.txt 2>&1
+          type libqt5quentier_enml_unit_tests.txt
+          bin\libqt5quentier_threading_unit_tests.exe > libqt5quentier_threading_unit_tests.txt 2>&1
+          type libqt5quentier_threading_unit_tests.txt
+          bin\libqt5quentier_utility_unit_tests.exe > libqt5quentier_utility_unit_tests.txt 2>&1
+          type libqt5quentier_utility_unit_tests.txt
+          bin\libqt5quentier_local_storage_sql_unit_tests.exe > libqt5quentier_local_storage_sql_unit_tests.txt 2>&1
+          type libqt5quentier_local_storage_sql_unit_tests.txt
+          bin\libqt5quentier_synchronization_unit_tests.exe > libqt5quentier_synchronization_unit_tests.txt 2>&1
+          type libqt5quentier_synchronization_unit_tests.txt
           set CONNECTION_TIMEOUT="60000"
-          bin\libqt5quentier_synchronization_integrational_tests.exe || VER>NUL
+          bin\libqt5quentier_synchronization_integrational_tests.exe > libqt5quentier_synchronization_integrational_tests.txt 2>&1
+          type libqt5quentier_synchronization_integrational_tests.txt
           7z a last_test_qt5_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
@@ -1524,18 +1572,21 @@ jobs:
           set PATH=%RUNNER_WORKSPACE%\openssl\bin;%PATH%
           set PATH=%RUNNER_WORKSPACE%\qtkeychain_qt6\bin;%PATH%
           set PATH=%RUNNER_WORKSPACE%\tidy_html5\bin;%PATH%
+          set PATH=%RUNNER_WORKSPACE%\googletest\bin;%PATH%
           set LIB=%RUNNER_WORKSPACE%\libiconv\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\libxml2\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\libhunspell\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\openssl\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\qtkeychain_qt6\lib;%LIB%
           set LIB=%RUNNER_WORKSPACE%\tidy_html5\lib;%LIB%
+          set LIB=%RUNNER_WORKSPACE%\googletest\lib;%LIB%
           set INCLUDE=%RUNNER_WORKSPACE%\libiconv\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\libxml2\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\libhunspell\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\openssl\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\qtkeychain_qt6\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\tidy_html5\include;%INCLUDE%
+          set INCLUDE=%RUNNER_WORKSPACE%\googletest\include;%INCLUDE%
           set BRANCH_NAME=master
           if "%GITHUB_EVENT_NAME%"=="push" if "%GITHUB_REF%"=="refs/heads/development" set BRANCH_NAME=development
           if "%GITHUB_EVENT_NAME%"=="pull_request" if "%GITHUB_BASE_REF%"=="development" set BRANCH_NAME=development
@@ -1550,14 +1601,26 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DBUILD_WITH_QT6=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt6_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt6" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl ..
+          cmake -G "NMake Makefiles" -DBUILD_WITH_QT6=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt6_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt6" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl -DGTest_DIR="%RUNNER_WORKSPACE%\googletest\lib\cmake\GTest" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
-          bin\test_libquentier.exe
+          bin\test_libquentier.exe > test_libquentier.txt 2>&1
+          type test_libquentier.txt
+          bin\libqt6quentier_enml_unit_tests.exe > libqt6quentier_enml_unit_tests.txt 2>&1
+          type libqt6quentier_enml_unit_tests.txt
+          bin\libqt6quentier_threading_unit_tests.exe > libqt6quentier_threading_unit_tests.txt 2>&1
+          type libqt6quentier_threading_unit_tests.txt
+          bin\libqt6quentier_utility_unit_tests.exe > libqt6quentier_utility_unit_tests.txt 2>&1
+          type libqt6quentier_utility_unit_tests.txt
+          bin\libqt6quentier_local_storage_sql_unit_tests.exe > libqt6quentier_local_storage_sql_unit_tests.txt 2>&1
+          type libqt6quentier_local_storage_sql_unit_tests.txt
+          bin\libqt6quentier_synchronization_unit_tests.exe > libqt6quentier_synchronization_unit_tests.txt 2>&1
+          type libqt6quentier_synchronization_unit_tests.txt
           set CONNECTION_TIMEOUT="60000"
           set QTEST_FATAL_FAIL="1"
-          bin\libqt6quentier_synchronization_integrational_tests.exe || VER>NUL
+          bin\libqt6quentier_synchronization_integrational_tests.exe > libqt6quentier_synchronization_integrational_tests.txt 2>&1
+          type libqt6quentier_synchronization_integrational_tests.txt
           7z a last_test_qt6_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
