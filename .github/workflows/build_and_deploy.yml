@@ -682,12 +682,12 @@ jobs:
 
       - name: Install dependencies
         id: install_deps
-        run: |
-          brew update
-          brew install hunspell
-          brew install tidy-html5
-          brew install openssl
-          brew install googletest
+        uses: tecolicom/actions-use-homebrew-tools@v1
+        with:
+          tools: 'hunspell tidy-html5 openssl googletest'
+          key: homebrew-deps-1
+          cache: yes
+          verbose: false
 
       - name: Cache QtKeychain
         id: cache_qtkeychain
