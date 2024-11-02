@@ -89,8 +89,7 @@ TEST_P(
     const auto serialized =
         serializeAuthenticationInfoToJson(*authenticationInfo);
 
-    const auto deserialized =
-        deserializeAuthenticationInfoFromJson(serialized);
+    const auto deserialized = deserializeAuthenticationInfoFromJson(serialized);
     ASSERT_TRUE(deserialized);
 
     const auto concreteDeserializedAuthenticationInfo =
