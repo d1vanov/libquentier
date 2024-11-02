@@ -89,11 +89,20 @@ TEST_P(
     const auto serialized =
         serializeAuthenticationInfoToJson(*authenticationInfo);
 
-    const auto deserialized = deserializeAuthenticationInfoFromJson(serialized);
+    const auto deserialized =
+        deserializeAuthenticationInfoFromJson(serialized);
     ASSERT_TRUE(deserialized);
 
     const auto concreteDeserializedAuthenticationInfo =
+#ifdef Q_OS_MAC
+        // NOTE: on macOS dynamic_cast across the shared library's boundary
+        // is problematic, see
+        // https://www.qt.io/blog/quality-assurance/one-way-dynamic_cast-across-library-boundaries-can-fail-and-how-to-fix-it
+        // Using reinterpret_cast instead.
+        std::reinterpret_pointer_cast<AuthenticationInfo>(deserialized);
+#else
         std::dynamic_pointer_cast<AuthenticationInfo>(deserialized);
+#endif
     ASSERT_TRUE(concreteDeserializedAuthenticationInfo);
 
     EXPECT_EQ(

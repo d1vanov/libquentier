@@ -286,7 +286,15 @@ TEST_P(SendStatusJsonSerializationTest, SerializeAndDeserializeSendStatus)
     ASSERT_TRUE(deserialized) << testData.m_testName;
 
     const auto concreteDeserializedSendStatus =
+#ifdef Q_OS_MAC
+        // NOTE: on macOS dynamic_cast across the shared library's boundary
+        // is problematic, see
+        // https://www.qt.io/blog/quality-assurance/one-way-dynamic_cast-across-library-boundaries-can-fail-and-how-to-fix-it
+        // Using reinterpret_cast instead.
+        std::reinterpret_pointer_cast<SendStatus>(deserialized);
+#else
         std::dynamic_pointer_cast<SendStatus>(deserialized);
+#endif
     ASSERT_TRUE(concreteDeserializedSendStatus) << testData.m_testName;
 
     EXPECT_EQ(*concreteDeserializedSendStatus, *sendStatus)

@@ -358,7 +358,15 @@ TEST(SyncResultJsonSerializationTest, SerializeAndDeserializeSyncResult)
     ASSERT_TRUE(deserialized);
 
     const auto concreteDeserializedSyncResult =
+#ifdef Q_OS_MAC
+        // NOTE: on macOS dynamic_cast across the shared library's boundary
+        // is problematic, see
+        // https://www.qt.io/blog/quality-assurance/one-way-dynamic_cast-across-library-boundaries-can-fail-and-how-to-fix-it
+        // Using reinterpret_cast instead.
+        std::reinterpret_pointer_cast<SyncResult>(deserialized);
+#else
         std::dynamic_pointer_cast<SyncResult>(deserialized);
+#endif
     ASSERT_TRUE(concreteDeserializedSyncResult);
 
     EXPECT_EQ(*concreteDeserializedSyncResult, *syncResult);
