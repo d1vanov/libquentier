@@ -1456,7 +1456,7 @@ jobs:
       - name: Cache Google test
         id: cache_google_test
         env:
-          GOOGLE_TEST_CACHE_VERSION: '1'
+          GOOGLE_TEST_CACHE_VERSION: '2'
         uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/googletest'
@@ -1483,7 +1483,7 @@ jobs:
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cd %RUNNER_WORKSPACE%\googletest_src
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" mkdir build
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cd build
-          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\googletest" ..
+          if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\googletest" -Dgtest_force_shared_crt=ON ..
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake --build . --target all
           if %GOOGLETEST_CACHED%==0 if "%GOOGLETEST_DOWNLOADED%"=="0" cmake --build . --target install
         shell: cmd
