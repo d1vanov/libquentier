@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 #include "Fwd.h"
 #include "INoteStoreProvider.h"
 
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <qevercloud/Fwd.h>
@@ -56,11 +57,9 @@ public:
             QString notebookLocalId, qevercloud::IRequestContextPtr ctx = {},
             qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
-    [[nodiscard]] QFuture<qevercloud::INoteStorePtr>
-        noteStoreForNotebookGuid(
-            qevercloud::Guid notebookGuid,
-            qevercloud::IRequestContextPtr ctx = {},
-            qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+    [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNotebookGuid(
+        qevercloud::Guid notebookGuid, qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
 
     [[nodiscard]] QFuture<qevercloud::INoteStorePtr> noteStoreForNoteLocalId(
         QString noteLocalId, qevercloud::IRequestContextPtr ctx = {},

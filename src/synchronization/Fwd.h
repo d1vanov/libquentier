@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,9 +69,6 @@ using INotebookFinderPtr = std::shared_ptr<INotebookFinder>;
 
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
-
-class INoteStoreFactory;
-using INoteStoreFactoryPtr = std::shared_ptr<INoteStoreFactory>;
 
 class INoteStoreProvider;
 using INoteStoreProviderPtr = std::shared_ptr<INoteStoreProvider>;

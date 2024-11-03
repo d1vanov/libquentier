@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <synchronization/INoteStoreFactory.h>
+#include <quentier/synchronization/INoteStoreFactory.h>
 
 #include <gmock/gmock.h>
 
@@ -28,11 +28,11 @@ class MockINoteStoreFactory : public INoteStoreFactory
 {
 public:
     MOCK_METHOD(
-        qevercloud::INoteStorePtr, noteStore,
+        ::qevercloud::INoteStorePtr, noteStore,
         (QString noteStoreUrl,
-         std::optional<qevercloud::Guid> linkedNotebookGuid,
-         qevercloud::IRequestContextPtr ctx,
-         qevercloud::IRetryPolicyPtr retryPolicy),
+         std::optional<::qevercloud::Guid> linkedNotebookGuid,
+         ::qevercloud::IRequestContextPtr ctx,
+         ::qevercloud::IRetryPolicyPtr retryPolicy),
         (override));
 };
 

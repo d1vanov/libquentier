@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,28 +18,26 @@
 
 #pragma once
 
-#include <memory>
+#include <quentier/utility/Linkage.h>
+
+#include <qevercloud/Fwd.h>
+#include <qevercloud/services/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
+
+#include <optional>
 
 namespace quentier::synchronization {
 
-class IAuthenticator;
-using IAuthenticatorPtr = std::shared_ptr<IAuthenticator>;
+class QUENTIER_EXPORT INoteStoreFactory
+{
+public:
+    virtual ~INoteStoreFactory();
 
-class INoteStoreFactory;
-using INoteStoreFactoryPtr = std::shared_ptr<INoteStoreFactory>;
-
-class ISyncConflictResolver;
-using ISyncConflictResolverPtr = std::shared_ptr<ISyncConflictResolver>;
-
-class ISynchronizer;
-using ISynchronizerPtr = std::shared_ptr<ISynchronizer>;
-
-class ISyncEventsNotifier;
-
-class ISyncOptions;
-using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
-
-class ISyncStateStorage;
-using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
+    [[nodiscard]] virtual qevercloud::INoteStorePtr noteStore(
+        QString noteStoreUrl = {},
+        std::optional<qevercloud::Guid> linkedNotebookGuid = {},
+        qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
+};
 
 } // namespace quentier::synchronization

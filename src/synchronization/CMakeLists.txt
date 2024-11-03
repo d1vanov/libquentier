@@ -34,7 +34,6 @@ target_sources(${LIBRARY_NAME}
   ILinkedNotebookTagsCleaner.h
   InkNoteImageDownloaderFactory.cpp
   InkNoteImageDownloaderFactory.h
-  INoteStoreFactory.h
   INoteStoreProvider.h
   INoteThumbnailDownloaderFactory.h
   IProtocolVersionChecker.h

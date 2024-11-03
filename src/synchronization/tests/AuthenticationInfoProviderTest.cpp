@@ -19,7 +19,6 @@
 #include "Utils.h"
 
 #include <synchronization/AuthenticationInfoProvider.h>
-#include <synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <synchronization/tests/mocks/MockIUserInfoProvider.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 #include <synchronization/types/AuthenticationInfo.h>
@@ -27,6 +26,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/synchronization/tests/mocks/MockIAuthenticator.h>
+#include <quentier/synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/UidGenerator.h>

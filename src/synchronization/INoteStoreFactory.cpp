@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,26 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <qevercloud/Fwd.h>
-#include <qevercloud/services/Fwd.h>
-#include <qevercloud/types/TypeAliases.h>
-
-#include <optional>
+#include <quentier/synchronization/INoteStoreFactory.h>
 
 namespace quentier::synchronization {
 
-class INoteStoreFactory
-{
-public:
-    virtual ~INoteStoreFactory() = default;
-
-    [[nodiscard]] virtual qevercloud::INoteStorePtr noteStore(
-        QString noteStoreUrl = {},
-        std::optional<qevercloud::Guid> linkedNotebookGuid = {},
-        qevercloud::IRequestContextPtr ctx = {},
-        qevercloud::IRetryPolicyPtr retryPolicy = {}) = 0;
-};
+INoteStoreFactory::~INoteStoreFactory() = default;
 
 } // namespace quentier::synchronization

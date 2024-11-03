@@ -23,6 +23,7 @@
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/IAuthenticator.h>
+#include <quentier/synchronization/INoteStoreFactory.h>
 #include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
@@ -30,7 +31,6 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/IKeychainService.h>
 
-#include <synchronization/INoteStoreFactory.h>
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/types/AuthenticationInfo.h>
 

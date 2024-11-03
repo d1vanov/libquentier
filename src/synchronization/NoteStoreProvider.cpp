@@ -18,13 +18,13 @@
 
 #include "NoteStoreProvider.h"
 
-#include "INoteStoreFactory.h"
 #include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/synchronization/INoteStoreFactory.h>
 #include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>

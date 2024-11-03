@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <synchronization/INoteStoreFactory.h>
+#include <quentier/synchronization/INoteStoreFactory.h>
 
 namespace quentier::synchronization {
 

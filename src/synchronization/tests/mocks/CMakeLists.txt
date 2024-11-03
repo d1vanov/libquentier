@@ -10,6 +10,7 @@ endif()
 target_sources(${MOCKS_NAME}
   PUBLIC
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockIAuthenticator.h
+    ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockINoteStoreFactory.h
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncConflictResolver.h
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncStateStorage.h
     MockIAccountSyncPersistenceDirProvider.h
@@ -25,7 +26,6 @@ target_sources(${MOCKS_NAME}
     MockILinkedNotebooksProcessor.h
     MockINotebooksProcessor.h
     MockINoteFullDataDownloader.h
-    MockINoteStoreFactory.h
     MockINoteStoreProvider.h
     MockINoteThumbnailDownloaderFactory.h
     MockINotesProcessor.h

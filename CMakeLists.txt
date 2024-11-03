@@ -110,6 +110,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/Factory.h
     headers/quentier/synchronization/Fwd.h
     headers/quentier/synchronization/IAuthenticator.h
+    headers/quentier/synchronization/INoteStoreFactory.h
     headers/quentier/synchronization/ISyncStateStorage.h
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISyncEventsNotifier.h
@@ -227,6 +228,7 @@ set(PRIVATE_HEADERS
     src/enml/conversion_rules/ISkipRule.cpp
     src/enml/conversion_rules/ISkipRuleBuilder.cpp
     src/enml/conversion_rules/MatchMode.cpp
+    src/synchronization/INoteStoreFactory.cpp
     src/synchronization/ISyncEventsNotifier.cpp
     src/synchronization/SyncStateStorage.h
     src/synchronization/types/AuthenticationInfo.h

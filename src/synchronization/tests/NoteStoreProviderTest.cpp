@@ -22,13 +22,13 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <synchronization/tests/mocks/MockIAuthenticationInfoProvider.h>
 #include <synchronization/tests/mocks/MockILinkedNotebookFinder.h>
-#include <synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <synchronization/tests/mocks/MockINotebookFinder.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 #include <synchronization/types/AuthenticationInfo.h>
@@ -195,7 +195,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
@@ -248,7 +248,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
@@ -353,7 +353,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
@@ -405,7 +405,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     resultFuture = noteStoreProvider->noteStoreForNotebookLocalId(
@@ -517,7 +517,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     auto resultFuture = noteStoreProvider->noteStoreForNotebookGuid(
@@ -569,7 +569,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     resultFuture = noteStoreProvider->noteStoreForNotebookGuid(
@@ -680,7 +680,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     auto resultFuture = noteStoreProvider->linkedNotebookNoteStore(
@@ -732,7 +732,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     resultFuture = noteStoreProvider->linkedNotebookNoteStore(
@@ -854,7 +854,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     auto resultFuture =
@@ -900,7 +900,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     resultFuture =
@@ -992,7 +992,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     auto resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
@@ -1039,7 +1039,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
@@ -1122,7 +1122,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     auto resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
@@ -1175,7 +1175,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     resultFuture = noteStoreProvider->noteStoreForNoteLocalId(
@@ -1268,7 +1268,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     auto resultFuture = noteStoreProvider->noteStoreForNoteGuid(
@@ -1315,7 +1315,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
                 }
                 EXPECT_NE(ctx.get(), defaultCtx.get());
                 EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-                return noteStore;
+                return noteStore; // NOLINT
             });
 
     resultFuture = noteStoreProvider->noteStoreForNoteGuid(
@@ -1398,7 +1398,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     auto resultFuture = noteStoreProvider->noteStoreForNoteGuid(
@@ -1451,7 +1451,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
             }
             EXPECT_NE(ctx.get(), defaultCtx.get());
             EXPECT_EQ(defaultRetryPolicy, retryPolicy);
-            return noteStore;
+            return noteStore; // NOLINT
         });
 
     resultFuture = noteStoreProvider->noteStoreForNoteGuid(

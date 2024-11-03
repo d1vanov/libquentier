@@ -29,7 +29,6 @@
 #include "MockILinkedNotebookTagsCleaner.h"
 #include "MockILinkedNotebooksProcessor.h"
 #include "MockINoteFullDataDownloader.h"
-#include "MockINoteStoreFactory.h"
 #include "MockINoteStoreProvider.h"
 #include "MockINoteThumbnailDownloaderFactory.h"
 #include "MockINotebookFinder.h"
@@ -52,5 +51,6 @@
 #include "qevercloud/services/MockINoteStore.h"
 #include "qevercloud/services/MockIUserStore.h"
 #include <quentier/synchronization/tests/mocks/MockIAuthenticator.h>
+#include <quentier/synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
