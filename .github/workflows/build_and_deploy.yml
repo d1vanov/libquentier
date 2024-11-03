@@ -937,14 +937,6 @@ jobs:
           if %BOOST_CACHED%==0 7z x boost_1_86_0.7z
         shell: cmd
 
-      - name: Cache Qt 5.15.2
-        id: cache_qt5
-        uses: actions/cache@v4
-        with:
-          path: '${{ runner.workspace }}/Qt5'
-          key: ${{ runner.os }}-Qt5Cache
-        if: ${{ matrix.qt_version == '5.15.2' }}
-
       - name: Install Qt 5.15.2
         id: install_qt5
         uses: jurplel/install-qt-action@v4
@@ -959,14 +951,6 @@ jobs:
           modules: 'qtwebengine'
           dir: '${{ runner.workspace }}/Qt5'
         if: ${{ matrix.qt_version == '5.15.2' }}
-
-      - name: Cache Qt 6.7.3
-        id: cache_qt6
-        uses: actions/cache@v4
-        with:
-          path: '${{ runner.workspace }}/Qt6'
-          key: ${{ runner.os }}-Qt6Cache-1
-        if: ${{ matrix.qt_version == '6.7.3' }}
 
       - name: Install Qt 6.7.3
         id: install_qt6
