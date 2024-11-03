@@ -180,7 +180,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -233,7 +233,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -340,7 +340,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -392,7 +392,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -504,7 +504,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -556,7 +556,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -667,7 +667,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -719,7 +719,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -839,7 +839,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -885,7 +885,7 @@ TEST_F(NoteStoreProviderTest, UserOwnNoteStore)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -977,7 +977,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -1024,7 +1024,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -1109,7 +1109,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -1162,7 +1162,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -1253,7 +1253,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -1300,7 +1300,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce(
             [&](const QString & noteStoreUrl,
                 const std::optional<qevercloud::Guid> & linkedNotebookGuid,
@@ -1385,7 +1385,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
     EXPECT_CALL(*noteStore, defaultRequestContext)
         .WillRepeatedly(Return(defaultCtx));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,
@@ -1438,7 +1438,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
         .WillOnce(Return(
             threading::makeReadyFuture<IAuthenticationInfoPtr>(authInfo)));
 
-    EXPECT_CALL(*m_mockNoteStoreFactory, noteStore)
+    EXPECT_CALL(*m_mockNoteStoreFactory, createNoteStore)
         .WillOnce([&](const QString & noteStoreUrl,
                       const std::optional<qevercloud::Guid> & guid,
                       const qevercloud::IRequestContextPtr & ctx,

@@ -688,7 +688,7 @@ void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
         return;
     }
 
-    auto noteStore = m_noteStoreFactory->noteStore(
+    auto noteStore = m_noteStoreFactory->createNoteStore(
         *noteStoreUrl, linkedNotebookGuid, m_ctx, m_retryPolicy);
 
     if (Q_UNLIKELY(!noteStore)) {

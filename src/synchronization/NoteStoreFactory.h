@@ -25,7 +25,7 @@ namespace quentier::synchronization {
 class NoteStoreFactory final : public INoteStoreFactory
 {
 public:
-    [[nodiscard]] qevercloud::INoteStorePtr noteStore(
+    [[nodiscard]] qevercloud::INoteStorePtr createNoteStore(
         QString noteStoreUrl = {},
         std::optional<qevercloud::Guid> linkedNotebookGuid = {},
         qevercloud::IRequestContextPtr ctx = {},

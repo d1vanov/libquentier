@@ -1481,7 +1481,7 @@ TEST_F(
     // warning from gtest
     EXPECT_CALL(
         *m_mockNoteStoreFactory,
-        noteStore(
+        createNoteStore(
             linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(),
             requestContext, retryPolicy))
         .WillOnce(
@@ -1635,7 +1635,7 @@ TEST_F(
     // warning from gtest
     EXPECT_CALL(
         *m_mockNoteStoreFactory,
-        noteStore(
+        createNoteStore(
             linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(),
             requestContext, retryPolicy))
         .WillOnce(
@@ -1903,7 +1903,7 @@ TEST_F(
     // warning from gtest
     EXPECT_CALL(
         *m_mockNoteStoreFactory,
-        noteStore(
+        createNoteStore(
             linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(),
             requestContext, retryPolicy))
         .WillOnce(
@@ -2068,7 +2068,7 @@ TEST_F(
     // warning from gtest
     EXPECT_CALL(
         *m_mockNoteStoreFactory,
-        noteStore(
+        createNoteStore(
             linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(),
             requestContext, retryPolicy))
         .WillOnce(
@@ -2515,7 +2515,7 @@ TEST_P(
 
     EXPECT_CALL(
         *m_mockNoteStoreFactory,
-        noteStore(
+        createNoteStore(
             linkedNotebook.noteStoreUrl().value(), linkedNotebook.guid(), _, _))
         .WillOnce(
             [noteStoreWeak =

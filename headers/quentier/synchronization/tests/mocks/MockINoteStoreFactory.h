@@ -28,7 +28,7 @@ class MockINoteStoreFactory : public INoteStoreFactory
 {
 public:
     MOCK_METHOD(
-        ::qevercloud::INoteStorePtr, noteStore,
+        ::qevercloud::INoteStorePtr, createNoteStore,
         (QString noteStoreUrl,
          std::optional<::qevercloud::Guid> linkedNotebookGuid,
          ::qevercloud::IRequestContextPtr ctx,

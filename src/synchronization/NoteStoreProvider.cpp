@@ -408,7 +408,7 @@ void NoteStoreProvider::createNoteStore(
 
             ctx = ctxBuilder.build();
 
-            auto noteStore = m_noteStoreFactory->noteStore(
+            auto noteStore = m_noteStoreFactory->createNoteStore(
                 authInfo->noteStoreUrl(), linkedNotebookGuid, ctx, retryPolicy);
 
             Q_ASSERT(noteStore);

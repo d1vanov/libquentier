@@ -22,7 +22,7 @@
 
 namespace quentier::synchronization {
 
-qevercloud::INoteStorePtr NoteStoreFactory::noteStore(
+qevercloud::INoteStorePtr NoteStoreFactory::createNoteStore(
     QString noteStoreUrl, std::optional<qevercloud::Guid> linkedNotebookGuid,
     qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy)
 {

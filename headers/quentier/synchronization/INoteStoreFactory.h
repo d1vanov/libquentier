@@ -33,7 +33,7 @@ class QUENTIER_EXPORT INoteStoreFactory
 public:
     virtual ~INoteStoreFactory();
 
-    [[nodiscard]] virtual qevercloud::INoteStorePtr noteStore(
+    [[nodiscard]] virtual qevercloud::INoteStorePtr createNoteStore(
         QString noteStoreUrl = {},
         std::optional<qevercloud::Guid> linkedNotebookGuid = {},
         qevercloud::IRequestContextPtr ctx = {},
