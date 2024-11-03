@@ -1548,8 +1548,8 @@ jobs:
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           echo "Start running tests"
-          bin\test_libquentier.exe -o test_libquentier_report.xml,junitxml
-          type test_libquentier_report.xml
+          bin\test_libquentier.exe -o test_libquentier_report.txt,txt
+          type test_libquentier_report.txt
           echo "Start gtest-based tests"
           bin\libqt5quentier_enml_unit_tests.exe > libqt5quentier_enml_unit_tests.txt 2>&1
           type libqt5quentier_enml_unit_tests.txt
@@ -1621,8 +1621,8 @@ jobs:
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           echo "Start running tests"
-          bin\test_libquentier.exe -o test_libquentier_report.xml,junitxml
-          type test_libquentier_report.xml
+          bin\test_libquentier.exe -o test_libquentier_report.txt,txt
+          type test_libquentier_report.txt
           echo "Start gtest-based tests"
           bin\libqt6quentier_enml_unit_tests.exe > libqt6quentier_enml_unit_tests.txt 2>&1
           type libqt6quentier_enml_unit_tests.txt
