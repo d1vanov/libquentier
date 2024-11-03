@@ -63,6 +63,7 @@ private:
     std::optional<QTemporaryDir> m_tempDir;
     local_storage::ILocalStoragePtr m_localStorage;
     NoteStoreServer * m_noteStoreServer = nullptr;
+    FakeUserStoreBackend * m_userStoreBackend = nullptr;
     UserStoreServer * m_userStoreServer = nullptr;
     SyncEventsCollector * m_syncEventsCollector = nullptr;
     std::shared_ptr<FakeSyncStateStorage> m_fakeSyncStateStorage;

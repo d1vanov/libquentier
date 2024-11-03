@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,34 +36,17 @@ class QTcpSocket;
 
 namespace quentier::synchronization::tests {
 
+class FakeUserStoreBackend;
+
 class UserStoreServer : public QObject
 {
     Q_OBJECT
 public:
-    UserStoreServer(
-        QString authenticationToken, QList<QNetworkCookie> cookies,
-        QObject * parent = nullptr);
+    UserStoreServer(FakeUserStoreBackend * backend, QObject * parent = nullptr);
 
     ~UserStoreServer() override;
 
     [[nodiscard]] quint16 port() const noexcept;
-
-    [[nodiscard]] qint16 edamVersionMajor() const noexcept;
-    void setEdamVersionMajor(qint16 edamVersionMajor) noexcept;
-
-    [[nodiscard]] qint16 edamVersionMinor() const noexcept;
-    void setEdamVersionMinor(qint16 edamVersionMinor) noexcept;
-
-    using UserOrException = std::variant<qevercloud::User, std::exception_ptr>;
-
-    [[nodiscard]] std::optional<UserOrException> findUser(
-        const QString & authenticationToken) const;
-
-    void putUser(const QString & authenticationToken, qevercloud::User user);
-    void putUserException(
-        const QString & authenticationToken, std::exception_ptr e);
-
-    void removeUser(const QString & authenticationToken);
 
     // private signals
 Q_SIGNALS:
@@ -74,31 +57,17 @@ Q_SIGNALS:
         qevercloud::User value, std::exception_ptr e, QUuid requestId);
 
 private Q_SLOTS:
-    void onCheckVersionRequest(
-        const QString & clientName, qint16 edamVersionMajor,
-        qint16 edamVersionMinor, const qevercloud::IRequestContextPtr & ctx);
-
-    void onGetUserRequest(const qevercloud::IRequestContextPtr & ctx);
     void onRequestReady(const QByteArray & responseData, QUuid requestId);
 
 private:
     void connectToQEverCloudServer();
 
-    [[nodiscard]] std::exception_ptr checkAuthentication(
-        const qevercloud::IRequestContextPtr & ctx) const;
-
 private:
-    const QString m_authenticationToken;
-    const QList<QNetworkCookie> m_cookies;
+    FakeUserStoreBackend * m_backend;
 
     QTcpServer * m_tcpServer = nullptr;
     qevercloud::UserStoreServer * m_server = nullptr;
     QHash<QUuid, QTcpSocket *> m_sockets;
-
-    qint16 m_edamVersionMajor = 0;
-    qint16 m_edamVersionMinor = 0;
-
-    QHash<QString, UserOrException> m_users;
 };
 
 } // namespace quentier::synchronization::tests

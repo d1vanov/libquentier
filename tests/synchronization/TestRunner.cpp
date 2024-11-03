@@ -21,6 +21,7 @@
 #include "FakeAuthenticator.h"
 #include "FakeKeychainService.h"
 #include "FakeSyncStateStorage.h"
+#include "FakeUserStoreBackend.h"
 #include "NoteStoreServer.h"
 #include "Setup.h"
 #include "SyncEventsCollector.h"
@@ -661,9 +662,12 @@ void TestRunner::init()
     m_fakeAuthenticator->putAccountAuthInfo(
         m_testAccount, std::move(authenticationInfo));
 
-    m_userStoreServer = new UserStoreServer(authToken, userStoreCookies, this);
+    m_userStoreBackend =
+        new FakeUserStoreBackend(authToken, userStoreCookies, this);
 
-    m_userStoreServer->putUser(
+    m_userStoreServer = new UserStoreServer(m_userStoreBackend, this);
+
+    m_userStoreBackend->putUser(
         authToken,
         qevercloud::UserBuilder{}
             .setId(m_testAccount.id())
@@ -696,6 +700,10 @@ void TestRunner::cleanup()
     m_userStoreServer->deleteLater();
     m_userStoreServer = nullptr;
 
+    m_userStoreBackend->disconnect();
+    m_userStoreBackend->deleteLater();
+    m_userStoreBackend = nullptr;
+
     m_fakeSyncStateStorage->disconnect();
     m_fakeSyncStateStorage->deleteLater();
     m_fakeSyncStateStorage = nullptr;
@@ -724,8 +732,8 @@ void TestRunner::runTestScenario()
         "tests::synchronization::TestRunner",
         "TestRunner::runTestScenario: " << testScenarioData.name.data());
 
-    m_userStoreServer->setEdamVersionMajor(testScenarioData.edamVersionMajor);
-    m_userStoreServer->setEdamVersionMinor(testScenarioData.edamVersionMinor);
+    m_userStoreBackend->setEdamVersionMajor(testScenarioData.edamVersionMajor);
+    m_userStoreBackend->setEdamVersionMinor(testScenarioData.edamVersionMinor);
 
     const DataItemTypes mergedDataItemTypes = [&testScenarioData] {
         DataItemTypes result;
