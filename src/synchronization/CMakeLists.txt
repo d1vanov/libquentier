@@ -64,6 +64,8 @@ target_sources(${LIBRARY_NAME}
   SyncEventsNotifier.h
   UserInfoProvider.cpp
   UserInfoProvider.h
+  UserStoreFactory.cpp
+  UserStoreFactory.h
   Utils.cpp
   Utils.h
   conflict_resolvers/Factory.cpp

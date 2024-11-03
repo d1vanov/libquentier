@@ -115,6 +115,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISyncEventsNotifier.h
     headers/quentier/synchronization/ISynchronizer.h
+    headers/quentier/synchronization/IUserStoreFactory.h
 )
 
 set(SYNCHRONIZATION_TYPES_HEADERS
@@ -230,6 +231,7 @@ set(PRIVATE_HEADERS
     src/enml/conversion_rules/MatchMode.cpp
     src/synchronization/INoteStoreFactory.cpp
     src/synchronization/ISyncEventsNotifier.cpp
+    src/synchronization/IUserStoreFactory.cpp
     src/synchronization/SyncStateStorage.h
     src/synchronization/types/AuthenticationInfo.h
     src/synchronization/types/SyncChunksDataCounters.h

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,31 +18,16 @@
 
 #pragma once
 
-#include <memory>
+#include <quentier/synchronization/IUserStoreFactory.h>
 
 namespace quentier::synchronization {
 
-class IAuthenticator;
-using IAuthenticatorPtr = std::shared_ptr<IAuthenticator>;
-
-class INoteStoreFactory;
-using INoteStoreFactoryPtr = std::shared_ptr<INoteStoreFactory>;
-
-class ISyncConflictResolver;
-using ISyncConflictResolverPtr = std::shared_ptr<ISyncConflictResolver>;
-
-class ISynchronizer;
-using ISynchronizerPtr = std::shared_ptr<ISynchronizer>;
-
-class ISyncEventsNotifier;
-
-class ISyncOptions;
-using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
-
-class ISyncStateStorage;
-using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
-
-class IUserStoreFactory;
-using IUserStoreFactoryPtr = std::shared_ptr<IUserStoreFactory>;
+class UserStoreFactory : public IUserStoreFactory
+{
+public: // IUserStoreFactory
+    [[nodiscard]] qevercloud::IUserStorePtr createUserStore(
+        QString userStoreUrl = {}, qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+};
 
 } // namespace quentier::synchronization
