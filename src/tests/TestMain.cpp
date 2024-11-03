@@ -81,7 +81,7 @@ int main(int argc, char * argv[])
     int res = 0;
 
 #define RUN_TESTS(tester)                                                      \
-    res = QTest::qExec(new tester);                                            \
+    res = QTest::qExec(new tester, argc, argv);                                \
     if (res != 0) {                                                            \
         return res;                                                            \
     }
