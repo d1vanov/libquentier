@@ -859,7 +859,7 @@ void TestRunner::runTestScenario()
 
     auto synchronizer = createSynchronizer(
         userStoreUrl, m_fakeAuthenticator, m_fakeSyncStateStorage,
-        m_fakeKeychainService, m_ctx);
+        m_fakeKeychainService, nullptr, nullptr, m_ctx);
 
     auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
 

@@ -29,6 +29,7 @@
 #include <synchronization/SyncStateStorage.h>
 #include <synchronization/Synchronizer.h>
 #include <synchronization/UserInfoProvider.h>
+#include <synchronization/UserStoreFactory.h>
 #include <synchronization/conflict_resolvers/Factory.h>
 #include <synchronization/conflict_resolvers/SimpleNoteSyncConflictResolver.h>
 #include <synchronization/conflict_resolvers/SimpleSyncConflictResolver.h>
@@ -49,7 +50,9 @@ IAuthenticatorPtr createQEverCloudAuthenticator(
 ISynchronizerPtr createSynchronizer(
     const QUrl & userStoreUrl, IAuthenticatorPtr authenticator,
     ISyncStateStoragePtr syncStateStorage, IKeychainServicePtr keychainService,
-    qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy)
+    INoteStoreFactoryPtr noteStoreFactory,
+    IUserStoreFactoryPtr userStoreFactory, qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy)
 {
     if (!authenticator) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -66,8 +69,12 @@ ISynchronizerPtr createSynchronizer(
 
     QString host = userStoreUrl.host();
 
-    auto userStore =
-        qevercloud::newUserStore(userStoreUrl.toString(), ctx, retryPolicy);
+    if (!userStoreFactory) {
+        userStoreFactory = std::make_shared<UserStoreFactory>();
+    }
+
+    auto userStore = userStoreFactory->createUserStore(
+        userStoreUrl.toString(), ctx, retryPolicy);
 
     auto protocolVersionChecker =
         std::make_shared<ProtocolVersionChecker>(userStore);
@@ -75,7 +82,10 @@ ISynchronizerPtr createSynchronizer(
     auto userInfoProvider =
         std::make_shared<UserInfoProvider>(std::move(userStore));
 
-    auto noteStoreFactory = std::make_shared<NoteStoreFactory>();
+    if (!noteStoreFactory) {
+        noteStoreFactory = std::make_shared<NoteStoreFactory>();
+    }
+
 
     auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(

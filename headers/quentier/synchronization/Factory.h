@@ -42,6 +42,8 @@ namespace quentier::synchronization {
     const QUrl & userStoreUrl, IAuthenticatorPtr authenticator,
     ISyncStateStoragePtr syncStateStorage = nullptr,
     IKeychainServicePtr keychainService = nullptr,
+    INoteStoreFactoryPtr noteStoreFactory = nullptr,
+    IUserStoreFactoryPtr userStoreFactory = nullptr,
     qevercloud::IRequestContextPtr ctx = nullptr,
     qevercloud::IRetryPolicyPtr retryPolicy = nullptr);
 
