@@ -32,6 +32,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR "ON")
 
 set(LIBQUENTIER_HAS_NOTE_EDITOR ${BUILD_WITH_NOTE_EDITOR})
 
+set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
 include(LibquentierFindBoost)
