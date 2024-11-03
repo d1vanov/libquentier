@@ -963,6 +963,12 @@ jobs:
         with:
           key: ${{ github.job }}-${{ matrix.qt_version }}
 
+      - name: Configure ccache log
+        id: ccache_log
+        run: |
+          %USERPROFILE%\.cargo\bin\ccache.exe --set-config=log_file=%GITHUB_WORKSPACE%\ccache_log.txt
+        shell: cmd
+
       - name: Cache boost 1.86.0
         id: cache_boost
         uses: actions/cache@v4
@@ -1696,6 +1702,22 @@ jobs:
         with:
           name: libquentier_windows_test_logs_qt6
           path: '${{ github.workspace }}\build\last_test_qt6_log.zip'
+        if: ${{ matrix.qt_version == '6.7.3' }}
+
+      - name: Upload Qt5 ccache logs
+        id: upload_qt5_ccache_logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_windows_ccache_logs_qt5
+          path: '${{ github.workspace }}\ccache_log.txt'
+        if: ${{ matrix.qt_version == '5.15.2' }}
+
+      - name: Upload Qt6 ccache logs
+        id: upload_qt6_ccache_logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: libquentier_windows_ccache_logs_qt6
+          path: '${{ github.workspace }}\ccache_log.txt'
         if: ${{ matrix.qt_version == '6.7.3' }}
 
   create_new_release:
