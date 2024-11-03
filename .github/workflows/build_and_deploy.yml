@@ -1563,29 +1563,13 @@ jobs:
           type libqt5quentier_synchronization_unit_tests.txt
           echo "Start sync integrational tests"
           set CONNECTION_TIMEOUT="60000"
-          bin\libqt5quentier_synchronization_integrational_tests.exe -o libqt5quentier_synchronization_integrational_tests_report.xml,junitxml
-          type libqt5quentier_synchronization_integrational_tests_report.xml
+          bin\libqt5quentier_synchronization_integrational_tests.exe -o libqt5quentier_synchronization_integrational_tests_report.txt,txt
+          type libqt5quentier_synchronization_integrational_tests_report.txt
           7z a last_test_qt5_log.zip %APPDATA%\d1vanov\LibquentierTests\logs-quentier\LibquentierTests-log.txt
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.qt_version == '5.15.2' }}
         shell: cmd
-
-      - name: Report Qt5 types and utility tests results
-        id: report_qt5_test_types_and_utility_tests_results
-        uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '5.15.2' }}
-        with:
-          report_paths: '**\build\test_libquentier_report.xml'
-          detailed_summary: true
-
-      - name: Report Qt5 synchronization integrational tests results
-        id: report_qt5_test_synchronization_integrational_tests_results
-        uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '5.15.2' }}
-        with:
-          report_paths: '**\build\libqt5quentier_synchronization_integrational_tests_report.xml'
-          detailed_summary: true
 
       - name: Build, test and install Qt6
         id: build_test_install_qt6
