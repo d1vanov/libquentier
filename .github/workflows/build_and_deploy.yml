@@ -1637,33 +1637,17 @@ jobs:
           echo "Start sync integrational tests"
           set CONNECTION_TIMEOUT="60000"
           set QTEST_FATAL_FAIL="1"
-          bin\libqt6quentier_synchronization_integrational_tests.exe -o libqt6quentier_synchronization_integrational_tests_report.xml,junitxml
-          type libqt6quentier_synchronization_integrational_tests_report.xml
+          bin\libqt6quentier_synchronization_integrational_tests.exe -o libqt6quentier_synchronization_integrational_tests_report.txt,txt
+          type libqt6quentier_synchronization_integrational_tests_report.txt
           7z a last_test_qt6_log.zip %APPDATA%\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
         if: ${{ matrix.qt_version == '6.7.3' }}
         shell: cmd
 
-      - name: Report Qt6 types and utility tests results
-        id: report_qt6_test_types_and_utility_tests_results
-        uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '6.7.3' }}
-        with:
-          report_paths: '**\build\test_libquentier_report.xml'
-          detailed_summary: true
-
-      - name: Report Qt6 synchronization integrational tests results
-        id: report_qt6_test_synchronization_integrational_tests_results
-        uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '6.7.3' }}
-        with:
-          report_paths: '**\build\libqt6quentier_synchronization_integrational_tests_report.xml'
-          detailed_summary: true
-
       - name: Show ccache stats
         run: |
-          "%USERPROFILE%\.cargo\bin\ccache" --show-stats
+          %USERPROFILE%\.cargo\bin\ccache.exe --show-stats
 
       - name: Archive installed Qt5 library
         id: archive_qt5
