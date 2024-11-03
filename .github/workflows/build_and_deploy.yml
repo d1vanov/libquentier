@@ -1563,16 +1563,16 @@ jobs:
       - name: Report Qt5 types and utility tests results
         id: report_qt5_test_types_and_utility_tests_results
         uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '5.15.2' }} && (success() || failure())
+        if: ${{ matrix.qt_version == '5.15.2' }}
         with:
-          report_paths: '%GITHUB_WORKSPACE%\build\test_libquentier_report.xml'
+          report_paths: '**\build\test_libquentier_report.xml'
 
       - name: Report Qt5 synchronization integrational tests results
         id: report_qt5_test_synchronization_integrational_tests_results
         uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '5.15.2' }} && (success() || failure())
+        if: ${{ matrix.qt_version == '5.15.2' }}
         with:
-          report_paths: '%GITHUB_WORKSPACE%\build\libqt5quentier_synchronization_integrational_tests_report.xml'
+          report_paths: '**\build\libqt5quentier_synchronization_integrational_tests_report.xml'
 
       - name: Build, test and install Qt6
         id: build_test_install_qt6
@@ -1651,16 +1651,16 @@ jobs:
       - name: Report Qt6 types and utility tests results
         id: report_qt6_test_types_and_utility_tests_results
         uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '6.7.3' }} && (success() || failure())
+        if: ${{ matrix.qt_version == '6.7.3' }}
         with:
-          report_paths: '%GITHUB_WORKSPACE%\build\test_libquentier_report.xml'
+          report_paths: '**\build\test_libquentier_report.xml'
 
       - name: Report Qt6 synchronization integrational tests results
         id: report_qt6_test_synchronization_integrational_tests_results
         uses: mikepenz/action-junit-report@v4
-        if: ${{ matrix.qt_version == '6.7.3' }} && (success() || failure())
+        if: ${{ matrix.qt_version == '6.7.3' }}
         with:
-          report_paths: '%GITHUB_WORKSPACE%\build\libqt6quentier_synchronization_integrational_tests_report.xml'
+          report_paths: '**\build\libqt6quentier_synchronization_integrational_tests_report.xml'
 
       - name: Show sccache stats
         run: |
