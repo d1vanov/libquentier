@@ -534,7 +534,7 @@ jobs:
           ./bin/libqt5quentier_local_storage_sql_unit_tests
           ./bin/libqt5quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
-          xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests -platform minimal || true
+          xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests -platform minimal
           7z a last_test_qt5_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '5.15.4' }}
 
@@ -553,7 +553,7 @@ jobs:
           ./bin/libqt6quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
           export QTEST_FATAL_FAIL=1
-          xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal || true
+          xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal
           7z a last_test_qt6_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '6.7.3' }}
 
@@ -640,13 +640,6 @@ jobs:
           curl -fsSL https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-mac.zip -o ninja-mac.zip
           unzip ninja-mac.zip
           echo "$RUNNER_WORKSPACE/ninja" >> $GITHUB_PATH
-
-      - name: Cache Qt 6.7.3
-        id: cache_qt6
-        uses: actions/cache@v4
-        with:
-          path: '${{ runner.workspace }}/Qt6'
-          key: ${{ runner.os }}-Qt6Cache
 
       - name: Install Qt 6.7.3
         id: install_qt6
@@ -1525,8 +1518,9 @@ jobs:
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
-          bin\test_libquentier.exe > test_libquentier_output.txt 2>&1
-          type test_libquentier_output.txt
+          echo "Start running tests"
+          bin\test_libquentier.exe -o test_libquentier_report.xml,junitxml
+          echo "Start gtest-based tests"
           bin\libqt5quentier_enml_unit_tests.exe > libqt5quentier_enml_unit_tests.txt 2>&1
           type libqt5quentier_enml_unit_tests.txt
           bin\libqt5quentier_threading_unit_tests.exe > libqt5quentier_threading_unit_tests.txt 2>&1
@@ -1537,14 +1531,28 @@ jobs:
           type libqt5quentier_local_storage_sql_unit_tests.txt
           bin\libqt5quentier_synchronization_unit_tests.exe > libqt5quentier_synchronization_unit_tests.txt 2>&1
           type libqt5quentier_synchronization_unit_tests.txt
+          echo "Start sync integrational tests"
           set CONNECTION_TIMEOUT="60000"
-          bin\libqt5quentier_synchronization_integrational_tests.exe > libqt5quentier_synchronization_integrational_tests.txt 2>&1
-          type libqt5quentier_synchronization_integrational_tests.txt
-          7z a last_test_qt5_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
+          bin\libqt5quentier_synchronization_integrational_tests.exe -o libqt5quentier_synchronization_integrational_tests_report.xml,junitxml
+          7z a last_test_qt5_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\LibquentierTests-log.txt
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.qt_version == '5.15.2' }}
         shell: cmd
+
+      - name: Report Qt5 types and utility tests results
+        id: report_qt5_test_types_and_utility_tests_results
+        uses: mikepenz/action-junit-report@v4
+        if: ${{ matrix.qt_version == '5.15.2' }} && (success() || failure())
+        with:
+          report_paths: '{{ github.workspace }}\build\test_libquentier_report.xml'
+
+      - name: Report Qt5 synchronization integrational tests results
+        id: report_qt5_test_synchronization_integrational_tests_results
+        uses: mikepenz/action-junit-report@v4
+        if: ${{ matrix.qt_version == '5.15.2' }} && (success() || failure())
+        with:
+          report_paths: '{{ github.workspace }}\build\libqt5quentier_synchronization_integrational_tests_report.xml'
 
       - name: Build, test and install Qt6
         id: build_test_install_qt6
@@ -1595,8 +1603,9 @@ jobs:
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
-          bin\test_libquentier.exe > test_libquentier.txt 2>&1
-          type test_libquentier.txt
+          echo "Start running tests"
+          bin\test_libquentier.exe -o test_libquentier_report.xml,junitxml
+          echo "Start gtest-based tests"
           bin\libqt6quentier_enml_unit_tests.exe > libqt6quentier_enml_unit_tests.txt 2>&1
           type libqt6quentier_enml_unit_tests.txt
           bin\libqt6quentier_threading_unit_tests.exe > libqt6quentier_threading_unit_tests.txt 2>&1
@@ -1607,15 +1616,30 @@ jobs:
           type libqt6quentier_local_storage_sql_unit_tests.txt
           bin\libqt6quentier_synchronization_unit_tests.exe > libqt6quentier_synchronization_unit_tests.txt 2>&1
           type libqt6quentier_synchronization_unit_tests.txt
+          echo "Start sync integrational tests"
           set CONNECTION_TIMEOUT="60000"
           set QTEST_FATAL_FAIL="1"
-          bin\libqt6quentier_synchronization_integrational_tests.exe > libqt6quentier_synchronization_integrational_tests.txt 2>&1
+          bin\libqt6quentier_synchronization_integrational_tests.exe -o libqt6quentier_synchronization_integrational_tests_report.xml,junitxml
           type libqt6quentier_synchronization_integrational_tests.txt
           7z a last_test_qt6_log.zip %USERPROFILE%\AppData\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
           %RUNNER_WORKSPACE%\breakpad\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt6quentier.syms
         if: ${{ matrix.qt_version == '6.7.3' }}
         shell: cmd
+
+      - name: Report Qt6 types and utility tests results
+        id: report_qt6_test_types_and_utility_tests_results
+        uses: mikepenz/action-junit-report@v4
+        if: ${{ matrix.qt_version == '6.7.3' }} && (success() || failure())
+        with:
+          report_paths: '{{ github.workspace }}\build\test_libquentier_report.xml'
+
+      - name: Report Qt6 synchronization integrational tests results
+        id: report_qt6_test_synchronization_integrational_tests_results
+        uses: mikepenz/action-junit-report@v4
+        if: ${{ matrix.qt_version == '6.7.3' }} && (success() || failure())
+        with:
+          report_paths: '{{ github.workspace }}\build\libqt6quentier_synchronization_integrational_tests_report.xml'
 
       - name: Archive installed Qt5 library
         id: archive_qt5
@@ -1743,7 +1767,7 @@ jobs:
 
       - name: Create new tagged release
         id: create_new_tagged_release
-        if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' && github.ref != 'refs/heads/integration-0.8.0' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REF: ${{ github.ref }}
