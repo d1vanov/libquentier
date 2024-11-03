@@ -1648,6 +1648,7 @@ jobs:
       - name: Show ccache stats
         run: |
           %USERPROFILE%\.cargo\bin\ccache.exe --show-stats
+        shell: cmd
 
       - name: Archive installed Qt5 library
         id: archive_qt5
