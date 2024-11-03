@@ -20,6 +20,7 @@
 
 #include "FakeAuthenticator.h"
 #include "FakeKeychainService.h"
+#include "FakeNoteStoreBackend.h"
 #include "FakeSyncStateStorage.h"
 #include "FakeUserStoreBackend.h"
 #include "NoteStoreServer.h"
@@ -318,14 +319,14 @@ struct ItemListsChecker
     }
 };
 
-[[nodiscard]] bool checkNoteStoreServerAndLocalStorageContentsEquality(
-    const NoteStoreServer & noteStoreServer,
+[[nodiscard]] bool checkNoteStoreBackendAndLocalStorageContentsEquality(
+    const FakeNoteStoreBackend & noteStoreBackend,
     const local_storage::ILocalStorage & localStorage,
     QString & errorDescription)
 {
     if (!ItemListsChecker<qevercloud::SavedSearch>::check(
-            [&noteStoreServer] {
-                return noteStoreServer.savedSearches().values();
+            [&noteStoreBackend] {
+                return noteStoreBackend.savedSearches().values();
             },
             [&localStorage] { return localStorage.listSavedSearches(); },
             errorDescription))
@@ -334,8 +335,8 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::LinkedNotebook>::check(
-            [&noteStoreServer] {
-                return noteStoreServer.linkedNotebooks().values();
+            [&noteStoreBackend] {
+                return noteStoreBackend.linkedNotebooks().values();
             },
             [&localStorage] { return localStorage.listLinkedNotebooks(); },
             errorDescription))
@@ -344,7 +345,9 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::Notebook>::check(
-            [&noteStoreServer] { return noteStoreServer.notebooks().values(); },
+            [&noteStoreBackend] {
+                return noteStoreBackend.notebooks().values();
+            },
             [&localStorage] { return localStorage.listNotebooks(); },
             errorDescription))
     {
@@ -352,9 +355,9 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::Tag>::check(
-            [&noteStoreServer] {
-                auto tags = noteStoreServer.tags().values();
-                auto notes = noteStoreServer.notes().values();
+            [&noteStoreBackend] {
+                auto tags = noteStoreBackend.tags().values();
+                auto notes = noteStoreBackend.notes().values();
                 // Will filter out server tags which are not referenced by any
                 // notes because during the last step of downloading step of the
                 // sync such notes should be cleared out of the local storage
@@ -388,7 +391,7 @@ struct ItemListsChecker
     }
 
     if (!ItemListsChecker<qevercloud::Note>::check(
-            [&noteStoreServer] {
+            [&noteStoreBackend] {
                 // There are some tricks related to notes and resources in
                 // NoteStoreServer:
                 // 1. There are two places where resources are stored in
@@ -402,8 +405,8 @@ struct ItemListsChecker
                 //    incremental sync conditions were set up and thus
                 //    modified resources were sent to the client separately
                 //    from notes owning these resources
-                auto notes = noteStoreServer.notes().values();
-                auto resources = noteStoreServer.resources();
+                auto notes = noteStoreBackend.notes().values();
+                auto resources = noteStoreBackend.resources();
 
                 for (auto & note: notes) {
                     if (!note.resources() || note.resources()->isEmpty()) {
@@ -643,7 +646,11 @@ void TestRunner::init()
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
     const auto userStoreCookies = generateUserStoreCookies();
-    m_noteStoreServer = new NoteStoreServer(authToken, userStoreCookies, this);
+
+    m_noteStoreBackend =
+        new FakeNoteStoreBackend(authToken, userStoreCookies, this);
+
+    m_noteStoreServer = new NoteStoreServer(m_noteStoreBackend, this);
 
     auto authenticationInfo = [&] {
         auto builder = createAuthenticationInfoBuilder();
@@ -695,6 +702,10 @@ void TestRunner::cleanup()
     m_noteStoreServer->disconnect();
     m_noteStoreServer->deleteLater();
     m_noteStoreServer = nullptr;
+
+    m_noteStoreBackend->disconnect();
+    m_noteStoreBackend->deleteLater();
+    m_noteStoreBackend = nullptr;
 
     m_userStoreServer->disconnect();
     m_userStoreServer->deleteLater();
@@ -763,13 +774,13 @@ void TestRunner::runTestScenario()
         testScenarioData.serverExpungedDataItemSources,
         m_noteStoreServer->port(), testData);
 
-    setupNoteStoreServer(
+    setupNoteStoreBackend(
         testData, testScenarioData.serverDataItemTypes,
         testScenarioData.serverItemGroups, testScenarioData.serverItemSources,
-        *m_noteStoreServer);
+        *m_noteStoreBackend);
 
     if (testScenarioData.stopSyncErrorTrigger) {
-        m_noteStoreServer->setStopSynchronizationError(
+        m_noteStoreBackend->setStopSynchronizationError(
             *testScenarioData.stopSyncErrorTrigger,
             testScenarioData.stopSyncError);
     }
@@ -814,7 +825,7 @@ void TestRunner::runTestScenario()
         "tests::synchronization::TestRunner",
         "Server sync state: " << *serverSyncState);
 
-    m_noteStoreServer->putUserOwnSyncState(
+    m_noteStoreBackend->putUserOwnSyncState(
         qevercloud::SyncStateBuilder{}
             .setUpdateCount(serverSyncState->userDataUpdateCount())
             .setUserLastUpdated(serverSyncState->userDataLastSyncTime())
@@ -835,7 +846,7 @@ void TestRunner::runTestScenario()
          qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
     {
         const auto lastSyncTime = linkedNotebookLastSyncTimes.value(it.key());
-        m_noteStoreServer->putLinkedNotebookSyncState(
+        m_noteStoreBackend->putLinkedNotebookSyncState(
             it.key(),
             qevercloud::SyncStateBuilder{}
                 .setUpdateCount(it.value())
@@ -906,7 +917,7 @@ void TestRunner::runTestScenario()
         {
             QNDEBUG("tests::synchronization::TestRunner", "Retrying the sync");
 
-            m_noteStoreServer->clearStopSynchronizationError();
+            m_noteStoreBackend->clearStopSynchronizationError();
             m_syncEventsCollector->clear();
 
             // Repeat the attempt
@@ -1030,7 +1041,7 @@ void TestRunner::runTestScenario()
 
         QVERIFY2(
             syncState->userDataUpdateCount() ==
-                m_noteStoreServer->currentUserOwnMaxUsn(),
+                m_noteStoreBackend->currentUserOwnMaxUsn(),
             "Max user own USN in sync state doesn't correspond to the USN "
             "recorded by note store server");
 
@@ -1041,7 +1052,7 @@ void TestRunner::runTestScenario()
              qevercloud::toRange(std::as_const(linkedNotebookUpdateCounts)))
         {
             const auto serverMaxUsn =
-                m_noteStoreServer->currentLinkedNotebookMaxUsn(it.key());
+                m_noteStoreBackend->currentLinkedNotebookMaxUsn(it.key());
 
             QVERIFY2(
                 serverMaxUsn,
@@ -1118,8 +1129,8 @@ void TestRunner::runTestScenario()
 
     {
         QString errorMessage;
-        const bool res = checkNoteStoreServerAndLocalStorageContentsEquality(
-            *m_noteStoreServer, *m_localStorage, errorMessage);
+        const bool res = checkNoteStoreBackendAndLocalStorageContentsEquality(
+            *m_noteStoreBackend, *m_localStorage, errorMessage);
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
     }

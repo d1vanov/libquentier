@@ -62,6 +62,7 @@ private:
     Account m_testAccount;
     std::optional<QTemporaryDir> m_tempDir;
     local_storage::ILocalStoragePtr m_localStorage;
+    FakeNoteStoreBackend * m_noteStoreBackend = nullptr;
     NoteStoreServer * m_noteStoreServer = nullptr;
     FakeUserStoreBackend * m_userStoreBackend = nullptr;
     UserStoreServer * m_userStoreServer = nullptr;

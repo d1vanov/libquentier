@@ -48,7 +48,7 @@ class ILocalStorage;
 namespace quentier::synchronization::tests {
 
 class FakeSyncStateStorage;
-class NoteStoreServer;
+class FakeNoteStoreBackend;
 
 } // namespace quentier::synchronization::tests
 
@@ -110,9 +110,9 @@ void setupTestData(
     DataItemTypes expungedDataItemTypes, ItemSources expungedItemSources,
     quint16 port, TestData & testData);
 
-void setupNoteStoreServer(
+void setupNoteStoreBackend(
     TestData & testData, DataItemTypes dataItemTypes, ItemGroups itemGroups,
-    ItemSources itemSources, NoteStoreServer & noteStoreServer);
+    ItemSources itemSources, FakeNoteStoreBackend & noteStoreBackend);
 
 void setupLocalStorage(
     const TestData & testData, DataItemTypes dataItemTypes,

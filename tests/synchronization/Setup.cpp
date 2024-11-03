@@ -17,7 +17,8 @@
  */
 
 #include "Setup.h"
-#include "NoteStoreServer.h"
+
+#include "FakeNoteStoreBackend.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -926,25 +927,25 @@ void setupTestData(
     }
 }
 
-void setupNoteStoreServer(
+void setupNoteStoreBackend(
     TestData & testData, DataItemTypes dataItemTypes, ItemGroups itemGroups,
-    ItemSources itemSources, NoteStoreServer & noteStoreServer)
+    ItemSources itemSources, FakeNoteStoreBackend & noteStoreBackend)
 {
-    QNINFO("tests::synchronization::Setup", "setupNoteStoreServer");
+    QNINFO("tests::synchronization::Setup", "setupNoteStoreBackend");
 
-    noteStoreServer.setMaxNumSavedSearches(1000);
-    noteStoreServer.setMaxNumTags(1000);
-    noteStoreServer.setMaxNumNotebooks(1000);
-    noteStoreServer.setMaxNumNotes(1000);
-    noteStoreServer.setMaxNoteSize(1000000);
-    noteStoreServer.setMaxNumResourcesPerNote(100);
-    noteStoreServer.setMaxNumTagsPerNote(100);
-    noteStoreServer.setMaxResourceSize(1000000);
+    noteStoreBackend.setMaxNumSavedSearches(1000);
+    noteStoreBackend.setMaxNumTags(1000);
+    noteStoreBackend.setMaxNumNotebooks(1000);
+    noteStoreBackend.setMaxNumNotes(1000);
+    noteStoreBackend.setMaxNoteSize(1000000);
+    noteStoreBackend.setMaxNumResourcesPerNote(100);
+    noteStoreBackend.setMaxNumTagsPerNote(100);
+    noteStoreBackend.setMaxResourceSize(1000000);
 
     const auto putSavedSearches =
         [&](QList<qevercloud::SavedSearch> & savedSearches) {
             for (auto & savedSearch: savedSearches) {
-                auto itemData = noteStoreServer.putSavedSearch(savedSearch);
+                auto itemData = noteStoreBackend.putSavedSearch(savedSearch);
                 savedSearch.setUpdateSequenceNum(itemData.usn);
                 if (itemData.name) {
                     savedSearch.setName(*itemData.name);
@@ -960,7 +961,7 @@ void setupNoteStoreServer(
         [&](QList<qevercloud::LinkedNotebook> & linkedNotebooks) {
             for (auto & linkedNotebook: linkedNotebooks) {
                 auto itemData =
-                    noteStoreServer.putLinkedNotebook(linkedNotebook);
+                    noteStoreBackend.putLinkedNotebook(linkedNotebook);
                 linkedNotebook.setUpdateSequenceNum(itemData.usn);
                 Q_ASSERT(!itemData.guid);
             }
@@ -968,7 +969,7 @@ void setupNoteStoreServer(
 
     const auto putNotebooks = [&](QList<qevercloud::Notebook> & notebooks) {
         for (auto & notebook: notebooks) {
-            auto itemData = noteStoreServer.putNotebook(notebook);
+            auto itemData = noteStoreBackend.putNotebook(notebook);
             notebook.setUpdateSequenceNum(itemData.usn);
 
             if (itemData.name) {
@@ -983,7 +984,7 @@ void setupNoteStoreServer(
 
     const auto putTags = [&](QList<qevercloud::Tag> & tags) {
         for (auto & tag: tags) {
-            auto itemData = noteStoreServer.putTag(tag);
+            auto itemData = noteStoreBackend.putTag(tag);
             tag.setUpdateSequenceNum(itemData.usn);
 
             if (itemData.name) {
@@ -998,7 +999,7 @@ void setupNoteStoreServer(
 
     const auto putNotes = [&](QList<qevercloud::Note> & notes) {
         for (auto & note: notes) {
-            auto itemData = noteStoreServer.putNote(note);
+            auto itemData = noteStoreBackend.putNote(note);
             note.setUpdateSequenceNum(itemData.usn);
 
             if (itemData.guid) {
@@ -1019,7 +1020,7 @@ void setupNoteStoreServer(
 
     const auto putResources = [&](QList<qevercloud::Resource> & resources) {
         for (auto & resource: resources) {
-            auto itemData = noteStoreServer.putResource(resource);
+            auto itemData = noteStoreBackend.putResource(resource);
             resource.setUpdateSequenceNum(itemData.usn);
 
             if (itemData.guid) {
@@ -1043,7 +1044,7 @@ void setupNoteStoreServer(
     setupLinkedNotebookAuthTokens(testData.m_modifiedLinkedNotebooks);
     setupLinkedNotebookAuthTokens(testData.m_newLinkedNotebooks);
 
-    noteStoreServer.setLinkedNotebookAuthTokensByGuid(
+    noteStoreBackend.setLinkedNotebookAuthTokensByGuid(
         std::move(linkedNotebookAuthTokens));
 
     // Need to put items in such a way that base items have smallest USNs
@@ -1206,22 +1207,22 @@ void setupNoteStoreServer(
     for (const auto & guid:
          std::as_const(testData.m_expungedUserOwnSavedSearchGuids))
     {
-        noteStoreServer.putExpungedSavedSearchGuid(guid);
+        noteStoreBackend.putExpungedSavedSearchGuid(guid);
     }
 
     for (const auto & guid: std::as_const(testData.m_expungedUserOwnTagGuids)) {
-        noteStoreServer.putExpungedUserOwnTagGuid(guid);
+        noteStoreBackend.putExpungedUserOwnTagGuid(guid);
     }
 
     for (const auto & guid:
          std::as_const(testData.m_expungedUserOwnNotebookGuids))
     {
-        noteStoreServer.putExpungedUserOwnNotebookGuid(guid);
+        noteStoreBackend.putExpungedUserOwnNotebookGuid(guid);
     }
 
     for (const auto & guid: std::as_const(testData.m_expungedUserOwnNoteGuids))
     {
-        noteStoreServer.putExpungedUserOwnNoteGuid(guid);
+        noteStoreBackend.putExpungedUserOwnNoteGuid(guid);
     }
 
     for (const auto it: qevercloud::toRange(
@@ -1229,7 +1230,7 @@ void setupNoteStoreServer(
     {
         const auto & linkedNotebookGuid = it.key();
         for (const auto & tagGuid: std::as_const(it.value())) {
-            noteStoreServer.putExpungedLinkedNotebookTagGuid(
+            noteStoreBackend.putExpungedLinkedNotebookTagGuid(
                 linkedNotebookGuid, tagGuid);
         }
     }
@@ -1239,7 +1240,7 @@ void setupNoteStoreServer(
     {
         const auto & linkedNotebookGuid = it.key();
         for (const auto & notebookGuid: std::as_const(it.value())) {
-            noteStoreServer.putExpungedLinkedNotebookNotebookGuid(
+            noteStoreBackend.putExpungedLinkedNotebookNotebookGuid(
                 linkedNotebookGuid, notebookGuid);
         }
     }
@@ -1249,7 +1250,7 @@ void setupNoteStoreServer(
     {
         const auto & linkedNotebookGuid = it.key();
         for (const auto & noteGuid: std::as_const(it.value())) {
-            noteStoreServer.putExpungedLinkedNotebookNoteGuid(
+            noteStoreBackend.putExpungedLinkedNotebookNoteGuid(
                 linkedNotebookGuid, noteGuid);
         }
     }

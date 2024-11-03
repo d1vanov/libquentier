@@ -28,6 +28,7 @@ using FakeAuthenticatorPtr = std::shared_ptr<FakeAuthenticator>;
 class FakeKeychainService;
 using FakeKeychainServicePtr = std::shared_ptr<FakeKeychainService>;
 
+class FakeNoteStoreBackend;
 class FakeSyncStateStorage;
 class FakeUserStoreBackend;
 class NoteStoreServer;
