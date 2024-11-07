@@ -14,6 +14,8 @@ add_library(${TESTS_LIB_NAME} STATIC
   FakeNoteStoreBackend.h
   FakeSyncStateStorage.cpp
   FakeSyncStateStorage.h
+  FakeUserStore.cpp
+  FakeUserStore.h
   FakeUserStoreBackend.cpp
   FakeUserStoreBackend.h
   NoteStoreServer.cpp

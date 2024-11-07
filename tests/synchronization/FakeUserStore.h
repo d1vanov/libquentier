@@ -163,8 +163,8 @@ private:
     void ensureRequestContext(qevercloud::IRequestContextPtr & ctx) const;
 
 private:
-    FakeNoteStoreBackend * m_backend;
-    QString m_noteStoreUrl;
+    FakeUserStoreBackend * m_backend;
+    QString m_userStoreUrl;
     qevercloud::IRequestContextPtr m_ctx;
     qevercloud::IRetryPolicyPtr m_retryPolicy;
 };
