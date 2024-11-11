@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 #include "Fwd.h"
 
 #include <quentier/local_storage/Fwd.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/threading/Fwd.h>
 #include <quentier/types/Account.h>
 
@@ -38,8 +39,12 @@ class TestRunner : public QObject
 {
     Q_OBJECT
 public:
-    explicit TestRunner(QObject * parent = nullptr);
+    struct Options
+    {
+        bool useNetworkTransportLayer = false;
+    };
 
+    explicit TestRunner(const Options & options, QObject * parent = nullptr);
     ~TestRunner() override;
 
 private Q_SLOTS:
@@ -62,10 +67,17 @@ private:
     Account m_testAccount;
     std::optional<QTemporaryDir> m_tempDir;
     local_storage::ILocalStoragePtr m_localStorage;
+
     FakeNoteStoreBackend * m_noteStoreBackend = nullptr;
-    NoteStoreServer * m_noteStoreServer = nullptr;
     FakeUserStoreBackend * m_userStoreBackend = nullptr;
+
+    bool m_useTestServers = false;
+    NoteStoreServer * m_noteStoreServer = nullptr;
     UserStoreServer * m_userStoreServer = nullptr;
+
+    INoteStoreFactoryPtr m_noteStoreFactory;
+    IUserStoreFactoryPtr m_userStoreFactory;
+
     SyncEventsCollector * m_syncEventsCollector = nullptr;
     std::shared_ptr<FakeSyncStateStorage> m_fakeSyncStateStorage;
     qevercloud::IRequestContextPtr m_ctx;

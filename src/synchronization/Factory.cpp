@@ -86,12 +86,11 @@ ISynchronizerPtr createSynchronizer(
         noteStoreFactory = std::make_shared<NoteStoreFactory>();
     }
 
-
     auto authenticationInfoProvider =
         std::make_shared<AuthenticationInfoProvider>(
             std::move(authenticator), std::move(keychainService),
-            std::move(userInfoProvider), std::move(noteStoreFactory),
-            std::move(ctx), std::move(retryPolicy), std::move(host));
+            std::move(userInfoProvider), noteStoreFactory, std::move(ctx),
+            std::move(retryPolicy), std::move(host));
 
     auto accountSyncPersistenceDirProvider =
         std::make_shared<AccountSyncPersistenceDirProvider>();
@@ -104,7 +103,7 @@ ISynchronizerPtr createSynchronizer(
     return std::make_shared<Synchronizer>(
         std::move(accountSynchronizerFactory),
         std::move(authenticationInfoProvider),
-        std::move(protocolVersionChecker));
+        std::move(protocolVersionChecker), std::move(noteStoreFactory));
 }
 
 ISyncConflictResolverPtr createSimpleSyncConflictResolver(

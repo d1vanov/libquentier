@@ -40,6 +40,7 @@ public: // IAccountSynchronizerFactory
     [[nodiscard]] IAccountSynchronizerPtr createAccountSynchronizer(
         Account account, ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,
+        INoteStoreFactoryPtr noteStoreFactory,
         ISyncOptionsPtr options) override;
 
 private:

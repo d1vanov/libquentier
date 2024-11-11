@@ -21,8 +21,10 @@
 #include "FakeAuthenticator.h"
 #include "FakeKeychainService.h"
 #include "FakeNoteStoreBackend.h"
+#include "FakeNoteStoreFactory.h"
 #include "FakeSyncStateStorage.h"
 #include "FakeUserStoreBackend.h"
+#include "FakeUserStoreFactory.h"
 #include "NoteStoreServer.h"
 #include "Setup.h"
 #include "SyncEventsCollector.h"
@@ -619,9 +621,10 @@ struct ItemListsChecker
 
 } // namespace
 
-TestRunner::TestRunner(QObject * parent) :
-    QObject(parent), m_fakeAuthenticator{std::make_shared<FakeAuthenticator>()},
-    m_fakeKeychainService{std::make_shared<FakeKeychainService>()}
+TestRunner::TestRunner(const Options & options, QObject * parent) :
+    QObject{parent}, m_fakeAuthenticator{std::make_shared<FakeAuthenticator>()},
+    m_fakeKeychainService{std::make_shared<FakeKeychainService>()},
+    m_useTestServers{options.useNetworkTransportLayer}
 {}
 
 TestRunner::~TestRunner() = default;
@@ -642,15 +645,28 @@ void TestRunner::init()
         m_testAccount, QDir{m_tempDir->path()});
 
     const QString authToken = QStringLiteral("AuthToken");
-    const QString webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
-    const auto now = QDateTime::currentMSecsSinceEpoch();
-
     const auto userStoreCookies = generateUserStoreCookies();
 
     m_noteStoreBackend =
         new FakeNoteStoreBackend(authToken, userStoreCookies, this);
 
-    m_noteStoreServer = new NoteStoreServer(m_noteStoreBackend, this);
+    m_userStoreBackend =
+        new FakeUserStoreBackend(authToken, userStoreCookies, this);
+
+    if (m_useTestServers) {
+        m_noteStoreServer = new NoteStoreServer(m_noteStoreBackend, this);
+        m_userStoreServer = new UserStoreServer(m_userStoreBackend, this);
+    }
+    else {
+        m_noteStoreFactory =
+            std::make_shared<FakeNoteStoreFactory>(m_noteStoreBackend);
+
+        m_userStoreFactory =
+            std::make_shared<FakeUserStoreFactory>(m_userStoreBackend);
+    }
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    const QString webApiUrlPrefix = QStringLiteral("webApiUrlPrefix");
 
     auto authenticationInfo = [&] {
         auto builder = createAuthenticationInfoBuilder();
@@ -661,18 +677,16 @@ void TestRunner::init()
             .setShardId(shardId)
             .setWebApiUrlPrefix(webApiUrlPrefix)
             .setNoteStoreUrl(QString::fromUtf8("http://127.0.0.1:%1")
-                                 .arg(m_noteStoreServer->port()))
+                                 .arg(
+                                     m_noteStoreServer
+                                         ? m_noteStoreServer->port()
+                                         : quint16{0}))
             .setUserStoreCookies(userStoreCookies)
             .build();
     }();
 
     m_fakeAuthenticator->putAccountAuthInfo(
         m_testAccount, std::move(authenticationInfo));
-
-    m_userStoreBackend =
-        new FakeUserStoreBackend(authToken, userStoreCookies, this);
-
-    m_userStoreServer = new UserStoreServer(m_userStoreBackend, this);
 
     m_userStoreBackend->putUser(
         authToken,
@@ -699,17 +713,25 @@ void TestRunner::cleanup()
     m_localStorage->notifier()->disconnect();
     m_localStorage.reset();
 
-    m_noteStoreServer->disconnect();
-    m_noteStoreServer->deleteLater();
-    m_noteStoreServer = nullptr;
+    if (m_noteStoreServer) {
+        m_noteStoreServer->disconnect();
+        m_noteStoreServer->deleteLater();
+        m_noteStoreServer = nullptr;
+    }
+
+    m_noteStoreFactory.reset();
 
     m_noteStoreBackend->disconnect();
     m_noteStoreBackend->deleteLater();
     m_noteStoreBackend = nullptr;
 
-    m_userStoreServer->disconnect();
-    m_userStoreServer->deleteLater();
-    m_userStoreServer = nullptr;
+    if (m_userStoreServer) {
+        m_userStoreServer->disconnect();
+        m_userStoreServer->deleteLater();
+        m_userStoreServer = nullptr;
+    }
+
+    m_userStoreFactory.reset();
 
     m_userStoreBackend->disconnect();
     m_userStoreBackend->deleteLater();
@@ -772,7 +794,7 @@ void TestRunner::runTestScenario()
         mergedDataItemTypes, mergedItemGroups, mergedItemSources,
         testScenarioData.serverExpungedDataItemTypes,
         testScenarioData.serverExpungedDataItemSources,
-        m_noteStoreServer->port(), testData);
+        (m_noteStoreServer ? m_noteStoreServer->port() : quint16{0}), testData);
 
     setupNoteStoreBackend(
         testData, testScenarioData.serverDataItemTypes,
@@ -856,10 +878,10 @@ void TestRunner::runTestScenario()
                 .build());
     }
 
-    const QUrl userStoreUrl =
-        QUrl::fromEncoded(QString::fromUtf8("http://127.0.0.1:%1")
-                              .arg(m_userStoreServer->port())
-                              .toUtf8());
+    const QUrl userStoreUrl = QUrl::fromEncoded(
+        QString::fromUtf8("http://127.0.0.1:%1")
+            .arg(m_userStoreServer ? m_userStoreServer->port() : quint16{0})
+            .toUtf8());
     QVERIFY(userStoreUrl.isValid());
 
     const QString syncPersistenceDirPath =
@@ -878,7 +900,7 @@ void TestRunner::runTestScenario()
 
     auto synchronizer = createSynchronizer(
         userStoreUrl, m_fakeAuthenticator, m_fakeSyncStateStorage,
-        m_fakeKeychainService, nullptr, nullptr, m_ctx);
+        m_fakeKeychainService, m_noteStoreFactory, m_userStoreFactory, m_ctx);
 
     auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
 
@@ -1131,6 +1153,12 @@ void TestRunner::runTestScenario()
         QString errorMessage;
         const bool res = checkNoteStoreBackendAndLocalStorageContentsEquality(
             *m_noteStoreBackend, *m_localStorage, errorMessage);
+        if (!res) {
+            QNWARNING(
+                "tests::synchronization::TestRunner",
+                "checkNoteStoreBackendAndLocalStorageContentsEquality failed: "
+                    << errorMessage);
+        }
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
     }
@@ -1139,6 +1167,12 @@ void TestRunner::runTestScenario()
         QString errorMessage;
         const bool res = checkNoLocallyModifiedObjectsInLocalStorageAfterSync(
             *m_localStorage, errorMessage);
+        if (!res) {
+            QNWARNING(
+                "tests::synchronization::TestRunner",
+                "checkNoLocallyModifiedObjectsInLocalStorageAfterSync failed: "
+                    << errorMessage);
+        }
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
     }
@@ -1148,6 +1182,12 @@ void TestRunner::runTestScenario()
         const bool res =
             checkNoNotelessLinkedNotebookTagsInLocalStorageAfterSync(
                 *m_localStorage, errorMessage);
+        if (!res) {
+            QNWARNING(
+                "tests::synchronization::TestRunner",
+                "checkNoNotelessLinkedNotebookTagsInLocalStorageAfterSync failed: "
+                    << errorMessage);
+        }
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
     }

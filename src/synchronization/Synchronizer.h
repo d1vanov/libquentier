@@ -40,7 +40,8 @@ public:
     Synchronizer(
         IAccountSynchronizerFactoryPtr accountSynchronizerFactory,
         IAuthenticationInfoProviderPtr authenticationInfoProvider,
-        IProtocolVersionCheckerPtr protocolVersionChecker);
+        IProtocolVersionCheckerPtr protocolVersionChecker,
+        INoteStoreFactoryPtr noteStoreFactory);
 
 public: // ISynchronizer
     [[nodiscard]] QFuture<std::pair<Account, IAuthenticationInfoPtr>>
@@ -69,6 +70,7 @@ private:
     const IAccountSynchronizerFactoryPtr m_accountSynchronizerFactory;
     const IAuthenticationInfoProviderPtr m_authenticationInfoProvider;
     const IProtocolVersionCheckerPtr m_protocolVersionChecker;
+    const INoteStoreFactoryPtr m_noteStoreFactory;
 };
 
 } // namespace quentier::synchronization

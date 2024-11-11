@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,25 +16,22 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "FakeUserStoreFactory.h"
+#include "FakeUserStore.h"
 
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/synchronization/Fwd.h>
-#include <quentier/types/Account.h>
+namespace quentier::synchronization::tests {
 
-#include <synchronization/Fwd.h>
+FakeUserStoreFactory::FakeUserStoreFactory(FakeUserStoreBackend * backend) :
+    m_backend{backend}
+{}
 
-namespace quentier::synchronization {
-
-class IAccountSynchronizerFactory
+qevercloud::IUserStorePtr FakeUserStoreFactory::createUserStore(
+    QString userStoreUrl, qevercloud::IRequestContextPtr ctx,
+    qevercloud::IRetryPolicyPtr retryPolicy)
 {
-public:
-    virtual ~IAccountSynchronizerFactory() noexcept = default;
+    return std::make_shared<FakeUserStore>(
+        m_backend, std::move(userStoreUrl), std::move(ctx),
+        std::move(retryPolicy));
+}
 
-    [[nodiscard]] virtual IAccountSynchronizerPtr createAccountSynchronizer(
-        Account account, ISyncConflictResolverPtr syncConflictResolver,
-        local_storage::ILocalStoragePtr localStorage,
-        INoteStoreFactoryPtr noteStoreFactory, ISyncOptionsPtr options) = 0;
-};
-
-} // namespace quentier::synchronization
+} // namespace quentier::synchronization::tests

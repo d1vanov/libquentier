@@ -25,6 +25,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
+#include <quentier/synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include <quentier/synchronization/tests/mocks/MockISyncStateStorage.h>
 #include <quentier/utility/FileSystem.h>
@@ -98,6 +99,9 @@ protected:
         m_mockAccountSyncPersistenceDirProvider = std::make_shared<
             NiceMock<mocks::MockIAccountSyncPersistenceDirProvider>>();
 
+    const std::shared_ptr<mocks::MockINoteStoreFactory> m_mockNoteStoreFactory =
+        std::make_shared<StrictMock<mocks::MockINoteStoreFactory>>();
+
     QTemporaryDir m_temporaryDir;
 };
 
@@ -145,7 +149,7 @@ TEST_F(AccountSynchronizerFactoryTest, CreateAccountSynchronizerForEmptyAccount)
     EXPECT_THROW(
         auto future = factory->createAccountSynchronizer(
             Account{}, m_mockSyncConflictResolver, m_mockLocalStorage,
-            SyncOptionsBuilder{}.build()),
+            m_mockNoteStoreFactory, SyncOptionsBuilder{}.build()),
         InvalidArgument);
 }
 
@@ -161,7 +165,7 @@ TEST_F(AccountSynchronizerFactoryTest, CreateAccountSynchronizerForLocalAccount)
     EXPECT_THROW(
         auto synchronizer = factory->createAccountSynchronizer(
             account, m_mockSyncConflictResolver, m_mockLocalStorage,
-            SyncOptionsBuilder{}.build()),
+            m_mockNoteStoreFactory, SyncOptionsBuilder{}.build()),
         InvalidArgument);
 }
 
@@ -177,7 +181,7 @@ TEST_F(AccountSynchronizerFactoryTest, CreateAccountSynchronizer)
 
     auto synchronizer = factory->createAccountSynchronizer(
         m_account, m_mockSyncConflictResolver, m_mockLocalStorage,
-        SyncOptionsBuilder{}.build());
+        m_mockNoteStoreFactory, SyncOptionsBuilder{}.build());
     EXPECT_TRUE(synchronizer);
 }
 

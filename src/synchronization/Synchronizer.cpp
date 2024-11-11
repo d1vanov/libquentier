@@ -159,10 +159,12 @@ private:
 Synchronizer::Synchronizer(
     IAccountSynchronizerFactoryPtr accountSynchronizerFactory,
     IAuthenticationInfoProviderPtr authenticationInfoProvider,
-    IProtocolVersionCheckerPtr protocolVersionChecker) :
+    IProtocolVersionCheckerPtr protocolVersionChecker,
+    INoteStoreFactoryPtr noteStoreFactory) :
     m_accountSynchronizerFactory{std::move(accountSynchronizerFactory)},
     m_authenticationInfoProvider{std::move(authenticationInfoProvider)},
-    m_protocolVersionChecker{std::move(protocolVersionChecker)}
+    m_protocolVersionChecker{std::move(protocolVersionChecker)},
+    m_noteStoreFactory{std::move(noteStoreFactory)}
 {
     if (Q_UNLIKELY(!m_accountSynchronizerFactory)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -177,6 +179,11 @@ Synchronizer::Synchronizer(
     if (Q_UNLIKELY(!m_protocolVersionChecker)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
             "Synchronizer ctor: protocol version checker is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_noteStoreFactory)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("Synchronizer ctor: note store factory is null")}};
     }
 }
 
@@ -275,7 +282,7 @@ void Synchronizer::doSynchronizeAccount(
     auto accountSynchronizer =
         m_accountSynchronizerFactory->createAccountSynchronizer(
             std::move(account), std::move(syncConflictResolver),
-            std::move(localStorage), std::move(options));
+            std::move(localStorage), m_noteStoreFactory, std::move(options));
 
     auto callback = std::make_shared<AccountSynchronizerCallback>(notifier);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,6 +39,9 @@ int main(int argc, char * argv[])
 
     quentier::initializeLibquentier();
 
+    quentier::synchronization::tests::TestRunner::Options options;
+    options.useNetworkTransportLayer = true;
+
     return QTest::qExec(
-        new quentier::synchronization::tests::TestRunner, argc, argv);
+        new quentier::synchronization::tests::TestRunner(options), argc, argv);
 }

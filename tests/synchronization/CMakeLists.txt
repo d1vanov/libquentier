@@ -12,12 +12,16 @@ add_library(${TESTS_LIB_NAME} STATIC
   FakeNoteStore.h
   FakeNoteStoreBackend.cpp
   FakeNoteStoreBackend.h
+  FakeNoteStoreFactory.cpp
+  FakeNoteStoreFactory.h
   FakeSyncStateStorage.cpp
   FakeSyncStateStorage.h
   FakeUserStore.cpp
   FakeUserStore.h
   FakeUserStoreBackend.cpp
   FakeUserStoreBackend.h
+  FakeUserStoreFactory.cpp
+  FakeUserStoreFactory.h
   NoteStoreServer.cpp
   NoteStoreServer.h
   Setup.cpp

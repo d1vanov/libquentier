@@ -20,6 +20,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/synchronization/INoteStoreFactory.h>
 #include <quentier/synchronization/types/ISyncOptions.h>
 
 #include <synchronization/AccountSynchronizer.h>
@@ -83,7 +84,8 @@ AccountSynchronizerFactory::AccountSynchronizerFactory(
 
 IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
     Account account, ISyncConflictResolverPtr syncConflictResolver,
-    local_storage::ILocalStoragePtr localStorage, ISyncOptionsPtr options)
+    local_storage::ILocalStoragePtr localStorage,
+    INoteStoreFactoryPtr noteStoreFactory, ISyncOptionsPtr options)
 {
     if (Q_UNLIKELY(account.isEmpty())) {
         throw InvalidArgument{ErrorString{
@@ -111,7 +113,10 @@ IAccountSynchronizerPtr AccountSynchronizerFactory::createAccountSynchronizer(
             "AccountSynchronizerFactory: sync options are null")}};
     }
 
-    auto noteStoreFactory = std::make_shared<NoteStoreFactory>();
+    if (!noteStoreFactory) {
+        noteStoreFactory = std::make_shared<NoteStoreFactory>();
+    }
+
     auto linkedNotebookFinder =
         std::make_shared<LinkedNotebookFinder>(localStorage);
 

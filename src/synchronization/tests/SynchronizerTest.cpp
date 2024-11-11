@@ -31,6 +31,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/synchronization/ISyncEventsNotifier.h>
+#include <quentier/synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
@@ -82,6 +83,9 @@ protected:
         m_mockProtocolVersionChecker =
             std::make_shared<StrictMock<mocks::MockIProtocolVersionChecker>>();
 
+    const std::shared_ptr<mocks::MockINoteStoreFactory> m_mockNoteStoreFactory =
+        std::make_shared<StrictMock<mocks::MockINoteStoreFactory>>();
+
     const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
@@ -99,7 +103,7 @@ TEST_F(SynchronizerTest, Ctor)
     EXPECT_NO_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
             m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker));
+            m_mockProtocolVersionChecker, m_mockNoteStoreFactory));
 }
 
 TEST_F(SynchronizerTest, CtorNullAccountSynchronizerFactory)
@@ -107,7 +111,7 @@ TEST_F(SynchronizerTest, CtorNullAccountSynchronizerFactory)
     EXPECT_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
             nullptr, m_mockAuthenticationInfoProvider,
-            m_mockProtocolVersionChecker),
+            m_mockProtocolVersionChecker, m_mockNoteStoreFactory),
         InvalidArgument);
 }
 
@@ -116,7 +120,7 @@ TEST_F(SynchronizerTest, CtorNullAuthenticationInfoProvider)
     EXPECT_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
             m_mockAccountSynchronizerFactory, nullptr,
-            m_mockProtocolVersionChecker),
+            m_mockProtocolVersionChecker, m_mockNoteStoreFactory),
         InvalidArgument);
 }
 
@@ -125,7 +129,16 @@ TEST_F(SynchronizerTest, CtorNullProtocolVersionChecker)
     EXPECT_THROW(
         const auto synchronizer = std::make_shared<Synchronizer>(
             m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
-            nullptr),
+            nullptr, m_mockNoteStoreFactory),
+        InvalidArgument);
+}
+
+TEST_F(SynchronizerTest, CtorNullNoteStoreFactory)
+{
+    EXPECT_THROW(
+        const auto synchronizer = std::make_shared<Synchronizer>(
+            m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
+            m_mockProtocolVersionChecker, nullptr),
         InvalidArgument);
 }
 
@@ -133,7 +146,7 @@ TEST_F(SynchronizerTest, AuthenticateNewAccount)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
         m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
-        m_mockProtocolVersionChecker);
+        m_mockProtocolVersionChecker, m_mockNoteStoreFactory);
 
     const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
@@ -160,7 +173,7 @@ TEST_F(SynchronizerTest, AuthenticateAccount)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
         m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
-        m_mockProtocolVersionChecker);
+        m_mockProtocolVersionChecker, m_mockNoteStoreFactory);
 
     const auto authenticationInfo = std::make_shared<AuthenticationInfo>();
 
@@ -181,7 +194,7 @@ TEST_F(SynchronizerTest, RevokeAuthentication)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
         m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
-        m_mockProtocolVersionChecker);
+        m_mockProtocolVersionChecker, m_mockNoteStoreFactory);
 
     const qevercloud::UserID userId = 42;
 
@@ -197,7 +210,7 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
 {
     const auto synchronizer = std::make_shared<Synchronizer>(
         m_mockAccountSynchronizerFactory, m_mockAuthenticationInfoProvider,
-        m_mockProtocolVersionChecker);
+        m_mockProtocolVersionChecker, m_mockNoteStoreFactory);
 
     bool onSyncChunksDownloadProgressCalled = false;
     bool onSyncChunksDownloadedCalled = false;
@@ -232,7 +245,7 @@ TEST_F(SynchronizerTest, SynchronizeAccount)
 
     EXPECT_CALL(
         *m_mockAccountSynchronizerFactory,
-        createAccountSynchronizer(m_account, _, _, syncOptions))
+        createAccountSynchronizer(m_account, _, _, _, syncOptions))
         .WillOnce(Return(m_mockAccountSynchronizer));
 
     std::shared_ptr<IAccountSynchronizer::ICallback> callback;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,24 +18,24 @@
 
 #pragma once
 
-#include <synchronization/IAccountSynchronizerFactory.h>
+#include "Fwd.h"
 
-#include <gmock/gmock.h>
+#include <quentier/synchronization/IUserStoreFactory.h>
 
-// clazy:excludeall=returning-void-expression
+namespace quentier::synchronization::tests {
 
-namespace quentier::synchronization::tests::mocks {
-
-class MockIAccountSynchronizerFactory : public IAccountSynchronizerFactory
+class FakeUserStoreFactory : public IUserStoreFactory
 {
 public:
-    MOCK_METHOD(
-        IAccountSynchronizerPtr, createAccountSynchronizer,
-        (Account account,
-         ISyncConflictResolverPtr syncConflictResolver,
-         local_storage::ILocalStoragePtr localStorage,
-         INoteStoreFactoryPtr noteStoreFactory, ISyncOptionsPtr options),
-        (override));
+    explicit FakeUserStoreFactory(FakeUserStoreBackend * backend);
+
+public: // IUserStoreFactory
+    [[nodiscard]] qevercloud::IUserStorePtr createUserStore(
+        QString userStoreUrl = {}, qevercloud::IRequestContextPtr ctx = {},
+        qevercloud::IRetryPolicyPtr retryPolicy = {}) override;
+
+private:
+    FakeUserStoreBackend * m_backend;
 };
 
-} // namespace quentier::synchronization::tests::mocks
+} // namespace quentier::synchronization::tests
