@@ -298,7 +298,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
                 EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                 EXPECT_EQ(maxEntriesParam, maxEntries);
                 EXPECT_EQ(syncChunkFilter, testData.m_syncChunkFilter);
-                EXPECT_EQ(ctxParam, ctx);
+                checkRequestContext(ctxParam, ctx);
                 return threading::makeReadyFuture(syncChunk);
             });
 
@@ -432,7 +432,7 @@ TEST_P(
                     EXPECT_EQ(
                         fullSyncOnly,
                         (testData.m_syncMode == SynchronizationMode::Full));
-                    EXPECT_EQ(ctxParam, ctx);
+                    checkRequestContext(ctxParam, ctx);
                     return threading::makeReadyFuture(syncChunk);
                 });
 
@@ -521,7 +521,7 @@ TEST_F(
                 EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                 EXPECT_EQ(maxEntriesParam, maxEntries);
                 EXPECT_EQ(syncChunkFilter, sampleFullSyncSyncChunkFilter);
-                EXPECT_EQ(ctxParam, ctx);
+                checkRequestContext(ctxParam, ctx);
 
                 if (afterUsnParam == sampleSyncChunk2.updateCount()) {
                     return threading::makeExceptionalFuture<
@@ -616,7 +616,7 @@ TEST_F(
                 EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                 EXPECT_EQ(maxEntriesParam, maxEntries);
                 EXPECT_EQ(syncChunkFilter, sampleFullSyncSyncChunkFilter);
-                EXPECT_EQ(ctxParam, ctx);
+                checkRequestContext(ctxParam, ctx);
 
                 if (afterUsnParam == sampleSyncChunk2.updateCount()) {
                     return threading::makeExceptionalFuture<
@@ -718,7 +718,7 @@ TEST_F(
                 EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                 EXPECT_EQ(maxEntriesParam, maxEntries);
                 EXPECT_EQ(syncChunkFilter, sampleFullSyncSyncChunkFilter);
-                EXPECT_EQ(ctxParam, ctx);
+                checkRequestContext(ctxParam, ctx);
 
                 if (i == 2) {
                     pendingLastSyncChunk = true;
@@ -824,7 +824,7 @@ TEST_F(
                     EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                     EXPECT_EQ(maxEntriesParam, maxEntries);
                     EXPECT_TRUE(fullSyncOnly);
-                    EXPECT_EQ(ctxParam, ctx);
+                    checkRequestContext(ctxParam, ctx);
 
                     if (afterUsnParam == sampleSyncChunk2.updateCount()) {
                         return threading::makeExceptionalFuture<
@@ -933,7 +933,7 @@ TEST_F(
                     EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                     EXPECT_EQ(maxEntriesParam, maxEntries);
                     EXPECT_TRUE(fullSyncOnly);
-                    EXPECT_EQ(ctxParam, ctx);
+                    checkRequestContext(ctxParam, ctx);
 
                     if (afterUsnParam == sampleSyncChunk2.updateCount()) {
                         return threading::makeExceptionalFuture<
@@ -1049,7 +1049,7 @@ TEST_F(
                     EXPECT_EQ(afterUsnParam, afterUsnCurrent);
                     EXPECT_EQ(maxEntriesParam, maxEntries);
                     EXPECT_TRUE(fullSyncOnly);
-                    EXPECT_EQ(ctxParam, ctx);
+                    checkRequestContext(ctxParam, ctx);
 
                     if (i == 2) {
                         pendingLastSyncChunk = true;

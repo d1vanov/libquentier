@@ -106,6 +106,10 @@ void NoteFullDataDownloader::downloadFullNoteDataImpl(
 
     m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
+    if (ctx) {
+        ctx = qevercloud::IRequestContextPtr{ctx->clone()};
+    }
+
     auto getNoteFuture = noteStore->getNoteWithResultSpecAsync(
         noteGuid,
         qevercloud::NoteResultSpecBuilder{}

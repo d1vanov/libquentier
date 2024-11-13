@@ -79,6 +79,10 @@ namespace {
 
     promise->start();
 
+    if (ctx) {
+        ctx.reset(ctx->clone());
+    }
+
     auto thenFuture = threading::then(
         noteStore.getFilteredSyncChunkAsync(
             afterUsn, maxEntries, filter, std::move(ctx)),
@@ -129,6 +133,10 @@ namespace {
     auto future = promise->future();
 
     promise->start();
+
+    if (ctx) {
+        ctx.reset(ctx->clone());
+    }
 
     auto thenFuture = threading::then(
         noteStore.getLinkedNotebookSyncChunkAsync(

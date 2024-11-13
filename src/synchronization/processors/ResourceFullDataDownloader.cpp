@@ -105,6 +105,10 @@ void ResourceFullDataDownloader::downloadFullResourceDataImpl(
 
     m_inFlightDownloads.fetch_add(1, std::memory_order_acq_rel);
 
+    if (ctx) {
+        ctx = qevercloud::IRequestContextPtr{ctx->clone()};
+    }
+
     auto getResourceFuture = noteStore->getResourceAsync(
         resourceGuid,
         /* withData = */ true,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,8 @@
 
 #include "Utils.h"
 
+#include <qevercloud/IRequestContext.h>
+
 #include <gtest/gtest.h>
 
 #include <utility>
@@ -34,5 +36,25 @@ void compareGuidLists(
         EXPECT_TRUE(rhs.contains(l));
     }
 }
+
+void checkRequestContext(
+    const qevercloud::IRequestContextPtr & ctx,
+    const qevercloud::IRequestContextPtr & expectedCtx)
+{
+    ASSERT_TRUE(ctx);
+    ASSERT_TRUE(expectedCtx);
+
+    EXPECT_NE(ctx, expectedCtx);
+    EXPECT_NE(ctx->requestId(), expectedCtx->requestId());
+    EXPECT_EQ(ctx->authenticationToken(), expectedCtx->authenticationToken());
+    EXPECT_EQ(ctx->cookies(), expectedCtx->cookies());
+    EXPECT_EQ(ctx->connectionTimeout(), expectedCtx->connectionTimeout());
+    EXPECT_EQ(ctx->maxConnectionTimeout(), expectedCtx->maxConnectionTimeout());
+    EXPECT_EQ(ctx->maxRequestRetryCount(), expectedCtx->maxRequestRetryCount());
+    EXPECT_EQ(
+        ctx->increaseConnectionTimeoutExponentially(),
+        expectedCtx->increaseConnectionTimeoutExponentially());
+}
+
 
 } // namespace quentier::synchronization::tests

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "Utils.h"
 
 #include <synchronization/processors/ResourceFullDataDownloader.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
@@ -97,10 +99,19 @@ TEST_F(ResourceFullDataDownloaderTest, DownloadSingleResource)
                          .build())
             .build();
 
-    EXPECT_CALL(
-        *m_mockNoteStore,
-        getResourceAsync(resource.guid().value(), true, true, true, true, ctx))
-        .WillOnce(Return(threading::makeReadyFuture(resource)));
+    EXPECT_CALL(*m_mockNoteStore, getResourceAsync)
+        .WillOnce([&](const qevercloud::Guid & guid, const bool withData,
+                      const bool withRecognition, const bool withAttributes,
+                      const bool withAlternateData,
+                      const qevercloud::IRequestContextPtr & ctxParam) {
+            EXPECT_EQ(guid, resource.guid().value());
+            EXPECT_TRUE(withData);
+            EXPECT_TRUE(withRecognition);
+            EXPECT_TRUE(withAttributes);
+            EXPECT_TRUE(withAlternateData);
+            checkRequestContext(ctxParam, ctx);
+            return threading::makeReadyFuture(resource);
+        });
 
     auto future = resourceFullDataDownloader->downloadFullResourceData(
         resource.guid().value(), m_mockNoteStore, ctx);
@@ -151,11 +162,13 @@ TEST_F(
                             const bool withData, const bool withRecognition,
                             const bool withAttributes,
                             const bool withAlternateData,
-                            const qevercloud::IRequestContextPtr &) { // NOLINT
+                            const qevercloud::IRequestContextPtr & ctxParam) {
             EXPECT_TRUE(withData);
             EXPECT_TRUE(withRecognition);
             EXPECT_TRUE(withAttributes);
             EXPECT_TRUE(withAlternateData);
+            checkRequestContext(ctxParam, ctx);
+
             auto promise = std::make_shared<QPromise<qevercloud::Resource>>();
             promise->start();
             auto future = promise->future();
@@ -230,11 +243,13 @@ TEST_F(
                             const bool withData, const bool withRecognition,
                             const bool withAttributes,
                             const bool withAlternateData,
-                            const qevercloud::IRequestContextPtr &) { // NOLINT
+                            const qevercloud::IRequestContextPtr & ctxParam) {
             EXPECT_TRUE(withData);
             EXPECT_TRUE(withRecognition);
             EXPECT_TRUE(withAttributes);
             EXPECT_TRUE(withAlternateData);
+            checkRequestContext(ctxParam, ctx);
+
             auto promise = std::make_shared<QPromise<qevercloud::Resource>>();
             promise->start();
             auto future = promise->future();

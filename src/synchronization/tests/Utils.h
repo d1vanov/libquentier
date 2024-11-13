@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <qevercloud/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QCoreApplication>
@@ -37,5 +38,9 @@ void waitForFuture(const QFuture<T> & future)
         QCoreApplication::processEvents();
     }
 }
+
+void checkRequestContext(
+    const qevercloud::IRequestContextPtr & ctx,
+    const qevercloud::IRequestContextPtr & expectedCtx);
 
 } // namespace quentier::synchronization::tests

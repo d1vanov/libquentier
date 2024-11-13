@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -130,11 +130,15 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
                           .setNotebookGuid(UidGenerator::Generate())
                           .build();
 
-    EXPECT_CALL(
-        *m_mockNoteStore,
-        getNoteWithResultSpecAsync(
-            note.guid().value(), expectedNoteResultSpec, ctx))
-        .WillOnce(Return(threading::makeReadyFuture(note)));
+    EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
+        .WillOnce([&](const qevercloud::Guid & guid,
+                      const qevercloud::NoteResultSpec & spec,
+                      const qevercloud::IRequestContextPtr & ctxParam) {
+            EXPECT_EQ(guid, note.guid().value());
+            EXPECT_EQ(spec, expectedNoteResultSpec);
+            checkRequestContext(ctxParam, ctx);
+            return threading::makeReadyFuture(note);
+        });
 
     auto future = noteFullDataDownloader->downloadFullNoteData(
         note.guid().value(), m_mockNoteStore, ctx);
@@ -194,8 +198,10 @@ TEST_P(
     EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
         .WillRepeatedly([&](const qevercloud::Guid &, // NOLINT
                             const qevercloud::NoteResultSpec & noteResultSpec,
-                            const qevercloud::IRequestContextPtr &) { // NOLINT
+                            const qevercloud::IRequestContextPtr & ctxParam) {
             EXPECT_EQ(noteResultSpec, expectedNoteResultSpec);
+            checkRequestContext(ctxParam, ctx);
+
             auto promise = std::make_shared<QPromise<qevercloud::Note>>();
             promise->start();
             auto future = promise->future();
@@ -277,8 +283,10 @@ TEST_P(
     EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
         .WillRepeatedly([&](const qevercloud::Guid &, // NOLINT
                             const qevercloud::NoteResultSpec & noteResultSpec,
-                            const qevercloud::IRequestContextPtr &) { // NOLINT
+                            const qevercloud::IRequestContextPtr & ctxParam) {
             EXPECT_EQ(noteResultSpec, expectedNoteResultSpec);
+            checkRequestContext(ctxParam, ctx);
+
             auto promise = std::make_shared<QPromise<qevercloud::Note>>();
             promise->start();
             auto future = promise->future();

@@ -918,8 +918,8 @@ QFuture<IDownloader::Result> Downloader::launchDownload(
             const qevercloud::INoteStorePtr & noteStore) mutable {
             Q_ASSERT(noteStore);
 
-            auto syncStateFuture =
-                noteStore->getSyncStateAsync(downloadContext->ctx);
+            auto syncStateFuture = noteStore->getSyncStateAsync(
+                qevercloud::IRequestContextPtr{downloadContext->ctx->clone()});
 
             threading::thenOrFailed(
                 std::move(syncStateFuture), currentThread, promise,
@@ -1221,12 +1221,14 @@ void Downloader::launchLinkedNotebookDataDownload(
             << ", linked notebook: " << linkedNotebookInfo(linkedNotebook));
 
     Q_ASSERT(downloadContext);
+    Q_ASSERT(downloadContext->ctx);
     Q_ASSERT(noteStore);
     Q_ASSERT(linkedNotebookResultPromise);
 
     auto linkedNotebookSyncStateFuture =
         noteStore->getLinkedNotebookSyncStateAsync(
-            linkedNotebook, downloadContext->ctx);
+            linkedNotebook,
+            qevercloud::IRequestContextPtr{downloadContext->ctx->clone()});
 
     const auto selfWeak = weak_from_this();
     auto * currentThread = QThread::currentThread();
