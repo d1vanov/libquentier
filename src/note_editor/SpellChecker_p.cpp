@@ -1218,7 +1218,7 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
     char ** rawCorrectionSuggestions = nullptr;
 
     const int numSuggestions =
-        m_pHunspell->suggest(&rawCorrectionSuggestions, wordData.constData());
+        m_hunspell->suggest(&rawCorrectionSuggestions, wordData.constData());
 
     result.reserve(std::max(numSuggestions, 0));
     for (int i = 0; i < numSuggestions; ++i) {
