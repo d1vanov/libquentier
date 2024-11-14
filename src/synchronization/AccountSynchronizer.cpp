@@ -736,52 +736,27 @@ void AccountSynchronizer::onDownloadFailed(
         e.raise();
     }
     catch (const qevercloud::EDAMSystemExceptionAuthExpired & ea) {
-        QNINFO(
-            "synchronization::AccountSynchronizer",
-            "Detected authentication expiration during sync, "
-            "trying to re-authenticate and restart sync");
         clearAuthenticationCachesAndRestartSync(std::move(context));
     }
     catch (const qevercloud::EDAMSystemExceptionRateLimitReached & er) {
-        QNINFO(
-            "synchronization::AccountSynchronizer",
-            "Detected API rate limit exceeding, rate limit duration = "
-                << (er.rateLimitDuration()
-                        ? QString::number(*er.rateLimitDuration())
-                        : QStringLiteral("<none>")));
-        // Rate limit reaching means it's pointless to try to
-        // continue the sync right now
-        auto syncResult = context->previousSyncResult
-            ? context->previousSyncResult
-            : std::make_shared<SyncResult>();
-
-        // Sync chunks counters for downloaded sync chunks should be available
-        // in counters cached within callbackWrapper
-        if (auto counters =
-                context->callbackWrapper->userOwnSyncChunksDataCounters())
-        {
-            syncResult->m_userAccountSyncChunksDataCounters =
-                std::move(counters);
+        processRateLimitReached(context, er.rateLimitDuration());
+    }
+    catch (const qevercloud::EDAMSystemException & ex) {
+        if (ex.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            processRateLimitReached(context, ex.rateLimitDuration());
         }
-
-        const auto linkedNotebookSyncChunksDataCounters =
-            context->callbackWrapper->linkedNotebookSyncChunksDataCounters();
-        for (const auto it:
-             qevercloud::toRange(linkedNotebookSyncChunksDataCounters))
-        {
-            const auto & linkedNotebookGuid = it.key();
-            auto counters = it.value();
-            Q_ASSERT(counters);
-
-            syncResult
-                ->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
-                std::move(counters);
+        else if (ex.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED) {
+            clearAuthenticationCachesAndRestartSync(std::move(context));
         }
-
-        syncResult->m_stopSynchronizationError = StopSynchronizationError{
-            RateLimitReachedError{er.rateLimitDuration()}};
-        context->promise->addResult(std::move(syncResult));
-        context->promise->finish();
+        else {
+            QNWARNING(
+                "synchronization::AccountSynchronizer",
+                "Caught EDAMSystemException on download attempt: error code = "
+                    << ex.errorCode() << ", error description: "
+                    << ex.message().value_or(QString{}));
+            context->promise->setException(e);
+            context->promise->finish();
+        }
     }
     catch (const QException & eq) {
         QNWARNING(
@@ -1423,6 +1398,11 @@ void AccountSynchronizer::storeDownloadedSyncChunks(Context & context)
 void AccountSynchronizer::clearAuthenticationCachesAndRestartSync(
     ContextPtr context)
 {
+    QNINFO(
+        "synchronization::AccountSynchronizer",
+        "Detected authentication expiration during sync, trying to "
+        "re-authenticate and restart sync");
+
     Q_ASSERT(context);
 
     m_authenticationInfoProvider->clearCaches(
@@ -1430,6 +1410,53 @@ void AccountSynchronizer::clearAuthenticationCachesAndRestartSync(
             IAuthenticationInfoProvider::ClearCacheOption::All{}});
 
     synchronizeImpl(std::move(context));
+}
+
+void AccountSynchronizer::processRateLimitReached(
+    const ContextPtr & context, std::optional<qint32> rateLimitDuration)
+{
+    QNINFO(
+        "synchronization::AccountSynchronizer",
+        "Detected API rate limit exceeding, rate limit duration = "
+        << (rateLimitDuration
+            ? QString::number(*rateLimitDuration)
+            : QStringLiteral("<none>")));
+
+    Q_ASSERT(context);
+
+    // Rate limit reaching means it's pointless to try to continue the sync
+    // right now
+    auto syncResult = context->previousSyncResult
+        ? context->previousSyncResult
+        : std::make_shared<SyncResult>();
+
+    // Sync chunks counters for downloaded sync chunks should be available
+    // in counters cached within callbackWrapper
+    if (auto counters =
+        context->callbackWrapper->userOwnSyncChunksDataCounters())
+    {
+        syncResult->m_userAccountSyncChunksDataCounters =
+            std::move(counters);
+    }
+
+    const auto linkedNotebookSyncChunksDataCounters =
+        context->callbackWrapper->linkedNotebookSyncChunksDataCounters();
+    for (const auto it:
+         qevercloud::toRange(linkedNotebookSyncChunksDataCounters))
+    {
+        const auto & linkedNotebookGuid = it.key();
+        auto counters = it.value();
+        Q_ASSERT(counters);
+
+        syncResult
+            ->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
+            std::move(counters);
+    }
+
+    syncResult->m_stopSynchronizationError = StopSynchronizationError{
+        RateLimitReachedError{rateLimitDuration}};
+    context->promise->addResult(std::move(syncResult));
+    context->promise->finish();
 }
 
 void AccountSynchronizer::finalize(Context & context)

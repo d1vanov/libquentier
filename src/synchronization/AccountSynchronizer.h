@@ -121,6 +121,9 @@ private:
     void storeDownloadedSyncChunks(Context & context);
     void clearAuthenticationCachesAndRestartSync(ContextPtr context);
 
+    void processRateLimitReached(
+        const ContextPtr & context, std::optional<qint32> rateLimitDuration);
+
     void finalize(Context & context);
 
 private:
