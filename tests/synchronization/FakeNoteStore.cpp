@@ -29,6 +29,7 @@
 
 #include <qevercloud/RequestContextBuilder.h>
 
+#include <QPointer>
 #include <QTimer>
 
 #include <memory>
@@ -42,6 +43,122 @@ namespace {
 
 // 10 minutes in milliseconds
 constexpr int gSyncMethodCallTimeout = 600000;
+
+void clearLocalFields(qevercloud::Notebook & n)
+{
+    // NOTE: not clearing local id as it is auto-generated and thus leaving it
+    // as is would resemble the behaviour of the real NoteStore better.
+    n.setLocalData({});
+    n.setLocalOnly(false);
+    n.setLocallyModified(false);
+    n.setLocallyFavorited(false);
+    n.setLinkedNotebookGuid(std::nullopt);
+}
+
+void clearLocalFields(qevercloud::Resource & r)
+{
+    // NOTE: not clearing local id as it is auto-generated and thus leaving it
+    // as is would resemble the behaviour of the real NoteStore better.
+    r.setLocalData({});
+    r.setLocalOnly(false);
+    r.setLocallyModified(false);
+    r.setLocallyFavorited(false);
+    r.setNoteLocalId(QString{});
+}
+
+void clearLocalFields(qevercloud::Note & n)
+{
+    // NOTE: not clearing local id as it is auto-generated and thus leaving it
+    // as is would resemble the behaviour of the real NoteStore better.
+    n.setLocalData({});
+    n.setLocalOnly(false);
+    n.setLocallyModified(false);
+    n.setLocallyFavorited(false);
+    n.setTagLocalIds(QStringList{});
+
+    if (n.resources()) {
+        for (auto & resource: *n.mutableResources()) {
+            clearLocalFields(resource);
+        }
+    }
+}
+
+void clearLocalFields(qevercloud::Tag & t)
+{
+    // NOTE: not clearing local id as it is auto-generated and thus leaving it
+    // as is would resemble the behaviour of the real NoteStore better.
+    t.setLocalData({});
+    t.setLocalOnly(false);
+    t.setLocallyModified(false);
+    t.setLocallyFavorited(false);
+    t.setLinkedNotebookGuid(std::nullopt);
+    t.setParentTagLocalId(QString{});
+}
+
+void clearLocalFields(qevercloud::SavedSearch & s)
+{
+    // NOTE: not clearing local id as it is auto-generated and thus leaving it
+    // as is would resemble the behaviour of the real NoteStore better.
+    s.setLocalData({});
+    s.setLocalOnly(false);
+    s.setLocallyModified(false);
+    s.setLocallyFavorited(false);
+}
+
+void clearLocalFields(qevercloud::SyncChunk & s)
+{
+    if (s.notes()) {
+        for (auto & n: *s.mutableNotes()) {
+            clearLocalFields(n);
+        }
+    }
+
+    if (s.notebooks()) {
+        for (auto & n: *s.mutableNotebooks()) {
+            clearLocalFields(n);
+        }
+    }
+
+    if (s.tags()) {
+        for (auto & t: *s.mutableTags()) {
+            clearLocalFields(t);
+        }
+    }
+
+    if (s.searches()) {
+        for (auto & ss: *s.mutableSearches()) {
+            clearLocalFields(ss);
+        }
+    }
+
+    if (s.resources()) {
+        for (auto & r: *s.mutableResources()) {
+            clearLocalFields(r);
+        }
+    }
+}
+
+template <class T>
+void setExceptionToPromise(
+    const std::shared_ptr<QPromise<T>> & promise, const std::exception_ptr & e)
+{
+    Q_ASSERT(e);
+    Q_ASSERT(promise);
+
+    try {
+        std::rethrow_exception(e);
+    }
+    catch (const QException & ex) {
+        promise->setException(ex);
+    }
+    catch (const std::exception & ex) {
+        promise->setException(RuntimeError{ErrorString{ex.what()}});
+    }
+    catch (...) {
+        promise->setException(
+            RuntimeError{ErrorString{QStringLiteral("Unknown error")}});
+    }
+}
 
 [[nodiscard]] ErrorString exceptionMessage(const std::exception_ptr & e)
 {
@@ -207,8 +324,7 @@ QFuture<qevercloud::SyncState> FakeNoteStore::getSyncStateAsync(
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -251,6 +367,7 @@ qevercloud::SyncChunk FakeNoteStore::getFilteredSyncChunk(
                 }
 
                 if (!e) {
+                    clearLocalFields(syncChunk);
                     result = std::move(syncChunk);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -320,13 +437,13 @@ QFuture<qevercloud::SyncChunk> FakeNoteStore::getFilteredSyncChunkAsync(
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(syncChunk);
                 promise->addResult(std::move(syncChunk));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
 
@@ -446,8 +563,7 @@ QFuture<qevercloud::SyncState> FakeNoteStore::getLinkedNotebookSyncStateAsync(
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -493,6 +609,7 @@ qevercloud::SyncChunk FakeNoteStore::getLinkedNotebookSyncChunk(
                 }
 
                 if (!e) {
+                    clearLocalFields(syncChunk);
                     result = std::move(syncChunk);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -556,13 +673,13 @@ QFuture<qevercloud::SyncChunk> FakeNoteStore::getLinkedNotebookSyncChunkAsync(
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(syncChunk);
                 promise->addResult(std::move(syncChunk));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
 
@@ -660,13 +777,17 @@ qevercloud::Notebook FakeNoteStore::createNotebook(
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::createNotebookRequestReady,
-            [&](qevercloud::Notebook n, const std::exception_ptr & e,
+            [&, this](
+                qevercloud::Notebook n, const std::exception_ptr & e,
                 const QUuid requestId) {
                 if (requestId != ctx->requestId()) {
                     return;
                 }
 
+                m_backend->removeUriForRequestId(requestId);
+
                 if (!e) {
+                    clearLocalFields(n);
                     result = std::move(n);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -683,6 +804,12 @@ qevercloud::Notebook FakeNoteStore::createNotebook(
 
         QTimer::singleShot(
             0, [ctx = std::move(ctx), notebook, backend = m_backend] {
+                if (notebook.linkedNotebookGuid()) {
+                    backend->setUriForRequestId(
+                        ctx->requestId(),
+                        notebook.linkedNotebookGuid()->toUtf8());
+                }
+
                 backend->onCreateNotebookRequest(notebook, ctx);
             });
 
@@ -721,23 +848,28 @@ QFuture<qevercloud::Notebook> FakeNoteStore::createNotebookAsync(
     QObject::connect(
         m_backend, &FakeNoteStoreBackend::createNotebookRequestReady,
         dummyObjectRaw,
-        [ctx, promise = std::move(promise), dummyObjectRaw](
+        [ctx, backend = QPointer{m_backend}, promise = std::move(promise),
+         dummyObjectRaw](
             qevercloud::Notebook n, const std::exception_ptr & e,
             const QUuid requestId) {
             if (requestId != ctx->requestId()) {
                 return;
             }
 
+            if (!backend.isNull()) {
+                backend->removeUriForRequestId(requestId);
+            }
+
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(n);
                 promise->addResult(std::move(n));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
 
@@ -745,6 +877,12 @@ QFuture<qevercloud::Notebook> FakeNoteStore::createNotebookAsync(
 
     QTimer::singleShot(
         0, [ctx = std::move(ctx), backend = m_backend, notebook] {
+            if (notebook.linkedNotebookGuid()) {
+                backend->setUriForRequestId(
+                    ctx->requestId(),
+                    notebook.linkedNotebookGuid()->toUtf8());
+            }
+
             backend->onCreateNotebookRequest(notebook, ctx);
         });
 
@@ -773,11 +911,14 @@ qint32 FakeNoteStore::updateNotebook(
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::updateNotebookRequestReady,
-            [&](const qint32 usn, const std::exception_ptr & e,
+            [&, this](
+                const qint32 usn, const std::exception_ptr & e,
                 const QUuid requestId) {
                 if (requestId != ctx->requestId()) {
                     return;
                 }
+
+                m_backend->removeUriForRequestId(requestId);
 
                 if (!e) {
                     result = usn;
@@ -796,6 +937,12 @@ qint32 FakeNoteStore::updateNotebook(
 
         QTimer::singleShot(
             0, [ctx = std::move(ctx), notebook, backend = m_backend] {
+                if (notebook.linkedNotebookGuid()) {
+                    backend->setUriForRequestId(
+                        ctx->requestId(),
+                        notebook.linkedNotebookGuid()->toUtf8());
+                }
+
                 backend->onUpdateNotebookRequest(notebook, ctx);
             });
 
@@ -834,11 +981,15 @@ QFuture<qint32> FakeNoteStore::updateNotebookAsync(
     QObject::connect(
         m_backend, &FakeNoteStoreBackend::updateNotebookRequestReady,
         dummyObjectRaw,
-        [ctx, promise = std::move(promise), dummyObjectRaw](
+        [ctx, backend = QPointer{m_backend}, promise = std::move(promise), dummyObjectRaw](
             const qint32 usn, const std::exception_ptr & e,
             const QUuid requestId) {
             if (requestId != ctx->requestId()) {
                 return;
+            }
+
+            if (!backend.isNull()) {
+                backend->removeUriForRequestId(requestId);
             }
 
             dummyObjectRaw->deleteLater();
@@ -849,14 +1000,19 @@ QFuture<qint32> FakeNoteStore::updateNotebookAsync(
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
 
     QTimer::singleShot(
         0, [ctx = std::move(ctx), notebook, backend = m_backend] {
+            if (notebook.linkedNotebookGuid()) {
+                backend->setUriForRequestId(
+                    ctx->requestId(),
+                    notebook.linkedNotebookGuid()->toUtf8());
+            }
+
             backend->onUpdateNotebookRequest(notebook, ctx);
         });
 
@@ -945,13 +1101,17 @@ qevercloud::Tag FakeNoteStore::createTag(
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::createTagRequestReady,
-            [&](qevercloud::Tag t, const std::exception_ptr & e,
+            [&, this](
+                qevercloud::Tag t, const std::exception_ptr & e,
                 const QUuid requestId) {
                 if (requestId != ctx->requestId()) {
                     return;
                 }
 
+                m_backend->removeUriForRequestId(requestId);
+
                 if (!e) {
+                    clearLocalFields(t);
                     result = std::move(t);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -967,6 +1127,11 @@ qevercloud::Tag FakeNoteStore::createTag(
             });
 
         QTimer::singleShot(0, [ctx = std::move(ctx), tag, backend = m_backend] {
+            if (tag.linkedNotebookGuid()) {
+                backend->setUriForRequestId(
+                    ctx->requestId(), tag.linkedNotebookGuid()->toUtf8());
+            }
+
             backend->onCreateTagRequest(tag, ctx);
         });
 
@@ -1004,28 +1169,38 @@ QFuture<qevercloud::Tag> FakeNoteStore::createTagAsync(
     auto * dummyObjectRaw = dummyObject.get();
     QObject::connect(
         m_backend, &FakeNoteStoreBackend::createTagRequestReady, dummyObjectRaw,
-        [ctx, promise = std::move(promise), dummyObjectRaw](
+        [ctx, backend = QPointer{m_backend}, promise = std::move(promise),
+         dummyObjectRaw](
             qevercloud::Tag t, const std::exception_ptr & e,
             const QUuid requestId) {
             if (requestId != ctx->requestId()) {
                 return;
             }
 
+            if (!backend.isNull()) {
+                backend->removeUriForRequestId(requestId);
+            }
+
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(t);
                 promise->addResult(std::move(t));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
 
     QTimer::singleShot(0, [ctx = std::move(ctx), tag, backend = m_backend] {
+        if (tag.linkedNotebookGuid()) {
+            backend->setUriForRequestId(
+                ctx->requestId(), tag.linkedNotebookGuid()->toUtf8());
+        }
+
         backend->onCreateTagRequest(tag, ctx);
     });
 
@@ -1054,11 +1229,14 @@ qint32 FakeNoteStore::updateTag(
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::updateTagRequestReady,
-            [&](const qint32 usn, const std::exception_ptr & e,
+            [&, this](
+                const qint32 usn, const std::exception_ptr & e,
                 const QUuid requestId) {
                 if (requestId != ctx->requestId()) {
                     return;
                 }
+
+                m_backend->removeUriForRequestId(requestId);
 
                 if (!e) {
                     result = usn;
@@ -1076,6 +1254,11 @@ qint32 FakeNoteStore::updateTag(
             });
 
         QTimer::singleShot(0, [ctx = std::move(ctx), tag, backend = m_backend] {
+            if (tag.linkedNotebookGuid()) {
+                backend->setUriForRequestId(
+                    ctx->requestId(), tag.linkedNotebookGuid()->toUtf8());
+            }
+
             backend->onUpdateTagRequest(tag, ctx);
         });
 
@@ -1113,11 +1296,16 @@ QFuture<qint32> FakeNoteStore::updateTagAsync(
     auto * dummyObjectRaw = dummyObject.get();
     QObject::connect(
         m_backend, &FakeNoteStoreBackend::updateTagRequestReady, dummyObjectRaw,
-        [ctx, promise = std::move(promise), dummyObjectRaw](
+        [ctx, backend = QPointer{m_backend}, promise = std::move(promise),
+         dummyObjectRaw](
             const qint32 usn, const std::exception_ptr & e,
             const QUuid requestId) {
             if (requestId != ctx->requestId()) {
                 return;
+            }
+
+            if (!backend.isNull()) {
+                backend->removeUriForRequestId(requestId);
             }
 
             dummyObjectRaw->deleteLater();
@@ -1128,13 +1316,17 @@ QFuture<qint32> FakeNoteStore::updateTagAsync(
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
 
     QTimer::singleShot(0, [ctx = std::move(ctx), tag, backend = m_backend] {
+        if (tag.linkedNotebookGuid()) {
+            backend->setUriForRequestId(
+                ctx->requestId(), tag.linkedNotebookGuid()->toUtf8());
+        }
+
         backend->onUpdateTagRequest(tag, ctx);
     });
 
@@ -1231,6 +1423,7 @@ qevercloud::SavedSearch FakeNoteStore::createSearch(
                 }
 
                 if (!e) {
+                    clearLocalFields(s);
                     result = std::move(s);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -1295,13 +1488,13 @@ QFuture<qevercloud::SavedSearch> FakeNoteStore::createSearchAsync(
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(s);
                 promise->addResult(std::move(s));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -1411,8 +1604,7 @@ QFuture<qint32> FakeNoteStore::updateSearchAsync(
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -1526,6 +1718,7 @@ qevercloud::Note FakeNoteStore::getNoteWithResultSpec(
                 }
 
                 if (!e) {
+                    clearLocalFields(n);
                     result = std::move(n);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -1591,13 +1784,13 @@ QFuture<qevercloud::Note> FakeNoteStore::getNoteWithResultSpecAsync(
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(n);
                 promise->addResult(std::move(n));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -1792,6 +1985,7 @@ qevercloud::Note FakeNoteStore::createNote(
                 }
 
                 if (!e) {
+                    clearLocalFields(n);
                     result = std::move(n);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -1856,13 +2050,13 @@ QFuture<qevercloud::Note> FakeNoteStore::createNoteAsync(
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(n);
                 promise->addResult(std::move(n));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -1972,8 +2166,7 @@ QFuture<qevercloud::Note> FakeNoteStore::updateNoteAsync(
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -2105,6 +2298,7 @@ qevercloud::Resource FakeNoteStore::getResource(
                 }
 
                 if (!e) {
+                    clearLocalFields(r);
                     result = std::move(r);
                     QTimer::singleShot(0, [&loop] { loop.exitAsSuccess(); });
                     return;
@@ -2176,13 +2370,13 @@ QFuture<qevercloud::Resource> FakeNoteStore::getResourceAsync(
             dummyObjectRaw->deleteLater();
 
             if (!e) {
+                clearLocalFields(r);
                 promise->addResult(std::move(r));
                 promise->finish();
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
@@ -2646,8 +2840,7 @@ QFuture<qevercloud::AuthenticationResult>
                 return;
             }
 
-            ErrorString errorMessage = exceptionMessage(e);
-            promise->setException(RuntimeError{std::move(errorMessage)});
+            setExceptionToPromise(promise, e);
             promise->finish();
         });
     Q_UNUSED(dummyObject.release()); // NOLINT
