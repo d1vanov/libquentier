@@ -124,8 +124,8 @@ QString syncChunksUsnInfo(const QList<qevercloud::SyncChunk> & syncChunks)
     for (const auto & syncChunk: std::as_const(syncChunks)) {
         const auto lowUsn = utils::syncChunkLowUsn(syncChunk);
         const auto & highUsn = syncChunk.chunkHighUSN();
-        strm << "    [" << printOptNum(lowUsn) << " => "
-             << printOptNum(highUsn) << "];\n";
+        strm << "    [" << printOptNum(lowUsn) << " => " << printOptNum(highUsn)
+             << "];\n";
     }
 
     strm.flush();
