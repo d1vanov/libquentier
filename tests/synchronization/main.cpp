@@ -22,7 +22,6 @@
 #include <quentier/utility/Initialize.h>
 #include <quentier/utility/QuentierApplication.h>
 
-#include <QCommandLineParser>
 #include <QDebug>
 #include <QTest>
 
@@ -32,47 +31,23 @@ int main(int argc, char * argv[])
     QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
     QCoreApplication::setApplicationName(QStringLiteral("LibquentierTests"));
 
-    // Setup command line option processing
-    QCommandLineParser parser;
-    parser.setApplicationDescription(QCoreApplication::translate(
-        "CommandLineParser", "Sync integrational tests"));
-
-    const QString useNetworkTransportLayerOptionName =
-        QStringLiteral("use_network_transport_layer");
-
-    QCommandLineOption useNetworkTransportLayerOption{
-        useNetworkTransportLayerOptionName};
-
-    useNetworkTransportLayerOption.setDescription(QStringLiteral(
-        "When this option is used, tests use local TCP socket and thus involve "
-        "network transport layer into the tests; otherwise the network layer "
-        "is not involved into the tests, a stub is used instead"));
-
-    parser.addOption(useNetworkTransportLayerOption);
-    parser.addHelpOption();
-
-    parser.process(app);
-
-    // Initialize logs and the rest of libquentier facilities
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Trace);
     // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
-    qWarning() << "Logs directory: " << quentier::QuentierLogFilesDirPath();
-
     quentier::initializeLibquentier();
 
-    // Run sync integrational tests
+    const auto useNetworkTransportLayer =
+        qgetenv("SYNC_INTEGRATIONAL_TESTS_USE_NETWORK_TRANSPORT_LAYER");
+
     quentier::synchronization::tests::TestRunner::Options options;
     options.useNetworkTransportLayer =
-        parser.optionNames().contains(useNetworkTransportLayerOptionName);
+        useNetworkTransportLayer == QByteArray{"1"};
 
-    // Remove our own command line argument so that only QTest related arguments
-    // go to QTest::qExec call.
-    QStringList arguments = QCoreApplication::arguments();
-    arguments.removeAll(
-        QStringLiteral("--") + useNetworkTransportLayerOptionName);
+    qWarning() << "Logs directory: " << quentier::QuentierLogFilesDirPath()
+               << "\nUse network transport layer = "
+               << (options.useNetworkTransportLayer ? "true" : "false");
 
     return QTest::qExec(
-        new quentier::synchronization::tests::TestRunner(options), arguments);
+        new quentier::synchronization::tests::TestRunner(options), argc, argv);
 }
