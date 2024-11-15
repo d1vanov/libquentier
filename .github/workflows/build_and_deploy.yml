@@ -1569,7 +1569,7 @@ jobs:
           type libqt5quentier_synchronization_unit_tests.txt
           echo "Start sync integrational tests"
           set CONNECTION_TIMEOUT="60000"
-          bin\libqt5quentier_synchronization_integrational_tests.exe --use_network_transport_layer -o libqt5quentier_synchronization_integrational_tests_report.txt,txt
+          bin\libqt5quentier_synchronization_integrational_tests.exe -o libqt5quentier_synchronization_integrational_tests_report.txt,txt
           type libqt5quentier_synchronization_integrational_tests_report.txt
           7z a last_test_qt5_log.zip %APPDATA%\d1vanov\LibquentierTests\logs-quentier\LibquentierTests-log.txt
           cmake --build . --target install
@@ -1643,7 +1643,7 @@ jobs:
           echo "Start sync integrational tests"
           set CONNECTION_TIMEOUT="60000"
           set QTEST_FATAL_FAIL="1"
-          bin\libqt6quentier_synchronization_integrational_tests.exe --use_network_transport_layer -o libqt6quentier_synchronization_integrational_tests_report.txt,txt
+          bin\libqt6quentier_synchronization_integrational_tests.exe -o libqt6quentier_synchronization_integrational_tests_report.txt,txt
           type libqt6quentier_synchronization_integrational_tests_report.txt
           7z a last_test_qt6_log.zip %APPDATA%\d1vanov\LibquentierTests\logs-quentier\*
           cmake --build . --target install
