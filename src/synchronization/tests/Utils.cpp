@@ -56,5 +56,4 @@ void checkRequestContext(
         expectedCtx->increaseConnectionTimeoutExponentially());
 }
 
-
 } // namespace quentier::synchronization::tests

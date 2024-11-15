@@ -879,8 +879,7 @@ QFuture<qevercloud::Notebook> FakeNoteStore::createNotebookAsync(
         0, [ctx = std::move(ctx), backend = m_backend, notebook] {
             if (notebook.linkedNotebookGuid()) {
                 backend->setUriForRequestId(
-                    ctx->requestId(),
-                    notebook.linkedNotebookGuid()->toUtf8());
+                    ctx->requestId(), notebook.linkedNotebookGuid()->toUtf8());
             }
 
             backend->onCreateNotebookRequest(notebook, ctx);
@@ -981,7 +980,8 @@ QFuture<qint32> FakeNoteStore::updateNotebookAsync(
     QObject::connect(
         m_backend, &FakeNoteStoreBackend::updateNotebookRequestReady,
         dummyObjectRaw,
-        [ctx, backend = QPointer{m_backend}, promise = std::move(promise), dummyObjectRaw](
+        [ctx, backend = QPointer{m_backend}, promise = std::move(promise),
+         dummyObjectRaw](
             const qint32 usn, const std::exception_ptr & e,
             const QUuid requestId) {
             if (requestId != ctx->requestId()) {
@@ -1009,8 +1009,7 @@ QFuture<qint32> FakeNoteStore::updateNotebookAsync(
         0, [ctx = std::move(ctx), notebook, backend = m_backend] {
             if (notebook.linkedNotebookGuid()) {
                 backend->setUriForRequestId(
-                    ctx->requestId(),
-                    notebook.linkedNotebookGuid()->toUtf8());
+                    ctx->requestId(), notebook.linkedNotebookGuid()->toUtf8());
             }
 
             backend->onUpdateNotebookRequest(notebook, ctx);

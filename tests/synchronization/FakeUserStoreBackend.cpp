@@ -57,8 +57,8 @@ void FakeUserStoreBackend::setEdamVersionMinor(
     m_edamVersionMinor = edamVersionMinor;
 }
 
-std::optional<FakeUserStoreBackend::UserOrException> FakeUserStoreBackend::findUser(
-    const QString & authenticationToken) const
+std::optional<FakeUserStoreBackend::UserOrException>
+    FakeUserStoreBackend::findUser(const QString & authenticationToken) const
 {
     const auto it = m_users.constFind(authenticationToken);
     if (it != m_users.constEnd()) {

@@ -1418,9 +1418,8 @@ void AccountSynchronizer::processRateLimitReached(
     QNINFO(
         "synchronization::AccountSynchronizer",
         "Detected API rate limit exceeding, rate limit duration = "
-        << (rateLimitDuration
-            ? QString::number(*rateLimitDuration)
-            : QStringLiteral("<none>")));
+            << (rateLimitDuration ? QString::number(*rateLimitDuration)
+                                  : QStringLiteral("<none>")));
 
     Q_ASSERT(context);
 
@@ -1433,10 +1432,9 @@ void AccountSynchronizer::processRateLimitReached(
     // Sync chunks counters for downloaded sync chunks should be available
     // in counters cached within callbackWrapper
     if (auto counters =
-        context->callbackWrapper->userOwnSyncChunksDataCounters())
+            context->callbackWrapper->userOwnSyncChunksDataCounters())
     {
-        syncResult->m_userAccountSyncChunksDataCounters =
-            std::move(counters);
+        syncResult->m_userAccountSyncChunksDataCounters = std::move(counters);
     }
 
     const auto linkedNotebookSyncChunksDataCounters =
@@ -1448,13 +1446,12 @@ void AccountSynchronizer::processRateLimitReached(
         auto counters = it.value();
         Q_ASSERT(counters);
 
-        syncResult
-            ->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
+        syncResult->m_linkedNotebookSyncChunksDataCounters[linkedNotebookGuid] =
             std::move(counters);
     }
 
-    syncResult->m_stopSynchronizationError = StopSynchronizationError{
-        RateLimitReachedError{rateLimitDuration}};
+    syncResult->m_stopSynchronizationError =
+        StopSynchronizationError{RateLimitReachedError{rateLimitDuration}};
     context->promise->addResult(std::move(syncResult));
     context->promise->finish();
 }

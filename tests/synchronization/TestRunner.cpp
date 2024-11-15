@@ -1185,8 +1185,8 @@ void TestRunner::runTestScenario()
         if (!res) {
             QNWARNING(
                 "tests::synchronization::TestRunner",
-                "checkNoNotelessLinkedNotebookTagsInLocalStorageAfterSync failed: "
-                    << errorMessage);
+                "checkNoNotelessLinkedNotebookTagsInLocalStorageAfterSync "
+                    << "failed: " << errorMessage);
         }
         const QByteArray errorMessageData = errorMessage.toLatin1();
         QVERIFY2(res, errorMessageData.data());
