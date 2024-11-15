@@ -559,7 +559,8 @@ jobs:
           ./bin/libqt5quentier_local_storage_sql_unit_tests
           ./bin/libqt5quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
-          xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests --use_network_transport_layer -platform minimal
+          export SYNC_INTEGRATIONAL_TESTS_USE_NETWORK_TRANSPORT_LAYER=1
+          xvfb-run ./bin/libqt5quentier_synchronization_integrational_tests -platform minimal
           7z a last_test_qt5_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '5.15.4' }}
 
@@ -578,7 +579,8 @@ jobs:
           ./bin/libqt6quentier_synchronization_unit_tests
           export CONNECTION_TIMEOUT=60000
           export QTEST_FATAL_FAIL=1
-          xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests --use_network_transport_layer -platform minimal
+          export SYNC_INTEGRATIONAL_TESTS_USE_NETWORK_TRANSPORT_LAYER=1
+          xvfb-run ./bin/libqt6quentier_synchronization_integrational_tests -platform minimal
           7z a last_test_qt6_log.zip $HOME/.libquentiertests/logs-quentier/*
         if: ${{ matrix.qt_version == '6.7.3' }}
 
@@ -1568,7 +1570,6 @@ jobs:
           bin\libqt5quentier_synchronization_unit_tests.exe > libqt5quentier_synchronization_unit_tests.txt 2>&1
           type libqt5quentier_synchronization_unit_tests.txt
           echo "Start sync integrational tests"
-          set CONNECTION_TIMEOUT="60000"
           bin\libqt5quentier_synchronization_integrational_tests.exe -o libqt5quentier_synchronization_integrational_tests_report.txt,txt
           type libqt5quentier_synchronization_integrational_tests_report.txt
           7z a last_test_qt5_log.zip %APPDATA%\d1vanov\LibquentierTests\logs-quentier\LibquentierTests-log.txt
@@ -1641,7 +1642,6 @@ jobs:
           bin\libqt6quentier_synchronization_unit_tests.exe > libqt6quentier_synchronization_unit_tests.txt 2>&1
           type libqt6quentier_synchronization_unit_tests.txt
           echo "Start sync integrational tests"
-          set CONNECTION_TIMEOUT="60000"
           set QTEST_FATAL_FAIL="1"
           bin\libqt6quentier_synchronization_integrational_tests.exe -o libqt6quentier_synchronization_integrational_tests_report.txt,txt
           type libqt6quentier_synchronization_integrational_tests_report.txt
