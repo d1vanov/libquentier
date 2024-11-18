@@ -29,9 +29,7 @@ namespace quentier {
 template <
     class ValueType, class ErrorType,
     typename =
-        typename std::enable_if_t<!std::is_void_v<std::decay_t<ErrorType>>>,
-    typename = typename std::enable_if_t<
-        !std::is_same_v<std::decay_t<ValueType>, std::decay_t<ErrorType>>>>
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<ErrorType>>>>
 class Result
 {
 private:
@@ -43,8 +41,7 @@ private:
 
     template <>
     struct ValueWrapper<void>
-    {
-    };
+    {};
 
 public:
     template <
