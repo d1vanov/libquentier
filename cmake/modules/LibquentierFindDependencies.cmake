@@ -71,6 +71,9 @@ else()
 endif()
 
 find_package(OpenSSL ${LIBQUENTIER_FIND_DEPS_ARGS})
+if (${OPENSSL_VERSION} VERSION_LESS "1.1.1")
+  message(FATAL "OpenSSL >= 1.1.1 is required")
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/LibquentierFindTidyHtml5.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/LibquentierFindHunspell.cmake")
