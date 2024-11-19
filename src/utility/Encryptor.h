@@ -24,15 +24,13 @@
 
 #include <array>
 #include <cstddef>
+#include <mutex>
+#include <vector>
 
 namespace quentier {
 
 class Encryptor : public IEncryptor
 {
-public:
-    Encryptor();
-    ~Encryptor() override;
-
 public: // IEncryptor
     [[nodiscard]] Result<QString, ErrorString> encrypt(
         const QString & text, const QString & passphrase) override;
@@ -62,7 +60,7 @@ private:
 
     [[nodiscard]] bool generateKey(
         const QByteArray & passphraseData, const unsigned char * salt,
-        quint32 keySize, ErrorString & errorDescription);
+        std::size_t keySize, ErrorString & errorDescription);
 
     [[nodiscard]] bool calculateHmac(
         const QByteArray & passphraseData, const unsigned char * salt,
@@ -91,27 +89,29 @@ private:
     void rc2KeyCodesFromPassphrase(const QString & passphrase) const;
 
     [[nodiscard]] QString decryptRc2Chunk(
-        const QByteArray & inputCharCodes, const QVector<int> & key) const;
+        const QByteArray & inputCharCodes, const std::vector<int> & key) const;
 
     [[nodiscard]] qint32 crc32(const QString & str) const;
 
 private:
     // Evernote service defined constants
-    static constexpr std::size_t s_aes_keysize = 16;
-    static constexpr std::size_t s_aes_hmacsize = 32;
+    static constexpr std::size_t s_aesKeySize = 16;
+    static constexpr std::size_t s_aesHmacSize = 32;
 
-    std::array<unsigned char, s_aes_keysize> m_salt;
-    std::array<unsigned char, s_aes_keysize> m_saltmac;
-    std::array<unsigned char, s_aes_keysize> m_iv;
+    std::mutex m_mutex;
 
-    std::array<unsigned char, s_aes_keysize> m_key;
-    std::array<unsigned char, s_aes_hmacsize> m_hmac;
+    std::array<unsigned char, s_aesKeySize> m_salt;
+    std::array<unsigned char, s_aesKeySize> m_saltmac;
+    std::array<unsigned char, s_aesKeySize> m_iv;
+
+    std::array<unsigned char, s_aesKeySize> m_key;
+    std::array<unsigned char, s_aesHmacSize> m_hmac;
 
     // Cache helpers
-    mutable QList<int> m_cached_xkey;
-    mutable QList<int> m_cached_key;
-    mutable std::array<int, 8> m_decrypt_rc2_chunk_key_codes;
-    mutable QString m_rc2_chunk_out;
+    mutable std::vector<int> m_cachedXkey;
+    mutable std::vector<int> m_cachedKey;
+    mutable std::array<int, 8> m_decryptRc2ChunkKeyCodes;
+    mutable QString m_rc2ChunkOut;
 };
 
 } // namespace quentier

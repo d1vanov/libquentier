@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,16 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <quentier/utility/Factory.h>
 
-#include <memory>
+#include "Encryptor.h"
 
 namespace quentier {
 
-struct IEncryptor;
-using IEncryptorPtr = std::shared_ptr<IEncryptor>;
-
-class IKeychainService;
-using IKeychainServicePtr = std::shared_ptr<IKeychainService>;
+IEncryptorPtr createOpenSslEncryptor()
+{
+    return std::make_shared<Encryptor>();
+}
 
 } // namespace quentier
