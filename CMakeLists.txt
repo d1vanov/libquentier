@@ -404,11 +404,13 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/Checks.cpp
     src/utility/DateTime.cpp
     src/utility/Initialize.cpp
+    src/utility/IEncryptor.cpp
     src/utility/MessageBox.cpp
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/Encryptor.cpp
     src/utility/EventLoopWithExitStatus.cpp
+    src/utility/Factory.cpp
     src/utility/FileCopier.cpp
     src/utility/FileCopier_p.cpp
     src/utility/FileIOProcessorAsync.cpp
