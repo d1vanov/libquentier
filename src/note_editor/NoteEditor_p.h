@@ -27,7 +27,8 @@
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 #include <quentier/utility/StringUtils.h>
 
 #include <qevercloud/types/Note.h>
@@ -42,6 +43,7 @@
 #include <QPointer>
 #include <QProgressDialog>
 #include <QUndoStack>
+#include <QUuid>
 #include <QWebEngineView>
 
 #include <memory>
@@ -366,14 +368,14 @@ public Q_SLOTS:
     void decryptEncryptedTextUnderCursor() override;
 
     void decryptEncryptedText(
-        QString encryptedText, QString cipher, QString keyLength, QString hint,
+        QString encryptedText, QString cipherStr, QString hint,
         QString enCryptIndex) override;
 
     void hideDecryptedTextUnderCursor() override;
 
     void hideDecryptedText(
-        QString encryptedText, QString decryptedText, QString cipher,
-        QString keyLength, QString hint, QString enDecryptedIndex) override;
+        QString encryptedText, QString decryptedText, QString cipherStr,
+        QString hint, QString enDecryptedIndex) override;
 
     void editHyperlinkDialog() override;
     void copyHyperlink() override;
@@ -625,7 +627,7 @@ private Q_SLOTS:
         const QVector<std::pair<QString, QString>> & extraData);
 
     void onDecryptEncryptedTextDelegateFinished(
-        QString encryptedText, QString cipher, size_t length, QString hint,
+        QString encryptedText, IEncryptor::Cipher cipher, QString hint,
         QString decryptedText, QString passphrase, bool rememberForSession,
         bool decryptPermanently);
 
@@ -1300,7 +1302,7 @@ private:
      */
     qint64 m_lastInteractionTimestamp = -1;
 
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
+    IEncryptorPtr m_encryptor;
     enml::IDecryptedTextCachePtr m_decryptedTextCache;
     enml::IENMLTagsConverterPtr m_enmlTagsConverter;
     enml::IConverterPtr m_enmlConverter;

@@ -18,8 +18,41 @@
 
 #include <quentier/utility/IEncryptor.h>
 
+#include <QDebug>
+#include <QTextStream>
+
 namespace quentier {
 
+namespace {
+
+template <class T>
+void printCipher(const IEncryptor::Cipher cipher, T & t)
+{
+    switch (cipher)
+    {
+    case IEncryptor::Cipher::AES:
+        t << "AES";
+        break;
+    case IEncryptor::Cipher::RC2:
+        t << "RC2";
+        break;
+    }
+}
+
+} // namespace
+
 IEncryptor::~IEncryptor() noexcept = default;
+
+QDebug & operator<<(QDebug & dbg, const IEncryptor::Cipher cipher)
+{
+    printCipher(cipher, dbg);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const IEncryptor::Cipher cipher)
+{
+    printCipher(cipher, strm);
+    return strm;
+}
 
 } // namespace quentier

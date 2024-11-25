@@ -22,6 +22,8 @@
 
 #include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <qevercloud/types/Note.h>
 
@@ -45,8 +47,8 @@ class EncryptSelectedTextDelegate final : public QObject
     Q_OBJECT
 public:
     explicit EncryptSelectedTextDelegate(
-        NoteEditorPrivate * pNoteEditor,
-        std::shared_ptr<EncryptionManager> encryptionManager,
+        NoteEditorPrivate * noteEditor,
+        IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         enml::IENMLTagsConverterPtr enmlTagsConverter);
 
@@ -61,8 +63,8 @@ private Q_SLOTS:
     void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onSelectedTextEncrypted(
-        QString selectedText, QString encryptedText, QString cipher,
-        size_t keyLength, QString hint, bool rememberForSession);
+        QString selectedText, QString encryptedText, IEncryptor::Cipher cipher,
+        QString hint, bool rememberForSession);
 
     void onEncryptionScriptDone(const QVariant & data);
 
@@ -74,8 +76,8 @@ private:
     using JsCallback = JsResultCallbackFunctor<EncryptSelectedTextDelegate>;
 
 private:
-    const QPointer<NoteEditorPrivate> m_pNoteEditor;
-    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const QPointer<NoteEditorPrivate> m_noteEditor;
+    const IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
@@ -83,8 +85,7 @@ private:
 
     QString m_selectionHtml;
     QString m_encryptedText;
-    QString m_cipher;
-    QString m_keyLength;
+    IEncryptor::Cipher m_cipher = IEncryptor::Cipher::AES;
     QString m_hint;
     bool m_rememberForSession = false;
 };

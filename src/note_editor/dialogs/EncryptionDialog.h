@@ -21,7 +21,8 @@
 #include <quentier/enml/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <QDialog>
 
@@ -40,8 +41,7 @@ class EncryptionDialog final : public QDialog
     Q_OBJECT
 public:
     explicit EncryptionDialog(
-        QString textToEncrypt, Account account,
-        std::shared_ptr<EncryptionManager> encryptionManager,
+        QString textToEncrypt, Account account, IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr);
 
@@ -55,8 +55,8 @@ public:
 
 Q_SIGNALS:
     void encryptionAccepted(
-        QString textToEncrypt, QString encryptedText, QString cipher,
-        size_t keyLength, QString hint, bool rememberForSession);
+        QString textToEncrypt, QString encryptedText, IEncryptor::Cipher cipher,
+        QString hint, bool rememberForSession);
 
 private Q_SLOTS:
     void setRememberPassphraseDefaultState(bool checked);
@@ -68,12 +68,12 @@ private:
     void setError(const ErrorString & error);
 
 private:
-    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
-    Ui::EncryptionDialog * m_pUI;
+    Ui::EncryptionDialog * m_ui;
 
     QString m_textToEncrypt;
-    QString m_cachedEncryptedText;
+    QString m_encryptedText;
     Account m_account;
 };
 

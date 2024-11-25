@@ -24,6 +24,9 @@
 
 #include <QString>
 
+class QDebug;
+class QTextStream;
+
 namespace quentier {
 
 /**
@@ -48,6 +51,11 @@ struct QUENTIER_EXPORT IEncryptor
          */
         AES
     };
+
+    friend QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, Cipher cipher);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, Cipher cipher);
 
     /**
      * Encrypt text fragment using AES cipher (RC2 cipher is only used for

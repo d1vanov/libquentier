@@ -183,14 +183,14 @@ public:
     virtual void decryptEncryptedTextUnderCursor() = 0;
 
     virtual void decryptEncryptedText(
-        QString encryptedText, QString cipher, QString keyLength, QString hint,
+        QString encryptedText, QString cipher, QString hint,
         QString enCryptIndex) = 0;
 
     virtual void hideDecryptedTextUnderCursor() = 0;
 
     virtual void hideDecryptedText(
         QString encryptedText, QString decryptedText, QString cipher,
-        QString keyLength, QString hint, QString enDecryptedIndex) = 0;
+        QString hint, QString enDecryptedIndex) = 0;
 
     virtual void editHyperlinkDialog() = 0;
     virtual void copyHyperlink() = 0;

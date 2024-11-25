@@ -19,7 +19,7 @@
 #pragma once
 
 #include <quentier/enml/IDecryptedTextCache.h>
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
 
 #include <QHash>
 #include <QtGlobal>
@@ -28,11 +28,14 @@ namespace quentier::enml {
 
 class DecryptedTextCache: public IDecryptedTextCache
 {
+public:
+    explicit DecryptedTextCache(IEncryptorPtr encryptor);
+
 public: // IDecryptedTextCache
     void addDecryptexTextInfo(
         const QString & encryptedText, const QString & decryptedText,
-        const QString & passphrase, const QString & cipher,
-        std::size_t keyLength, RememberForSession rememberForSession) override;
+        const QString & passphrase, IEncryptor::Cipher cipher,
+        RememberForSession rememberForSession) override;
 
     [[nodiscard]] std::optional<std::pair<QString, RememberForSession>>
         findDecryptedTextInfo(const QString & encryptedText) const override;
@@ -49,8 +52,7 @@ private:
     {
         QString m_decryptedText;
         QString m_passphrase;
-        QString m_cipher;
-        std::size_t m_keyLength = 0;
+        IEncryptor::Cipher m_cipher;
         RememberForSession m_rememberForSession = RememberForSession::No;
     };
 
@@ -59,7 +61,7 @@ private:
 private:
     DataHash m_dataHash;
     DataHash m_staleDataHash;
-    EncryptionManager m_encryptionManager;
+    IEncryptorPtr m_encryptor;
 };
 
 } // namespace quentier::enml

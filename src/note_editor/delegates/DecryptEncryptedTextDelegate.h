@@ -22,17 +22,17 @@
 
 #include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <qevercloud/types/Note.h>
 
 #include <QPointer>
 
-#include <cstddef>
 #include <memory>
 
 namespace quentier {
 
-class EncryptionManager;
 class NoteEditorPrivate;
 
 /**
@@ -45,9 +45,9 @@ class DecryptEncryptedTextDelegate final : public QObject
     Q_OBJECT
 public:
     explicit DecryptEncryptedTextDelegate(
-        QString encryptedTextId, QString encryptedText, QString cipher,
-        const QString & length, QString hint, NoteEditorPrivate * pNoteEditor,
-        std::shared_ptr<EncryptionManager> encryptionManager,
+        QString encryptedTextId, QString encryptedText,
+        IEncryptor::Cipher cipher, QString hint, NoteEditorPrivate * noteEditor,
+        IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         enml::IENMLTagsConverterPtr enmlTagsConverter);
 
@@ -55,7 +55,7 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QString encryptedText, QString cipher, size_t length, QString hint,
+        QString encryptedText, IEncryptor::Cipher cipher, QString hint,
         QString decryptedText, QString passphrase, bool rememberForSession,
         bool decryptPermanently);
 
@@ -66,8 +66,8 @@ private Q_SLOTS:
     void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onEncryptedTextDecrypted(
-        QString cipher, size_t keyLength, QString encryptedText,
-        QString passphrase, QString decryptedText, bool rememberForSession,
+        QString encryptedText, IEncryptor::Cipher cipher, QString passphrase,
+        QString decryptedText, bool rememberForSession,
         bool decryptPermanently);
 
     void onDecryptionScriptFinished(const QVariant & data);
@@ -79,21 +79,20 @@ private:
     using JsCallback = JsResultCallbackFunctor<DecryptEncryptedTextDelegate>;
 
 private:
-    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     QString m_encryptedTextId;
     QString m_encryptedText;
-    QString m_cipher;
-    std::size_t m_length = 0;
+    IEncryptor::Cipher m_cipher;
     QString m_hint;
     QString m_decryptedText;
     QString m_passphrase;
     bool m_rememberForSession = false;
     bool m_decryptPermanently = false;
 
-    QPointer<NoteEditorPrivate> m_pNoteEditor;
+    QPointer<NoteEditorPrivate> m_noteEditor;
 };
 
 } // namespace quentier
