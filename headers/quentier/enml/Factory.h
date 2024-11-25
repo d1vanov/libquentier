@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/enml/Fwd.h>
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 namespace quentier::enml {
@@ -26,7 +27,8 @@ namespace quentier::enml {
 /**
  * @brief factory function for IDecryptedTextCache
  */
-[[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr createDecryptedTextCache();
+[[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr
+    createDecryptedTextCache(IEncryptorPtr encryptor);
 
 /**
  * @brief factory function for IENMLTagsConverter

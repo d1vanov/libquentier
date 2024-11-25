@@ -21,6 +21,7 @@
 #include <quentier/enml/IDecryptedTextCache.h>
 #include <quentier/enml/IHtmlData.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Factory.h>
 
 #include <QFile>
 #include <QXmlStreamReader>
@@ -477,7 +478,8 @@ Here's some bold red text!</span>
 <div>-- Author unknown</div>
 </en-note>)#");
 
-    auto decryptedTextCache = createDecryptedTextCache();
+    auto encryptor = createOpenSslEncryptor();
+    auto decryptedTextCache = createDecryptedTextCache(std::move(encryptor));
     auto res = convertEnmlToHtmlAndBackImpl(enml, *decryptedTextCache);
     EXPECT_TRUE(res.isValid()) << res.error().toStdString();
 }
@@ -498,7 +500,8 @@ TEST(ConverterTest, ConvertEnmlWithToDoTagsToHtmlAndBack)
 <en-todo checked="false"/>Another not yet completed item
 </en-note>)#");
 
-    auto decryptedTextCache = createDecryptedTextCache();
+    auto encryptor = createOpenSslEncryptor();
+    auto decryptedTextCache = createDecryptedTextCache(std::move(encryptor));
     auto res = convertEnmlToHtmlAndBackImpl(enml, *decryptedTextCache);
     EXPECT_TRUE(res.isValid()) << res.error().toStdString();
 }
@@ -603,7 +606,8 @@ r1MUeNkzHGVP5fHEppUlIExDG/Vpjh9KK1uu0VqTFoUWA0IXAAMA5eHnbxhBrjvL
 AwnDDBoCUOsAb2nCh2UZ6LSFneb58xQ/6WeoQ7QDDHLSoUIXn</en-crypt>
 </en-note>)#");
 
-    auto decryptedTextCache = createDecryptedTextCache();
+    auto encryptor = createOpenSslEncryptor();
+    auto decryptedTextCache = createDecryptedTextCache(std::move(encryptor));
 
     decryptedTextCache->addDecryptexTextInfo(
         QStringLiteral("K+sUXSxI2Mt075+pSDxR/gnCNIEnk5XH1P/D0Eie17"
@@ -613,7 +617,7 @@ AwnDDBoCUOsAb2nCh2UZ6LSFneb58xQ/6WeoQ7QDDHLSoUIXn</en-crypt>
         QStringLiteral("<span style=\"display: inline !important; float: none; "
                        "\">Ok, here's a piece of text I'm going to encrypt "
                        "now</span>"),
-        QStringLiteral("my_own_encryption_key_1988"), QStringLiteral("RC2"), 64,
+        QStringLiteral("my_own_encryption_key_1988"), IEncryptor::Cipher::RC2,
         IDecryptedTextCache::RememberForSession::Yes);
 
     decryptedTextCache->addDecryptexTextInfo(
@@ -623,7 +627,7 @@ AwnDDBoCUOsAb2nCh2UZ6LSFneb58xQ/6WeoQ7QDDHLSoUIXn</en-crypt>
                        "VeK60YoiJnSOHvEYptoOs1FVfZAwnDDBoCUOsAb2nCh2UZ6LSFneb58"
                        "xQ/6WeoQ7QDDHLSoUIXn"),
         QStringLiteral("Sample text said to be the decrypted one"),
-        QStringLiteral("MyEncryptionPassword"), QStringLiteral("AES"), 128,
+        QStringLiteral("MyEncryptionPassword"), IEncryptor::Cipher::AES,
         IDecryptedTextCache::RememberForSession::Yes);
 
     auto res = convertEnmlToHtmlAndBackImpl(enml, *decryptedTextCache);
@@ -647,7 +651,8 @@ type="image/jpeg" hash="f03c1c2d96bc67eda02968c8b5af9008"/>
 type="application/pdf" hash="6051a24c8677fd21c65c1566654c228"/>
 </en-note>)#");
 
-    auto decryptedTextCache = createDecryptedTextCache();
+    auto encryptor = createOpenSslEncryptor();
+    auto decryptedTextCache = createDecryptedTextCache(std::move(encryptor));
     auto res = convertEnmlToHtmlAndBackImpl(enml, *decryptedTextCache);
     EXPECT_TRUE(res.isValid()) << res.error().toStdString();
 }
@@ -668,7 +673,8 @@ TEST_P(ConverterComplexEnmlTest, ConvertComplexEnmlToHtmlAndBack)
 
     const QString enml = QString::fromLocal8Bit(file.readAll());
 
-    auto decryptedTextCache = createDecryptedTextCache();
+    auto encryptor = createOpenSslEncryptor();
+    auto decryptedTextCache = createDecryptedTextCache(std::move(encryptor));
     auto res = convertEnmlToHtmlAndBackImpl(enml, *decryptedTextCache);
     EXPECT_TRUE(res.isValid()) << res.error().toStdString();
 }

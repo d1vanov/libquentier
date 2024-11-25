@@ -24,9 +24,9 @@
 
 namespace quentier::enml {
 
-IDecryptedTextCachePtr createDecryptedTextCache()
+IDecryptedTextCachePtr createDecryptedTextCache(IEncryptorPtr encryptor)
 {
-    return std::make_shared<DecryptedTextCache>();
+    return std::make_shared<DecryptedTextCache>(std::move(encryptor));
 }
 
 IENMLTagsConverterPtr createEnmlTagsConverter()
