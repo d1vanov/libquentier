@@ -18,8 +18,10 @@
 
 #include "ObfuscatingKeychainService.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -28,8 +30,6 @@ namespace quentier {
 
 namespace keys {
 
-constexpr const char * cipher = "Cipher";
-constexpr const char * keyLength = "KeyLength";
 constexpr const char * value = "Value";
 
 } // namespace keys
@@ -39,18 +39,13 @@ namespace {
 constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
 [[nodiscard]] bool writePasswordImpl(
-    EncryptionManager & encryptionManager, const QString & service, // NOLINT
+    IEncryptor & encryptor, const QString & service, // NOLINT
     const QString & key, const QString & password,
     ErrorString & errorDescription)
 {
-    QString encryptedString;
-    QString cipher;
-    std::size_t keyLength = 0;
-
-    if (!encryptionManager.encrypt(
-            password, key, cipher, keyLength, encryptedString,
-            errorDescription))
-    {
+    const auto res = encryptor.encrypt(password, key);
+    if (!res.isValid()) {
+        errorDescription = res.error();
         return false;
     }
 
@@ -58,13 +53,9 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
         QString::fromUtf8(settingsFileName)};
 
     obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
-    obfuscatedKeychainStorage.setValue(keys::cipher, cipher);
 
     obfuscatedKeychainStorage.setValue(
-        keys::keyLength, QVariant::fromValue(keyLength));
-
-    obfuscatedKeychainStorage.setValue(
-        keys::value, encryptedString.toUtf8().toBase64());
+        keys::value, res.get().toUtf8().toBase64());
 
     obfuscatedKeychainStorage.endGroup();
     obfuscatedKeychainStorage.sync();
@@ -73,44 +64,34 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 }
 
 [[nodiscard]] IKeychainService::ErrorCode readPasswordImpl(
-    EncryptionManager & encryptionManager, const QString & service, // NOLINT
+    IEncryptor & encryptor, const QString & service, // NOLINT
     const QString & key, QString & password, ErrorString & errorDescription)
 {
     ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};
 
+    QString encryptedText;
     obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
 
-    if (!obfuscatedKeychainStorage.contains(keys::cipher) &&
-        !obfuscatedKeychainStorage.contains(keys::keyLength) &&
-        !obfuscatedKeychainStorage.contains(keys::value))
-    {
-        return IKeychainService::ErrorCode::EntryNotFound;
+    if (obfuscatedKeychainStorage.contains(keys::value)) {
+        encryptedText = QString::fromUtf8(QByteArray::fromBase64(
+                obfuscatedKeychainStorage.value(keys::value).toByteArray()));
     }
-
-    QString cipher = obfuscatedKeychainStorage.value(keys::cipher).toString();
-
-    bool conversionResult = false;
-    std::size_t keyLength = obfuscatedKeychainStorage.value(keys::keyLength)
-                                .toULongLong(&conversionResult);
-    if (!conversionResult) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "utility::keychain::ObfuscatingKeychainService",
-            "Could not convert key length to unsigned long"));
-        return IKeychainService::ErrorCode::OtherError;
-    }
-
-    QString encryptedText = QString::fromUtf8(QByteArray::fromBase64(
-        obfuscatedKeychainStorage.value(keys::value).toByteArray()));
 
     obfuscatedKeychainStorage.endGroup();
 
-    if (!encryptionManager.decrypt(
-            encryptedText, key, cipher, keyLength, password, errorDescription))
-    {
+    if (encryptedText.isEmpty()) {
+        return IKeychainService::ErrorCode::EntryNotFound;
+    }
+
+    const auto res =
+        encryptor.decrypt(encryptedText, key, IEncryptor::Cipher::AES);
+    if (!res.isValid()) {
+        errorDescription = res.error();
         return IKeychainService::ErrorCode::OtherError;
     }
 
+    password = res.get();
     return IKeychainService::ErrorCode::NoError;
 }
 
@@ -121,20 +102,28 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
         QString::fromUtf8(settingsFileName)};
 
     obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
+    ApplicationSettings::GroupCloser groupCloser{obfuscatedKeychainStorage};
 
-    if (obfuscatedKeychainStorage.allKeys().isEmpty()) {
-        obfuscatedKeychainStorage.endGroup();
+    if (!obfuscatedKeychainStorage.contains(keys::value)) {
         return IKeychainService::ErrorCode::EntryNotFound;
     }
 
     obfuscatedKeychainStorage.remove(QStringLiteral(""));
-    obfuscatedKeychainStorage.endGroup();
     return IKeychainService::ErrorCode::NoError;
 }
 
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
+
+ObfuscatingKeychainService::ObfuscatingKeychainService(
+    IEncryptorPtr encryptor) : m_encryptor{std::move(encryptor)}
+{
+    if (Q_UNLIKELY(!m_encryptor)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "ObfuscatingKeychainService ctor: encryptor is null")}};
+    }
+}
 
 ObfuscatingKeychainService::~ObfuscatingKeychainService() noexcept = default;
 
@@ -143,7 +132,7 @@ QFuture<void> ObfuscatingKeychainService::writePassword(
 {
     ErrorString errorDescription;
     if (writePasswordImpl(
-            m_encryptionManager, service, key, password, errorDescription))
+            *m_encryptor, service, key, password, errorDescription))
     {
         return threading::makeReadyFuture();
     }
@@ -158,7 +147,7 @@ QFuture<QString> ObfuscatingKeychainService::readPassword(
     QString password;
     ErrorString errorDescription;
     const auto errorCode = readPasswordImpl(
-        m_encryptionManager, service, key, password, errorDescription);
+        *m_encryptor, service, key, password, errorDescription);
     if (errorCode == IKeychainService::ErrorCode::NoError) {
         return threading::makeReadyFuture<QString>(std::move(password));
     }

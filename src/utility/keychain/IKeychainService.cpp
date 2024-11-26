@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/utility/Factory.h>
 #include <quentier/utility/IKeychainService.h>
 
 #include "CompositeKeychainService.h"
@@ -134,7 +135,8 @@ IKeychainServicePtr newQtKeychainService()
 
 IKeychainServicePtr newObfuscatingKeychainService()
 {
-    return std::make_shared<ObfuscatingKeychainService>();
+    return std::make_shared<ObfuscatingKeychainService>(
+        createOpenSslEncryptor());
 }
 
 IKeychainServicePtr newCompositeKeychainService(

@@ -18,8 +18,10 @@
 
 #include <utility/keychain/ObfuscatingKeychainService.h>
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Factory.h>
 
 #include <gtest/gtest.h>
 
@@ -52,6 +54,8 @@ protected:
     }
 
 protected:
+    const IEncryptorPtr m_encryptor = createOpenSslEncryptor();
+
     const QString m_service = QStringLiteral("service");
     const QString m_key = QStringLiteral("key");
     const QString m_password = QStringLiteral("password");
@@ -59,12 +63,17 @@ protected:
 
 TEST_F(ObfuscatingKeychainServiceTest, Ctor)
 {
-    EXPECT_NO_THROW(ObfuscatingKeychainService());
+    EXPECT_NO_THROW(ObfuscatingKeychainService{m_encryptor});
+}
+
+TEST_F(ObfuscatingKeychainServiceTest, CtorNullEncryptor)
+{
+    EXPECT_THROW(ObfuscatingKeychainService{nullptr}, InvalidArgument);
 }
 
 TEST_F(ObfuscatingKeychainServiceTest, WritePassword)
 {
-    ObfuscatingKeychainService obfuscatingKeychainService;
+    ObfuscatingKeychainService obfuscatingKeychainService{m_encryptor};
 
     auto writeFuture =
         obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
@@ -73,15 +82,6 @@ TEST_F(ObfuscatingKeychainServiceTest, WritePassword)
 
     ApplicationSettings settings{settingsName()};
     settings.beginGroup(settingsGroupName());
-
-    QString cipher = settings.value("Cipher").toString();
-    EXPECT_EQ(cipher, QStringLiteral("AES"));
-
-    bool conversionResult = false;
-    std::size_t keyLength =
-        settings.value("KeyLength").toULongLong(&conversionResult);
-    EXPECT_TRUE(conversionResult);
-    EXPECT_EQ(keyLength, 128);
 
     QString value = settings.value("Value").toString();
     EXPECT_FALSE(value.isEmpty());
@@ -92,7 +92,7 @@ TEST_F(ObfuscatingKeychainServiceTest, WritePassword)
 
 TEST_F(ObfuscatingKeychainServiceTest, ReadNonexistentPassword)
 {
-    ObfuscatingKeychainService obfuscatingKeychainService;
+    ObfuscatingKeychainService obfuscatingKeychainService{m_encryptor};
 
     auto readFuture = obfuscatingKeychainService.readPassword(m_service, m_key);
     ASSERT_TRUE(readFuture.isFinished());
@@ -111,7 +111,7 @@ TEST_F(ObfuscatingKeychainServiceTest, ReadNonexistentPassword)
 
 TEST_F(ObfuscatingKeychainServiceTest, ReadWrittenPassword)
 {
-    ObfuscatingKeychainService obfuscatingKeychainService;
+    ObfuscatingKeychainService obfuscatingKeychainService{m_encryptor};
 
     auto writeFuture =
         obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
@@ -126,7 +126,7 @@ TEST_F(ObfuscatingKeychainServiceTest, ReadWrittenPassword)
 
 TEST_F(ObfuscatingKeychainServiceTest, DeleteNonexistentPassword)
 {
-    ObfuscatingKeychainService obfuscatingKeychainService;
+    ObfuscatingKeychainService obfuscatingKeychainService{m_encryptor};
 
     auto deleteFuture =
         obfuscatingKeychainService.deletePassword(m_service, m_key);
@@ -136,7 +136,7 @@ TEST_F(ObfuscatingKeychainServiceTest, DeleteNonexistentPassword)
 
 TEST_F(ObfuscatingKeychainServiceTest, DeleteWrittenPassword)
 {
-    ObfuscatingKeychainService obfuscatingKeychainService;
+    ObfuscatingKeychainService obfuscatingKeychainService{m_encryptor};
 
     auto writeFuture =
         obfuscatingKeychainService.writePassword(m_service, m_key, m_password);
@@ -150,15 +150,13 @@ TEST_F(ObfuscatingKeychainServiceTest, DeleteWrittenPassword)
 
     ApplicationSettings settings{settingsName()};
     settings.beginGroup(settingsGroupName());
-    EXPECT_FALSE(settings.contains("Cipher"));
-    EXPECT_FALSE(settings.contains("KeyLength"));
     EXPECT_FALSE(settings.contains("Value"));
     settings.endGroup();
 }
 
 TEST_F(ObfuscatingKeychainServiceTest, ReadWrittenThenDeletedPassword)
 {
-    ObfuscatingKeychainService obfuscatingKeychainService;
+    ObfuscatingKeychainService obfuscatingKeychainService{m_encryptor};
 
     auto writeFuture =
         obfuscatingKeychainService.writePassword(m_service, m_key, m_password);

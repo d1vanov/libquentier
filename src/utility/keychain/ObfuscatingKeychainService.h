@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/IKeychainService.h>
 
 namespace quentier {
@@ -32,6 +32,9 @@ namespace quentier {
 class ObfuscatingKeychainService final : public IKeychainService
 {
 public:
+    explicit ObfuscatingKeychainService(IEncryptorPtr encryptor);
+
+public:
     ~ObfuscatingKeychainService() noexcept override;
 
     [[nodiscard]] QFuture<void> writePassword(
@@ -44,7 +47,7 @@ public:
         QString service, QString key) override;
 
 private:
-    mutable EncryptionManager m_encryptionManager;
+    const IEncryptorPtr m_encryptor;
 };
 
 } // namespace quentier
