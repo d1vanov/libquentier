@@ -33,7 +33,6 @@
 
 namespace quentier {
 
-class EncryptionManager;
 class NoteEditorPrivate;
 
 /**
