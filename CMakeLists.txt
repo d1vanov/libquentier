@@ -173,7 +173,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/Checks.h
     headers/quentier/utility/Compat.h
     headers/quentier/utility/DateTime.h
-    headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/Factory.h
     headers/quentier/utility/FileCopier.h
@@ -244,7 +243,6 @@ set(PRIVATE_HEADERS
     src/synchronization/types/SyncStateBuilder.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
-    src/utility/EncryptionManager_p.h
     src/utility/Encryptor.h
     src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
@@ -406,8 +404,6 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/Initialize.cpp
     src/utility/IEncryptor.cpp
     src/utility/MessageBox.cpp
-    src/utility/EncryptionManager.cpp
-    src/utility/EncryptionManager_p.cpp
     src/utility/Encryptor.cpp
     src/utility/EventLoopWithExitStatus.cpp
     src/utility/Factory.cpp
@@ -791,7 +787,6 @@ target_compile_definitions(${LIBNAME}
 set(TEST_HEADERS
     src/tests/types/ResourceRecognitionIndicesParsingTest.h
     src/tests/types/TypesTester.h
-    src/tests/utility/EncryptionManagerTests.h
     src/tests/utility/LRUCacheTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/utility/UtilityTester.h
@@ -800,7 +795,6 @@ set(TEST_HEADERS
 set(TEST_SOURCES
     src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
     src/tests/types/TypesTester.cpp
-    src/tests/utility/EncryptionManagerTests.cpp
     src/tests/utility/LRUCacheTests.cpp
     src/tests/utility/TagSortByParentChildRelationsTest.cpp
     src/tests/utility/UtilityTester.cpp

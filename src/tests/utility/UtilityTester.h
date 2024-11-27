@@ -32,12 +32,7 @@ public:
 private Q_SLOTS:
     void init();
 
-    void encryptDecryptNoteTest();
-    void decryptNoteAesTest();
-    void decryptNoteRc2Test();
-
     void tagSortByParentChildRelationsTest();
-
     void lruCacheTests();
 
 private:
