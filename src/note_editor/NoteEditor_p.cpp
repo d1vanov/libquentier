@@ -129,9 +129,9 @@
 #include <QThread>
 #include <QTimer>
 #include <QTransform>
+#include <QWebChannel>
 #include <QWebEngineSettings>
-#include <QtWebChannel>
-#include <QtWebSockets/QWebSocketServer>
+#include <QWebSocketServer>
 
 #include <algorithm>
 #include <cmath>
