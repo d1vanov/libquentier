@@ -18,6 +18,8 @@
 
 #include "NoteStoreFactory.h"
 
+#include <quentier/logging/QuentierLogger.h>
+
 #include <qevercloud/services/INoteStore.h>
 
 namespace quentier::synchronization {
@@ -26,6 +28,12 @@ qevercloud::INoteStorePtr NoteStoreFactory::createNoteStore(
     QString noteStoreUrl, std::optional<qevercloud::Guid> linkedNotebookGuid,
     qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy)
 {
+    QNDEBUG(
+        "synchronization::NoteStoreFactory",
+        "NoteStoreFactory::createNoteStore: note store url = "
+            << noteStoreUrl << ", linked notebook guid = "
+            << linkedNotebookGuid.value_or(QStringLiteral("<none>")));
+
     return qevercloud::newNoteStore(
         std::move(noteStoreUrl), std::move(linkedNotebookGuid), std::move(ctx),
         std::move(retryPolicy));

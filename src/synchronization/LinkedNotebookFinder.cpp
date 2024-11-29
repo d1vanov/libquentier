@@ -320,7 +320,7 @@ QFuture<std::optional<qevercloud::LinkedNotebook>>
                 QNDEBUG(
                     "synchronization::LinkedNotebookFinder",
                     "Notebook found by guid "
-                        << notebookGuid << "does not "
+                        << notebookGuid << " does not "
                         << "have linked notebook guid: " << *notebook);
 
                 if (const auto self = selfWeak.lock()) {

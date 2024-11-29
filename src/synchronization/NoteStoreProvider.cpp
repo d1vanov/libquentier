@@ -353,8 +353,17 @@ void NoteStoreProvider::createNoteStore(
     qevercloud::IRequestContextPtr ctx, qevercloud::IRetryPolicyPtr retryPolicy,
     const std::shared_ptr<QPromise<qevercloud::INoteStorePtr>> & promise)
 {
+    QNDEBUG(
+        "synchronization::NoteStoreProvider",
+        "NoteStoreProvider::createNoteStore: linked notebook = "
+            << (linkedNotebook ? linkedNotebookInfo(*linkedNotebook)
+                               : QStringLiteral("<none>")));
+
     if (!linkedNotebook) {
         if (auto userOwnNoteStore = cachedUserOwnNoteStore(ctx)) {
+            QNDEBUG(
+                "synchronization::NoteStoreProvider",
+                "Using cached user own note store");
             promise->addResult(std::move(userOwnNoteStore));
             promise->finish();
             return;
@@ -364,6 +373,9 @@ void NoteStoreProvider::createNoteStore(
         auto linkedNotebookNoteStore =
             cachedLinkedNotebookNoteStore(*linkedNotebook, ctx))
     {
+        QNDEBUG(
+            "synchronization::NoteStoreProvider",
+            "Using cached linked notebook note store");
         promise->addResult(std::move(linkedNotebookNoteStore));
         promise->finish();
         return;

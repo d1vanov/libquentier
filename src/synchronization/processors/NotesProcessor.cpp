@@ -586,7 +586,10 @@ void NotesProcessor::downloadFullNoteDataImpl(
         "synchronization::NotesProcessor",
         "NotesProcessor::downloadFullNoteDataImpl: note guid = "
             << noteGuid << ", note usn = " << *note.updateSequenceNum()
-            << ", note local id = " << note.localId());
+            << ", note local id = " << note.localId() << ", note store url = "
+            << noteStore->noteStoreUrl() << ", linked notebook guid = "
+            << noteStore->linkedNotebookGuid().value_or(
+                   QStringLiteral("<none>")));
 
     auto noteFuture = m_noteFullDataDownloader->downloadFullNoteData(
         noteGuid, std::move(noteStore), context->ctx);
