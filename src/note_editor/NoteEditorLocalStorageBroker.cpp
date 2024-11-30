@@ -72,8 +72,7 @@ void NoteEditorLocalStorageBroker::setLocalStorage(
     connectToLocalStorageNotifier(m_localStorage->notifier());
 }
 
-void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(
-    qevercloud::Note note)
+void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(qevercloud::Note note)
 {
     auto noteLocalId = note.localId();
 
@@ -106,9 +105,9 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(
         "Haven't found the note to be saved within the cache");
 
     if (Q_UNLIKELY(!m_localStorage)) {
-        ErrorString error{QT_TR_NOOP(
-            "Cannot save note to local storage: local storage is "
-            "inaccessible")};
+        ErrorString error{
+            QT_TR_NOOP("Cannot save note to local storage: local storage is "
+                       "inaccessible")};
         QNWARNING("note_editor::NoteEditorLocalStorageBroker", error);
         Q_EMIT failedToSaveNoteToLocalStorage(note.localId(), error);
         return;
@@ -159,9 +158,9 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(
                 return;
             }
 
-            ErrorString error{QT_TR_NOOP(
-                "Cannot save note to local storage: failed to find "
-                "the previous version of the note")};
+            ErrorString error{
+                QT_TR_NOOP("Cannot save note to local storage: failed to find "
+                           "the previous version of the note")};
             error.details() = QString::fromUtf8(e.what());
             Q_EMIT failedToSaveNoteToLocalStorage(noteLocalId, error);
 
@@ -421,7 +420,8 @@ void NoteEditorLocalStorageBroker::onNotePutImpl(const qevercloud::Note & note)
     if (m_localIdsOfNotesBeingSavedInLocalStorage.contains(noteLocalId)) {
         QNDEBUG(
             "note_editor::NoteEditorLocalStorageBroker",
-            "Ignoring the update of note with local id " << noteLocalId
+            "Ignoring the update of note with local id "
+                << noteLocalId
                 << " in local storage because this note is currently being "
                 << "saved, will wait for the current save operation's finish");
         return;
@@ -615,8 +615,7 @@ void NoteEditorLocalStorageBroker::findNotebookForNoteImpl(
 
     threading::onFailed(
         std::move(thenFuture), this,
-        [this, note,
-         canceler = m_localStorageCanceler](const QException & e) {
+        [this, note, canceler = m_localStorageCanceler](const QException & e) {
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -841,8 +840,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
 
     auto thenFuture = threading::then(
         std::move(resourcesFuture), this,
-        [this, note = updatedNoteVersion,
-         canceler = m_localStorageCanceler] {
+        [this, note = updatedNoteVersion, canceler = m_localStorageCanceler] {
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
