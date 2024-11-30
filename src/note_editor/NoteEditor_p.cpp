@@ -6907,6 +6907,7 @@ void NoteEditorPrivate::onPageHtmlReceived(
     const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::onPageHtmlReceived");
+    QNTRACE("note_editor", html);
     Q_UNUSED(extraData)
 
     Q_EMIT noteEditorHtmlUpdated(html);
@@ -8843,7 +8844,9 @@ qevercloud::Resource NoteEditorPrivate::attachResourceToNote(
         m_pNote->mutableResources()->push_back(resource);
     }
 
-    Q_EMIT convertedToNote(*m_pNote);
+    // NOTE: will not emit convertedToNote signal because the current state
+    // of the note is likely not the one that listeners of this signal want to
+    // see.
     return resource;
 }
 

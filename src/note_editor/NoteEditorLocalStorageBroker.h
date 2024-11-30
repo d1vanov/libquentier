@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Dmitry Ivanov
+ * Copyright 2018-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,6 +31,7 @@
 
 #include <QHash>
 #include <QObject>
+#include <QQueue>
 #include <QSet>
 #include <QVector>
 
@@ -71,7 +72,7 @@ Q_SIGNALS:
         QString resourceLocalId, ErrorString errorDescription);
 
 public Q_SLOTS:
-    void saveNoteToLocalStorage(const qevercloud::Note & note);
+    void saveNoteToLocalStorage(qevercloud::Note note);
     void findNoteAndNotebook(const QString & noteLocalId);
     void findResourceData(const QString & resourceLocalId);
 
@@ -104,12 +105,18 @@ private:
 
     void updateNoteImpl(const qevercloud::Note & note);
 
+    void finalizeSaveNoteToLocalStorageAttempt(const QString & noteLocalId);
+
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
 
 private:
     local_storage::ILocalStoragePtr m_localStorage;
     utility::cancelers::ManualCancelerPtr m_localStorageCanceler;
+
+    QSet<QString> m_localIdsOfNotesBeingSavedInLocalStorage;
+    QHash<QString, QQueue<qevercloud::Note>>
+        m_notesToSaveInLocalStorageByLocalId;
 
     LRUCache<QString, qevercloud::Notebook> m_notebooksCache;
     LRUCache<QString, qevercloud::Note> m_notesCache;

@@ -23,8 +23,6 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
-#include <QPointer>
-
 #include <algorithm>
 #include <utility>
 
@@ -67,94 +65,108 @@ void NoteEditorLocalStorageBroker::setLocalStorage(
     m_localStorageCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
+    m_localIdsOfNotesBeingSavedInLocalStorage.clear();
+    m_notesToSaveInLocalStorageByLocalId.clear();
+
     m_localStorage = std::move(localStorage);
     connectToLocalStorageNotifier(m_localStorage->notifier());
 }
 
 void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(
-    const qevercloud::Note & note)
+    qevercloud::Note note)
 {
+    auto noteLocalId = note.localId();
+
     QNDEBUG(
         "note_editor::NoteEditorLocalStorageBroker",
         "NoteEditorLocalStorageBroker::saveNoteToLocalStorage: note local id = "
-            << note.localId());
+            << noteLocalId);
 
-    const auto * pCachedNote = m_notesCache.get(note.localId());
-    if (!pCachedNote) {
+    if (m_localIdsOfNotesBeingSavedInLocalStorage.contains(noteLocalId)) {
         QNDEBUG(
             "note_editor::NoteEditorLocalStorageBroker",
-            "Haven't found the note to be saved within the cache");
-
-        if (Q_UNLIKELY(!m_localStorage)) {
-            ErrorString error{QT_TR_NOOP(
-                "Cannot save note to local storage: local storage is "
-                "inaccessible")};
-            QNWARNING("note_editor::NoteEditorLocalStorageBroker", error);
-            Q_EMIT failedToSaveNoteToLocalStorage(note.localId(), error);
-            return;
-        }
-
-        const auto selfWeak = QPointer{this};
-
-        auto future = m_localStorage->findNoteByLocalId(
-            note.localId(),
-            local_storage::ILocalStorage::FetchNoteOptions{} |
-                local_storage::ILocalStorage::FetchNoteOption::
-                    WithResourceMetadata);
-
-        auto thenFuture = threading::then(
-            std::move(future), this,
-            [this, selfWeak, note, canceler = m_localStorageCanceler](
-                const std::optional<qevercloud::Note> & n) {
-                if (selfWeak.isNull()) {
-                    return;
-                }
-
-                if (canceler && canceler->isCanceled()) {
-                    QNDEBUG(
-                        "note_editor::NoteEditorLocalStorageBroker",
-                        "Saving the note is canceled");
-                    return;
-                }
-
-                if (Q_UNLIKELY(!n)) {
-                    Q_EMIT failedToSaveNoteToLocalStorage(
-                        note.localId(),
-                        ErrorString{QT_TR_NOOP(
-                            "Cannot save note to local storage: could not "
-                            "find the previous version of the note")});
-                    return;
-                }
-
-                saveNoteToLocalStorageImpl(*n, note);
-            });
-
-        threading::onFailed(
-            std::move(thenFuture), this,
-            [this, selfWeak, note,
-             canceler = m_localStorageCanceler](const QException & e) {
-                if (selfWeak.isNull()) {
-                    return;
-                }
-
-                if (canceler && canceler->isCanceled()) {
-                    QNDEBUG(
-                        "note_editor::NoteEditorLocalStorageBroker",
-                        "Saving the note is canceled");
-                    return;
-                }
-
-                ErrorString error{QT_TR_NOOP(
-                    "Cannot save note to local storage: failed to find "
-                    "the previous version of the note")};
-                error.details() = QString::fromUtf8(e.what());
-                Q_EMIT failedToSaveNoteToLocalStorage(note.localId(), error);
-            });
-
+            "This note is already being saved to local storage, will wait for "
+            "the current save operation to finish before another one");
+        QNTRACE(
+            "note_editor::NoteEditorLocalStorageBroker",
+            "Putting the note into the queue for saving in local storage: "
+                << note);
+        m_notesToSaveInLocalStorageByLocalId[noteLocalId].enqueue(note);
         return;
     }
 
-    saveNoteToLocalStorageImpl(*pCachedNote, note);
+    const auto * cachedNote = m_notesCache.get(noteLocalId);
+    if (cachedNote) {
+        saveNoteToLocalStorageImpl(*cachedNote, note);
+        return;
+    }
+
+    QNDEBUG(
+        "note_editor::NoteEditorLocalStorageBroker",
+        "Haven't found the note to be saved within the cache");
+
+    if (Q_UNLIKELY(!m_localStorage)) {
+        ErrorString error{QT_TR_NOOP(
+            "Cannot save note to local storage: local storage is "
+            "inaccessible")};
+        QNWARNING("note_editor::NoteEditorLocalStorageBroker", error);
+        Q_EMIT failedToSaveNoteToLocalStorage(note.localId(), error);
+        return;
+    }
+
+    m_localIdsOfNotesBeingSavedInLocalStorage.insert(noteLocalId);
+
+    auto future = m_localStorage->findNoteByLocalId(
+        noteLocalId,
+        local_storage::ILocalStorage::FetchNoteOptions{} |
+            local_storage::ILocalStorage::FetchNoteOption::
+                WithResourceMetadata);
+
+    auto thenFuture = threading::then(
+        std::move(future), this,
+        [this, note = std::move(note), canceler = m_localStorageCanceler](
+            const std::optional<qevercloud::Note> & n) {
+            if (canceler && canceler->isCanceled()) {
+                QNDEBUG(
+                    "note_editor::NoteEditorLocalStorageBroker",
+                    "Saving the note is canceled");
+                finalizeSaveNoteToLocalStorageAttempt(note.localId());
+                return;
+            }
+
+            if (Q_UNLIKELY(!n)) {
+                Q_EMIT failedToSaveNoteToLocalStorage(
+                    note.localId(),
+                    ErrorString{QT_TR_NOOP(
+                        "Cannot save note to local storage: could not "
+                        "find the previous version of the note")});
+                finalizeSaveNoteToLocalStorageAttempt(note.localId());
+                return;
+            }
+
+            saveNoteToLocalStorageImpl(*n, note);
+        });
+
+    threading::onFailed(
+        std::move(thenFuture), this,
+        [this, noteLocalId = std::move(noteLocalId),
+         canceler = m_localStorageCanceler](const QException & e) {
+            if (canceler && canceler->isCanceled()) {
+                QNDEBUG(
+                    "note_editor::NoteEditorLocalStorageBroker",
+                    "Saving the note is canceled");
+                finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
+                return;
+            }
+
+            ErrorString error{QT_TR_NOOP(
+                "Cannot save note to local storage: failed to find "
+                "the previous version of the note")};
+            error.details() = QString::fromUtf8(e.what());
+            Q_EMIT failedToSaveNoteToLocalStorage(noteLocalId, error);
+
+            finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
+        });
 }
 
 void NoteEditorLocalStorageBroker::findNoteAndNotebook(
@@ -220,8 +232,6 @@ void NoteEditorLocalStorageBroker::findResourceData(
         return;
     }
 
-    const auto selfWeak = QPointer{this};
-
     auto future = m_localStorage->findResourceByLocalId(
         resourceLocalId,
         local_storage::ILocalStorage::FetchResourceOptions{} |
@@ -229,12 +239,8 @@ void NoteEditorLocalStorageBroker::findResourceData(
 
     auto thenFuture = threading::then(
         std::move(future), this,
-        [this, selfWeak, resourceLocalId, canceler = m_localStorageCanceler](
+        [this, resourceLocalId, canceler = m_localStorageCanceler](
             const std::optional<qevercloud::Resource> & resource) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -268,12 +274,8 @@ void NoteEditorLocalStorageBroker::findResourceData(
 
     threading::onFailed(
         std::move(thenFuture), this,
-        [this, selfWeak, resourceLocalId,
+        [this, resourceLocalId,
          canceler = m_localStorageCanceler](const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -414,14 +416,25 @@ void NoteEditorLocalStorageBroker::onResourceExpunged(
 
 void NoteEditorLocalStorageBroker::onNotePutImpl(const qevercloud::Note & note)
 {
-    const auto * pCachedNote = m_notesCache.get(note.localId());
-    if (pCachedNote) {
-        if (*pCachedNote == note) {
+    const auto & noteLocalId = note.localId();
+
+    if (m_localIdsOfNotesBeingSavedInLocalStorage.contains(noteLocalId)) {
+        QNDEBUG(
+            "note_editor::NoteEditorLocalStorageBroker",
+            "Ignoring the update of note with local id " << noteLocalId
+                << " in local storage because this note is currently being "
+                << "saved, will wait for the current save operation's finish");
+        return;
+    }
+
+    const auto * cachedNote = m_notesCache.get(noteLocalId);
+    if (cachedNote) {
+        if (*cachedNote == note) {
             return;
         }
 
         if (!note.resources() || note.resources()->empty()) {
-            m_notesCache.put(note.localId(), note);
+            m_notesCache.put(noteLocalId, note);
         }
         else {
             auto resources = *note.resources();
@@ -436,7 +449,7 @@ void NoteEditorLocalStorageBroker::onNotePutImpl(const qevercloud::Note & note)
 
             qevercloud::Note noteWithoutResourceDataBodies = note;
             noteWithoutResourceDataBodies.setResources(resources);
-            m_notesCache.put(note.localId(), noteWithoutResourceDataBodies);
+            m_notesCache.put(noteLocalId, noteWithoutResourceDataBodies);
         }
     }
 
@@ -492,8 +505,6 @@ void NoteEditorLocalStorageBroker::findNoteImpl(const QString & noteLocalId)
         return;
     }
 
-    const auto selfWeak = QPointer{this};
-
     auto future = m_localStorage->findNoteByLocalId(
         noteLocalId,
         local_storage::ILocalStorage::FetchNoteOptions{} |
@@ -502,12 +513,8 @@ void NoteEditorLocalStorageBroker::findNoteImpl(const QString & noteLocalId)
 
     auto thenFuture = threading::then(
         std::move(future), this,
-        [this, selfWeak, noteLocalId, canceler = m_localStorageCanceler](
+        [this, noteLocalId, canceler = m_localStorageCanceler](
             const std::optional<qevercloud::Note> & note) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -547,12 +554,8 @@ void NoteEditorLocalStorageBroker::findNoteImpl(const QString & noteLocalId)
 
     threading::onFailed(
         std::move(thenFuture), this,
-        [this, selfWeak, noteLocalId,
+        [this, noteLocalId,
          canceler = m_localStorageCanceler](const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -585,17 +588,11 @@ void NoteEditorLocalStorageBroker::findNotebookForNoteImpl(
         return;
     }
 
-    const auto selfWeak = QPointer{this};
-
     auto future = m_localStorage->findNotebookByLocalId(note.notebookLocalId());
     auto thenFuture = threading::then(
         std::move(future), this,
-        [this, selfWeak, note, canceler = m_localStorageCanceler](
+        [this, note, canceler = m_localStorageCanceler](
             const std::optional<qevercloud::Notebook> & notebook) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -618,12 +615,8 @@ void NoteEditorLocalStorageBroker::findNotebookForNoteImpl(
 
     threading::onFailed(
         std::move(thenFuture), this,
-        [this, selfWeak, note,
+        [this, note,
          canceler = m_localStorageCanceler](const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -846,16 +839,10 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         QList<QFuture<void>>{} << putAllResourcesFuture
                                << expungeAllResourcesFuture);
 
-    const auto selfWeak = QPointer{this};
-
     auto thenFuture = threading::then(
         std::move(resourcesFuture), this,
-        [this, selfWeak, note = updatedNoteVersion,
+        [this, note = updatedNoteVersion,
          canceler = m_localStorageCanceler] {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -868,16 +855,13 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
 
     threading::onFailed(
         std::move(thenFuture), this,
-        [this, selfWeak, noteLocalId = updatedNoteVersion.localId(),
+        [this, noteLocalId = updatedNoteVersion.localId(),
          canceler = m_localStorageCanceler](const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
                     "Note updating processing is canceled");
+                finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
                 return;
             }
 
@@ -886,6 +870,8 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
             error.details() = QString::fromUtf8(e.what());
             QNWARNING("note_editor::NoteEditorLocalStorageBroker", error);
             Q_EMIT failedToSaveNoteToLocalStorage(noteLocalId, error);
+
+            finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
         });
 }
 
@@ -895,6 +881,8 @@ void NoteEditorLocalStorageBroker::updateNoteImpl(const qevercloud::Note & note)
         "note_editor::NoteEditorLocalStorageBroker",
         "NoteEditorLocalStorageBroker::updateNoteImpl: note local id = "
             << note.localId());
+
+    QNTRACE("note_editor::NoteEditorLocalStorageBroker", "Note: " << note);
 
     if (Q_UNLIKELY(!m_localStorage)) {
         ErrorString error{
@@ -909,8 +897,6 @@ void NoteEditorLocalStorageBroker::updateNoteImpl(const qevercloud::Note & note)
     // consistent
     Q_UNUSED(m_notesCache.remove(note.localId()))
 
-    const auto selfWeak = QPointer{this};
-
     auto future = m_localStorage->updateNote(
         note,
         local_storage::ILocalStorage::UpdateNoteOptions{} |
@@ -920,12 +906,8 @@ void NoteEditorLocalStorageBroker::updateNoteImpl(const qevercloud::Note & note)
 
     auto thenFuture = threading::then(
         std::move(future), this,
-        [this, selfWeak, noteLocalId = note.localId(),
+        [this, noteLocalId = note.localId(),
          canceler = m_localStorageCanceler] {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
@@ -933,21 +915,24 @@ void NoteEditorLocalStorageBroker::updateNoteImpl(const qevercloud::Note & note)
                 return;
             }
 
+            QNDEBUG(
+                "note_editor::NoteEditorLocalStorageBroker",
+                "Successfully saved note to local storage, note local id = "
+                    << noteLocalId);
             Q_EMIT noteSavedToLocalStorage(noteLocalId);
+
+            finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
         });
 
     threading::onFailed(
         std::move(thenFuture), this,
-        [this, selfWeak, noteLocalId = note.localId(),
+        [this, noteLocalId = note.localId(),
          canceler = m_localStorageCanceler](const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
             if (canceler && canceler->isCanceled()) {
                 QNDEBUG(
                     "note_editor::NoteEditorLocalStorageBroker",
                     "Note updating processing is canceled");
+                finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
                 return;
             }
 
@@ -956,7 +941,40 @@ void NoteEditorLocalStorageBroker::updateNoteImpl(const qevercloud::Note & note)
             error.details() = QString::fromUtf8(e.what());
             QNWARNING("note_editor::NoteEditorLocalStorageBroker", error);
             Q_EMIT failedToSaveNoteToLocalStorage(noteLocalId, error);
+
+            finalizeSaveNoteToLocalStorageAttempt(noteLocalId);
         });
+}
+
+void NoteEditorLocalStorageBroker::finalizeSaveNoteToLocalStorageAttempt(
+    const QString & noteLocalId)
+{
+    QNDEBUG(
+        "note_editor::NoteEditorLocalStorageBroker",
+        "NoteEditorLocalStorageBroker::finalizeSaveNoteToLocalStorageAttempt: "
+            << noteLocalId);
+
+    m_localIdsOfNotesBeingSavedInLocalStorage.remove(noteLocalId);
+
+    const auto it = m_notesToSaveInLocalStorageByLocalId.find(noteLocalId);
+    if (it == m_notesToSaveInLocalStorageByLocalId.end()) {
+        return;
+    }
+
+    Q_ASSERT(!it->isEmpty());
+
+    auto note = it->dequeue();
+    if (it->isEmpty()) {
+        m_notesToSaveInLocalStorageByLocalId.erase(it);
+    }
+
+    QNDEBUG(
+        "note_editor::NoteEditorLocalStorageBroker",
+        "Executing delayed repeated attempt to save this note to local "
+        "storage");
+    QNTRACE("note_editor::NoteEditorLocalStorageBroker", note);
+
+    saveNoteToLocalStorage(std::move(note));
 }
 
 } // namespace quentier
