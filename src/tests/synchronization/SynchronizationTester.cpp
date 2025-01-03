@@ -33,9 +33,9 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QStringBuilder>
+#include <QTest>
 #include <QTextStream>
 #include <QTimer>
-#include <QTest>
 
 #include <iostream>
 

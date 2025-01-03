@@ -221,7 +221,8 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
 
     QByteArray dataToWrite;
     for (auto it = m_userDictionary.constBegin(),
-         end = m_userDictionary.constEnd(); it != end; ++it)
+              end = m_userDictionary.constEnd();
+         it != end; ++it)
     {
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
