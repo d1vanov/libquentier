@@ -46,7 +46,7 @@ jobs:
             tidy_html5_cache_version: '1'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install non-Qt dependencies
         id: install_non_qt_deps
@@ -104,7 +104,7 @@ jobs:
 
       - name: Cache QtKeychain for Qt 5.15.4
         id: cache_qtkeychain_qt_modern
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qtkeychain_qt_modern'
           key: ${{ runner.os }}-qtkeychain-qt-modern-${{ matrix.qtkeychain_cache_version }}
@@ -134,7 +134,7 @@ jobs:
         id: cache_tidy_html5
         env:
           TIDY_HTML5_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/tidy_html5'
           key: ${{ runner.os }}-tidy-html5-${{ env.TIDY_HTML5_CACHE_VERSION }}
@@ -158,7 +158,7 @@ jobs:
 
       - name: Cache QEverCloud master for Qt 5.12.8
         id: cache_qevercloud_master_qt_old
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_master_qt_old'
           key: ${{ runner.os }}-qevercloud-master_qt-old-4
@@ -166,7 +166,7 @@ jobs:
 
       - name: Cache QEverCloud development for Qt 5.12.8
         id: cache_qevercloud_development_qt_old
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_development_qt_old'
           key: ${{ runner.os }}-qevercloud-development_qt-old-4
@@ -230,7 +230,7 @@ jobs:
 
       - name: Cache QEverCloud master for Qt 5.15.4
         id: cache_qevercloud_master_qt_modern
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_master_qt_modern'
           key: ${{ runner.os }}-qevercloud-master_qt-modern-1
@@ -238,7 +238,7 @@ jobs:
 
       - name: Cache QEverCloud development Qt 5.15.4
         id: cache_qevercloud_development_qt_modern
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_development_qt_modern'
           key: ${{ runner.os }}-qevercloud-development_qt-modern-2
@@ -444,14 +444,14 @@ jobs:
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.14.1
+        uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.16.x'
+          cmake-version: '3.30.x'
 
       - name: Use cmake
         run: cmake --version
@@ -468,7 +468,7 @@ jobs:
 
       - name: Cache Qt 5.15.2
         id: cache_qt5
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/Qt5'
           key: ${{ runner.os }}-Qt5Cache
@@ -489,7 +489,7 @@ jobs:
 
       - name: Cache boost 1.81.0
         id: cache_boost
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/boost'
           key: ${{ runner.os }}-BoostCache
@@ -515,7 +515,7 @@ jobs:
 
       - name: Cache QtKeychain
         id: cache_qtkeychain
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qtkeychain'
           key: ${{ runner.os }}-qtkeychain
@@ -543,7 +543,7 @@ jobs:
 
       - name: Cache QEverCloud master
         id: cache_qevercloud_master
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_master'
           key: ${{ runner.os }}-qevercloud-master-3
@@ -551,7 +551,7 @@ jobs:
 
       - name: Cache QEverCloud development
         id: cache_qevercloud_development
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_development'
           key: ${{ runner.os }}-qevercloud-development-3
@@ -684,11 +684,11 @@ jobs:
           - target_arch: 'x64'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache boost 1.77.0
         id: cache_boost
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/boost'
           key: ${{ runner.os }}-BoostCache
@@ -707,7 +707,7 @@ jobs:
 
       - name: Cache Qt 5.15.2 x86
         id: cache_qt_x86
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/Qt_x86'
           key: ${{ runner.os }}-QtCache-x86-1
@@ -730,7 +730,7 @@ jobs:
 
       - name: Cache Qt 5.15.2 x64
         id: cache_qt_x64
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/Qt_x64'
           key: ${{ runner.os }}-QtCache-x64-1
@@ -755,7 +755,7 @@ jobs:
         id: cache_qevercloud_master_x86
         env:
           QEVERCLOUD_CACHE_VERSION: '2'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_win_master_x86'
           key: qevercloud-win-master-x86-${{ env.QEVERCLOUD_CACHE_VERSION }}
@@ -794,7 +794,7 @@ jobs:
         id: cache_qevercloud_development_x86
         env:
           QEVERCLOUD_CACHE_VERSION: '3'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_win_development_x86'
           key: qevercloud-win-development-x86-${{ env.QEVERCLOUD_CACHE_VERSION }}
@@ -833,7 +833,7 @@ jobs:
         id: cache_libiconv_x86
         env:
           LIBICONV_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/libiconv_win_x86'
           key: libiconv-win-x86-${{ env.LIBICONV_CACHE_VERSION }}
@@ -856,7 +856,7 @@ jobs:
         id: cache_libxml2_x86
         env:
           LIBXML2_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/libxml2_win_x86'
           key: libxml2-win-x86-${{ env.LIBXML2_CACHE_VERSION }}
@@ -879,7 +879,7 @@ jobs:
         id: cache_libhunspell_x86
         env:
           LIBHUNSPELL_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/libhunspell_win_x86'
           key: libhunspell-win-x86-${{ env.LIBHUNSPELL_CACHE_VERSION }}
@@ -902,7 +902,7 @@ jobs:
         id: cache_openssl_x86
         env:
           OPENSSL_CACHE_VERSION: '6'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/openssl_win_x86'
           key: openssl-win-x86-${{ env.OPENSSL_CACHE_VERSION }}
@@ -925,7 +925,7 @@ jobs:
         id: cache_qtkeychain_x86
         env:
           QTKEYCHAIN_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path:  '${{ runner.workspace }}/qtkeychain_win_x86'
           key: qtkeychain-win-x86-${{ env.QTKEYCHAIN_CACHE_VERSION }}
@@ -948,7 +948,7 @@ jobs:
         id: cache_tidy_html5_x86
         env:
           TIDY_HTML5_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/tidy_html5_win_x86'
           key: tidy-html5-win-x86-${{ env.TIDY_HTML5_CACHE_VERSION }}
@@ -971,7 +971,7 @@ jobs:
         id: cache_google_breakpad_x86
         env:
           GOOGLE_BREAKPAD_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/breakpad_win_x86'
           key: breakpad-win-x86-${{ env.GOOGLE_BREAKPAD_CACHE_VERSION }}
@@ -994,7 +994,7 @@ jobs:
         id: cache_qevercloud_master_x64
         env:
           QEVERCLOUD_CACHE_VERSION: '2'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_win_master_x64'
           key: qevercloud-win-master-x64-${{ env.QEVERCLOUD_CACHE_VERSION }}
@@ -1033,7 +1033,7 @@ jobs:
         id: cache_qevercloud_development_x64
         env:
           QEVERCLOUD_CACHE_VERSION: '3'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_win_development_x64'
           key: qevercloud-win-development-x64-${{ env.QEVERCLOUD_CACHE_VERSION }}
@@ -1072,7 +1072,7 @@ jobs:
         id: cache_libiconv_x64
         env:
           LIBICONV_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/libiconv_win_x64'
           key: libiconv-win-x64-${{ env.LIBICONV_CACHE_VERSION }}
@@ -1095,7 +1095,7 @@ jobs:
         id: cache_libxml2_x64
         env:
           LIBXML2_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/libxml2_win_x64'
           key: libxml2-win-x64-${{ env.LIBXML2_CACHE_VERSION }}
@@ -1118,7 +1118,7 @@ jobs:
         id: cache_libhunspell_x64
         env:
           LIBHUNSPELL_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/libhunspell_win_x64'
           key: libhunspell-win-x64-${{ env.LIBHUNSPELL_CACHE_VERSION }}
@@ -1141,7 +1141,7 @@ jobs:
         id: cache_openssl_x64
         env:
           OPENSSL_CACHE_VERSION: '6'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/openssl_win_x64'
           key: openssl-win-x64-${{ env.OPENSSL_CACHE_VERSION }}
@@ -1164,7 +1164,7 @@ jobs:
         id: cache_qtkeychain_x64
         env:
           QTKEYCHAIN_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path:  '${{ runner.workspace }}/qtkeychain_win_x64'
           key: qtkeychain-win-x64-${{ env.QTKEYCHAIN_CACHE_VERSION }}
@@ -1187,7 +1187,7 @@ jobs:
         id: cache_tidy_html5_x64
         env:
           TIDY_HTML5_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/tidy_html5_win_x64'
           key: tidy-html5-win-x64-${{ env.TIDY_HTML5_CACHE_VERSION }}
@@ -1210,7 +1210,7 @@ jobs:
         id: cache_google_breakpad_x64
         env:
           GOOGLE_BREAKPAD_CACHE_VERSION: '1'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/breakpad_win_x64'
           key: breakpad-win-x64-${{ env.GOOGLE_BREAKPAD_CACHE_VERSION }}
