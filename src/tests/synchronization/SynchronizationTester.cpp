@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,9 +32,10 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
+#include <QStringBuilder>
 #include <QTextStream>
 #include <QTimer>
-#include <QtTest/QtTest>
+#include <QTest>
 
 #include <iostream>
 

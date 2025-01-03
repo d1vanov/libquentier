@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 #include <quentier/utility/IKeychainService.h>
 
 #include <QSignalSpy>
-#include <QtTest/QTest>
+#include <QTest>
 
 #include <stdexcept>
 

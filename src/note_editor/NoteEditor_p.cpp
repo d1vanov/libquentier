@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -108,8 +108,8 @@ using OwnershipNamespace = QWebFrame;
 #include <QTimer>
 #include <QWebEngineSettings>
 
-#include <QtWebChannel>
-#include <QtWebSockets/QWebSocketServer>
+#include <QWebChannel>
+#include <QWebSocketServer>
 typedef QWebEngineSettings WebSettings;
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 

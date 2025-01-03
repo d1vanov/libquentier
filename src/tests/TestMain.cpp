@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@
 
 #include <QDebug>
 #include <QDir>
-#include <QtTest/QtTest>
+#include <QTest>
 
 using namespace quentier::test;
 
