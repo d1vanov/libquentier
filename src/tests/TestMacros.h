@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Dmitry Ivanov
+ * Copyright 2019-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_TESTS_TEST_MACROS_H
 
 #include <QDebug>
-#include <QtTest/QtTest>
+#include <QTest>
 
 #include <stdexcept>
 

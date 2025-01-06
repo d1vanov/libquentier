@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Dmitry Ivanov
+ * Copyright 2019-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
 
-#include <QtTest/QtTest>
+#include <QTest>
 
 namespace quentier {
 namespace test {

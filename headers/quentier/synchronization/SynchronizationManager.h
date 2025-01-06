@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 
 #include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -368,6 +369,12 @@ Q_SIGNALS:
     void syncChunksDownloaded();
 
     /**
+     * This signal is emitted during user own account's downloaded sync chunks
+     * contents processing and denotes the progress on that step.
+     */
+    void syncChunksDataProcessingProgress(ISyncChunksDataCountersPtr counters);
+
+    /**
      * This signal is emitted during linked notebooks sync chunks downloading
      * and denotes the progress of that step, individually for each linked
      * notebook. The percentage of completeness can be computed roughly as
@@ -399,6 +406,13 @@ Q_SIGNALS:
      * notebooks are downloaded during "remote to local" synchronization step
      */
     void linkedNotebooksSyncChunksDownloaded();
+
+    /**
+     * This signal is emitted during linked notebooks' downloaded sync chunks
+     * contents processing and denotes the progress on that step.
+     */
+    void linkedNotebookSyncChunksDataProcessingProgress(
+        ISyncChunksDataCountersPtr counters);
 
     /**
      * This signal is emitted on each successful download of full note data from

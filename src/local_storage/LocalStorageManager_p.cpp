@@ -1436,13 +1436,10 @@ bool LocalStorageManagerPrivate::expungeNotebook(
         return false;
     }
 
+    QStringList noteLocalUids;
     ErrorString error;
-    if (!removeResourceDataFilesForNotebook(notebook, error)) {
-        errorDescription = errorPrefix;
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        return false;
+    if (!listNoteLocalUidsPerNotebook(localUid, noteLocalUids, error)) {
+        QNWARNING("local_storage", error);
     }
 
     uid = sqlEscapeString(uid);
@@ -1454,6 +1451,11 @@ bool LocalStorageManagerPrivate::expungeNotebook(
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
+
+    error.clear();
+    if (!removeResourceDataFilesForNotes(noteLocalUids, error)) {
+        QNWARNING("local_storage", error);
+    }
 
     return true;
 }
@@ -1728,13 +1730,12 @@ bool LocalStorageManagerPrivate::expungeLinkedNotebook(
         return false;
     }
 
+    QStringList noteLocalUids;
     ErrorString error;
-    if (!removeResourceDataFilesForLinkedNotebook(linkedNotebook, error)) {
-        errorDescription = errorPrefix;
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        return false;
+    if (!listNoteLocalUidsPerLinkedNotebook(
+            linkedNotebookGuid, noteLocalUids, error))
+    {
+        QNWARNING("local_storage", error);
     }
 
     QString queryString =
@@ -1744,6 +1745,11 @@ bool LocalStorageManagerPrivate::expungeLinkedNotebook(
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
+
+    error.clear();
+    if (!removeResourceDataFilesForNotes(noteLocalUids, error)) {
+        QNWARNING("local_storage", error);
+    }
 
     return true;
 }
@@ -3119,11 +3125,7 @@ bool LocalStorageManagerPrivate::expungeNote(
 
     error.clear();
     if (!removeResourceDataFilesForNote(localUid, error)) {
-        errorDescription = errorPrefix;
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        return false;
+        QNWARNING("local_storage", error);
     }
 
     return true;
@@ -4200,11 +4202,7 @@ bool LocalStorageManagerPrivate::expungeEnResource(
     error.clear();
     res = removeResourceDataFiles(resource, error);
     if (!res) {
-        errorDescription = errorPrefix;
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        return false;
+        QNWARNING("local_storage", error);
     }
 
     return true;
@@ -5968,6 +5966,67 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
         "  UNIQUE(localUid, guid))"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create SavedSearches table"));
     DATABASE_CHECK_AND_SET_ERROR()
+
+    return true;
+}
+
+bool LocalStorageManagerPrivate::listNoteLocalUidsPerNotebook(
+    const QString & notebookLocalUid, QStringList & noteLocalUids,
+    ErrorString & errorDescription) const
+{
+    noteLocalUids.clear();
+
+    ErrorString errorPrefix(
+        QT_TR_NOOP("can't list note local uids per notebook"));
+
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid FROM Notes "
+        "WHERE notebookLocalUid = :notebookLocalUid");
+
+    QSqlQuery query{m_sqlDatabase};
+    bool res = query.prepare(queryString);
+    DATABASE_CHECK_AND_SET_ERROR()
+
+    query.bindValue(QStringLiteral(":notebookLocalUid"), notebookLocalUid);
+
+    res = query.exec();
+    DATABASE_CHECK_AND_SET_ERROR()
+
+    noteLocalUids.reserve(std::max(query.size(), 0));
+    while (query.next()) {
+        noteLocalUids << query.value(0).toString();
+    }
+
+    return true;
+}
+
+bool LocalStorageManagerPrivate::listNoteLocalUidsPerLinkedNotebook(
+    const QString & linkedNotebookGuid, QStringList & noteLocalUids,
+    ErrorString & errorDescription) const
+{
+    noteLocalUids.clear();
+
+    ErrorString errorPrefix(
+        QT_TR_NOOP("can't list note local uids per linked notebook"));
+
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid FROM Notes WHERE notebookLocalUid IN "
+        "(SELECT localUid FROM Notebooks WHERE linkedNotebookGuid = "
+        ":linkedNotebookGuid)");
+
+    QSqlQuery query{m_sqlDatabase};
+    bool res = query.prepare(queryString);
+    DATABASE_CHECK_AND_SET_ERROR()
+
+    query.bindValue(QStringLiteral(":linkedNotebookGuid"), linkedNotebookGuid);
+
+    res = query.exec();
+    DATABASE_CHECK_AND_SET_ERROR()
+
+    noteLocalUids.reserve(std::max(query.size(), 0));
+    while (query.next()) {
+        noteLocalUids << query.value(0).toString();
+    }
 
     return true;
 }
@@ -8503,6 +8562,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
         // alternatively to guids to NoteStore::createNote method
     }
 
+    QStringList localUidsOfExpungedResources;
     if (options & UpdateNoteOption::UpdateResourceMetadata) {
         if (!note.hasResources()) {
             QNDEBUG(
@@ -8518,16 +8578,6 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
             QSqlQuery query(m_sqlDatabase);
             bool res = query.exec(queryString);
             DATABASE_CHECK_AND_SET_ERROR()
-
-            ErrorString error;
-            res = removeResourceDataFilesForNote(localUid, error);
-            if (!res) {
-                errorDescription = errorPrefix;
-                errorDescription.appendBase(error.base());
-                errorDescription.appendBase(error.additionalBases());
-                errorDescription.details() = error.details();
-                return false;
-            }
         }
         else {
             bool updateResourceBinaryData =
@@ -8535,7 +8585,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 
             bool res = partialUpdateNoteResources(
                 localUid, note.resources(), updateResourceBinaryData,
-                errorDescription);
+                errorDescription, localUidsOfExpungedResources);
 
             if (!res) {
                 return false;
@@ -8543,7 +8593,33 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
         }
     }
 
-    return transaction.commit(errorDescription);
+    const bool committed = transaction.commit(errorDescription);
+    if (committed) {
+        // Now it is safe to remove resource data files, if any
+        if (options & UpdateNoteOption::UpdateResourceMetadata) {
+            if (!note.hasResources()) {
+                ErrorString error;
+                if (!removeResourceDataFilesForNote(localUid, error)) {
+                    QNWARNING("local_storage", error);
+                }
+            }
+            else {
+                for (const auto & resourceLocalUid:
+                     qAsConst(localUidsOfExpungedResources)) {
+                    Resource resource;
+                    resource.setLocalUid(resourceLocalUid);
+                    resource.setNoteLocalUid(localUid);
+
+                    ErrorString error;
+                    if (!removeResourceDataFiles(resource, error)) {
+                        QNWARNING("local_storage", error);
+                    }
+                }
+            }
+        }
+    }
+
+    return committed;
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
@@ -10090,113 +10166,22 @@ bool LocalStorageManagerPrivate::removeResourceDataFilesForNote(
     return true;
 }
 
-bool LocalStorageManagerPrivate::removeResourceDataFilesForNotebook(
-    const Notebook & notebook, ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::removeResourceDataFilesForNotes(
+    const QStringList & noteLocalUids, ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage",
-        "LocalStorageManagerPrivate::removeResourceDataFilesForNotebook: "
-            << "notebook = " << notebook);
+        "LocalStorageManagerPrivate::removeResourceDataFilesForNotes");
 
-    ErrorString errorPrefix(
-        QT_TR_NOOP("failed to remove resource data files for notebook: cannot "
-                   "list note local uids per notebook"));
-
-    QString column, uid;
-    if (notebook.hasGuid()) {
-        column = QStringLiteral("notebookGuid");
-        uid = notebook.guid();
-    }
-    else {
-        column = QStringLiteral("notebookLocalUid");
-        uid = notebook.localUid();
-    }
-
-    uid = sqlEscapeString(uid);
-
-    QString queryString =
-        QString::fromUtf8("SELECT localUid FROM Notes WHERE %1 = '%2'")
-            .arg(column, uid);
-
-    QSqlQuery query(m_sqlDatabase);
-    bool res = query.exec(queryString);
-    DATABASE_CHECK_AND_SET_ERROR()
-
-    QStringList noteLocalUids;
-    noteLocalUids.reserve(std::max(query.size(), 0));
-
-    ErrorString error;
-    while (query.next()) {
-        QString noteLocalUid = query.value(0).toString();
-
-        error.clear();
-        if (!removeResourceDataFilesForNote(noteLocalUid, error)) {
-            errorDescription.setBase(QT_TR_NOOP(
-                "failed to remove resource data files for notebook"));
-
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            return false;
+    bool failed = false;
+    for (const auto & noteLocalUid: qAsConst(noteLocalUids)) {
+        if (!removeResourceDataFilesForNote(noteLocalUid, errorDescription)) {
+            QNWARNING("local_storage", errorDescription);
+            failed = true;
         }
     }
 
-    return true;
-}
-
-bool LocalStorageManagerPrivate::removeResourceDataFilesForLinkedNotebook(
-    const LinkedNotebook & linkedNotebook, ErrorString & errorDescription)
-{
-    QNDEBUG(
-        "local_storage",
-        "LocalStorageManagerPrivate::removeResourceDataFilesForLinkedNotebook: "
-            << "linked notebook = " << linkedNotebook);
-
-    ErrorString errorPrefix(
-        QT_TR_NOOP("failed to remove resource data files for linked notebook: "
-                   "cannot list note local uids per linked notebook"));
-
-    if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
-        errorDescription.setBase(
-            QT_TR_NOOP("failed to remove resource data files for linked "
-                       "notebook: linked notebook has no guid set"));
-        QNWARNING(
-            "local_storage",
-            errorDescription << ", linked notebook: " << linkedNotebook);
-        return false;
-    }
-
-    QString queryString =
-        QString::fromUtf8(
-            "SELECT localUid FROM Notes WHERE notebookLocalUid IN "
-            "(SELECT localUid FROM Notebooks WHERE "
-            "linkedNotebookGuid = '%1')")
-            .arg(sqlEscapeString(linkedNotebook.guid()));
-
-    QSqlQuery query(m_sqlDatabase);
-    bool res = query.exec(queryString);
-    DATABASE_CHECK_AND_SET_ERROR()
-
-    QStringList noteLocalUids;
-    noteLocalUids.reserve(std::max(query.size(), 0));
-
-    ErrorString error;
-    while (query.next()) {
-        QString noteLocalUid = query.value(0).toString();
-
-        error.clear();
-        if (!removeResourceDataFilesForNote(noteLocalUid, error)) {
-            errorDescription.setBase(QT_TR_NOOP(
-                "failed to remove resource data files for notebook"));
-
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            return false;
-        }
-    }
-
-    return true;
+    return !failed;
 }
 
 bool LocalStorageManagerPrivate::
@@ -14115,7 +14100,8 @@ bool LocalStorageManagerPrivate::complementResourceNoteIds(
 
 bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     const QString & noteLocalUid, const QList<Resource> & updatedNoteResources,
-    const bool updateResourceBinaryData, ErrorString & errorDescription)
+    const bool updateResourceBinaryData, ErrorString & errorDescription,
+    QStringList & localUidsOfExpungedResources)
 {
     QNDEBUG(
         "local_storage",
@@ -14186,7 +14172,6 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
     // Now figure out which resources were removed from the note
     // and which were added or updated
-    QStringList localUidsForResourcesRemovedFromNote;
     QList<Resource> addedResources;
     QList<Resource> updatedResources;
 
@@ -14252,7 +14237,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         }
 
         if (!foundResource) {
-            localUidsForResourcesRemovedFromNote
+            localUidsOfExpungedResources
                 << sqlEscapeString(previousNoteResource.localUid());
         }
     }
@@ -14278,30 +14263,13 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
     // Now delete the removed resources and add/update the added/updated ones
 
-    if (!localUidsForResourcesRemovedFromNote.isEmpty()) {
+    if (!localUidsOfExpungedResources.isEmpty()) {
         QString removeResourcesQueryString =
             QString::fromUtf8(
                 "DELETE FROM Resources WHERE resourceLocalUid IN ('%1')")
-                .arg(localUidsForResourcesRemovedFromNote.join(
-                    QStringLiteral(",")));
+                .arg(localUidsOfExpungedResources.join(QStringLiteral(",")));
         res = query.exec(removeResourcesQueryString);
         DATABASE_CHECK_AND_SET_ERROR()
-
-        for (const auto & localUid:
-             qAsConst(localUidsForResourcesRemovedFromNote)) {
-            Resource resource;
-            resource.setLocalUid(localUid);
-            resource.setNoteLocalUid(noteLocalUid);
-
-            ErrorString error;
-            if (!removeResourceDataFiles(resource, error)) {
-                errorDescription = errorPrefix;
-                errorDescription.appendBase(error.base());
-                errorDescription.appendBase(error.additionalBases());
-                errorDescription.details() = error.details();
-                return false;
-            }
-        }
     }
 
     int numAddedResources = addedResources.size();

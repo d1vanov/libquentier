@@ -1593,6 +1593,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", notebook: " << notebook);
+
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
             return static_cast<int>(userException.errorCode);
@@ -1653,6 +1657,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
             errorDescription.details() = userException.parameter.ref();
         }
 
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", notebook: " << notebook);
+
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode);
@@ -1674,6 +1682,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
             if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
+
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", notebook: " << notebook);
 
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
@@ -1707,6 +1719,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
             errorDescription.details() = userException.parameter.ref();
         }
 
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", notebook: " << notebook);
+
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode);
@@ -1727,6 +1743,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
                            "notebooks, please remove "
                            "some of them"));
         }
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", notebook: " << notebook);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
@@ -1763,6 +1783,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", note: " << note);
+
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
             return static_cast<int>(userException.errorCode);
@@ -1787,10 +1811,6 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
                 errorDescription.details() =
                     QString::number(note.content().length());
-
-                QNWARNING(
-                    "synchronization:note_store",
-                    errorDescription << ", note's content: " << note.content());
             }
             else {
                 errorDescription.appendBase(QT_TR_NOOP("note has no content"));
@@ -1802,10 +1822,6 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             if (note.hasNoteAttributes()) {
                 errorDescription.appendBase(
                     QT_TR_NOOP("invalid note attributes"));
-
-                QNWARNING(
-                    "synchronization:note_store",
-                    errorDescription << ": " << note.noteAttributes());
             }
             else {
                 errorDescription.appendBase(
@@ -1818,34 +1834,26 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("invalid resource attributes "
                            "for some of note's resources"));
-
-            QNWARNING(
-                "synchronization:note_store",
-                errorDescription << ", note: " << note);
         }
         else if (
             userException.parameter.ref() == QStringLiteral("Resource.mime")) {
             errorDescription.appendBase(
                 QT_TR_NOOP("invalid mime type for some of note's resources"));
-
-            QNWARNING(
-                "synchronization:note_store",
-                errorDescription << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
             errorDescription.appendBase(
                 QT_TR_NOOP("Note.tagNames was provided "
                            "and one of the specified tags "
                            "had invalid length or pattern"));
-
-            QNWARNING(
-                "synchronization:note_store",
-                errorDescription << ", note: " << note);
         }
         else {
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", note: " << note);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
@@ -1869,6 +1877,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", note: " << note);
+
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
             return static_cast<int>(userException.errorCode);
@@ -1882,6 +1894,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", note: " << note);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
@@ -1905,24 +1921,30 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", note: " << note);
+
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
             return static_cast<int>(userException.errorCode);
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Resource.data")) {
+        if (userException.parameter.ref() == QStringLiteral("Resource.data") ||
+            userException.parameter.ref() == QStringLiteral("Data.body"))
+        {
             errorDescription.appendBase(
                 QT_TR_NOOP("data body for some of note's "
                            "resources is missing"));
-
-            QNWARNING(
-                "synchronization:note_store",
-                errorDescription << ", note: " << note);
         }
         else {
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", note: " << note);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
@@ -1947,6 +1969,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         QNWARNING(
             "synchronization:note_store",
             errorDescription << ", note: " << note);
+
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode);
@@ -1968,6 +1991,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
+
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", note: " << note);
 
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
@@ -2004,12 +2031,6 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         {
             errorDescription.appendBase(
                 QT_TR_NOOP("note attributes string is too large"));
-            if (note.hasNoteAttributes()) {
-                QNWARNING(
-                    "synchronization:note_store",
-                    errorDescription << ", note attributes: "
-                                     << note.noteAttributes());
-            }
         }
         else if (userException.parameter.ref().startsWith(
                      QStringLiteral("ResourceAttribute.")))
@@ -2017,24 +2038,20 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("one of note's resources has too large resource "
                            "attributes string"));
-
-            QNWARNING(
-                "synchronization:note_store",
-                errorDescription << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag")) {
             errorDescription.appendBase(
                 QT_TR_NOOP("Note.tagNames was provided, and the required new "
                            "tags would exceed the maximum number per account"));
-
-            QNWARNING(
-                "synchronization:note_store",
-                errorDescription << ", note: " << note);
         }
         else {
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", note: " << note);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
@@ -2059,6 +2076,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
+            QNWARNING(
+                "synchronization:note_store",
+                errorDescription << ", note: " << note);
+
             // FIXME: should actually return properly typed
             // qevercloud::EDAMErrorCode
             return static_cast<int>(userException.errorCode);
@@ -2068,12 +2089,6 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             QStringLiteral("Note.notebookGuid")) {
             errorDescription.appendBase(
                 QT_TR_NOOP("note's notebook is not owned by user"));
-            if (note.hasNotebookGuid()) {
-                QNWARNING(
-                    "synchronization:note_store",
-                    errorDescription << ", notebook guid: "
-                                     << note.notebookGuid());
-            }
         }
         else if (
             !thrownOnCreation &&
@@ -2086,6 +2101,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", note: " << note);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode
@@ -2106,6 +2125,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         errorDescription.appendBase(
             QT_TR_NOOP("note exceeds upload quota limit"));
+
+        QNWARNING(
+            "synchronization:note_store",
+            errorDescription << ", note: " << note);
 
         // FIXME: should actually return properly typed
         // qevercloud::EDAMErrorCode

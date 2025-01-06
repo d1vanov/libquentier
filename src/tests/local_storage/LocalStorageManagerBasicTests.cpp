@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <QCryptographicHash>
-#include <QtTest/QtTest>
+#include <QTest>
 
 #include <string>
 

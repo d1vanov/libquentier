@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,9 +32,10 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
+#include <QStringBuilder>
+#include <QTest>
 #include <QTextStream>
 #include <QTimer>
-#include <QtTest/QtTest>
 
 #include <iostream>
 
@@ -207,6 +208,9 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -243,6 +247,9 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -283,6 +290,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -324,6 +334,10 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    QVERIFY(catcher.syncChunksDataCounters().size() == 1);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -366,6 +380,8 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -412,6 +428,8 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -458,6 +476,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -505,6 +526,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -551,6 +575,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -598,6 +625,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -647,6 +677,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -687,6 +720,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -728,6 +764,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -770,6 +809,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -810,6 +852,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -851,6 +896,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -893,6 +941,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -934,6 +985,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -976,6 +1030,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1020,6 +1077,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1061,6 +1121,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1103,6 +1166,10 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    QVERIFY(catcher.syncChunksDataCounters().size() == 1);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1147,6 +1214,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1188,6 +1258,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1230,6 +1303,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1274,6 +1350,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1315,6 +1394,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1357,6 +1439,10 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    QVERIFY(catcher.syncChunksDataCounters().size() == 1);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1401,6 +1487,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1442,6 +1531,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1484,6 +1576,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1528,6 +1623,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1568,6 +1666,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1609,6 +1710,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1651,6 +1755,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1698,6 +1805,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1746,6 +1856,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1797,6 +1910,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -1838,6 +1954,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -1880,6 +1999,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -1922,6 +2044,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -1967,6 +2092,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2010,6 +2138,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2052,6 +2183,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2094,6 +2228,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2139,6 +2276,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2183,6 +2323,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2226,6 +2369,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2272,6 +2418,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2316,6 +2465,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2359,6 +2511,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2405,6 +2560,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2452,6 +2610,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2498,6 +2659,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2547,6 +2711,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2594,6 +2761,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2640,6 +2810,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2689,6 +2862,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
@@ -2732,6 +2908,8 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
 
     expungeNotelessLinkedNotebookTagsFromRemoteStorage();
     checkIdentityOfLocalAndRemoteItems();
@@ -2780,6 +2958,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -2826,6 +3007,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -2871,6 +3055,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -2917,6 +3104,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 }
@@ -2964,6 +3154,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3028,6 +3221,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3092,6 +3288,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3157,6 +3356,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3214,6 +3416,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3275,6 +3480,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3335,6 +3543,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3395,6 +3606,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3449,6 +3663,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3502,6 +3719,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3555,6 +3775,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3608,6 +3831,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3662,6 +3888,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3716,6 +3945,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3769,6 +4001,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3822,6 +4057,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3875,6 +4113,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3928,6 +4169,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -3982,6 +4226,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -4036,6 +4283,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressEmpty(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -4091,6 +4341,9 @@ void SynchronizationTester::
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkProgressNotificationsOrder(catcher);
+    checkSyncChunksDataProcessingProgressOrder(catcher);
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(catcher);
+
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
@@ -7147,6 +7400,48 @@ void SynchronizationTester::checkProgressNotificationsOrder(
             QString::fromUtf8("Wrong linked notebook resource "
                               "download progress order: ") +
             errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::checkSyncChunksDataProcessingProgressEmpty(
+    const SynchronizationManagerSignalsCatcher & catcher)
+{
+    ErrorString errorDescription;
+    if (!catcher.checkSyncChunksDataProcessingProgressEmpty(errorDescription)) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::checkSyncChunksDataProcessingProgressOrder(
+    const SynchronizationManagerSignalsCatcher & catcher)
+{
+    ErrorString errorDescription;
+    if (!catcher.checkSyncChunksDataProcessingProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+        const SynchronizationManagerSignalsCatcher & catcher)
+{
+    ErrorString errorDescription;
+    if (!catcher.checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+            errorDescription))
+    {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+        const SynchronizationManagerSignalsCatcher & catcher)
+{
+    ErrorString errorDescription;
+    if (!catcher.checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+            errorDescription))
+    {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
 }
 

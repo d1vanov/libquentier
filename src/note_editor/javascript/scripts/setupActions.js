@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,3 +30,30 @@ function disableCut(e) {
 
 document.body.onpaste = disablePaste;
 document.body.oncut = disableCut;
+
+document.onkeydown = function(e) {
+    if (navigator.appVersion.indexOf('Mac') != -1) {
+        if (e.metaKey) {
+            if (e.key === 'z') {
+                actionsWatcher.onUndoActionToggled();
+                e.preventDefault();
+            }
+            else if (e.key === 'y') {
+                actionsWatcher.onRedoActionToggled();
+                e.preventDefault();
+            }
+        }
+    }
+    else {
+        if (e.ctrlKey) {
+            if (e.key === 'z') {
+                actionsWatcher.onUndoActionToggled();
+                e.preventDefault();
+            }
+            else if (e.key === 'y') {
+                actionsWatcher.onRedoActionToggled();
+                e.preventDefault();
+            }
+        }
+    }
+}

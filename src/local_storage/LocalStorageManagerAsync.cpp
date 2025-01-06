@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2323,15 +2323,12 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
         }
 
         if (d->m_useCache) {
-            // clang-format off
-            SAVE_WARNINGS
-            CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
-            // clang-format off
-            for (const auto it: // clazy:exclude=range-loop
-                 qevercloud::toRange(qAsConst(tagsWithNoteLocalUids))) {
+            for (auto it = tagsWithNoteLocalUids.constBegin(),
+                      end = tagsWithNoteLocalUids.constEnd();
+                 it != end; ++it)
+            {
                 d->m_pLocalStorageCacheManager->cacheTag(it->first);
             }
-            RESTORE_WARNINGS
         }
 
         Q_EMIT listTagsWithNoteLocalUidsComplete(

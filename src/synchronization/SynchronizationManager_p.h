@@ -89,11 +89,16 @@ Q_SIGNALS:
 
     void syncChunksDownloaded();
 
+    void syncChunksDataProcessingProgress(ISyncChunksDataCountersPtr counters);
+
     void linkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
         qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
 
     void linkedNotebooksSyncChunksDownloaded();
+
+    void linkedNotebookSyncChunksDataProcessingProgress(
+        ISyncChunksDataCountersPtr counters);
 
     void notesDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);

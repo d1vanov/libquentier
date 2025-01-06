@@ -61,6 +61,10 @@ SynchronizationManager::SynchronizationManager(
         &SynchronizationManager::syncChunksDownloadProgress);
 
     QObject::connect(
+        d_ptr, &SynchronizationManagerPrivate::syncChunksDataProcessingProgress,
+        this, &SynchronizationManager::syncChunksDataProcessingProgress);
+
+    QObject::connect(
         d_ptr,
         &SynchronizationManagerPrivate::
             linkedNotebookSyncChunksDownloadProgress,
@@ -71,6 +75,14 @@ SynchronizationManager::SynchronizationManager(
         d_ptr,
         &SynchronizationManagerPrivate::linkedNotebooksSyncChunksDownloaded,
         this, &SynchronizationManager::linkedNotebooksSyncChunksDownloaded);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::
+            linkedNotebookSyncChunksDataProcessingProgress,
+        this,
+        &SynchronizationManager::
+            linkedNotebookSyncChunksDataProcessingProgress);
 
     QObject::connect(
         d_ptr, &SynchronizationManagerPrivate::notesDownloadProgress, this,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -108,8 +108,8 @@ using OwnershipNamespace = QWebFrame;
 #include <QTimer>
 #include <QWebEngineSettings>
 
-#include <QtWebChannel>
-#include <QtWebSockets/QWebSocketServer>
+#include <QWebChannel>
+#include <QWebSocketServer>
 typedef QWebEngineSettings WebSettings;
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 
@@ -534,7 +534,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     // Disable the keyboard modifiers to prevent auto-triggering of note editor
     // page actions - they should go through the preprocessing of the note
     // editor
-    page->executeJavaScript(m_disablePasteJs);
+    page->executeJavaScript(m_setupActionsJs);
 
     // NOTE: executing page mutation observer's script last
     // so that it doesn't catch the mutations originating from the above scripts
@@ -6209,7 +6209,7 @@ void NoteEditorPrivate::setupScripts()
         "javascript/scripts/toDoCheckboxAutomaticInserter.js",
         m_toDoCheckboxAutomaticInsertionJs);
 
-    SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
+    SETUP_SCRIPT("javascript/scripts/setupActions.js", m_setupActionsJs);
 
     SETUP_SCRIPT(
         "javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
@@ -6378,6 +6378,14 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
     QObject::connect(
         m_pActionsWatcher, &ActionsWatcher::pasteActionToggled, this,
         &NoteEditorPrivate::paste);
+
+    QObject::connect(
+        m_pActionsWatcher, &ActionsWatcher::undoActionToggled, this,
+        &NoteEditorPrivate::undo);
+
+    QObject::connect(
+        m_pActionsWatcher, &ActionsWatcher::redoActionToggled, this,
+        &NoteEditorPrivate::redo);
 
     // Connect with NoteEditorLocalStorageBroker
 
@@ -7230,12 +7238,8 @@ void NoteEditorPrivate::onPageHtmlReceived(
     if (m_pendingConversionToNoteForSavingInLocalStorage) {
         m_pendingConversionToNoteForSavingInLocalStorage = false;
 
-        if (m_needConversionToNote) {
-            m_pNote->setDirty(true);
-
-            m_pNote->setModificationTimestamp(
-                QDateTime::currentMSecsSinceEpoch());
-        }
+        m_pNote->setDirty(true);
+        m_pNote->setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
 
         saveNoteToLocalStorage();
     }
@@ -8858,19 +8862,7 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
 
     if (m_pendingNoteSavingInLocalStorage) {
         QNDEBUG("note_editor", "Note is already being saved to local storage");
-
-        if (m_needConversionToNote) {
-            QNDEBUG(
-                "note_editor",
-                "It appears the note editor content has "
-                    << "been changed since save note request was last issued; "
-                       "will "
-                    << "repeat the attempt to save the note after the current "
-                    << "attempt is finished");
-
-            m_shouldRepeatSavingNoteInLocalStorage = true;
-        }
-
+        m_shouldRepeatSavingNoteInLocalStorage = true;
         return;
     }
 

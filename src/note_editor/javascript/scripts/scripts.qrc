@@ -38,7 +38,7 @@
         <file>imageAreasHilitor.js</file>
         <file>managedPageAction.js</file>
         <file>setInitialCaretPosition.js</file>
-        <file>disablePaste.js</file>
+        <file>setupActions.js</file>
         <file>nodeUndoRedoManager.js</file>
         <file>toDoCheckboxAutomaticInserter.js</file>
         <file>findAndReplaceDOMText.js</file>
