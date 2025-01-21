@@ -646,7 +646,7 @@ jobs:
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -688,20 +688,20 @@ jobs:
           modules: 'qtwebengine qtwebchannel qtwebsockets qtpositioning'
           dir: '${{ runner.workspace }}/Qt6'
 
-      - name: Cache boost 1.86.0
+      - name: Cache boost 1.87.0
         id: cache_boost
         uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/boost'
-          key: ${{ runner.os }}-BoostCache
+          key: ${{ runner.os }}-BoostCache-2
 
-      - name: Install boost 1.86.0
+      - name: Install boost 1.87.0
         id: install_boost
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/boost" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/boost)" ]; then
-            curl -fsSL https://boostorg.jfrog.io/artifactory/main/release/1.86.0/source/boost_1_86_0.tar.bz2 -o "${{ runner.temp }}/boost.tar.bz2"
+            curl -fsSL https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2 -o "${{ runner.temp }}/boost.tar.bz2"
             mkdir -p $RUNNER_WORKSPACE/boost
             tar -xf "${{ runner.temp }}/boost.tar.bz2" -C $RUNNER_WORKSPACE/boost
           fi
@@ -737,8 +737,10 @@ jobs:
               -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qtkeychain \
               -DBUILD_TRANSLATIONS=ON \
               -DBUILD_SHARED_LIBS=ON \
-              -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-              -DBUILD_WITH_QT6=ON ..
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DBUILD_WITH_QT6=ON \
+              ..
             cmake --build . --target all
             cmake --build . --target install
           fi
@@ -876,14 +878,15 @@ jobs:
             -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$(pwd)/bin \
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.7.3/clang_64 \
-            -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_86_0 \
+            -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_87_0 \
             -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt6_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt6 \
             -DQt6Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain/lib/cmake/Qt6Keychain \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
             -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
             -DBUILD_WITH_QT6=ON \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ..
         shell: bash
 
@@ -971,23 +974,23 @@ jobs:
           %USERPROFILE%\.cargo\bin\ccache.exe --set-config=log_file=%GITHUB_WORKSPACE%\ccache_log.txt
         shell: cmd
 
-      - name: Cache boost 1.86.0
+      - name: Cache boost 1.87.0
         id: cache_boost
         uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/boost'
-          key: ${{ runner.os }}-BoostCache
+          key: ${{ runner.os }}-BoostCache-2
 
-      - name: Install boost 1.86.0
+      - name: Install boost 1.87.0
         id: install_boost
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if exist %RUNNER_WORKSPACE%\boost (set BOOST_CACHED=1) else (set BOOST_CACHED=0)
           if %BOOST_CACHED%==0 mkdir %RUNNER_WORKSPACE%\boost
-          if %BOOST_CACHED%==0 cmd.exe /c curl -fsSL https://boostorg.jfrog.io/artifactory/main/release/1.86.0/source/boost_1_86_0.7z -o %RUNNER_WORKSPACE%\boost\boost_1_86_0.7z
+          if %BOOST_CACHED%==0 cmd.exe /c curl -fsSL https://archives.boost.io/release/1.87.0/source/boost_1_87_0.7z -o %RUNNER_WORKSPACE%\boost\boost_1_87_0.7z
           if %BOOST_CACHED%==0 cd %RUNNER_WORKSPACE%\boost
-          if %BOOST_CACHED%==0 7z x boost_1_86_0.7z
+          if %BOOST_CACHED%==0 7z x boost_1_87_0.7z
         shell: cmd
 
       - name: Install Qt 5.15.2
@@ -1063,7 +1066,7 @@ jobs:
       - name: Cache QEverCloud development qt5
         id: cache_qevercloud_development_qt5
         env:
-          QEVERCLOUD_CACHE_VERSION: '2'
+          QEVERCLOUD_CACHE_VERSION: '3'
         uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_win_development_qt5'
@@ -1176,7 +1179,7 @@ jobs:
       - name: Cache QEverCloud development qt6
         id: cache_qevercloud_development_qt6
         env:
-          QEVERCLOUD_CACHE_VERSION: '2'
+          QEVERCLOUD_CACHE_VERSION: '3'
         uses: actions/cache@v4
         with:
           path: '${{ runner.workspace }}/qevercloud_win_development_qt6'
@@ -1551,7 +1554,7 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt5" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl -DGTest_DIR="%RUNNER_WORKSPACE%\googletest\lib\cmake\GTest" -DCMAKE_C_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" -DCMAKE_CXX_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt5" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_87_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl -DGTest_DIR="%RUNNER_WORKSPACE%\googletest\lib\cmake\GTest" -DCMAKE_C_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" -DCMAKE_CXX_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
@@ -1623,7 +1626,7 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DBUILD_WITH_QT6=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt6_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt6" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_86_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl -DGTest_DIR="%RUNNER_WORKSPACE%\googletest\lib\cmake\GTest" -DCMAKE_C_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" -DCMAKE_CXX_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" ..
+          cmake -G "NMake Makefiles" -DBUILD_WITH_QT6=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="%GITHUB_WORKSPACE%\build\bin" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt6_DIR="%QEVERCLOUD_DIR%\cmake\QEverCloud-qt6" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_87_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5" -DOPENSSL_ROOT_DIR=%RUNNER_WORKSPACE%\openssl -DGTest_DIR="%RUNNER_WORKSPACE%\googletest\lib\cmake\GTest" -DCMAKE_C_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" -DCMAKE_CXX_COMPILER_LAUNCHER="%USERPROFILE%\.cargo\bin\ccache" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
