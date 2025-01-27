@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 
 #include <quentier/utility/StandardPaths.h>
 
+#include <QByteArray>
 #include <QTemporaryDir>
 
 #include <gtest/gtest.h>
@@ -34,6 +35,9 @@ class AccountSyncPersistenceDirProviderTest : public testing::Test
 protected:
     void SetUp() override
     {
+        m_originalPersistenceStoragePath =
+            qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+
         qputenv(
             LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
             m_temporaryDir.path().toLocal8Bit());
@@ -41,7 +45,9 @@ protected:
 
     void TearDown() override
     {
-        qputenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH, QByteArray{});
+        qputenv(
+            LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+            m_originalPersistenceStoragePath);
     }
 
 protected:
@@ -53,6 +59,7 @@ protected:
         QStringLiteral("www.evernote.com"),
         QStringLiteral("shard id")};
 
+    QByteArray m_originalPersistenceStoragePath;
     QTemporaryDir m_temporaryDir;
 };
 

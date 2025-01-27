@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,6 +29,7 @@
 #include <quentier/synchronization/tests/mocks/MockINoteStoreFactory.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/Unreachable.h>
 #include <quentier/utility/tests/mocks/MockIKeychainService.h>
@@ -40,8 +41,10 @@
 #include <qevercloud/types/builders/UserBuilder.h>
 #include <qevercloud/types/builders/UserUrlsBuilder.h>
 
+#include <QByteArray>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QTemporaryDir>
 
 #include <gtest/gtest.h>
 
@@ -266,33 +269,35 @@ class AuthenticationInfoProviderTest : public testing::Test
 protected:
     void SetUp() override
     {
-        clearPersistence();
+        m_originalPersistenceStoragePath =
+            qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+
+        qputenv(
+            LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+            m_temporaryDir.path().toLocal8Bit());
     }
 
     void TearDown() override
     {
-        clearPersistence();
+        qputenv(
+            LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+            m_originalPersistenceStoragePath);
     };
 
-private:
-    void clearPersistence()
-    {
-        const Account account{
-            QStringLiteral("username"),
+protected:
+    const QString m_host = QStringLiteral("www.evernote.com");
+
+    const std::shared_ptr<AuthenticationInfo> m_authenticationInfo =
+        createSampleAuthenticationInfo();
+
+    const Account m_account{
+        QStringLiteral("username"),
             Account::Type::Evernote,
             m_authenticationInfo->userId(),
             Account::EvernoteAccountType::Free,
             m_host,
             m_authenticationInfo->shardId()};
 
-        ApplicationSettings appSettings{
-            account, QStringLiteral("SynchronizationPersistence")};
-
-        appSettings.remove(QString::fromUtf8(""));
-        appSettings.sync();
-    }
-
-protected:
     const std::shared_ptr<mocks::MockIAuthenticator> m_mockAuthenticator =
         std::make_shared<StrictMock<mocks::MockIAuthenticator>>();
 
@@ -306,13 +311,11 @@ protected:
     const std::shared_ptr<mocks::MockINoteStoreFactory> m_mockNoteStoreFactory =
         std::make_shared<StrictMock<mocks::MockINoteStoreFactory>>();
 
-    const QString m_host = QStringLiteral("www.evernote.com");
-
-    const std::shared_ptr<AuthenticationInfo> m_authenticationInfo =
-        createSampleAuthenticationInfo();
-
     const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    QByteArray m_originalPersistenceStoragePath;
+    QTemporaryDir m_temporaryDir;
 };
 
 TEST_F(AuthenticationInfoProviderTest, Ctor)
