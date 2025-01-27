@@ -292,11 +292,11 @@ protected:
 
     const Account m_account{
         QStringLiteral("username"),
-            Account::Type::Evernote,
-            m_authenticationInfo->userId(),
-            Account::EvernoteAccountType::Free,
-            m_host,
-            m_authenticationInfo->shardId()};
+        Account::Type::Evernote,
+        m_authenticationInfo->userId(),
+        Account::EvernoteAccountType::Free,
+        m_host,
+        m_authenticationInfo->shardId()};
 
     const std::shared_ptr<mocks::MockIAuthenticator> m_mockAuthenticator =
         std::make_shared<StrictMock<mocks::MockIAuthenticator>>();
