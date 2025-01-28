@@ -14,6 +14,7 @@ target_sources(${MOCKS_NAME}
     MockINotesHandler.h
     MockIResourcesHandler.h
     MockISavedSearchesHandler.h
+    MockISqlDatabaseWrapper.h
     MockISynchronizationInfoHandler.h
     MockITagsHandler.h
     MockIUsersHandler.h

@@ -14,6 +14,7 @@ target_sources(${LIBRARY_NAME}
   INotesHandler.h
   IResourcesHandler.h
   ISavedSearchesHandler.h
+  ISqlDatabaseWrapper.h
   ISynchronizationInfoHandler.h
   ITagsHandler.h
   IVersionHandler.h
@@ -34,6 +35,8 @@ target_sources(${LIBRARY_NAME}
   ResourcesHandler.h
   SavedSearchesHandler.cpp
   SavedSearchesHandler.h
+  SqlDatabaseWrapper.cpp
+  SqlDatabaseWrapper.h
   SynchronizationInfoHandler.cpp
   SynchronizationInfoHandler.h
   TablesInitializer.cpp

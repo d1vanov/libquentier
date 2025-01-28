@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,6 +43,9 @@ using IResourcesHandlerPtr = std::shared_ptr<IResourcesHandler>;
 
 class ISavedSearchesHandler;
 using ISavedSearchesHandlerPtr = std::shared_ptr<ISavedSearchesHandler>;
+
+class ISqlDatabaseWrapper;
+using ISqlDatabaseWrapperPtr = std::shared_ptr<ISqlDatabaseWrapper>;
 
 class ISynchronizationInfoHandler;
 using ISynchronizationInfoHandlerPtr = std::shared_ptr<ISynchronizationInfoHandler>;

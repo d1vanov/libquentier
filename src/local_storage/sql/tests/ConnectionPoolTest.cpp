@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,12 +18,16 @@
 
 #include "../ConnectionPool.h"
 
+#include <local_storage/sql/tests/mocks/MockISqlDatabaseWrapper.h>
+
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/LocalStorageOpenException.h>
 
 #include <QCoreApplication>
 #include <QDeadlineTimer>
 #include <QFuture>
 #include <QFutureSynchronizer>
+#include <QMutex>
 #include <QSemaphore>
 #include <QSqlDatabase>
 #include <QThread>
@@ -44,50 +48,97 @@
 
 namespace quentier::local_storage::sql::tests {
 
-TEST(ConnectionPoolTest, Ctor)
+using testing::Return;
+using testing::StrictMock;
+
+class ConnectionPoolTest : public testing::Test
 {
+protected:
+    const std::shared_ptr<mocks::MockISqlDatabaseWrapper>
+        m_mockSqlDatabaseWrapper =
+            std::make_shared<StrictMock<mocks::MockISqlDatabaseWrapper>>();
+};
+
+TEST_F(ConnectionPoolTest, Ctor)
+{
+    EXPECT_CALL(
+        *m_mockSqlDatabaseWrapper, isDriverAvailable(QStringLiteral("QSQLITE")))
+        .WillOnce(Return(true));
+
     EXPECT_NO_THROW(
         const auto pool = std::make_shared<ConnectionPool>(
-            QStringLiteral("localhost"), QStringLiteral("user"),
-            QStringLiteral("password"), QStringLiteral("database"),
-            QStringLiteral("QSQLITE")));
+            m_mockSqlDatabaseWrapper, QStringLiteral("localhost"),
+            QStringLiteral("user"), QStringLiteral("password"),
+            QStringLiteral("database"), QStringLiteral("QSQLITE")));
 }
 
-TEST(ConnectionPoolTest, CtorThrowOnMissingSqlDriver)
+TEST_F(ConnectionPoolTest, CtorNullSqlDatabaseWrapper)
 {
     EXPECT_THROW(
         const auto pool = std::make_shared<ConnectionPool>(
-            QStringLiteral("localhost"), QStringLiteral("user"),
+            nullptr, QStringLiteral("localhost"), QStringLiteral("user"),
             QStringLiteral("password"), QStringLiteral("database"),
+            QStringLiteral("QSQLITE")),
+        InvalidArgument);
+}
+
+TEST_F(ConnectionPoolTest, CtorThrowOnMissingSqlDriver)
+{
+    EXPECT_CALL(
+        *m_mockSqlDatabaseWrapper,
+        isDriverAvailable(QStringLiteral("NonexistentDatabaseDriver")))
+        .WillOnce(Return(false));
+
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, drivers)
+        .WillOnce(Return(QStringList{} << QStringLiteral("QSQLITE")));
+
+    EXPECT_THROW(
+        const auto pool = std::make_shared<ConnectionPool>(
+            m_mockSqlDatabaseWrapper, QStringLiteral("localhost"),
+            QStringLiteral("user"), QStringLiteral("password"),
+            QStringLiteral("database"),
             QStringLiteral("NonexistentDatabaseDriver")),
         LocalStorageOpenException);
 }
 
-TEST(ConnectionPoolTest, CreateConnectionForCurrentThread)
+TEST_F(ConnectionPoolTest, CreateConnectionForCurrentThread)
 {
-    auto connectionNames = QSqlDatabase::connectionNames();
-    EXPECT_TRUE(connectionNames.isEmpty());
+    EXPECT_CALL(
+        *m_mockSqlDatabaseWrapper, isDriverAvailable(QStringLiteral("QSQLITE")))
+        .WillOnce(Return(true));
 
     const auto pool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral("database"),
-        QStringLiteral("QSQLITE"));
+        m_mockSqlDatabaseWrapper, QStringLiteral("localhost"),
+        QStringLiteral("user"), QStringLiteral("password"),
+        QStringLiteral("database"), QStringLiteral("QSQLITE"));
 
-    connectionNames = QSqlDatabase::connectionNames();
-    EXPECT_TRUE(connectionNames.isEmpty());
+    QString connectionName;
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, addDatabase)
+        .WillOnce([&](const QString & type, const QString & name) {
+            EXPECT_EQ(type, QStringLiteral("QSQLITE"));
+            connectionName = name;
+            return QSqlDatabase::addDatabase(type, name);
+        });
 
     Q_UNUSED(pool->database());
-    connectionNames = QSqlDatabase::connectionNames();
-    EXPECT_EQ(connectionNames.size(), 1);
-    QSqlDatabase::removeDatabase(connectionNames[0]);
+
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, removeDatabase)
+        .WillOnce([=](const QString & name) {
+            EXPECT_EQ(name, connectionName);
+            QSqlDatabase::removeDatabase(name);
+        });
 }
 
-TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
+TEST_F(ConnectionPoolTest, CreateConnectionsForEachThread)
 {
+    EXPECT_CALL(
+        *m_mockSqlDatabaseWrapper, isDriverAvailable(QStringLiteral("QSQLITE")))
+        .WillOnce(Return(true));
+
     const auto pool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral("database"),
-        QStringLiteral("QSQLITE"));
+        m_mockSqlDatabaseWrapper, QStringLiteral("localhost"),
+        QStringLiteral("user"), QStringLiteral("password"),
+        QStringLiteral("database"), QStringLiteral("QSQLITE"));
 
     const std::size_t threadCount = 3;
     QSemaphore threadSemaphore{static_cast<int>(threadCount)};
@@ -101,6 +152,32 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     for (auto & promise: threadWaitPromises) {
         promise.start();
     }
+
+    QMutex connectionNamesMutex;
+    QSet<QString> connectionNames;
+
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, addDatabase)
+        .Times(threadCount)
+        .WillRepeatedly([&](const QString & type, const QString & name) {
+            EXPECT_EQ(type, QStringLiteral("QSQLITE"));
+            {
+                const QMutexLocker locker{&connectionNamesMutex};
+                connectionNames.insert(name);
+            }
+            return QSqlDatabase::addDatabase(type, name);
+        });
+
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, removeDatabase)
+        .Times(threadCount)
+        .WillRepeatedly([&](const QString & name) {
+            {
+                const QMutexLocker locker{&connectionNamesMutex};
+                const bool removed = connectionNames.remove(name);
+                EXPECT_TRUE(removed);
+            }
+
+            QSqlDatabase::removeDatabase(name);
+        });
 
     const auto makeThreadFunc = [&](const std::size_t index) {
         return [&, index] {
@@ -133,23 +210,11 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     // Now each thread should have its own DB connection
     EXPECT_EQ(threadSemaphore.available(), 0);
 
-    // Wait for database connections to appear in the list of connection names
-    // It should really be synchronous but it appears that somewhere in the gory
-    // guts of Qt it is actually asynchronous
-    const int maxIterations = 500;
-    bool gotExpectedConnectionNames = false;
-    for (int i = 0; i < maxIterations; ++i) {
-        auto connectionNames = QSqlDatabase::connectionNames();
-        if (connectionNames.size() != static_cast<int>(threadCount)) {
-            QThread::msleep(50);
-            continue;
-        }
-
-        gotExpectedConnectionNames = true;
-        break;
+    // Check that all expected connections are established
+    {
+        const QMutexLocker locker{&connectionNamesMutex};
+        EXPECT_EQ(connectionNames.size(), static_cast<int>(threadCount));
     }
-
-    EXPECT_TRUE(gotExpectedConnectionNames);
 
     // Let the threads finish
     for (std::size_t i = 0; i < threadCount; ++i) {
@@ -162,27 +227,20 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     // Give lambdas connected to threads finished signal a chance to fire
     QCoreApplication::processEvents();
 
-    // Wait for database connections to close
-    for (int i = 0; i < maxIterations; ++i) {
-        const auto connectionNames = QSqlDatabase::connectionNames();
-        if (connectionNames.isEmpty()) {
-            break;
-        }
-
-        QThread::msleep(100);
-        QCoreApplication::processEvents();
-    }
-
-    auto connectionNames = QSqlDatabase::connectionNames();
+    // Ensure that all connections were closed
     EXPECT_TRUE(connectionNames.isEmpty());
 }
 
-TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
+TEST_F(ConnectionPoolTest, RemoveConnectionsInDestructor)
 {
+    EXPECT_CALL(
+        *m_mockSqlDatabaseWrapper, isDriverAvailable(QStringLiteral("QSQLITE")))
+        .WillOnce(Return(true));
+
     auto pool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"), QStringLiteral("database"),
-        QStringLiteral("QSQLITE"));
+        m_mockSqlDatabaseWrapper, QStringLiteral("localhost"),
+        QStringLiteral("user"), QStringLiteral("password"),
+        QStringLiteral("database"), QStringLiteral("QSQLITE"));
 
     const std::size_t threadCount = 3;
     QSemaphore threadSemaphore{static_cast<int>(threadCount)};
@@ -196,6 +254,32 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     for (auto & promise: threadWaitPromises) {
         promise.start();
     }
+
+    QMutex connectionNamesMutex;
+    QSet<QString> connectionNames;
+
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, addDatabase)
+        .Times(threadCount)
+        .WillRepeatedly([&](const QString & type, const QString & name) {
+            EXPECT_EQ(type, QStringLiteral("QSQLITE"));
+            {
+                const QMutexLocker locker{&connectionNamesMutex};
+                connectionNames.insert(name);
+            }
+            return QSqlDatabase::addDatabase(type, name);
+        });
+
+    EXPECT_CALL(*m_mockSqlDatabaseWrapper, removeDatabase)
+        .Times(threadCount)
+        .WillRepeatedly([&](const QString & name) {
+            {
+                const QMutexLocker locker{&connectionNamesMutex};
+                const bool removed = connectionNames.remove(name);
+                EXPECT_TRUE(removed);
+            }
+
+            QSqlDatabase::removeDatabase(name);
+        });
 
     const auto makeThreadFunc = [&](const std::size_t index) {
         return [&, index] {
@@ -228,28 +312,14 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     // Now each thread should have its own DB connection
     EXPECT_EQ(threadSemaphore.available(), 0);
 
-    // Wait for database connections to appear in the list of connection names
-    // It should really be synchronous but it appears that somewhere in the gory
-    // guts of Qt it is actually asynchronous
-    const int maxIterations = 500;
-    bool gotExpectedConnectionNames = false;
-    for (int i = 0; i < maxIterations; ++i) {
-        auto connectionNames = QSqlDatabase::connectionNames();
-        if (connectionNames.size() != static_cast<int>(threadCount)) {
-            QThread::msleep(50);
-            continue;
-        }
-
-        gotExpectedConnectionNames = true;
-        break;
+    // Check that all expected connections are established
+    {
+        const QMutexLocker locker{&connectionNamesMutex};
+        EXPECT_EQ(connectionNames.size(), static_cast<int>(threadCount));
     }
-
-    EXPECT_TRUE(gotExpectedConnectionNames);
 
     // Destroying the pool and verifying that connections are gone
     pool.reset();
-
-    auto connectionNames = QSqlDatabase::connectionNames();
     EXPECT_TRUE(connectionNames.isEmpty());
 
     // Can let the threads finish now

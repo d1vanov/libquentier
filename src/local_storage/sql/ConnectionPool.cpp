@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include "ConnectionPool.h"
+#include "ISqlDatabaseWrapper.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/LocalStorageOpenException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
@@ -40,8 +42,10 @@
 namespace quentier::local_storage::sql {
 
 ConnectionPool::ConnectionPool(
-    QString hostName, QString userName, QString password, QString databaseName,
+    ISqlDatabaseWrapperPtr sqlDatabaseWrapper, QString hostName,
+    QString userName, QString password, QString databaseName,
     QString sqlDriverName, QString connectionOptions) :
+    m_sqlDatabaseWrapper{std::move(sqlDatabaseWrapper)},
     m_hostName{std::move(hostName)}, m_userName{std::move(userName)},
     m_password{std::move(password)}, m_databaseName{std::move(databaseName)},
     m_sqlDriverName{std::move(sqlDriverName)},
@@ -50,8 +54,13 @@ ConnectionPool::ConnectionPool(
         return sysInfo.pageSize();
     }()}
 {
+    if (Q_UNLIKELY(!m_sqlDatabaseWrapper)) {
+        throw InvalidArgument{ErrorString{QStringLiteral(
+            "ConnectionPool ctor: sql database wrapper is null")}};
+    }
+
     const bool isSqlDriverAvailable =
-        QSqlDatabase::isDriverAvailable(m_sqlDriverName);
+        m_sqlDatabaseWrapper->isDriverAvailable(m_sqlDriverName);
 
     if (Q_UNLIKELY(!isSqlDriverAvailable)) {
         ErrorString error(
@@ -60,7 +69,7 @@ ConnectionPool::ConnectionPool(
         error.details() += m_sqlDriverName;
         error.details() += QStringLiteral("; available SQL drivers: ");
 
-        const QStringList drivers = QSqlDatabase::drivers();
+        const QStringList drivers = m_sqlDatabaseWrapper->drivers();
         for (const auto & driver: std::as_const(drivers)) {
             error.details() += driver;
             if (&driver != &drivers.back()) {
@@ -78,18 +87,18 @@ ConnectionPool::~ConnectionPool()
     for (auto it = m_connections.begin(), end = m_connections.end(); it != end;
          ++it)
     {
-        QSqlDatabase::removeDatabase(it.value().m_connectionName);
+        m_sqlDatabaseWrapper->removeDatabase(it.value().m_connectionName);
     }
 }
 
 QSqlDatabase ConnectionPool::database()
 {
-    auto * pCurrentThread = QThread::currentThread();
+    auto * currentThread = QThread::currentThread();
     {
         const QReadLocker lock{&m_connectionsLock};
-        const auto it = m_connections.find(pCurrentThread);
+        const auto it = m_connections.find(currentThread);
         if (it != m_connections.end()) {
-            return QSqlDatabase::database(
+            return m_sqlDatabaseWrapper->database(
                 it->m_connectionName, /* open = */ true);
         }
     }
@@ -97,9 +106,10 @@ QSqlDatabase ConnectionPool::database()
     QWriteLocker lock{&m_connectionsLock};
 
     // Try to find the existing connection again
-    const auto it = m_connections.find(pCurrentThread);
+    const auto it = m_connections.find(currentThread);
     if (it != m_connections.end()) {
-        return QSqlDatabase::database(it->m_connectionName, /* open = */ true);
+        return m_sqlDatabaseWrapper->database(
+            it->m_connectionName, /* open = */ true);
     }
 
     std::ostringstream sstrm;
@@ -126,27 +136,30 @@ QSqlDatabase ConnectionPool::database()
         return result;
     }();
 
-    m_connections[pCurrentThread] =
-        ConnectionData{QPointer{pCurrentThread}, connectionName};
+    m_connections[currentThread] =
+        ConnectionData{QPointer{currentThread}, connectionName};
 
     QObject::connect(
-        pCurrentThread, &QThread::finished, pCurrentThread,
-        [pCurrentThread, self_weak = weak_from_this()] {
+        currentThread, &QThread::finished, currentThread,
+        [currentThread, self_weak = weak_from_this()] {
             auto self = self_weak.lock();
             if (!self) {
                 return;
             }
 
             const QWriteLocker lock{&self->m_connectionsLock};
-            const auto it = self->m_connections.find(pCurrentThread);
+            const auto it = self->m_connections.find(currentThread);
             if (Q_LIKELY(it != self->m_connections.end())) {
-                QSqlDatabase::removeDatabase(it.value().m_connectionName);
+                self->m_sqlDatabaseWrapper->removeDatabase(
+                    it.value().m_connectionName);
                 self->m_connections.erase(it);
             }
         },
         Qt::QueuedConnection);
 
-    auto database = QSqlDatabase::addDatabase(m_sqlDriverName, connectionName);
+    auto database =
+        m_sqlDatabaseWrapper->addDatabase(m_sqlDriverName, connectionName);
+
     database.setHostName(m_hostName);
     database.setUserName(m_userName);
     database.setPassword(m_password);

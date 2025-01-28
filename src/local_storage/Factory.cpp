@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,7 @@
 #include <local_storage/sql/Notifier.h>
 #include <local_storage/sql/ResourcesHandler.h>
 #include <local_storage/sql/SavedSearchesHandler.h>
+#include <local_storage/sql/SqlDatabaseWrapper.h>
 #include <local_storage/sql/SynchronizationInfoHandler.h>
 #include <local_storage/sql/TablesInitializer.h>
 #include <local_storage/sql/TagsHandler.h>
@@ -50,9 +51,12 @@ ILocalStoragePtr createSqliteLocalStorage(
     auto localStorageMainFilePath =
         localStorageDir.absoluteFilePath(QStringLiteral("qn.storage.sqlite"));
 
+    auto sqlDatabaseWrapper = std::make_shared<sql::SqlDatabaseWrapper>();
+
     auto connectionPool = std::make_shared<sql::ConnectionPool>(
-        QStringLiteral("localhost"), QString{}, QString{},
-        std::move(localStorageMainFilePath), QStringLiteral("QSQLITE"));
+        std::move(sqlDatabaseWrapper), QStringLiteral("localhost"), QString{},
+        QString{}, std::move(localStorageMainFilePath),
+        QStringLiteral("QSQLITE"));
 
     {
         auto database = connectionPool->database();

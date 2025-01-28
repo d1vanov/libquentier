@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #include "Utils.h"
 
 #include "../ConnectionPool.h"
+#include "../SqlDatabaseWrapper.h"
 #include "../TablesInitializer.h"
 
 #include <gtest/gtest.h>
@@ -69,6 +70,7 @@ ConnectionPoolPtr createConnectionPool()
 {
     static int counter = 1;
     return std::make_shared<ConnectionPool>(
+        std::make_shared<SqlDatabaseWrapper>(),
         QStringLiteral("localhost"), QStringLiteral("user"),
         QStringLiteral("password"),
         QString::fromUtf8("file::memdb%1?mode=memory&cache=shared")

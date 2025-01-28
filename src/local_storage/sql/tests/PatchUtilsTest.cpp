@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 #include "../ConnectionPool.h"
 #include "../ErrorHandling.h"
 #include "../Fwd.h"
+#include "../SqlDatabaseWrapper.h"
 #include "../TablesInitializer.h"
 #include "../patches/PatchUtils.h"
 
@@ -64,7 +65,8 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     Q_ASSERT(testLocalStorageDir.isValid());
 
     auto connectionPool = std::make_shared<ConnectionPool>(
-        QStringLiteral("localhost"), QString::fromUtf8(gTestAccountName),
+        std::make_shared<SqlDatabaseWrapper>(), QStringLiteral("localhost"),
+        QString::fromUtf8(gTestAccountName),
         QString::fromUtf8(gTestAccountName),
         testLocalStorageDir.filePath(QString::fromUtf8(gTestDatabaseFileName)),
         QStringLiteral("QSQLITE"));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "Fwd.h"
+
 #include <QHash>
 #include <QPointer>
 #include <QReadWriteLock>
@@ -32,9 +34,9 @@ class ConnectionPool final: public std::enable_shared_from_this<ConnectionPool>
 {
 public:
     explicit ConnectionPool(
-        QString hostName, QString userName, QString password,
-        QString databaseName, QString sqlDriverName,
-        QString connectionOptions = {});
+        ISqlDatabaseWrapperPtr sqlDatabaseWrapper, QString hostName,
+        QString userName, QString password, QString databaseName,
+        QString sqlDriverName, QString connectionOptions = {});
 
     ~ConnectionPool();
 
@@ -47,6 +49,7 @@ private:
         QString m_connectionName;
     };
 
+    const ISqlDatabaseWrapperPtr m_sqlDatabaseWrapper;
     const QString m_hostName;
     const QString m_userName;
     const QString m_password;
