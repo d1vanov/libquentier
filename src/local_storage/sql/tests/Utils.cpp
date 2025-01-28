@@ -70,9 +70,8 @@ ConnectionPoolPtr createConnectionPool()
 {
     static int counter = 1;
     return std::make_shared<ConnectionPool>(
-        std::make_shared<SqlDatabaseWrapper>(),
-        QStringLiteral("localhost"), QStringLiteral("user"),
-        QStringLiteral("password"),
+        std::make_shared<SqlDatabaseWrapper>(), QStringLiteral("localhost"),
+        QStringLiteral("user"), QStringLiteral("password"),
         QString::fromUtf8("file::memdb%1?mode=memory&cache=shared")
             .arg(counter++),
         QStringLiteral("QSQLITE"), QStringLiteral("QSQLITE_OPEN_URI"));
