@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,7 +47,6 @@ function provideSrcAndOnClickScriptForEnCryptImgTags(path) {
         element.setAttribute("onclick", "window.enCryptElementClickHandler.onEnCryptElementClicked(" +
                              "this.getAttribute(\"encrypted_text\"), " +
                              "this.getAttribute(\"cipher\") || \"\", " +
-                             "this.getAttribute(\"length\") || \"\", " +
                              "this.getAttribute(\"hint\") || \"\", " +
                              "this.getAttribute(\"en-crypt-id\") || \"\"" +
                              ")");
