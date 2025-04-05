@@ -62,11 +62,11 @@ namespace quentier {
 EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
     NoteEditorPrivate * noteEditor, IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache,
-    enml::IENMLTagsConverterPtr m_enmlTagsConverter) :
+    enml::IENMLTagsConverterPtr enmlTagsConverter) :
     QObject(noteEditor), m_noteEditor(noteEditor),
     m_encryptor(std::move(encryptor)),
     m_decryptedTextCache(std::move(decryptedTextCache)),
-    m_enmlTagsConverter(std::move(m_enmlTagsConverter))
+    m_enmlTagsConverter(std::move(enmlTagsConverter))
 {
     if (Q_UNLIKELY(!m_encryptor)) {
         throw InvalidArgument{ErrorString{
