@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -264,7 +264,8 @@ public Q_SLOTS:
     void initialize(
         local_storage::ILocalStoragePtr localStorage,
         SpellChecker & spellChecker, const Account & account,
-        QThread * pBackgroundJobsThread) override;
+        QThread * backgroundJobsThread,
+        enml::IDecryptedTextCachePtr decryptedTextCache) override;
 
     void setAccount(const Account & account) override;
     void setUndoStack(QUndoStack * pUndoStack) override;

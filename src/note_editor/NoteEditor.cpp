@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,15 +29,17 @@
 #include <QUndoStack>
 #include <QVBoxLayout>
 
+#include <utility>
+
 namespace quentier {
 
 NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
     QWidget(parent, flags), m_backend(new NoteEditorPrivate(*this))
 {
-    auto * pLayout = new QVBoxLayout;
-    pLayout->addWidget(m_backend->widget());
-    pLayout->setContentsMargins(0, 0, 0, 0);
-    setLayout(pLayout);
+    auto * layout = new QVBoxLayout;
+    layout->addWidget(m_backend->widget());
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
     setAcceptDrops(true);
 }
 
@@ -45,10 +47,12 @@ NoteEditor::~NoteEditor() noexcept = default;
 
 void NoteEditor::initialize(
     local_storage::ILocalStoragePtr localStorage, SpellChecker & spellChecker,
-    const Account & account, QThread * pBackgroundJobsThread)
+    const Account & account, QThread * backgroundJobsThread,
+    enml::IDecryptedTextCachePtr decryptedTextCache)
 {
     m_backend->initialize(
-        std::move(localStorage), spellChecker, account, pBackgroundJobsThread);
+        std::move(localStorage), spellChecker, account, backgroundJobsThread,
+        std::move(decryptedTextCache));
 }
 
 INoteEditorBackend * NoteEditor::backend() noexcept

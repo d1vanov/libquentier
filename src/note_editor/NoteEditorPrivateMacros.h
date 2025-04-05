@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,6 +41,15 @@
                   << (m_pNotebook ? m_pNotebook->toString()                    \
                                   : QStringLiteral("<null>")));                \
         Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }
+
+#define CHECK_DECRYPTED_TEXT_CACHE(message)                                    \
+    if (Q_UNLIKELY(!m_decryptedTextCache)) {                                   \
+        ErrorString error(message);                                            \
+        error.appendBase(QT_TRANSLATE_NOOP(                                    \
+            "NoteEditorPrivate", "No decrypted text cache"));                  \
+        QNWARNING("note_editor", error);                                       \
         return;                                                                \
     }
 

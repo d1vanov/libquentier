@@ -226,7 +226,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pTextCursorPositionJavaScriptHandler(
         new TextCursorPositionJavaScriptHandler(this)),
     m_encryptor(createOpenSslEncryptor()),
-    m_decryptedTextCache(enml::createDecryptedTextCache(m_encryptor)),
     m_enmlTagsConverter(enml::createEnmlTagsConverter()),
     m_enmlConverter(enml::createConverter(m_enmlTagsConverter)),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
@@ -2154,6 +2153,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
         "note_editor",
         "NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished");
 
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't decrypt text"))
+
     setModified();
 
     EncryptDecryptUndoCommandInfo info;
@@ -2801,7 +2802,10 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_genericResourceImageFilePathsByResourceHash.clear();
     m_saveGenericResourceImageToFileRequestIds.clear();
     m_recognitionIndicesByResourceHash.clear();
-    m_decryptedTextCache->clearNonRememberedForSessionEntries();
+
+    if (m_decryptedTextCache) {
+        m_decryptedTextCache->clearNonRememberedForSessionEntries();
+    }
 
     m_lastSearchHighlightedText.resize(0);
     m_lastSearchHighlightedTextCaseSensitivity = false;
@@ -4341,6 +4345,8 @@ void NoteEditorPrivate::noteToEditorContent()
         clearEditorContent();
         return;
     }
+
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Cannot fetch note content"))
 
     if (isInkNote(*m_pNote)) {
         inkNoteToEditorContent();
@@ -6924,6 +6930,8 @@ void NoteEditorPrivate::onPageHtmlReceived(
     QNTRACE("note_editor", html);
     Q_UNUSED(extraData)
 
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Cannot fetch note content"))
+
     Q_EMIT noteEditorHtmlUpdated(html);
 
     if (!m_pendingConversionToNote) {
@@ -7904,7 +7912,8 @@ void NoteEditorPrivate::execJavascriptCommand(
 
 void NoteEditorPrivate::initialize(
     local_storage::ILocalStoragePtr localStorage, SpellChecker & spellChecker,
-    const Account & account, QThread * pBackgroundJobsThread)
+    const Account & account, QThread * backgroundJobsThread,
+    enml::IDecryptedTextCachePtr decryptedTextCache)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::initialize");
 
@@ -7915,9 +7924,14 @@ void NoteEditorPrivate::initialize(
 
     m_pSpellChecker = &spellChecker;
 
-    if (pBackgroundJobsThread) {
-        m_pFileIOProcessorAsync->moveToThread(pBackgroundJobsThread);
+    if (backgroundJobsThread) {
+        m_pFileIOProcessorAsync->moveToThread(backgroundJobsThread);
     }
+
+    if (!decryptedTextCache) {
+        decryptedTextCache = enml::createDecryptedTextCache(m_encryptor);
+    }
+    m_decryptedTextCache = std::move(decryptedTextCache);
 
     setAccount(account);
 }
@@ -10844,6 +10858,7 @@ void NoteEditorPrivate::encryptSelectedText()
     QNDEBUG("note_editor", "NoteEditorPrivate::encryptSelectedText");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't encrypt the selected text"))
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't encrypt the selected text"))
 
     auto * delegate = new EncryptSelectedTextDelegate(
         this, m_encryptor, m_decryptedTextCache, m_enmlTagsConverter);
@@ -10897,6 +10912,7 @@ void NoteEditorPrivate::decryptEncryptedText(
     QNDEBUG("note_editor", "NoteEditorPrivate::decryptEncryptedText");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't decrypt the encrypted text"))
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't decrypt the encrypted text"))
 
     const auto cipher = parseCipher(cipherStr);
     if (Q_UNLIKELY(!cipher)) {
@@ -10969,6 +10985,8 @@ void NoteEditorPrivate::hideDecryptedText(
     QString hint, QString enDecryptedIndex)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::hideDecryptedText");
+
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't hide the encrypted text"))
 
     const auto cipher = parseCipher(cipherStr);
     if (Q_UNLIKELY(!cipher)) {

@@ -42,7 +42,8 @@ void DecryptedTextCache::addDecryptexTextInfo(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::addDecryptexTextInfo: encryptedText = "
             << encryptedText
-            << ", rememberForSession = " << rememberForSession);
+            << ", rememberForSession = " << rememberForSession
+            << ", this = " << static_cast<const void*>(this));
 
     if (passphrase.isEmpty()) {
         QNWARNING(
@@ -65,7 +66,8 @@ std::optional<std::pair<QString, IDecryptedTextCache::RememberForSession>>
 {
     QNDEBUG(
         "enml::DecryptedTextCache",
-        "DecryptedTextCache::findDecryptedTextInfo: " << encryptedText);
+        "DecryptedTextCache::findDecryptedTextInfo: "
+            << encryptedText << ", this = " << static_cast<const void *>(this));
 
     auto dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end()) {
