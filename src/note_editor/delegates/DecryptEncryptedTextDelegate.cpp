@@ -237,8 +237,8 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
     }
 
     Q_EMIT finished(
-        m_encryptedText, m_cipher, m_hint, m_decryptedText,
-        m_passphrase, m_rememberForSession, m_decryptPermanently);
+        m_encryptedText, m_cipher, m_hint, m_decryptedText, m_passphrase,
+        m_rememberForSession, m_decryptPermanently);
 }
 
 } // namespace quentier

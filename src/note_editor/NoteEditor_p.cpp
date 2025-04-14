@@ -10925,8 +10925,8 @@ void NoteEditorPrivate::decryptEncryptedText(
     }
 
     auto * delegate = new DecryptEncryptedTextDelegate(
-        enCryptIndex, encryptedText, *cipher, hint, this,
-        m_encryptor, m_decryptedTextCache, m_enmlTagsConverter);
+        enCryptIndex, encryptedText, *cipher, hint, this, m_encryptor,
+        m_decryptedTextCache, m_enmlTagsConverter);
 
     QObject::connect(
         delegate, &DecryptEncryptedTextDelegate::finished, this,

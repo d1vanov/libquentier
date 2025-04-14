@@ -28,8 +28,7 @@ namespace {
 template <class T>
 void printCipher(const IEncryptor::Cipher cipher, T & t)
 {
-    switch (cipher)
-    {
+    switch (cipher) {
     case IEncryptor::Cipher::AES:
         t << "AES";
         break;

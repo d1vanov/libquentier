@@ -143,8 +143,7 @@ void EncryptionDialog::accept()
         return;
     }
 
-    const auto res = m_encryptor->encrypt(
-        m_textToEncrypt, passphrase);
+    const auto res = m_encryptor->encrypt(m_textToEncrypt, passphrase);
 
     if (!res.isValid()) {
         const auto & error = res.error();

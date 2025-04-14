@@ -69,8 +69,8 @@ EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
     m_enmlTagsConverter(std::move(enmlTagsConverter))
 {
     if (Q_UNLIKELY(!m_encryptor)) {
-        throw InvalidArgument{ErrorString{
-            "EncryptSelectedTextDelegate ctor: encryptor is null"}};
+        throw InvalidArgument{
+            ErrorString{"EncryptSelectedTextDelegate ctor: encryptor is null"}};
     }
 
     if (Q_UNLIKELY(!m_decryptedTextCache)) {
@@ -139,8 +139,8 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
     QString selectedText, QString encryptedText, // NOLINT
-    const IEncryptor::Cipher cipher,
-    QString hint, bool rememberForSession)     // NOLINT
+    const IEncryptor::Cipher cipher, QString hint,
+    bool rememberForSession) // NOLINT
 {
     QNDEBUG(
         "note_editor::EncryptSelectedTextDelegate",
@@ -162,8 +162,7 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
     }
     else {
         m_encryptedTextHtml = m_enmlTagsConverter->convertEncryptedText(
-            encryptedText, hint, cipher,
-            m_noteEditor->nextEncryptedTextId());
+            encryptedText, hint, cipher, m_noteEditor->nextEncryptedTextId());
 
         m_encryptedTextHtml =
             enml::utils::htmlEscapeString(m_encryptedTextHtml);
@@ -209,8 +208,7 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
 
     QString javascript;
     if (m_rememberForSession) {
-        const QString id =
-            QString::number(m_noteEditor->nextDecryptedTextId());
+        const QString id = QString::number(m_noteEditor->nextDecryptedTextId());
 
         QString escapedDecryptedText =
             enml::utils::htmlEscapeString(m_selectionHtml);

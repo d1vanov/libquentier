@@ -41,9 +41,8 @@ void DecryptedTextCache::addDecryptexTextInfo(
     QNDEBUG(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::addDecryptexTextInfo: encryptedText = "
-            << encryptedText
-            << ", rememberForSession = " << rememberForSession
-            << ", this = " << static_cast<const void*>(this));
+            << encryptedText << ", rememberForSession = " << rememberForSession
+            << ", this = " << static_cast<const void *>(this));
 
     if (passphrase.isEmpty()) {
         QNWARNING(

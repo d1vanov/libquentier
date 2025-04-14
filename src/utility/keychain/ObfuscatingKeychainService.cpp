@@ -75,7 +75,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
     if (obfuscatedKeychainStorage.contains(keys::value)) {
         encryptedText = QString::fromUtf8(QByteArray::fromBase64(
-                obfuscatedKeychainStorage.value(keys::value).toByteArray()));
+            obfuscatedKeychainStorage.value(keys::value).toByteArray()));
     }
 
     obfuscatedKeychainStorage.endGroup();

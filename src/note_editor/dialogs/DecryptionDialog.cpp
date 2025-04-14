@@ -31,8 +31,8 @@ namespace quentier {
 DecryptionDialog::DecryptionDialog(
     QString encryptedText, IEncryptor::Cipher cipher, QString hint,
     Account account, IEncryptorPtr encryptor,
-    enml::IDecryptedTextCachePtr decryptedTextCache,
-    QWidget * parent, bool decryptPermanentlyFlag) :
+    enml::IDecryptedTextCachePtr decryptedTextCache, QWidget * parent,
+    bool decryptPermanentlyFlag) :
     QDialog{parent}, m_encryptor{std::move(encryptor)},
     m_decryptedTextCache{std::move(decryptedTextCache)},
     m_ui{new Ui::DecryptionDialog}, m_encryptedText{std::move(encryptedText)},
@@ -181,8 +181,7 @@ void DecryptionDialog::accept()
 
     m_decryptedText = res.get();
 
-    const bool rememberForSession =
-        m_ui->rememberPasswordCheckBox->isChecked();
+    const bool rememberForSession = m_ui->rememberPasswordCheckBox->isChecked();
 
     const bool decryptPermanently =
         m_ui->decryptPermanentlyCheckBox->isChecked();
