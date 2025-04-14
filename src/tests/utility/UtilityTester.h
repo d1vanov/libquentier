@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,10 +31,6 @@ public:
 
 private Q_SLOTS:
     void init();
-
-    void encryptDecryptNoteTest();
-    void decryptNoteAesTest();
-    void decryptNoteRc2Test();
 
     void tagSortByParentChildRelationsTest();
 
