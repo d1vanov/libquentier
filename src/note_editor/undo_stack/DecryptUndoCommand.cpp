@@ -70,7 +70,7 @@ void DecryptUndoCommand::redoImpl()
     if (!m_info.m_decryptPermanently) {
         m_decryptedTextCache->addDecryptexTextInfo(
             m_info.m_encryptedText, m_info.m_decryptedText, m_info.m_passphrase,
-            m_info.m_cipher, m_info.m_keyLength,
+            m_info.m_cipher,
             m_info.m_rememberForSession
                 ? enml::IDecryptedTextCache::RememberForSession::Yes
                 : enml::IDecryptedTextCache::RememberForSession::No);

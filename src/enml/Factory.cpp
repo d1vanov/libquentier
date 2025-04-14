@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,15 +18,21 @@
 
 #include <quentier/enml/Factory.h>
 
+#include <utility/Encryptor.h>
+
 #include "Converter.h"
 #include "DecryptedTextCache.h"
 #include "ENMLTagsConverter.h"
 
 namespace quentier::enml {
 
-IDecryptedTextCachePtr createDecryptedTextCache()
+IDecryptedTextCachePtr createDecryptedTextCache(IEncryptorPtr encryptor)
 {
-    return std::make_shared<DecryptedTextCache>();
+    if (!encryptor) {
+        encryptor = std::make_shared<Encryptor>();
+    }
+
+    return std::make_shared<DecryptedTextCache>(std::move(encryptor));
 }
 
 IENMLTagsConverterPtr createEnmlTagsConverter()

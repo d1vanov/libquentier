@@ -20,14 +20,13 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Result.h>
+#include <quentier/utility/IEncryptor.h>
 #include <quentier/utility/Linkage.h>
 
 #include <qevercloud/types/Fwd.h>
 
 #include <QString>
 #include <QtGlobal>
-
-#include <cstddef>
 
 namespace quentier::enml {
 
@@ -56,14 +55,13 @@ public:
      * @param encryptedText encrypted text contained within en-crypt tag
      * @param hint hint to be displayed when user tries to decrypt the text
      * @param cipher cipher used to ecrypt the text
-     * @param keyLength length of the key used to encrypt the text
      * @param index index of particular en-crypt tag within the note content
      *              so that different en-crypt tags can be differentiated
      * @return HTML representation of en-crypt tag
      */
     [[nodiscard]] virtual QString convertEncryptedText(
         const QString & encryptedText, const QString & hint,
-        const QString & cipher, std::size_t keyLength, quint32 index) const = 0;
+        IEncryptor::Cipher cipher, quint32 index) const = 0;
 
     /**
      * Converts already decrypted en-crypt tag into its HTML counterpart
@@ -71,14 +69,13 @@ public:
      * @param encryptedText encrypted text contained within en-crypt tag
      * @param hint hint to be displayed when user tries to decrypt the text
      * @param cipher cipher used to ecrypt the text
-     * @param keyLength length of the key used to encrypt the text
      * @param index index of particular en-crypt tag within the note content
      *              so that different en-crypt tags can be differentiated
      * @return HTML representation of decrypted en-crypt tag
      */
     [[nodiscard]] virtual QString convertDecryptedText(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, const QString & cipher, std::size_t keyLength,
+        const QString & hint, IEncryptor::Cipher cipher,
         quint32 index) const = 0;
 
     /**

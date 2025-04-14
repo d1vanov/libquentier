@@ -18,20 +18,31 @@
 
 #include "DecryptedTextCache.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/IEncryptor.h>
 
 namespace quentier::enml {
 
+DecryptedTextCache::DecryptedTextCache(IEncryptorPtr encryptor) :
+    m_encryptor{std::move(encryptor)}
+{
+    if (Q_UNLIKELY(!m_encryptor)) {
+        throw InvalidArgument{ErrorString{
+            QStringLiteral("DecryptedTextCache ctor: encryptor is null")}};
+    }
+}
+
 void DecryptedTextCache::addDecryptexTextInfo(
     const QString & encryptedText, const QString & decryptedText,
-    const QString & passphrase, const QString & cipher, std::size_t keyLength,
+    const QString & passphrase, const IEncryptor::Cipher cipher,
     RememberForSession rememberForSession)
 {
     QNDEBUG(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::addDecryptexTextInfo: encryptedText = "
-            << encryptedText
-            << ", rememberForSession = " << rememberForSession);
+            << encryptedText << ", rememberForSession = " << rememberForSession
+            << ", this = " << static_cast<const void *>(this));
 
     if (passphrase.isEmpty()) {
         QNWARNING(
@@ -45,7 +56,6 @@ void DecryptedTextCache::addDecryptexTextInfo(
     entry.m_decryptedText = decryptedText;
     entry.m_passphrase = passphrase;
     entry.m_cipher = cipher;
-    entry.m_keyLength = keyLength;
     entry.m_rememberForSession = rememberForSession;
 }
 
@@ -55,7 +65,8 @@ std::optional<std::pair<QString, IDecryptedTextCache::RememberForSession>>
 {
     QNDEBUG(
         "enml::DecryptedTextCache",
-        "DecryptedTextCache::findDecryptedTextInfo: " << encryptedText);
+        "DecryptedTextCache::findDecryptedTextInfo: "
+            << encryptedText << ", this = " << static_cast<const void *>(this));
 
     auto dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end()) {
@@ -141,33 +152,28 @@ std::optional<QString> DecryptedTextCache::updateDecryptedTextInfo(
     Data & entry = it.value();
     const QString & passphrase = entry.m_passphrase;
 
-    QString newEncryptedText;
-    ErrorString errorDescription;
-    const bool res = m_encryptionManager.encrypt(
-        newDecryptedText, passphrase, entry.m_cipher, entry.m_keyLength,
-        newEncryptedText, errorDescription);
-
-    if (!res) {
+    const auto res = m_encryptor->encrypt(newDecryptedText, passphrase);
+    if (!res.isValid()) {
         QNWARNING(
             "enml::DecryptedTextCache",
-            "Could not re-encrypt the decrypted text: " << errorDescription);
+            "Could not re-encrypt the decrypted text: " << res.error());
         return std::nullopt;
     }
 
+    const auto & newEncryptedText = res.get();
     if (foundInDataHash) {
         // Copy the previous entry's stale data to the stale data hash
         // in case it would be needed further
         auto & staleEntry = m_staleDataHash[originalEncryptedText];
         staleEntry.m_cipher = entry.m_cipher;
-        staleEntry.m_keyLength = entry.m_keyLength;
         staleEntry.m_rememberForSession = entry.m_rememberForSession;
         staleEntry.m_decryptedText = entry.m_decryptedText;
         staleEntry.m_passphrase = entry.m_passphrase;
 
         m_dataHash.erase(it);
+
         auto & newEntry = m_dataHash[newEncryptedText];
-        newEntry.m_cipher = staleEntry.m_cipher;
-        newEntry.m_keyLength = staleEntry.m_keyLength;
+        newEntry.m_cipher = IEncryptor::Cipher::AES;
         newEntry.m_rememberForSession = staleEntry.m_rememberForSession;
         newEntry.m_decryptedText = newDecryptedText;
         newEntry.m_passphrase = staleEntry.m_passphrase;
@@ -177,7 +183,6 @@ std::optional<QString> DecryptedTextCache::updateDecryptedTextInfo(
 
     auto & dataEntry = m_dataHash[newEncryptedText];
     dataEntry.m_cipher = entry.m_cipher;
-    dataEntry.m_keyLength = entry.m_keyLength;
     dataEntry.m_rememberForSession = entry.m_rememberForSession;
     dataEntry.m_decryptedText = newDecryptedText;
     dataEntry.m_passphrase = entry.m_passphrase;

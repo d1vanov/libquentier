@@ -22,6 +22,9 @@
 
 namespace quentier {
 
+struct IEncryptor;
+using IEncryptorPtr = std::shared_ptr<IEncryptor>;
+
 class IKeychainService;
 using IKeychainServicePtr = std::shared_ptr<IKeychainService>;
 

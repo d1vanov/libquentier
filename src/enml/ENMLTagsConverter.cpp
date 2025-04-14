@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,16 +49,14 @@ QString ENMLTagsConverter::convertEnToDo(bool checked, quint32 index) const
 }
 
 QString ENMLTagsConverter::convertEncryptedText(
-    const QString & encryptedText, const QString & hint, const QString & cipher,
-    std::size_t keyLength, quint32 index) const
+    const QString & encryptedText, const QString & hint,
+    const IEncryptor::Cipher cipher, quint32 index) const
 {
     QString html;
     QTextStream strm{&html};
 
     strm << R"#(<img en-tag="en-crypt" cipher=")#";
     strm << cipher;
-    strm << R"#(" length=")#";
-    strm << keyLength;
 
     strm << R"#(" class="en-crypt hvr-border-color" encrypted_text=")#";
     strm << encryptedText;
@@ -83,8 +81,7 @@ QString ENMLTagsConverter::convertEncryptedText(
 
 QString ENMLTagsConverter::convertDecryptedText(
     const QString & decryptedText, const QString & encryptedText,
-    const QString & hint, const QString & cipher, std::size_t keyLength,
-    quint32 index) const
+    const QString & hint, const IEncryptor::Cipher cipher, quint32 index) const
 {
     QString result;
     QXmlStreamWriter writer{&result};
@@ -103,13 +100,13 @@ QString ENMLTagsConverter::convertDecryptedText(
         QStringLiteral("class"),
         QStringLiteral("en-decrypted hvr-border-color"));
 
-    if (!cipher.isEmpty()) {
-        writer.writeAttribute(QStringLiteral("cipher"), cipher);
-    }
+    {
+        QString cipherStr;
+        QTextStream strm{&cipherStr};
+        strm << cipher;
+        strm.flush();
 
-    if (keyLength != 0) {
-        writer.writeAttribute(
-            QStringLiteral("length"), QString::number(keyLength));
+        writer.writeAttribute(QStringLiteral("cipher"), cipherStr);
     }
 
     if (!hint.isEmpty()) {

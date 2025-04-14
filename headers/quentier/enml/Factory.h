@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,14 +19,19 @@
 #pragma once
 
 #include <quentier/enml/Fwd.h>
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 namespace quentier::enml {
 
 /**
  * @brief factory function for IDecryptedTextCache
+ * @param encryptor instance of encryptor used by the returned
+ *                  IDecryptedTextCache implementation. If nullptr, the default
+ *                  implementation of IEncryptor is used.
  */
-[[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr createDecryptedTextCache();
+[[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr
+    createDecryptedTextCache(IEncryptorPtr encryptor = nullptr);
 
 /**
  * @brief factory function for IENMLTagsConverter

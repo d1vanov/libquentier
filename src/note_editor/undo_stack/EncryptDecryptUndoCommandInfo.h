@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <QString>
+#include <quentier/utility/IEncryptor.h>
 
-#include <cstddef>
+#include <QString>
 
 namespace quentier {
 
@@ -29,7 +29,7 @@ struct EncryptDecryptUndoCommandInfo
     QString m_encryptedText;
     QString m_decryptedText;
     QString m_passphrase;
-    QString m_cipher;
+    IEncryptor::Cipher m_cipher;
     QString m_hint;
     std::size_t m_keyLength = 0;
     bool m_rememberForSession = false;

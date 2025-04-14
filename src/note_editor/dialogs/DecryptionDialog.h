@@ -21,11 +21,11 @@
 #include <quentier/enml/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <QDialog>
 
-#include <cstddef>
 #include <memory>
 
 namespace Ui {
@@ -41,8 +41,8 @@ class DecryptionDialog final : public QDialog
     Q_OBJECT
 public:
     explicit DecryptionDialog(
-        QString encryptedText, QString cipher, QString hint, size_t keyLength,
-        Account account, std::shared_ptr<EncryptionManager> encryptionManager,
+        QString encryptedText, IEncryptor::Cipher cipher, QString hint,
+        Account account, IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr, bool decryptPermanentlyFlag = false);
 
@@ -51,13 +51,12 @@ public:
     [[nodiscard]] QString passphrase() const noexcept;
     [[nodiscard]] bool rememberPassphrase() const noexcept;
     [[nodiscard]] bool decryptPermanently() const noexcept;
-
     [[nodiscard]] QString decryptedText() const noexcept;
 
 Q_SIGNALS:
     void decryptionAccepted(
-        QString cipher, size_t keyLength, QString encryptedText,
-        QString passphrase, QString decryptedText, bool rememberPassphrase,
+        QString encryptedText, IEncryptor::Cipher cipher, QString passphrase,
+        QString decryptedText, bool rememberPassphrase,
         bool decryptPermanently);
 
 private Q_SLOTS:
@@ -74,16 +73,15 @@ private:
     void setError(const ErrorString & error);
 
 private:
-    const std::shared_ptr<EncryptionManager> m_encryptionManager;
+    const IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
 
-    Ui::DecryptionDialog * m_pUI;
+    Ui::DecryptionDialog * m_ui;
     QString m_encryptedText;
-    QString m_cipher;
+    IEncryptor::Cipher m_cipher;
     QString m_hint;
-    QString m_cachedDecryptedText;
+    QString m_decryptedText;
     Account m_account;
-    std::size_t m_keyLength;
 };
 
 } // namespace quentier

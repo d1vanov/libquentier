@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,11 +18,11 @@
 
 #pragma once
 
+#include <quentier/utility/IEncryptor.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QString>
 
-#include <cstddef>
 #include <optional>
 #include <utility>
 
@@ -50,8 +50,8 @@ public:
 
     virtual void addDecryptexTextInfo(
         const QString & encryptedText, const QString & decryptedText,
-        const QString & passphrase, const QString & cipher,
-        std::size_t keyLength, RememberForSession rememberForSession) = 0;
+        const QString & passphrase, IEncryptor::Cipher cipher,
+        RememberForSession rememberForSession) = 0;
 
     [[nodiscard]] virtual std::optional<std::pair<QString, RememberForSession>>
         findDecryptedTextInfo(const QString & encryptedText) const = 0;

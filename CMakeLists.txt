@@ -175,11 +175,13 @@ set(UTILITY_HEADERS
     headers/quentier/utility/DateTime.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
+    headers/quentier/utility/Factory.h
     headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystem.h
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/Fwd.h
+    headers/quentier/utility/IEncryptor.h
     headers/quentier/utility/IKeychainService.h
     headers/quentier/utility/Initialize.h
     headers/quentier/utility/LRUCache.hpp
@@ -243,6 +245,7 @@ set(PRIVATE_HEADERS
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/EncryptionManager_p.h
+    src/utility/Encryptor.h
     src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
@@ -401,10 +404,13 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/Checks.cpp
     src/utility/DateTime.cpp
     src/utility/Initialize.cpp
+    src/utility/IEncryptor.cpp
     src/utility/MessageBox.cpp
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
+    src/utility/Encryptor.cpp
     src/utility/EventLoopWithExitStatus.cpp
+    src/utility/Factory.cpp
     src/utility/FileCopier.cpp
     src/utility/FileCopier_p.cpp
     src/utility/FileIOProcessorAsync.cpp

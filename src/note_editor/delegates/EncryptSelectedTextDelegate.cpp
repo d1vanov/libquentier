@@ -29,14 +29,14 @@
 namespace quentier {
 
 #define CHECK_NOTE_EDITOR()                                                    \
-    if (Q_UNLIKELY(m_pNoteEditor.isNull())) {                                  \
+    if (Q_UNLIKELY(m_noteEditor.isNull())) {                                   \
         QNDEBUG("note_editor:delegate", "Note editor is null");                \
         return;                                                                \
     }
 
 #define CHECK_ACCOUNT()                                                        \
     CHECK_NOTE_EDITOR()                                                        \
-    if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) {                            \
+    if (Q_UNLIKELY(!m_noteEditor->accountPtr())) {                             \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "EncryptSelectedTextDelegate",                                     \
             "Can't encrypt the selected text: "                                \
@@ -48,7 +48,7 @@ namespace quentier {
 
 #define GET_PAGE()                                                             \
     CHECK_NOTE_EDITOR()                                                        \
-    auto * page = qobject_cast<NoteEditorPage *>(m_pNoteEditor->page());       \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor->page());        \
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "EncryptSelectedTextDelegate",                                     \
@@ -60,18 +60,17 @@ namespace quentier {
     }
 
 EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
-    NoteEditorPrivate * pNoteEditor,
-    std::shared_ptr<EncryptionManager> encryptionManager,
+    NoteEditorPrivate * noteEditor, IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache,
-    enml::IENMLTagsConverterPtr m_enmlTagsConverter) :
-    QObject(pNoteEditor), m_pNoteEditor(pNoteEditor),
-    m_encryptionManager(std::move(encryptionManager)),
+    enml::IENMLTagsConverterPtr enmlTagsConverter) :
+    QObject(noteEditor), m_noteEditor(noteEditor),
+    m_encryptor(std::move(encryptor)),
     m_decryptedTextCache(std::move(decryptedTextCache)),
-    m_enmlTagsConverter(std::move(m_enmlTagsConverter))
+    m_enmlTagsConverter(std::move(enmlTagsConverter))
 {
-    if (Q_UNLIKELY(!m_encryptionManager)) {
-        throw InvalidArgument{ErrorString{
-            "EncryptSelectedTextDelegate ctor: encryption manager is null"}};
+    if (Q_UNLIKELY(!m_encryptor)) {
+        throw InvalidArgument{
+            ErrorString{"EncryptSelectedTextDelegate ctor: encryptor is null"}};
     }
 
     if (Q_UNLIKELY(!m_decryptedTextCache)) {
@@ -115,17 +114,17 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 
     CHECK_ACCOUNT()
 
-    const auto pEncryptionDialog = std::make_unique<EncryptionDialog>(
-        m_selectionHtml, *m_pNoteEditor->accountPtr(), m_encryptionManager,
-        m_decryptedTextCache, m_pNoteEditor);
+    const auto encryptionDialog = std::make_unique<EncryptionDialog>(
+        m_selectionHtml, *m_noteEditor->accountPtr(), m_encryptor,
+        m_decryptedTextCache, m_noteEditor);
 
-    pEncryptionDialog->setWindowModality(Qt::WindowModal);
+    encryptionDialog->setWindowModality(Qt::WindowModal);
 
     QObject::connect(
-        pEncryptionDialog.get(), &EncryptionDialog::encryptionAccepted, this,
+        encryptionDialog.get(), &EncryptionDialog::encryptionAccepted, this,
         &EncryptSelectedTextDelegate::onSelectedTextEncrypted);
 
-    const int res = pEncryptionDialog->exec();
+    const int res = encryptionDialog->exec();
 
     QNTRACE(
         "note_editor::EncryptSelectedTextDelegate",
@@ -139,8 +138,9 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 }
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
-    QString selectedText, QString encryptedText, QString cipher, // NOLINT
-    size_t keyLength, QString hint, bool rememberForSession)     // NOLINT
+    QString selectedText, QString encryptedText, // NOLINT
+    const IEncryptor::Cipher cipher, QString hint,
+    bool rememberForSession) // NOLINT
 {
     QNDEBUG(
         "note_editor::EncryptSelectedTextDelegate",
@@ -157,25 +157,23 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
 
     if (m_rememberForSession) {
         m_encryptedText = enml::utils::htmlEscapeString(encryptedText);
-        m_cipher = enml::utils::htmlEscapeString(cipher);
-        m_keyLength = QString::number(keyLength);
+        m_cipher = cipher;
         m_hint = enml::utils::htmlEscapeString(hint);
     }
     else {
         m_encryptedTextHtml = m_enmlTagsConverter->convertEncryptedText(
-            encryptedText, hint, cipher, keyLength,
-            m_pNoteEditor->nextEncryptedTextId());
+            encryptedText, hint, cipher, m_noteEditor->nextEncryptedTextId());
 
         m_encryptedTextHtml =
             enml::utils::htmlEscapeString(m_encryptedTextHtml);
     }
 
-    if (m_pNoteEditor->isEditorPageModified()) {
+    if (m_noteEditor->isEditorPageModified()) {
         QObject::connect(
-            m_pNoteEditor.data(), &NoteEditorPrivate::convertedToNote, this,
+            m_noteEditor.data(), &NoteEditorPrivate::convertedToNote, this,
             &EncryptSelectedTextDelegate::onOriginalPageConvertedToNote);
 
-        m_pNoteEditor->convertToNote();
+        m_noteEditor->convertToNote();
     }
     else {
         encryptSelectedText();
@@ -194,7 +192,7 @@ void EncryptSelectedTextDelegate::onOriginalPageConvertedToNote(
     Q_UNUSED(note)
 
     QObject::disconnect(
-        m_pNoteEditor.data(), &NoteEditorPrivate::convertedToNote, this,
+        m_noteEditor.data(), &NoteEditorPrivate::convertedToNote, this,
         &EncryptSelectedTextDelegate::onOriginalPageConvertedToNote);
 
     encryptSelectedText();
@@ -210,19 +208,22 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
 
     QString javascript;
     if (m_rememberForSession) {
-        const QString id =
-            QString::number(m_pNoteEditor->nextDecryptedTextId());
+        const QString id = QString::number(m_noteEditor->nextDecryptedTextId());
 
         QString escapedDecryptedText =
             enml::utils::htmlEscapeString(m_selectionHtml);
+
+        QString cipherStr;
+        QTextStream strm;
+        strm << m_cipher;
+        strm.flush();
 
         javascript = QStringLiteral(
                          "encryptDecryptManager."
                          "replaceSelectionWithDecryptedText('") +
             id + QStringLiteral("', '") + escapedDecryptedText +
             QStringLiteral("', '") + m_encryptedText + QStringLiteral("', '") +
-            m_hint + QStringLiteral("', '") + m_cipher +
-            QStringLiteral("', '") + m_keyLength + QStringLiteral("');");
+            m_hint + QStringLiteral("', '") + cipherStr + QStringLiteral("');");
     }
     else {
         javascript = QString::fromUtf8(

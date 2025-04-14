@@ -25,23 +25,23 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <QLineEdit>
 
 namespace quentier {
 
 EncryptionDialog::EncryptionDialog(
-    QString textToEncrypt, Account account,
-    std::shared_ptr<EncryptionManager> encryptionManager,
+    QString textToEncrypt, Account account, IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache, QWidget * parent) :
-    QDialog{parent}, m_encryptionManager{std::move(encryptionManager)},
+    QDialog{parent}, m_encryptor{std::move(encryptor)},
     m_decryptedTextCache{std::move(decryptedTextCache)},
-    m_pUI{new Ui::EncryptionDialog}, m_textToEncrypt{std::move(textToEncrypt)},
+    m_ui{new Ui::EncryptionDialog}, m_textToEncrypt{std::move(textToEncrypt)},
     m_account{std::move(account)}
 {
-    if (Q_UNLIKELY(!m_encryptionManager)) {
+    if (Q_UNLIKELY(!m_encryptor)) {
         throw InvalidArgument{
-            ErrorString{"EncryptionDialog ctor: encryption manager is null"}};
+            ErrorString{"EncryptionDialog ctor: encryptor is null"}};
     }
 
     if (Q_UNLIKELY(!m_decryptedTextCache)) {
@@ -49,7 +49,7 @@ EncryptionDialog::EncryptionDialog(
             ErrorString{"EncryptionDialog ctor: decrypted text cache is null"}};
     }
 
-    m_pUI->setupUi(this);
+    m_ui->setupUi(this);
 
     bool rememberPassphraseForSessionDefault = false;
     ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
@@ -63,41 +63,41 @@ EncryptionDialog::EncryptionDialog(
     }
 
     setRememberPassphraseDefaultState(rememberPassphraseForSessionDefault);
-    m_pUI->onErrorTextLabel->setVisible(false);
+    m_ui->onErrorTextLabel->setVisible(false);
 
     QObject::connect(
-        m_pUI->rememberPasswordForSessionCheckBox, &QCheckBox::stateChanged,
+        m_ui->rememberPasswordForSessionCheckBox, &QCheckBox::stateChanged,
         this, &EncryptionDialog::onRememberPassphraseStateChanged);
 }
 
 EncryptionDialog::~EncryptionDialog() noexcept
 {
-    delete m_pUI;
+    delete m_ui;
 }
 
 QString EncryptionDialog::passphrase() const noexcept
 {
-    return m_pUI->encryptionPasswordLineEdit->text();
+    return m_ui->encryptionPasswordLineEdit->text();
 }
 
 bool EncryptionDialog::rememberPassphrase() const noexcept
 {
-    return m_pUI->rememberPasswordForSessionCheckBox->isChecked();
+    return m_ui->rememberPasswordForSessionCheckBox->isChecked();
 }
 
 QString EncryptionDialog::encryptedText() const noexcept
 {
-    return m_cachedEncryptedText;
+    return m_encryptedText;
 }
 
 QString EncryptionDialog::hint() const noexcept
 {
-    return m_pUI->hintLineEdit->text();
+    return m_ui->hintLineEdit->text();
 }
 
 void EncryptionDialog::setRememberPassphraseDefaultState(const bool checked)
 {
-    m_pUI->rememberPasswordForSessionCheckBox->setChecked(checked);
+    m_ui->rememberPasswordForSessionCheckBox->setChecked(checked);
 }
 
 void EncryptionDialog::onRememberPassphraseStateChanged(
@@ -113,16 +113,16 @@ void EncryptionDialog::onRememberPassphraseStateChanged(
     else {
         appSettings.setValue(
             NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION,
-            QVariant(m_pUI->rememberPasswordForSessionCheckBox->isChecked()));
+            QVariant(m_ui->rememberPasswordForSessionCheckBox->isChecked()));
     }
 }
 
 void EncryptionDialog::accept()
 {
-    const QString passphrase = m_pUI->encryptionPasswordLineEdit->text();
+    const QString passphrase = m_ui->encryptionPasswordLineEdit->text();
 
     const QString repeatedPassphrase =
-        m_pUI->repeatEncryptionPasswordLineEdit->text();
+        m_ui->repeatEncryptionPasswordLineEdit->text();
 
     if (passphrase.isEmpty()) {
         QNINFO(
@@ -143,40 +143,36 @@ void EncryptionDialog::accept()
         return;
     }
 
-    m_cachedEncryptedText.resize(0);
-    ErrorString errorDescription;
-    QString cipher = QStringLiteral("AES");
-    size_t keyLength = 128;
+    const auto res = m_encryptor->encrypt(m_textToEncrypt, passphrase);
 
-    const bool res = m_encryptionManager->encrypt(
-        m_textToEncrypt, passphrase, cipher, keyLength, m_cachedEncryptedText,
-        errorDescription);
-
-    if (!res) {
-        QNINFO("note_editor::EncryptionDialog", errorDescription);
-        setError(errorDescription);
+    if (!res.isValid()) {
+        const auto & error = res.error();
+        QNINFO("note_editor::EncryptionDialog", error);
+        setError(error);
         return;
     }
 
+    m_encryptedText = res.get();
+
     const bool rememberForSession =
-        m_pUI->rememberPasswordForSessionCheckBox->isChecked();
+        m_ui->rememberPasswordForSessionCheckBox->isChecked();
 
     m_decryptedTextCache->addDecryptexTextInfo(
-        m_cachedEncryptedText, m_textToEncrypt, passphrase, cipher, keyLength,
+        m_encryptedText, m_textToEncrypt, passphrase, IEncryptor::Cipher::AES,
         rememberForSession ? enml::IDecryptedTextCache::RememberForSession::Yes
                            : enml::IDecryptedTextCache::RememberForSession::No);
 
     Q_EMIT encryptionAccepted(
-        m_textToEncrypt, m_cachedEncryptedText, cipher, keyLength,
-        m_pUI->hintLineEdit->text(), rememberForSession);
+        m_textToEncrypt, m_encryptedText, IEncryptor::Cipher::AES,
+        m_ui->hintLineEdit->text(), rememberForSession);
 
     QDialog::accept();
 }
 
 void EncryptionDialog::setError(const ErrorString & error)
 {
-    m_pUI->onErrorTextLabel->setText(error.localizedString());
-    m_pUI->onErrorTextLabel->setVisible(true);
+    m_ui->onErrorTextLabel->setText(error.localizedString());
+    m_ui->onErrorTextLabel->setVisible(true);
 }
 
 } // namespace quentier

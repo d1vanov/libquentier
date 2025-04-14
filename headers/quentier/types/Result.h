@@ -26,44 +26,49 @@
 
 namespace quentier {
 
-/**
- * @brief The Result template class represents the bare bones result monad
- * implementation which either contains some valid value or an error.
- */
 template <
-    class T, class Error,
-    typename = typename std::enable_if_t<
-        !std::is_same_v<std::decay_t<T>, std::decay_t<Error>>>>
+    class ValueType, class ErrorType,
+    typename =
+        typename std::enable_if_t<!std::is_void_v<std::decay_t<ErrorType>>>>
 class Result
 {
-    using ValueType = std::conditional_t<
-        std::is_same_v<std::decay_t<T>, void>, std::monostate, T>;
+private:
+    template <typename T>
+    struct ValueWrapper
+    {
+        T value;
+    };
+
+    using ValueWrapperInnerType = std::conditional_t<
+        std::is_void_v<std::decay_t<ValueType>>, std::nullptr_t,
+        std::decay_t<ValueType>>;
 
 public:
     template <
-        typename T1 = T,
+        typename T1 = ValueType,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
             nullptr>
-    explicit Result(T1 t) : m_valueOrError{std::move(t)}
+    explicit Result(T1 t) :
+        m_valueOrError{ValueWrapper<std::decay_t<ValueType>>{std::move(t)}}
     {}
 
     template <
-        typename T1 = T,
+        typename T1 = ValueType,
         typename std::enable_if_t<std::is_void_v<std::decay_t<T1>>> * = nullptr>
-    explicit Result() : m_valueOrError{std::monostate{}}
+    explicit Result() : m_valueOrError{ValueWrapper<std::nullptr_t>{}}
     {}
 
-    explicit Result(Error error) : m_valueOrError{std::move(error)} {}
+    explicit Result(ErrorType error) : m_valueOrError{std::move(error)} {}
 
-    Result(const Result<T, Error> & other) :
+    Result(const Result<ValueType, ErrorType> & other) :
         m_valueOrError{other.m_valueOrError}
     {}
 
-    Result(Result<T, Error> && other) :
+    Result(Result<ValueType, ErrorType> && other) :
         m_valueOrError{std::move(other.m_valueOrError)}
     {}
 
-    Result & operator=(const Result<T, Error> & other)
+    Result & operator=(const Result<ValueType, ErrorType> & other)
     {
         if (this != &other) {
             m_valueOrError = other.m_valueOrError;
@@ -72,7 +77,7 @@ public:
         return *this;
     }
 
-    Result & operator=(Result<T, Error> && other)
+    Result & operator=(Result<ValueType, ErrorType> && other)
     {
         if (this != &other) {
             m_valueOrError = std::move(other.m_valueOrError);
@@ -86,7 +91,8 @@ public:
      */
     [[nodiscard]] bool isValid() const noexcept
     {
-        return std::holds_alternative<ValueType>(m_valueOrError);
+        return std::holds_alternative<ValueWrapper<ValueWrapperInnerType>>(
+            m_valueOrError);
     }
 
     operator bool() const noexcept
@@ -95,7 +101,7 @@ public:
     }
 
     template <
-        typename T1 = T,
+        typename T1 = ValueType,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
             nullptr>
     [[nodiscard]] T1 & get()
@@ -112,11 +118,12 @@ public:
         }
 #endif
 
-        return std::get<T>(m_valueOrError);
+        return std::get<ValueWrapper<std::decay_t<ValueType>>>(m_valueOrError)
+            .value;
     }
 
     template <
-        typename T1 = T,
+        typename T1 = ValueType,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
             nullptr>
     [[nodiscard]] const T1 & get() const
@@ -133,11 +140,12 @@ public:
         }
 #endif
 
-        return std::get<T>(m_valueOrError);
+        return std::get<ValueWrapper<std::decay_t<ValueType>>>(m_valueOrError)
+            .value;
     }
 
     template <
-        typename T1 = T,
+        typename T1 = ValueType,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
             nullptr>
     [[nodiscard]] T1 & operator*()
@@ -146,7 +154,7 @@ public:
     }
 
     template <
-        typename T1 = T,
+        typename T1 = ValueType,
         typename std::enable_if_t<!std::is_void_v<std::decay_t<T1>>> * =
             nullptr>
     [[nodiscard]] const T1 & operator*() const
@@ -154,7 +162,7 @@ public:
         return get();
     }
 
-    [[nodiscard]] const Error & error() const
+    [[nodiscard]] const ErrorType & error() const
     {
         // NOTE: std::get also performs the check of what is stored inside the
         // variant but it throws std::bad_variant_access which doesn't implement
@@ -168,10 +176,10 @@ public:
         }
 #endif
 
-        return std::get<Error>(m_valueOrError);
+        return std::get<ErrorType>(m_valueOrError);
     }
 
-    [[nodiscard]] Error & error()
+    [[nodiscard]] ErrorType & error()
     {
         // NOTE: std::get also performs the check of what is stored inside the
         // variant but it throws std::bad_variant_access which doesn't implement
@@ -185,11 +193,11 @@ public:
         }
 #endif
 
-        return std::get<Error>(m_valueOrError);
+        return std::get<ErrorType>(m_valueOrError);
     }
 
 private:
-    std::variant<ValueType, Error> m_valueOrError;
+    std::variant<ValueWrapper<ValueWrapperInnerType>, ErrorType> m_valueOrError;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
@@ -66,16 +67,21 @@ public:
      * @param spellChecker                  Spell checker to be used by note
      *                                      editor
      * @param account                       Current account
-     * @param pBackgroundJobsThread         Pointer to the thread to be used for
+     * @param backgroundJobsThread          Pointer to the thread to be used for
      *                                      scheduling of background jobs
      *                                      of NoteEditor; if null, NoteEditor's
      *                                      background jobs would take place in
      *                                      GUI thread
+     * @param decryptedTextCache            Decrypted text cache to be used for
+     *                                      note rendering and text decryption.
+     *                                      If null, a new instance would be
+     *                                      created and used.
      */
     void initialize(
         local_storage::ILocalStoragePtr localStorage,
         SpellChecker & spellChecker, const Account & account,
-        QThread * pBackgroundJobsThread = nullptr);
+        QThread * backgroundJobsThread = nullptr,
+        enml::IDecryptedTextCachePtr decryptedTextCache = nullptr);
 
     /**
      * @return the pointer to the note editor's backend

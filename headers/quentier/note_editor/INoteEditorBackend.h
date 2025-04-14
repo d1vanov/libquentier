@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
@@ -45,7 +46,8 @@ public:
     virtual void initialize(
         local_storage::ILocalStoragePtr localStorage,
         SpellChecker & spellChecker, const Account & account,
-        QThread * pBackgroundJobsThread) = 0;
+        QThread * backgroundJobsThread,
+        enml::IDecryptedTextCachePtr decryptedTextCache) = 0;
 
     [[nodiscard]] virtual QObject * object() = 0; // provide QObject interface
     [[nodiscard]] virtual QWidget * widget() = 0; // provide QWidget interface
@@ -183,14 +185,14 @@ public:
     virtual void decryptEncryptedTextUnderCursor() = 0;
 
     virtual void decryptEncryptedText(
-        QString encryptedText, QString cipher, QString keyLength, QString hint,
+        QString encryptedText, QString cipher, QString hint,
         QString enCryptIndex) = 0;
 
     virtual void hideDecryptedTextUnderCursor() = 0;
 
     virtual void hideDecryptedText(
         QString encryptedText, QString decryptedText, QString cipher,
-        QString keyLength, QString hint, QString enDecryptedIndex) = 0;
+        QString hint, QString enDecryptedIndex) = 0;
 
     virtual void editHyperlinkDialog() = 0;
     virtual void copyHyperlink() = 0;

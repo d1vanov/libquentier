@@ -95,6 +95,7 @@
 #include <quentier/utility/Checks.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
+#include <quentier/utility/Factory.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/ShortcutManager.h>
@@ -175,6 +176,20 @@ namespace quentier {
 
 namespace {
 
+[[nodiscard]] std::optional<IEncryptor::Cipher> parseCipher(
+    const QString & cipherStr) noexcept
+{
+    if (cipherStr == QStringLiteral("AES")) {
+        return IEncryptor::Cipher::AES;
+    }
+
+    if (cipherStr == QStringLiteral("RC2")) {
+        return IEncryptor::Cipher::RC2;
+    }
+
+    return std::nullopt;
+}
+
 [[nodiscard]] int fontMetricsWidth(
     const QFontMetrics & fontMetrics, const QString & text, int len = -1)
 {
@@ -210,8 +225,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
         new ContextMenuEventJavaScriptHandler(this)),
     m_pTextCursorPositionJavaScriptHandler(
         new TextCursorPositionJavaScriptHandler(this)),
-    m_encryptionManager(new EncryptionManager),
-    m_decryptedTextCache(enml::createDecryptedTextCache()),
+    m_encryptor(createOpenSslEncryptor()),
     m_enmlTagsConverter(enml::createEnmlTagsConverter()),
     m_enmlConverter(enml::createConverter(m_enmlTagsConverter)),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
@@ -2131,7 +2145,7 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
 }
 
 void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
-    QString encryptedText, QString cipher, size_t length, QString hint,
+    QString encryptedText, const IEncryptor::Cipher cipher, QString hint,
     QString decryptedText, QString passphrase, bool rememberForSession,
     bool decryptPermanently)
 {
@@ -2139,15 +2153,16 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
         "note_editor",
         "NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished");
 
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't decrypt text"))
+
     setModified();
 
     EncryptDecryptUndoCommandInfo info;
     info.m_encryptedText = std::move(encryptedText);
     info.m_decryptedText = std::move(decryptedText);
     info.m_passphrase = std::move(passphrase);
-    info.m_cipher = std::move(cipher);
+    info.m_cipher = cipher;
     info.m_hint = std::move(hint);
-    info.m_keyLength = length;
     info.m_rememberForSession = rememberForSession;
     info.m_decryptPermanently = decryptPermanently;
 
@@ -2157,17 +2172,17 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
         (decryptPermanently ? QStringLiteral("true")
                             : QStringLiteral("false")));
 
-    auto * pCommand = new DecryptUndoCommand(
+    auto * command = new DecryptUndoCommand(
         info, m_decryptedTextCache, *this,
         NoteEditorCallbackFunctor<QVariant>(
             this, &NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished,
             extraData));
 
     QObject::connect(
-        pCommand, &DecryptUndoCommand::notifyError, this,
+        command, &DecryptUndoCommand::notifyError, this,
         &NoteEditorPrivate::onUndoCommandError);
 
-    m_pUndoStack->push(pCommand);
+    m_pUndoStack->push(command);
 
     auto * delegate = qobject_cast<DecryptEncryptedTextDelegate *>(sender());
     if (Q_LIKELY(delegate)) {
@@ -2787,7 +2802,10 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_genericResourceImageFilePathsByResourceHash.clear();
     m_saveGenericResourceImageToFileRequestIds.clear();
     m_recognitionIndicesByResourceHash.clear();
-    m_decryptedTextCache->clearNonRememberedForSessionEntries();
+
+    if (m_decryptedTextCache) {
+        m_decryptedTextCache->clearNonRememberedForSessionEntries();
+    }
 
     m_lastSearchHighlightedText.resize(0);
     m_lastSearchHighlightedTextCaseSensitivity = false;
@@ -4327,6 +4345,8 @@ void NoteEditorPrivate::noteToEditorContent()
         clearEditorContent();
         return;
     }
+
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Cannot fetch note content"))
 
     if (isInkNote(*m_pNote)) {
         inkNoteToEditorContent();
@@ -6910,6 +6930,8 @@ void NoteEditorPrivate::onPageHtmlReceived(
     QNTRACE("note_editor", html);
     Q_UNUSED(extraData)
 
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Cannot fetch note content"))
+
     Q_EMIT noteEditorHtmlUpdated(html);
 
     if (!m_pendingConversionToNote) {
@@ -7890,7 +7912,8 @@ void NoteEditorPrivate::execJavascriptCommand(
 
 void NoteEditorPrivate::initialize(
     local_storage::ILocalStoragePtr localStorage, SpellChecker & spellChecker,
-    const Account & account, QThread * pBackgroundJobsThread)
+    const Account & account, QThread * backgroundJobsThread,
+    enml::IDecryptedTextCachePtr decryptedTextCache)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::initialize");
 
@@ -7901,9 +7924,14 @@ void NoteEditorPrivate::initialize(
 
     m_pSpellChecker = &spellChecker;
 
-    if (pBackgroundJobsThread) {
-        m_pFileIOProcessorAsync->moveToThread(pBackgroundJobsThread);
+    if (backgroundJobsThread) {
+        m_pFileIOProcessorAsync->moveToThread(backgroundJobsThread);
     }
+
+    if (!decryptedTextCache) {
+        decryptedTextCache = enml::createDecryptedTextCache(m_encryptor);
+    }
+    m_decryptedTextCache = std::move(decryptedTextCache);
 
     setAccount(account);
 }
@@ -10830,9 +10858,10 @@ void NoteEditorPrivate::encryptSelectedText()
     QNDEBUG("note_editor", "NoteEditorPrivate::encryptSelectedText");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't encrypt the selected text"))
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't encrypt the selected text"))
 
     auto * delegate = new EncryptSelectedTextDelegate(
-        this, m_encryptionManager, m_decryptedTextCache, m_enmlTagsConverter);
+        this, m_encryptor, m_decryptedTextCache, m_enmlTagsConverter);
 
     QObject::connect(
         delegate, &EncryptSelectedTextDelegate::finished, this,
@@ -10870,7 +10899,6 @@ void NoteEditorPrivate::decryptEncryptedTextUnderCursor()
     decryptEncryptedText(
         m_currentContextMenuExtraData.m_encryptedText,
         m_currentContextMenuExtraData.m_cipher,
-        m_currentContextMenuExtraData.m_keyLength,
         m_currentContextMenuExtraData.m_hint,
         m_currentContextMenuExtraData.m_id);
 
@@ -10878,16 +10906,27 @@ void NoteEditorPrivate::decryptEncryptedTextUnderCursor()
 }
 
 void NoteEditorPrivate::decryptEncryptedText(
-    QString encryptedText, QString cipher, QString length, QString hint,
+    QString encryptedText, QString cipherStr, QString hint,
     QString enCryptIndex)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::decryptEncryptedText");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't decrypt the encrypted text"))
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't decrypt the encrypted text"))
+
+    const auto cipher = parseCipher(cipherStr);
+    if (Q_UNLIKELY(!cipher)) {
+        ErrorString error{
+            QT_TR_NOOP("Cannot decrypt encrypted text: unknown cipher")};
+        error.details() = cipherStr;
+        QNWARNING("note_editor", error);
+        Q_EMIT notifyError(error);
+        return;
+    }
 
     auto * delegate = new DecryptEncryptedTextDelegate(
-        enCryptIndex, encryptedText, cipher, length, hint, this,
-        m_encryptionManager, m_decryptedTextCache, m_enmlTagsConverter);
+        enCryptIndex, encryptedText, *cipher, hint, this, m_encryptor,
+        m_decryptedTextCache, m_enmlTagsConverter);
 
     QObject::connect(
         delegate, &DecryptEncryptedTextDelegate::finished, this,
@@ -10935,7 +10974,6 @@ void NoteEditorPrivate::hideDecryptedTextUnderCursor()
         m_currentContextMenuExtraData.m_encryptedText,
         m_currentContextMenuExtraData.m_decryptedText,
         m_currentContextMenuExtraData.m_cipher,
-        m_currentContextMenuExtraData.m_keyLength,
         m_currentContextMenuExtraData.m_hint,
         m_currentContextMenuExtraData.m_id);
 
@@ -10943,19 +10981,18 @@ void NoteEditorPrivate::hideDecryptedTextUnderCursor()
 }
 
 void NoteEditorPrivate::hideDecryptedText(
-    QString encryptedText, QString decryptedText, QString cipher,
-    QString keyLength, QString hint, QString enDecryptedIndex)
+    QString encryptedText, QString decryptedText, QString cipherStr,
+    QString hint, QString enDecryptedIndex)
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::hideDecryptedText");
 
-    bool conversionResult = false;
-    const auto keyLengthInt =
-        static_cast<std::size_t>(keyLength.toInt(&conversionResult));
-    if (Q_UNLIKELY(!conversionResult)) {
-        ErrorString error(
-            QT_TR_NOOP("Can't hide the decrypted text: can't convert "
-                       "the key length attribute to an integer"));
-        error.details() = keyLength;
+    CHECK_DECRYPTED_TEXT_CACHE(QT_TR_NOOP("Can't hide the encrypted text"))
+
+    const auto cipher = parseCipher(cipherStr);
+    if (Q_UNLIKELY(!cipher)) {
+        ErrorString error{
+            QT_TR_NOOP("Cannot hide decrypted text: unknown cipher")};
+        error.details() = cipherStr;
         QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
@@ -10968,19 +11005,17 @@ void NoteEditorPrivate::hideDecryptedText(
     {
         QNDEBUG(
             "note_editor",
-            "The original decrypted text doesn't match "
-                << "the newer one, will return-encrypt "
-                << "the decrypted text");
+            "The original decrypted text doesn't match the newer one, will "
+                << "return-encrypt the decrypted text");
 
         const auto reEncryptedText =
             m_decryptedTextCache->updateDecryptedTextInfo(
                 encryptedText, decryptedText);
         if (Q_UNLIKELY(!reEncryptedText)) {
             ErrorString error(
-                QT_TR_NOOP("Can't hide the decrypted text: "
-                           "the decrypted text was modified "
-                           "but it failed to get return-encrypted"));
-            error.details() = keyLength;
+                QT_TR_NOOP("Can't hide the decrypted text: the decrypted text "
+                           "was modified but it failed to get "
+                           "return-encrypted"));
             QNWARNING("note_editor", error);
             Q_EMIT notifyError(error);
             return;
@@ -10997,7 +11032,7 @@ void NoteEditorPrivate::hideDecryptedText(
     const quint32 enCryptIndex = m_lastFreeEnCryptIdNumber++;
 
     QString html = m_enmlTagsConverter->convertEncryptedText(
-        encryptedText, hint, cipher, keyLengthInt, enCryptIndex);
+        encryptedText, hint, *cipher, enCryptIndex);
 
     escapeStringForJavaScript(html);
 

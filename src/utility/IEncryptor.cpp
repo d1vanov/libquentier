@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,20 +16,42 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EnCryptElementOnClickHandler.h"
+#include <quentier/utility/IEncryptor.h>
+
+#include <QDebug>
+#include <QTextStream>
 
 namespace quentier {
 
-EnCryptElementOnClickHandler::EnCryptElementOnClickHandler(QObject * parent) :
-    QObject(parent)
-{}
+namespace {
 
-void EnCryptElementOnClickHandler::onEnCryptElementClicked(
-    QString encryptedText, QString cipher, QString hint, QString enCryptIndex)
+template <class T>
+void printCipher(const IEncryptor::Cipher cipher, T & t)
 {
-    Q_EMIT decrypt(
-        std::move(encryptedText), std::move(cipher), std::move(hint),
-        std::move(enCryptIndex));
+    switch (cipher) {
+    case IEncryptor::Cipher::AES:
+        t << "AES";
+        break;
+    case IEncryptor::Cipher::RC2:
+        t << "RC2";
+        break;
+    }
+}
+
+} // namespace
+
+IEncryptor::~IEncryptor() noexcept = default;
+
+QDebug & operator<<(QDebug & dbg, const IEncryptor::Cipher cipher)
+{
+    printCipher(cipher, dbg);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const IEncryptor::Cipher cipher)
+{
+    printCipher(cipher, strm);
+    return strm;
 }
 
 } // namespace quentier

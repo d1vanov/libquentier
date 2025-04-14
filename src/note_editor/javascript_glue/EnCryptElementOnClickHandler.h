@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,12 +37,12 @@ public:
 
 Q_SIGNALS:
     void decrypt(
-        QString encryptedText, QString cipher, QString length, QString hint,
-        QString enCryptIndex, bool * pCancelled);
+        QString encryptedText, QString cipher, QString hint,
+        QString enCryptIndex);
 
 public Q_SLOTS:
     void onEnCryptElementClicked(
-        QString encryptedText, QString cipher, QString length, QString hint,
+        QString encryptedText, QString cipher, QString hint,
         QString enCryptIndex);
 };
 

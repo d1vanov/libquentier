@@ -28,7 +28,7 @@ function EncryptDecryptManager() {
 
     var lastError;
 
-    this.replaceSelectionWithDecryptedText = function(id, decryptedText, encryptedText, hint, cipher, keyLength) {
+    this.replaceSelectionWithDecryptedText = function(id, decryptedText, encryptedText, hint, cipher) {
         console.log("EncryptDecryptManager::replaceSelectionWithDecryptedText");
 
         var selection = window.getSelection();
@@ -61,10 +61,6 @@ function EncryptDecryptManager() {
 
             if (cipher) {
                 decryptedTextElement.setAttribute("cipher", cipher);
-            }
-
-            if (keyLength) {
-                decryptedTextElement.setAttribute("length", keyLength);
             }
 
             if (hint) {
