@@ -33,15 +33,15 @@ template <
 class Result
 {
 private:
-    template <class T>
+    template <typename T>
     struct ValueWrapper
     {
         T value;
     };
 
-    template <>
-    struct ValueWrapper<void>
-    {};
+    using ValueWrapperInnerType = std::conditional_t<
+        std::is_void_v<std::decay_t<ValueType>>, std::nullptr_t,
+        std::decay_t<ValueType>>;
 
 public:
     template <
@@ -55,7 +55,7 @@ public:
     template <
         typename T1 = ValueType,
         typename std::enable_if_t<std::is_void_v<std::decay_t<T1>>> * = nullptr>
-    explicit Result() : m_valueOrError{ValueWrapper<void>{}}
+    explicit Result() : m_valueOrError{ValueWrapper<std::nullptr_t>{}}
     {}
 
     explicit Result(ErrorType error) : m_valueOrError{std::move(error)} {}
@@ -91,7 +91,7 @@ public:
      */
     [[nodiscard]] bool isValid() const noexcept
     {
-        return std::holds_alternative<ValueWrapper<std::decay_t<ValueType>>>(
+        return std::holds_alternative<ValueWrapper<ValueWrapperInnerType>>(
             m_valueOrError);
     }
 
@@ -197,8 +197,7 @@ public:
     }
 
 private:
-    std::variant<ValueWrapper<std::decay_t<ValueType>>, ErrorType>
-        m_valueOrError;
+    std::variant<ValueWrapper<ValueWrapperInnerType>, ErrorType> m_valueOrError;
 };
 
 } // namespace quentier
