@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,6 @@
 
 #include "UtilityTester.h"
 
-#include "EncryptionManagerTests.h"
 #include "LRUCacheTests.h"
 #include "TagSortByParentChildRelationsTest.h"
 
@@ -62,36 +61,6 @@ void UtilityTester::init()
             QString::fromUtf8(exception.what()) +                              \
             QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));          \
     }
-
-void UtilityTester::encryptDecryptNoteTest()
-{
-    try {
-        QString error;
-        const bool res = encryptDecryptTest(error);
-        QVERIFY2(res, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void UtilityTester::decryptNoteAesTest()
-{
-    try {
-        QString error;
-        const bool res = decryptAesTest(error);
-        QVERIFY2(res, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void UtilityTester::decryptNoteRc2Test()
-{
-    try {
-        QString error;
-        const bool res = decryptRc2Test(error);
-        QVERIFY2(res, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
 
 void UtilityTester::tagSortByParentChildRelationsTest()
 {
