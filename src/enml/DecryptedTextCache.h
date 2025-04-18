@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,8 @@
 #include <QHash>
 #include <QtGlobal>
 
+#include <mutex>
+
 namespace quentier::enml {
 
 class DecryptedTextCache: public IDecryptedTextCache
@@ -44,6 +46,8 @@ public: // IDecryptedTextCache
         const QString & originalEncryptedText,
         const QString & newDecryptedText) override;
 
+    [[nodiscard]] bool containsRememberedForSessionEntries() const override;
+
     void removeDecryptedTextInfo(const QString & encryptedText) override;
     void clearNonRememberedForSessionEntries() override;
 
@@ -59,9 +63,12 @@ private:
     using DataHash = QHash<QString, Data>;
 
 private:
+    const IEncryptorPtr m_encryptor;
+
+    mutable std::mutex m_mutex;
+
     DataHash m_dataHash;
     DataHash m_staleDataHash;
-    IEncryptorPtr m_encryptor;
 };
 
 } // namespace quentier::enml
