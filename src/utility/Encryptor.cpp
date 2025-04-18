@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -133,6 +133,8 @@ Result<QString, ErrorString> Encryptor::decrypt(
     const auto makeError = [&] {
         return Result<QString, ErrorString>{std::move(errorDescription)};
     };
+
+    const std::lock_guard lock{m_mutex};
 
     switch (cipher) {
     case Cipher::RC2:
