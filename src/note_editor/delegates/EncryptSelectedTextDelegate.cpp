@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -138,9 +138,9 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 }
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
-    QString selectedText, QString encryptedText, // NOLINT
-    const IEncryptor::Cipher cipher, QString hint,
-    bool rememberForSession) // NOLINT
+    QString selectedText, QString encryptedText,   // NOLINT
+    const IEncryptor::Cipher cipher, QString hint, // NOLINT
+    bool rememberForSession)                       // NOLINT
 {
     QNDEBUG(
         "note_editor::EncryptSelectedTextDelegate",
@@ -214,7 +214,7 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
             enml::utils::htmlEscapeString(m_selectionHtml);
 
         QString cipherStr;
-        QTextStream strm;
+        QTextStream strm{&cipherStr};
         strm << m_cipher;
         strm.flush();
 
