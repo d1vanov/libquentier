@@ -52,6 +52,8 @@ void DecryptedTextCache::addDecryptexTextInfo(
         return;
     }
 
+    const std::lock_guard lock{m_mutex};
+
     Data & entry = m_dataHash[encryptedText];
     entry.m_decryptedText = decryptedText;
     entry.m_passphrase = passphrase;
@@ -67,6 +69,8 @@ std::optional<std::pair<QString, IDecryptedTextCache::RememberForSession>>
         "enml::DecryptedTextCache",
         "DecryptedTextCache::findDecryptedTextInfo: "
             << encryptedText << ", this = " << static_cast<const void *>(this));
+
+    const std::lock_guard lock{m_mutex};
 
     auto dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end()) {
@@ -89,12 +93,41 @@ std::optional<std::pair<QString, IDecryptedTextCache::RememberForSession>>
     return std::pair{data.m_decryptedText, data.m_rememberForSession};
 }
 
+bool DecryptedTextCache::containsRememberedForSessionEntries() const
+{
+    const std::lock_guard lock{m_mutex};
+
+    const auto checkHash = [](const DataHash & dataHash) {
+        for (auto it = dataHash.constBegin(), end = dataHash.constEnd();
+             it != end; ++it)
+        {
+            if (it.value().m_rememberForSession == RememberForSession::Yes) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    if (checkHash(m_dataHash)) {
+        return true;
+    }
+
+    if (checkHash(m_staleDataHash)) {
+        return true;
+    }
+
+    return false;
+}
+
 void DecryptedTextCache::removeDecryptedTextInfo(const QString & encryptedText)
 {
     QNDEBUG(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::removeDecryptedTextInfo: encryptedText = "
             << encryptedText);
+
+    const std::lock_guard lock{m_mutex};
 
     auto it = m_dataHash.find(encryptedText);
     if (it != m_dataHash.end()) {
@@ -111,6 +144,8 @@ void DecryptedTextCache::clearNonRememberedForSessionEntries()
     QNDEBUG(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::clearNonRememberedForSessionEntries");
+
+    const std::lock_guard lock{m_mutex};
 
     for (auto it = m_dataHash.begin(); it != m_dataHash.end();) {
         const Data & data = it.value();
@@ -134,6 +169,8 @@ std::optional<QString> DecryptedTextCache::updateDecryptedTextInfo(
         "enml::DecryptedTextCache",
         "DecryptedTextCache::updateDecryptedTextInfo: "
             << "original encrypted text = " << originalEncryptedText);
+
+    const std::lock_guard lock{m_mutex};
 
     bool foundInDataHash = true;
     auto it = m_dataHash.find(originalEncryptedText);

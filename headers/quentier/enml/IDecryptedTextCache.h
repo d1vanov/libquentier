@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -59,6 +59,8 @@ public:
     [[nodiscard]] virtual std::optional<QString> updateDecryptedTextInfo(
         const QString & originalEncryptedText,
         const QString & newDecryptedText) = 0;
+
+    [[nodiscard]] virtual bool containsRememberedForSessionEntries() const = 0;
 
     virtual void removeDecryptedTextInfo(const QString & encryptedText) = 0;
     virtual void clearNonRememberedForSessionEntries() = 0;
