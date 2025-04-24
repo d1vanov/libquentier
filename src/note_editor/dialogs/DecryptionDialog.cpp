@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,6 +67,19 @@ DecryptionDialog::DecryptionDialog(
     setRememberPassphraseDefaultState(rememberPassphraseForSessionDefault);
     m_ui->onErrorTextLabel->setVisible(false);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    QObject::connect(
+        m_ui->showPasswordCheckBox, &QCheckBox::checkStateChanged, this,
+        &DecryptionDialog::onShowPasswordStateChanged);
+
+    QObject::connect(
+        m_ui->rememberPasswordCheckBox, &QCheckBox::checkStateChanged, this,
+        &DecryptionDialog::onRememberPassphraseStateChanged);
+
+    QObject::connect(
+        m_ui->decryptPermanentlyCheckBox, &QCheckBox::checkStateChanged, this,
+        &DecryptionDialog::onDecryptPermanentlyStateChanged);
+#else
     QObject::connect(
         m_ui->showPasswordCheckBox, &QCheckBox::stateChanged, this,
         &DecryptionDialog::onShowPasswordStateChanged);
@@ -78,6 +91,7 @@ DecryptionDialog::DecryptionDialog(
     QObject::connect(
         m_ui->decryptPermanentlyCheckBox, &QCheckBox::stateChanged, this,
         &DecryptionDialog::onDecryptPermanentlyStateChanged);
+#endif
 }
 
 DecryptionDialog::~DecryptionDialog() noexcept

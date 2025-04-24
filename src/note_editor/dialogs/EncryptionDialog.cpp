@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,9 +65,15 @@ EncryptionDialog::EncryptionDialog(
     setRememberPassphraseDefaultState(rememberPassphraseForSessionDefault);
     m_ui->onErrorTextLabel->setVisible(false);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    QObject::connect(
+        m_ui->rememberPasswordForSessionCheckBox, &QCheckBox::checkStateChanged,
+        this, &EncryptionDialog::onRememberPassphraseStateChanged);
+#else
     QObject::connect(
         m_ui->rememberPasswordForSessionCheckBox, &QCheckBox::stateChanged,
         this, &EncryptionDialog::onRememberPassphraseStateChanged);
+#endif
 }
 
 EncryptionDialog::~EncryptionDialog() noexcept
