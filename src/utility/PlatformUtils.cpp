@@ -17,8 +17,8 @@
  */
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/SuppressWarnings.h>
 #include <quentier/utility/PlatformUtils.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QDesktopServices>
 #include <QStandardPaths>
