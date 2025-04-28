@@ -41,4 +41,3 @@ namespace quentier::utils {
 void QUENTIER_EXPORT openUrl(const QUrl & url);
 
 } // namespace quentier::utils
-
