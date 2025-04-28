@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,25 +16,29 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/System.h>
+#pragma once
 
-#include <quentier/utility/PlatformUtils.h>
+#include <quentier/utility/Linkage.h>
 
-namespace quentier {
+#include <QString>
+#include <QUrl>
 
-QString getCurrentUserName()
-{
-    return utils::getCurrentUserName();
-}
+namespace quentier::utils {
 
-QString getCurrentUserFullName()
-{
-    return utils::getCurrentUserFullName();
-}
+/**
+ * @return              The system user name of the currently logged in user
+ */
+[[nodiscard]] QString QUENTIER_EXPORT getCurrentUserName();
 
-void openUrl(const QUrl & url)
-{
-    utils::openUrl(url);
-}
+/**
+ * @return              The full name of the currently logged in user
+ */
+[[nodiscard]] QString QUENTIER_EXPORT getCurrentUserFullName();
 
-} // namespace quentier
+/**
+ * openUrl sends the request to open a url
+ */
+void QUENTIER_EXPORT openUrl(const QUrl & url);
+
+} // namespace quentier::utils
+

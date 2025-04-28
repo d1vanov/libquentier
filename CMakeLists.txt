@@ -185,6 +185,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/Initialize.h
     headers/quentier/utility/LRUCache.hpp
     headers/quentier/utility/MessageBox.h
+    headers/quentier/utility/PlatformUtils.h
     headers/quentier/utility/Printable.h
     headers/quentier/utility/QuentierApplication.h
     headers/quentier/utility/QuentierUndoCommand.h
@@ -414,6 +415,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileSystem.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
+    src/utility/PlatformUtils.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp
     src/utility/QuentierUndoCommand.cpp
