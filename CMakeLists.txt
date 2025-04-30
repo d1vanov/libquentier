@@ -195,7 +195,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/StringUtils.h
     headers/quentier/utility/SuppressWarnings.h
     headers/quentier/utility/SysInfo.h
-    headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
     headers/quentier/utility/Unreachable.h)
@@ -426,7 +425,6 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/StringUtils.cpp
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
-    src/utility/System.cpp
     src/utility/TagSortByParentChildRelations.cpp
     src/utility/UidGenerator.cpp
     src/utility/VersionInfo.cpp)
