@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,8 @@
 
 #include "TypeChecks.h"
 
+#include <utility/Checks.h>
+
 #include <qevercloud/Constants.h>
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Note.h>
@@ -29,7 +31,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Validation.h>
-#include <quentier/utility/Checks.h>
 
 #include <QRegularExpression>
 
@@ -48,7 +49,7 @@ bool checkLinkedNotebook(
         return false;
     }
 
-    if (!checkGuid(*linkedNotebook.guid())) {
+    if (!utility::checkGuid(*linkedNotebook.guid())) {
         errorDescription.setBase(
             QStringLiteral("Linked notebook's guid is invalid"));
 
@@ -98,7 +99,7 @@ bool checkNote(
         return false;
     }
 
-    if (note.guid() && !checkGuid(*note.guid())) {
+    if (note.guid() && !utility::checkGuid(*note.guid())) {
         errorDescription.setBase(QStringLiteral("Note's guid is invalid"));
 
         errorDescription.details() = *note.guid();
@@ -106,7 +107,7 @@ bool checkNote(
     }
 
     if (note.updateSequenceNum() &&
-        !checkUpdateSequenceNumber(*note.updateSequenceNum()))
+        !utility::checkUpdateSequenceNumber(*note.updateSequenceNum()))
     {
         errorDescription.setBase(
             QStringLiteral("Note's update sequence number is invalid"));
@@ -146,7 +147,7 @@ bool checkNote(
         }
     }
 
-    if (note.notebookGuid() && !checkGuid(*note.notebookGuid())) {
+    if (note.notebookGuid() && !utility::checkGuid(*note.notebookGuid())) {
         errorDescription.setBase(
             QStringLiteral("Note's notebook guid is invalid"));
 
@@ -304,7 +305,7 @@ bool checkNotebook(
         return false;
     }
 
-    if (notebook.guid() && !checkGuid(*notebook.guid())) {
+    if (notebook.guid() && !utility::checkGuid(*notebook.guid())) {
         errorDescription.setBase(QStringLiteral("Notebook's guid is invalid"));
 
         errorDescription.details() = *notebook.guid();
@@ -324,7 +325,9 @@ bool checkNotebook(
         return QString{};
     }();
 
-    if (!linkedNotebookGuid.isEmpty() && !checkGuid(linkedNotebookGuid)) {
+    if (!linkedNotebookGuid.isEmpty() &&
+        !utility::checkGuid(linkedNotebookGuid))
+    {
         errorDescription.setBase(
             QStringLiteral("Notebook's linked notebook guid is invalid"));
 
@@ -333,7 +336,7 @@ bool checkNotebook(
     }
 
     if (notebook.updateSequenceNum() &&
-        !checkUpdateSequenceNumber(*notebook.updateSequenceNum()))
+        !utility::checkUpdateSequenceNumber(*notebook.updateSequenceNum()))
     {
         errorDescription.setBase(
             QStringLiteral("Notebook's update sequence number is invalid"));
@@ -362,7 +365,7 @@ bool checkNotebook(
             }
 
             if (sharedNotebook.notebookGuid() &&
-                !checkGuid(*sharedNotebook.notebookGuid()))
+                !utility::checkGuid(*sharedNotebook.notebookGuid()))
             {
                 errorDescription.setBase(QStringLiteral(
                     "Notebook has shared notebook with invalid guid"));
@@ -408,7 +411,7 @@ bool checkResource(
         return false;
     }
 
-    if (resource.guid() && !checkGuid(*resource.guid())) {
+    if (resource.guid() && !utility::checkGuid(*resource.guid())) {
         errorDescription.setBase(QStringLiteral("Resource's guid is invalid"));
 
         errorDescription.details() = *resource.guid();
@@ -416,7 +419,7 @@ bool checkResource(
     }
 
     if (resource.updateSequenceNum() &&
-        !checkUpdateSequenceNumber(*resource.updateSequenceNum()))
+        !utility::checkUpdateSequenceNumber(*resource.updateSequenceNum()))
     {
         errorDescription.setBase(
             QStringLiteral("Resource's update sequence number is invalid"));
@@ -427,7 +430,7 @@ bool checkResource(
         return false;
     }
 
-    if (resource.noteGuid() && !checkGuid(*resource.noteGuid())) {
+    if (resource.noteGuid() && !utility::checkGuid(*resource.noteGuid())) {
         errorDescription.setBase(
             QStringLiteral("Resource's note guid is invalid"));
 
@@ -560,7 +563,7 @@ bool checkSavedSearch(
         return false;
     }
 
-    if (savedSearch.guid() && !checkGuid(*savedSearch.guid())) {
+    if (savedSearch.guid() && !utility::checkGuid(*savedSearch.guid())) {
         errorDescription.setBase(
             QStringLiteral("Saved search's guid is invalid"));
 
@@ -575,7 +578,7 @@ bool checkSavedSearch(
     }
 
     if (savedSearch.updateSequenceNum() &&
-        !checkUpdateSequenceNumber(*savedSearch.updateSequenceNum()))
+        !utility::checkUpdateSequenceNumber(*savedSearch.updateSequenceNum()))
     {
         errorDescription.setBase(
             QStringLiteral("Saved search's update sequence number is invalid"));
@@ -624,7 +627,7 @@ bool checkTag(
         return false;
     }
 
-    if (tag.guid() && !checkGuid(*tag.guid())) {
+    if (tag.guid() && !utility::checkGuid(*tag.guid())) {
         errorDescription.setBase(QStringLiteral("Tag's guid is invalid"));
 
         errorDescription.details() = *tag.guid();
@@ -633,7 +636,9 @@ bool checkTag(
 
     const QString linkedNotebookGuid =
         tag.linkedNotebookGuid().value_or(QString{});
-    if (!linkedNotebookGuid.isEmpty() && !checkGuid(linkedNotebookGuid)) {
+    if (!linkedNotebookGuid.isEmpty() &&
+        !utility::checkGuid(linkedNotebookGuid))
+    {
         errorDescription.setBase(
             QStringLiteral("Tag's linked notebook guid is invalid"));
 
@@ -646,7 +651,7 @@ bool checkTag(
     }
 
     if (tag.updateSequenceNum() &&
-        !checkUpdateSequenceNumber(*tag.updateSequenceNum()))
+        !utility::checkUpdateSequenceNumber(*tag.updateSequenceNum()))
     {
         errorDescription.setBase(
             QStringLiteral("Tag's update sequence number is invalid"));
@@ -655,7 +660,7 @@ bool checkTag(
         return false;
     }
 
-    if (tag.parentGuid() && !checkGuid(*tag.parentGuid())) {
+    if (tag.parentGuid() && !utility::checkGuid(*tag.parentGuid())) {
         errorDescription.setBase(
             QStringLiteral("Tag's parent guid is invalid"));
 

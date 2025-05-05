@@ -92,7 +92,6 @@
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 #include <quentier/types/ResourceUtils.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/Checks.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/Factory.h>
@@ -102,6 +101,8 @@
 #include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/UidGenerator.h>
+
+#include <utility/Checks.h>
 
 #include <QApplication>
 #include <QBuffer>
@@ -3344,10 +3345,7 @@ void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(
     int normalizedProgress =
         static_cast<int>(std::floor(progress * 100.0 + 0.5));
 
-    if (normalizedProgress > 100) {
-        normalizedProgress = 100;
-    }
-
+    normalizedProgress = std::min(normalizedProgress, 100);
     it->second->setValue(normalizedProgress);
 }
 
@@ -5404,8 +5402,9 @@ void NoteEditorPrivate::updateResource(
         return;
     }
 
-    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty()))
-    { // NOLINT
+    if (Q_UNLIKELY( // NOLINT
+            !m_pNote->resources() || m_pNote->resources()->isEmpty()))
+    {
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: no resources within "
                        "the note in the note editor"));
@@ -8558,8 +8557,9 @@ void NoteEditorPrivate::replaceResourceInNote(
         return;
     }
 
-    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty()))
-    { // NOLINT
+    if (Q_UNLIKELY( // NOLINT
+            !m_pNote->resources() || m_pNote->resources()->isEmpty()))
+    {
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
                        "note has no resources"));
@@ -8862,7 +8862,7 @@ qevercloud::Resource NoteEditorPrivate::attachResourceToNote(
 
     resource.setNoteLocalId(m_pNote->localId());
     if (m_pNote->guid()) {
-        resource.setNoteGuid(*m_pNote->guid());
+        resource.setNoteGuid(m_pNote->guid());
     }
 
     if (!m_pNote->resources()) {
@@ -9014,8 +9014,9 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
         return qint64(0);
     }
 
-    if (Q_UNLIKELY(!m_pNote->resources() || m_pNote->resources()->isEmpty()))
-    { // NOLINT
+    if (Q_UNLIKELY( // NOLINT
+            !m_pNote->resources() || m_pNote->resources()->isEmpty()))
+    {
         QNTRACE("note_editor", "Note has no resources - returning zero");
         return qint64(0);
     }
@@ -9474,7 +9475,7 @@ void NoteEditorPrivate::paste()
             return;
         }
 
-        if (Q_UNLIKELY(!checkGuid(noteGuid))) {
+        if (Q_UNLIKELY(!utility::checkGuid(noteGuid))) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't insert in-app note link: "
                            "note guid is invalid"));

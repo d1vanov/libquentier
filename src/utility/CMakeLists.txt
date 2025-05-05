@@ -6,6 +6,8 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  Checks.cpp
+  Checks.h
   keychain/CompositeKeychainService.cpp
   keychain/CompositeKeychainService.h
   keychain/MigratingKeychainService.cpp

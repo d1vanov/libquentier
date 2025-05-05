@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,11 +18,9 @@
 
 #pragma once
 
-#include <quentier/utility/Linkage.h>
-
 #include <QString>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * checkGuid checks the valitidy of the input guid
@@ -30,7 +28,7 @@ namespace quentier {
  * @param guid      The guid to be checked for validity
  * @return          True if the passed in guid is valid, false otherwise
  */
-[[nodiscard]] bool QUENTIER_EXPORT checkGuid(const QString & guid);
+[[nodiscard]] bool checkGuid(const QString & guid);
 
 /**
  * checkUpdateSequenceNumber checks the passed in update sequence number
@@ -41,7 +39,6 @@ namespace quentier {
  * @return                      True if the passed in update sequence number
  *                              is valid, false otherwise
  */
-[[nodiscard]] bool QUENTIER_EXPORT
-    checkUpdateSequenceNumber(qint32 updateSequenceNumber);
+[[nodiscard]] bool checkUpdateSequenceNumber(qint32 updateSequenceNumber);
 
-} // namespace quentier
+} // namespace quentier::utility

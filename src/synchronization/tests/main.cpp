@@ -35,10 +35,8 @@ int main(int argc, char * argv[])
     QUENTIER_SET_MIN_LOG_LEVEL(Warning);
     QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
-    QTimer::singleShot(
-        0,
-        [&]() // clazy:exclude=connect-3arg-lambda
-        {
+    QTimer::singleShot( // clazy:exclude=connect-3arg-lambda
+        0, [&] {
             ::testing::InitGoogleTest(&argc, argv); // NOLINT
             auto testResult = RUN_ALL_TESTS();
             QCoreApplication::exit(testResult);

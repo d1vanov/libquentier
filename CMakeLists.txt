@@ -170,7 +170,6 @@ set(EXCEPTION_HEADERS
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
-    headers/quentier/utility/Checks.h
     headers/quentier/utility/Compat.h
     headers/quentier/utility/DateTime.h
     headers/quentier/utility/EventLoopWithExitStatus.h
@@ -399,7 +398,6 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp
-    src/utility/Checks.cpp
     src/utility/DateTime.cpp
     src/utility/Initialize.cpp
     src/utility/IEncryptor.cpp

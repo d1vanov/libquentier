@@ -38,6 +38,7 @@ target_link_libraries(${TESTS_NAME}
   PRIVATE
     ${LIBNAME}_interface
     ${LIBNAME}
+    ${LIBNAME}_utility
     ${LIBRARY_NAME}
     ${LIBRARY_NAME}_testing_mocks
     ${GMOCK_LIBRARIES}

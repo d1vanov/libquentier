@@ -91,6 +91,7 @@ target_link_libraries(${LIBRARY_NAME}
   PUBLIC
     ${LIBNAME}_private
     ${LIBNAME}_threading
+    ${LIBNAME}_utility
     Qt${LIBQUENTIER_QT_VERSION}::Core
     Qt${LIBQUENTIER_QT_VERSION}::Sql)
 

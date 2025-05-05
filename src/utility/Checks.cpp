@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Checks.h>
+#include "Checks.h"
 
 #include <qevercloud/Constants.h>
 
 #include <limits>
 
-namespace quentier {
+namespace quentier::utility {
 
 bool checkGuid(const QString & guid)
 {
@@ -40,10 +40,9 @@ bool checkGuid(const QString & guid)
 
 bool checkUpdateSequenceNumber(const qint32 updateSequenceNumber)
 {
-    return !(
-        (updateSequenceNumber < 0) ||
-        (updateSequenceNumber == std::numeric_limits<int32_t>::min()) ||
-        (updateSequenceNumber == std::numeric_limits<int32_t>::max()));
+    return updateSequenceNumber >= 0 &&
+        updateSequenceNumber != std::numeric_limits<qint32>::min() &&
+        updateSequenceNumber != std::numeric_limits<qint32>::max();
 }
 
-} // namespace quentier
+} // namespace quentier::utility
