@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 #include <mutex>
 #include <vector>
 
-namespace quentier {
+namespace quentier::utility {
 
 class Encryptor : public IEncryptor
 {
@@ -114,4 +114,4 @@ private:
     mutable QString m_rc2ChunkOut;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

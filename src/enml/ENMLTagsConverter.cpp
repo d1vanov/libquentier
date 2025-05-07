@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,8 @@
 
 namespace quentier::enml {
 
-QString ENMLTagsConverter::convertEnToDo(bool checked, quint32 index) const
+QString ENMLTagsConverter::convertEnToDo(
+    const bool checked, const quint32 index) const
 {
     QString html;
     QTextStream strm{&html};
@@ -50,7 +51,7 @@ QString ENMLTagsConverter::convertEnToDo(bool checked, quint32 index) const
 
 QString ENMLTagsConverter::convertEncryptedText(
     const QString & encryptedText, const QString & hint,
-    const IEncryptor::Cipher cipher, quint32 index) const
+    const utility::IEncryptor::Cipher cipher, const quint32 index) const
 {
     QString html;
     QTextStream strm{&html};
@@ -81,7 +82,8 @@ QString ENMLTagsConverter::convertEncryptedText(
 
 QString ENMLTagsConverter::convertDecryptedText(
     const QString & decryptedText, const QString & encryptedText,
-    const QString & hint, const IEncryptor::Cipher cipher, quint32 index) const
+    const QString & hint, const utility::IEncryptor::Cipher cipher,
+    const quint32 index) const
 {
     QString result;
     QXmlStreamWriter writer{&result};

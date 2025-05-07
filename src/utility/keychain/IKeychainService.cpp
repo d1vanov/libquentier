@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -136,7 +136,7 @@ IKeychainServicePtr newQtKeychainService()
 IKeychainServicePtr newObfuscatingKeychainService()
 {
     return std::make_shared<ObfuscatingKeychainService>(
-        createOpenSslEncryptor());
+        utility::createOpenSslEncryptor());
 }
 
 IKeychainServicePtr newCompositeKeychainService(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,7 +47,7 @@ class EncryptSelectedTextDelegate final : public QObject
 public:
     explicit EncryptSelectedTextDelegate(
         NoteEditorPrivate * noteEditor,
-        IEncryptorPtr encryptor,
+        utility::IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         enml::IENMLTagsConverterPtr enmlTagsConverter);
 
@@ -62,8 +62,9 @@ private Q_SLOTS:
     void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onSelectedTextEncrypted(
-        QString selectedText, QString encryptedText, IEncryptor::Cipher cipher,
-        QString hint, bool rememberForSession);
+        QString selectedText, QString encryptedText,
+        utility::IEncryptor::Cipher cipher, QString hint,
+        bool rememberForSession);
 
     void onEncryptionScriptDone(const QVariant & data);
 
@@ -76,7 +77,7 @@ private:
 
 private:
     const QPointer<NoteEditorPrivate> m_noteEditor;
-    const IEncryptorPtr m_encryptor;
+    const utility::IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
@@ -84,7 +85,7 @@ private:
 
     QString m_selectionHtml;
     QString m_encryptedText;
-    IEncryptor::Cipher m_cipher = IEncryptor::Cipher::AES;
+    utility::IEncryptor::Cipher m_cipher = utility::IEncryptor::Cipher::AES;
     QString m_hint;
     bool m_rememberForSession = false;
 };

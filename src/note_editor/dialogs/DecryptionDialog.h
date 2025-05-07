@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,8 +41,8 @@ class DecryptionDialog final : public QDialog
     Q_OBJECT
 public:
     explicit DecryptionDialog(
-        QString encryptedText, IEncryptor::Cipher cipher, QString hint,
-        Account account, IEncryptorPtr encryptor,
+        QString encryptedText, utility::IEncryptor::Cipher cipher, QString hint,
+        Account account, utility::IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr, bool decryptPermanentlyFlag = false);
 
@@ -55,8 +55,8 @@ public:
 
 Q_SIGNALS:
     void decryptionAccepted(
-        QString encryptedText, IEncryptor::Cipher cipher, QString passphrase,
-        QString decryptedText, bool rememberPassphrase,
+        QString encryptedText, utility::IEncryptor::Cipher cipher,
+        QString passphrase, QString decryptedText, bool rememberPassphrase,
         bool decryptPermanently);
 
 private Q_SLOTS:
@@ -73,12 +73,12 @@ private:
     void setError(const ErrorString & error);
 
 private:
-    const IEncryptorPtr m_encryptor;
+    const utility::IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
 
     Ui::DecryptionDialog * m_ui;
     QString m_encryptedText;
-    IEncryptor::Cipher m_cipher;
+    utility::IEncryptor::Cipher m_cipher;
     QString m_hint;
     QString m_decryptedText;
     Account m_account;

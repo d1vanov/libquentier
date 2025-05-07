@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ struct EncryptDecryptUndoCommandInfo
     QString m_encryptedText;
     QString m_decryptedText;
     QString m_passphrase;
-    IEncryptor::Cipher m_cipher;
+    utility::IEncryptor::Cipher m_cipher;
     QString m_hint;
     std::size_t m_keyLength = 0;
     bool m_rememberForSession = false;

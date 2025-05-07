@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,8 +65,9 @@ namespace quentier {
     }
 
 DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
-    QString encryptedTextId, QString encryptedText, IEncryptor::Cipher cipher,
-    QString hint, NoteEditorPrivate * noteEditor, IEncryptorPtr encryptor,
+    QString encryptedTextId, QString encryptedText,
+    utility::IEncryptor::Cipher cipher, QString hint,
+    NoteEditorPrivate * noteEditor, utility::IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache,
     enml::IENMLTagsConverterPtr enmlTagsConverter) :
     QObject(noteEditor), m_encryptor(std::move(encryptor)),
@@ -155,9 +156,9 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
 }
 
 void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
-    QString encryptedText, const IEncryptor::Cipher cipher, // NOLINT
-    QString passphrase, QString decryptedText, bool rememberForSession,
-    bool decryptPermanently)
+    QString encryptedText, const utility::IEncryptor::Cipher cipher, // NOLINT
+    QString passphrase, QString decryptedText, const bool rememberForSession,
+    const bool decryptPermanently)
 {
     QNDEBUG(
         "note_editor::DecryptEncryptedTextDelegate",

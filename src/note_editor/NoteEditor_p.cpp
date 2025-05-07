@@ -177,15 +177,15 @@ namespace quentier {
 
 namespace {
 
-[[nodiscard]] std::optional<IEncryptor::Cipher> parseCipher(
+[[nodiscard]] std::optional<utility::IEncryptor::Cipher> parseCipher(
     const QString & cipherStr) noexcept
 {
     if (cipherStr == QStringLiteral("AES")) {
-        return IEncryptor::Cipher::AES;
+        return utility::IEncryptor::Cipher::AES;
     }
 
     if (cipherStr == QStringLiteral("RC2")) {
-        return IEncryptor::Cipher::RC2;
+        return utility::IEncryptor::Cipher::RC2;
     }
 
     return std::nullopt;
@@ -226,7 +226,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
         new ContextMenuEventJavaScriptHandler(this)),
     m_pTextCursorPositionJavaScriptHandler(
         new TextCursorPositionJavaScriptHandler(this)),
-    m_encryptor(createOpenSslEncryptor()),
+    m_encryptor(utility::createOpenSslEncryptor()),
     m_enmlTagsConverter(enml::createEnmlTagsConverter()),
     m_enmlConverter(enml::createConverter(m_enmlTagsConverter)),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
@@ -2146,9 +2146,9 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
 }
 
 void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
-    QString encryptedText, const IEncryptor::Cipher cipher, QString hint,
-    QString decryptedText, QString passphrase, bool rememberForSession,
-    bool decryptPermanently)
+    QString encryptedText, const utility::IEncryptor::Cipher cipher,
+    QString hint, QString decryptedText, QString passphrase,
+    bool rememberForSession, bool decryptPermanently)
 {
     QNDEBUG(
         "note_editor",

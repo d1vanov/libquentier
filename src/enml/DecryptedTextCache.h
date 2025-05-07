@@ -31,12 +31,12 @@ namespace quentier::enml {
 class DecryptedTextCache: public IDecryptedTextCache
 {
 public:
-    explicit DecryptedTextCache(IEncryptorPtr encryptor);
+    explicit DecryptedTextCache(utility::IEncryptorPtr encryptor);
 
 public: // IDecryptedTextCache
     void addDecryptexTextInfo(
         const QString & encryptedText, const QString & decryptedText,
-        const QString & passphrase, IEncryptor::Cipher cipher,
+        const QString & passphrase, utility::IEncryptor::Cipher cipher,
         RememberForSession rememberForSession) override;
 
     [[nodiscard]] std::optional<std::pair<QString, RememberForSession>>
@@ -56,14 +56,14 @@ private:
     {
         QString m_decryptedText;
         QString m_passphrase;
-        IEncryptor::Cipher m_cipher;
+        utility::IEncryptor::Cipher m_cipher;
         RememberForSession m_rememberForSession = RememberForSession::No;
     };
 
     using DataHash = QHash<QString, Data>;
 
 private:
-    const IEncryptorPtr m_encryptor;
+    const utility::IEncryptorPtr m_encryptor;
 
     mutable std::mutex m_mutex;
 

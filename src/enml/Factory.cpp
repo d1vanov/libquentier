@@ -17,8 +17,7 @@
  */
 
 #include <quentier/enml/Factory.h>
-
-#include <utility/Encryptor.h>
+#include <quentier/utility/Factory.h>
 
 #include "Converter.h"
 #include "DecryptedTextCache.h"
@@ -26,10 +25,11 @@
 
 namespace quentier::enml {
 
-IDecryptedTextCachePtr createDecryptedTextCache(IEncryptorPtr encryptor)
+IDecryptedTextCachePtr createDecryptedTextCache(
+    utility::IEncryptorPtr encryptor)
 {
     if (!encryptor) {
-        encryptor = std::make_shared<Encryptor>();
+        encryptor = utility::createOpenSslEncryptor();
     }
 
     return std::make_shared<DecryptedTextCache>(std::move(encryptor));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,11 +20,11 @@
 
 #include "Encryptor.h"
 
-namespace quentier {
+namespace quentier::utility {
 
 IEncryptorPtr createOpenSslEncryptor()
 {
     return std::make_shared<Encryptor>();
 }
 
-} // namespace quentier
+} // namespace quentier::utility

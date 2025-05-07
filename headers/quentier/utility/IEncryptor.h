@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 class QDebug;
 class QTextStream;
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The IEncryptor interface provides encryption and decryption
@@ -79,4 +79,4 @@ struct QUENTIER_EXPORT IEncryptor
         Cipher cipher) = 0;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

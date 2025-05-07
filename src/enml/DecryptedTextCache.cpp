@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 
 namespace quentier::enml {
 
-DecryptedTextCache::DecryptedTextCache(IEncryptorPtr encryptor) :
+DecryptedTextCache::DecryptedTextCache(utility::IEncryptorPtr encryptor) :
     m_encryptor{std::move(encryptor)}
 {
     if (Q_UNLIKELY(!m_encryptor)) {
@@ -35,7 +35,7 @@ DecryptedTextCache::DecryptedTextCache(IEncryptorPtr encryptor) :
 
 void DecryptedTextCache::addDecryptexTextInfo(
     const QString & encryptedText, const QString & decryptedText,
-    const QString & passphrase, const IEncryptor::Cipher cipher,
+    const QString & passphrase, const utility::IEncryptor::Cipher cipher,
     RememberForSession rememberForSession)
 {
     QNDEBUG(
@@ -210,7 +210,7 @@ std::optional<QString> DecryptedTextCache::updateDecryptedTextInfo(
         m_dataHash.erase(it);
 
         auto & newEntry = m_dataHash[newEncryptedText];
-        newEntry.m_cipher = IEncryptor::Cipher::AES;
+        newEntry.m_cipher = utility::IEncryptor::Cipher::AES;
         newEntry.m_rememberForSession = staleEntry.m_rememberForSession;
         newEntry.m_decryptedText = newDecryptedText;
         newEntry.m_passphrase = staleEntry.m_passphrase;

@@ -50,7 +50,7 @@ public:
 
     virtual void addDecryptexTextInfo(
         const QString & encryptedText, const QString & decryptedText,
-        const QString & passphrase, IEncryptor::Cipher cipher,
+        const QString & passphrase, utility::IEncryptor::Cipher cipher,
         RememberForSession rememberForSession) = 0;
 
     [[nodiscard]] virtual std::optional<std::pair<QString, RememberForSession>>

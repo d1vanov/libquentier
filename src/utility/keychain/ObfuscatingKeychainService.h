@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ namespace quentier {
 class ObfuscatingKeychainService final : public IKeychainService
 {
 public:
-    explicit ObfuscatingKeychainService(IEncryptorPtr encryptor);
+    explicit ObfuscatingKeychainService(utility::IEncryptorPtr encryptor);
 
 public:
     ~ObfuscatingKeychainService() noexcept override;
@@ -47,7 +47,7 @@ public:
         QString service, QString key) override;
 
 private:
-    const IEncryptorPtr m_encryptor;
+    const utility::IEncryptorPtr m_encryptor;
 };
 
 } // namespace quentier

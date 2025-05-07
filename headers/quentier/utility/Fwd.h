@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,10 +20,14 @@
 
 #include <memory>
 
-namespace quentier {
+namespace quentier::utility {
 
 struct IEncryptor;
 using IEncryptorPtr = std::shared_ptr<IEncryptor>;
+
+} // namespace quentier::utility
+
+namespace quentier {
 
 class IKeychainService;
 using IKeychainServicePtr = std::shared_ptr<IKeychainService>;

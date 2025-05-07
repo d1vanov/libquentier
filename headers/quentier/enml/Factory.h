@@ -28,10 +28,10 @@ namespace quentier::enml {
  * @brief factory function for IDecryptedTextCache
  * @param encryptor instance of encryptor used by the returned
  *                  IDecryptedTextCache implementation. If nullptr, the default
- *                  implementation of IEncryptor is used.
+ *                  implementation of utility::IEncryptor is used.
  */
 [[nodiscard]] QUENTIER_EXPORT IDecryptedTextCachePtr
-    createDecryptedTextCache(IEncryptorPtr encryptor = nullptr);
+    createDecryptedTextCache(utility::IEncryptorPtr encryptor = nullptr);
 
 /**
  * @brief factory function for IENMLTagsConverter

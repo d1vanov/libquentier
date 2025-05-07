@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * Factory function creating IEnctyptor instance using OpenSSL algorithms for
@@ -29,4 +29,4 @@ namespace quentier {
  */
 [[nodiscard]] QUENTIER_EXPORT IEncryptorPtr createOpenSslEncryptor();
 
-} // namespace quentier
+} // namespace quentier::utility

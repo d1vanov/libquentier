@@ -37,13 +37,15 @@
 #include <limits>
 #include <string_view>
 
-namespace quentier {
+namespace quentier::utility {
 
 using namespace std::string_view_literals;
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4351)
 #endif
+
+namespace {
 
 [[nodiscard]] QString sslLibErrorDescription()
 {
@@ -58,6 +60,10 @@ using namespace std::string_view_literals;
 
     return QString::fromStdString(buf);
 }
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
 
 Result<QString, ErrorString> Encryptor::encrypt(
     const QString & text, const QString & passphrase)
@@ -951,4 +957,4 @@ qint32 Encryptor::crc32(const QString & str) const
     return (crc ^ (-1));
 }
 
-} // namespace quentier
+} // namespace quentier::utility
