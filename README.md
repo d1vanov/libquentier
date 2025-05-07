@@ -3,7 +3,7 @@ libquentier
 
 **Set of Qt/C++ APIs for feature rich desktop clients for Evernote service**
 
-![master](https://github.com/d1vanov/libquentier/workflows/Build/badge.svg?branch=master)
+![master](https://github.com/d1vanov/libquentier/actions/workflows/build_and_deploy.yml/badge.svg?branch=master)
 
 ## What's this
 
