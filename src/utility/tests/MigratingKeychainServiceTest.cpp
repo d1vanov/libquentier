@@ -348,4 +348,4 @@ TEST_F(
     EXPECT_TRUE(caughtException);
 }
 
-} // namespace quentier::utility::tests
+} // namespace quentier::utility::keychain::tests

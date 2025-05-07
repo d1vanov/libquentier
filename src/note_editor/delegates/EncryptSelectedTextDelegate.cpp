@@ -138,7 +138,7 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 }
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
-    QString selectedText, QString encryptedText,   // NOLINT
+    QString selectedText, QString encryptedText,            // NOLINT
     const utility::IEncryptor::Cipher cipher, QString hint, // NOLINT
     const bool rememberForSession)
 {

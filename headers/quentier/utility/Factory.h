@@ -74,10 +74,9 @@ namespace quentier::utility {
 // TODO: remove after adaptation in Quentier
 namespace quentier {
 
-using utility::newQtKeychainService;
-using utility::newObfuscatingKeychainService;
 using utility::newCompositeKeychainService;
 using utility::newMigratingKeychainService;
+using utility::newObfuscatingKeychainService;
+using utility::newQtKeychainService;
 
 } // namespace quentier
-
