@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -140,7 +140,8 @@ const char * gLinkedNotebookAuthenticationTimestamp =
 
 // clang-format off
 AuthenticationInfoProvider::AuthenticationInfoProvider(
-    IAuthenticatorPtr authenticator, IKeychainServicePtr keychainService,
+    IAuthenticatorPtr authenticator,
+    utility::IKeychainServicePtr keychainService,
     IUserInfoProviderPtr userInfoProvider,
     INoteStoreFactoryPtr noteStoreFactory, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy, QString host) :

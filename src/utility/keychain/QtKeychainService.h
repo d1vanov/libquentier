@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 class QtKeychainService final : public IKeychainService
 {
@@ -37,4 +37,4 @@ public:
         QString service, QString key) override;
 };
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

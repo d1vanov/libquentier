@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 /**
  * @brief The MigratingKeychainService class implements IKeychainService
@@ -72,4 +72,4 @@ private:
     const IKeychainServicePtr m_sinkKeychain;
 };
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

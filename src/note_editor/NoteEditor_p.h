@@ -628,7 +628,7 @@ private Q_SLOTS:
         const QVector<std::pair<QString, QString>> & extraData);
 
     void onDecryptEncryptedTextDelegateFinished(
-        QString encryptedText, IEncryptor::Cipher cipher, QString hint,
+        QString encryptedText, utility::IEncryptor::Cipher cipher, QString hint,
         QString decryptedText, QString passphrase, bool rememberForSession,
         bool decryptPermanently);
 
@@ -1303,7 +1303,7 @@ private:
      */
     qint64 m_lastInteractionTimestamp = -1;
 
-    IEncryptorPtr m_encryptor;
+    utility::IEncryptorPtr m_encryptor;
     enml::IDecryptedTextCachePtr m_decryptedTextCache;
     enml::IENMLTagsConverterPtr m_enmlTagsConverter;
     enml::IConverterPtr m_enmlConverter;

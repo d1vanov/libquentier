@@ -60,7 +60,7 @@ namespace quentier {
     }
 
 EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
-    NoteEditorPrivate * noteEditor, IEncryptorPtr encryptor,
+    NoteEditorPrivate * noteEditor, utility::IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache,
     enml::IENMLTagsConverterPtr enmlTagsConverter) :
     QObject(noteEditor), m_noteEditor(noteEditor),
@@ -138,9 +138,9 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 }
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
-    QString selectedText, QString encryptedText,   // NOLINT
-    const IEncryptor::Cipher cipher, QString hint, // NOLINT
-    bool rememberForSession)                       // NOLINT
+    QString selectedText, QString encryptedText,            // NOLINT
+    const utility::IEncryptor::Cipher cipher, QString hint, // NOLINT
+    const bool rememberForSession)
 {
     QNDEBUG(
         "note_editor::EncryptSelectedTextDelegate",

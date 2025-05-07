@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 #include <QDebug>
 #include <QTextStream>
 
-namespace quentier {
+namespace quentier::utility {
 
 namespace {
 
@@ -54,4 +54,4 @@ QTextStream & operator<<(QTextStream & strm, const IEncryptor::Cipher cipher)
     return strm;
 }
 
-} // namespace quentier
+} // namespace quentier::utility

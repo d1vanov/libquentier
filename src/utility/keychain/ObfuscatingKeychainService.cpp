@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 namespace keys {
 
@@ -167,4 +167,4 @@ QFuture<void> ObfuscatingKeychainService::deletePassword(
     return threading::makeExceptionalFuture<void>(Exception{errorCode});
 }
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

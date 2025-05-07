@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,11 +30,11 @@ public: // IENMLTagsConverter
 
     [[nodiscard]] QString convertEncryptedText(
         const QString & encryptedText, const QString & hint,
-        IEncryptor::Cipher cipher, quint32 index) const override;
+        utility::IEncryptor::Cipher cipher, quint32 index) const override;
 
     [[nodiscard]] QString convertDecryptedText(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, IEncryptor::Cipher cipher,
+        const QString & hint, utility::IEncryptor::Cipher cipher,
         quint32 index) const override;
 
     [[nodiscard]] Result<QString, ErrorString> convertResource(

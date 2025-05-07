@@ -41,7 +41,7 @@ namespace quentier::synchronization {
 [[nodiscard]] QUENTIER_EXPORT ISynchronizerPtr createSynchronizer(
     const QUrl & userStoreUrl, IAuthenticatorPtr authenticator,
     ISyncStateStoragePtr syncStateStorage = nullptr,
-    IKeychainServicePtr keychainService = nullptr,
+    utility::IKeychainServicePtr keychainService = nullptr,
     INoteStoreFactoryPtr noteStoreFactory = nullptr,
     IUserStoreFactoryPtr userStoreFactory = nullptr,
     qevercloud::IRequestContextPtr ctx = nullptr,

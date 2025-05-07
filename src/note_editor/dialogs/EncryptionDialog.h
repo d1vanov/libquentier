@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,8 @@ class EncryptionDialog final : public QDialog
     Q_OBJECT
 public:
     explicit EncryptionDialog(
-        QString textToEncrypt, Account account, IEncryptorPtr encryptor,
+        QString textToEncrypt, Account account,
+        utility::IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr);
 
@@ -55,8 +56,9 @@ public:
 
 Q_SIGNALS:
     void encryptionAccepted(
-        QString textToEncrypt, QString encryptedText, IEncryptor::Cipher cipher,
-        QString hint, bool rememberForSession);
+        QString textToEncrypt, QString encryptedText,
+        utility::IEncryptor::Cipher cipher, QString hint,
+        bool rememberForSession);
 
 private Q_SLOTS:
     void setRememberPassphraseDefaultState(bool checked);
@@ -68,7 +70,7 @@ private:
     void setError(const ErrorString & error);
 
 private:
-    const IEncryptorPtr m_encryptor;
+    const utility::IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     Ui::EncryptionDialog * m_ui;
 

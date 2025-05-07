@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 /**
  * @brief The ObfuscatingKeychainService class implements IKeychainService
@@ -50,4 +50,4 @@ private:
     const IEncryptorPtr m_encryptor;
 };
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

@@ -32,7 +32,7 @@
 namespace quentier {
 
 EncryptionDialog::EncryptionDialog(
-    QString textToEncrypt, Account account, IEncryptorPtr encryptor,
+    QString textToEncrypt, Account account, utility::IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache, QWidget * parent) :
     QDialog{parent}, m_encryptor{std::move(encryptor)},
     m_decryptedTextCache{std::move(decryptedTextCache)},
@@ -164,12 +164,13 @@ void EncryptionDialog::accept()
         m_ui->rememberPasswordForSessionCheckBox->isChecked();
 
     m_decryptedTextCache->addDecryptexTextInfo(
-        m_encryptedText, m_textToEncrypt, passphrase, IEncryptor::Cipher::AES,
+        m_encryptedText, m_textToEncrypt, passphrase,
+        utility::IEncryptor::Cipher::AES,
         rememberForSession ? enml::IDecryptedTextCache::RememberForSession::Yes
                            : enml::IDecryptedTextCache::RememberForSession::No);
 
     Q_EMIT encryptionAccepted(
-        m_textToEncrypt, m_encryptedText, IEncryptor::Cipher::AES,
+        m_textToEncrypt, m_encryptedText, utility::IEncryptor::Cipher::AES,
         m_ui->hintLineEdit->text(), rememberForSession);
 
     QDialog::accept();

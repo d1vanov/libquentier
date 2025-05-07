@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,10 @@
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/types/ErrorString.h>
+
+// TODO: remove after adaptation in Quentier
+#include <quentier/utility/Factory.h>
+
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
@@ -27,7 +31,7 @@
 
 class QDebug;
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The IKeychainService interface provides the ability to interact with
@@ -154,16 +158,4 @@ public:
         QString service, QString key) = 0;
 };
 
-[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newQtKeychainService();
-
-[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr
-    newObfuscatingKeychainService();
-
-[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
-    QString name, IKeychainServicePtr primaryKeychain,
-    IKeychainServicePtr secondaryKeychain);
-
-[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
-    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain);
-
-} // namespace quentier
+} // namespace quentier::utility

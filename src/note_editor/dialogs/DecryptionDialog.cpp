@@ -29,8 +29,8 @@
 namespace quentier {
 
 DecryptionDialog::DecryptionDialog(
-    QString encryptedText, IEncryptor::Cipher cipher, QString hint,
-    Account account, IEncryptorPtr encryptor,
+    QString encryptedText, utility::IEncryptor::Cipher cipher, QString hint,
+    Account account, utility::IEncryptorPtr encryptor,
     enml::IDecryptedTextCachePtr decryptedTextCache, QWidget * parent,
     bool decryptPermanentlyFlag) :
     QDialog{parent}, m_encryptor{std::move(encryptor)},
@@ -172,7 +172,7 @@ void DecryptionDialog::accept()
     const QString passphrase = m_ui->passwordLineEdit->text();
 
     auto res = m_encryptor->decrypt(m_encryptedText, passphrase, m_cipher);
-    if (!res.isValid() && m_cipher == IEncryptor::Cipher::AES) {
+    if (!res.isValid() && m_cipher == utility::IEncryptor::Cipher::AES) {
         QNDEBUG(
             "note_editor::DecryptionDialog",
             "The initial attempt to decrypt the text using AES cipher has "
@@ -180,7 +180,7 @@ void DecryptionDialog::accept()
                 << "using RC2 encryption");
 
         res = m_encryptor->decrypt(
-            m_encryptedText, passphrase, IEncryptor::Cipher::RC2);
+            m_encryptedText, passphrase, utility::IEncryptor::Cipher::RC2);
     }
 
     if (!res.isValid()) {

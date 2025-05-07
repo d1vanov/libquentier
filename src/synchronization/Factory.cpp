@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/synchronization/Factory.h>
-#include <quentier/utility/IKeychainService.h>
+#include <quentier/utility/Factory.h>
 
 #include <synchronization/AccountSyncPersistenceDirProvider.h>
 #include <synchronization/AccountSynchronizerFactory.h>
@@ -49,7 +49,8 @@ IAuthenticatorPtr createQEverCloudAuthenticator(
 
 ISynchronizerPtr createSynchronizer(
     const QUrl & userStoreUrl, IAuthenticatorPtr authenticator,
-    ISyncStateStoragePtr syncStateStorage, IKeychainServicePtr keychainService,
+    ISyncStateStoragePtr syncStateStorage,
+    utility::IKeychainServicePtr keychainService,
     INoteStoreFactoryPtr noteStoreFactory,
     IUserStoreFactoryPtr userStoreFactory, qevercloud::IRequestContextPtr ctx,
     qevercloud::IRetryPolicyPtr retryPolicy)
@@ -64,7 +65,7 @@ ISynchronizerPtr createSynchronizer(
     }
 
     if (!keychainService) {
-        keychainService = newQtKeychainService();
+        keychainService = utility::newQtKeychainService();
     }
 
     QString host = userStoreUrl.host();

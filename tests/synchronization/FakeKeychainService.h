@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 
 namespace quentier::synchronization::tests {
 
-class FakeKeychainService final : public IKeychainService
+class FakeKeychainService final : public utility::IKeychainService
 {
 public:
     using PasswordByKey = QHash<QString, QString>;

@@ -61,7 +61,7 @@ public:
      */
     [[nodiscard]] virtual QString convertEncryptedText(
         const QString & encryptedText, const QString & hint,
-        IEncryptor::Cipher cipher, quint32 index) const = 0;
+        utility::IEncryptor::Cipher cipher, quint32 index) const = 0;
 
     /**
      * Converts already decrypted en-crypt tag into its HTML counterpart
@@ -75,7 +75,7 @@ public:
      */
     [[nodiscard]] virtual QString convertDecryptedText(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, IEncryptor::Cipher cipher,
+        const QString & hint, utility::IEncryptor::Cipher cipher,
         quint32 index) const = 0;
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,8 +46,8 @@ class DecryptEncryptedTextDelegate final : public QObject
 public:
     explicit DecryptEncryptedTextDelegate(
         QString encryptedTextId, QString encryptedText,
-        IEncryptor::Cipher cipher, QString hint, NoteEditorPrivate * noteEditor,
-        IEncryptorPtr encryptor,
+        utility::IEncryptor::Cipher cipher, QString hint,
+        NoteEditorPrivate * noteEditor, utility::IEncryptorPtr encryptor,
         enml::IDecryptedTextCachePtr decryptedTextCache,
         enml::IENMLTagsConverterPtr enmlTagsConverter);
 
@@ -55,7 +55,7 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QString encryptedText, IEncryptor::Cipher cipher, QString hint,
+        QString encryptedText, utility::IEncryptor::Cipher cipher, QString hint,
         QString decryptedText, QString passphrase, bool rememberForSession,
         bool decryptPermanently);
 
@@ -66,8 +66,8 @@ private Q_SLOTS:
     void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onEncryptedTextDecrypted(
-        QString encryptedText, IEncryptor::Cipher cipher, QString passphrase,
-        QString decryptedText, bool rememberForSession,
+        QString encryptedText, utility::IEncryptor::Cipher cipher,
+        QString passphrase, QString decryptedText, bool rememberForSession,
         bool decryptPermanently);
 
     void onDecryptionScriptFinished(const QVariant & data);
@@ -79,13 +79,13 @@ private:
     using JsCallback = JsResultCallbackFunctor<DecryptEncryptedTextDelegate>;
 
 private:
-    const IEncryptorPtr m_encryptor;
+    const utility::IEncryptorPtr m_encryptor;
     const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     QString m_encryptedTextId;
     QString m_encryptedText;
-    IEncryptor::Cipher m_cipher;
+    utility::IEncryptor::Cipher m_cipher;
     QString m_hint;
     QString m_decryptedText;
     QString m_passphrase;

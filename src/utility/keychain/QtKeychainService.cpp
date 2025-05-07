@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@
 
 #include <memory>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 namespace {
 
@@ -88,7 +88,7 @@ QFuture<void> QtKeychainService::writePassword(
         });
 
     job->start();
-    Q_UNUSED(job.release());
+    Q_UNUSED(job.release()); // NOLINT
     return future;
 }
 
@@ -125,7 +125,7 @@ QFuture<QString> QtKeychainService::readPassword(
         });
 
     job->start();
-    Q_UNUSED(job.release());
+    Q_UNUSED(job.release()); // NOLINT
     return future;
 }
 
@@ -154,8 +154,8 @@ QFuture<void> QtKeychainService::deletePassword(
         });
 
     job->start();
-    Q_UNUSED(job.release());
+    Q_UNUSED(job.release()); // NOLINT
     return future;
 }
 
-} // namespace quentier
+} // namespace quentier::utility::keychain
