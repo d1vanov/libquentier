@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 /**
  * @brief The CompositeKeychainService class implements IKeychainService
@@ -140,4 +140,4 @@ private:
     mutable bool m_serviceKeysCachesInitialized = false;
 };
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

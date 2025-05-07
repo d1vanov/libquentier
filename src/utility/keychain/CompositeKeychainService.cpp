@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,7 +35,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 namespace keys {
 
@@ -229,7 +229,7 @@ QFuture<QString> CompositeKeychainService::readPassword(
         [promise, selfWeak = weak_from_this(), service = std::move(service),
          key = std::move(key)](const QException & e) mutable {
             if (const auto self = selfWeak.lock()) {
-                if (!utility::utils::isNoEntryError(e)) {
+                if (!isNoEntryError(e)) {
                     QNWARNING(
                         "utility::keychain::CompositeKeychainService",
                         "Failed to read password from the primary keychain: "
@@ -262,7 +262,7 @@ QFuture<QString> CompositeKeychainService::readPassword(
                     [promise, selfWeak, service = std::move(service),
                      key = std::move(key)](const QException & e) {
                         if (const auto self = selfWeak.lock()) {
-                            if (!utility::utils::isNoEntryError(e)) {
+                            if (!isNoEntryError(e)) {
                                 QNWARNING(
                                     "utility::keychain::"
                                     "CompositeKeychainService",
@@ -582,4 +582,4 @@ CompositeKeychainService::ServiceKeyPairsCache
     return cache;
 }
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

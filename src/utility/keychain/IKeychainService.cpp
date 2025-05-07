@@ -29,7 +29,7 @@
 #include <QDebug>
 #include <QTextStream>
 
-namespace quentier {
+namespace quentier::utility {
 
 namespace {
 
@@ -130,12 +130,12 @@ QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
 
 IKeychainServicePtr newQtKeychainService()
 {
-    return std::make_shared<QtKeychainService>();
+    return std::make_shared<keychain::QtKeychainService>();
 }
 
 IKeychainServicePtr newObfuscatingKeychainService()
 {
-    return std::make_shared<ObfuscatingKeychainService>(
+    return std::make_shared<keychain::ObfuscatingKeychainService>(
         utility::createOpenSslEncryptor());
 }
 
@@ -143,7 +143,7 @@ IKeychainServicePtr newCompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
     IKeychainServicePtr secondaryKeychain)
 {
-    return std::make_shared<CompositeKeychainService>(
+    return std::make_shared<keychain::CompositeKeychainService>(
         std::move(name), std::move(primaryKeychain),
         std::move(secondaryKeychain));
 }
@@ -151,8 +151,8 @@ IKeychainServicePtr newCompositeKeychainService(
 IKeychainServicePtr newMigratingKeychainService(
     IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain)
 {
-    return std::make_shared<MigratingKeychainService>(
+    return std::make_shared<keychain::MigratingKeychainService>(
         std::move(sourceKeychain), std::move(sinkKeychain));
 }
 
-} // namespace quentier
+} // namespace quentier::utility

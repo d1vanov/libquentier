@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,7 +33,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 MigratingKeychainService::MigratingKeychainService(
     IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain) :
@@ -200,7 +200,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
                     // Deleting from sink keychain succeeded but allThenFuture
                     // is in a failed state. It means deleting from the source
                     // keychain has failed.
-                    if (utility::utils::isNoEntryError(*allFutureError)) {
+                    if (isNoEntryError(*allFutureError)) {
                         // EntryNotFound when deleting is factually equivalent
                         // to no error as the net result is the same -
                         // the source keychain doesn't have the key which
@@ -219,7 +219,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
                  sourceKeychainFuture = std::move(sourceKeychainFuture)](
                     const QException & e) mutable {
                     // Deleting from the sink keychain has failed.
-                    if (!utility::utils::isNoEntryError(e)) {
+                    if (!isNoEntryError(e)) {
                         promise->setException(e);
                         promise->finish();
                         return;
@@ -241,7 +241,7 @@ QFuture<void> MigratingKeychainService::deletePassword(
                     threading::onFailed(
                         std::move(sourceKeychainThenFuture),
                         [promise](const QException & e) {
-                            if (utility::utils::isNoEntryError(e)) {
+                            if (isNoEntryError(e)) {
                                 // EntryNotFound when deleting is factually
                                 // equivalent to no error as the net result is
                                 // the same - the source keychain doesn't have
@@ -261,4 +261,4 @@ QFuture<void> MigratingKeychainService::deletePassword(
     return future;
 }
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier::utility::utils {
+namespace quentier::utility::keychain {
 
 bool isNoEntryError(const QException & e) noexcept
 {
@@ -38,4 +38,4 @@ bool isNoEntryError(const QException & e) noexcept
     return isNoEntryError;
 }
 
-} // namespace quentier::utility::utils
+} // namespace quentier::utility::keychain

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
-namespace quentier::utility::tests {
+namespace quentier::utility::keychain::tests {
 
 class ObfuscatingKeychainServiceTest : public testing::Test
 {
@@ -183,4 +183,4 @@ TEST_F(ObfuscatingKeychainServiceTest, ReadWrittenThenDeletedPassword)
     EXPECT_TRUE(caughtException);
 }
 
-} // namespace quentier::utility::tests
+} // namespace quentier::utility::keychain::tests

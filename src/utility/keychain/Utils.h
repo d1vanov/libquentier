@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,9 @@
 
 class QException;
 
-namespace quentier::utility::utils {
+namespace quentier::utility::keychain {
 
 [[nodiscard]] bool isNoEntryError(const QException & e) noexcept;
 
-} // namespace quentier::utility::utils
+} // namespace quentier::utility::keychain
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
-namespace quentier::utility::tests {
+namespace quentier::utility::keychain::tests {
 
 using testing::Return;
 using testing::StrictMock;
@@ -37,11 +37,13 @@ using testing::StrictMock;
 class MigratingKeychainServiceTest : public testing::Test
 {
 protected:
-    const std::shared_ptr<mocks::MockIKeychainService> m_mockSourceKeychain =
-        std::make_shared<StrictMock<mocks::MockIKeychainService>>();
+    const std::shared_ptr<utility::tests::mocks::MockIKeychainService>
+        m_mockSourceKeychain = std::make_shared<
+            StrictMock<utility::tests::mocks::MockIKeychainService>>();
 
-    const std::shared_ptr<mocks::MockIKeychainService> m_mockSinkKeychain =
-        std::make_shared<StrictMock<mocks::MockIKeychainService>>();
+    const std::shared_ptr<utility::tests::mocks::MockIKeychainService>
+        m_mockSinkKeychain = std::make_shared<
+            StrictMock<utility::tests::mocks::MockIKeychainService>>();
 };
 
 TEST_F(MigratingKeychainServiceTest, Ctor)

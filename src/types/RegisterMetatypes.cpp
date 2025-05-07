@@ -91,11 +91,11 @@ void registerMetatypes()
     qRegisterMetaType<QHash<QString, std::pair<QString, QString>>>(
         "QHash<QString,std::pair<QString,QString> >");
 
-    using ErrorCode = IKeychainService::ErrorCode;
+    using ErrorCode = utility::IKeychainService::ErrorCode;
     qRegisterMetaType<ErrorCode>("ErrorCode");
 
-    qRegisterMetaType<IKeychainService::ErrorCode>(
-        "IKeychainService::ErrorCode");
+    qRegisterMetaType<utility::IKeychainService::ErrorCode>(
+        "utility::IKeychainService::ErrorCode");
 
     qRegisterMetaType<QList<QNetworkCookie>>("QList<QNeworkCookie>");
 

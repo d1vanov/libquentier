@@ -26,7 +26,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 namespace keys {
 
@@ -39,7 +39,7 @@ namespace {
 constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
 [[nodiscard]] bool writePasswordImpl(
-    utility::IEncryptor & encryptor, const QString & service, // NOLINT
+    IEncryptor & encryptor, const QString & service, // NOLINT
     const QString & key, const QString & password,
     ErrorString & errorDescription)
 {
@@ -64,7 +64,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 }
 
 [[nodiscard]] IKeychainService::ErrorCode readPasswordImpl(
-    utility::IEncryptor & encryptor, const QString & service, // NOLINT
+    IEncryptor & encryptor, const QString & service, // NOLINT
     const QString & key, QString & password, ErrorString & errorDescription)
 {
     ApplicationSettings obfuscatedKeychainStorage{
@@ -85,7 +85,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
     }
 
     const auto res =
-        encryptor.decrypt(encryptedText, key, utility::IEncryptor::Cipher::AES);
+        encryptor.decrypt(encryptedText, key, IEncryptor::Cipher::AES);
     if (!res.isValid()) {
         errorDescription = res.error();
         return IKeychainService::ErrorCode::OtherError;
@@ -117,7 +117,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 ////////////////////////////////////////////////////////////////////////////////
 
 ObfuscatingKeychainService::ObfuscatingKeychainService(
-    utility::IEncryptorPtr encryptor) : m_encryptor{std::move(encryptor)}
+    IEncryptorPtr encryptor) : m_encryptor{std::move(encryptor)}
 {
     if (Q_UNLIKELY(!m_encryptor)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -167,4 +167,4 @@ QFuture<void> ObfuscatingKeychainService::deletePassword(
     return threading::makeExceptionalFuture<void>(Exception{errorCode});
 }
 
-} // namespace quentier
+} // namespace quentier::utility::keychain

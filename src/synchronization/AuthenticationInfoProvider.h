@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,7 +49,8 @@ class AuthenticationInfoProvider final :
 {
 public:
     AuthenticationInfoProvider(
-        IAuthenticatorPtr authenticator, IKeychainServicePtr keychainService,
+        IAuthenticatorPtr authenticator,
+        utility::IKeychainServicePtr keychainService,
         IUserInfoProviderPtr userInfoProvider,
         INoteStoreFactoryPtr noteStoreFactory,
         qevercloud::IRequestContextPtr ctx,
@@ -137,7 +138,7 @@ private:
 
 private:
     const IAuthenticatorPtr m_authenticator;
-    const IKeychainServicePtr m_keychainService;
+    const utility::IKeychainServicePtr m_keychainService;
     const IUserInfoProviderPtr m_userInfoProvider;
     const INoteStoreFactoryPtr m_noteStoreFactory;
     const qevercloud::IRequestContextPtr m_ctx;

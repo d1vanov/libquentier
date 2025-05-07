@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
-namespace quentier::utility::tests {
+namespace quentier::utility::keychain::tests {
 
 using testing::Return;
 using testing::StrictMock;
@@ -52,11 +52,13 @@ protected:
 protected:
     const QString m_name = QStringLiteral("test_composite_keychain");
 
-    const std::shared_ptr<mocks::MockIKeychainService> m_mockPrimaryKeychain =
-        std::make_shared<StrictMock<mocks::MockIKeychainService>>();
+    const std::shared_ptr<utility::tests::mocks::MockIKeychainService>
+        m_mockPrimaryKeychain = std::make_shared<
+            StrictMock<utility::tests::mocks::MockIKeychainService>>();
 
-    const std::shared_ptr<mocks::MockIKeychainService> m_mockSecondaryKeychain =
-        std::make_shared<StrictMock<mocks::MockIKeychainService>>();
+    const std::shared_ptr<utility::tests::mocks::MockIKeychainService>
+        m_mockSecondaryKeychain = std::make_shared<
+            StrictMock<utility::tests::mocks::MockIKeychainService>>();
 
     LogLevel m_logLevel = LogLevel::Info;
 };
@@ -493,4 +495,4 @@ TEST_F(
     EXPECT_TRUE(caughtException);
 }
 
-} // namespace quentier::utility::tests
+} // namespace quentier::utility::keychain::tests

@@ -21,7 +21,7 @@
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 /**
  * @brief The ObfuscatingKeychainService class implements IKeychainService
@@ -32,7 +32,7 @@ namespace quentier {
 class ObfuscatingKeychainService final : public IKeychainService
 {
 public:
-    explicit ObfuscatingKeychainService(utility::IEncryptorPtr encryptor);
+    explicit ObfuscatingKeychainService(IEncryptorPtr encryptor);
 
 public:
     ~ObfuscatingKeychainService() noexcept override;
@@ -47,7 +47,7 @@ public:
         QString service, QString key) override;
 
 private:
-    const utility::IEncryptorPtr m_encryptor;
+    const IEncryptorPtr m_encryptor;
 };
 
-} // namespace quentier
+} // namespace quentier::utility::keychain
