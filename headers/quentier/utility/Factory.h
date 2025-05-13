@@ -70,13 +70,3 @@ namespace quentier::utility {
     IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain);
 
 } // namespace quentier::utility
-
-// TODO: remove after adaptation in Quentier
-namespace quentier {
-
-using utility::newCompositeKeychainService;
-using utility::newMigratingKeychainService;
-using utility::newObfuscatingKeychainService;
-using utility::newQtKeychainService;
-
-} // namespace quentier

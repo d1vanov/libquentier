@@ -29,11 +29,3 @@ class IKeychainService;
 using IKeychainServicePtr = std::shared_ptr<IKeychainService>;
 
 } // namespace quentier::utility
-
-namespace quentier {
-
-// TODO: remove after adaptation to namespaced version in Quentier
-using IKeychainService = utility::IKeychainService;
-using IKeychainServicePtr = utility::IKeychainServicePtr;
-
-} // namespace quentier

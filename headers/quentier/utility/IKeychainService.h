@@ -21,9 +21,6 @@
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/types/ErrorString.h>
 
-// TODO: remove after adaptation in Quentier
-#include <quentier/utility/Factory.h>
-
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
