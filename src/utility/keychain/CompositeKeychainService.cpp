@@ -25,6 +25,7 @@
 #include <quentier/utility/ApplicationSettings.h>
 
 #include <QMetaObject>
+#include <QMutexLocker>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -185,8 +186,7 @@ QFuture<void> CompositeKeychainService::writePassword(
                                     "utility::keychain::"
                                     "CompositeKeychainService",
                                     "Failed to write password to primary "
-                                    "keychain: "
-                                        << "name = " << self->m_name
+                                        << "keychain: name = " << self->m_name
                                         << ", service = " << service
                                         << ", key = " << key
                                         << ", error: " << e.what());
@@ -210,7 +210,12 @@ QFuture<QString> CompositeKeychainService::readPassword(
     promise->start();
 
     QFuture<QString> primaryKeychainFuture = [&] {
-        if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
+        const bool available = [&, this] {
+            const QMutexLocker locker{&m_mutex};
+            return isServiceKeyPairAvailableInPrimaryKeychain(service, key);
+        }();
+
+        if (available) {
             return m_primaryKeychain->readPassword(service, key);
         }
 
@@ -239,9 +244,14 @@ QFuture<QString> CompositeKeychainService::readPassword(
                 }
 
                 QFuture<QString> secondaryKeychainFuture = [&] {
-                    if (self->isServiceKeyPairAvailableInSecondaryKeychain(
-                            service, key))
-                    {
+                    const bool available = [&] {
+                        const QMutexLocker lock{&self->m_mutex};
+                        return self
+                            ->isServiceKeyPairAvailableInSecondaryKeychain(
+                                service, key);
+                    }();
+
+                    if (available) {
                         return self->m_secondaryKeychain->readPassword(
                             service, key);
                     }
@@ -267,10 +277,9 @@ QFuture<QString> CompositeKeychainService::readPassword(
                                     "utility::keychain::"
                                     "CompositeKeychainService",
                                     "Failed to read password from the "
-                                    "secondary keychain: "
-                                        << "name = " << self->m_name
-                                        << ", service = " << service
-                                        << ", key = " << key
+                                        << "secondary keychain: name = "
+                                        << self->m_name << ", service = "
+                                        << service << ", key = " << key
                                         << ", error: " << e.what());
                             }
                         }
@@ -336,10 +345,9 @@ QFuture<void> CompositeKeychainService::deletePassword(
                         QNWARNING(
                             "utility::keychain::CompositeKeychainService",
                             "Failed to delete password from secondary "
-                            "keychain: "
-                                << "name = " << self->m_name << ", service = "
-                                << service << ", key = " << key
-                                << ", error: " << allFutureError);
+                                << "keychain: name = " << self->m_name
+                                << ", service = " << service << ", key = "
+                                << key << ", error: " << allFutureError);
                     }
 
                     promise->finish();
@@ -383,8 +391,7 @@ QFuture<void> CompositeKeychainService::deletePassword(
                                     "utility::keychain::"
                                     "CompositeKeychainService",
                                     "Failed to delete password from secondary "
-                                    "keychain: "
-                                        << "name = " << self->m_name
+                                        << "keychain: name = " << self->m_name
                                         << ", service = " << service
                                         << ", key = " << key
                                         << ", error: " << e.what());
@@ -401,6 +408,8 @@ QFuture<void> CompositeKeychainService::deletePassword(
 void CompositeKeychainService::markServiceKeyPairAsUnavailableInPrimaryKeychain(
     const QString & service, const QString & key)
 {
+    const QMutexLocker lock{&m_mutex};
+
     if (!isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
         return;
     }
@@ -415,6 +424,8 @@ void CompositeKeychainService::
     unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(
         const QString & service, const QString & key)
 {
+    const QMutexLocker lock{&m_mutex};
+
     if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
         return;
     }
@@ -444,6 +455,8 @@ void CompositeKeychainService::
     markServiceKeyPairAsUnavailableInSecondaryKeychain(
         const QString & service, const QString & key)
 {
+    const QMutexLocker lock{&m_mutex};
+
     if (!isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
         return;
     }
@@ -458,6 +471,8 @@ void CompositeKeychainService::
     unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
         const QString & service, const QString & key)
 {
+    const QMutexLocker lock{&m_mutex};
+
     if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
         return;
     }

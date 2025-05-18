@@ -21,6 +21,7 @@
 #include <quentier/utility/IKeychainService.h>
 
 #include <QHash>
+#include <QMutex>
 #include <QSet>
 
 #include <memory>
@@ -122,13 +123,14 @@ private:
     using ServiceKeyPairsCache = QHash<QString, QSet<QString>>;
 
     [[nodiscard]] ServiceKeyPairsCache
-    readServiceKeyPairsUnavailableInPrimaryKeychain() const;
+        readServiceKeyPairsUnavailableInPrimaryKeychain() const;
 
     [[nodiscard]] ServiceKeyPairsCache
-    readServiceKeyPairsUnavailableInSecondaryKeychain() const;
+        readServiceKeyPairsUnavailableInSecondaryKeychain() const;
 
     [[nodiscard]] ServiceKeyPairsCache
-    readServiceKeyPairsUnavailableInKeychainImpl(const char * groupName) const;
+        readServiceKeyPairsUnavailableInKeychainImpl(
+            const char * groupName) const;
 
 private:
     const QString m_name;
@@ -138,6 +140,7 @@ private:
     mutable ServiceKeyPairsCache m_serviceKeysUnavailableInPrimaryKeychain;
     mutable ServiceKeyPairsCache m_serviceKeysUnavailableInSecondaryKeychain;
     mutable bool m_serviceKeysCachesInitialized = false;
+    mutable QMutex m_mutex;
 };
 
 } // namespace quentier::utility::keychain
