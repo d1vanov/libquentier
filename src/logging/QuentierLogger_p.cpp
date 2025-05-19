@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -100,9 +100,9 @@ QuentierFileLogWriter::~QuentierFileLogWriter() noexcept
 
 void QuentierFileLogWriter::write(QString message)
 {
-    const DateTimePrintOptions options(
-        DateTimePrintOption::IncludeMilliseconds |
-        DateTimePrintOption::IncludeTimezone);
+    const utility::DateTimePrintOptions options(
+        utility::DateTimePrintOption::IncludeMilliseconds |
+        utility::DateTimePrintOption::IncludeTimezone);
 
     message.prepend(
         printableDateTimeFromTimestamp(

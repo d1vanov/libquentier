@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 
 #include <QFlags>
 
-namespace quentier {
+namespace quentier::utility {
 
 [[nodiscard]] constexpr int secondsToMilliseconds(int seconds) noexcept
 {
@@ -78,5 +78,15 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrintOptions)
         DateTimePrintOption::IncludeMilliseconds |
         DateTimePrintOption::IncludeTimezone),
     const char * customFormat = nullptr);
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to utility namespace in Quentier
+namespace quentier {
+
+using utility::DateTimePrintOption;
+using utility::DateTimePrintOptions;
+using utility::printableDateTimeFromTimestamp;
+using utility::secondsToMilliseconds;
 
 } // namespace quentier

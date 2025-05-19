@@ -324,7 +324,7 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         QNDEBUG(
             "synchronization::AuthenticationInfoProvider",
             "Authentication token is about to expire: expiration timestamp = "
-                << printableDateTimeFromTimestamp(
+                << utility::printableDateTimeFromTimestamp(
                        authenticationInfo->m_authTokenExpirationTime));
 
         authenticateAccountWithoutCache(std::move(account), promise);
@@ -1014,7 +1014,8 @@ std::optional<AuthenticationInfoProvider::LinkedNotebookTimestamps>
                 "Authentication token for linked notebook with guid "
                     << linkedNotebookGuid << " is about to expire: "
                     << "expiration timestamp = "
-                    << printableDateTimeFromTimestamp(expirationTimestamp));
+                    << utility::printableDateTimeFromTimestamp(
+                           expirationTimestamp));
 
             return std::nullopt;
         }
@@ -1211,10 +1212,10 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                         << "application settings for host " << m_host
                         << ", user id " << authenticationInfo->userId()
                         << ": auth token expiration timestamp = "
-                        << printableDateTimeFromTimestamp(
+                        << utility::printableDateTimeFromTimestamp(
                                authenticationInfo->authTokenExpirationTime())
                         << ", authentication time = "
-                        << printableDateTimeFromTimestamp(
+                        << utility::printableDateTimeFromTimestamp(
                                authenticationInfo->authenticationTime())
                         << ", web API url prefix = "
                         << authenticationInfo->webApiUrlPrefix());
@@ -1294,10 +1295,10 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
                         << m_host << ", user id "
                         << authenticationInfo->userId()
                         << ": auth token expiration timestamp = "
-                        << printableDateTimeFromTimestamp(
+                        << utility::printableDateTimeFromTimestamp(
                                authenticationInfo->authTokenExpirationTime())
                         << ", authentication time = "
-                        << printableDateTimeFromTimestamp(
+                        << utility::printableDateTimeFromTimestamp(
                                authenticationInfo->authenticationTime()));
 
                 locker.unlock();

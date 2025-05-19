@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2014,9 +2014,9 @@ Result<QString, ErrorString> Converter::exportNotesToEnex(
     QXmlStreamAttributes enExportAttributes;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    DateTimePrintOptions dateTimePrintOptions;
+    utility::DateTimePrintOptions dateTimePrintOptions;
 #else
-    DateTimePrintOptions dateTimePrintOptions{0}; // NOLINT
+    utility::DateTimePrintOptions dateTimePrintOptions{0}; // NOLINT
 #endif
 
     const qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();

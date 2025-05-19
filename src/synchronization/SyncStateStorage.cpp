@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -220,7 +220,7 @@ void SyncStateStorage::setSyncState(
             "synchronization::SyncStateStorage",
             "Persisted last sync parameters for a linked notebook: guid = "
                 << guid << ", update count = " << it.value() << ", sync time = "
-                << printableDateTimeFromTimestamp(syncTimeIt.value()));
+                << utility::printableDateTimeFromTimestamp(syncTimeIt.value()));
         ++counter;
     }
 

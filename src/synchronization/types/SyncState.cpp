@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -63,7 +63,8 @@ QTextStream & SyncState::print(QTextStream & strm) const
     strm << "SyncState:\n"
          << "    userDataUpdateCount = " << m_userDataUpdateCount << ",\n"
          << "    userDataLastSyncTime = "
-         << printableDateTimeFromTimestamp(m_userDataLastSyncTime) << ",\n";
+         << utility::printableDateTimeFromTimestamp(m_userDataLastSyncTime)
+         << ",\n";
 
     strm << "    linked notebook update counts:";
     if (m_linkedNotebookUpdateCounts.isEmpty()) {
@@ -85,7 +86,8 @@ QTextStream & SyncState::print(QTextStream & strm) const
         for (const auto it: qevercloud::toRange(m_linkedNotebookLastSyncTimes))
         {
             strm << "        [" << it.key() << " => "
-                 << printableDateTimeFromTimestamp(it.value()) << "];\n";
+                 << utility::printableDateTimeFromTimestamp(it.value())
+                 << "];\n";
         }
     }
 

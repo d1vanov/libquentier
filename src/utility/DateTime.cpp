@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 #include <array>
 #include <ctime>
 
-namespace quentier {
+namespace quentier::utility {
 
 QString printableDateTimeFromTimestamp(
     const qint64 timestamp, const DateTimePrintOptions options,
@@ -64,9 +64,10 @@ QString printableDateTimeFromTimestamp(
     std::array<char, 100> buffer;
     const char * format = "%Y-%m-%d %H:%M:%S";
     const size_t size = strftime(
-        &buffer[0], buffer.size(), (customFormat ? customFormat : format), tm);
+        buffer.data(), buffer.size(), (customFormat ? customFormat : format),
+        tm);
 
-    result += QString::fromLocal8Bit(&buffer[0], static_cast<int>(size));
+    result += QString::fromLocal8Bit(buffer.data(), static_cast<int>(size));
 
     if (options & DateTimePrintOption::IncludeMilliseconds) {
         qint64 msecPart = timestamp - t * 1000;
@@ -92,4 +93,4 @@ QString printableDateTimeFromTimestamp(
     return result;
 }
 
-} // namespace quentier
+} // namespace quentier::utility

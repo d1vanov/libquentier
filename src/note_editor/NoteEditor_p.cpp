@@ -520,8 +520,8 @@ void NoteEditorPrivate::onContentChanged()
         return;
     }
 
-    m_pageToNoteContentPostponeTimerId =
-        startTimer(secondsToMilliseconds(m_secondsToWaitBeforeConversionStart));
+    m_pageToNoteContentPostponeTimerId = startTimer(
+        utility::secondsToMilliseconds(m_secondsToWaitBeforeConversionStart));
 
     m_watchingForContentChange = true;
     m_contentChangedSinceWatchingStart = false;

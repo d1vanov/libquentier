@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,7 +47,7 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
         killTimer(m_postOperationTimerId);                                     \
     }                                                                          \
     m_postOperationTimerId =                                                   \
-        startTimer(secondsToMilliseconds(m_idleTimePeriodSeconds));            \
+        startTimer(utility::secondsToMilliseconds(m_idleTimePeriodSeconds));   \
     QNTRACE(                                                                   \
         "utility:file_async",                                                  \
         "FileIOProcessorAsyncPrivate: started post "                           \

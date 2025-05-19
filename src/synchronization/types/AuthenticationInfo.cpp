@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,9 +32,9 @@ QTextStream & AuthenticationInfo::print(QTextStream & strm) const
          << ", authToken = " << m_authToken
          << ", authToken size = " << m_authToken.size()
          << ", authTokenExpirationTime = "
-         << printableDateTimeFromTimestamp(m_authTokenExpirationTime)
+         << utility::printableDateTimeFromTimestamp(m_authTokenExpirationTime)
          << ", authenticationTime = "
-         << printableDateTimeFromTimestamp(m_authenticationTime)
+         << utility::printableDateTimeFromTimestamp(m_authenticationTime)
          << ", shardId = " << m_shardId << ", noteStoreUrl = " << m_noteStoreUrl
          << ", webApiUrlPrefix = " << m_webApiUrlPrefix;
 

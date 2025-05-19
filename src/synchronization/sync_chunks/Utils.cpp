@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -353,8 +353,8 @@ QString briefSyncChunkInfo(const qevercloud::SyncChunk & syncChunk)
     QTextStream strm{&res};
 
     strm << "Current time = "
-         << printableDateTimeFromTimestamp(syncChunk.currentTime()) << " ("
-         << syncChunk.currentTime() << "), chunk high USN = "
+         << utility::printableDateTimeFromTimestamp(syncChunk.currentTime())
+         << " (" << syncChunk.currentTime() << "), chunk high USN = "
          << (syncChunk.chunkHighUSN()
                  ? QString::number(*syncChunk.chunkHighUSN())
                  : QStringLiteral("<none>"))
