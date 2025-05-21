@@ -80,13 +80,3 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrintOptions)
     const char * customFormat = nullptr);
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to utility namespace in Quentier
-namespace quentier {
-
-using utility::DateTimePrintOption;
-using utility::DateTimePrintOptions;
-using utility::printableDateTimeFromTimestamp;
-using utility::secondsToMilliseconds;
-
-} // namespace quentier
