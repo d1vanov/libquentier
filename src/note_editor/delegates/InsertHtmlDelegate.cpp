@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,6 @@
 #include <quentier/types/Account.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/types/ResourceUtils.h>
-#include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Size.h>
 
 #include <QBuffer>

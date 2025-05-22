@@ -95,14 +95,14 @@ void checkAuthenticationInfoPartPersistence(
     const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
     const QString & host)
 {
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    const ApplicationSettings::GroupCloser groupCloser{appSettings};
+    const utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_EQ(
         appSettings.value(QStringLiteral("NoteStoreUrl")).toString(),
@@ -132,14 +132,14 @@ void checkLinkedNotebookAuthenticationInfoPartPersistence(
     const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
     const QString & host, const qevercloud::Guid & linkedNotebookGuid)
 {
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_GE(appSettings.allKeys().size(), 2);
 
@@ -164,14 +164,14 @@ void checkNoLinkedNotebookAuthenticationInfoPartPersistence(
     const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
     const QString & host, const qevercloud::Guid & linkedNotebookGuid)
 {
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_FALSE(appSettings.contains(
         QStringLiteral("LinkedNotebookExpirationTimestamp_") +
@@ -186,14 +186,14 @@ void setupAuthenticationInfoPartPersistence(
     const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
     const QString & host)
 {
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     appSettings.setValue(
         QStringLiteral("NoteStoreUrl"), authenticationInfo->noteStoreUrl());
@@ -221,14 +221,14 @@ void setupLinkedNotebookAuthenticationInfoPartPersistence(
     const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
     const QString & host, const qevercloud::Guid & linkedNotebookGuid)
 {
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     appSettings.setValue(
         QStringLiteral("LinkedNotebookExpirationTimestamp_") +
@@ -245,14 +245,14 @@ void checkNoAuthenticationInfoPartPersistence(
     const IAuthenticationInfoPtr & authenticationInfo, const Account & account,
     const QString & host)
 {
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + host + QStringLiteral("/") +
         QString::number(authenticationInfo->userId()));
 
-    const ApplicationSettings::GroupCloser groupCloser{appSettings};
+    const utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_FALSE(appSettings.contains(QStringLiteral("NoteStoreUrl")));
     EXPECT_FALSE(appSettings.contains(QStringLiteral("ExpirationTimestamp")));
@@ -666,14 +666,14 @@ TEST_F(
     EXPECT_EQ(pair.first, account);
     EXPECT_EQ(pair.second.get(), m_authenticationInfo.get());
 
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
         QString::number(m_authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_TRUE(appSettings.allKeys().isEmpty());
 }
@@ -765,14 +765,14 @@ TEST_F(
     EXPECT_EQ(pair.first, account);
     EXPECT_EQ(pair.second.get(), m_authenticationInfo.get());
 
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QStringLiteral("SynchronizationPersistence")};
 
     appSettings.beginGroup(
         QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
         QString::number(m_authenticationInfo->userId()));
 
-    ApplicationSettings::GroupCloser groupCloser{appSettings};
+    utility::ApplicationSettings::GroupCloser groupCloser{appSettings};
 
     EXPECT_TRUE(appSettings.allKeys().isEmpty());
 }

@@ -62,7 +62,7 @@ ISyncStatePtr SyncStateStorage::getSyncState(const Account & account)
 
     auto syncState = std::make_shared<synchronization::SyncState>();
 
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QString::fromUtf8(gSynchronizationPersistenceName)};
 
     const QString keyGroup = lastSyncParamsGroupKey(account);
@@ -165,7 +165,7 @@ void SyncStateStorage::setSyncState(
 {
     Q_ASSERT(syncState);
 
-    ApplicationSettings appSettings{
+    utility::ApplicationSettings appSettings{
         account, QString::fromUtf8(gSynchronizationPersistenceName)};
 
     const QString keyGroup = lastSyncParamsGroupKey(account);

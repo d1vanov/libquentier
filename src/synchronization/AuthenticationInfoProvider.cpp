@@ -869,7 +869,7 @@ std::shared_ptr<AuthenticationInfo>
     AuthenticationInfoProvider::readAuthenticationInfoPart(
         const Account & account) const
 {
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gSynchronizationPersistence)};
 
     // NOTE: having account id as a part of the group seems redundant
@@ -879,7 +879,7 @@ std::shared_ptr<AuthenticationInfo>
                                  .arg(m_host, QString::number(account.id()));
 
     settings.beginGroup(keyGroup);
-    ApplicationSettings::GroupCloser groupCloser{settings};
+    utility::ApplicationSettings::GroupCloser groupCloser{settings};
 
     // NOTE: user store cookies are optional, so not considering them a hard
     // requirement
@@ -965,7 +965,7 @@ std::optional<AuthenticationInfoProvider::LinkedNotebookTimestamps>
         const Account & account,
         const qevercloud::Guid & linkedNotebookGuid) const
 {
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gSynchronizationPersistence)};
 
     // NOTE: having account id as a part of the group seems redundant
@@ -975,7 +975,7 @@ std::optional<AuthenticationInfoProvider::LinkedNotebookTimestamps>
                                  .arg(m_host, QString::number(account.id()));
 
     settings.beginGroup(keyGroup);
-    ApplicationSettings::GroupCloser groupCloser{settings};
+    utility::ApplicationSettings::GroupCloser groupCloser{settings};
 
     const QString authenticationTimestampKey = QString::fromUtf8("%1_%2").arg(
         gLinkedNotebookAuthenticationTimestamp, linkedNotebookGuid);
@@ -1150,7 +1150,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
              account = std::move(account)] {
                 const QWriteLocker locker{&m_authenticationInfosRWLock};
 
-                ApplicationSettings settings{
+                utility::ApplicationSettings settings{
                     account, QString::fromUtf8(gSynchronizationPersistence)};
 
                 settings.beginGroup(
@@ -1159,7 +1159,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                             m_host,
                             QString::number(authenticationInfo->userId())));
 
-                ApplicationSettings::GroupCloser groupCloser{settings};
+                utility::ApplicationSettings::GroupCloser groupCloser{settings};
 
                 settings.setValue(
                     gNoteStoreUrlKey, authenticationInfo->noteStoreUrl());
@@ -1257,7 +1257,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
              linkedNotebookGuid = std::move(linkedNotebookGuid)] {
                 QWriteLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
 
-                ApplicationSettings settings{
+                utility::ApplicationSettings settings{
                     account, QString::fromUtf8(gSynchronizationPersistence)};
 
                 settings.beginGroup(
@@ -1266,7 +1266,7 @@ QFuture<void> AuthenticationInfoProvider::storeLinkedNotebookAuthenticationInfo(
                             m_host,
                             QString::number(authenticationInfo->userId())));
 
-                ApplicationSettings::GroupCloser groupCloser{settings};
+                utility::ApplicationSettings::GroupCloser groupCloser{settings};
 
                 const QString authenticationTimestampKey =
                     QString::fromUtf8("%1_%2").arg(
@@ -1423,14 +1423,14 @@ void AuthenticationInfoProvider::clearUserCacheImpl(
 
     const Account & account = accountAuthenticationInfo.account;
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gSynchronizationPersistence)};
 
     settings.beginGroup(
         QString::fromUtf8("Authentication/%1/%2/")
             .arg(m_host, QString::number(authenticationInfo->userId())));
 
-    ApplicationSettings::GroupCloser groupCloser{settings};
+    utility::ApplicationSettings::GroupCloser groupCloser{settings};
 
     settings.remove(gNoteStoreUrlKey);
     settings.remove(gExpirationTimestampKey);
@@ -1470,14 +1470,14 @@ void AuthenticationInfoProvider::clearLinkedNotebookCacheImpl(
 
     const Account & account = accountAuthenticationInfo.account;
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gSynchronizationPersistence)};
 
     settings.beginGroup(
         QString::fromUtf8("Authentication/%1/%2/")
             .arg(m_host, QString::number(authenticationInfo->userId())));
 
-    ApplicationSettings::GroupCloser groupCloser{settings};
+    utility::ApplicationSettings::GroupCloser groupCloser{settings};
 
     settings.remove(QString::fromUtf8("%1_%2").arg(
         gLinkedNotebookAuthenticationTimestamp, linkedNotebookGuid));

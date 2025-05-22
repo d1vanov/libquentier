@@ -88,10 +88,10 @@ private:
 
     /**
      * @return either nonnull pointer to AuthenticationInfo with data filled
-     *         from persistent ApplicationSettings but without authentication
-     *         token and shard id as these are stored in the keychain or
-     *         null pointer if there is no persistent data for the passed
-     *         account or if some error occurs when trying to read it
+     *         from persistent utility::ApplicationSettings but without
+     *         authentication token and shard id as these are stored in the
+     *         keychain or null pointer if there is no persistent data for the
+     *         passed account or if some error occurs when trying to read it
      */
     [[nodiscard]] std::shared_ptr<AuthenticationInfo>
         readAuthenticationInfoPart(const Account & account) const;

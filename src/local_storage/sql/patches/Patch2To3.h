@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,14 +21,9 @@
 #include "PatchBase.h"
 
 #include <quentier/types/Account.h>
+#include <quentier/utility/Fwd.h>
 
 #include <QPointer>
-
-namespace quentier {
-
-class ApplicationSettings;
-
-} // namespace quentier
 
 namespace quentier::local_storage::sql {
 
@@ -73,12 +68,12 @@ private: // PatchBase
 
 private:
     [[nodiscard]] bool fixMissingGuidFields(
-        ApplicationSettings & databaseUpgradeInfo,
+        utility::ApplicationSettings & databaseUpgradeInfo,
         QPromise<void> & promise, // for progress updates
         ErrorString & errorDescription);
 
     [[nodiscard]] bool updateResourcesStorage(
-        ApplicationSettings & databaseUpgradeInfo,
+        utility::ApplicationSettings & databaseUpgradeInfo,
         QPromise<void> & promise, // for progress updates
         ErrorString & errorDescription);
 

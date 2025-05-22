@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -540,7 +540,7 @@ const std::array gPatch2To3ResourcesTestData{
         [] {
             Account account{gTestAccountName, Account::Type::Local};
 
-            ApplicationSettings databaseUpgradeInfo{
+            utility::ApplicationSettings databaseUpgradeInfo{
                 account,
                 QStringLiteral(
                     "LocalStorageDatabaseUpgradeFromVersion2ToVersion3")};
@@ -559,7 +559,7 @@ const std::array gPatch2To3ResourcesTestData{
         [] {
             Account account{gTestAccountName, Account::Type::Local};
 
-            ApplicationSettings databaseUpgradeInfo{
+            utility::ApplicationSettings databaseUpgradeInfo{
                 account,
                 QStringLiteral(
                     "LocalStorageDatabaseUpgradeFromVersion2ToVersion3")};

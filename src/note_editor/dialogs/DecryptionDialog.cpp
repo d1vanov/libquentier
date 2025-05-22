@@ -54,7 +54,8 @@ DecryptionDialog::DecryptionDialog(
     setHint(m_hint);
 
     bool rememberPassphraseForSessionDefault = false;
-    ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
+    utility::ApplicationSettings appSettings{
+        m_account, NOTE_EDITOR_SETTINGS_NAME};
 
     const auto rememberPassphraseForSessionSetting =
         appSettings.value(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION);
@@ -140,7 +141,8 @@ void DecryptionDialog::onRememberPassphraseStateChanged(int checked)
 {
     Q_UNUSED(checked)
 
-    ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
+    utility::ApplicationSettings appSettings{
+        m_account, NOTE_EDITOR_SETTINGS_NAME};
     if (!appSettings.isWritable()) {
         QNINFO(
             "note_editor::DecryptionDialog",

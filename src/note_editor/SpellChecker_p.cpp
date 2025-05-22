@@ -332,7 +332,7 @@ void SpellCheckerPrivate::persistFoundDictionariesData(
 
     restoreSystemDictionatiesEnabledDisabledSettings();
 
-    ApplicationSettings settings;
+    utility::ApplicationSettings settings;
     settings.beginGroup(gFoundDictionariesGroupKey);
 
     settings.beginWriteArray(gDictionariesKey);
@@ -364,7 +364,7 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
         "note_editor::SpellCheckerPrivate",
         "SpellCheckerPrivate::checkAndScanSystemDictionaries");
 
-    ApplicationSettings appSettings;
+    utility::ApplicationSettings appSettings;
     appSettings.beginGroup(gFoundDictionariesGroupKey);
 
     m_systemDictionaries.clear();
@@ -602,7 +602,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 
         restoreSystemDictionatiesEnabledDisabledSettings();
 
-        ApplicationSettings settings;
+        utility::ApplicationSettings settings;
         settings.beginGroup(gFoundDictionariesGroupKey);
 
         settings.beginWriteArray(gDictionariesKey);
@@ -735,7 +735,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
     }
 
     if (!foundValidPath) {
-        ApplicationSettings settings;
+        utility::ApplicationSettings settings;
         settings.beginGroup("SpellCheck"sv);
 
         const QString userDictionaryPathFromSettings =
@@ -793,7 +793,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
     }
 
     if (foundValidPath) {
-        ApplicationSettings settings;
+        utility::ApplicationSettings settings;
         settings.beginGroup("SpellCheck"sv);
         settings.setValue("UserDictionaryPath"sv, m_userDictionaryPath);
         settings.endGroup();
@@ -933,7 +933,7 @@ void SpellCheckerPrivate::persistEnabledSystemDictionaries()
         "Enabled system dictionaties: "
             << enabledSystemDictionaries.join(QStringLiteral(", ")));
 
-    ApplicationSettings appSettings{m_currentAccount};
+    utility::ApplicationSettings appSettings{m_currentAccount};
     appSettings.setValue(
         gEnabledSystemDictionariesKey, enabledSystemDictionaries);
 }
@@ -945,7 +945,7 @@ void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
         "SpellCheckerPrivate"
             << "::restoreSystemDictionatiesEnabledDisabledSettings");
 
-    ApplicationSettings appSettings{m_currentAccount};
+    utility::ApplicationSettings appSettings{m_currentAccount};
 
     const bool containsEnabledSystemDictionaries =
         appSettings.contains(gEnabledSystemDictionariesKey);

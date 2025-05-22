@@ -22,6 +22,8 @@
 
 namespace quentier::utility {
 
+class ApplicationSettings;
+
 struct IEncryptor;
 using IEncryptorPtr = std::shared_ptr<IEncryptor>;
 

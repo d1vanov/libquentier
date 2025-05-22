@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -185,7 +185,7 @@ bool Patch2To3::applySync(
 {
     QNDEBUG("local_storage::sql::patches::2_to_3", "Patch2To3::applySync");
 
-    ApplicationSettings databaseUpgradeInfo{
+    utility::ApplicationSettings databaseUpgradeInfo{
         m_account,
         QStringLiteral("LocalStorageDatabaseUpgradeFromVersion2ToVersion3")};
 
@@ -202,7 +202,7 @@ bool Patch2To3::applySync(
 }
 
 bool Patch2To3::fixMissingGuidFields(
-    ApplicationSettings & databaseUpgradeInfo,
+    utility::ApplicationSettings & databaseUpgradeInfo,
     QPromise<void> & promise, // for progress updates
     ErrorString & errorDescription)
 {
@@ -497,7 +497,7 @@ bool Patch2To3::fixMissingGuidFields(
 }
 
 bool Patch2To3::updateResourcesStorage(
-    ApplicationSettings & databaseUpgradeInfo,
+    utility::ApplicationSettings & databaseUpgradeInfo,
     QPromise<void> & promise, // for progress updates
     ErrorString & errorDescription)
 {

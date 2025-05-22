@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -193,7 +193,7 @@ bool Patch1To2::applySync(
 {
     QNDEBUG("local_storage::sql::patches", "Patch1To2::applySync");
 
-    ApplicationSettings databaseUpgradeInfo{
+    utility::ApplicationSettings databaseUpgradeInfo{
         m_account, QString::fromUtf8(gUpgrade1To2Persistence)};
 
     ErrorString errorPrefix{QStringLiteral(
@@ -238,7 +238,7 @@ bool Patch1To2::applySync(
             gUpgrade1To2LocalIdsForResourcesCopiedToFilesKey);
 
         auto pProcessedResourceLocalIdsDatabaseUpgradeInfoCloser =
-            std::make_unique<ApplicationSettings::ArrayCloser>(
+            std::make_unique<utility::ApplicationSettings::ArrayCloser>(
                 databaseUpgradeInfo);
 
         const auto numResources = resourceLocalIds.size();
@@ -634,7 +634,7 @@ void Patch1To2::filterResourceLocalIds(QStringList & resourceLocalIds) const
 {
     QNDEBUG("local_storage:patches", "Patch1To2::filterResourceLocalIds");
 
-    ApplicationSettings databaseUpgradeInfo{
+    utility::ApplicationSettings databaseUpgradeInfo{
         m_account, QString::fromUtf8(gUpgrade1To2Persistence)};
 
     const int numEntries = databaseUpgradeInfo.beginReadArray(

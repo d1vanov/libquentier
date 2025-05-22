@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -101,7 +101,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         return {};
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -153,7 +153,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         return {};
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -196,7 +196,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
         return {};
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -237,7 +237,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
         return {};
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -281,7 +281,7 @@ void ShortcutManagerPrivate::setUserShortcut(
         return;
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -314,7 +314,7 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(
         return;
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -353,7 +353,7 @@ void ShortcutManagerPrivate::setDefaultShortcut(
         return;
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(
@@ -403,7 +403,7 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(
         return;
     }
 
-    ApplicationSettings settings{
+    utility::ApplicationSettings settings{
         account, QString::fromUtf8(gShortcutSettingsName)};
 
     settings.beginGroup(shortcutGroupString(

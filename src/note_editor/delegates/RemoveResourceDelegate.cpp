@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -105,7 +105,8 @@ void RemoveResourceDelegate::doStart()
         return;
     }
 
-    ApplicationSettings appSettings(*account, NOTE_EDITOR_SETTINGS_NAME);
+    utility::ApplicationSettings appSettings{
+        *account, NOTE_EDITOR_SETTINGS_NAME};
     int resourceDataSizeThreshold = -1;
     if (appSettings.contains(
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD))

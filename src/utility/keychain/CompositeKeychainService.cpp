@@ -501,7 +501,7 @@ bool CompositeKeychainService::isServiceKeyPairAvailableInSecondaryKeychain(
 void CompositeKeychainService::persistUnavailableServiceKeyPairs(
     const char * groupName, const QString & service, const QString & key)
 {
-    ApplicationSettings settings{m_name};
+    utility::ApplicationSettings settings{m_name};
     settings.beginGroup(groupName);
 
     bool foundItem = false;
@@ -577,7 +577,7 @@ CompositeKeychainService::ServiceKeyPairsCache
     CompositeKeychainService::readServiceKeyPairsUnavailableInKeychainImpl(
         const char * groupName) const
 {
-    ApplicationSettings settings{m_name};
+    utility::ApplicationSettings settings{m_name};
     settings.beginGroup(groupName);
 
     ServiceKeyPairsCache cache;

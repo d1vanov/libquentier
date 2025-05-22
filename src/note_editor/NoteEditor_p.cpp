@@ -4739,7 +4739,8 @@ void NoteEditorPrivate::manualSaveResourceToFile(
     if (!preferredSuffixes.isEmpty()) {
         CHECK_ACCOUNT(QT_TR_NOOP("Internal error: can't save the attachment"))
 
-        ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
+        utility::ApplicationSettings appSettings{
+            *m_pAccount, NOTE_EDITOR_SETTINGS_NAME};
         const QStringList childGroups = appSettings.childGroups();
         const auto attachmentsSaveLocGroupIndex =
             childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
@@ -10317,7 +10318,8 @@ void NoteEditorPrivate::addAttachmentDialog()
     CHECK_ACCOUNT(QT_TR_NOOP("Internal error, can't add an attachment"))
 
     QString addAttachmentInitialFolderPath;
-    ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
+    utility::ApplicationSettings appSettings{
+        *m_pAccount, NOTE_EDITOR_SETTINGS_NAME};
 
     const QVariant lastAttachmentAddLocation =
         appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 
 #include <string_view>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The ApplicationSettings class enhances the functionality of QSettings,
@@ -382,6 +382,30 @@ public:
 
 private:
     Q_DISABLE_COPY(ApplicationSettings)
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migration in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT ApplicationSettings : public utility::ApplicationSettings
+{
+    Q_OBJECT;
+
+public:
+    explicit ApplicationSettings(const QString & settingsName = {});
+
+    explicit ApplicationSettings(
+        const Account & account, const QString & settingsName = {});
+
+    ApplicationSettings(
+        const Account & account, const char * settingsName,
+        int settingsNameSize = -1);
+
+    ApplicationSettings(const Account & account, std::string_view settingsName);
+
+    ~ApplicationSettings() override;
 };
 
 } // namespace quentier
