@@ -267,30 +267,3 @@ QTextStream & ApplicationSettings::print(QTextStream & strm) const
 }
 
 } // namespace quentier::utility
-
-// TODO: remove after migration in Quentier
-namespace quentier {
-
-ApplicationSettings::ApplicationSettings(const QString & settingsName) :
-    utility::ApplicationSettings(settingsName)
-{}
-
-ApplicationSettings::ApplicationSettings(
-    const Account & account, const QString & settingsName) :
-    utility::ApplicationSettings(account, settingsName)
-{}
-
-ApplicationSettings::ApplicationSettings(
-    const Account & account, const char * settingsName,
-    const int settingsNameSize) :
-    utility::ApplicationSettings(account, settingsName, settingsNameSize)
-{}
-
-ApplicationSettings::ApplicationSettings(
-    const Account & account, const std::string_view settingsName) :
-    utility::ApplicationSettings(account, settingsName)
-{}
-
-ApplicationSettings::~ApplicationSettings() = default;
-
-} // namespace quentier

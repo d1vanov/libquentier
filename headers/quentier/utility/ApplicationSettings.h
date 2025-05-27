@@ -385,27 +385,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migration in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT ApplicationSettings : public utility::ApplicationSettings
-{
-    Q_OBJECT;
-
-public:
-    explicit ApplicationSettings(const QString & settingsName = {});
-
-    explicit ApplicationSettings(
-        const Account & account, const QString & settingsName = {});
-
-    ApplicationSettings(
-        const Account & account, const char * settingsName,
-        int settingsNameSize = -1);
-
-    ApplicationSettings(const Account & account, std::string_view settingsName);
-
-    ~ApplicationSettings() override;
-};
-
-} // namespace quentier
