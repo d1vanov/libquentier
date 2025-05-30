@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 class QDebug;
 class QTextStream;
 
-namespace quentier {
+namespace quentier::utility {
 
 class QUENTIER_EXPORT EventLoopWithExitStatus : public QEventLoop
 {
@@ -57,6 +57,19 @@ public Q_SLOTS:
 private:
     ExitStatus m_exitStatus;
     ErrorString m_errorDescription;
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to version from utility namespace in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT EventLoopWithExitStatus :
+    public utility::EventLoopWithExitStatus
+{
+    Q_OBJECT
+public:
+    explicit EventLoopWithExitStatus(QObject * parent = nullptr);
 };
 
 } // namespace quentier

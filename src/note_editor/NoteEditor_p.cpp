@@ -8002,15 +8002,15 @@ bool NoteEditorPrivate::print(
     auto * pConversionTimer = new QTimer(this);
     pConversionTimer->setSingleShot(true);
 
-    EventLoopWithExitStatus eventLoop;
+    utility::EventLoopWithExitStatus eventLoop;
 
     QObject::connect(
         pConversionTimer, &QTimer::timeout, &eventLoop,
-        &EventLoopWithExitStatus::exitAsTimeout);
+        &utility::EventLoopWithExitStatus::exitAsTimeout);
 
     QObject::connect(
         this, &NoteEditorPrivate::htmlReadyForPrinting, &eventLoop,
-        &EventLoopWithExitStatus::exitAsSuccess);
+        &utility::EventLoopWithExitStatus::exitAsSuccess);
 
     pConversionTimer->start(500);
 
@@ -8022,7 +8022,7 @@ bool NoteEditorPrivate::print(
     pConversionTimer->deleteLater();
     pConversionTimer = nullptr;
 
-    if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
+    if (status == utility::EventLoopWithExitStatus::ExitStatus::Timeout) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: failed to get the note editor page's "
                        "HTML in time"));
@@ -8135,11 +8135,11 @@ bool NoteEditorPrivate::exportToEnex(
         auto * pSaveNoteTimer = new QTimer(this);
         pSaveNoteTimer->setSingleShot(true);
 
-        EventLoopWithExitStatus eventLoop;
+        utility::EventLoopWithExitStatus eventLoop;
 
         QObject::connect(
             pSaveNoteTimer, &QTimer::timeout, &eventLoop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             this, SIGNAL(convertedToNote(Note)), &eventLoop,
@@ -8156,7 +8156,7 @@ bool NoteEditorPrivate::exportToEnex(
         Q_UNUSED(eventLoop.exec(QEventLoop::ExcludeUserInputEvents))
         const auto status = eventLoop.exitStatus();
 
-        if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        if (status == utility::EventLoopWithExitStatus::ExitStatus::Timeout) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't export note to enex: failed to save "
                            "the edited note in time"));
@@ -8164,7 +8164,7 @@ bool NoteEditorPrivate::exportToEnex(
             return false;
         }
 
-        if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
+        if (status == utility::EventLoopWithExitStatus::ExitStatus::Failure) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't export note to enex: failed to save "
                            "the edited note"));

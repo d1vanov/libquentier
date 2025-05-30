@@ -28,7 +28,6 @@
 #include <quentier/threading/Future.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/FileCopier.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>

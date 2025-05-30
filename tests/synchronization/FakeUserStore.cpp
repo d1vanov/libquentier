@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -103,19 +103,19 @@ bool FakeUserStore::checkVersion(
     ensureRequestContext(ctx);
 
     bool result = false;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeUserStoreBackend::checkVersionRequestReady,
@@ -157,11 +157,11 @@ bool FakeUserStore::checkVersion(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to check protocol version in due time")}};
     }
@@ -314,19 +314,19 @@ qevercloud::User FakeUserStore::getUser(qevercloud::IRequestContextPtr ctx)
     ensureRequestContext(ctx);
 
     qevercloud::User result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeUserStoreBackend::getUserRequestReady,
@@ -364,11 +364,11 @@ qevercloud::User FakeUserStore::getUser(qevercloud::IRequestContextPtr ctx)
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{
             ErrorString{QStringLiteral("Failed to get user in due time")}};
     }

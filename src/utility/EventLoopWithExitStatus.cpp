@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,7 +38,7 @@
         break;                                                                 \
     }
 
-namespace quentier {
+namespace quentier::utility {
 
 EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
     QEventLoop(parent), m_exitStatus(ExitStatus::Success)
@@ -101,5 +101,13 @@ QTextStream & operator<<(
     PRINT_EXIT_STATUS(strm, status);
     return strm;
 }
+
+} // namespace quentier::utility
+
+namespace quentier {
+
+EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
+    utility::EventLoopWithExitStatus{parent}
+{}
 
 } // namespace quentier

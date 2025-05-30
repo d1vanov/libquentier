@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -233,19 +233,19 @@ qevercloud::SyncState FakeNoteStore::getSyncState(
     ensureRequestContext(ctx);
 
     qevercloud::SyncState result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::getSyncStateRequestReady,
@@ -283,11 +283,11 @@ qevercloud::SyncState FakeNoteStore::getSyncState(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to get sync state in due time")}};
     }
@@ -344,19 +344,19 @@ qevercloud::SyncChunk FakeNoteStore::getFilteredSyncChunk(
     ensureRequestContext(ctx);
 
     qevercloud::SyncChunk result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::getFilteredSyncChunkRequestReady,
@@ -399,11 +399,11 @@ qevercloud::SyncChunk FakeNoteStore::getFilteredSyncChunk(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to get filtered sync chunk in due time")}};
     }
@@ -467,19 +467,19 @@ qevercloud::SyncState FakeNoteStore::getLinkedNotebookSyncState(
     ensureRequestContext(ctx);
 
     qevercloud::SyncState result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend,
@@ -520,11 +520,11 @@ qevercloud::SyncState FakeNoteStore::getLinkedNotebookSyncState(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{QStringLiteral(
             "Failed to get linked notebook sync state in due time")}};
     }
@@ -585,19 +585,19 @@ qevercloud::SyncChunk FakeNoteStore::getLinkedNotebookSyncChunk(
     ensureRequestContext(ctx);
 
     qevercloud::SyncChunk result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend,
@@ -634,11 +634,11 @@ qevercloud::SyncChunk FakeNoteStore::getLinkedNotebookSyncChunk(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to get filtered sync chunk in due time")}};
     }
@@ -761,19 +761,19 @@ qevercloud::Notebook FakeNoteStore::createNotebook(
     ensureRequestContext(ctx);
 
     qevercloud::Notebook result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::createNotebookRequestReady,
@@ -822,11 +822,11 @@ qevercloud::Notebook FakeNoteStore::createNotebook(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to create notebook in due time")}};
     }
@@ -894,19 +894,19 @@ qint32 FakeNoteStore::updateNotebook(
     ensureRequestContext(ctx);
 
     qint32 result = 0;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::updateNotebookRequestReady,
@@ -954,11 +954,11 @@ qint32 FakeNoteStore::updateNotebook(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to update notebook in due time")}};
     }
@@ -1084,19 +1084,19 @@ qevercloud::Tag FakeNoteStore::createTag(
     ensureRequestContext(ctx);
 
     qevercloud::Tag result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::createTagRequestReady,
@@ -1143,11 +1143,11 @@ qevercloud::Tag FakeNoteStore::createTag(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{
             ErrorString{QStringLiteral("Failed to create tag in due time")}};
     }
@@ -1212,19 +1212,19 @@ qint32 FakeNoteStore::updateTag(
     ensureRequestContext(ctx);
 
     qint32 result = 0;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::updateTagRequestReady,
@@ -1270,11 +1270,11 @@ qint32 FakeNoteStore::updateTag(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{
             ErrorString{QStringLiteral("Failed to update tag in due time")}};
     }
@@ -1399,19 +1399,19 @@ qevercloud::SavedSearch FakeNoteStore::createSearch(
     ensureRequestContext(ctx);
 
     qevercloud::SavedSearch result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::createSavedSearchRequestReady,
@@ -1451,11 +1451,11 @@ qevercloud::SavedSearch FakeNoteStore::createSearch(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to create saved search in due time")}};
     }
@@ -1511,19 +1511,19 @@ qint32 FakeNoteStore::updateSearch(
     ensureRequestContext(ctx);
 
     qint32 result = 0;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::updateSavedSearchRequestReady,
@@ -1562,11 +1562,11 @@ qint32 FakeNoteStore::updateSearch(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to update saved search in due time")}};
     }
@@ -1694,19 +1694,19 @@ qevercloud::Note FakeNoteStore::getNoteWithResultSpec(
     ensureRequestContext(ctx);
 
     qevercloud::Note result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::getNoteWithResultSpecRequestReady,
@@ -1746,11 +1746,11 @@ qevercloud::Note FakeNoteStore::getNoteWithResultSpec(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{
             QStringLiteral("Failed to get note with result spec in due time")}};
     }
@@ -1961,19 +1961,19 @@ qevercloud::Note FakeNoteStore::createNote(
     ensureRequestContext(ctx);
 
     qevercloud::Note result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::createNoteRequestReady,
@@ -2013,11 +2013,11 @@ qevercloud::Note FakeNoteStore::createNote(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{
             ErrorString{QStringLiteral("Failed to create note in due time")}};
     }
@@ -2073,19 +2073,19 @@ qevercloud::Note FakeNoteStore::updateNote(
     ensureRequestContext(ctx);
 
     qevercloud::Note result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::updateNoteRequestReady,
@@ -2124,11 +2124,11 @@ qevercloud::Note FakeNoteStore::updateNote(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{
             ErrorString{QStringLiteral("Failed to update note in due time")}};
     }
@@ -2274,19 +2274,19 @@ qevercloud::Resource FakeNoteStore::getResource(
     ensureRequestContext(ctx);
 
     qevercloud::Resource result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend, &FakeNoteStoreBackend::getResourceRequestReady,
@@ -2331,11 +2331,11 @@ qevercloud::Resource FakeNoteStore::getResource(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{
             ErrorString{QStringLiteral("Failed to get resource in due time")}};
     }
@@ -2738,19 +2738,19 @@ qevercloud::AuthenticationResult FakeNoteStore::authenticateToSharedNotebook(
     ensureRequestContext(ctx);
 
     qevercloud::AuthenticationResult result;
-    EventLoopWithExitStatus::ExitStatus status =
-        EventLoopWithExitStatus::ExitStatus::Failure;
+    utility::EventLoopWithExitStatus::ExitStatus status =
+        utility::EventLoopWithExitStatus::ExitStatus::Failure;
     ErrorString error;
     {
         QTimer timer;
         timer.setInterval(gSyncMethodCallTimeout);
         timer.setSingleShot(true);
 
-        EventLoopWithExitStatus loop;
+        utility::EventLoopWithExitStatus loop;
 
         QObject::connect(
             &timer, &QTimer::timeout, &loop,
-            &EventLoopWithExitStatus::exitAsTimeout);
+            &utility::EventLoopWithExitStatus::exitAsTimeout);
 
         auto connection = QObject::connect(
             m_backend,
@@ -2794,11 +2794,11 @@ qevercloud::AuthenticationResult FakeNoteStore::authenticateToSharedNotebook(
     }
 
     switch (status) {
-    case EventLoopWithExitStatus::ExitStatus::Success:
+    case utility::EventLoopWithExitStatus::ExitStatus::Success:
         return result;
-    case EventLoopWithExitStatus::ExitStatus::Failure:
+    case utility::EventLoopWithExitStatus::ExitStatus::Failure:
         throw RuntimeError{std::move(error)};
-    case EventLoopWithExitStatus::ExitStatus::Timeout:
+    case utility::EventLoopWithExitStatus::ExitStatus::Timeout:
         throw RuntimeError{ErrorString{QStringLiteral(
             "Failed to authenticate to shared notebook in due time")}};
     }
