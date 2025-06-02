@@ -60,16 +60,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to version from utility namespace in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT EventLoopWithExitStatus :
-    public utility::EventLoopWithExitStatus
-{
-    Q_OBJECT
-public:
-    explicit EventLoopWithExitStatus(QObject * parent = nullptr);
-};
-
-} // namespace quentier

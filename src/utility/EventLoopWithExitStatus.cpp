@@ -103,11 +103,3 @@ QTextStream & operator<<(
 }
 
 } // namespace quentier::utility
-
-namespace quentier {
-
-EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
-    utility::EventLoopWithExitStatus{parent}
-{}
-
-} // namespace quentier
