@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,6 @@
 #pragma once
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Linkage.h>
 
 #include <QObject>
 #include <QString>
@@ -27,11 +26,9 @@
 class QDebug;
 class QTextStream;
 
-namespace quentier {
+namespace quentier::utility {
 
-class FileCopierPrivate;
-
-class QUENTIER_EXPORT FileCopier : public QObject
+class FileCopier : public QObject
 {
     Q_OBJECT
 public:
@@ -65,11 +62,18 @@ public Q_SLOTS:
     void cancel();
 
 private:
+    void clear();
+
+private:
     Q_DISABLE_COPY(FileCopier)
 
 private:
-    FileCopierPrivate * d_ptr;
-    Q_DECLARE_PRIVATE(FileCopier)
+    QString m_sourcePath;
+    QString m_destPath;
+
+    bool m_idle = true;
+    bool m_cancelled = false;
+    double m_currentProgress = 0.0;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

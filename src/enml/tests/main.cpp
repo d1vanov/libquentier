@@ -38,8 +38,8 @@ int main(int argc, char * argv[])
     Q_INIT_RESOURCE(test_resources);
 
     QTimer::singleShot(
-        0,
-        [&]() // clazy:exclude=connect-3arg-lambda
+        0,  // clazy:exclude=connect-3arg-lambda
+        [&] // clazy:exclude=connect-3arg-lambda
         {
             ::testing::InitGoogleTest(&argc, argv); // NOLINT
             auto testResult = RUN_ALL_TESTS();

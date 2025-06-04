@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,9 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/FileCopier.h>
 #include <quentier/utility/FileSystem.h>
+
+#include <utility/FileCopier.h>
 
 #include <QDir>
 
@@ -155,11 +156,11 @@ bool backupLocalStorageDatabaseFiles(
     }
 
     // Copy the main db file's contents to the backup location
-    auto pFileCopier = std::make_unique<FileCopier>();
+    auto fileCopier = std::make_unique<utility::FileCopier>();
 
     QObject::connect(
-        pFileCopier.get(), &FileCopier::progressUpdate, pFileCopier.get(),
-        [&](double progress) {
+        fileCopier.get(), &utility::FileCopier::progressUpdate,
+        fileCopier.get(), [&](double progress) {
             promise.setProgressValue(std::clamp(
                 static_cast<int>(std::round(progress * 100.0)), 0, 100));
         });
@@ -167,7 +168,7 @@ bool backupLocalStorageDatabaseFiles(
     bool detectedError = false;
 
     QObject::connect(
-        pFileCopier.get(), &FileCopier::notifyError, pFileCopier.get(),
+        fileCopier.get(), &utility::FileCopier::notifyError, fileCopier.get(),
         [&detectedError, &errorDescription](ErrorString error) {
             errorDescription = std::move(error);
             detectedError = true;
@@ -179,7 +180,7 @@ bool backupLocalStorageDatabaseFiles(
     const QString backupDbFilePath =
         backupDirPath + QString::fromUtf8("/%1").arg(gDbFileName);
 
-    pFileCopier->copyFile(sourceDbFilePath, backupDbFilePath);
+    fileCopier->copyFile(sourceDbFilePath, backupDbFilePath);
     return !detectedError;
 }
 
@@ -273,11 +274,11 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
 
     // Restore the main db file's contents from the backup location
 
-    auto pFileCopier = std::make_unique<FileCopier>();
+    auto fileCopier = std::make_unique<utility::FileCopier>();
 
     QObject::connect(
-        pFileCopier.get(), &FileCopier::progressUpdate, pFileCopier.get(),
-        [&](double progress) {
+        fileCopier.get(), &utility::FileCopier::progressUpdate,
+        fileCopier.get(), [&](double progress) {
             promise.setProgressValue(std::clamp(
                 static_cast<int>(std::round(progress * 100.0)), 0, 100));
         });
@@ -285,7 +286,7 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
     bool detectedError = false;
 
     QObject::connect(
-        pFileCopier.get(), &FileCopier::notifyError, pFileCopier.get(),
+        fileCopier.get(), &utility::FileCopier::notifyError, fileCopier.get(),
         [&detectedError, &errorDescription](ErrorString error) {
             errorDescription = std::move(error);
             detectedError = true;
@@ -297,7 +298,7 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
     const QString backupDbFilePath =
         backupDirPath + QString::fromUtf8("/%1").arg(gDbFileName);
 
-    pFileCopier->copyFile(backupDbFilePath, sourceDbFilePath);
+    fileCopier->copyFile(backupDbFilePath, sourceDbFilePath);
     return !detectedError;
 }
 

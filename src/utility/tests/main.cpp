@@ -36,8 +36,8 @@ int main(int argc, char * argv[])
     QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
     QTimer::singleShot(
-        0,
-        [&]() // clazy:exclude=connect-3arg-lambda
+        0,  // clazy:exclude=connect-3arg-lambda
+        [&] // clazy:exclude=connect-3arg-lambda
         {
             ::testing::InitGoogleTest(&argc, argv); // NOLINT
             auto testResult = RUN_ALL_TESTS();

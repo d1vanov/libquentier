@@ -8,6 +8,8 @@ target_sources(${LIBRARY_NAME}
   PRIVATE
   Checks.cpp
   Checks.h
+  FileCopier.cpp
+  FileCopier.h
   keychain/CompositeKeychainService.cpp
   keychain/CompositeKeychainService.h
   keychain/MigratingKeychainService.cpp

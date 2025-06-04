@@ -27,7 +27,6 @@
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/FileCopier.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/UidGenerator.h>
