@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Fwd.h>
 
 #include <QHash>
 #include <QList>
@@ -34,14 +35,12 @@ class Hunspell;
 
 namespace quentier {
 
-class FileIOProcessorAsync;
-
 class SpellCheckerPrivate final : public QObject
 {
     Q_OBJECT
 public:
     SpellCheckerPrivate(
-        FileIOProcessorAsync * fileIOProcessorAsync, Account account,
+        utility::FileIOProcessorAsync * fileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     // The second bool in the pair indicates whether the dictionary
@@ -150,7 +149,7 @@ private:
     };
 
 private:
-    FileIOProcessorAsync * m_fileIOProcessorAsync;
+    utility::FileIOProcessorAsync * m_fileIOProcessorAsync;
     Account m_currentAccount;
 
     // Hashed by the language code

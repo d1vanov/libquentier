@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 #include <QString>
 #include <QUuid>
 
-namespace quentier {
+namespace quentier::utility {
 
 class FileIOProcessorAsyncPrivate final : public QObject
 {
@@ -60,4 +60,4 @@ private:
     qint32 m_postOperationTimerId = 0;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

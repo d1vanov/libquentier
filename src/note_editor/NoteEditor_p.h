@@ -63,7 +63,6 @@ namespace quentier {
 class ActionsWatcher;
 class ContextMenuEventJavaScriptHandler;
 class EnCryptElementOnClickHandler;
-class FileIOProcessorAsync;
 class GenericResourceImageJavaScriptHandler;
 class GenericResourceImageManager;
 class GenericResourceOpenAndSaveButtonsOnClickHandler;
@@ -428,7 +427,7 @@ Q_SIGNALS:
      */
     void openResourceFile(QString resourceLocalId);
 
-    // Signals for communicating with FileIOProcessorAsync
+    // Signals for communicating with utility::FileIOProcessorAsync
 
     /**
      * The signal used for writing of note editor page's HTML to a file so that
@@ -1341,7 +1340,7 @@ private:
 
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager = nullptr;
-    FileIOProcessorAsync * m_pFileIOProcessorAsync;
+    utility::FileIOProcessorAsync * m_pFileIOProcessorAsync;
 
     ResourceInfo m_resourceInfo;
     ResourceInfoJavaScriptHandler * m_pResourceInfoJavaScriptHandler;

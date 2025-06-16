@@ -229,7 +229,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_encryptor(utility::createOpenSslEncryptor()),
     m_enmlTagsConverter(enml::createEnmlTagsConverter()),
     m_enmlConverter(enml::createConverter(m_enmlTagsConverter)),
-    m_pFileIOProcessorAsync(new FileIOProcessorAsync),
+    m_pFileIOProcessorAsync(new utility::FileIOProcessorAsync),
     m_pResourceInfoJavaScriptHandler(
         new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
     m_pGenericResoureImageJavaScriptHandler(
@@ -5881,15 +5881,15 @@ void NoteEditorPrivate::setupFileIO()
 
     QObject::connect(
         this, &NoteEditorPrivate::writeNoteHtmlToFile, m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::onWriteFileRequest);
+        &utility::FileIOProcessorAsync::onWriteFileRequest);
 
     QObject::connect(
         this, &NoteEditorPrivate::saveResourceToFile, m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::onWriteFileRequest);
+        &utility::FileIOProcessorAsync::onWriteFileRequest);
 
     QObject::connect(
         m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::writeFileRequestProcessed, this,
+        &utility::FileIOProcessorAsync::writeFileRequestProcessed, this,
         &NoteEditorPrivate::onWriteFileRequestProcessed);
 
     if (m_pResourceDataInTemporaryFileStorageManager) {

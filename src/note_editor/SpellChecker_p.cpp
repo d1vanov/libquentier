@@ -53,9 +53,9 @@ constexpr auto gEnabledSystemDictionariesKey = "EnabledSystemDictionaries"sv;
 } // namespace
 
 SpellCheckerPrivate::SpellCheckerPrivate(
-    FileIOProcessorAsync * fileIOProcessorAsync, Account account,
+    utility::FileIOProcessorAsync * fileIOProcessorAsync, Account account,
     QObject * parent, const QString & userDictionaryPath) :
-    QObject(parent), m_fileIOProcessorAsync{fileIOProcessorAsync},
+    QObject{parent}, m_fileIOProcessorAsync{fileIOProcessorAsync},
     m_currentAccount{std::move(account)}
 {
     initializeUserDictionary(userDictionaryPath);
@@ -228,11 +228,11 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
 
     QObject::connect(
         this, &SpellCheckerPrivate::writeFile, m_fileIOProcessorAsync,
-        &FileIOProcessorAsync::onWriteFileRequest);
+        &utility::FileIOProcessorAsync::onWriteFileRequest);
 
     QObject::connect(
         m_fileIOProcessorAsync,
-        &FileIOProcessorAsync::writeFileRequestProcessed, this,
+        &utility::FileIOProcessorAsync::writeFileRequestProcessed, this,
         &SpellCheckerPrivate::onWriteFileRequestProcessed);
 
     m_updateUserDictionaryFileRequestId = QUuid::createUuid();
@@ -800,11 +800,11 @@ void SpellCheckerPrivate::initializeUserDictionary(
 
         QObject::connect(
             this, &SpellCheckerPrivate::readFile, m_fileIOProcessorAsync,
-            &FileIOProcessorAsync::onReadFileRequest);
+            &utility::FileIOProcessorAsync::onReadFileRequest);
 
         QObject::connect(
             m_fileIOProcessorAsync,
-            &FileIOProcessorAsync::readFileRequestProcessed, this,
+            &utility::FileIOProcessorAsync::readFileRequestProcessed, this,
             &SpellCheckerPrivate::onReadFileRequestProcessed);
 
         m_readUserDictionaryRequestId = QUuid::createUuid();
@@ -889,11 +889,11 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
     if (!dataToWrite.isEmpty()) {
         QObject::connect(
             this, &SpellCheckerPrivate::writeFile, m_fileIOProcessorAsync,
-            &FileIOProcessorAsync::onWriteFileRequest);
+            &utility::FileIOProcessorAsync::onWriteFileRequest);
 
         QObject::connect(
             m_fileIOProcessorAsync,
-            &FileIOProcessorAsync::writeFileRequestProcessed, this,
+            &utility::FileIOProcessorAsync::writeFileRequestProcessed, this,
             &SpellCheckerPrivate::onWriteFileRequestProcessed);
 
         m_appendUserDictionaryPartToFileRequestId = QUuid::createUuid();
@@ -1028,11 +1028,12 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(
 
     QObject::disconnect(
         this, &SpellCheckerPrivate::readFile, m_fileIOProcessorAsync,
-        &FileIOProcessorAsync::onReadFileRequest);
+        &utility::FileIOProcessorAsync::onReadFileRequest);
 
     QObject::disconnect(
-        m_fileIOProcessorAsync, &FileIOProcessorAsync::readFileRequestProcessed,
-        this, &SpellCheckerPrivate::onReadFileRequestProcessed);
+        m_fileIOProcessorAsync,
+        &utility::FileIOProcessorAsync::readFileRequestProcessed, this,
+        &SpellCheckerPrivate::onReadFileRequestProcessed);
 
     if (Q_LIKELY(success)) {
         QBuffer buffer{&data};
@@ -1091,11 +1092,11 @@ void SpellCheckerPrivate::onWriteFileRequestProcessed(
     {
         QObject::disconnect(
             this, &SpellCheckerPrivate::writeFile, m_fileIOProcessorAsync,
-            &FileIOProcessorAsync::onWriteFileRequest);
+            &utility::FileIOProcessorAsync::onWriteFileRequest);
 
         QObject::disconnect(
             m_fileIOProcessorAsync,
-            &FileIOProcessorAsync::writeFileRequestProcessed, this,
+            &utility::FileIOProcessorAsync::writeFileRequestProcessed, this,
             &SpellCheckerPrivate::onWriteFileRequestProcessed);
     }
 }

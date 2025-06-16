@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QList>
@@ -35,8 +36,13 @@ class QUENTIER_EXPORT SpellChecker : public QObject
 {
     Q_OBJECT
 public:
+    // TODO: remove after migration to utility::FileIOProcessorAsync in Quentier
     SpellChecker(
         FileIOProcessorAsync * fileIOProcessorAsync, Account account,
+        QObject * parent = nullptr, const QString & userDictionaryPath = {});
+
+    SpellChecker(
+        utility::FileIOProcessorAsync * fileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     // The second bool in the pair indicates whether the dictionary

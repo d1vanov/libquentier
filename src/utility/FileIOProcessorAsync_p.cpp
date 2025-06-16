@@ -26,7 +26,7 @@
 #include <QFileInfo>
 #include <QTimerEvent>
 
-namespace quentier {
+namespace quentier::utility {
 
 FileIOProcessorAsyncPrivate::FileIOProcessorAsyncPrivate(QObject * parent) :
     QObject(parent)
@@ -177,4 +177,4 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
     Q_EMIT readyForIO();
 }
 
-} // namespace quentier
+} // namespace quentier::utility

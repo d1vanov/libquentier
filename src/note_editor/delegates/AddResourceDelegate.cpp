@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,18 +42,18 @@ namespace quentier {
 AddResourceDelegate::AddResourceDelegate(
     QString filePath, NoteEditorPrivate & noteEditor,
     enml::IENMLTagsConverterPtr enmlTagsConverter,
-    ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
-    FileIOProcessorAsync * pFileIOProcessorAsync,
-    GenericResourceImageManager * pGenericResourceImageManager,
+    ResourceDataInTemporaryFileStorageManager * resourceDataManager,
+    utility::FileIOProcessorAsync * fileIOProcessorAsync,
+    GenericResourceImageManager * genericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
-    QObject(&noteEditor), m_noteEditor(noteEditor),
-    m_enmlTagsConverter(std::move(enmlTagsConverter)),
-    m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
-    m_pFileIOProcessorAsync(pFileIOProcessorAsync),
-    m_genericResourceImageFilePathsByResourceHash(
-        genericResourceImageFilePathsByResourceHash),
-    m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_filePath(std::move(filePath))
+    QObject{&noteEditor}, m_noteEditor{noteEditor},
+    m_enmlTagsConverter{std::move(enmlTagsConverter)},
+    m_resourceDataInTemporaryFileStorageManager{resourceDataManager},
+    m_fileIOProcessorAsync{fileIOProcessorAsync},
+    m_genericResourceImageFilePathsByResourceHash{
+        genericResourceImageFilePathsByResourceHash},
+    m_genericResourceImageManager{genericResourceImageManager},
+    m_filePath{std::move(filePath)}
 {
     if (Q_UNLIKELY(!m_enmlTagsConverter)) {
         throw InvalidArgument{ErrorString{QStringLiteral(
@@ -65,17 +65,17 @@ AddResourceDelegate::AddResourceDelegate(
     QByteArray resourceData, const QString & mimeType,
     NoteEditorPrivate & noteEditor,
     enml::IENMLTagsConverterPtr enmlTagsConverter,
-    ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
-    FileIOProcessorAsync * pFileIOProcessorAsync,
-    GenericResourceImageManager * pGenericResourceImageManager,
+    ResourceDataInTemporaryFileStorageManager * resourceDataManager,
+    utility::FileIOProcessorAsync * fileIOProcessorAsync,
+    GenericResourceImageManager * genericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
-    QObject(&noteEditor), m_noteEditor(noteEditor),
-    m_enmlTagsConverter(std::move(enmlTagsConverter)),
-    m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
-    m_pFileIOProcessorAsync(pFileIOProcessorAsync),
-    m_genericResourceImageFilePathsByResourceHash(
-        genericResourceImageFilePathsByResourceHash),
-    m_pGenericResourceImageManager(pGenericResourceImageManager),
+    QObject{&noteEditor}, m_noteEditor{noteEditor},
+    m_enmlTagsConverter{std::move(enmlTagsConverter)},
+    m_resourceDataInTemporaryFileStorageManager{resourceDataManager},
+    m_fileIOProcessorAsync{fileIOProcessorAsync},
+    m_genericResourceImageFilePathsByResourceHash{
+        genericResourceImageFilePathsByResourceHash},
+    m_genericResourceImageManager{genericResourceImageManager},
     m_data(std::move(resourceData))
 {
     if (Q_UNLIKELY(!m_enmlTagsConverter)) {
@@ -274,12 +274,12 @@ void AddResourceDelegate::doStartUsingFile()
     m_readResourceFileRequestId = QUuid::createUuid();
 
     QObject::connect(
-        this, &AddResourceDelegate::readFileData, m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::onReadFileRequest);
+        this, &AddResourceDelegate::readFileData, m_fileIOProcessorAsync,
+        &utility::FileIOProcessorAsync::onReadFileRequest);
 
     QObject::connect(
-        m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::readFileRequestProcessed, this,
+        m_fileIOProcessorAsync,
+        &utility::FileIOProcessorAsync::readFileRequestProcessed, this,
         &AddResourceDelegate::onResourceFileRead);
 
     Q_EMIT readFileData(m_filePath, m_readResourceFileRequestId);
@@ -299,12 +299,12 @@ void AddResourceDelegate::onResourceFileRead(
             << "success = " << (success ? "true" : "false"));
 
     QObject::disconnect(
-        this, &AddResourceDelegate::readFileData, m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::onReadFileRequest);
+        this, &AddResourceDelegate::readFileData, m_fileIOProcessorAsync,
+        &utility::FileIOProcessorAsync::onReadFileRequest);
 
     QObject::disconnect(
-        m_pFileIOProcessorAsync,
-        &FileIOProcessorAsync::readFileRequestProcessed, this,
+        m_fileIOProcessorAsync,
+        &utility::FileIOProcessorAsync::readFileRequestProcessed, this,
         &AddResourceDelegate::onResourceFileRead);
 
     if (Q_UNLIKELY(!success)) {
@@ -412,12 +412,12 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
 
     QObject::connect(
         this, &AddResourceDelegate::saveResourceDataToTemporaryFile,
-        m_pResourceDataInTemporaryFileStorageManager,
+        m_resourceDataInTemporaryFileStorageManager,
         &ResourceDataInTemporaryFileStorageManager::
             onSaveResourceDataToTemporaryFileRequest);
 
     QObject::connect(
-        m_pResourceDataInTemporaryFileStorageManager,
+        m_resourceDataInTemporaryFileStorageManager,
         &ResourceDataInTemporaryFileStorageManager::
             saveResourceDataToTemporaryFileCompleted,
         this, &AddResourceDelegate::onResourceDataSavedToTemporaryFile);
@@ -468,12 +468,12 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
 
     QObject::disconnect(
         this, &AddResourceDelegate::saveResourceDataToTemporaryFile,
-        m_pResourceDataInTemporaryFileStorageManager,
+        m_resourceDataInTemporaryFileStorageManager,
         &ResourceDataInTemporaryFileStorageManager::
             onSaveResourceDataToTemporaryFileRequest);
 
     QObject::disconnect(
-        m_pResourceDataInTemporaryFileStorageManager,
+        m_resourceDataInTemporaryFileStorageManager,
         &ResourceDataInTemporaryFileStorageManager::
             saveResourceDataToTemporaryFileCompleted,
         this, &AddResourceDelegate::onResourceDataSavedToTemporaryFile);
@@ -516,11 +516,11 @@ void AddResourceDelegate::onGenericResourceImageSaved(
 
     QObject::disconnect(
         this, &AddResourceDelegate::saveGenericResourceImageToFile,
-        m_pGenericResourceImageManager,
+        m_genericResourceImageManager,
         &GenericResourceImageManager::onGenericResourceImageWriteRequest);
 
     QObject::disconnect(
-        m_pGenericResourceImageManager,
+        m_genericResourceImageManager,
         &GenericResourceImageManager::genericResourceImageWriteReply, this,
         &AddResourceDelegate::onGenericResourceImageSaved);
 
@@ -606,11 +606,11 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
 
     QObject::connect(
         this, &AddResourceDelegate::saveGenericResourceImageToFile,
-        m_pGenericResourceImageManager,
+        m_genericResourceImageManager,
         &GenericResourceImageManager::onGenericResourceImageWriteRequest);
 
     QObject::connect(
-        m_pGenericResourceImageManager,
+        m_genericResourceImageManager,
         &GenericResourceImageManager::genericResourceImageWriteReply, this,
         &AddResourceDelegate::onGenericResourceImageSaved);
 

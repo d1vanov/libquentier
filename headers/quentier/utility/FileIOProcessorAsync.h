@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 #include <QString>
 #include <QUuid>
 
-namespace quentier {
+namespace quentier::utility {
 
 class FileIOProcessorAsyncPrivate;
 
@@ -117,6 +117,18 @@ public Q_SLOTS:
 private:
     FileIOProcessorAsyncPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(FileIOProcessorAsync)
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to utility::FileIOProcessorAsync in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT FileIOProcessorAsync : public utility::FileIOProcessorAsync
+{
+    Q_OBJECT
+public:
+    explicit FileIOProcessorAsync(QObject * parent = nullptr);
 };
 
 } // namespace quentier

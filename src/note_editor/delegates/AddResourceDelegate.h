@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Fwd.h>
 
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Resource.h>
@@ -35,7 +36,6 @@
 namespace quentier {
 
 class Account;
-class FileIOProcessorAsync;
 class GenericResourceImageManager;
 class NoteEditorPrivate;
 class ResourceDataInTemporaryFileStorageManager;
@@ -55,10 +55,10 @@ public:
      *
      * @param filePath                      The absolute path to the file in
      *                                      which the resource data is located
-     * @param noteEditor                    The note editor holding the note to
+     * @param noteEditor                    Note editor holding the note to
      *                                      which the resource is to be added
      * @param enmlTagsConverter             ENML tags converter
-     * @param pResourceDataManager          The pointer to
+     * @param resourceDataManager           Pointer to
      *                                      ResourceDataInTemporaryFileStorageManager
      *                                      which might be required for storing
      *                                      the new resource's data in a
@@ -66,13 +66,15 @@ public:
      *                                      editor page's convenience; it is
      *                                      only actually required if the added
      *                                      resource is an image
-     * @param pFileIOProcessorAsync         The pointer to FileIOProcessorAsync
-     *                                      worker performing the actual IO of
-     *                                      file data
-     * @param pGenericResourceImageManager  The pointer to
-     * GenericResourceImageManager required for composing the generic resource
-     * image for QWebEngine-based backend of NoteEditor
-     * @param genericResourceImageFilePathsByResourceHash   The hash container
+     * @param fileIOProcessorAsync          Pointer to
+     *                                      utility::FileIOProcessorAsync worker
+     *                                      performing the actual IO of file
+     *                                      data
+     * @param genericResourceImageManager   Pointer to
+     *                                      GenericResourceImageManager needed
+     *                                      for the creation of generic resource
+     *                                      images
+     * @param genericResourceImageFilePathsByResourceHash   Hash container
      *                                                      storing generic
      *                                                      resource image file
      *                                                      paths by resource
@@ -81,9 +83,9 @@ public:
     explicit AddResourceDelegate(
         QString filePath, NoteEditorPrivate & noteEditor,
         enml::IENMLTagsConverterPtr enmlTagsConverter,
-        ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
-        FileIOProcessorAsync * pFileIOProcessorAsync,
-        GenericResourceImageManager * pGenericResourceImageManager,
+        ResourceDataInTemporaryFileStorageManager * resourceDataManager,
+        utility::FileIOProcessorAsync * fileIOProcessorAsync,
+        GenericResourceImageManager * genericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash);
 
@@ -97,7 +99,7 @@ public:
      * @param noteEditor                    The note editor holding the note to
      *                                      which the resource is to be added
      * @param enmlTagsConverter             ENML tags converter
-     * @param pResourceDataManager          The pointer to
+     * @param resourceDataManager           Pointer to
      *                                      ResourceDataInTemporaryFileStorageManager
      *                                      which might be required for storing
      *                                      the new resource's data in a
@@ -105,13 +107,15 @@ public:
      *                                      editor page's convenience; it is
      *                                      only actually required if the added
      *                                      resource is an image
-     * @param pFileIOProcessorAsync         The pointer to FileIOProcessorAsync
-     *                                      worker performing the actual IO of
-     *                                      file data
-     * @param pGenericResourceImageManager  The pointer to
-     * GenericResourceImageManager required for composing the generic resource
-     * image for QWebEngine-based backend of NoteEditor
-     * @param genericResourceImageFilePathsByResourceHash   The hash container
+     * @param fileIOProcessorAsync          Pointer to
+     *                                      utility::FileIOProcessorAsync worker
+     *                                      performing the actual IO of file
+     *                                      data
+     * @param genericResourceImageManager   Pointer to
+     *                                      GenericResourceImageManager needed
+     *                                      for the creation of generic resource
+     *                                      images
+     * @param genericResourceImageFilePathsByResourceHash   Hash container
      *                                                      storing generic
      *                                                      resource file paths
      *                                                      by resource hash
@@ -120,9 +124,9 @@ public:
         QByteArray resourceData, const QString & mimeType,
         NoteEditorPrivate & noteEditor,
         enml::IENMLTagsConverterPtr enmlTagsConverter,
-        ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
-        FileIOProcessorAsync * pFileIOProcessorAsync,
-        GenericResourceImageManager * pGenericResourceImageManager,
+        ResourceDataInTemporaryFileStorageManager * resourceDataManager,
+        utility::FileIOProcessorAsync * fileIOProcessorAsync,
+        GenericResourceImageManager * genericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash);
 
@@ -189,12 +193,12 @@ private:
     const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     ResourceDataInTemporaryFileStorageManager *
-        m_pResourceDataInTemporaryFileStorageManager;
+        m_resourceDataInTemporaryFileStorageManager;
 
-    FileIOProcessorAsync * m_pFileIOProcessorAsync;
+    utility::FileIOProcessorAsync * m_fileIOProcessorAsync;
 
     QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;
-    GenericResourceImageManager * m_pGenericResourceImageManager;
+    GenericResourceImageManager * m_genericResourceImageManager;
     QUuid m_saveResourceImageRequestId;
 
     /**
