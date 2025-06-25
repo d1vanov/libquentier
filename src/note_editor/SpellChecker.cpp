@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,17 +23,6 @@
 #include "SpellChecker_p.h"
 
 namespace quentier {
-
-SpellChecker::SpellChecker(
-    FileIOProcessorAsync * fileIOProcessorAsync, Account account,
-    QObject * parent, const QString & userDictionaryPath) :
-    QObject{parent},
-    d_ptr{new SpellCheckerPrivate{
-        fileIOProcessorAsync, std::move(account), this, userDictionaryPath}}
-{
-    QObject::connect(
-        d_ptr, &SpellCheckerPrivate::ready, this, &SpellChecker::ready);
-}
 
 SpellChecker::SpellChecker(
     utility::FileIOProcessorAsync * fileIOProcessorAsync, Account account,

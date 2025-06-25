@@ -36,11 +36,6 @@ class QUENTIER_EXPORT SpellChecker : public QObject
 {
     Q_OBJECT
 public:
-    // TODO: remove after migration to utility::FileIOProcessorAsync in Quentier
-    SpellChecker(
-        FileIOProcessorAsync * fileIOProcessorAsync, Account account,
-        QObject * parent = nullptr, const QString & userDictionaryPath = {});
-
     SpellChecker(
         utility::FileIOProcessorAsync * fileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});

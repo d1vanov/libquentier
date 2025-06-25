@@ -60,11 +60,3 @@ void FileIOProcessorAsync::onReadFileRequest(
 }
 
 } // namespace quentier::utility
-
-namespace quentier {
-
-FileIOProcessorAsync::FileIOProcessorAsync(QObject * parent) :
-    utility::FileIOProcessorAsync{parent}
-{}
-
-} // namespace quentier

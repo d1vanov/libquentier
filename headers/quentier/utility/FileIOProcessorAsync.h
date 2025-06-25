@@ -120,16 +120,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to utility::FileIOProcessorAsync in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT FileIOProcessorAsync :
-    public utility::FileIOProcessorAsync
-{
-    Q_OBJECT
-public:
-    explicit FileIOProcessorAsync(QObject * parent = nullptr);
-};
-
-} // namespace quentier
