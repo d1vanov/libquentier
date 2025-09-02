@@ -99,10 +99,10 @@ namespace quentier::utility {
 // TODO: remove after migration to namespaced functions in Quentier
 namespace quentier {
 
-using utility::relativePathFromAbsolutePath;
-using utility::removeFile;
-using utility::removeDir;
 using utility::readFileContents;
+using utility::relativePathFromAbsolutePath;
+using utility::removeDir;
+using utility::removeFile;
 using utility::renameFile;
 
 } // namespace quentier

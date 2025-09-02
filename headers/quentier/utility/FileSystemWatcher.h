@@ -30,12 +30,10 @@ class QUENTIER_EXPORT FileSystemWatcher : public QObject
     Q_OBJECT
 public:
     explicit FileSystemWatcher(
-        int removalTimeoutMSec = 500,
-        QObject * parent = nullptr);
+        int removalTimeoutMSec = 500, QObject * parent = nullptr);
 
     explicit FileSystemWatcher(
-        const QStringList & paths,
-        int removalTimeoutMSec = 500,
+        const QStringList & paths, int removalTimeoutMSec = 500,
         QObject * parent = nullptr);
 
     ~FileSystemWatcher() override;
