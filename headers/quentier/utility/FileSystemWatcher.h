@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,25 +23,19 @@
 #include <QObject>
 #include <QStringList>
 
-#define FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC (500)
-
-namespace quentier {
-
-class FileSystemWatcherPrivate;
+namespace quentier::utility {
 
 class QUENTIER_EXPORT FileSystemWatcher : public QObject
 {
     Q_OBJECT
 public:
     explicit FileSystemWatcher(
-        int removalTimeoutMSec =
-            FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+        int removalTimeoutMSec = 500,
         QObject * parent = nullptr);
 
     explicit FileSystemWatcher(
         const QStringList & paths,
-        int removalTimeoutMSec =
-            FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+        int removalTimeoutMSec = 500,
         QObject * parent = nullptr);
 
     ~FileSystemWatcher() override;
@@ -66,8 +60,17 @@ private:
     Q_DISABLE_COPY(FileSystemWatcher)
 
 private:
+    class FileSystemWatcherPrivate;
+
     FileSystemWatcherPrivate * d_ptr;
     Q_DECLARE_PRIVATE(FileSystemWatcher)
 };
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to namespaced class in Quentier
+namespace quentier {
+
+using utility::FileSystemWatcher;
 
 } // namespace quentier

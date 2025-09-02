@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@
 #include <windows.h>
 #endif // defined Q_OS_WIN
 
-namespace quentier {
+namespace quentier::utility {
 
 QString relativePathFromAbsolutePath(
     const QString & absolutePath, const QString & relativePathRootFolder)
@@ -251,4 +251,4 @@ bool renameFile(
 #endif // Q_OS_WIN
 }
 
-} // namespace quentier
+} // namespace quentier::utility

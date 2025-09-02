@@ -2794,7 +2794,8 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
         const QFileInfo noteEditorPageFileInfo(noteEditorPagePath());
         if (noteEditorPageFileInfo.exists() && noteEditorPageFileInfo.isFile())
         {
-            Q_UNUSED(removeFile(noteEditorPageFileInfo.absoluteFilePath()))
+            Q_UNUSED(
+                utility::removeFile(noteEditorPageFileInfo.absoluteFilePath()))
         }
     }
 
@@ -8732,7 +8733,7 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(
             continue;
         }
 
-        Q_UNUSED(removeFile(entryFilePath))
+        Q_UNUSED(utility::removeFile(entryFilePath))
     }
 }
 

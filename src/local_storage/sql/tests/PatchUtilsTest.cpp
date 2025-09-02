@@ -120,7 +120,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
 
     // Now ensure the ability to restore the backup
 
-    EXPECT_TRUE(removeFile(
+    EXPECT_TRUE(utility::removeFile(
         localStorageDirPath +
         QString::fromUtf8("/%1").arg(gTestDatabaseFileName)));
 

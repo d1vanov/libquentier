@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -375,10 +375,10 @@ void GenericResourceImageManager::
             "note_editor",
             "Found stale generic resource image file " << filePath
                                                        << ", removing it");
-        Q_UNUSED(removeFile(filePath))
+        Q_UNUSED(utility::removeFile(filePath))
 
         // Need to also remove the helper .hash file
-        Q_UNUSED(removeFile(
+        Q_UNUSED(utility::removeFile(
             fileInfo.absolutePath() + QStringLiteral("/") + baseName +
             QStringLiteral(".hash")))
     }

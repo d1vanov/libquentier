@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,9 +32,9 @@ MSVC_SUPPRESS_WARNING(4834)
 
 RESTORE_WARNINGS
 
-namespace quentier {
+namespace quentier::utility {
 
-class FileSystemWatcherPrivate final : public QObject
+class FileSystemWatcher::FileSystemWatcherPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -73,7 +73,7 @@ private:
     void processDirectoryRemoval(const QString & path);
 
 private:
-    void timerEvent(QTimerEvent * pEvent) override;
+    void timerEvent(QTimerEvent * event) override;
 
 private:
     Q_DISABLE_COPY(FileSystemWatcherPrivate)
@@ -93,4 +93,4 @@ private:
     PathWithTimerId m_justRemovedDirectoryPathsWithPostRemovalTimerIds;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

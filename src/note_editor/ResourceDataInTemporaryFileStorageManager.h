@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -443,7 +443,7 @@ private:
         m_resourceLocalIdsPendingFindInLocalStorageForWritingToFileForOpening;
 
     QHash<QString, QString> m_resourceLocalIdByFilePath;
-    FileSystemWatcher m_fileSystemWatcher;
+    utility::FileSystemWatcher m_fileSystemWatcher;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -427,7 +427,7 @@ void writeProcessedNoteInfo(
     const QFileInfo cancelledNoteFileInfo{getNoteFileInfo(cancelledNotesDir)};
 
     if (cancelledNoteFileInfo.exists() &&
-        !removeFile(cancelledNoteFileInfo.absoluteFilePath()))
+        !utility::removeFile(cancelledNoteFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "synchronization::utils",
@@ -443,7 +443,7 @@ void writeProcessedNoteInfo(
         getNoteFileInfo(failedToDownloadNotesDir)};
 
     if (failedToDownloadNoteFileInfo.exists() &&
-        !removeFile(failedToDownloadNoteFileInfo.absoluteFilePath()))
+        !utility::removeFile(failedToDownloadNoteFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "synchronization::utils",
@@ -460,7 +460,7 @@ void writeProcessedNoteInfo(
         getNoteFileInfo(failedToProcessNotesDir)};
 
     if (failedToProcessNoteFileInfo.exists() &&
-        !removeFile(failedToProcessNoteFileInfo.absoluteFilePath()))
+        !utility::removeFile(failedToProcessNoteFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "synchronization::utils",
@@ -585,7 +585,7 @@ void writeProcessedResourceInfo(
         getResourceFileInfo(cancelledResourcesDir)};
 
     if (cancelledResourceFileInfo.exists() &&
-        !removeFile(cancelledResourceFileInfo.absoluteFilePath()))
+        !utility::removeFile(cancelledResourceFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "synchronization::utils",
@@ -603,7 +603,8 @@ void writeProcessedResourceInfo(
         getResourceFileInfo(failedToDownloadResourcesDir)};
 
     if (failedToDownloadResourceFileInfo.exists() &&
-        !removeFile(failedToDownloadResourceFileInfo.absoluteFilePath()))
+        !utility::removeFile(
+            failedToDownloadResourceFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "synchronization::utils",
@@ -621,7 +622,8 @@ void writeProcessedResourceInfo(
         getResourceFileInfo(failedToProcessResourcesDir)};
 
     if (failedToProcessResourceFileInfo.exists() &&
-        !removeFile(failedToProcessResourceFileInfo.absoluteFilePath()))
+        !utility::removeFile(
+            failedToProcessResourceFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "synchronization::utils",
