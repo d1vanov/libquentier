@@ -54,7 +54,7 @@ int main(int argc, char * argv[])
 
         QDir evernoteAccountsDir(evernoteAccountsPath);
         if (evernoteAccountsDir.exists() &&
-            !quentier::removeDir(evernoteAccountsPath))
+            !quentier::utility::removeDir(evernoteAccountsPath))
         {
             qWarning() << "Failed to delete the directory with libquentier "
                        << "tests persistence for Evernote accounts: "
@@ -68,7 +68,7 @@ int main(int argc, char * argv[])
 
         QDir localAccountsDir(localAccountsPath);
         if (localAccountsDir.exists() &&
-            !quentier::removeDir(localAccountsPath))
+            !quentier::utility::removeDir(localAccountsPath))
         {
             qWarning() << "Failed to delete the directory with libquentier "
                        << "tests persistence for local accounts: "

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,13 +18,12 @@
 
 #pragma once
 
+#include <quentier/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QString>
 
-namespace quentier {
-
-class ErrorString;
+namespace quentier::utility {
 
 /**
  * relativePathFromAbsolutePath converts the absolute path to a relative one
@@ -94,5 +93,16 @@ class ErrorString;
  */
 [[nodiscard]] bool QUENTIER_EXPORT renameFile(
     const QString & from, const QString & to, ErrorString & errorDescription);
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to namespaced functions in Quentier
+namespace quentier {
+
+using utility::readFileContents;
+using utility::relativePathFromAbsolutePath;
+using utility::removeDir;
+using utility::removeFile;
+using utility::renameFile;
 
 } // namespace quentier

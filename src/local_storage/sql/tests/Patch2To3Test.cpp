@@ -472,7 +472,9 @@ Q_DECLARE_FLAGS(
             }();
 
             errorDescription.clear();
-            if (!::quentier::renameFile(pathFrom, pathTo, errorDescription)) {
+            if (!::quentier::utility::renameFile(
+                    pathFrom, pathTo, errorDescription))
+            {
                 FAIL() << errorDescription.nonLocalizedString().toStdString();
                 return;
             }
@@ -486,7 +488,7 @@ Q_DECLARE_FLAGS(
                 return result;
             }();
 
-            if (!::quentier::removeDir(dirPathToRemove)) {
+            if (!::quentier::utility::removeDir(dirPathToRemove)) {
                 FAIL() << "Failed to remove dir: "
                        << dirPathToRemove.toStdString();
                 return;

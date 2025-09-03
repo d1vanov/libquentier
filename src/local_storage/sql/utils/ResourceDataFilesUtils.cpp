@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -504,7 +504,7 @@ bool removeResourceDataFilesForNote(
     const QString dataPath = localStorageDir.absolutePath() +
         QStringLiteral("/Resources/data/") + noteLocalId;
 
-    if (!removeDir(dataPath)) {
+    if (!utility::removeDir(dataPath)) {
         errorDescription.setBase(QStringLiteral(
             "Cannot remove resource data files for note: failed to remove "
             "the folder containing note's resource data bodies"));
@@ -516,7 +516,7 @@ bool removeResourceDataFilesForNote(
     const QString alternateDataPath = localStorageDir.absolutePath() +
         QStringLiteral("/Resources/alternateData/") + noteLocalId;
 
-    if (!removeDir(alternateDataPath)) {
+    if (!utility::removeDir(alternateDataPath)) {
         errorDescription.setBase(QStringLiteral(
             "failed to remove the folder containing note's resource "
             "alternate data bodies"));
@@ -563,7 +563,7 @@ bool removeResourceDataFiles(
         return res;
     }();
 
-    if (!removeDir(dataPath)) {
+    if (!utility::removeDir(dataPath)) {
         errorDescription.setBase(QStringLiteral(
             "failed to remove the folder containing resource data body "
             "versions"));
@@ -580,7 +580,7 @@ bool removeResourceDataFiles(
         return res;
     }();
 
-    if (!removeDir(alternateDataPath)) {
+    if (!utility::removeDir(alternateDataPath)) {
         errorDescription.setBase(QStringLiteral(
             "failed to remove the folder containing resource alternate "
             "data body versions"));

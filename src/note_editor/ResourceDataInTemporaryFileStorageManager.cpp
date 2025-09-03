@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -479,7 +479,7 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(
     }
 
     ErrorString errorDescription;
-    const QByteArray data = readFileContents(path, errorDescription);
+    const QByteArray data = utility::readFileContents(path, errorDescription);
     if (!errorDescription.isEmpty()) {
         QNWARNING("note_editor", errorDescription);
         m_fileSystemWatcher.removePath(path);
@@ -733,7 +733,7 @@ void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(
 void ResourceDataInTemporaryFileStorageManager::createConnections()
 {
     QObject::connect(
-        &m_fileSystemWatcher, &FileSystemWatcher::fileChanged, this,
+        &m_fileSystemWatcher, &utility::FileSystemWatcher::fileChanged, this,
         &ResourceDataInTemporaryFileStorageManager::onFileChanged);
 
     auto & noteEditorLocalStorageBroker =
@@ -956,7 +956,7 @@ void ResourceDataInTemporaryFileStorageManager::
         if (fileInfo.isSymLink()) {
             QNTRACE("note_editor", "Removing symlink file without any checks");
             stopWatchingResourceFile(filePath);
-            Q_UNUSED(removeFile(filePath))
+            Q_UNUSED(utility::removeFile(filePath))
             continue;
         }
 
@@ -1004,11 +1004,11 @@ void ResourceDataInTemporaryFileStorageManager::
             "Found stale resource file " << filePath << ", removing it");
 
         stopWatchingResourceFile(filePath);
-        Q_UNUSED(removeFile(filePath))
+        Q_UNUSED(utility::removeFile(filePath))
 
         // Need to also remove the helper .hash file
         stopWatchingResourceFile(filePath);
-        Q_UNUSED(removeFile(
+        Q_UNUSED(utility::removeFile(
             fileInfo.absolutePath() + QStringLiteral("/") + baseName +
             QStringLiteral(".hash")));
     }
@@ -1195,7 +1195,7 @@ ResourceDataInTemporaryFileStorageManager::ResultType
 
                 stopWatchingResourceFile(dir.absoluteFilePath(entry));
 
-                if (!removeFile(dir.absoluteFilePath(entry))) {
+                if (!utility::removeFile(dir.absoluteFilePath(entry))) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Failed to remove stale temporary resource "
                                    "file"));
@@ -1212,7 +1212,7 @@ ResourceDataInTemporaryFileStorageManager::ResultType
 
                 const QFileInfo hashFileInfo(dir.absoluteFilePath(hashFile));
                 if (hashFileInfo.exists() &&
-                    !removeFile(hashFileInfo.absoluteFilePath()))
+                    !utility::removeFile(hashFileInfo.absoluteFilePath()))
                 {
                     errorDescription.setBase(QT_TR_NOOP(
                         "Failed to remove stale temporary resource's "

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -231,10 +231,10 @@ protected:
 
         for (const auto & entry: std::as_const(entries)) {
             if (entry.isDir()) {
-                ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
+                ASSERT_TRUE(utility::removeDir(entry.absoluteFilePath()));
             }
             else {
-                ASSERT_TRUE(removeFile(entry.absoluteFilePath()));
+                ASSERT_TRUE(utility::removeFile(entry.absoluteFilePath()));
             }
         }
     }

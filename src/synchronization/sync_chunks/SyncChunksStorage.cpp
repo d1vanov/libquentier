@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -348,7 +348,7 @@ void flushSyncChunk(
 
 void removeDirWithLog(const QString & dirPath)
 {
-    if (!removeDir(dirPath)) {
+    if (!utility::removeDir(dirPath)) {
         QNWARNING(
             "synchronization::SyncChunksStorage",
             "Failed to remove dir with contents: " << dirPath);
@@ -651,7 +651,7 @@ void SyncChunksStorage::clearUserOwnSyncChunksImpl()
         if (userOwnSyncChunk.isDir()) {
             removeDirWithLog(userOwnSyncChunk.absoluteFilePath());
         }
-        else if (!removeFile(userOwnSyncChunk.absoluteFilePath())) {
+        else if (!utility::removeFile(userOwnSyncChunk.absoluteFilePath())) {
             QNWARNING(
                 "synchronization::SyncChunksStorage",
                 "Failed to remove sync chunk file: "
@@ -709,7 +709,7 @@ void SyncChunksStorage::clearAllSyncChunks()
             removeDirWithLog(entry.absoluteFilePath());
         }
         else {
-            Q_UNUSED(removeFile(entry.absoluteFilePath()))
+            Q_UNUSED(utility::removeFile(entry.absoluteFilePath()))
         }
     }
 }

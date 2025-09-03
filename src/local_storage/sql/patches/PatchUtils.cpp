@@ -84,7 +84,9 @@ bool backupLocalStorageDatabaseFiles(
             backupDirPath + QStringLiteral("/") + shmDbFileName;
 
         const QFileInfo shmDbBackupFileInfo{shmDbBackupFilePath};
-        if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFilePath)) {
+        if (shmDbBackupFileInfo.exists() &&
+            !utility::removeFile(shmDbBackupFilePath))
+        {
             errorDescription.setBase(
                 QStringLiteral("Can't backup local storage: failed to remove "
                                "pre-existing SQLite shm backup file"));
@@ -120,7 +122,9 @@ bool backupLocalStorageDatabaseFiles(
             backupDirPath + QStringLiteral("/") + walDbFileName;
 
         const QFileInfo walDbBackupFileInfo{walDbBackupFilePath};
-        if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFilePath)) {
+        if (walDbBackupFileInfo.exists() &&
+            !utility::removeFile(walDbBackupFilePath))
+        {
             errorDescription.setBase(QStringLiteral(
                 "Can't backup local storage: failed to remove pre-existing "
                 "SQLite wal backup file"));
@@ -210,7 +214,7 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
             localStorageDirPath + QStringLiteral("/") + shmDbFileName;
 
         QFileInfo shmDbFileInfo{shmDbFilePath};
-        if (shmDbFileInfo.exists() && !removeFile(shmDbFilePath)) {
+        if (shmDbFileInfo.exists() && !utility::removeFile(shmDbFilePath)) {
             errorDescription.setBase(QStringLiteral(
                 "Can't restore the local storage from backup: failed to remove "
                 "the pre-existing SQLite shm file"));
@@ -247,7 +251,7 @@ bool restoreLocalStorageDatabaseFilesFromBackup(
             localStorageDirPath + QStringLiteral("/") + walDbFileName;
 
         const QFileInfo walDbFileInfo{walDbFilePath};
-        if (walDbFileInfo.exists() && !removeFile(walDbFilePath)) {
+        if (walDbFileInfo.exists() && !utility::removeFile(walDbFilePath)) {
             errorDescription.setBase(QStringLiteral(
                 "Can't restore the local storage from backup: failed to remove "
                 "the pre-existing SQLite wal file"));
@@ -316,7 +320,7 @@ bool removeLocalStorageDatabaseFilesBackup(
         backupDirPath + QStringLiteral("/qn.storage.sqlite-shm")};
 
     if (shmDbBackupFileInfo.exists() &&
-        !removeFile(shmDbBackupFileInfo.absoluteFilePath()))
+        !utility::removeFile(shmDbBackupFileInfo.absoluteFilePath()))
     {
         QNDEBUG(
             "local_storage::sql::patches::utils",
@@ -332,7 +336,7 @@ bool removeLocalStorageDatabaseFilesBackup(
         backupDirPath + QStringLiteral("/qn.storage.sqlite-wal")};
 
     if (walDbBackupFileInfo.exists() &&
-        !removeFile(walDbBackupFileInfo.absoluteFilePath()))
+        !utility::removeFile(walDbBackupFileInfo.absoluteFilePath()))
     {
         QNDEBUG(
             "local_storage::sql::patches::utils",
@@ -348,7 +352,7 @@ bool removeLocalStorageDatabaseFilesBackup(
         backupDirPath + QStringLiteral("/qn.storage.sqlite")};
 
     if (dbBackupFileInfo.exists() &&
-        !removeFile(dbBackupFileInfo.absoluteFilePath()))
+        !utility::removeFile(dbBackupFileInfo.absoluteFilePath()))
     {
         QNWARNING(
             "local_storage::sql::patches::utils",
