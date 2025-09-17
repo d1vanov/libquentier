@@ -41,7 +41,7 @@ int main(int argc, char * argv[])
     QUENTIER_SET_MIN_LOG_LEVEL(Trace);
     // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
-    quentier::initializeLibquentier();
+    quentier::utility::initializeLibquentier();
 
     // Remove any persistence left after the previous run of tests
     QString libquentierTestsPersistencePath =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ int main(int argc, char * argv[])
     QCoreApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
 
-    quentier::initializeLibquentier();
+    quentier::utility::initializeLibquentier();
 
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Warning);

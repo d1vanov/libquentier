@@ -77,26 +77,26 @@ void UtilityTester::lruCacheTests()
 {
     try {
         QString error;
-        bool res = ::quentier::test::testEmptyLRUCacheConsistency(error);
+        bool res =
+            ::quentier::utility::test::testEmptyLRUCacheConsistency(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testNonEmptyLRUCacheConsistency(error);
+        res = ::quentier::utility::test::testNonEmptyLRUCacheConsistency(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testRemovalFromLRUCache(error);
+        res = ::quentier::utility::test::testRemovalFromLRUCache(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testLRUCacheReverseIterators(error);
+        res = ::quentier::utility::test::testLRUCacheReverseIterators(error);
         QVERIFY2(res, qPrintable(error));
 
-        res =
-            ::quentier::test::testItemsAdditionToLRUCacheBeforeReachingMaxSize(
-                error);
+        res = ::quentier::utility::test::
+            testItemsAdditionToLRUCacheBeforeReachingMaxSize(error);
 
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testItemsAdditionToLRUCacheAfterReachingMaxSize(
-            error);
+        res = ::quentier::utility::test::
+            testItemsAdditionToLRUCacheAfterReachingMaxSize(error);
 
         QVERIFY2(res, qPrintable(error));
     }

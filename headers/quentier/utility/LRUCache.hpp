@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 #include <cstddef>
 #include <list>
 
-namespace quentier {
+namespace quentier::utility {
 
 template <
     class Key, class Value,
@@ -31,7 +31,7 @@ template <
 class LRUCache
 {
 public:
-    LRUCache(const size_t maxSize = 100) : m_maxSize(maxSize) {}
+    explicit LRUCache(const std::size_t maxSize = 100) : m_maxSize{maxSize} {}
 
     using key_type = Key;
     using mapped_type = Value;
@@ -97,12 +97,12 @@ public:
         return m_container.empty();
     }
 
-    [[nodiscard]] size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     {
         return m_currentSize;
     }
 
-    [[nodiscard]] size_t max_size() const noexcept
+    [[nodiscard]] std::size_t max_size() const noexcept
     {
         return m_maxSize;
     }
@@ -171,15 +171,15 @@ public:
         return true;
     }
 
-    void setMaxSize(const size_t maxSize)
+    void setMaxSize(const std::size_t maxSize)
     {
         if (maxSize >= m_maxSize) {
             m_maxSize = maxSize;
             return;
         }
 
-        size_t diff = m_maxSize - maxSize;
-        for (size_t i = 0; (i < diff) && !m_container.empty(); ++i) {
+        std::size_t diff = m_maxSize - maxSize;
+        for (std::size_t i = 0; (i < diff) && !m_container.empty(); ++i) {
             auto lastIt = m_container.end();
             --lastIt;
 
@@ -219,10 +219,20 @@ private:
 
 private:
     mutable container_type m_container;
-    size_t m_currentSize = 0;
-    size_t m_maxSize;
+    std::size_t m_currentSize = 0;
+    std::size_t m_maxSize;
 
     mutable QHash<Key, iterator> m_mapper;
 };
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to namespaced version in Quentier
+namespace quentier {
+
+template <
+    class Key, class Value,
+    class Allocator = std::allocator<std::pair<Key, Value>>>
+using LRUCache = utility::LRUCache<Key, Value, Allocator>;
 
 } // namespace quentier

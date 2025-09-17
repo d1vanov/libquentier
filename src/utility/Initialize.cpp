@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@
 
 #include <QCoreApplication>
 
-namespace quentier {
+namespace quentier::utility {
 
 void initializeLibquentier()
 {
@@ -47,4 +47,4 @@ void initializeLibquentier()
 #endif
 }
 
-} // namespace quentier
+} // namespace quentier::utility

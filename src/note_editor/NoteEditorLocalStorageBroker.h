@@ -118,14 +118,14 @@ private:
     QHash<QString, QQueue<qevercloud::Note>>
         m_notesToSaveInLocalStorageByLocalId;
 
-    LRUCache<QString, qevercloud::Notebook> m_notebooksCache;
-    LRUCache<QString, qevercloud::Note> m_notesCache;
+    utility::LRUCache<QString, qevercloud::Notebook> m_notebooksCache;
+    utility::LRUCache<QString, qevercloud::Note> m_notesCache;
 
     /**
      * This cache stores resources with binary data but only if that data is not
      * too large to prevent spending too much memory on it
      */
-    LRUCache<QString, qevercloud::Resource> m_resourcesCache;
+    utility::LRUCache<QString, qevercloud::Resource> m_resourcesCache;
 };
 
 } // namespace quentier

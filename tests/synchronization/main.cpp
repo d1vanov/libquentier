@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,7 +35,7 @@ int main(int argc, char * argv[])
     QUENTIER_SET_MIN_LOG_LEVEL(Trace);
     // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
-    quentier::initializeLibquentier();
+    quentier::utility::initializeLibquentier();
 
     const auto useNetworkTransportLayer =
         qgetenv("SYNC_INTEGRATIONAL_TESTS_USE_NETWORK_TRANSPORT_LAYER");

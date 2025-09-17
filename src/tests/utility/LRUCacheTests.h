@@ -20,7 +20,7 @@
 
 #include <QString>
 
-namespace quentier::test {
+namespace quentier::utility::test {
 
 [[nodiscard]] bool testEmptyLRUCacheConsistency(QString & error);
 [[nodiscard]] bool testNonEmptyLRUCacheConsistency(QString & error);
@@ -33,4 +33,4 @@ namespace quentier::test {
 [[nodiscard]] bool testItemsAdditionToLRUCacheAfterReachingMaxSize(
     QString & error);
 
-} // namespace quentier::test
+} // namespace quentier::utility::test

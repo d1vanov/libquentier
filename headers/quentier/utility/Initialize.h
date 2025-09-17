@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,12 +20,19 @@
 
 #include <quentier/utility/Linkage.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * initializeLibquentier - the function that needs to be called during
  * the initial stages of application startup for the library to work properly
  */
 void QUENTIER_EXPORT initializeLibquentier();
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to namespaced version in Quentier
+namespace quentier {
+
+using utility::initializeLibquentier;
 
 } // namespace quentier
