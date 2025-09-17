@@ -65,10 +65,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to namespaced class in Quentier
-namespace quentier {
-
-using utility::FileSystemWatcher;
-
-} // namespace quentier
