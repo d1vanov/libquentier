@@ -329,7 +329,7 @@ jobs:
 
   build_macos:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
@@ -403,6 +403,7 @@ jobs:
           brew install hunspell
           brew install tidy-html5
           brew install openssl@1.1
+          brew install gsed
 
       - name: Cache QtKeychain
         id: cache_qtkeychain
@@ -420,6 +421,7 @@ jobs:
             git clone https://github.com/frankosterfeld/qtkeychain.git $RUNNER_WORKSPACE/qtkeychain_src
             cd $RUNNER_WORKSPACE/qtkeychain_src
             git checkout 0.14.1
+            gsed -i -e '10 i set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE INTERNAL "" FORCE)' CMakeLists.txt
             mkdir build
             cd build
             cmake -G Ninja -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
@@ -465,6 +467,7 @@ jobs:
               git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_src
               cd qevercloud_master_src
               git checkout master
+              gsed -i -e '11 i set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE INTERNAL "" FORCE)' CMakeLists.txt
               mkdir build
               cd build
               cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ..
@@ -519,14 +522,15 @@ jobs:
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
           fi
           export QTKEYCHAIN_DIR=$RUNNER_WORKSPACE/qtkeychain
+          gsed -i -e '10 i set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE INTERNAL "" FORCE)' ../CMakeLists.txt
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt5/Qt/5.15.2/clang_64 \
             -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_87_0 \
-            -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+            -DOPENSSL_ROOT_DIR=/opt/homebrew/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DQt5Keychain_DIR=$QTKEYCHAIN_DIR/lib/cmake/Qt5Keychain \
-            -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
-            -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
+            -DTIDY_HTML5_INCLUDE_DIR=/opt/homebrew/include \
+            -DTIDY_HTML5_LIBRARIES=/opt/homebrew/lib/libtidy.dylib \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ..
