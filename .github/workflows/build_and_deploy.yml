@@ -887,11 +887,11 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.8.3/clang_64 \
             -DBOOST_ROOT=$RUNNER_WORKSPACE/boost/boost_1_87_0 \
-            -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+            -DOPENSSL_ROOT_DIR=/opt/homebrew/openssl \
             -DQEverCloud-qt6_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt6 \
             -DQt6Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain/lib/cmake/Qt6Keychain \
-            -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
-            -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
+            -DTIDY_HTML5_INCLUDE_DIR=/opt/homebrew/include \
+            -DTIDY_HTML5_LIBRARIES=/opt/homebrew/lib/libtidy.dylib \
             -DBUILD_WITH_QT6=ON \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -924,7 +924,7 @@ jobs:
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
           fi
-          export DYLD_LIBRARY_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.8.3/clang_64/lib:/usr/local/opt/openssl/lib:$QEVERCLOUD_DIR/lib:$RUNNER_WORKSPACE/qtkeychain/lib:/usr/local/opt/tidy-html5/lib:$DYLD_LIBRARY_PATH
+          export DYLD_LIBRARY_PATH=$RUNNER_WORKSPACE/Qt6/Qt/6.8.3/clang_64/lib:/opt/homebrew/openssl/lib:$QEVERCLOUD_DIR/lib:$RUNNER_WORKSPACE/qtkeychain/lib:/opt/homebrew/lib:$DYLD_LIBRARY_PATH
           ./bin/test_libquentier
           ./bin/libqt6quentier_enml_unit_tests
           ./bin/libqt6quentier_threading_unit_tests
