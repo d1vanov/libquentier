@@ -408,7 +408,7 @@ jobs:
           arch -x86_64 /usr/local/bin/brew update
           arch -x86_64 /usr/local/bin/brew install hunspell
           arch -x86_64 /usr/local/bin/brew install tidy-html5
-          arch -x86_64 /usr/local/bin/brew install openssl@1.1
+          arch -x86_64 /usr/local/bin/brew install openssl
           arch -x86_64 /usr/local/bin/brew install gsed
 
       - name: Cache QtKeychain
