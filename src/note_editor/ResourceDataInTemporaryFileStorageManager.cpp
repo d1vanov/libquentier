@@ -22,6 +22,7 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileSystem.h>
+#include <quentier/utility/PlatformUtils.h>
 #include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
 
@@ -280,7 +281,7 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
 
         m_resourceLocalIdByFilePath[fileStoragePath] = resourceLocalId;
         watchResourceFileForChanges(resourceLocalId, fileStoragePath);
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
+        utility::openUrl(QUrl::fromLocalFile(fileStoragePath));
         Q_EMIT openedResource(resourceLocalId, noteLocalId);
         return;
     }
@@ -314,7 +315,7 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
     }
 
     watchResourceFileForChanges(resourceLocalId, fileStoragePath);
-    QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
+    utility::openUrl(QUrl::fromLocalFile(fileStoragePath));
     Q_EMIT openedResource(resourceLocalId, noteLocalId);
 }
 
@@ -649,7 +650,7 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
             QStringLiteral("/") + resourceLocalId + QStringLiteral(".dat");
 
         watchResourceFileForChanges(resourceLocalId, fileStoragePath);
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
+        utility::openUrl(QUrl::fromLocalFile(fileStoragePath));
         Q_EMIT openedResource(resourceLocalId, noteLocalId);
     }
 }

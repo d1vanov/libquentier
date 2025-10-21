@@ -57,11 +57,11 @@ RESTORE_WARNINGS
 
 #endif // defined Q_OS_WIN
 
-namespace quentier::utils {
+namespace quentier::utility {
 
 QString getCurrentUserName()
 {
-    QNDEBUG("utility:system", "getCurrentUserName");
+    QNDEBUG("utility::PlatformUtils", "getCurrentUserName");
 
     QString userName;
 
@@ -81,7 +81,7 @@ QString getCurrentUserName()
 
     if (userName.isEmpty()) {
         QNTRACE(
-            "utility:system",
+            "utility::PlatformUtils",
             "Native platform API failed to provide "
                 << "the username, trying environment variables fallback");
 
@@ -91,13 +91,13 @@ QString getCurrentUserName()
         }
     }
 
-    QNTRACE("utility:system", "Username = " << userName);
+    QNTRACE("utility::PlatformUtils", "Username = " << userName);
     return userName;
 }
 
 QString getCurrentUserFullName()
 {
-    QNDEBUG("utility:system", "getCurrentUserFullName");
+    QNDEBUG("utility::PlatformUtils", "getCurrentUserFullName");
 
     QString userFullName;
 
@@ -144,8 +144,8 @@ QString getCurrentUserFullName()
 
 void openUrl(const QUrl & url)
 {
-    QNDEBUG("utility:system", "openUrl: " << url);
+    QNDEBUG("utility::PlatformUtils", "openUrl: " << url);
     QDesktopServices::openUrl(url);
 }
 
-} // namespace quentier::utils
+} // namespace quentier::utility

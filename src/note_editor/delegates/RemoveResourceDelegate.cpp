@@ -141,7 +141,7 @@ void RemoveResourceDelegate::doStart()
             (m_resource.data()->size() ? *m_resource.data()->size()
                                        : *m_resource.alternateData()->size());
 
-        const int result = questionMessageBox(
+        const int result = utility::questionMessageBox(
             &m_noteEditor, tr("Confirm attachment removal"),
             tr("The attachment removal would be irreversible"),
             tr("Are you sure you want to remove this "

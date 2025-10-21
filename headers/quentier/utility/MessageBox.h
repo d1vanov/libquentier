@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 
 #include <QMessageBox>
 
-namespace quentier {
+namespace quentier::utility {
 
 int QUENTIER_EXPORT genericMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
@@ -57,5 +57,17 @@ int QUENTIER_EXPORT criticalMessageBox(
  */
 void QUENTIER_EXPORT
     internalErrorMessageBox(QWidget * parent, QString detailedText = {});
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to namespaced versions in Quentier
+namespace quentier {
+
+using utility::genericMessageBox;
+using utility::informationMessageBox;
+using utility::warningMessageBox;
+using utility::criticalMessageBox;
+using utility::questionMessageBox;
+using utility::internalErrorMessageBox;
 
 } // namespace quentier

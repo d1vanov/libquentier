@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,9 +22,11 @@
 
 #include <memory>
 
-namespace quentier {
+namespace quentier::utility {
 
-int messageBoxImplementation(
+namespace {
+
+[[nodiscard]] int messageBoxImplementation(
     const QMessageBox::Icon icon, QWidget * parent, const QString & title,
     const QString & briefText, const QString & detailedText,
     QMessageBox::StandardButtons buttons)
@@ -46,6 +48,8 @@ int messageBoxImplementation(
     pMessageBox->setStandardButtons(buttons);
     return pMessageBox->exec();
 }
+
+} // namespace
 
 int genericMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
@@ -108,4 +112,4 @@ void internalErrorMessageBox(QWidget * parent, QString detailedText)
         detailedText))
 }
 
-} // namespace quentier
+} // namespace quentier::utility

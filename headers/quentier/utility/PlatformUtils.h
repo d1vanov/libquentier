@@ -23,7 +23,7 @@
 #include <QString>
 #include <QUrl>
 
-namespace quentier::utils {
+namespace quentier::utility {
 
 /**
  * @return              The system user name of the currently logged in user
@@ -39,5 +39,14 @@ namespace quentier::utils {
  * openUrl sends the request to open a url
  */
 void QUENTIER_EXPORT openUrl(const QUrl & url);
+
+} // namespace quentier::utility
+
+// TODO: remove after migration to quentier::utility namespaced versions in Quentier
+namespace quentier::utils {
+
+using utility::getCurrentUserName;
+using utility::getCurrentUserFullName;
+using utility::openUrl;
 
 } // namespace quentier::utils

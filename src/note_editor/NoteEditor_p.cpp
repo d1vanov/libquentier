@@ -97,6 +97,7 @@
 #include <quentier/utility/Factory.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/FileSystem.h>
+#include <quentier/utility/PlatformUtils.h>
 #include <quentier/utility/ShortcutManager.h>
 #include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
@@ -3781,7 +3782,7 @@ void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
         return;
     }
 
-    QDesktopServices::openUrl(url);
+    utility::openUrl(url);
 }
 
 void NoteEditorPrivate::handleInAppLinkClicked(const QString & urlString)
