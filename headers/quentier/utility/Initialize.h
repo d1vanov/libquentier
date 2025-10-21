@@ -29,10 +29,3 @@ namespace quentier::utility {
 void QUENTIER_EXPORT initializeLibquentier();
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to namespaced version in Quentier
-namespace quentier {
-
-using utility::initializeLibquentier;
-
-} // namespace quentier
