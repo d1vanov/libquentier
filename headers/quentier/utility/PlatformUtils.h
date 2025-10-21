@@ -42,11 +42,12 @@ void QUENTIER_EXPORT openUrl(const QUrl & url);
 
 } // namespace quentier::utility
 
-// TODO: remove after migration to quentier::utility namespaced versions in Quentier
+// TODO: remove after migration to quentier::utility namespaced versions in
+// Quentier
 namespace quentier::utils {
 
-using utility::getCurrentUserName;
 using utility::getCurrentUserFullName;
+using utility::getCurrentUserName;
 using utility::openUrl;
 
 } // namespace quentier::utils

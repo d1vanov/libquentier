@@ -63,11 +63,11 @@ void QUENTIER_EXPORT
 // TODO: remove after migration to namespaced versions in Quentier
 namespace quentier {
 
+using utility::criticalMessageBox;
 using utility::genericMessageBox;
 using utility::informationMessageBox;
-using utility::warningMessageBox;
-using utility::criticalMessageBox;
-using utility::questionMessageBox;
 using utility::internalErrorMessageBox;
+using utility::questionMessageBox;
+using utility::warningMessageBox;
 
 } // namespace quentier
