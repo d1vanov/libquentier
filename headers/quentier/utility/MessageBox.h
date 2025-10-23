@@ -59,15 +59,3 @@ void QUENTIER_EXPORT
     internalErrorMessageBox(QWidget * parent, QString detailedText = {});
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to namespaced versions in Quentier
-namespace quentier {
-
-using utility::criticalMessageBox;
-using utility::genericMessageBox;
-using utility::informationMessageBox;
-using utility::internalErrorMessageBox;
-using utility::questionMessageBox;
-using utility::warningMessageBox;
-
-} // namespace quentier
