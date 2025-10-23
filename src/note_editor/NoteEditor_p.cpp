@@ -6026,172 +6026,168 @@ void NoteEditorPrivate::setupScripts()
 
 #define SETUP_SCRIPT(scriptPathPart, scriptVarName)                            \
     file.setFileName(QStringLiteral(":/" scriptPathPart));                     \
-    file.open(QIODevice::ReadOnly);                                            \
-    scriptVarName = QString::fromUtf8(file.readAll());                         \
-    file.close()
+    if (file.open(QIODevice::ReadOnly)) {                                      \
+        scriptVarName = QString::fromUtf8(file.readAll());                     \
+        file.close();                                                          \
+    }
 
-    SETUP_SCRIPT("javascript/jquery/jquery-2.1.3.min.js", m_jQueryJs);
-    SETUP_SCRIPT("javascript/jquery/jquery-ui.min.js", m_jQueryUiJs);
+    SETUP_SCRIPT("javascript/jquery/jquery-2.1.3.min.js", m_jQueryJs)
+    SETUP_SCRIPT("javascript/jquery/jquery-ui.min.js", m_jQueryUiJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/pageMutationObserver.js", m_pageMutationObserverJs);
+        "javascript/scripts/pageMutationObserver.js", m_pageMutationObserverJs)
 
     SETUP_SCRIPT(
         "javascript/colResizable/colResizable-1.5.min.js",
-        m_resizableTableColumnsJs);
+        m_resizableTableColumnsJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/resizableImageManager.js",
-        m_resizableImageManagerJs);
+        m_resizableImageManagerJs)
 
-    SETUP_SCRIPT("javascript/debounce/jquery.debounce-1.0.5.js", m_debounceJs);
-    SETUP_SCRIPT("javascript/rangy/rangy-core.js", m_rangyCoreJs);
+    SETUP_SCRIPT("javascript/debounce/jquery.debounce-1.0.5.js", m_debounceJs)
+    SETUP_SCRIPT("javascript/rangy/rangy-core.js", m_rangyCoreJs)
 
     SETUP_SCRIPT(
         "javascript/rangy/rangy-selectionsaverestore.js",
-        m_rangySelectionSaveRestoreJs);
+        m_rangySelectionSaveRestoreJs)
 
-    SETUP_SCRIPT("javascript/hilitor/hilitor-utf8.js", m_hilitorJs);
-
-    SETUP_SCRIPT(
-        "javascript/scripts/imageAreasHilitor.js", m_imageAreasHilitorJs);
-
-    SETUP_SCRIPT("javascript/scripts/onTableResize.js", m_onTableResizeJs);
+    SETUP_SCRIPT("javascript/hilitor/hilitor-utf8.js", m_hilitorJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/nodeUndoRedoManager.js", m_nodeUndoRedoManagerJs);
+        "javascript/scripts/imageAreasHilitor.js", m_imageAreasHilitorJs)
+
+    SETUP_SCRIPT("javascript/scripts/onTableResize.js", m_onTableResizeJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/selectionManager.js", m_selectionManagerJs);
+        "javascript/scripts/nodeUndoRedoManager.js", m_nodeUndoRedoManagerJs)
+
+    SETUP_SCRIPT("javascript/scripts/selectionManager.js", m_selectionManagerJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/textEditingUndoRedoManager.js",
-        m_textEditingUndoRedoManagerJs);
+        m_textEditingUndoRedoManagerJs)
+
+    SETUP_SCRIPT("javascript/scripts/getSelectionHtml.js", m_getSelectionHtmlJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/getSelectionHtml.js", m_getSelectionHtmlJs);
-
-    SETUP_SCRIPT(
-        "javascript/scripts/snapSelectionToWord.js", m_snapSelectionToWordJs);
+        "javascript/scripts/snapSelectionToWord.js", m_snapSelectionToWordJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/replaceSelectionWithHtml.js",
-        m_replaceSelectionWithHtmlJs);
+        m_replaceSelectionWithHtmlJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/findReplaceManager.js", m_findReplaceManagerJs);
+        "javascript/scripts/findReplaceManager.js", m_findReplaceManagerJs)
 
-    SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs);
+    SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/managedPageAction.js", m_managedPageActionJs);
+        "javascript/scripts/managedPageAction.js", m_managedPageActionJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/setInitialCaretPosition.js",
-        m_setInitialCaretPositionJs);
+        m_setInitialCaretPositionJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/toDoCheckboxAutomaticInserter.js",
-        m_toDoCheckboxAutomaticInsertionJs);
+        m_toDoCheckboxAutomaticInsertionJs)
 
-    SETUP_SCRIPT("javascript/scripts/setupActions.js", m_setupActionsJs);
+    SETUP_SCRIPT("javascript/scripts/setupActions.js", m_setupActionsJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
+        "javascript/scripts/updateResourceHash.js", m_updateResourceHashJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/updateImageResourceSrc.js",
-        m_updateImageResourceSrcJs);
+        m_updateImageResourceSrcJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/provideSrcForResourceImgTags.js",
-        m_provideSrcForResourceImgTagsJs);
+        m_provideSrcForResourceImgTagsJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/onResourceInfoReceived.js",
-        m_onResourceInfoReceivedJs);
+        m_onResourceInfoReceivedJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/findInnermostElement.js", m_findInnermostElementJs);
+        "javascript/scripts/findInnermostElement.js", m_findInnermostElementJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/determineStatesForCurrentTextCursorPosition.js",
-        m_determineStatesForCurrentTextCursorPositionJs);
+        m_determineStatesForCurrentTextCursorPositionJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/determineContextMenuEventTarget.js",
-        m_determineContextMenuEventTargetJs);
+        m_determineContextMenuEventTargetJs)
 
-    SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs);
+    SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs)
 
-    SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs);
-
-    SETUP_SCRIPT(
-        "javascript/scripts/htmlInsertionManager.js", m_htmlInsertionManagerJs);
+    SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/sourceCodeFormatter.js", m_sourceCodeFormatterJs);
+        "javascript/scripts/htmlInsertionManager.js", m_htmlInsertionManagerJs)
 
     SETUP_SCRIPT(
-        "javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs);
+        "javascript/scripts/sourceCodeFormatter.js", m_sourceCodeFormatterJs)
+
+    SETUP_SCRIPT("javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/encryptDecryptManager.js",
-        m_encryptDecryptManagerJs);
+        m_encryptDecryptManagerJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/findAndReplaceDOMText.js",
-        m_findAndReplaceDOMTextJs);
+        m_findAndReplaceDOMTextJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
-        m_tabAndShiftTabIndentAndUnindentReplacerJs);
+        m_tabAndShiftTabIndentAndUnindentReplacerJs)
 
-    SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
-    SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs);
-    SETUP_SCRIPT("javascript/scripts/setFontSize.js", m_setFontSizeJs);
+    SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs)
+    SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs)
+    SETUP_SCRIPT("javascript/scripts/setFontSize.js", m_setFontSizeJs)
 
-    SETUP_SCRIPT("qtwebchannel/qwebchannel.js", m_qWebChannelJs);
+    SETUP_SCRIPT("qtwebchannel/qwebchannel.js", m_qWebChannelJs)
 
-    SETUP_SCRIPT(
-        "javascript/scripts/qWebChannelSetup.js", m_qWebChannelSetupJs);
+    SETUP_SCRIPT("javascript/scripts/qWebChannelSetup.js", m_qWebChannelSetupJs)
 
-    SETUP_SCRIPT("javascript/scripts/enToDoTagsSetup.js", m_setupEnToDoTagsJs);
+    SETUP_SCRIPT("javascript/scripts/enToDoTagsSetup.js", m_setupEnToDoTagsJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/flipEnToDoCheckboxState.js",
-        m_flipEnToDoCheckboxStateJs);
+        m_flipEnToDoCheckboxStateJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/provideSrcAndOnClickScriptForEnCryptImgTags.js",
-        m_provideSrcAndOnClickScriptForEnCryptImgTagsJs);
+        m_provideSrcAndOnClickScriptForEnCryptImgTagsJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/provideSrcForGenericResourceImages.js",
-        m_provideSrcForGenericResourceImagesJs);
+        m_provideSrcForGenericResourceImagesJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/onGenericResourceImageReceived.js",
-        m_onGenericResourceImageReceivedJs);
+        m_onGenericResourceImageReceivedJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/genericResourceOnClickHandler.js",
-        m_genericResourceOnClickHandlerJs);
+        m_genericResourceOnClickHandlerJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/setupGenericResourceOnClickHandler.js",
-        m_setupGenericResourceOnClickHandlerJs);
+        m_setupGenericResourceOnClickHandlerJs)
 
-    SETUP_SCRIPT(
-        "javascript/scripts/clickInterceptor.js", m_clickInterceptorJs);
+    SETUP_SCRIPT("javascript/scripts/clickInterceptor.js", m_clickInterceptorJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/notifyTextCursorPositionChanged.js",
-        m_notifyTextCursorPositionChangedJs);
+        m_notifyTextCursorPositionChangedJs)
 
     SETUP_SCRIPT(
         "javascript/scripts/setupTextCursorPositionTracking.js",
-        m_setupTextCursorPositionTrackingJs);
+        m_setupTextCursorPositionTrackingJs)
 #undef SETUP_SCRIPT
 }
 
