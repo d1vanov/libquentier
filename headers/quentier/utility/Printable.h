@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 #include <QString>
 #include <QTextStream>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The Printable class is the interface for Quentier's internal classes
@@ -49,6 +49,14 @@ public:
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & debug, const Printable & printable);
 };
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to version from quentier::utility namespace in
+// Quentier
+namespace quentier {
+
+using utility::Printable;
 
 } // namespace quentier
 

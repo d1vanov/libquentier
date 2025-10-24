@@ -24,8 +24,6 @@
 #include "ObfuscatingKeychainService.h"
 #include "QtKeychainService.h"
 
-#include <quentier/utility/Printable.h>
-
 #include <QDebug>
 #include <QTextStream>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@
 
 namespace quentier::synchronization {
 
-class QUENTIER_EXPORT IDownloadResourcesStatus : public Printable
+class QUENTIER_EXPORT IDownloadResourcesStatus : public utility::Printable
 {
 public:
     ~IDownloadResourcesStatus() noexcept override;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,7 +39,7 @@ class ErrorStringData;
  *    translatable strings; one translatable string is not always enough because
  *    the error message might be composed from different parts
  */
-class QUENTIER_EXPORT ErrorString : public Printable
+class QUENTIER_EXPORT ErrorString : public utility::Printable
 {
 public:
     explicit ErrorString(const char * error = nullptr);

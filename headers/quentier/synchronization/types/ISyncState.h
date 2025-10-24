@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ namespace quentier::synchronization {
  * @brief The ISyncState interface provides accessory methods to determine
  * the sync state for the account
  */
-class QUENTIER_EXPORT ISyncState : public Printable
+class QUENTIER_EXPORT ISyncState : public utility::Printable
 {
 public:
     [[nodiscard]] virtual qint32 userDataUpdateCount() const = 0;

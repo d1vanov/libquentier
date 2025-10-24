@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,7 @@ namespace quentier {
 
 class ResourceRecognitionIndexItemData;
 
-class QUENTIER_EXPORT ResourceRecognitionIndexItem : public Printable
+class QUENTIER_EXPORT ResourceRecognitionIndexItem : public utility::Printable
 {
 public:
     explicit ResourceRecognitionIndexItem();
@@ -124,6 +124,7 @@ public:
     [[nodiscard]] QList<IBarcodeItemPtr> barcodeItems() const;
     void setBarcodeItems(QList<IBarcodeItemPtr> barcodeItems);
 
+    // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 
 private:

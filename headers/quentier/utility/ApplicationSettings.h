@@ -31,7 +31,9 @@ namespace quentier::utility {
  * in particular it simplifies the way of working with either application-wide
  * or account-specific settings
  */
-class QUENTIER_EXPORT ApplicationSettings : public QSettings, public Printable
+class QUENTIER_EXPORT ApplicationSettings :
+    public QSettings,
+    public utility::Printable
 {
     Q_OBJECT
 public:
@@ -100,7 +102,6 @@ public:
      */
     ~ApplicationSettings() override;
 
-public:
     /**
      * Helper struct for RAII style of ensuring the array once began would be
      * closed even if exception is thrown after beginning the array
@@ -135,7 +136,6 @@ public:
         ApplicationSettings & m_settings;
     };
 
-public:
     /**
      * Appends prefix to the current group.
      * The call is redirected to QSettings::beginGroup. It is required in this
@@ -377,7 +377,7 @@ public:
     [[nodiscard]] QVariant value(
         std::string_view key, const QVariant & defaultValue = {}) const;
 
-public:
+    // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 
 private:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ namespace quentier::synchronization {
  * @brief The IAuthenticationInfo interface represents the information
  * obtained through OAuth and necessary to access Evernote API
  */
-class QUENTIER_EXPORT IAuthenticationInfo : public Printable
+class QUENTIER_EXPORT IAuthenticationInfo : public utility::Printable
 {
 public:
     /**

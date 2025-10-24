@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ namespace quentier::enml::conversion_rules {
  * interface facilitates skipping these tags and attributes in the process of
  * conversion from HTML to ENML
  */
-class ISkipRule : public Printable
+class ISkipRule : public utility::Printable
 {
 public:
     ~ISkipRule() override;
@@ -89,7 +89,7 @@ public:
      */
     [[nodiscard]] virtual Qt::CaseSensitivity caseSensitivity() const = 0;
 
-public: // Printable
+public: // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 };
 

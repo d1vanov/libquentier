@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 
 namespace quentier::local_storage {
 
-class QUENTIER_EXPORT NoteSearchQuery : public Printable
+class QUENTIER_EXPORT NoteSearchQuery : public utility::Printable
 {
 public:
     explicit NoteSearchQuery();
@@ -167,6 +167,7 @@ public:
 
     [[nodiscard]] bool isMatcheable() const;
 
+    // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 
 private:

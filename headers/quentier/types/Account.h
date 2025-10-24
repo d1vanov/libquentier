@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ class AccountData;
  * name, whether it is local or synchronized to Evernote and for the latter
  * case - some additional details like upload limit etc.
  */
-class QUENTIER_EXPORT Account : public Printable
+class QUENTIER_EXPORT Account : public utility::Printable
 {
 public:
     enum class Type
@@ -99,9 +99,9 @@ public:
     void setName(QString name);
 
     /**
-     * @return      Printable user's name that is not used to uniquely identify
-     *              the account, so this name may repeat across different local
-     *              and Evernote accounts
+     * @return      Displayable user's name which is not used to uniquely
+     *              identify the account, so this name may repeat across
+     *              different local and Evernote accounts
      */
     [[nodiscard]] QString displayName() const;
 
@@ -158,6 +158,7 @@ public:
 
     void setEvernoteAccountLimits(const qevercloud::AccountLimits & limits);
 
+    // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 
 private:

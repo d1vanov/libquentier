@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -53,7 +53,7 @@ public:
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
-    struct Result : public Printable
+    struct Result : public utility::Printable
     {
         QTextStream & print(QTextStream & strm) const override;
 

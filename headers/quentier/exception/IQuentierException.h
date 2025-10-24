@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
-#define LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Printable.h>
@@ -34,7 +33,9 @@ namespace quentier {
  * IQuentierException based exceptions can provide both localized and
  * non-localized error messages.
  */
-class QUENTIER_EXPORT IQuentierException : public Printable, public QException
+class QUENTIER_EXPORT IQuentierException :
+    public utility::Printable,
+    public QException
 {
 public:
     ~IQuentierException() noexcept override;
@@ -43,8 +44,10 @@ public:
     [[nodiscard]] QString localizedErrorMessage() const;
     [[nodiscard]] QString nonLocalizedErrorMessage() const;
 
+    // std::exception
     [[nodiscard]] const char * what() const noexcept override;
 
+    // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 
 protected:
@@ -60,5 +63,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H

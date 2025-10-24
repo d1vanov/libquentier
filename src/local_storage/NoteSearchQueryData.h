@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,9 @@
 
 namespace quentier::local_storage {
 
-class NoteSearchQuery::Data final : public QSharedData, public Printable
+class NoteSearchQuery::Data final :
+    public QSharedData,
+    public utility::Printable
 {
 public:
     Data() = default;

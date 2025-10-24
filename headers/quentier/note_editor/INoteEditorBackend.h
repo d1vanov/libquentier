@@ -21,7 +21,6 @@
 #include <quentier/enml/Fwd.h>
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Printable.h>
 
 #include <QPalette>
 #include <QPrinter>
@@ -29,6 +28,7 @@
 #include <QThread>
 #include <QWidget>
 
+class QTextStream;
 class QUndoStack;
 
 namespace quentier {

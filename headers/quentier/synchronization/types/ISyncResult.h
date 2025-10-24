@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,7 @@
 
 namespace quentier::synchronization {
 
-class QUENTIER_EXPORT ISyncResult : public Printable
+class QUENTIER_EXPORT ISyncResult : public utility::Printable
 {
 public:
     [[nodiscard]] virtual ISyncStatePtr syncState() const = 0;

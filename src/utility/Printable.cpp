@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #include <quentier/utility/Printable.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 Printable::~Printable() noexcept = default;
 
@@ -41,4 +41,4 @@ QTextStream & operator<<(QTextStream & strm, const Printable & printable)
     return printable.print(strm);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

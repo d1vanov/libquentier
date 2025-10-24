@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@ namespace quentier::synchronization {
  * attempt to send information either from user's own account or from some
  * linked notebook to Evernote.
  */
-class QUENTIER_EXPORT ISendStatus : public Printable
+class QUENTIER_EXPORT ISendStatus : public utility::Printable
 {
 public:
     using QExceptionPtr = std::shared_ptr<QException>;

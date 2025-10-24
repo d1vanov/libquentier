@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,7 +38,7 @@ namespace quentier::synchronization {
  * @brief The IDownloadNotesStatus interface presents information about the
  * status of notes downloading process
  */
-class QUENTIER_EXPORT IDownloadNotesStatus : public Printable
+class QUENTIER_EXPORT IDownloadNotesStatus : public utility::Printable
 {
 public:
     using QExceptionPtr = std::shared_ptr<QException>;

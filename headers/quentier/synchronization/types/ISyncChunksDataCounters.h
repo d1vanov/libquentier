@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@ namespace quentier::synchronization {
  * representing the current progress on processing the data from downloaded
  * sync chunks
  */
-struct QUENTIER_EXPORT ISyncChunksDataCounters : public Printable
+struct QUENTIER_EXPORT ISyncChunksDataCounters : public utility::Printable
 {
     // ================= Saved searches =================
 

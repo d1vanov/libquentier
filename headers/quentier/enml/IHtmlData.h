@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@ namespace quentier::enml {
  * @brief The IHtmlData represents the result of ENML to HTML conversion:
  * HTML itself plus some metadata
  */
-struct QUENTIER_EXPORT IHtmlData : public Printable
+struct QUENTIER_EXPORT IHtmlData : public utility::Printable
 {
     /**
      * HTML representation of note content
@@ -57,7 +57,7 @@ struct QUENTIER_EXPORT IHtmlData : public Printable
      */
     [[nodiscard]] virtual quint32 numEnDecryptedNodes() const = 0;
 
-public: // Printable
+public: // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 };
 

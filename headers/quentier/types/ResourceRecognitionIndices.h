@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@ namespace quentier {
 
 class ResourceRecognitionIndicesData;
 
-class QUENTIER_EXPORT ResourceRecognitionIndices : public Printable
+class QUENTIER_EXPORT ResourceRecognitionIndices : public utility::Printable
 {
 public:
     explicit ResourceRecognitionIndices();
@@ -64,6 +64,7 @@ public:
 
     bool setData(const QByteArray & rawRecognitionIndicesData);
 
+    // utility::Printable
     QTextStream & print(QTextStream & strm) const override;
 
 private:
