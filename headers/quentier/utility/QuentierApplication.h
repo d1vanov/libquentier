@@ -43,6 +43,7 @@ namespace quentier {
 class QUENTIER_EXPORT QuentierApplication : public utility::QuentierApplication
 {
     Q_OBJECT;
+
 public:
     QuentierApplication(int & argc, char * argv[]); // NOLINT
     ~QuentierApplication() noexcept override;
