@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@ namespace quentier {
 
 class NoteEditorPrivate;
 
-class INoteEditorUndoCommand : public QuentierUndoCommand
+class INoteEditorUndoCommand : public utility::QuentierUndoCommand
 {
     Q_OBJECT
 public:

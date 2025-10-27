@@ -24,6 +24,7 @@ namespace quentier::utility {
 
 class ApplicationSettings;
 class FileIOProcessorAsync;
+class QuentierApplication;
 
 struct IEncryptor;
 using IEncryptorPtr = std::shared_ptr<IEncryptor>;

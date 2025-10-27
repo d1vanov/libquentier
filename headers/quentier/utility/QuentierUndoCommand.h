@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 #include <QObject>
 #include <QUndoCommand>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The QuentierUndoCommand class has the sole purpose of working around
@@ -77,4 +77,4 @@ private:
     bool m_onceUndoExecuted = false;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

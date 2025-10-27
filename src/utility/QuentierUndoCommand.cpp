@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierUndoCommand.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 QuentierUndoCommand::QuentierUndoCommand(QUndoCommand * parent) :
     QObject(nullptr), QUndoCommand(parent)
@@ -34,18 +34,18 @@ QuentierUndoCommand::~QuentierUndoCommand() noexcept = default;
 
 void QuentierUndoCommand::undo()
 {
-    QNTRACE("utility:undo", "QuentierUndoCommand::undo");
+    QNTRACE("utility::QuentierUndoCommand", "QuentierUndoCommand::undo");
     m_onceUndoExecuted = true;
     undoImpl();
 }
 
 void QuentierUndoCommand::redo()
 {
-    QNTRACE("utility:undo", "QuentierUndoCommand::redo");
+    QNTRACE("utility::QuentierUndoCommand", "QuentierUndoCommand::redo");
 
     if (Q_UNLIKELY(!m_onceUndoExecuted)) {
         QNTRACE(
-            "utility:undo",
+            "utility::QuentierUndoCommand",
             "Ignoring the attempt to execute redo for "
                 << "command " << text() << " as there was no previous undo");
         return;
@@ -54,4 +54,4 @@ void QuentierUndoCommand::redo()
     redoImpl();
 }
 
-} // namespace quentier
+} // namespace quentier::utility

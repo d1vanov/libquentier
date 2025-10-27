@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 
 #include <QApplication>
 
-namespace quentier {
+namespace quentier::utility {
 
 class QUENTIER_EXPORT QuentierApplication : public QApplication
 {
@@ -31,8 +31,21 @@ public:
     QuentierApplication(int & argc, char * argv[]); // NOLINT
     ~QuentierApplication() noexcept override;
 
-    [[nodiscard]] bool notify(QObject * pObject, QEvent * pEvent) override;
-    [[nodiscard]] bool event(QEvent * pEvent) override;
+    [[nodiscard]] bool notify(QObject * object, QEvent * event) override;
+    [[nodiscard]] bool event(QEvent * event) override;
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT QuentierApplication : public utility::QuentierApplication
+{
+    Q_OBJECT;
+public:
+    QuentierApplication(int & argc, char * argv[]); // NOLINT
+    ~QuentierApplication() noexcept override;
 };
 
 } // namespace quentier
