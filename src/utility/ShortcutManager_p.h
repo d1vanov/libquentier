@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,15 +19,14 @@
 #pragma once
 
 #include <quentier/types/Account.h>
+#include <quentier/utility/ShortcutManager.h>
 
 #include <QKeySequence>
 #include <QObject>
 
-namespace quentier {
+namespace quentier::utility {
 
-class ShortcutManager;
-
-class ShortcutManagerPrivate final : public QObject
+class ShortcutManager::ShortcutManagerPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -65,20 +64,20 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void setUserShortcut(
-        int key, QKeySequence shortcut, const Account & account,
+        int key, const QKeySequence & shortcut, const Account & account,
         QString context);
 
     void setNonStandardUserShortcut(
-        QString nonStandardKey, QKeySequence shortcut, const Account & account,
-        QString context);
+        QString nonStandardKey, const QKeySequence & shortcut,
+        const Account & account, QString context);
 
     void setDefaultShortcut(
-        int key, QKeySequence shortcut, const Account & account,
+        int key, const QKeySequence & shortcut, const Account & account,
         QString context);
 
     void setNonStandardDefaultShortcut(
-        QString nonStandardKey, QKeySequence shortcut, const Account & account,
-        QString context);
+        QString nonStandardKey, const QKeySequence & shortcut,
+        const Account & account, QString context);
 
 private:
     [[nodiscard]] QString keyToString(int key) const;
@@ -92,4 +91,4 @@ private:
     Q_DECLARE_PUBLIC(ShortcutManager)
 };
 
-} // namespace quentier
+} // namespace quentier::utility

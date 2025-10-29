@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,9 +24,7 @@
 #include <QKeySequence>
 #include <QObject>
 
-namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(ShortcutManagerPrivate)
+namespace quentier::utility {
 
 class QUENTIER_EXPORT ShortcutManager : public QObject
 {
@@ -168,24 +166,39 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void setUserShortcut(
-        int key, QKeySequence shortcut, const Account & account,
+        int key, const QKeySequence & shortcut, const Account & account,
         QString context = {});
 
     void setNonStandardUserShortcut(
-        QString nonStandardKey, QKeySequence shortcut, const Account & account,
-        QString context = {});
+        QString nonStandardKey, const QKeySequence & shortcut,
+        const Account & account, QString context = {});
 
     void setDefaultShortcut(
-        int key, QKeySequence shortcut, const Account & account,
+        int key, const QKeySequence & shortcut, const Account & account,
         QString context = {});
 
     void setNonStandardDefaultShortcut(
-        QString nonStandardKey, QKeySequence shortcut, const Account & account,
-        QString context = {});
+        QString nonStandardKey, const QKeySequence & shortcut,
+        const Account & account, QString context = {});
 
 private:
+    class ShortcutManagerPrivate;
+
     ShortcutManagerPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(ShortcutManager)
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT ShortcutManager : public utility::ShortcutManager
+{
+    Q_OBJECT
+public:
+    explicit ShortcutManager(QObject * parent = nullptr);
+    ~ShortcutManager() override;
 };
 
 } // namespace quentier

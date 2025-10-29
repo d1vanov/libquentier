@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include "ShortcutManager_p.h"
 
-namespace quentier {
+namespace quentier::utility {
 
 ShortcutManager::ShortcutManager(QObject * parent) :
     QObject(parent), d_ptr(new ShortcutManagerPrivate(*this))
@@ -72,7 +72,7 @@ QKeySequence ShortcutManager::userShortcut(
 }
 
 void ShortcutManager::setUserShortcut(
-    int key, QKeySequence shortcut, const Account & account, // NOLINT
+    const int key, const QKeySequence & shortcut, const Account & account,
     QString context)
 {
     Q_D(ShortcutManager);
@@ -80,7 +80,7 @@ void ShortcutManager::setUserShortcut(
 }
 
 void ShortcutManager::setNonStandardUserShortcut(
-    QString nonStandardKey, QKeySequence shortcut, // NOLINT
+    QString nonStandardKey, const QKeySequence & shortcut,
     const Account & account, QString context)
 {
     Q_D(ShortcutManager);
@@ -89,7 +89,7 @@ void ShortcutManager::setNonStandardUserShortcut(
 }
 
 void ShortcutManager::setDefaultShortcut(
-    int key, QKeySequence shortcut, const Account & account, // NOLINT
+    const int key, const QKeySequence & shortcut, const Account & account,
     QString context)
 {
     Q_D(ShortcutManager);
@@ -97,12 +97,23 @@ void ShortcutManager::setDefaultShortcut(
 }
 
 void ShortcutManager::setNonStandardDefaultShortcut(
-    QString nonStandardKey, QKeySequence shortcut, // NOLINT
+    QString nonStandardKey, const QKeySequence & shortcut,
     const Account & account, QString context)
 {
     Q_D(ShortcutManager);
     d->setNonStandardDefaultShortcut(
         std::move(nonStandardKey), shortcut, account, std::move(context));
 }
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+ShortcutManager::ShortcutManager(QObject * parent) :
+    utility::ShortcutManager(parent)
+{}
+
+ShortcutManager::~ShortcutManager() = default;
 
 } // namespace quentier

@@ -5587,11 +5587,11 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
         }
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::SpellCheckIgnoreWord, tr("Ignore word"),
+            utility::ShortcutManager::SpellCheckIgnoreWord, tr("Ignore word"),
             m_pGenericTextContextMenu, onSpellCheckIgnoreWordAction, enabled);
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::SpellCheckAddWordToUserDictionary,
+            utility::ShortcutManager::SpellCheckAddWordToUserDictionary,
             tr("Add word to user dictionary"), m_pGenericTextContextMenu,
             onSpellCheckAddWordToUserDictionaryAction, enabled);
 
@@ -5636,7 +5636,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
     setupPasteGenericTextMenuActions();
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::Font, tr("Font") + QStringLiteral("..."),
+        utility::ShortcutManager::Font, tr("Font") + QStringLiteral("..."),
         m_pGenericTextContextMenu, fontMenu, m_isPageEditable);
 
     setupParagraphSubMenuForGenericTextMenu(selectedHtml);
@@ -5649,43 +5649,44 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
         QMenu * pTableMenu = m_pGenericTextContextMenu->addMenu(tr("Table"));
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::InsertRow, tr("Insert row"), pTableMenu,
+            utility::ShortcutManager::InsertRow, tr("Insert row"), pTableMenu,
             insertTableRow, m_isPageEditable);
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::InsertColumn, tr("Insert column"), pTableMenu,
-            insertTableColumn, m_isPageEditable);
+            utility::ShortcutManager::InsertColumn, tr("Insert column"),
+            pTableMenu, insertTableColumn, m_isPageEditable);
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::RemoveRow, tr("Remove row"), pTableMenu,
+            utility::ShortcutManager::RemoveRow, tr("Remove row"), pTableMenu,
             removeTableRow, m_isPageEditable);
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::RemoveColumn, tr("Remove column"), pTableMenu,
-            removeTableColumn, m_isPageEditable);
+            utility::ShortcutManager::RemoveColumn, tr("Remove column"),
+            pTableMenu, removeTableColumn, m_isPageEditable);
 
         Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
     }
     else {
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::InsertTable,
+            utility::ShortcutManager::InsertTable,
             tr("Insert table") + QStringLiteral("..."),
             m_pGenericTextContextMenu, insertTableDialog, m_isPageEditable);
     }
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::InsertHorizontalLine, tr("Insert horizontal line"),
-        m_pGenericTextContextMenu, insertHorizontalLine, m_isPageEditable);
+        utility::ShortcutManager::InsertHorizontalLine,
+        tr("Insert horizontal line"), m_pGenericTextContextMenu,
+        insertHorizontalLine, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::AddAttachment,
+        utility::ShortcutManager::AddAttachment,
         tr("Add attachment") + QStringLiteral("..."), m_pGenericTextContextMenu,
         addAttachmentDialog, m_isPageEditable);
 
     Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::InsertToDoTag, tr("Insert ToDo tag"),
+        utility::ShortcutManager::InsertToDoTag, tr("Insert ToDo tag"),
         m_pGenericTextContextMenu, insertToDoCheckbox, m_isPageEditable);
 
     Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
@@ -5693,22 +5694,23 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
     auto * pHyperlinkMenu = m_pGenericTextContextMenu->addMenu(tr("Hyperlink"));
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::EditHyperlink, tr("Add/edit") + QStringLiteral("..."),
-        pHyperlinkMenu, editHyperlinkDialog, m_isPageEditable);
+        utility::ShortcutManager::EditHyperlink,
+        tr("Add/edit") + QStringLiteral("..."), pHyperlinkMenu,
+        editHyperlinkDialog, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::CopyHyperlink, tr("Copy"), pHyperlinkMenu,
+        utility::ShortcutManager::CopyHyperlink, tr("Copy"), pHyperlinkMenu,
         copyHyperlink, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::RemoveHyperlink, tr("Remove"), pHyperlinkMenu,
+        utility::ShortcutManager::RemoveHyperlink, tr("Remove"), pHyperlinkMenu,
         removeHyperlink, m_isPageEditable);
 
     if (!insideDecryptedTextFragment && !selectedHtml.isEmpty()) {
         Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::Encrypt,
+            utility::ShortcutManager::Encrypt,
             tr("Encrypt selected fragment") + QStringLiteral("..."),
             m_pGenericTextContextMenu, encryptSelectedText, m_isPageEditable);
     }
@@ -5716,7 +5718,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
         Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::Encrypt, tr("Encrypt back"),
+            utility::ShortcutManager::Encrypt, tr("Encrypt back"),
             m_pGenericTextContextMenu, hideDecryptedTextUnderCursor,
             m_isPageEditable);
     }
@@ -5740,39 +5742,40 @@ void NoteEditorPrivate::setupImageResourceContextMenu(
     bool enabled = true;
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::CopyAttachment, tr("Copy"),
+        utility::ShortcutManager::CopyAttachment, tr("Copy"),
         m_pImageResourceContextMenu, copyAttachmentUnderCursor, enabled);
 
     bool canRemoveResource = m_isPageEditable && m_pAccount &&
         (m_pAccount->type() != Account::Type::Evernote);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::RemoveAttachment, tr("Remove"),
+        utility::ShortcutManager::RemoveAttachment, tr("Remove"),
         m_pImageResourceContextMenu, removeAttachmentUnderCursor,
         canRemoveResource);
 
     Q_UNUSED(m_pImageResourceContextMenu->addSeparator());
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::ImageRotateClockwise, tr("Rotate clockwise"),
+        utility::ShortcutManager::ImageRotateClockwise, tr("Rotate clockwise"),
         m_pImageResourceContextMenu, rotateImageAttachmentUnderCursorClockwise,
         m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::ImageRotateCounterClockwise,
+        utility::ShortcutManager::ImageRotateCounterClockwise,
         tr("Rotate countercloskwise"), m_pImageResourceContextMenu,
         rotateImageAttachmentUnderCursorCounterclockwise, m_isPageEditable);
 
     Q_UNUSED(m_pImageResourceContextMenu->addSeparator());
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::OpenAttachment, tr("Open"),
+        utility::ShortcutManager::OpenAttachment, tr("Open"),
         m_pImageResourceContextMenu, openAttachmentUnderCursor,
         m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::SaveAttachment, tr("Save as") + QStringLiteral("..."),
-        m_pImageResourceContextMenu, saveAttachmentUnderCursor, enabled);
+        utility::ShortcutManager::SaveAttachment,
+        tr("Save as") + QStringLiteral("..."), m_pImageResourceContextMenu,
+        saveAttachmentUnderCursor, enabled);
 
     m_pImageResourceContextMenu->exec(m_lastContextMenuEventGlobalPos);
 }
@@ -5800,12 +5803,12 @@ void NoteEditorPrivate::setupNonImageResourceContextMenu(
         (m_pAccount->type() != Account::Type::Evernote);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::RemoveAttachment, tr("Remove"),
+        utility::ShortcutManager::RemoveAttachment, tr("Remove"),
         m_pNonImageResourceContextMenu, removeAttachmentUnderCursor,
         canRemoveResource);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::RenameAttachment, tr("Rename"),
+        utility::ShortcutManager::RenameAttachment, tr("Rename"),
         m_pNonImageResourceContextMenu, renameAttachmentUnderCursor,
         m_isPageEditable);
 
@@ -5844,9 +5847,9 @@ void NoteEditorPrivate::setupEncryptedTextContextMenu(
     m_pEncryptedTextContextMenu = new QMenu(this);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::Decrypt, tr("Decrypt") + QStringLiteral("..."),
-        m_pEncryptedTextContextMenu, decryptEncryptedTextUnderCursor,
-        m_isPageEditable);
+        utility::ShortcutManager::Decrypt,
+        tr("Decrypt") + QStringLiteral("..."), m_pEncryptedTextContextMenu,
+        decryptEncryptedTextUnderCursor, m_isPageEditable);
 
     m_pEncryptedTextContextMenu->exec(m_lastContextMenuEventGlobalPos);
 }
@@ -5862,7 +5865,7 @@ void NoteEditorPrivate::setupActionShortcut(
         return;
     }
 
-    ShortcutManager shortcutManager;
+    utility::ShortcutManager shortcutManager;
 
     const QKeySequence shortcut =
         shortcutManager.shortcut(key, *m_pAccount, context);
@@ -7192,8 +7195,9 @@ void NoteEditorPrivate::setupPasteGenericTextMenuActions()
             "Clipboard buffer has html, adding paste " << "unformatted action");
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::PasteUnformatted, tr("Paste as unformatted text"),
-            m_pGenericTextContextMenu, pasteUnformatted, m_isPageEditable);
+            utility::ShortcutManager::PasteUnformatted,
+            tr("Paste as unformatted text"), m_pGenericTextContextMenu,
+            pasteUnformatted, m_isPageEditable);
     }
 
     Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
@@ -7223,46 +7227,50 @@ void NoteEditorPrivate::setupParagraphSubMenuForGenericTextMenu(
         m_pGenericTextContextMenu->addMenu(tr("Paragraph"));
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::AlignLeft, tr("Align left"), pParagraphSubMenu,
-        alignLeft, m_isPageEditable);
+        utility::ShortcutManager::AlignLeft, tr("Align left"),
+        pParagraphSubMenu, alignLeft, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::AlignCenter, tr("Center text"), pParagraphSubMenu,
-        alignCenter, m_isPageEditable);
+        utility::ShortcutManager::AlignCenter, tr("Center text"),
+        pParagraphSubMenu, alignCenter, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::AlignRight, tr("Align right"), pParagraphSubMenu,
-        alignRight, m_isPageEditable);
+        utility::ShortcutManager::AlignRight, tr("Align right"),
+        pParagraphSubMenu, alignRight, m_isPageEditable);
 
     Q_UNUSED(pParagraphSubMenu->addSeparator());
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::IncreaseIndentation, tr("Increase indentation"),
-        pParagraphSubMenu, increaseIndentation, m_isPageEditable);
+        utility::ShortcutManager::IncreaseIndentation,
+        tr("Increase indentation"), pParagraphSubMenu, increaseIndentation,
+        m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::DecreaseIndentation, tr("Decrease indentation"),
-        pParagraphSubMenu, decreaseIndentation, m_isPageEditable);
+        utility::ShortcutManager::DecreaseIndentation,
+        tr("Decrease indentation"), pParagraphSubMenu, decreaseIndentation,
+        m_isPageEditable);
 
     Q_UNUSED(pParagraphSubMenu->addSeparator());
 
     if (!selectedHtml.isEmpty()) {
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::IncreaseFontSize, tr("Increase font size"),
-            pParagraphSubMenu, increaseFontSize, m_isPageEditable);
+            utility::ShortcutManager::IncreaseFontSize,
+            tr("Increase font size"), pParagraphSubMenu, increaseFontSize,
+            m_isPageEditable);
 
         ADD_ACTION_WITH_SHORTCUT(
-            ShortcutManager::DecreaseFontSize, tr("Decrease font size"),
-            pParagraphSubMenu, decreaseFontSize, m_isPageEditable);
+            utility::ShortcutManager::DecreaseFontSize,
+            tr("Decrease font size"), pParagraphSubMenu, decreaseFontSize,
+            m_isPageEditable);
 
         Q_UNUSED(pParagraphSubMenu->addSeparator());
     }
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::InsertNumberedList, tr("Numbered list"),
+        utility::ShortcutManager::InsertNumberedList, tr("Numbered list"),
         pParagraphSubMenu, insertNumberedList, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::InsertBulletedList, tr("Bulleted list"),
+        utility::ShortcutManager::InsertBulletedList, tr("Bulleted list"),
         pParagraphSubMenu, insertBulletedList, m_isPageEditable);
 }
 
@@ -7299,11 +7307,11 @@ void NoteEditorPrivate::setupStyleSubMenuForGenericTextMenu()
         m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::Strikethrough, tr("Strikethrough"), pStyleSubMenu,
-        textStrikethrough, m_isPageEditable);
+        utility::ShortcutManager::Strikethrough, tr("Strikethrough"),
+        pStyleSubMenu, textStrikethrough, m_isPageEditable);
 
     ADD_ACTION_WITH_SHORTCUT(
-        ShortcutManager::Highlight, tr("Highlight"), pStyleSubMenu,
+        utility::ShortcutManager::Highlight, tr("Highlight"), pStyleSubMenu,
         textHighlight, m_isPageEditable);
 }
 
