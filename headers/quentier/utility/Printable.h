@@ -52,14 +52,6 @@ public:
 
 } // namespace quentier::utility
 
-// TODO: remove after migrating to version from quentier::utility namespace in
-// Quentier
-namespace quentier {
-
-using utility::Printable;
-
-} // namespace quentier
-
 // printing operators for existing classes not inheriting from Printable
 
 template <class T>
