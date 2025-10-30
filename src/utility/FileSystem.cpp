@@ -184,7 +184,7 @@ QByteArray readFileContents(
             "Failed to read file contents, file is too large"));
 
         errorDescription.details() =
-            humanReadableSize(static_cast<quint64>(length));
+            utility::humanReadableSize(static_cast<quint64>(length));
         return result;
     }
 

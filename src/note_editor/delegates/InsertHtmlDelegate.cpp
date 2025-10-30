@@ -281,7 +281,8 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
 
         m_resourceInfo.cacheResourceInfo(
             *resource.data()->bodyHash(), resourceDisplayName(resource),
-            humanReadableSize(static_cast<quint64>(*resource.data()->size())),
+            utility::humanReadableSize(
+                static_cast<quint64>(*resource.data()->size())),
             imgData.m_resourceFileStoragePath, resourceImageSize);
 
         resources << resource;

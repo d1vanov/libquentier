@@ -489,7 +489,7 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(
 
     QNTRACE(
         "note_editor",
-        "Size of new resource data: " << humanReadableSize(
+        "Size of new resource data: " << utility::humanReadableSize(
             static_cast<quint64>(std::max<qsizetype>(data.size(), 0))));
 
     const QByteArray dataHash = calculateHash(data);

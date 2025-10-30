@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -357,7 +357,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
 
     const QString displayName = resourceDisplayName(m_rotatedResource);
 
-    const QString displaySize = humanReadableSize(
+    const QString displaySize = utility::humanReadableSize(
         static_cast<quint64>(*m_rotatedResource.data()->size()));
 
     m_rotatedResource.mutableData()->setBodyHash(dataHash);

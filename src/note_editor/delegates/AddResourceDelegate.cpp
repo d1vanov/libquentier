@@ -715,9 +715,9 @@ bool AddResourceDelegate::checkResourceDataSize(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate" << "::checkResourceDataSize: size = "
-                              << humanReadableSize(static_cast<quint64>(
-                                     std::max(size, qint64(0)))));
+        "AddResourceDelegate::checkResourceDataSize: size = "
+            << utility::humanReadableSize(
+                   static_cast<quint64>(std::max(size, qint64(0)))));
 
     if (note.limits()) {
         const auto & limits = *note.limits();
@@ -728,7 +728,7 @@ bool AddResourceDelegate::checkResourceDataSize(
             ErrorString error(
                 QT_TR_NOOP("Can't add attachment: the resource to be added is "
                            "too large, max resource size allowed is"));
-            error.details() = humanReadableSize(
+            error.details() = utility::humanReadableSize(
                 static_cast<quint64>(*limits.resourceSizeMax()));
             Q_EMIT notifyError(error);
             return false;
@@ -743,7 +743,7 @@ bool AddResourceDelegate::checkResourceDataSize(
                 "Can't add attachment: the addition of the resource :"
                 "would violate the max resource size which is"));
             error.details() =
-                humanReadableSize(static_cast<quint64>(*limits.noteSizeMax()));
+                utility::humanReadableSize(static_cast<quint64>(*limits.noteSizeMax()));
             Q_EMIT notifyError(error);
             return false;
         }
@@ -752,7 +752,7 @@ bool AddResourceDelegate::checkResourceDataSize(
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: the resource is "
                        "too large, max resource size allowed is"));
-        error.details() = humanReadableSize(
+        error.details() = utility::humanReadableSize(
             static_cast<quint64>(pAccount->resourceSizeMax()));
         Q_EMIT notifyError(error);
         return false;

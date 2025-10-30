@@ -544,7 +544,7 @@ void NoteEditorPrivate::onResourceFileChanged(
             << "resource local id = " << resourceLocalId
             << ", file storage path: " << fileStoragePath
             << ", new resource data size = "
-            << humanReadableSize(static_cast<quint64>(
+            << utility::humanReadableSize(static_cast<quint64>(
                    std::max<qsizetype>(resourceData.size(), 0)))
             << ", resource data hash = " << resourceDataHash.toHex());
 
@@ -615,7 +615,7 @@ void NoteEditorPrivate::onResourceFileChanged(
     const QString displayName = resourceDisplayName(resource);
 
     const QString displaySize =
-        humanReadableSize(static_cast<quint64>(resourceData.size()));
+        utility::humanReadableSize(static_cast<quint64>(resourceData.size()));
 
     QNTRACE("note_editor", "Updating resource within the note: " << resource);
 
@@ -1622,7 +1622,8 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(
 
     m_resourceInfo.cacheResourceInfo(
         *addedResource.data()->bodyHash(), resourceDisplayName(addedResource),
-        humanReadableSize(static_cast<quint64>(*addedResource.data()->size())),
+        utility::humanReadableSize(
+            static_cast<quint64>(*addedResource.data()->size())),
         resourceFileStoragePath, resourceImageSize);
 
     setupGenericResourceImages();
@@ -3296,8 +3297,9 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(
 
         const QString displayName = resourceDisplayName(resource);
 
-        const QString displaySize = humanReadableSize(static_cast<quint64>(
-            std::max(*resource.data()->size(), qint32(0))));
+        const QString displaySize =
+            utility::humanReadableSize(static_cast<quint64>(
+                std::max(*resource.data()->size(), qint32(0))));
 
         QSize resourceImageSize;
         if (resource.height() && resource.width()) {
@@ -3884,7 +3886,7 @@ bool NoteEditorPrivate::checkNoteSize(
             errorDescription.setBase(
                 QT_TR_NOOP("Note size (text + resources) "
                            "exceeds the allowed maximum"));
-            errorDescription.details() = humanReadableSize(
+            errorDescription.details() = utility::humanReadableSize(
                 static_cast<quint64>(*noteLimits.noteSizeMax()));
             QNINFO("note_editor", errorDescription);
             return false;
@@ -3909,7 +3911,7 @@ bool NoteEditorPrivate::checkNoteSize(
             errorDescription.setBase(
                 QT_TR_NOOP("Note size (text + resources) "
                            "exceeds the allowed maximum"));
-            errorDescription.details() = humanReadableSize(
+            errorDescription.details() = utility::humanReadableSize(
                 static_cast<quint64>(m_pAccount->noteSizeMax()));
             QNINFO("note_editor", errorDescription);
             return false;
@@ -4962,7 +4964,7 @@ QImage NoteEditorPrivate::buildGenericResourceImage(
     if ((resource.data() && resource.data()->size()) ||
         (resource.alternateData() && resource.alternateData()->size()))
     {
-        resourceHumanReadableSize = humanReadableSize(
+        resourceHumanReadableSize = utility::humanReadableSize(
             (resource.data() && resource.data()->size())
                 ? static_cast<quint64>(*resource.data()->size())
                 : static_cast<quint64>(*resource.alternateData()->size()));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 
 #include <QString>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * humanReadableSize provides the human readable string denoting the size
@@ -34,5 +34,12 @@ namespace quentier {
  *                  number of bytes
  */
 [[nodiscard]] QString QUENTIER_EXPORT humanReadableSize(quint64 bytes);
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+using utility::humanReadableSize;
 
 } // namespace quentier

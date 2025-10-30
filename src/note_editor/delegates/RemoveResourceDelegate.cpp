@@ -147,7 +147,7 @@ void RemoveResourceDelegate::doStart()
             tr("Are you sure you want to remove this "
                "attachment? Due to its large size") +
                 QStringLiteral(" (") +
-                humanReadableSize(
+                utility::humanReadableSize(
                     static_cast<quint64>(std::max(resourceDataSize, 0))) +
                 QStringLiteral(") ") + tr("its removal would be irreversible"));
 

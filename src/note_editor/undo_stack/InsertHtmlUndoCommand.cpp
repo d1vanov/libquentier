@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -227,7 +227,7 @@ void InsertHtmlUndoCommand::redoImpl()
 
             m_resourceInfo.cacheResourceInfo(
                 *resource.data()->bodyHash(), resourceDisplayName(resource),
-                humanReadableSize(
+                utility::humanReadableSize(
                     static_cast<quint64>(*resource.data()->size())),
                 m_resourceFileStoragePaths[static_cast<int>(index)],
                 resourceImageSize);

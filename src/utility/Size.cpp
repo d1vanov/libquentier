@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include <QStringList>
 
-namespace quentier {
+namespace quentier::utility {
 
 QString humanReadableSize(const quint64 bytes)
 {
@@ -44,4 +44,4 @@ QString humanReadableSize(const quint64 bytes)
     return result;
 }
 
-} // namespace quentier
+} // namespace quentier::utility
