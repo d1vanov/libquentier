@@ -742,8 +742,8 @@ bool AddResourceDelegate::checkResourceDataSize(
             ErrorString error(QT_TR_NOOP(
                 "Can't add attachment: the addition of the resource :"
                 "would violate the max resource size which is"));
-            error.details() =
-                utility::humanReadableSize(static_cast<quint64>(*limits.noteSizeMax()));
+            error.details() = utility::humanReadableSize(
+                static_cast<quint64>(*limits.noteSizeMax()));
             Q_EMIT notifyError(error);
             return false;
         }
