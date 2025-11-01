@@ -27,7 +27,7 @@
 
 int main(int argc, char * argv[])
 {
-    quentier::QuentierApplication app(argc, argv);
+    quentier::utility::QuentierApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
     QCoreApplication::setApplicationName(QStringLiteral("LibquentierTests"));
 
