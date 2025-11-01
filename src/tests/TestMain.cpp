@@ -45,7 +45,7 @@ int main(int argc, char * argv[])
 
     // Remove any persistence left after the previous run of tests
     QString libquentierTestsPersistencePath =
-        quentier::applicationPersistentStoragePath();
+        quentier::utility::applicationPersistentStoragePath();
 
     QDir libquentierTestsPersistenceDir(libquentierTestsPersistencePath);
     if (libquentierTestsPersistenceDir.exists()) {

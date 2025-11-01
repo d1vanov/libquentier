@@ -61,14 +61,14 @@ ResourceDataInTemporaryFileStorageManager::
 QString ResourceDataInTemporaryFileStorageManager::
     imageResourceFileStorageFolderPath()
 {
-    return applicationTemporaryStoragePath() +
+    return utility::applicationTemporaryStoragePath() +
         QStringLiteral("/resources/image");
 }
 
 QString ResourceDataInTemporaryFileStorageManager::
     nonImageResourceFileStorageFolderPath()
 {
-    return applicationTemporaryStoragePath() +
+    return utility::applicationTemporaryStoragePath() +
         QStringLiteral("/resources/non-image");
 }
 

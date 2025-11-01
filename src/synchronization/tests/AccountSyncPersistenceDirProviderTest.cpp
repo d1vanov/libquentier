@@ -36,17 +36,17 @@ protected:
     void SetUp() override
     {
         m_originalPersistenceStoragePath =
-            qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+            qgetenv(utility::gLibquentierPersistenceStoragePath);
 
         qputenv(
-            LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+            utility::gLibquentierPersistenceStoragePath,
             m_temporaryDir.path().toLocal8Bit());
     }
 
     void TearDown() override
     {
         qputenv(
-            LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+            utility::gLibquentierPersistenceStoragePath,
             m_originalPersistenceStoragePath);
     }
 

@@ -80,7 +80,7 @@ TEST(PatchUtilsTest, BackupLocalStorageTest)
     writerThread->start();
 
     qputenv(
-        LIBQUENTIER_PERSISTENCE_STORAGE_PATH,
+        utility::gLibquentierPersistenceStoragePath,
         testLocalStorageDir.path().toLocal8Bit());
 
     const QString backupDirPrefix = QStringLiteral("backup_dir");

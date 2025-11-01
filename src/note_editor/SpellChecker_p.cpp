@@ -773,7 +773,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
             "settings, fallback to the default path");
 
         const QString fallbackUserDictionaryPath =
-            applicationPersistentStoragePath() +
+            utility::applicationPersistentStoragePath() +
             QStringLiteral("/spellcheck/user_dictionary.txt");
 
         if (!checkUserDictionaryPath(fallbackUserDictionaryPath)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,18 +28,21 @@
 #define LIBQUENTIER_PERSISTENCE_STORAGE_PATH                                   \
     "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"
 
-namespace quentier {
+namespace quentier::utility {
+
+constexpr const char * gLibquentierPersistenceStoragePath =
+    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH";
 
 /**
  * applicationPersistentStoragePath returns the path to folder in which
  * the application should store its persistent data. By default chooses
  * the appropriate system location but that can be overridden by setting
- * QUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard
+ * LIBQUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard
  * location is overridden via the environment variable, the bool pointed to
- * by pNonStandardLocation (if any) is set to false
+ * by nonStandardLocation (if any) is set to false
  */
 [[nodiscard]] QString QUENTIER_EXPORT
-    applicationPersistentStoragePath(bool * pNonStandardLocation = nullptr);
+    applicationPersistentStoragePath(bool * nonStandardLocation = nullptr);
 
 /**
  * accountPersistentStoragePath returns the path to account-specific folder
@@ -70,5 +73,15 @@ namespace quentier {
  * @return          The path to user's documents storage directory
  */
 [[nodiscard]] QString QUENTIER_EXPORT documentsPath();
+
+} // namespace quentier::utility
+
+namespace quentier {
+
+using utility::applicationPersistentStoragePath;
+using utility::accountPersistentStoragePath;
+using utility::applicationTemporaryStoragePath;
+using utility::homePath;
+using utility::documentsPath;
 
 } // namespace quentier

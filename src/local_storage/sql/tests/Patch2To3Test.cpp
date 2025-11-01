@@ -71,8 +71,6 @@ using namespace std::string_literals;
 
 namespace {
 
-const char * gAppPersistentStoragePath = "LIBQUENTIER_PERSISTENCE_STORAGE_PATH";
-
 const QString gTestAccountName = QStringLiteral("testAccountName");
 
 const QString gTestDbConnectionName =
@@ -137,12 +135,14 @@ protected:
 
         m_thread->start();
 
-        qputenv(gAppPersistentStoragePath, m_temporaryDir.path().toUtf8());
+        qputenv(
+            utility::gLibquentierPersistenceStoragePath,
+            m_temporaryDir.path().toUtf8());
     }
 
     void TearDown() override
     {
-        qunsetenv(gAppPersistentStoragePath);
+        qunsetenv(utility::gLibquentierPersistenceStoragePath);
 
         m_thread->quit();
         m_thread->wait();

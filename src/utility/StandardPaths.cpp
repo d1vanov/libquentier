@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,16 +23,15 @@
 #include <QDesktopServices>
 #include <QStandardPaths>
 
-namespace quentier {
+namespace quentier::utility {
 
-QString applicationPersistentStoragePath(bool * pNonStandardLocation)
+QString applicationPersistentStoragePath(bool * nonStandardLocation)
 {
-    const QByteArray envOverride =
-        qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+    const QByteArray envOverride = qgetenv(gLibquentierPersistenceStoragePath);
 
     if (!envOverride.isEmpty()) {
-        if (pNonStandardLocation) {
-            *pNonStandardLocation = true;
+        if (nonStandardLocation) {
+            *nonStandardLocation = true;
         }
 
         return QString::fromLocal8Bit(envOverride);
@@ -103,4 +102,4 @@ QString documentsPath()
     return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

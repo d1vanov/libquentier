@@ -306,7 +306,7 @@ QuentierLogger::QuentierLogger(QObject * parent) :
 
 QString QuentierLogger::logFilesDirPath()
 {
-    return applicationPersistentStoragePath() +
+    return utility::applicationPersistentStoragePath() +
         QStringLiteral("/logs-quentier");
 }
 
