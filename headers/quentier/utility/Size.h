@@ -36,10 +36,3 @@ namespace quentier::utility {
 [[nodiscard]] QString QUENTIER_EXPORT humanReadableSize(quint64 bytes);
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-using utility::humanReadableSize;
-
-} // namespace quentier
