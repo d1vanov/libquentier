@@ -78,10 +78,10 @@ constexpr const char * gLibquentierPersistenceStoragePath =
 
 namespace quentier {
 
-using utility::applicationPersistentStoragePath;
 using utility::accountPersistentStoragePath;
+using utility::applicationPersistentStoragePath;
 using utility::applicationTemporaryStoragePath;
-using utility::homePath;
 using utility::documentsPath;
+using utility::homePath;
 
 } // namespace quentier
