@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include "StringUtils_p.h"
 
-namespace quentier {
+namespace quentier::utility {
 
 StringUtils::StringUtils() : d_ptr(new StringUtilsPrivate) {}
 
@@ -47,5 +47,14 @@ void StringUtils::removeNewlines(QString & str) const
     Q_D(const StringUtils);
     d->removeNewlines(str);
 }
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+StringUtils::StringUtils() = default;
+
+StringUtils::~StringUtils() noexcept = default;
 
 } // namespace quentier

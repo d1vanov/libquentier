@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,9 +24,7 @@
 #include <QSet>
 #include <QString>
 
-namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(StringUtilsPrivate)
+namespace quentier::utility {
 
 class QUENTIER_EXPORT StringUtils
 {
@@ -41,8 +39,21 @@ public:
     void removeNewlines(QString & str) const;
 
 private:
+    class StringUtilsPrivate;
     StringUtilsPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(StringUtils);
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT StringUtils : public utility::StringUtils
+{
+public:
+    StringUtils();
+    ~StringUtils() noexcept;
 };
 
 } // namespace quentier

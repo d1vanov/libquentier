@@ -1319,7 +1319,7 @@ private:
     SpellChecker * m_pSpellChecker = nullptr;
     bool m_spellCheckerEnabled = false;
     QSet<QString> m_currentNoteMisSpelledWords;
-    StringUtils m_stringUtils;
+    utility::StringUtils m_stringUtils;
 
     QString m_lastSelectedHtml;
     QString m_lastSelectedHtmlForEncryption;

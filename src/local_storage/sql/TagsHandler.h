@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -131,7 +131,7 @@ private:
     const threading::QThreadPtr m_thread;
     Notifier * m_notifier;
 
-    StringUtils m_stringUtils;
+    utility::StringUtils m_stringUtils;
 };
 
 } // namespace quentier::local_storage::sql

@@ -30,7 +30,6 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/StringUtils.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>

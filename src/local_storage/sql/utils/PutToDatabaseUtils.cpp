@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2179,7 +2179,7 @@ bool putTag(
     QString tagNameNormalized;
     if (tag.name()) {
         tagNameNormalized = tag.name()->toLower();
-        StringUtils stringUtils;
+        utility::StringUtils stringUtils;
         stringUtils.removeDiacritics(tagNameNormalized);
     }
 
@@ -2929,7 +2929,7 @@ bool putResourceRecognitionData(
 
     recognitionData.chop(1); // Remove trailing whitespace
 
-    StringUtils stringUtils;
+    utility::StringUtils stringUtils;
     stringUtils.removePunctuation(recognitionData);
     stringUtils.removeDiacritics(recognitionData);
 
@@ -3169,7 +3169,7 @@ bool putCommonNoteData(
             "failed to prepare query"),
         false);
 
-    StringUtils stringUtils;
+    utility::StringUtils stringUtils;
 
     const QString titleNormalized = [&] {
         if (!note.title()) {

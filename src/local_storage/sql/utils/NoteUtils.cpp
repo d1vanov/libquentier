@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -451,7 +451,7 @@ void contentSearchTermToSqlQueryParts(
     const QStringList & contentSearchTerms =
         noteSearchQuery.contentSearchTerms();
 
-    StringUtils stringUtils;
+    utility::StringUtils stringUtils;
     const auto asterisk = QList<QChar>{} << QChar::fromLatin1('*');
 
     if (!contentSearchTerms.isEmpty()) {

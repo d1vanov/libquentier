@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,9 +23,9 @@
 #include <QHash>
 #include <QStringList>
 
-namespace quentier {
+namespace quentier::utility {
 
-class StringUtilsPrivate
+class StringUtils::StringUtilsPrivate
 {
 public:
     StringUtilsPrivate();
@@ -44,4 +44,4 @@ private:
     QStringList m_noDiacriticLetters;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

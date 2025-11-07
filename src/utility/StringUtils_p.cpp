@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,14 +25,14 @@
 
 #include <utility>
 
-namespace quentier {
+namespace quentier::utility {
 
-StringUtilsPrivate::StringUtilsPrivate()
+StringUtils::StringUtilsPrivate::StringUtilsPrivate()
 {
     initialize();
 }
 
-void StringUtilsPrivate::removePunctuation(
+void StringUtils::StringUtilsPrivate::removePunctuation(
     QString & str, const QList<QChar> & charactersToPreserve) const
 {
     QString filterStr =
@@ -53,7 +53,7 @@ void StringUtilsPrivate::removePunctuation(
     str.remove(punctuationFilter);
 }
 
-void StringUtilsPrivate::removeDiacritics(QString & str) const
+void StringUtils::StringUtilsPrivate::removeDiacritics(QString & str) const
 {
     QNTRACE("utility:string", "str before normalizing by KD form: " << str);
     str = str.normalized(QString::NormalizationForm_KD);
@@ -83,13 +83,13 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
     QNTRACE("utility:string", "str after removing diacritics: " << str);
 }
 
-void StringUtilsPrivate::removeNewlines(QString & str) const
+void StringUtils::StringUtilsPrivate::removeNewlines(QString & str) const
 {
     static const QRegularExpression regexp{QStringLiteral("[\n\r\v\f]")};
     str.replace(regexp, QStringLiteral(" "));
 }
 
-void StringUtilsPrivate::initialize()
+void StringUtils::StringUtilsPrivate::initialize()
 {
     m_diacriticLetters = QString::fromUtf8(
         "ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæ"
@@ -123,4 +123,4 @@ void StringUtilsPrivate::initialize()
         << QStringLiteral("u") << QStringLiteral("y") << QStringLiteral("y");
 }
 
-} // namespace quentier
+} // namespace quentier::utility
