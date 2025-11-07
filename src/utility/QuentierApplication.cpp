@@ -59,13 +59,3 @@ bool QuentierApplication::event(QEvent * event)
 }
 
 } // namespace quentier::utility
-
-namespace quentier {
-
-QuentierApplication::QuentierApplication(int & argc, char * argv[]) // NOLINT
-    : utility::QuentierApplication(argc, argv)
-{}
-
-QuentierApplication::~QuentierApplication() noexcept = default;
-
-} // namespace quentier

@@ -36,17 +36,3 @@ public:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT QuentierApplication : public utility::QuentierApplication
-{
-    Q_OBJECT;
-
-public:
-    QuentierApplication(int & argc, char * argv[]); // NOLINT
-    ~QuentierApplication() noexcept override;
-};
-
-} // namespace quentier

@@ -75,13 +75,3 @@ constexpr const char * gLibquentierPersistenceStoragePath =
 [[nodiscard]] QString QUENTIER_EXPORT documentsPath();
 
 } // namespace quentier::utility
-
-namespace quentier {
-
-using utility::accountPersistentStoragePath;
-using utility::applicationPersistentStoragePath;
-using utility::applicationTemporaryStoragePath;
-using utility::documentsPath;
-using utility::homePath;
-
-} // namespace quentier

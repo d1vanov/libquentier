@@ -189,16 +189,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT ShortcutManager : public utility::ShortcutManager
-{
-    Q_OBJECT
-public:
-    explicit ShortcutManager(QObject * parent = nullptr);
-    ~ShortcutManager() override;
-};
-
-} // namespace quentier

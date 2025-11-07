@@ -226,13 +226,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migration to namespaced version in Quentier
-namespace quentier {
-
-template <
-    class Key, class Value,
-    class Allocator = std::allocator<std::pair<Key, Value>>>
-using LRUCache = utility::LRUCache<Key, Value, Allocator>;
-
-} // namespace quentier

@@ -106,14 +106,3 @@ void ShortcutManager::setNonStandardDefaultShortcut(
 }
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-ShortcutManager::ShortcutManager(QObject * parent) :
-    utility::ShortcutManager(parent)
-{}
-
-ShortcutManager::~ShortcutManager() = default;
-
-} // namespace quentier
