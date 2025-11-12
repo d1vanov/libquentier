@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,7 +33,7 @@
 
 #include <cstddef>
 
-namespace quentier {
+namespace quentier::utility {
 
 qint64 SysInfo::totalMemory()
 {
@@ -85,4 +85,4 @@ QString SysInfo::stackTrace()
         "patches are welcome");
 }
 
-} // namespace quentier
+} // namespace quentier::utility

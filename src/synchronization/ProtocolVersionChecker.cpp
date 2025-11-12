@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -51,7 +51,7 @@ namespace {
     clientName += QCoreApplication::applicationVersion();
     clientName += QStringLiteral("; ");
 
-    SysInfo sysInfo;
+    utility::SysInfo sysInfo;
     QString platformName = sysInfo.platformName();
     clientName += platformName;
 

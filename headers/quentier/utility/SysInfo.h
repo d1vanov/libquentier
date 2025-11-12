@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,9 +22,7 @@
 
 #include <QString>
 
-namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(SysInfoPrivate)
+namespace quentier::utility {
 
 class QUENTIER_EXPORT SysInfo
 {
@@ -44,8 +42,21 @@ private:
     Q_DISABLE_COPY(SysInfo)
 
 private:
+    class SysInfoPrivate;
     SysInfoPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(SysInfo)
+};
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+class QUENTIER_EXPORT SysInfo : public utility::SysInfo
+{
+public:
+    SysInfo();
+    ~SysInfo() noexcept;
 };
 
 } // namespace quentier

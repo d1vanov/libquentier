@@ -50,7 +50,7 @@ ConnectionPool::ConnectionPool(
     m_password{std::move(password)}, m_databaseName{std::move(databaseName)},
     m_sqlDriverName{std::move(sqlDriverName)},
     m_connectionOptions{std::move(connectionOptions)}, m_pageSize{[] {
-        SysInfo sysInfo;
+        utility::SysInfo sysInfo;
         return sysInfo.pageSize();
     }()}
 {

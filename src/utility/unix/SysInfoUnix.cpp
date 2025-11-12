@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,11 @@
 
 #include <unistd.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 qint64 SysInfo::pageSize()
 {
     return static_cast<qint64>(sysconf(_SC_PAGESIZE));
 }
 
-} // namespace quentier
+} // namespace quentier::utility

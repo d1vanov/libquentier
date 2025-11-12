@@ -36,7 +36,7 @@ bool QuentierApplication::notify(QObject * object, QEvent * event)
         return QApplication::notify(object, event);
     }
     catch (const std::exception & e) {
-        SysInfo sysInfo;
+        utility::SysInfo sysInfo;
         QNERROR(
             "utility:app",
             "Caught unhandled exception: " << e.what() << ", backtrace: "

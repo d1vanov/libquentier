@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -73,7 +73,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionSuccess)
         .WillOnce([&](const QString & clientName, qint16 versionMajor,
                       qint16 versionMinor,
                       const qevercloud::IRequestContextPtr & ctx) {
-            SysInfo sysInfo;
+            utility::SysInfo sysInfo;
 
             EXPECT_EQ(
                 clientName,
@@ -113,7 +113,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionImplicitFailure)
         .WillOnce([&](const QString & clientName, qint16 versionMajor,
                       qint16 versionMinor,
                       const qevercloud::IRequestContextPtr & ctx) {
-            SysInfo sysInfo;
+            utility::SysInfo sysInfo;
 
             EXPECT_EQ(
                 clientName,
@@ -161,7 +161,7 @@ TEST_F(ProtocolVersionCheckerTest, CheckProtocolVersionExplicitFailure)
         .WillOnce([&](const QString & clientName, qint16 versionMajor,
                       qint16 versionMinor,
                       const qevercloud::IRequestContextPtr & ctx) {
-            SysInfo sysInfo;
+            utility::SysInfo sysInfo;
 
             EXPECT_EQ(
                 clientName,

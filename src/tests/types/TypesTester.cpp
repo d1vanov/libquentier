@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,7 @@
 
 #define CATCH_EXCEPTION()                                                      \
     catch (const std::exception & exception) {                                 \
-        SysInfo sysInfo;                                                       \
+        utility::SysInfo sysInfo;                                              \
         QFAIL(qPrintable(                                                      \
             QStringLiteral("Caught exception: ") +                             \
             QString::fromUtf8(exception.what()) +                              \

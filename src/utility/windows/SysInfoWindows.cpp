@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@
 
 #include <windows.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 qint64 SysInfo::pageSize()
 {
@@ -77,4 +77,4 @@ QString SysInfo::stackTrace()
         "patches are welcome");
 }
 
-} // namespace quentier
+} // namespace quentier::utility

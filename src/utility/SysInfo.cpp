@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 
 #include <QSysInfo>
 
-namespace quentier {
+namespace quentier::utility {
 
 SysInfo::SysInfo() : d_ptr(new SysInfoPrivate) {}
 
@@ -35,5 +35,13 @@ QString SysInfo::platformName()
 {
     return QSysInfo::prettyProductName();
 }
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+SysInfo::SysInfo() = default;
+SysInfo::~SysInfo() noexcept = default;
 
 } // namespace quentier

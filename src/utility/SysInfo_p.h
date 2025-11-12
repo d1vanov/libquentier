@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,11 +18,13 @@
 
 #pragma once
 
+#include <quentier/utility/SysInfo.h>
+
 #include <QMutex>
 
-namespace quentier {
+namespace quentier::utility {
 
-class SysInfoPrivate
+class SysInfo::SysInfoPrivate
 {
 public:
     SysInfoPrivate() = default;
@@ -30,4 +32,4 @@ public:
     QMutex m_mutex;
 };
 
-} // namespace quentier
+} // namespace quentier::utility

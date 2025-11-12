@@ -55,7 +55,7 @@ void UtilityTester::init()
 
 #define CATCH_EXCEPTION()                                                      \
     catch (const std::exception & exception) {                                 \
-        SysInfo sysInfo;                                                       \
+        utility::SysInfo sysInfo;                                              \
         QFAIL(qPrintable(                                                      \
             QStringLiteral("Caught exception: ") +                             \
             QString::fromUtf8(exception.what()) +                              \

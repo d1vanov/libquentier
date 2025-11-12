@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@
 #include <QMutexLocker>
 #include <QString>
 
-namespace quentier {
+namespace quentier::utility {
 
 qint64 SysInfo::totalMemory()
 {
@@ -82,7 +82,7 @@ QString SysInfo::stackTrace()
     FILE * fileHandle = freopen(tmpFile.toLocal8Bit().data(), "w", stderr);
     if (!fileHandle) {
         perror("Can't reopen stderr");
-        return QString();
+        return {};
     }
 
     stacktrace::displayCurrentStackTrace();
@@ -103,4 +103,4 @@ QString SysInfo::stackTrace()
     return QString::fromLocal8Bit(file.readAll());
 }
 
-} // namespace quentier
+} // namespace quentier::utility
