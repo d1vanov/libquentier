@@ -49,12 +49,3 @@ void StringUtils::removeNewlines(QString & str) const
 }
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-StringUtils::StringUtils() = default;
-
-StringUtils::~StringUtils() noexcept = default;
-
-} // namespace quentier

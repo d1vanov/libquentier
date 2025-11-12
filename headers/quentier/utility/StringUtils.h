@@ -45,15 +45,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT StringUtils : public utility::StringUtils
-{
-public:
-    StringUtils();
-    ~StringUtils() noexcept;
-};
-
-} // namespace quentier
