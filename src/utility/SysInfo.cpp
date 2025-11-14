@@ -37,11 +37,3 @@ QString SysInfo::platformName()
 }
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-SysInfo::SysInfo() = default;
-SysInfo::~SysInfo() noexcept = default;
-
-} // namespace quentier

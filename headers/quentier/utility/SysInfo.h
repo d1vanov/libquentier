@@ -48,15 +48,3 @@ private:
 };
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-class QUENTIER_EXPORT SysInfo : public utility::SysInfo
-{
-public:
-    SysInfo();
-    ~SysInfo() noexcept;
-};
-
-} // namespace quentier
