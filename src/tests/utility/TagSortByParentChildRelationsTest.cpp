@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -155,7 +155,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << eighthTag;
 
     ErrorString errorDescription;
-    bool res = sortTagsByParentChildRelations(tags, errorDescription);
+    bool res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -168,7 +168,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
 
     // Check the already sorted list
     errorDescription.clear();
-    res = sortTagsByParentChildRelations(tags, errorDescription);
+    res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -186,7 +186,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << thirdTag;
 
     errorDescription.clear();
-    res = sortTagsByParentChildRelations(tags, errorDescription);
+    res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -201,7 +201,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags.clear();
 
     errorDescription.clear();
-    res = sortTagsByParentChildRelations(tags, errorDescription);
+    res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -217,7 +217,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << firstTag;
 
     errorDescription.clear();
-    res = sortTagsByParentChildRelations(tags, errorDescription);
+    res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -234,7 +234,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << secondTag;
 
     errorDescription.clear();
-    res = sortTagsByParentChildRelations(tags, errorDescription);
+    res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -252,7 +252,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << fourthTag;
 
     errorDescription.clear();
-    res = sortTagsByParentChildRelations(tags, errorDescription);
+    res = utility::sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;

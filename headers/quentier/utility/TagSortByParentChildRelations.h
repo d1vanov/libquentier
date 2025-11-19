@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,19 +18,14 @@
 
 #pragma once
 
+#include <quentier/types/Fwd.h>
 #include <quentier/utility/Linkage.h>
+
+#include <qevercloud/types/Fwd.h>
 
 #include <QList>
 
-namespace qevercloud {
-
-class Tag;
-
-} // namespace qevercloud
-
-namespace quentier {
-
-class ErrorString;
+namespace quentier::utility {
 
 /**
  * Sorts the tags within the passed in list in such a manner that all parent
@@ -46,4 +41,4 @@ class ErrorString;
 bool QUENTIER_EXPORT sortTagsByParentChildRelations(
     QList<qevercloud::Tag> & tagList, ErrorString & errorDescription);
 
-} // namespace quentier
+} // namespace quentier::utility

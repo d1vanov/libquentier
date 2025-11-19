@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 
 #include <utility>
 
-namespace quentier {
+namespace quentier::utility {
 
 bool sortTagsByParentChildRelations(
     QList<qevercloud::Tag> & tagList, ErrorString & errorDescription)
@@ -185,4 +185,4 @@ bool sortTagsByParentChildRelations(
     return true;
 }
 
-} // namespace quentier
+} // namespace quentier::utility

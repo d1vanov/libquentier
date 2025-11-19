@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -180,7 +180,7 @@ QFuture<void> TagsProcessor::processTagsList(
     }
 
     ErrorString errorDescription;
-    if (!sortTagsByParentChildRelations(tags, errorDescription)) {
+    if (!utility::sortTagsByParentChildRelations(tags, errorDescription)) {
         return threading::makeExceptionalFuture<void>(
             RuntimeError{std::move(errorDescription)});
     }

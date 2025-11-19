@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -854,7 +854,7 @@ void Sender::sendTags(
     // set parentGuid property to its child tags which are already inside "tags"
     // list.
     ErrorString errorDescription;
-    if (!sortTagsByParentChildRelations(tags, errorDescription)) {
+    if (!utility::sortTagsByParentChildRelations(tags, errorDescription)) {
         promise->setException(RuntimeError{std::move(errorDescription)});
         promise->finish();
         return;
