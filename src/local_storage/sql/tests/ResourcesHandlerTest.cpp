@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -103,7 +103,7 @@ namespace {
 [[nodiscard]] qevercloud::Notebook createNotebook()
 {
     qevercloud::Notebook notebook;
-    notebook.setGuid(UidGenerator::Generate());
+    notebook.setGuid(utility::UidGenerator::Generate());
     notebook.setName(QStringLiteral("name"));
     notebook.setUpdateSequenceNum(1);
 
@@ -124,7 +124,7 @@ namespace {
     note.setNotebookLocalId(notebook.localId());
     note.setNotebookGuid(notebook.guid());
 
-    note.setGuid(UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::Generate());
     note.setUpdateSequenceNum(1);
 
     note.setTitle(QStringLiteral("Title"));
@@ -160,7 +160,7 @@ Q_DECLARE_FLAGS(CreateResourceOptions, CreateResourceOption);
     resource.setLocallyModified(true);
 
     if (noteGuid) {
-        resource.setGuid(UidGenerator::Generate());
+        resource.setGuid(utility::UidGenerator::Generate());
         resource.setUpdateSequenceNum(42);
     }
 
@@ -343,15 +343,15 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto resourceFuture =
-        resourcesHandler->findResourceByLocalId(UidGenerator::Generate());
+    auto resourceFuture = resourcesHandler->findResourceByLocalId(
+        utility::UidGenerator::Generate());
 
     resourceFuture.waitForFinished();
     ASSERT_EQ(resourceFuture.resultCount(), 1);
     EXPECT_FALSE(resourceFuture.result());
 
     resourceFuture = resourcesHandler->findResourceByLocalId(
-        UidGenerator::Generate(),
+        utility::UidGenerator::Generate(),
         ILocalStorage::FetchResourceOption::WithBinaryData);
 
     resourceFuture.waitForFinished();
@@ -365,14 +365,14 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto resourceFuture =
-        resourcesHandler->findResourceByGuid(UidGenerator::Generate());
+        resourcesHandler->findResourceByGuid(utility::UidGenerator::Generate());
 
     resourceFuture.waitForFinished();
     ASSERT_EQ(resourceFuture.resultCount(), 1);
     EXPECT_FALSE(resourceFuture.result());
 
     resourceFuture = resourcesHandler->findResourceByGuid(
-        UidGenerator::Generate(),
+        utility::UidGenerator::Generate(),
         ILocalStorage::FetchResourceOption::WithBinaryData);
 
     resourceFuture.waitForFinished();
@@ -385,8 +385,8 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto expungeResourceFuture =
-        resourcesHandler->expungeResourceByLocalId(UidGenerator::Generate());
+    auto expungeResourceFuture = resourcesHandler->expungeResourceByLocalId(
+        utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
 }
@@ -396,8 +396,8 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByGuid)
     const auto resourcesHandler = std::make_shared<ResourcesHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto expungeResourceFuture =
-        resourcesHandler->expungeResourceByGuid(UidGenerator::Generate());
+    auto expungeResourceFuture = resourcesHandler->expungeResourceByGuid(
+        utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
 }
@@ -507,8 +507,8 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), 1);
 
-    resourceCountFuture =
-        resourcesHandler->resourceCountPerNoteLocalId(UidGenerator::Generate());
+    resourceCountFuture = resourcesHandler->resourceCountPerNoteLocalId(
+        utility::UidGenerator::Generate());
 
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), 0);
@@ -662,8 +662,8 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
          it != resources.end(); ++it)
     {
         auto & resource = *it;
-        resource.setLocalId(UidGenerator::Generate());
-        resource.setGuid(UidGenerator::Generate());
+        resource.setLocalId(utility::UidGenerator::Generate());
+        resource.setGuid(utility::UidGenerator::Generate());
 
         resource.setUpdateSequenceNum(resourceCounter);
         ++resourceCounter;
@@ -699,8 +699,8 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), resources.size());
 
-    resourceCountFuture =
-        resourcesHandler->resourceCountPerNoteLocalId(UidGenerator::Generate());
+    resourceCountFuture = resourcesHandler->resourceCountPerNoteLocalId(
+        utility::UidGenerator::Generate());
 
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), 0);

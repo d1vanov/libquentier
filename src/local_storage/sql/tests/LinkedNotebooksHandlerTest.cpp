@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -95,7 +95,7 @@ namespace {
         QStringLiteral("sharedNotebookGlobalId"));
 
     linkedNotebook.setUri(QStringLiteral("uri"));
-    linkedNotebook.setGuid(UidGenerator::Generate());
+    linkedNotebook.setGuid(utility::UidGenerator::Generate());
     linkedNotebook.setUpdateSequenceNum(1);
     linkedNotebook.setNoteStoreUrl(QStringLiteral("noteStoreUrl"));
     linkedNotebook.setWebApiUrlPrefix(QStringLiteral("webApiUrlPrefix"));
@@ -202,7 +202,7 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldNotFindNonexistentLinkedNotebookByGuid)
 
     auto linkedNotebookFuture =
         linkedNotebooksHandler->findLinkedNotebookByGuid(
-            UidGenerator::Generate());
+            utility::UidGenerator::Generate());
 
     linkedNotebookFuture.waitForFinished();
     ASSERT_EQ(linkedNotebookFuture.resultCount(), 1);
@@ -219,7 +219,7 @@ TEST_F(
 
     auto expungeLinkedNotebookFuture =
         linkedNotebooksHandler->expungeLinkedNotebookByGuid(
-            UidGenerator::Generate());
+            utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeLinkedNotebookFuture.waitForFinished());
 }

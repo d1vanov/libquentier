@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -106,7 +106,7 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::Generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -131,7 +131,7 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::Generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -162,7 +162,7 @@ TEST_F(InkNoteImageDownloaderFactoryTest, UserOwnNoteThumbnailDownloader)
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::Generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -197,8 +197,9 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = UidGenerator::Generate();
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -236,8 +237,9 @@ TEST_F(InkNoteImageDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = UidGenerator::Generate();
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)

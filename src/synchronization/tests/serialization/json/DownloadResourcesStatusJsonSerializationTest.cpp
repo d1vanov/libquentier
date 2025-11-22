@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -56,8 +56,8 @@ TEST_P(DownloadResourcesStatusJsonSerializationTest, SerializeAndDeserialize)
 
     const auto generateResource = [&] {
         return qevercloud::ResourceBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::Generate())
             .setUpdateSequenceNum(updateSequenceNumber++)
             .build();
     };
@@ -88,14 +88,14 @@ TEST_P(DownloadResourcesStatusJsonSerializationTest, SerializeAndDeserialize)
 
     status->m_processedResourceGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_processedResourceGuidsAndUsns[UidGenerator::Generate()] =
-            updateSequenceNumber++;
+        status->m_processedResourceGuidsAndUsns
+            [utility::UidGenerator::Generate()] = updateSequenceNumber++;
     }
 
     status->m_cancelledResourceGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_cancelledResourceGuidsAndUsns[UidGenerator::Generate()] =
-            updateSequenceNumber++;
+        status->m_cancelledResourceGuidsAndUsns
+            [utility::UidGenerator::Generate()] = updateSequenceNumber++;
     }
 
     status->m_stopSynchronizationError = GetParam();

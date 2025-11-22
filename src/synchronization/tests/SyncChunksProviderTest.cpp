@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -120,12 +120,12 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -136,12 +136,12 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -152,12 +152,12 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -197,12 +197,12 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -213,12 +213,12 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -234,12 +234,12 @@ TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -305,12 +305,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -321,12 +321,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -337,12 +337,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -411,12 +411,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -427,12 +427,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -448,12 +448,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -520,12 +520,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -536,12 +536,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -552,12 +552,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -629,12 +629,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -645,12 +645,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -666,12 +666,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -730,7 +730,8 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
     SyncChunksProvider provider{
         m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
 
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     const QList<std::pair<qint32, qint32>> usnsRange =
         QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
@@ -750,12 +751,12 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -766,12 +767,12 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -782,12 +783,12 @@ TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -817,7 +818,8 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
     SyncChunksProvider provider{
         m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
 
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     const QList<std::pair<qint32, qint32>> usnsRange =
         QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
@@ -836,12 +838,12 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -852,12 +854,12 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -875,12 +877,12 @@ TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -947,7 +949,8 @@ TEST_F(
     SyncChunksProvider provider{
         m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
 
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     InSequence s;
 
@@ -962,12 +965,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -978,12 +981,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -994,12 +997,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -1061,7 +1064,8 @@ TEST_F(
     SyncChunksProvider provider{
         m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
 
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     const QList<std::pair<qint32, qint32>> usnsRange =
         QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
@@ -1081,12 +1085,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -1097,12 +1101,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -1120,12 +1124,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -1191,7 +1195,8 @@ TEST_F(
     SyncChunksProvider provider{
         m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
 
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     InSequence s;
 
@@ -1206,12 +1211,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -1222,12 +1227,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -1238,12 +1243,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())
@@ -1311,7 +1316,8 @@ TEST_F(
     SyncChunksProvider provider{
         m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
 
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
 
     const QList<std::pair<qint32, qint32>> usnsRange =
         QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
@@ -1330,12 +1336,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #1"))
                           .setUpdateSequenceNum(0)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #2"))
                           .setUpdateSequenceNum(35)
                           .build())
@@ -1346,12 +1352,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #3"))
                           .setUpdateSequenceNum(36)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #4"))
                           .setUpdateSequenceNum(54)
                           .build())
@@ -1369,12 +1375,12 @@ TEST_F(
                .setNotebooks(
                    QList<qevercloud::Notebook>{}
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #5"))
                           .setUpdateSequenceNum(55)
                           .build()
                    << qevercloud::NotebookBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Notebook #6"))
                           .setUpdateSequenceNum(82)
                           .build())

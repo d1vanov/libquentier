@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 #include <QString>
 #include <QUuid>
 
-namespace quentier {
+namespace quentier::utility {
 
 class QUENTIER_EXPORT UidGenerator
 {
@@ -31,5 +31,12 @@ public:
     [[nodiscard]] static QString Generate();
     [[nodiscard]] static QString UidToString(const QUuid & uid);
 };
+
+} // namespace quentier::utility
+
+namespace quentier {
+
+class QUENTIER_EXPORT UidGenerator : public utility::UidGenerator
+{};
 
 } // namespace quentier

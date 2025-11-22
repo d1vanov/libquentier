@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -365,14 +365,14 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     Q_ASSERT(localNote.guid());
     const auto noteGuid = *localNote.guid();
 
-    localNote.setLocalId(UidGenerator::Generate());
+    localNote.setLocalId(utility::UidGenerator::Generate());
     localNote.setGuid(std::nullopt);
     localNote.setUpdateSequenceNum(std::nullopt);
     localNote.setLocallyModified(true);
 
     if (localNote.resources()) {
         for (auto & resource: *localNote.mutableResources()) {
-            resource.setLocalId(UidGenerator::Generate());
+            resource.setLocalId(utility::UidGenerator::Generate());
             resource.setGuid(std::nullopt);
             resource.setUpdateSequenceNum(std::nullopt);
             resource.setNoteGuid(std::nullopt);
@@ -464,7 +464,7 @@ void ResourcesProcessor::handleResourceConflict(
 
     Q_ASSERT(context);
 
-    localResource.setLocalId(UidGenerator::Generate());
+    localResource.setLocalId(utility::UidGenerator::Generate());
     localResource.setGuid(std::nullopt);
     localResource.setNoteGuid(std::nullopt);
     localResource.setUpdateSequenceNum(std::nullopt);

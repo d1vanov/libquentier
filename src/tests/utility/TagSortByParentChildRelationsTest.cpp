@@ -75,67 +75,67 @@ bool tagSortByParentChildRelationsTest(QString & error)
 {
     qevercloud::Tag firstTag;
     firstTag.setName(QStringLiteral("First tag"));
-    firstTag.setGuid(UidGenerator::Generate());
+    firstTag.setGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag secondTag;
     secondTag.setName(QStringLiteral("Second tag"));
-    secondTag.setGuid(UidGenerator::Generate());
+    secondTag.setGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag thirdTag;
     thirdTag.setName(QStringLiteral("Third tag"));
-    thirdTag.setGuid(UidGenerator::Generate());
+    thirdTag.setGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag fourthTag;
     fourthTag.setName(QStringLiteral("Fourth tag"));
-    fourthTag.setGuid(UidGenerator::Generate());
+    fourthTag.setGuid(utility::UidGenerator::Generate());
     fourthTag.setParentGuid(firstTag.guid());
     fourthTag.setParentTagLocalId(firstTag.localId());
 
     qevercloud::Tag fifthTag;
     fifthTag.setName(QStringLiteral("Fifth tag"));
-    fifthTag.setGuid(UidGenerator::Generate());
+    fifthTag.setGuid(utility::UidGenerator::Generate());
     fifthTag.setParentGuid(firstTag.guid());
     fifthTag.setParentTagLocalId(firstTag.localId());
 
     qevercloud::Tag sixthTag;
     sixthTag.setName(QStringLiteral("Sixth tag"));
-    sixthTag.setGuid(UidGenerator::Generate());
+    sixthTag.setGuid(utility::UidGenerator::Generate());
     sixthTag.setParentGuid(secondTag.guid());
     sixthTag.setParentTagLocalId(secondTag.localId());
 
     qevercloud::Tag seventhTag;
     seventhTag.setName(QStringLiteral("Seventh tag"));
-    seventhTag.setGuid(UidGenerator::Generate());
+    seventhTag.setGuid(utility::UidGenerator::Generate());
     seventhTag.setParentGuid(secondTag.guid());
     seventhTag.setParentTagLocalId(secondTag.localId());
 
     qevercloud::Tag eighthTag;
     eighthTag.setName(QStringLiteral("Eighth tag"));
-    eighthTag.setGuid(UidGenerator::Generate());
+    eighthTag.setGuid(utility::UidGenerator::Generate());
     eighthTag.setParentGuid(thirdTag.guid());
     eighthTag.setParentTagLocalId(thirdTag.localId());
 
     qevercloud::Tag ninethTag;
     ninethTag.setName(QStringLiteral("Ninth tag"));
-    ninethTag.setGuid(UidGenerator::Generate());
+    ninethTag.setGuid(utility::UidGenerator::Generate());
     ninethTag.setParentGuid(fourthTag.guid());
     ninethTag.setParentTagLocalId(fourthTag.localId());
 
     qevercloud::Tag tenthTag;
     tenthTag.setName(QStringLiteral("Tenth tag"));
-    tenthTag.setGuid(UidGenerator::Generate());
+    tenthTag.setGuid(utility::UidGenerator::Generate());
     tenthTag.setParentGuid(sixthTag.guid());
     tenthTag.setParentTagLocalId(sixthTag.localId());
 
     qevercloud::Tag eleventhTag;
     eleventhTag.setName(QStringLiteral("Eleventh tag"));
-    eleventhTag.setGuid(UidGenerator::Generate());
+    eleventhTag.setGuid(utility::UidGenerator::Generate());
     eleventhTag.setParentGuid(eighthTag.guid());
     eleventhTag.setParentTagLocalId(eighthTag.localId());
 
     qevercloud::Tag twelvethTag;
     twelvethTag.setName(QStringLiteral("Twelveth tag"));
-    twelvethTag.setGuid(UidGenerator::Generate());
+    twelvethTag.setGuid(utility::UidGenerator::Generate());
     twelvethTag.setParentGuid(tenthTag.guid());
     twelvethTag.setParentTagLocalId(tenthTag.localId());
 

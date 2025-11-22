@@ -786,7 +786,7 @@ bool Patch2To3::updateAuxiliaryTableVersion(ErrorString & errorDescription)
 QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
     const
 {
-    QHash<QString, Patch2To3::ResourceVersionIds> resourceVersionIds;
+    QHash<QString, Patch2To3::ResourceVersionIds> resourceVersionIdsMap;
     const QString localStorageDirPath = m_localStorageDir.absolutePath();
 
     QDir resourceDataBodiesDir{
@@ -807,8 +807,8 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
             }
 
             // File's base name is resource's local id
-            resourceVersionIds[resourceDataBodyFile.baseName()]
-                .m_dataBodyVersionId = UidGenerator::Generate();
+            resourceVersionIdsMap[resourceDataBodyFile.baseName()]
+                .m_dataBodyVersionId = utility::UidGenerator::Generate();
         }
     }
 
@@ -834,12 +834,15 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
             }
 
             // File's base name is resource's local id
-            resourceVersionIds[resourceAlternateDataBodyFile.baseName()]
-                .m_alternateDataBodyVersionId = UidGenerator::Generate();
+            auto & resourceVersionIds =
+                resourceVersionIdsMap[resourceAlternateDataBodyFile.baseName()];
+
+            resourceVersionIds.m_alternateDataBodyVersionId =
+                utility::UidGenerator::Generate();
         }
     }
 
-    return resourceVersionIds;
+    return resourceVersionIdsMap;
 }
 
 std::optional<QHash<QString, Patch2To3::ResourceVersionIds>>

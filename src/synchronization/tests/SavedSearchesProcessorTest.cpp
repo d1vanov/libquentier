@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -147,26 +147,26 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
 {
     const auto savedSearches = QList<qevercloud::SavedSearch>{}
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #1"))
                .setUpdateSequenceNum(0)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
                .build();
@@ -295,8 +295,9 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
 TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
 {
     const auto expungedSavedSearchGuids = QList<qevercloud::Guid>{}
-        << UidGenerator::Generate() << UidGenerator::Generate()
-        << UidGenerator::Generate();
+        << utility::UidGenerator::Generate()
+        << utility::UidGenerator::Generate()
+        << utility::UidGenerator::Generate();
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -368,26 +369,26 @@ TEST_F(
 {
     const auto savedSearches = QList<qevercloud::SavedSearch>{}
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #1"))
                .setUpdateSequenceNum(0)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
                .build();
@@ -491,15 +492,15 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 {
     auto savedSearch = qevercloud::SavedSearchBuilder{}
-                           .setLocalId(UidGenerator::Generate())
-                           .setGuid(UidGenerator::Generate())
+                           .setLocalId(utility::UidGenerator::Generate())
+                           .setGuid(utility::UidGenerator::Generate())
                            .setName(QStringLiteral("Saved search #1"))
                            .setUpdateSequenceNum(1)
                            .build();
 
     const auto localConflict =
         qevercloud::SavedSearchBuilder{}
-            .setLocalId(UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::Generate())
             .setGuid(savedSearch.guid())
             .setName(savedSearch.name())
             .setUpdateSequenceNum(savedSearch.updateSequenceNum().value() - 1)
@@ -545,7 +546,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     {
         movedLocalConflict =
             qevercloud::SavedSearchBuilder{}
-                .setGuid(UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -624,20 +625,20 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     auto savedSearches = QList<qevercloud::SavedSearch>{}
         << savedSearch
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
                .build();
@@ -733,16 +734,17 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
 {
     const auto savedSearch = qevercloud::SavedSearchBuilder{}
-                                 .setLocalId(UidGenerator::Generate())
-                                 .setGuid(UidGenerator::Generate())
+                                 .setLocalId(utility::UidGenerator::Generate())
+                                 .setGuid(utility::UidGenerator::Generate())
                                  .setName(QStringLiteral("Saved search #1"))
                                  .setUpdateSequenceNum(1)
                                  .build();
 
-    const auto localConflict = qevercloud::SavedSearchBuilder{}
-                                   .setLocalId(UidGenerator::Generate())
-                                   .setName(savedSearch.name())
-                                   .build();
+    const auto localConflict =
+        qevercloud::SavedSearchBuilder{}
+            .setLocalId(utility::UidGenerator::Generate())
+            .setName(savedSearch.name())
+            .build();
 
     QMutex mutex;
     QList<qevercloud::SavedSearch> savedSearchesPutIntoLocalStorage;
@@ -805,7 +807,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     {
         movedLocalConflict =
             qevercloud::SavedSearchBuilder{}
-                .setGuid(UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -856,20 +858,20 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     auto savedSearches = QList<qevercloud::SavedSearch>{}
         << savedSearch
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::SavedSearchBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Saved search #4"))
                .setUpdateSequenceNum(54)
                .build();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,7 +37,7 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
     theirs.setUpdateSequenceNum(42);
 
     qevercloud::Note mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setUpdateSequenceNum(41);
 
     auto future =
@@ -53,7 +53,7 @@ TEST(
 {
     SimpleNoteSyncConflictResolver resolver;
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Note theirs;
     theirs.setGuid(guid);
@@ -74,7 +74,7 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenMineHasNoGuid)
     SimpleNoteSyncConflictResolver resolver;
 
     qevercloud::Note theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setUpdateSequenceNum(42);
 
     qevercloud::Note mine;
@@ -92,11 +92,11 @@ TEST(SimpleNoteSyncConflictResolverTest, ConflictWhenGuidsDontMatch)
     SimpleNoteSyncConflictResolver resolver;
 
     qevercloud::Note theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setUpdateSequenceNum(42);
 
     qevercloud::Note mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setUpdateSequenceNum(41);
 
     auto future =
@@ -115,7 +115,7 @@ TEST(
 {
     SimpleNoteSyncConflictResolver resolver;
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Note theirs;
     theirs.setGuid(guid);
@@ -141,7 +141,7 @@ TEST(
 {
     SimpleNoteSyncConflictResolver resolver;
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Note theirs;
     theirs.setGuid(guid);
@@ -167,7 +167,7 @@ TEST(
 {
     SimpleNoteSyncConflictResolver resolver;
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Note theirs;
     theirs.setGuid(guid);
@@ -194,7 +194,7 @@ TEST(
 {
     SimpleNoteSyncConflictResolver resolver;
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Note theirs;
     theirs.setGuid(guid);
@@ -206,7 +206,7 @@ TEST(
     mine.setLocallyModified(true);
 
     qevercloud::Resource mineResource;
-    mineResource.setGuid(UidGenerator::Generate());
+    mineResource.setGuid(utility::UidGenerator::Generate());
     mineResource.setNoteLocalId(mine.localId());
     mineResource.setNoteGuid(mine.guid());
     mineResource.setUpdateSequenceNum(30);

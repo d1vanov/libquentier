@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -187,7 +187,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putSavedSearch(
     ItemData result;
 
     if (!search.guid()) {
-        result.guid = UidGenerator::Generate();
+        result.guid = utility::UidGenerator::Generate();
         search.setGuid(result.guid);
     }
 
@@ -294,7 +294,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putTag(qevercloud::Tag tag)
     ItemData result;
 
     if (!tag.guid()) {
-        result.guid = UidGenerator::Generate();
+        result.guid = utility::UidGenerator::Generate();
         tag.setGuid(result.guid);
     }
 
@@ -532,7 +532,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putNotebook(
     ItemData result;
 
     if (!notebook.guid()) {
-        result.guid = UidGenerator::Generate();
+        result.guid = utility::UidGenerator::Generate();
         notebook.setGuid(result.guid);
     }
 
@@ -770,7 +770,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putNote(
     ItemData result;
 
     if (!note.guid()) {
-        result.guid = UidGenerator::Generate();
+        result.guid = utility::UidGenerator::Generate();
         note.setGuid(result.guid);
     }
 
@@ -812,7 +812,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putNote(
     auto resources = *note.resources();
     for (auto & resource: resources) {
         if (!resource.guid()) {
-            resource.setGuid(UidGenerator::Generate());
+            resource.setGuid(utility::UidGenerator::Generate());
         }
 
         if (!resource.noteGuid()) {
@@ -1004,7 +1004,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putResource(
     ItemData result;
 
     if (!resource.guid()) {
-        result.guid = UidGenerator::Generate();
+        result.guid = utility::UidGenerator::Generate();
         resource.setGuid(result.guid);
     }
 
@@ -1112,7 +1112,7 @@ FakeNoteStoreBackend::ItemData FakeNoteStoreBackend::putLinkedNotebook(
     ItemData result;
 
     if (!linkedNotebook.guid()) {
-        result.guid = UidGenerator::Generate();
+        result.guid = utility::UidGenerator::Generate();
         linkedNotebook.setGuid(result.guid);
     }
 
@@ -1465,7 +1465,7 @@ void FakeNoteStoreBackend::onCreateNotebookRequest(
         return;
     }
 
-    notebook.setGuid(UidGenerator::Generate());
+    notebook.setGuid(utility::UidGenerator::Generate());
 
     std::optional<qint32> maxUsn = notebook.linkedNotebookGuid()
         ? currentLinkedNotebookMaxUsn(*notebook.linkedNotebookGuid())
@@ -1740,10 +1740,10 @@ void FakeNoteStoreBackend::onCreateNoteRequest(
         return;
     }
 
-    note.setGuid(UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::Generate());
     if (note.resources() && !note.resources()->isEmpty()) {
         for (auto & resource: *note.mutableResources()) {
-            resource.setGuid(UidGenerator::Generate());
+            resource.setGuid(utility::UidGenerator::Generate());
             resource.setNoteGuid(note.guid());
             ++(*maxUsn);
             resource.setUpdateSequenceNum(maxUsn);
@@ -2044,7 +2044,7 @@ void FakeNoteStoreBackend::onCreateTagRequest(
         return;
     }
 
-    tag.setGuid(UidGenerator::Generate());
+    tag.setGuid(utility::UidGenerator::Generate());
 
     std::optional<qint32> maxUsn = tag.linkedNotebookGuid()
         ? currentLinkedNotebookMaxUsn(*tag.linkedNotebookGuid())
@@ -2259,7 +2259,7 @@ void FakeNoteStoreBackend::onCreateSavedSearchRequest(
         return;
     }
 
-    search.setGuid(UidGenerator::Generate());
+    search.setGuid(utility::UidGenerator::Generate());
 
     auto maxUsn = currentUserOwnMaxUsn();
     ++maxUsn;
@@ -2765,7 +2765,7 @@ void FakeNoteStoreBackend::onGetNoteWithResultSpecRequest(
 
             resource = *resourceIt;
 
-            resource.setLocalId(UidGenerator::Generate());
+            resource.setLocalId(utility::UidGenerator::Generate());
             resource.setLocalData({});
             resource.setLocalOnly(false);
             resource.setLocallyModified(false);
@@ -2936,7 +2936,7 @@ void FakeNoteStoreBackend::onGetResourceRequest(
 
     auto resource = *resourceIt;
 
-    resource.setLocalId(UidGenerator::Generate());
+    resource.setLocalId(utility::UidGenerator::Generate());
     resource.setLocalData({});
     resource.setLocalOnly(false);
     resource.setLocallyModified(false);
@@ -3395,7 +3395,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             qevercloud::SavedSearch search = *savedSearchIt;
-            search.setLocalId(UidGenerator::Generate());
+            search.setLocalId(utility::UidGenerator::Generate());
             search.setLocalData({});
             search.setLocalOnly(false);
             search.setLocallyModified(false);
@@ -3423,7 +3423,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             qevercloud::Tag tag = *tagIt;
-            tag.setLocalId(UidGenerator::Generate());
+            tag.setLocalId(utility::UidGenerator::Generate());
             tag.setLocalData({});
             tag.setLocalOnly(false);
             tag.setLocallyModified(false);
@@ -3454,7 +3454,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             }
 
             qevercloud::Notebook notebook = *notebookIt;
-            notebook.setLocalId(UidGenerator::Generate());
+            notebook.setLocalId(utility::UidGenerator::Generate());
             notebook.setLocalData({});
             notebook.setLocalOnly(false);
             notebook.setLocallyModified(false);
@@ -3487,7 +3487,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
             auto qecNote = *noteIt;
             Q_ASSERT(qecNote.guid());
 
-            qecNote.setLocalId(UidGenerator::Generate());
+            qecNote.setLocalId(utility::UidGenerator::Generate());
             qecNote.setLocalData({});
             qecNote.setLocalOnly(false);
             qecNote.setLocallyModified(false);
@@ -3549,7 +3549,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                         resource.mutableAlternateData()->setBody(std::nullopt);
                     }
 
-                    resource.setLocalId(UidGenerator::Generate());
+                    resource.setLocalId(utility::UidGenerator::Generate());
                     resource.setLocalData({});
                     resource.setLocalOnly(false);
                     resource.setLocallyModified(false);
@@ -3606,7 +3606,7 @@ std::pair<qevercloud::SyncChunk, std::exception_ptr>
                 }
 
                 auto qecResource = *resourceIt;
-                qecResource.setLocalId(UidGenerator::Generate());
+                qecResource.setLocalId(utility::UidGenerator::Generate());
                 qecResource.setLocalData({});
                 qecResource.setLocalOnly(false);
                 qecResource.setLocallyModified(false);

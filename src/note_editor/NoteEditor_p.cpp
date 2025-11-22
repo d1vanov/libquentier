@@ -8192,7 +8192,7 @@ bool NoteEditorPrivate::exportToEnex(
     for (auto it = tagNames.constBegin(), end = tagNames.constEnd(); it != end;
          ++it)
     {
-        const QString fakeTagLocalId = UidGenerator::Generate();
+        const QString fakeTagLocalId = utility::UidGenerator::Generate();
         tagLocalIds.push_back(fakeTagLocalId);
         tagNamesByTagLocalId[fakeTagLocalId] = *it;
     }

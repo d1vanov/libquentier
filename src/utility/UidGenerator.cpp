@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #include <quentier/utility/UidGenerator.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 QString UidGenerator::Generate()
 {
@@ -29,7 +29,7 @@ QString UidGenerator::Generate()
 QString UidGenerator::UidToString(const QUuid & uid)
 {
     if (uid.isNull()) {
-        return QString();
+        return {};
     }
 
     QString result = uid.toString();
@@ -38,4 +38,4 @@ QString UidGenerator::UidToString(const QUuid & uid)
     return result;
 }
 
-} // namespace quentier
+} // namespace quentier::utility

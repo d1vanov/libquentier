@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -176,7 +176,7 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByLocalId)
         m_connectionPool, m_notifier, m_thread);
 
     auto savedSearchFuture = savedSearchesHandler->findSavedSearchByLocalId(
-        UidGenerator::Generate());
+        utility::UidGenerator::Generate());
 
     savedSearchFuture.waitForFinished();
     ASSERT_EQ(savedSearchFuture.resultCount(), 1);
@@ -188,8 +188,8 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
     const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
         m_connectionPool, m_notifier, m_thread);
 
-    auto savedSearchFuture =
-        savedSearchesHandler->findSavedSearchByGuid(UidGenerator::Generate());
+    auto savedSearchFuture = savedSearchesHandler->findSavedSearchByGuid(
+        utility::UidGenerator::Generate());
 
     savedSearchFuture.waitForFinished();
     ASSERT_EQ(savedSearchFuture.resultCount(), 1);
@@ -218,7 +218,7 @@ TEST_F(
 
     auto expungeSavedSearchFuture =
         savedSearchesHandler->expungeSavedSearchByLocalId(
-            UidGenerator::Generate());
+            utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeSavedSearchFuture.waitForFinished());
 }
@@ -271,7 +271,7 @@ Q_DECLARE_FLAGS(CreateSavedSearchOptions, CreateSavedSearchOption);
 {
     qevercloud::SavedSearch savedSearch;
     savedSearch.setLocallyModified(true);
-    savedSearch.setGuid(UidGenerator::Generate());
+    savedSearch.setGuid(utility::UidGenerator::Generate());
     savedSearch.setName(QStringLiteral("Saved search"));
     savedSearch.setQuery(QStringLiteral("Query"));
     savedSearch.setFormat(qevercloud::QueryFormat::USER);
@@ -520,8 +520,8 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
          it != savedSearches.end(); ++it)
     {
         auto & savedSearch = *it;
-        savedSearch.setLocalId(UidGenerator::Generate());
-        savedSearch.setGuid(UidGenerator::Generate());
+        savedSearch.setLocalId(utility::UidGenerator::Generate());
+        savedSearch.setGuid(utility::UidGenerator::Generate());
 
         savedSearch.setName(
             savedSearches.begin()->name().value() + QStringLiteral(" #") +
@@ -624,12 +624,12 @@ TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
         m_connectionPool, m_notifier, m_thread);
 
     qevercloud::SavedSearch search1;
-    search1.setGuid(UidGenerator::Generate());
+    search1.setGuid(utility::UidGenerator::Generate());
     search1.setUpdateSequenceNum(1);
     search1.setName(QStringLiteral("search"));
 
     qevercloud::SavedSearch search2;
-    search2.setGuid(UidGenerator::Generate());
+    search2.setGuid(utility::UidGenerator::Generate());
     search2.setUpdateSequenceNum(2);
     search2.setName(QStringLiteral("séarch"));
 
@@ -659,29 +659,29 @@ TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
 const QList<qevercloud::SavedSearch> gSavedSearchesForListGuidsTest =
     QList<qevercloud::SavedSearch>{}
     << qevercloud::SavedSearchBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Saved search 1"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .build()
     << qevercloud::SavedSearchBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Saved search 2"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .build()
     << qevercloud::SavedSearchBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Saved search 3"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .build()
     << qevercloud::SavedSearchBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Saved search 4"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)

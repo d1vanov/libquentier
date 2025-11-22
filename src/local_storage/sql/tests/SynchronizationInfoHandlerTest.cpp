@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -66,7 +66,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::LinkedNotebook linkedNotebook;
-        linkedNotebook.setGuid(UidGenerator::Generate());
+        linkedNotebook.setGuid(utility::UidGenerator::Generate());
 
         linkedNotebook.setUri(QStringLiteral("uri"));
         linkedNotebook.setUpdateSequenceNum(smallestUsn + i);
@@ -90,7 +90,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::Notebook notebook;
-        notebook.setGuid(UidGenerator::Generate());
+        notebook.setGuid(utility::UidGenerator::Generate());
         notebook.setUpdateSequenceNum(smallestUsn + i);
         notebook.setName(
             QStringLiteral("Notebook #") + QString::number(smallestIndex + i));
@@ -110,7 +110,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::Tag tag;
-        tag.setGuid(UidGenerator::Generate());
+        tag.setGuid(utility::UidGenerator::Generate());
         tag.setUpdateSequenceNum(smallestUsn + i);
         tag.setName(
             QStringLiteral("Tag #") + QString::number(smallestIndex + i));
@@ -137,7 +137,7 @@ namespace {
         note.setLocallyFavorited(true);
         note.setNotebookLocalId(notebookLocalId);
         note.setNotebookGuid(notebookGuid);
-        note.setGuid(UidGenerator::Generate());
+        note.setGuid(utility::UidGenerator::Generate());
 
         note.setUpdateSequenceNum(smallestUsn + i);
 
@@ -171,7 +171,7 @@ namespace {
         resource.setLocallyModified(true);
 
         if (noteGuid) {
-            resource.setGuid(UidGenerator::Generate());
+            resource.setGuid(utility::UidGenerator::Generate());
             resource.setUpdateSequenceNum(smallestUsn + i);
         }
 
@@ -196,7 +196,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::SavedSearch search;
-        search.setGuid(UidGenerator::Generate());
+        search.setGuid(utility::UidGenerator::Generate());
         search.setUpdateSequenceNum(smallestUsn + i);
         search.setName(
             QStringLiteral("Saved search #") +
@@ -307,7 +307,7 @@ TEST_F(
             m_connectionPool, m_thread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
-        UidGenerator::Generate());
+        utility::UidGenerator::Generate());
 
     highUsn.waitForFinished();
     EXPECT_EQ(highUsn.result(), 0);
@@ -356,7 +356,8 @@ TEST_F(
 
     const int notebookCount = 3;
     const qint32 smallestUsn = 42;
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -444,7 +445,8 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinTagsFromLinkedNotebook)
 
     const int tagCount = 3;
     const qint32 smallestUsn = 42;
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -542,7 +544,8 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotesFromLinkedNotebook)
 
     const int notebookCount = 1;
     const qint32 smallestUsn = 41;
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -672,7 +675,8 @@ TEST_F(
 
     const int notebookCount = 1;
     const qint32 smallestUsn = 41;
-    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    const qevercloud::Guid linkedNotebookGuid =
+        utility::UidGenerator::Generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(

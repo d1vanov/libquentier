@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,8 +57,8 @@ TEST_P(DownloadNotesStatusJsonSerializationTest, SerializeAndDeserialize)
 
     const auto generateNote = [&] {
         return qevercloud::NoteBuilder{}
-            .setLocalId(UidGenerator::Generate())
-            .setGuid(UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::Generate())
             .setTitle(QString::fromUtf8("Note #%1").arg(noteCounter++))
             .setUpdateSequenceNum(updateSequenceNumber++)
             .build();
@@ -93,26 +93,26 @@ TEST_P(DownloadNotesStatusJsonSerializationTest, SerializeAndDeserialize)
     for (int i = 0; i < itemCount; ++i) {
         status->m_noteGuidsWhichFailedToExpunge
             << IDownloadNotesStatus::GuidWithException{
-                   UidGenerator::Generate(),
+                   utility::UidGenerator::Generate(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("Failed to expunge note")})};
     }
 
     status->m_processedNoteGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_processedNoteGuidsAndUsns[UidGenerator::Generate()] =
+        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
             updateSequenceNumber++;
     }
 
     status->m_cancelledNoteGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_cancelledNoteGuidsAndUsns[UidGenerator::Generate()] =
+        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
             updateSequenceNumber++;
     }
 
     status->m_expungedNoteGuids.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_expungedNoteGuids << UidGenerator::Generate();
+        status->m_expungedNoteGuids << utility::UidGenerator::Generate();
     }
 
     status->m_stopSynchronizationError = GetParam();

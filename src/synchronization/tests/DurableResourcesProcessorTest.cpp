@@ -63,7 +63,7 @@ namespace {
     QList<qevercloud::Guid> result;
     result.reserve(count);
     for (qint32 i = 0; i < count; ++i) {
-        result << UidGenerator::Generate();
+        result << utility::UidGenerator::Generate();
     }
 
     return result;
@@ -81,7 +81,7 @@ const QList gTestGuidsSet4 = generateTestGuids(3);
         return {};
     }
 
-    const auto noteGuid = UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::Generate();
 
     QList<qevercloud::Resource> result;
     result.reserve(resourceGuids.size());

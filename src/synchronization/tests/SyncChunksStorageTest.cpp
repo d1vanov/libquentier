@@ -60,7 +60,7 @@ namespace {
             qevercloud::NotebookBuilder{}
                 .setName(QStringLiteral("Notebook #") + QString::number(i + 1))
                 .setUpdateSequenceNum(lowUsn++)
-                .setGuid(UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .build();
 
         if (!result.notebooks()) {
@@ -76,7 +76,7 @@ namespace {
             qevercloud::TagBuilder{}
                 .setName(QStringLiteral("Tag #") + QString::number(i + 1))
                 .setUpdateSequenceNum(lowUsn++)
-                .setGuid(UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .build();
 
         if (!result.tags()) {
@@ -93,7 +93,7 @@ namespace {
                 .setName(
                     QStringLiteral("Saved search #") + QString::number(i + 1))
                 .setUpdateSequenceNum(lowUsn++)
-                .setGuid(UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .setQuery(QStringLiteral("query"))
                 .build();
 
@@ -110,7 +110,7 @@ namespace {
             qevercloud::NoteBuilder{}
                 .setTitle(QStringLiteral("Note #") + QString::number(i + 1))
                 .setUpdateSequenceNum(lowUsn++)
-                .setGuid(UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .build();
 
         if (!result.notes()) {
@@ -127,7 +127,7 @@ namespace {
                                       QStringLiteral("Linked notebook #") +
                                       QString::number(i + 1))
                                   .setUpdateSequenceNum(lowUsn++)
-                                  .setGuid(UidGenerator::Generate())
+                                  .setGuid(utility::UidGenerator::Generate())
                                   .build();
 
         if (!result.linkedNotebooks()) {
@@ -141,7 +141,7 @@ namespace {
 
     for (int i = 0; i < itemCount && lowUsn <= highUsn; ++i) {
         auto resource = qevercloud::ResourceBuilder{}
-                            .setGuid(UidGenerator::Generate())
+                            .setGuid(utility::UidGenerator::Generate())
                             .setUpdateSequenceNum(lowUsn++)
                             .build();
 
@@ -267,7 +267,7 @@ TEST_F(SyncChunksStorageTest, FetchNonexistentLinkedNotebookSyncChunks)
     auto storage =
         std::make_shared<SyncChunksStorage>(QDir{m_temporaryDir.path()});
 
-    const auto linkedNotebookGuid = UidGenerator::Generate();
+    const auto linkedNotebookGuid = utility::UidGenerator::Generate();
 
     const auto usnsRanges =
         storage->fetchLinkedNotebookSyncChunksLowAndHighUsns(
@@ -339,7 +339,7 @@ TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;
@@ -467,7 +467,7 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;
@@ -570,7 +570,7 @@ TEST_F(SyncChunksStorageTest, PutEmptyLinkedNotebookSyncChunks)
 
     // Should do nothing on empty list of linked notebook sync chunks
     storage->putLinkedNotebookSyncChunks(
-        UidGenerator::Generate(), QList<qevercloud::SyncChunk>{});
+        utility::UidGenerator::Generate(), QList<qevercloud::SyncChunk>{});
     storage->flush();
 
     checkSyncChunksPersistenceDirIsEmpty(temporaryDir);
@@ -632,7 +632,7 @@ TEST_F(
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;
@@ -780,7 +780,7 @@ TEST_F(
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;
@@ -827,7 +827,7 @@ TEST_F(
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;
@@ -953,7 +953,7 @@ TEST_F(SyncChunksStorageTest, ClearLinkedNotebookSyncChunks)
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;
@@ -1003,7 +1003,7 @@ TEST_F(SyncChunksStorageTest, ClearAllSyncChunks)
     QList<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids << UidGenerator::Generate();
+        linkedNotebookGuids << utility::UidGenerator::Generate();
     }
 
     constexpr int syncChunkCount = 3;

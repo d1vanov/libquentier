@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -103,7 +103,7 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
 
     const std::optional<qevercloud::Guid> linkedNotebookGuid =
         (GetParam() == WithLinkedNotebookGuid::Yes
-             ? std::make_optional(UidGenerator::Generate())
+             ? std::make_optional(utility::UidGenerator::Generate())
              : std::nullopt);
 
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid())
@@ -125,9 +125,9 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
             .build();
 
     const auto note = qevercloud::NoteBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setUpdateSequenceNum(1U)
-                          .setNotebookGuid(UidGenerator::Generate())
+                          .setNotebookGuid(utility::UidGenerator::Generate())
                           .build();
 
     EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
@@ -158,7 +158,7 @@ TEST_P(
 
     const std::optional<qevercloud::Guid> linkedNotebookGuid =
         (GetParam() == WithLinkedNotebookGuid::Yes
-             ? std::make_optional(UidGenerator::Generate())
+             ? std::make_optional(utility::UidGenerator::Generate())
              : std::nullopt);
 
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid())
@@ -184,9 +184,9 @@ TEST_P(
         result.reserve(noteCount);
         for (quint32 i = 0; i < noteCount; ++i) {
             result << qevercloud::NoteBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setUpdateSequenceNum(i + 1U)
-                          .setNotebookGuid(UidGenerator::Generate())
+                          .setNotebookGuid(utility::UidGenerator::Generate())
                           .build();
         }
         return result;
@@ -243,7 +243,7 @@ TEST_P(
 
     const std::optional<qevercloud::Guid> linkedNotebookGuid =
         (GetParam() == WithLinkedNotebookGuid::Yes
-             ? std::make_optional(UidGenerator::Generate())
+             ? std::make_optional(utility::UidGenerator::Generate())
              : std::nullopt);
 
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid())
@@ -269,9 +269,9 @@ TEST_P(
         result.reserve(noteCount);
         for (quint32 i = 0; i < noteCount; ++i) {
             result << qevercloud::NoteBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setUpdateSequenceNum(i + 1U)
-                          .setNotebookGuid(UidGenerator::Generate())
+                          .setNotebookGuid(utility::UidGenerator::Generate())
                           .build();
         }
         return result;

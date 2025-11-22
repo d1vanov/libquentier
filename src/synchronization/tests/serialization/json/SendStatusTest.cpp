@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -226,8 +226,8 @@ TEST_P(SendStatusJsonSerializationTest, SerializeAndDeserializeSendStatus)
     for (int i = 0; i < testData.m_failedToSendNoteCount; ++i) {
         sendStatus->m_failedToSendNotes << ISendStatus::NoteWithException{
             qevercloud::NoteBuilder{}
-                .setLocalId(UidGenerator::Generate())
-                .setGuid(UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .setTitle(QString::fromUtf8("Note #%1").arg(noteCounter++))
                 .setUpdateSequenceNum(usn++)
                 .build(),
@@ -239,8 +239,8 @@ TEST_P(SendStatusJsonSerializationTest, SerializeAndDeserializeSendStatus)
         sendStatus->m_failedToSendNotebooks
             << ISendStatus::NotebookWithException{
                    qevercloud::NotebookBuilder{}
-                       .setLocalId(UidGenerator::Generate())
-                       .setGuid(UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::Generate())
+                       .setGuid(utility::UidGenerator::Generate())
                        .setName(QString::fromUtf8("Notebook #%1")
                                     .arg(notebookCounter++))
                        .setUpdateSequenceNum(usn++)
@@ -254,8 +254,8 @@ TEST_P(SendStatusJsonSerializationTest, SerializeAndDeserializeSendStatus)
         sendStatus->m_failedToSendSavedSearches
             << ISendStatus::SavedSearchWithException{
                    qevercloud::SavedSearchBuilder{}
-                       .setLocalId(UidGenerator::Generate())
-                       .setGuid(UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::Generate())
+                       .setGuid(utility::UidGenerator::Generate())
                        .setName(QString::fromUtf8("Saved search #%1")
                                     .arg(savedSearchCounter++))
                        .setUpdateSequenceNum(usn++)
@@ -268,8 +268,8 @@ TEST_P(SendStatusJsonSerializationTest, SerializeAndDeserializeSendStatus)
     for (int i = 0; i < testData.m_failedToSendTagCount; ++i) {
         sendStatus->m_failedToSendTags << ISendStatus::TagWithException{
             qevercloud::TagBuilder{}
-                .setLocalId(UidGenerator::Generate())
-                .setGuid(UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::Generate())
                 .setName(QString::fromUtf8("Tag #%1").arg(tagCounter++))
                 .setUpdateSequenceNum(usn++)
                 .build(),

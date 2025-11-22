@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,12 +57,12 @@ const auto sampleSyncChunk1 =
         .setNotebooks(
             QList<qevercloud::Notebook>{}
             << qevercloud::NotebookBuilder{}
-                   .setGuid(UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Notebook #1"))
                    .setUpdateSequenceNum(0)
                    .build()
             << qevercloud::NotebookBuilder{}
-                   .setGuid(UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Notebook #2"))
                    .setUpdateSequenceNum(35)
                    .build())
@@ -75,12 +75,12 @@ const auto sampleSyncChunk2 =
         .setNotebooks(
             QList<qevercloud::Notebook>{}
             << qevercloud::NotebookBuilder{}
-                   .setGuid(UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Notebook #3"))
                    .setUpdateSequenceNum(36)
                    .build()
             << qevercloud::NotebookBuilder{}
-                   .setGuid(UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Notebook #4"))
                    .setUpdateSequenceNum(54)
                    .build())
@@ -93,12 +93,12 @@ const auto sampleSyncChunk3 =
         .setNotebooks(
             QList<qevercloud::Notebook>{}
             << qevercloud::NotebookBuilder{}
-                   .setGuid(UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Notebook #5"))
                    .setUpdateSequenceNum(55)
                    .build()
             << qevercloud::NotebookBuilder{}
-                   .setGuid(UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Notebook #6"))
                    .setUpdateSequenceNum(82)
                    .build())
@@ -391,7 +391,7 @@ TEST_P(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::Generate())
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
@@ -778,7 +778,7 @@ TEST_F(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::Generate())
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
@@ -888,7 +888,7 @@ TEST_F(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::Generate())
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;
@@ -996,7 +996,7 @@ TEST_F(
     const auto ctx = qevercloud::newRequestContext(authToken);
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::Generate())
                                     .build();
 
     constexpr qint32 afterUsnInitial = 0;

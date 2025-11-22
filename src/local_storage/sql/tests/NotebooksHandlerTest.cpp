@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -243,7 +243,7 @@ Q_DECLARE_FLAGS(CreateNotebookOptions, CreateNotebookOption);
     notebook.setLocalOnly(false);
     notebook.setLocallyFavorited(true);
 
-    notebook.setGuid(UidGenerator::Generate());
+    notebook.setGuid(utility::UidGenerator::Generate());
     notebook.setName(QStringLiteral("name"));
     notebook.setUpdateSequenceNum(1);
     notebook.setDefaultNotebook(true);
@@ -283,7 +283,7 @@ Q_DECLARE_FLAGS(CreateNotebookOptions, CreateNotebookOption);
     }
 
     if (createOptions & CreateNotebookOption::WithLinkedNotebookGuid) {
-        notebook.setLinkedNotebookGuid(UidGenerator::Generate());
+        notebook.setLinkedNotebookGuid(utility::UidGenerator::Generate());
     }
 
     return notebook;
@@ -375,8 +375,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto notebookFuture =
-        notebooksHandler->findNotebookByLocalId(UidGenerator::Generate());
+    auto notebookFuture = notebooksHandler->findNotebookByLocalId(
+        utility::UidGenerator::Generate());
 
     notebookFuture.waitForFinished();
     ASSERT_EQ(notebookFuture.resultCount(), 1);
@@ -389,7 +389,7 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto notebookFuture =
-        notebooksHandler->findNotebookByGuid(UidGenerator::Generate());
+        notebooksHandler->findNotebookByGuid(utility::UidGenerator::Generate());
 
     notebookFuture.waitForFinished();
     ASSERT_EQ(notebookFuture.resultCount(), 1);
@@ -425,8 +425,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto expungeNotebookFuture =
-        notebooksHandler->expungeNotebookByLocalId(UidGenerator::Generate());
+    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByLocalId(
+        utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
 }
@@ -436,8 +436,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto expungeNotebookFuture =
-        notebooksHandler->expungeNotebookByGuid(UidGenerator::Generate());
+    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByGuid(
+        utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
 }
@@ -474,8 +474,8 @@ TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
-    auto sharedNotebooksFuture =
-        notebooksHandler->listSharedNotebooks(UidGenerator::Generate());
+    auto sharedNotebooksFuture = notebooksHandler->listSharedNotebooks(
+        utility::UidGenerator::Generate());
 
     sharedNotebooksFuture.waitForFinished();
     ASSERT_EQ(sharedNotebooksFuture.resultCount(), 1);
@@ -812,8 +812,8 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
          it != notebooks.end(); ++it)
     {
         auto & notebook = *it;
-        notebook.setLocalId(UidGenerator::Generate());
-        notebook.setGuid(UidGenerator::Generate());
+        notebook.setLocalId(utility::UidGenerator::Generate());
+        notebook.setGuid(utility::UidGenerator::Generate());
 
         notebook.setName(
             notebooks.begin()->name().value() + QStringLiteral(" #") +
@@ -1065,12 +1065,12 @@ TEST_F(NotebooksHandlerTest, FindNotebookByNameWithDiacritics)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook1;
-    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setGuid(utility::UidGenerator::Generate());
     notebook1.setUpdateSequenceNum(1);
     notebook1.setName(QStringLiteral("notebook"));
 
     qevercloud::Notebook notebook2;
-    notebook2.setGuid(UidGenerator::Generate());
+    notebook2.setGuid(utility::UidGenerator::Generate());
     notebook2.setUpdateSequenceNum(2);
     notebook2.setName(QStringLiteral("Notébook"));
 
@@ -1232,11 +1232,11 @@ TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
             m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook1;
-    linkedNotebook1.setGuid(UidGenerator::Generate());
+    linkedNotebook1.setGuid(utility::UidGenerator::Generate());
     linkedNotebook1.setUsername(QStringLiteral("username1"));
 
     qevercloud::LinkedNotebook linkedNotebook2;
-    linkedNotebook2.setGuid(UidGenerator::Generate());
+    linkedNotebook2.setGuid(utility::UidGenerator::Generate());
     linkedNotebook2.setUsername(QStringLiteral("username2"));
 
     auto putLinkedNotebookFuture =
@@ -1253,24 +1253,24 @@ TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook userOwnNotebook1;
-    userOwnNotebook1.setGuid(UidGenerator::Generate());
+    userOwnNotebook1.setGuid(utility::UidGenerator::Generate());
     userOwnNotebook1.setUpdateSequenceNum(1);
     userOwnNotebook1.setName(QStringLiteral("userOwnNotebook #1"));
 
     qevercloud::Notebook userOwnNotebook2;
-    userOwnNotebook2.setGuid(UidGenerator::Generate());
+    userOwnNotebook2.setGuid(utility::UidGenerator::Generate());
     userOwnNotebook2.setUpdateSequenceNum(2);
     userOwnNotebook2.setName(QStringLiteral("userOwnNotebook #2"));
 
     qevercloud::Notebook notebookFromLinkedNotebook1;
-    notebookFromLinkedNotebook1.setGuid(UidGenerator::Generate());
+    notebookFromLinkedNotebook1.setGuid(utility::UidGenerator::Generate());
     notebookFromLinkedNotebook1.setUpdateSequenceNum(3);
     notebookFromLinkedNotebook1.setName(
         QStringLiteral("Notebook from linkedNotebook1"));
     notebookFromLinkedNotebook1.setLinkedNotebookGuid(linkedNotebook1.guid());
 
     qevercloud::Notebook notebookFromLinkedNotebook2;
-    notebookFromLinkedNotebook2.setGuid(UidGenerator::Generate());
+    notebookFromLinkedNotebook2.setGuid(utility::UidGenerator::Generate());
     notebookFromLinkedNotebook2.setUpdateSequenceNum(4);
     notebookFromLinkedNotebook2.setName(
         QStringLiteral("Notebook from linkedNotebook2"));
@@ -1355,101 +1355,101 @@ TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid1ForListGuidsTest,
-    (UidGenerator::Generate()));
+    (utility::UidGenerator::Generate()));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid2ForListGuidsTest,
-    (UidGenerator::Generate()));
+    (utility::UidGenerator::Generate()));
 
 const QList<qevercloud::Notebook> gNotebooksForListGuidsTest =
     QList<qevercloud::Notebook>{}
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 1"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 2"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 3"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 4"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 5"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 6"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 7"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 8"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 9"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 10"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 11"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
            .build()
     << qevercloud::NotebookBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Notebook 12"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)

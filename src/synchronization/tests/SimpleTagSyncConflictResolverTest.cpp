@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,7 +65,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
 
     qevercloud::Tag mine;
     mine.setName(QStringLiteral("mine"));
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
 
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
@@ -79,11 +79,11 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWhenTheirsHasNoName)
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag mine;
     mine.setName(QStringLiteral("mine"));
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
 
     auto future =
         resolver.resolveTagConflict(std::move(theirs), std::move(mine));
@@ -97,7 +97,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWhenMineHasNoNameOrGuid)
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("theirs"));
 
     qevercloud::Tag mine;
@@ -114,7 +114,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWithSameNameAndGuid)
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Tag mine;
@@ -137,11 +137,11 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWithSameNameButDifferentGuid)
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -180,11 +180,11 @@ TEST_F(
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName1 =
@@ -234,11 +234,11 @@ TEST_F(
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName1 =
@@ -300,12 +300,12 @@ TEST_F(
     // from user's own account
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
 
     auto future =
@@ -326,12 +326,12 @@ TEST_F(
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
     mine.setLinkedNotebookGuid(theirs.linkedNotebookGuid());
 
@@ -371,12 +371,12 @@ TEST_F(
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
     mine.setLinkedNotebookGuid(theirs.linkedNotebookGuid());
 
@@ -428,12 +428,12 @@ TEST_F(
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
     mine.setLinkedNotebookGuid(theirs.linkedNotebookGuid());
 
@@ -490,7 +490,7 @@ TEST_F(SimpleTagSyncConflictResolverTest, ConflictWithSameGuidButDifferentName)
 {
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Tag theirs;
     theirs.setGuid(guid);
@@ -524,7 +524,7 @@ TEST_F(
 {
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Tag theirs;
     theirs.setGuid(guid);
@@ -536,7 +536,7 @@ TEST_F(
 
     qevercloud::Tag tag;
     tag.setName(theirs.name());
-    tag.setGuid(UidGenerator::Generate());
+    tag.setGuid(utility::UidGenerator::Generate());
 
     EXPECT_CALL(
         *m_mockLocalStorage,
@@ -581,11 +581,11 @@ TEST_F(
         std::make_shared<SimpleTagSyncConflictResolver>(m_mockLocalStorage);
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -676,7 +676,7 @@ TEST_F(
     auto resolver =
         std::make_shared<SimpleTagSyncConflictResolver>(m_mockLocalStorage);
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Tag theirs;
     theirs.setGuid(guid);
@@ -771,11 +771,11 @@ TEST_F(
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Tag theirs;
-    theirs.setGuid(UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::Generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Tag mine;
-    mine.setGuid(UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::Generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -801,7 +801,7 @@ TEST_F(
 {
     SimpleTagSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::Generate();
 
     qevercloud::Tag theirs;
     theirs.setGuid(guid);

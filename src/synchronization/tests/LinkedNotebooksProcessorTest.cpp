@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -129,22 +129,22 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
 {
     const auto linkedNotebooks = QList<qevercloud::LinkedNotebook>{}
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #1"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #2"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #3"))
                .setUpdateSequenceNum(37)
                .build()
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #4"))
                .setUpdateSequenceNum(38)
                .build();
@@ -213,8 +213,9 @@ TEST_F(LinkedNotebooksProcessorTest, ProcessLinkedNotebooks)
 TEST_F(LinkedNotebooksProcessorTest, ProcessExpungedLinkedNotebooks)
 {
     const auto expungedLinkedNotebookGuids = QList<qevercloud::Guid>{}
-        << UidGenerator::Generate() << UidGenerator::Generate()
-        << UidGenerator::Generate();
+        << utility::UidGenerator::Generate()
+        << utility::UidGenerator::Generate()
+        << utility::UidGenerator::Generate();
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -277,22 +278,22 @@ TEST_F(
 {
     const auto linkedNotebooks = QList<qevercloud::LinkedNotebook>{}
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #1"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #2"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #3"))
                .setUpdateSequenceNum(37)
                .build()
         << qevercloud::LinkedNotebookBuilder{}
-               .setGuid(UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setUsername(QStringLiteral("username #4"))
                .setUpdateSequenceNum(38)
                .build();

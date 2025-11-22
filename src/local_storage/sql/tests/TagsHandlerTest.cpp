@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Dmitry Ivanov
+ * Copyright 2021-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -105,12 +105,12 @@ Q_DECLARE_FLAGS(CreateTagOptions, CreateTagOption);
     tag.setLocallyFavorited(true);
     tag.setLocalOnly(false);
 
-    tag.setGuid(UidGenerator::Generate());
+    tag.setGuid(utility::UidGenerator::Generate());
     tag.setName(QStringLiteral("name"));
     tag.setUpdateSequenceNum(1);
 
     if (createOptions & CreateTagOption::WithLinkedNotebookGuid) {
-        tag.setLinkedNotebookGuid(UidGenerator::Generate());
+        tag.setLinkedNotebookGuid(utility::UidGenerator::Generate());
     }
 
     return tag;
@@ -201,7 +201,7 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByLocalId)
     const auto tagsHandler =
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
-    auto tagFuture = tagsHandler->findTagByLocalId(UidGenerator::Generate());
+    auto tagFuture = tagsHandler->findTagByLocalId(utility::UidGenerator::Generate());
     tagFuture.waitForFinished();
     ASSERT_EQ(tagFuture.resultCount(), 1);
     EXPECT_FALSE(tagFuture.result());
@@ -212,7 +212,7 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByGuid)
     const auto tagsHandler =
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
-    auto tagFuture = tagsHandler->findTagByGuid(UidGenerator::Generate());
+    auto tagFuture = tagsHandler->findTagByGuid(utility::UidGenerator::Generate());
     tagFuture.waitForFinished();
     ASSERT_EQ(tagFuture.resultCount(), 1);
     EXPECT_FALSE(tagFuture.result());
@@ -235,7 +235,7 @@ TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByLocalId)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto expungeTagFuture =
-        tagsHandler->expungeTagByLocalId(UidGenerator::Generate());
+        tagsHandler->expungeTagByLocalId(utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeTagFuture.waitForFinished());
 }
@@ -246,7 +246,7 @@ TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByGuid)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto expungeTagFuture =
-        tagsHandler->expungeTagByGuid(UidGenerator::Generate());
+        tagsHandler->expungeTagByGuid(utility::UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeTagFuture.waitForFinished());
 }
@@ -286,7 +286,7 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
     listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
     auto listTagsFuture = tagsHandler->listTagsPerNoteLocalId(
-        UidGenerator::Generate(), listTagsOptions);
+        utility::UidGenerator::Generate(), listTagsOptions);
 
     listTagsFuture.waitForFinished();
     EXPECT_TRUE(listTagsFuture.result().isEmpty());
@@ -841,8 +841,8 @@ TEST_F(TagsHandlerTest, RefuseToPutTagWithUnknownParent)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     auto tag = createTag();
-    tag.setParentTagLocalId(UidGenerator::Generate());
-    tag.setParentGuid(UidGenerator::Generate());
+    tag.setParentTagLocalId(utility::UidGenerator::Generate());
+    tag.setParentGuid(utility::UidGenerator::Generate());
 
     auto putTagFuture = tagsHandler->putTag(tag);
     EXPECT_THROW(putTagFuture.waitForFinished(), IQuentierException);
@@ -856,12 +856,12 @@ TEST_F(TagsHandlerTest, FindTagByNameWithDiacritics)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
-    tag1.setGuid(UidGenerator::Generate());
+    tag1.setGuid(utility::UidGenerator::Generate());
     tag1.setUpdateSequenceNum(1);
     tag1.setName(QStringLiteral("tag"));
 
     qevercloud::Tag tag2;
-    tag2.setGuid(UidGenerator::Generate());
+    tag2.setGuid(utility::UidGenerator::Generate());
     tag2.setUpdateSequenceNum(2);
     tag2.setName(QStringLiteral("tāg"));
 
@@ -893,11 +893,11 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
             m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook1;
-    linkedNotebook1.setGuid(UidGenerator::Generate());
+    linkedNotebook1.setGuid(utility::UidGenerator::Generate());
     linkedNotebook1.setUsername(QStringLiteral("username1"));
 
     qevercloud::LinkedNotebook linkedNotebook2;
-    linkedNotebook2.setGuid(UidGenerator::Generate());
+    linkedNotebook2.setGuid(utility::UidGenerator::Generate());
     linkedNotebook2.setUsername(QStringLiteral("username1"));
 
     auto putLinkedNotebookFuture =
@@ -914,23 +914,23 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag userOwnTag1;
-    userOwnTag1.setGuid(UidGenerator::Generate());
+    userOwnTag1.setGuid(utility::UidGenerator::Generate());
     userOwnTag1.setUpdateSequenceNum(1);
     userOwnTag1.setName(QStringLiteral("userOwnTag #1"));
 
     qevercloud::Tag userOwnTag2;
-    userOwnTag2.setGuid(UidGenerator::Generate());
+    userOwnTag2.setGuid(utility::UidGenerator::Generate());
     userOwnTag2.setUpdateSequenceNum(2);
     userOwnTag2.setName(QStringLiteral("userOwnTag #2"));
 
     qevercloud::Tag tagFromLinkedNotebook1;
-    tagFromLinkedNotebook1.setGuid(UidGenerator::Generate());
+    tagFromLinkedNotebook1.setGuid(utility::UidGenerator::Generate());
     tagFromLinkedNotebook1.setUpdateSequenceNum(3);
     tagFromLinkedNotebook1.setName(QStringLiteral("Tag from linkedNotebook1"));
     tagFromLinkedNotebook1.setLinkedNotebookGuid(linkedNotebook1.guid());
 
     qevercloud::Tag tagFromLinkedNotebook2;
-    tagFromLinkedNotebook2.setGuid(UidGenerator::Generate());
+    tagFromLinkedNotebook2.setGuid(utility::UidGenerator::Generate());
     tagFromLinkedNotebook2.setUpdateSequenceNum(4);
     tagFromLinkedNotebook2.setName(QStringLiteral("Tag from linkedNotebook2"));
     tagFromLinkedNotebook2.setLinkedNotebookGuid(linkedNotebook2.guid());
@@ -1014,22 +1014,22 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
-    tag1.setGuid(UidGenerator::Generate());
+    tag1.setGuid(utility::UidGenerator::Generate());
     tag1.setUpdateSequenceNum(1);
     tag1.setName(QStringLiteral("Tag 1"));
 
     qevercloud::Tag tag2;
-    tag2.setGuid(UidGenerator::Generate());
+    tag2.setGuid(utility::UidGenerator::Generate());
     tag2.setUpdateSequenceNum(2);
     tag2.setName(QStringLiteral("Tag 2"));
 
     qevercloud::Tag tag3;
-    tag3.setGuid(UidGenerator::Generate());
+    tag3.setGuid(utility::UidGenerator::Generate());
     tag3.setUpdateSequenceNum(3);
     tag3.setName(QStringLiteral("Tag 3"));
 
     qevercloud::Tag tag4;
-    tag4.setGuid(UidGenerator::Generate());
+    tag4.setGuid(utility::UidGenerator::Generate());
     tag4.setUpdateSequenceNum(4);
     tag4.setName(QStringLiteral("Tag 4"));
 
@@ -1043,7 +1043,7 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook1;
-    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setGuid(utility::UidGenerator::Generate());
     notebook1.setUpdateSequenceNum(5);
     notebook1.setName(QStringLiteral("Notebook 1"));
 
@@ -1054,7 +1054,7 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Note note;
-    note.setGuid(UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::Generate());
     note.setUpdateSequenceNum(6);
     note.setTitle(QStringLiteral("Note"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
@@ -1138,7 +1138,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
             m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::LinkedNotebook linkedNotebook1;
-    linkedNotebook1.setGuid(UidGenerator::Generate());
+    linkedNotebook1.setGuid(utility::UidGenerator::Generate());
     linkedNotebook1.setUpdateSequenceNum(1);
     linkedNotebook1.setUsername(QStringLiteral("username1"));
 
@@ -1151,25 +1151,25 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
-    tag1.setGuid(UidGenerator::Generate());
+    tag1.setGuid(utility::UidGenerator::Generate());
     tag1.setUpdateSequenceNum(2);
     tag1.setName(QStringLiteral("Tag 1"));
     tag1.setLinkedNotebookGuid(linkedNotebook1.guid());
 
     qevercloud::Tag tag2;
-    tag2.setGuid(UidGenerator::Generate());
+    tag2.setGuid(utility::UidGenerator::Generate());
     tag2.setUpdateSequenceNum(3);
     tag2.setName(QStringLiteral("Tag 2"));
     tag2.setLinkedNotebookGuid(linkedNotebook1.guid());
 
     qevercloud::Tag tag3;
-    tag3.setGuid(UidGenerator::Generate());
+    tag3.setGuid(utility::UidGenerator::Generate());
     tag3.setUpdateSequenceNum(4);
     tag3.setName(QStringLiteral("Tag 3"));
     tag3.setLinkedNotebookGuid(linkedNotebook1.guid());
 
     qevercloud::Tag tag4;
-    tag4.setGuid(UidGenerator::Generate());
+    tag4.setGuid(utility::UidGenerator::Generate());
     tag4.setUpdateSequenceNum(5);
     tag4.setName(QStringLiteral("Tag 4"));
     tag4.setLinkedNotebookGuid(linkedNotebook1.guid());
@@ -1184,7 +1184,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Notebook notebook1;
-    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setGuid(utility::UidGenerator::Generate());
     notebook1.setUpdateSequenceNum(6);
     notebook1.setName(QStringLiteral("Notebook 1"));
     notebook1.setLinkedNotebookGuid(linkedNotebook1.guid());
@@ -1196,7 +1196,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Note note;
-    note.setGuid(UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::Generate());
     note.setUpdateSequenceNum(7);
     note.setTitle(QStringLiteral("Note"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
@@ -1274,100 +1274,100 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid1ForListGuidsTest,
-    (UidGenerator::Generate()));
+    (utility::UidGenerator::Generate()));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid2ForListGuidsTest,
-    (UidGenerator::Generate()));
+    (utility::UidGenerator::Generate()));
 
 const QList<qevercloud::Tag> gTagsForListGuidsTest = QList<qevercloud::Tag>{}
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 1"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 2"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 3"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 4"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 5"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 6"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 7"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 8"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 9"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 10"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 11"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
            .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
            .build()
     << qevercloud::TagBuilder{}
-           .setLocalId(UidGenerator::Generate())
-           .setGuid(UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::Generate())
+           .setGuid(utility::UidGenerator::Generate())
            .setName(QStringLiteral("Tag 12"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)

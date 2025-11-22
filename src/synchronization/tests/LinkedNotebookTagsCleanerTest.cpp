@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Dmitry Ivanov
+ * Copyright 2023-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -71,8 +71,8 @@ TEST_F(LinkedNotebookTagsCleanerTest, ClearTags)
 
         for (int i = 0; i < tagCount; ++i) {
             result << qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QString::fromUtf8("Tag #%1").arg(i + 1))
                           .build();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Dmitry Ivanov
+ * Copyright 2024-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,26 +44,26 @@ const std::array gSyncStates{
         .setUserDataUpdateCount(43)
         .setUserDataLastSyncTime(qevercloud::Timestamp{1721405555000})
         .setLinkedNotebookUpdateCounts(QHash<qevercloud::Guid, qint32>{
-            {UidGenerator::Generate(), 44},
-            {UidGenerator::Generate(), 45},
-            {UidGenerator::Generate(), 46},
+            {utility::UidGenerator::Generate(), 44},
+            {utility::UidGenerator::Generate(), 45},
+            {utility::UidGenerator::Generate(), 46},
         })
         .build(),
     SyncStateBuilder{}
         .setUserDataUpdateCount(43)
         .setUserDataLastSyncTime(qevercloud::Timestamp{1721405555000})
         .setLinkedNotebookUpdateCounts(QHash<qevercloud::Guid, qint32>{
-            {UidGenerator::Generate(), 44},
-            {UidGenerator::Generate(), 45},
-            {UidGenerator::Generate(), 46},
+            {utility::UidGenerator::Generate(), 44},
+            {utility::UidGenerator::Generate(), 45},
+            {utility::UidGenerator::Generate(), 46},
         })
         .setLinkedNotebookLastSyncTimes(
             QHash<qevercloud::Guid, qevercloud::Timestamp>{
-                {UidGenerator::Generate(),
+                {utility::UidGenerator::Generate(),
                  qevercloud::Timestamp{1721405556000}},
-                {UidGenerator::Generate(),
+                {utility::UidGenerator::Generate(),
                  qevercloud::Timestamp{1721405557000}},
-                {UidGenerator::Generate(),
+                {utility::UidGenerator::Generate(),
                  qevercloud::Timestamp{1721405558000}},
             })
         .build(),

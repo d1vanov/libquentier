@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -143,48 +143,48 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
     // to ensure that TagsProcessor would properly sort them and put parent ones
     // into the local storage first
     const auto tag4 = qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #4"))
                           .setUpdateSequenceNum(36)
                           .build();
 
     const auto tag1 = qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #1"))
                           .setUpdateSequenceNum(32)
                           .setParentGuid(tag4.guid())
                           .build();
 
     const auto tag3 = qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #3"))
                           .setUpdateSequenceNum(35)
                           .build();
 
     const auto tag2 = qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #2"))
                           .setUpdateSequenceNum(33)
                           .build();
 
     // Add some tags from a linked notebook
-    const auto linkedNotebookGuid = UidGenerator::Generate();
+    const auto linkedNotebookGuid = utility::UidGenerator::Generate();
 
     const auto tag6 = qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #6"))
                           .setUpdateSequenceNum(37)
                           .setLinkedNotebookGuid(linkedNotebookGuid)
                           .build();
 
     const auto tag5 = qevercloud::TagBuilder{}
-                          .setLocalId(UidGenerator::Generate())
-                          .setGuid(UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setName(QStringLiteral("Tag #5"))
                           .setUpdateSequenceNum(38)
                           .setLinkedNotebookGuid(linkedNotebookGuid)
@@ -334,8 +334,9 @@ TEST_F(TagsProcessorTest, ProcessTagsWithoutConflicts)
 TEST_F(TagsProcessorTest, ProcessExpungedTags)
 {
     const auto expungedTagGuids = QList<qevercloud::Guid>{}
-        << UidGenerator::Generate() << UidGenerator::Generate()
-        << UidGenerator::Generate();
+        << utility::UidGenerator::Generate()
+        << utility::UidGenerator::Generate()
+        << utility::UidGenerator::Generate();
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -395,26 +396,26 @@ TEST_F(TagsProcessorTest, FilterOutExpungedTagsFromSyncChunkTags)
 {
     const auto tags = QList<qevercloud::Tag>{}
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #1"))
                .setUpdateSequenceNum(31)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #2"))
                .setUpdateSequenceNum(32)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #3"))
                .setUpdateSequenceNum(33)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #4"))
                .setUpdateSequenceNum(34)
                .build();
@@ -507,15 +508,15 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 {
     auto tag = qevercloud::TagBuilder{}
-                   .setLocalId(UidGenerator::Generate())
-                   .setGuid(UidGenerator::Generate())
+                   .setLocalId(utility::UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::Generate())
                    .setName(QStringLiteral("Tag #1"))
                    .setUpdateSequenceNum(1)
                    .build();
 
     const auto localConflict =
         qevercloud::TagBuilder{}
-            .setLocalId(UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::Generate())
             .setGuid(tag.guid())
             .setName(tag.name())
             .setUpdateSequenceNum(tag.updateSequenceNum().value() - 1)
@@ -650,20 +651,20 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
     auto tags = QList<qevercloud::Tag>{}
         << tag
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #4"))
                .setUpdateSequenceNum(54)
                .build();
@@ -750,16 +751,17 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
 {
     const auto tag = qevercloud::TagBuilder{}
-                         .setLocalId(UidGenerator::Generate())
-                         .setGuid(UidGenerator::Generate())
+                         .setLocalId(utility::UidGenerator::Generate())
+                         .setGuid(utility::UidGenerator::Generate())
                          .setName(QStringLiteral("Tag #1"))
                          .setUpdateSequenceNum(1)
                          .build();
 
-    const auto localConflict = qevercloud::TagBuilder{}
-                                   .setLocalId(UidGenerator::Generate())
-                                   .setName(tag.name())
-                                   .build();
+    const auto localConflict =
+        qevercloud::TagBuilder{}
+            .setLocalId(utility::UidGenerator::Generate())
+            .setName(tag.name())
+            .build();
 
     QMutex mutex;
     QList<qevercloud::Tag> tagsPutIntoLocalStorage;
@@ -883,20 +885,20 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
     auto tags = QList<qevercloud::Tag>{}
         << tag
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::TagBuilder{}
-               .setLocalId(UidGenerator::Generate())
-               .setGuid(UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::Generate())
+               .setGuid(utility::UidGenerator::Generate())
                .setName(QStringLiteral("Tag #4"))
                .setUpdateSequenceNum(54)
                .build();

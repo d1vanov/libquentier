@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Dmitry Ivanov
+ * Copyright 2022-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -88,9 +88,9 @@ TEST_F(ResourceFullDataDownloaderTest, DownloadSingleResource)
 
     const auto resource =
         qevercloud::ResourceBuilder{}
-            .setGuid(UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::Generate())
             .setUpdateSequenceNum(1U)
-            .setNoteGuid(UidGenerator::Generate())
+            .setNoteGuid(utility::UidGenerator::Generate())
             .setData(qevercloud::DataBuilder{}
                          .setBody(dataBody)
                          .setSize(dataBody.size())
@@ -140,9 +140,9 @@ TEST_F(
             const auto dataBody =
                 QString::fromUtf8("Data #%1").arg(i + 1).toUtf8();
             result << qevercloud::ResourceBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setUpdateSequenceNum(1U)
-                          .setNoteGuid(UidGenerator::Generate())
+                          .setNoteGuid(utility::UidGenerator::Generate())
                           .setData(qevercloud::DataBuilder{}
                                        .setBody(dataBody)
                                        .setSize(dataBody.size())
@@ -221,9 +221,9 @@ TEST_F(
             const auto dataBody =
                 QString::fromUtf8("Data #%1").arg(i + 1).toUtf8();
             result << qevercloud::ResourceBuilder{}
-                          .setGuid(UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::Generate())
                           .setUpdateSequenceNum(1U)
-                          .setNoteGuid(UidGenerator::Generate())
+                          .setNoteGuid(utility::UidGenerator::Generate())
                           .setData(qevercloud::DataBuilder{}
                                        .setBody(dataBody)
                                        .setSize(dataBody.size())

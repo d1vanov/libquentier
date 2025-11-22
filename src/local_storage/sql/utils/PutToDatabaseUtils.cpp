@@ -2645,7 +2645,7 @@ bool putResource(
         PutResourceBinaryDataOption::WithBinaryData)
     {
         if (resource.data() && resource.data()->body()) {
-            resourceDataBodyVersionId = UidGenerator::Generate();
+            resourceDataBodyVersionId = utility::UidGenerator::Generate();
             if (!putResourceDataBodyVersionId(
                     localId, resourceDataBodyVersionId, database,
                     errorDescription))
@@ -2663,7 +2663,9 @@ bool putResource(
         }
 
         if (resource.alternateData() && resource.alternateData()->body()) {
-            resourceAlternateDataBodyVersionId = UidGenerator::Generate();
+            resourceAlternateDataBodyVersionId =
+                utility::UidGenerator::Generate();
+
             if (!putResourceAlternateDataBodyVersionId(
                     localId, resourceAlternateDataBodyVersionId, database,
                     errorDescription))
