@@ -201,7 +201,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByLocalId)
     const auto tagsHandler =
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
-    auto tagFuture = tagsHandler->findTagByLocalId(utility::UidGenerator::generate());
+    auto tagFuture =
+        tagsHandler->findTagByLocalId(utility::UidGenerator::generate());
     tagFuture.waitForFinished();
     ASSERT_EQ(tagFuture.resultCount(), 1);
     EXPECT_FALSE(tagFuture.result());
@@ -212,7 +213,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByGuid)
     const auto tagsHandler =
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
-    auto tagFuture = tagsHandler->findTagByGuid(utility::UidGenerator::generate());
+    auto tagFuture =
+        tagsHandler->findTagByGuid(utility::UidGenerator::generate());
     tagFuture.waitForFinished();
     ASSERT_EQ(tagFuture.resultCount(), 1);
     EXPECT_FALSE(tagFuture.result());
