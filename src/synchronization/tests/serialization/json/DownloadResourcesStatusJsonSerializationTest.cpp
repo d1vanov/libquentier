@@ -56,8 +56,8 @@ TEST_P(DownloadResourcesStatusJsonSerializationTest, SerializeAndDeserialize)
 
     const auto generateResource = [&] {
         return qevercloud::ResourceBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUpdateSequenceNum(updateSequenceNumber++)
             .build();
     };
@@ -89,13 +89,13 @@ TEST_P(DownloadResourcesStatusJsonSerializationTest, SerializeAndDeserialize)
     status->m_processedResourceGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
         status->m_processedResourceGuidsAndUsns
-            [utility::UidGenerator::Generate()] = updateSequenceNumber++;
+            [utility::UidGenerator::generate()] = updateSequenceNumber++;
     }
 
     status->m_cancelledResourceGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
         status->m_cancelledResourceGuidsAndUsns
-            [utility::UidGenerator::Generate()] = updateSequenceNumber++;
+            [utility::UidGenerator::generate()] = updateSequenceNumber++;
     }
 
     status->m_stopSynchronizationError = GetParam();

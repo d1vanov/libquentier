@@ -259,7 +259,7 @@ namespace {
         resource.setNoteLocalId(noteLocalId);
         resource.setNoteGuid(noteGuid);
         if (noteGuid) {
-            resource.setGuid(utility::UidGenerator::Generate());
+            resource.setGuid(utility::UidGenerator::generate());
             resource.setUpdateSequenceNum(10 + i);
         }
 
@@ -324,7 +324,7 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
         note.setNotebookGuid(notebook.guid());
     }
 
-    note.setGuid(utility::UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::generate());
     note.setUpdateSequenceNum(1);
 
     note.setTitle(QStringLiteral("Title"));
@@ -341,14 +341,14 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
 
     if (createNoteOptions.testFlag(CreateNoteOption::WithTagLocalIds)) {
         note.setTagLocalIds(
-            QStringList{} << utility::UidGenerator::Generate()
-                          << utility::UidGenerator::Generate());
+            QStringList{} << utility::UidGenerator::generate()
+                          << utility::UidGenerator::generate());
     }
 
     if (createNoteOptions.testFlag(CreateNoteOption::WithTagGuids)) {
         note.setTagGuids(
-            QList<qevercloud::Guid>{} << utility::UidGenerator::Generate()
-                                      << utility::UidGenerator::Generate());
+            QList<qevercloud::Guid>{} << utility::UidGenerator::generate()
+                                      << utility::UidGenerator::generate());
     }
 
     if (createNoteOptions.testFlag(CreateNoteOption::WithSharedNotes)) {
@@ -377,7 +377,7 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
 [[nodiscard]] qevercloud::Notebook createNotebook()
 {
     qevercloud::Notebook notebook;
-    notebook.setGuid(utility::UidGenerator::Generate());
+    notebook.setGuid(utility::UidGenerator::generate());
     notebook.setName(QStringLiteral("name"));
     notebook.setUpdateSequenceNum(1);
 
@@ -515,7 +515,7 @@ TEST_F(
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
     auto noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
 
     noteCountFuture.waitForFinished();
@@ -533,7 +533,7 @@ TEST_F(
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
     auto noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         NoteCountOptions{NoteCountOption::IncludeDeletedNotes});
 
     noteCountFuture.waitForFinished();
@@ -551,7 +551,7 @@ TEST_F(
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
     auto noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
             NoteCountOption::IncludeDeletedNotes);
 
@@ -570,7 +570,7 @@ TEST_F(
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
     auto noteCountFuture = notesHandler->noteCountPerTagLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
 
     noteCountFuture.waitForFinished();
@@ -588,7 +588,7 @@ TEST_F(
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
     auto noteCountFuture = notesHandler->noteCountPerTagLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         NoteCountOptions{NoteCountOption::IncludeDeletedNotes});
 
     noteCountFuture.waitForFinished();
@@ -605,7 +605,7 @@ TEST_F(
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
     auto noteCountFuture = notesHandler->noteCountPerTagLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
             NoteCountOption::IncludeDeletedNotes);
 
@@ -660,7 +660,7 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
     auto noteFuture = notesHandler->findNoteByLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata});
 
     noteFuture.waitForFinished();
@@ -677,7 +677,7 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
     auto noteFuture = notesHandler->findNoteByGuid(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata});
 
     noteFuture.waitForFinished();
@@ -691,7 +691,7 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNoteFuture =
-        notesHandler->expungeNoteByLocalId(utility::UidGenerator::Generate());
+        notesHandler->expungeNoteByLocalId(utility::UidGenerator::generate());
 
     EXPECT_NO_THROW(expungeNoteFuture.waitForFinished());
 }
@@ -702,7 +702,7 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeNoteFuture =
-        notesHandler->expungeNoteByGuid(utility::UidGenerator::Generate());
+        notesHandler->expungeNoteByGuid(utility::UidGenerator::generate());
 
     EXPECT_NO_THROW(expungeNoteFuture.waitForFinished());
 }
@@ -713,7 +713,7 @@ TEST_F(NotesHandlerTest, ShouldNotListSharedNotesForNonexistentNote)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto listSharedNotesFuture =
-        notesHandler->listSharedNotes(utility::UidGenerator::Generate());
+        notesHandler->listSharedNotes(utility::UidGenerator::generate());
 
     listSharedNotesFuture.waitForFinished();
     EXPECT_TRUE(listSharedNotesFuture.result().isEmpty());
@@ -744,7 +744,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
     auto notesFuture = notesHandler->listNotesPerNotebookLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
         ILocalStorage::ListNotesOptions{});
 
@@ -761,7 +761,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
     auto notesFuture = notesHandler->listNotesPerTagLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
         ILocalStorage::ListNotesOptions{});
 
@@ -778,8 +778,8 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
     auto notesFuture = notesHandler->listNotesPerNotebookAndTagLocalIds(
-        QStringList{} << utility::UidGenerator::Generate(),
-        QStringList{} << utility::UidGenerator::Generate(),
+        QStringList{} << utility::UidGenerator::generate(),
+        QStringList{} << utility::UidGenerator::generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
         ILocalStorage::ListNotesOptions{});
 
@@ -796,8 +796,8 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
     auto notesFuture = notesHandler->listNotesByLocalIds(
-        QStringList{} << utility::UidGenerator::Generate()
-                      << utility::UidGenerator::Generate(),
+        QStringList{} << utility::UidGenerator::generate()
+                      << utility::UidGenerator::generate(),
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
         ILocalStorage::ListNotesOptions{});
 
@@ -1351,8 +1351,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     for (auto it = std::next(notes.begin()); it != notes.end(); ++it) // NOLINT
     {
         auto & note = *it;
-        note.setLocalId(utility::UidGenerator::Generate());
-        note.setGuid(utility::UidGenerator::Generate());
+        note.setLocalId(utility::UidGenerator::generate());
+        note.setGuid(utility::UidGenerator::generate());
 
         note.setTitle(
             note.title().value() + QStringLiteral(" #") +
@@ -1596,7 +1596,7 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag;
-    tag.setGuid(utility::UidGenerator::Generate());
+    tag.setGuid(utility::UidGenerator::generate());
     tag.setUpdateSequenceNum(1);
     tag.setName(QStringLiteral("Tag"));
 
@@ -1608,7 +1608,7 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 
     // Put note with a tag and a resource to the local storage
     qevercloud::Note note;
-    note.setGuid(utility::UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::generate());
     note.setUpdateSequenceNum(1);
     note.setTitle(QStringLiteral("Note"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
@@ -1744,102 +1744,102 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid1ForListGuidsTest,
-    (utility::UidGenerator::Generate()));
+    (utility::UidGenerator::generate()));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     qevercloud::Guid, gLinkedNotebookGuid2ForListGuidsTest,
-    (utility::UidGenerator::Generate()));
+    (utility::UidGenerator::generate()));
 
 Q_GLOBAL_STATIC_WITH_ARGS(
     QList<qevercloud::Notebook>, gNotebooksForListGuidsTest,
     (QList<qevercloud::Notebook>{}
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 1"))
             .setLocallyModified(false)
             .setLocallyFavorited(false)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 2"))
             .setLocallyModified(true)
             .setLocallyFavorited(false)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 3"))
             .setLocallyModified(false)
             .setLocallyFavorited(true)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 4"))
             .setLocallyModified(true)
             .setLocallyFavorited(true)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 5"))
             .setLocallyModified(false)
             .setLocallyFavorited(false)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 6"))
             .setLocallyModified(true)
             .setLocallyFavorited(false)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 7"))
             .setLocallyModified(false)
             .setLocallyFavorited(true)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 8"))
             .setLocallyModified(true)
             .setLocallyFavorited(true)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid1ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 9"))
             .setLocallyModified(false)
             .setLocallyFavorited(false)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 10"))
             .setLocallyModified(true)
             .setLocallyFavorited(false)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 11"))
             .setLocallyModified(false)
             .setLocallyFavorited(true)
             .setLinkedNotebookGuid(*gLinkedNotebookGuid2ForListGuidsTest)
             .build()
      << qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setName(QString::fromUtf8("Notebook 12"))
             .setLocallyModified(true)
             .setLocallyFavorited(true)
@@ -1848,8 +1848,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(
 
 const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 1"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
@@ -1857,8 +1857,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[0].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 2"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
@@ -1866,8 +1866,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[1].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 3"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
@@ -1875,8 +1875,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[2].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 4"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
@@ -1884,8 +1884,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[3].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 5"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
@@ -1893,8 +1893,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[4].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 6"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
@@ -1902,8 +1902,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[5].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 7"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
@@ -1911,8 +1911,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[6].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 8"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
@@ -1920,8 +1920,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[7].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 9"))
            .setLocallyModified(false)
            .setLocallyFavorited(false)
@@ -1929,8 +1929,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[8].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 10"))
            .setLocallyModified(true)
            .setLocallyFavorited(false)
@@ -1938,8 +1938,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[9].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 11"))
            .setLocallyModified(false)
            .setLocallyFavorited(true)
@@ -1947,8 +1947,8 @@ const QList<qevercloud::Note> gNotesForListGuidsTest = QList<qevercloud::Note>{}
            .setNotebookLocalId((*gNotebooksForListGuidsTest)[10].localId())
            .build()
     << qevercloud::NoteBuilder{}
-           .setLocalId(utility::UidGenerator::Generate())
-           .setGuid(utility::UidGenerator::Generate())
+           .setLocalId(utility::UidGenerator::generate())
+           .setGuid(utility::UidGenerator::generate())
            .setTitle(QStringLiteral("Note 12"))
            .setLocallyModified(true)
            .setLocallyFavorited(true)
@@ -2346,7 +2346,7 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
         std::make_shared<TagsHandler>(m_connectionPool, m_notifier, m_thread);
 
     qevercloud::Tag tag1;
-    tag1.setGuid(utility::UidGenerator::Generate());
+    tag1.setGuid(utility::UidGenerator::generate());
     tag1.setUpdateSequenceNum(1);
     tag1.setName(QStringLiteral("Tag #1"));
 
@@ -2354,7 +2354,7 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
     putTagFuture.waitForFinished();
 
     qevercloud::Tag tag2;
-    tag2.setGuid(utility::UidGenerator::Generate());
+    tag2.setGuid(utility::UidGenerator::generate());
     tag2.setUpdateSequenceNum(2);
     tag2.setName(QStringLiteral("Tag #2"));
 
@@ -2365,7 +2365,7 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     qevercloud::Note note;
-    note.setGuid(utility::UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::generate());
     note.setUpdateSequenceNum(1);
     note.setTitle(QStringLiteral("Note"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));

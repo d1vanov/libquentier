@@ -103,7 +103,7 @@ namespace {
 [[nodiscard]] qevercloud::Notebook createNotebook()
 {
     qevercloud::Notebook notebook;
-    notebook.setGuid(utility::UidGenerator::Generate());
+    notebook.setGuid(utility::UidGenerator::generate());
     notebook.setName(QStringLiteral("name"));
     notebook.setUpdateSequenceNum(1);
 
@@ -124,7 +124,7 @@ namespace {
     note.setNotebookLocalId(notebook.localId());
     note.setNotebookGuid(notebook.guid());
 
-    note.setGuid(utility::UidGenerator::Generate());
+    note.setGuid(utility::UidGenerator::generate());
     note.setUpdateSequenceNum(1);
 
     note.setTitle(QStringLiteral("Title"));
@@ -160,7 +160,7 @@ Q_DECLARE_FLAGS(CreateResourceOptions, CreateResourceOption);
     resource.setLocallyModified(true);
 
     if (noteGuid) {
-        resource.setGuid(utility::UidGenerator::Generate());
+        resource.setGuid(utility::UidGenerator::generate());
         resource.setUpdateSequenceNum(42);
     }
 
@@ -344,14 +344,14 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto resourceFuture = resourcesHandler->findResourceByLocalId(
-        utility::UidGenerator::Generate());
+        utility::UidGenerator::generate());
 
     resourceFuture.waitForFinished();
     ASSERT_EQ(resourceFuture.resultCount(), 1);
     EXPECT_FALSE(resourceFuture.result());
 
     resourceFuture = resourcesHandler->findResourceByLocalId(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         ILocalStorage::FetchResourceOption::WithBinaryData);
 
     resourceFuture.waitForFinished();
@@ -365,14 +365,14 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto resourceFuture =
-        resourcesHandler->findResourceByGuid(utility::UidGenerator::Generate());
+        resourcesHandler->findResourceByGuid(utility::UidGenerator::generate());
 
     resourceFuture.waitForFinished();
     ASSERT_EQ(resourceFuture.resultCount(), 1);
     EXPECT_FALSE(resourceFuture.result());
 
     resourceFuture = resourcesHandler->findResourceByGuid(
-        utility::UidGenerator::Generate(),
+        utility::UidGenerator::generate(),
         ILocalStorage::FetchResourceOption::WithBinaryData);
 
     resourceFuture.waitForFinished();
@@ -386,7 +386,7 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeResourceFuture = resourcesHandler->expungeResourceByLocalId(
-        utility::UidGenerator::Generate());
+        utility::UidGenerator::generate());
 
     EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
 }
@@ -397,7 +397,7 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByGuid)
         m_connectionPool, m_notifier, m_thread, m_temporaryDir.path());
 
     auto expungeResourceFuture = resourcesHandler->expungeResourceByGuid(
-        utility::UidGenerator::Generate());
+        utility::UidGenerator::generate());
 
     EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
 }
@@ -508,7 +508,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     EXPECT_EQ(resourceCountFuture.result(), 1);
 
     resourceCountFuture = resourcesHandler->resourceCountPerNoteLocalId(
-        utility::UidGenerator::Generate());
+        utility::UidGenerator::generate());
 
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), 0);
@@ -662,8 +662,8 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
          it != resources.end(); ++it)
     {
         auto & resource = *it;
-        resource.setLocalId(utility::UidGenerator::Generate());
-        resource.setGuid(utility::UidGenerator::Generate());
+        resource.setLocalId(utility::UidGenerator::generate());
+        resource.setGuid(utility::UidGenerator::generate());
 
         resource.setUpdateSequenceNum(resourceCounter);
         ++resourceCounter;
@@ -700,7 +700,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
     EXPECT_EQ(resourceCountFuture.result(), resources.size());
 
     resourceCountFuture = resourcesHandler->resourceCountPerNoteLocalId(
-        utility::UidGenerator::Generate());
+        utility::UidGenerator::generate());
 
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), 0);

@@ -243,7 +243,7 @@ Q_DECLARE_FLAGS(
     const auto now = QDateTime::currentMSecsSinceEpoch();
     ResourcesTestData testData;
 
-    testData.m_notebook.setGuid(utility::UidGenerator::Generate());
+    testData.m_notebook.setGuid(utility::UidGenerator::generate());
     testData.m_notebook.setName(QStringLiteral("name"));
     testData.m_notebook.setUpdateSequenceNum(1);
     testData.m_notebook.setServiceCreated(now);
@@ -257,7 +257,7 @@ Q_DECLARE_FLAGS(
     testData.m_note.setLocallyFavorited(true);
     testData.m_note.setNotebookLocalId(testData.m_notebook.localId());
     testData.m_note.setNotebookGuid(testData.m_notebook.guid());
-    testData.m_note.setGuid(utility::UidGenerator::Generate());
+    testData.m_note.setGuid(utility::UidGenerator::generate());
     testData.m_note.setUpdateSequenceNum(1);
     testData.m_note.setTitle(QStringLiteral("Title"));
     testData.m_note.setContent(
@@ -274,7 +274,7 @@ Q_DECLARE_FLAGS(
     putNoteFuture.waitForFinished();
 
     testData.m_firstResource.setLocallyModified(true);
-    testData.m_firstResource.setGuid(utility::UidGenerator::Generate());
+    testData.m_firstResource.setGuid(utility::UidGenerator::generate());
     testData.m_firstResource.setUpdateSequenceNum(42);
     testData.m_firstResource.setNoteLocalId(testData.m_note.localId());
     testData.m_firstResource.setNoteGuid(testData.m_note.guid());
@@ -292,8 +292,8 @@ Q_DECLARE_FLAGS(
     }
 
     testData.m_secondResource = testData.m_firstResource;
-    testData.m_secondResource.setLocalId(utility::UidGenerator::Generate());
-    testData.m_secondResource.setGuid(utility::UidGenerator::Generate());
+    testData.m_secondResource.setLocalId(utility::UidGenerator::generate());
+    testData.m_secondResource.setGuid(utility::UidGenerator::generate());
     testData.m_secondResource.setUpdateSequenceNum(
         testData.m_secondResource.updateSequenceNum().value() + 1);
 
@@ -317,8 +317,8 @@ Q_DECLARE_FLAGS(
     }
 
     testData.m_thirdResource = testData.m_secondResource;
-    testData.m_thirdResource.setLocalId(utility::UidGenerator::Generate());
-    testData.m_thirdResource.setGuid(utility::UidGenerator::Generate());
+    testData.m_thirdResource.setLocalId(utility::UidGenerator::generate());
+    testData.m_thirdResource.setGuid(utility::UidGenerator::generate());
     testData.m_thirdResource.setUpdateSequenceNum(
         testData.m_thirdResource.updateSequenceNum().value() + 1);
 
@@ -712,7 +712,7 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
         result.reserve(localNotebookCount);
         for (int i = 0; i < localNotebookCount; ++i) {
             result << qevercloud::NotebookBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
                           .setName(QString::fromUtf8("Local notebook #%1")
                                        .arg(i + 1))
                           .build();
@@ -729,7 +729,7 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
         for (const auto & localNotebook: std::as_const(localNotebooks)) {
             for (int i = 0; i < localNotePerNotebookCount; ++i) {
                 result << qevercloud::NoteBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setTitle(QString::fromUtf8("Local note #%1")
                                             .arg(localNoteCounter++))
                               .setNotebookLocalId(localNotebook.localId())
@@ -749,8 +749,8 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
         result.reserve(notebookCount);
         for (int i = 0; i < notebookCount; ++i) {
             result << qevercloud::NotebookBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(updateSequenceNum++)
                           .setName(QString::fromUtf8("Non-local notebook #%1")
                                        .arg(i + 1))
@@ -771,8 +771,8 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
         for (const auto & notebook: std::as_const(notebooks)) {
             for (int i = 0; i < notePerNotebookCount; ++i) {
                 result << qevercloud::NoteBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
-                              .setGuid(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
+                              .setGuid(utility::UidGenerator::generate())
                               .setUpdateSequenceNum(updateSequenceNum++)
                               .setTitle(QString::fromUtf8(
                                             "Note with notebook guid #%1")
@@ -797,8 +797,8 @@ TEST_F(Patch2To3Test, CheckNoteNotebookGuidsUpgrade)
             for (const auto & notebook: std::as_const(notebooks)) {
                 for (int i = 0; i < notePerNotebookCount; ++i) {
                     result << qevercloud::NoteBuilder{}
-                                  .setLocalId(utility::UidGenerator::Generate())
-                                  .setGuid(utility::UidGenerator::Generate())
+                                  .setLocalId(utility::UidGenerator::generate())
+                                  .setGuid(utility::UidGenerator::generate())
                                   .setUpdateSequenceNum(updateSequenceNum++)
                                   .setTitle(
                                       QString::fromUtf8(
@@ -943,7 +943,7 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
         result.reserve(localParentTagCount);
         for (int i = 0; i < localParentTagCount; ++i) {
             result << qevercloud::TagBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
                           .setName(QString::fromUtf8("Local parent tag #%1")
                                        .arg(i + 1))
                           .build();
@@ -961,7 +961,7 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
         for (const auto & parentTag: std::as_const(localParentTags)) {
             for (int i = 0; i < localChildTagPerParentTagCount; ++i) {
                 result << qevercloud::TagBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QString::fromUtf8("Local child tag #%1")
                                            .arg(tagCounter++))
                               .setParentTagLocalId(parentTag.localId())
@@ -981,8 +981,8 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
         result.reserve(tagCount);
         for (int i = 0; i < tagCount; ++i) {
             result << qevercloud::TagBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(updateSequenceNum++)
                           .setName(QString::fromUtf8("Non-local parent tag #%1")
                                        .arg(i + 1))
@@ -1002,8 +1002,8 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
             for (const auto & parentTag: std::as_const(parentTags)) {
                 for (int i = 0; i < childTagPerParentTagCount; ++i) {
                     result << qevercloud::TagBuilder{}
-                                  .setLocalId(utility::UidGenerator::Generate())
-                                  .setGuid(utility::UidGenerator::Generate())
+                                  .setLocalId(utility::UidGenerator::generate())
+                                  .setGuid(utility::UidGenerator::generate())
                                   .setUpdateSequenceNum(updateSequenceNum++)
                                   .setName(
                                       QString::fromUtf8("Non-local child tag "
@@ -1029,8 +1029,8 @@ TEST_F(Patch2To3Test, CheckParentTagGuidsUpgrade)
             for (const auto & parentTag: std::as_const(parentTags)) {
                 for (int i = 0; i < childTagPerParentTagCount; ++i) {
                     result << qevercloud::TagBuilder{}
-                                  .setLocalId(utility::UidGenerator::Generate())
-                                  .setGuid(utility::UidGenerator::Generate())
+                                  .setLocalId(utility::UidGenerator::generate())
+                                  .setGuid(utility::UidGenerator::generate())
                                   .setUpdateSequenceNum(updateSequenceNum++)
                                   .setName(QString::fromUtf8(
                                                "Non-local child tag without "
@@ -1174,7 +1174,7 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
     // Local notebook
     const auto localNotebook =
         qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setName(QStringLiteral(
                 "Local notebook for resource note guids upgrade"))
             .build();
@@ -1187,7 +1187,7 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
         result.reserve(localNoteCount);
         for (int i = 0; i < localNoteCount; ++i) {
             result << qevercloud::NoteBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
                           .setNotebookLocalId(localNotebook.localId())
                           .setTitle(
                               QString::fromUtf8("Local note #%1").arg(i + 1))
@@ -1204,7 +1204,7 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
         for (auto & note: localNotes) {
             for (int i = 0; i < resourcesPerNoteCount; ++i) {
                 result << qevercloud::ResourceBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setNoteLocalId(note.localId())
                               .build();
                 if (!note.resources()) {
@@ -1224,8 +1224,8 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
     // Non-local notebook
     const auto notebook =
         qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUpdateSequenceNum(updateSequenceNum++)
             .setName("Notebook for resource note guids upgrade")
             .build();
@@ -1237,8 +1237,8 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
         result.reserve(noteCount);
         for (int i = 0; i < noteCount; ++i) {
             result << qevercloud::NoteBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(updateSequenceNum++)
                           .setNotebookLocalId(notebook.localId())
                           .setNotebookGuid(notebook.guid())
@@ -1257,8 +1257,8 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
         for (auto & note: notes) {
             for (int i = 0; i < resourcesPerNoteCount; ++i) {
                 result << qevercloud::ResourceBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
-                              .setGuid(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
+                              .setGuid(utility::UidGenerator::generate())
                               .setNoteLocalId(note.localId())
                               .setNoteGuid(note.guid())
                               .setUpdateSequenceNum(updateSequenceNum++)
@@ -1283,8 +1283,8 @@ TEST_F(Patch2To3Test, CheckResourceNoteGuidsUpgrade)
         for (auto & note: notes) {
             for (int i = 0; i < resourcesPerNoteCount; ++i) {
                 result << qevercloud::ResourceBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
-                              .setGuid(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
+                              .setGuid(utility::UidGenerator::generate())
                               .setNoteLocalId(note.localId())
                               .setUpdateSequenceNum(updateSequenceNum++)
                               .build();

@@ -95,7 +95,7 @@ namespace {
         QStringLiteral("sharedNotebookGlobalId"));
 
     linkedNotebook.setUri(QStringLiteral("uri"));
-    linkedNotebook.setGuid(utility::UidGenerator::Generate());
+    linkedNotebook.setGuid(utility::UidGenerator::generate());
     linkedNotebook.setUpdateSequenceNum(1);
     linkedNotebook.setNoteStoreUrl(QStringLiteral("noteStoreUrl"));
     linkedNotebook.setWebApiUrlPrefix(QStringLiteral("webApiUrlPrefix"));
@@ -202,7 +202,7 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldNotFindNonexistentLinkedNotebookByGuid)
 
     auto linkedNotebookFuture =
         linkedNotebooksHandler->findLinkedNotebookByGuid(
-            utility::UidGenerator::Generate());
+            utility::UidGenerator::generate());
 
     linkedNotebookFuture.waitForFinished();
     ASSERT_EQ(linkedNotebookFuture.resultCount(), 1);
@@ -219,7 +219,7 @@ TEST_F(
 
     auto expungeLinkedNotebookFuture =
         linkedNotebooksHandler->expungeLinkedNotebookByGuid(
-            utility::UidGenerator::Generate());
+            utility::UidGenerator::generate());
 
     EXPECT_NO_THROW(expungeLinkedNotebookFuture.waitForFinished());
 }

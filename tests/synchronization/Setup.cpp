@@ -182,8 +182,8 @@ void printItemSources(T & t, const ItemSources sources)
     const int index, const QString & nameSuffix = {})
 {
     return qevercloud::SavedSearchBuilder{}
-        .setGuid(utility::UidGenerator::Generate())
-        .setLocalId(utility::UidGenerator::Generate())
+        .setGuid(utility::UidGenerator::generate())
+        .setLocalId(utility::UidGenerator::generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
@@ -198,9 +198,9 @@ void printItemSources(T & t, const ItemSources sources)
     std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt)
 {
     return qevercloud::TagBuilder{}
-        .setGuid(utility::UidGenerator::Generate())
+        .setGuid(utility::UidGenerator::generate())
         .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
-        .setLocalId(utility::UidGenerator::Generate())
+        .setLocalId(utility::UidGenerator::generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
@@ -213,9 +213,9 @@ void printItemSources(T & t, const ItemSources sources)
     std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt)
 {
     return qevercloud::NotebookBuilder{}
-        .setGuid(utility::UidGenerator::Generate())
+        .setGuid(utility::UidGenerator::generate())
         .setLinkedNotebookGuid(std::move(linkedNotebookGuid))
-        .setLocalId(utility::UidGenerator::Generate())
+        .setLocalId(utility::UidGenerator::generate())
         .setLocalOnly(false)
         .setLocallyModified(false)
         .setLocallyFavorited(false)
@@ -230,10 +230,10 @@ void printItemSources(T & t, const ItemSources sources)
 {
     auto note =
         qevercloud::NoteBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setNotebookGuid(std::move(notebookGuid))
             .setNotebookLocalId(std::move(notebookLocalId))
-            .setLocalId(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setLocalOnly(false)
             .setLocallyModified(false)
             .setLocallyFavorited(false)
@@ -269,8 +269,8 @@ void printItemSources(T & t, const ItemSources sources)
     const auto resourceSize = resourceData.size();
 
     return qevercloud::ResourceBuilder{}
-        .setGuid(utility::UidGenerator::Generate())
-        .setLocalId(utility::UidGenerator::Generate())
+        .setGuid(utility::UidGenerator::generate())
+        .setLocalId(utility::UidGenerator::generate())
         .setHeight(32)
         .setWidth(24)
         .setLocalOnly(false)
@@ -288,7 +288,7 @@ void printItemSources(T & t, const ItemSources sources)
 [[nodiscard]] qevercloud::LinkedNotebook generateLinkedNotebook(
     const int index, const quint16 port)
 {
-    auto guid = utility::UidGenerator::Generate();
+    auto guid = utility::UidGenerator::generate();
     return qevercloud::LinkedNotebookBuilder{}
         .setGuid(guid)
         .setLocalOnly(false)
@@ -848,7 +848,7 @@ void setupTestData(
             constexpr int expungedItemCount = 3;
             expungedGuids.reserve(expungedGuids.size() + expungedItemCount);
             for (int i = 0; i < expungedItemCount; ++i) {
-                expungedGuids.insert(utility::UidGenerator::Generate());
+                expungedGuids.insert(utility::UidGenerator::generate());
             }
         };
 
@@ -1599,7 +1599,7 @@ void setupLocalStorage(
         localStorage
             .putSavedSearch(
                 qevercloud::SavedSearchBuilder{}
-                    .setLocalId(utility::UidGenerator::Generate())
+                    .setLocalId(utility::UidGenerator::generate())
                     .setGuid(guid)
                     .setName(QString::fromUtf8("Expunged saved search #%1")
                                  .arg(expungedSavedSearchIndex++))
@@ -1614,7 +1614,7 @@ void setupLocalStorage(
     {
         localStorage
             .putNotebook(qevercloud::NotebookBuilder{}
-                             .setLocalId(utility::UidGenerator::Generate())
+                             .setLocalId(utility::UidGenerator::generate())
                              .setGuid(guid)
                              .setName(QString::fromUtf8("Expunged notebook #%1")
                                           .arg(expungedNotebookIndex++))
@@ -1632,7 +1632,7 @@ void setupLocalStorage(
             localStorage
                 .putNotebook(
                     qevercloud::NotebookBuilder{}
-                        .setLocalId(utility::UidGenerator::Generate())
+                        .setLocalId(utility::UidGenerator::generate())
                         .setGuid(guid)
                         .setLinkedNotebookGuid(linkedNotebookGuid)
                         .setName(QString::fromUtf8(
@@ -1648,7 +1648,7 @@ void setupLocalStorage(
     for (const auto & guid: std::as_const(testData.m_expungedUserOwnTagGuids)) {
         localStorage
             .putTag(qevercloud::TagBuilder{}
-                        .setLocalId(utility::UidGenerator::Generate())
+                        .setLocalId(utility::UidGenerator::generate())
                         .setGuid(guid)
                         .setName(QString::fromUtf8("Expunged tag #%1")
                                      .arg(expungedTagIndex++))
@@ -1665,7 +1665,7 @@ void setupLocalStorage(
         for (const auto & guid: std::as_const(guids)) {
             localStorage
                 .putTag(qevercloud::TagBuilder{}
-                            .setLocalId(utility::UidGenerator::Generate())
+                            .setLocalId(utility::UidGenerator::generate())
                             .setGuid(guid)
                             .setLinkedNotebookGuid(linkedNotebookGuid)
                             .setName(QString::fromUtf8(
@@ -1700,7 +1700,7 @@ void setupLocalStorage(
             const auto & notebook = notebooks.at(notebookIndex++);
             localStorage
                 .putNote(qevercloud::NoteBuilder{}
-                             .setLocalId(utility::UidGenerator::Generate())
+                             .setLocalId(utility::UidGenerator::generate())
                              .setGuid(guid)
                              .setTitle(QString::fromUtf8("Expunged note #%1")
                                            .arg(expungedNoteIndex++))
@@ -1741,7 +1741,7 @@ void setupLocalStorage(
                 localStorage
                     .putNote(
                         qevercloud::NoteBuilder{}
-                            .setLocalId(utility::UidGenerator::Generate())
+                            .setLocalId(utility::UidGenerator::generate())
                             .setGuid(guid)
                             .setTitle(QString::fromUtf8(
                                           "Expunged linked notebook's note #%1")

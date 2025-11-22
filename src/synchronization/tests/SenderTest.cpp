@@ -153,7 +153,7 @@ enum class WithEvernoteFields
 {
     qevercloud::SavedSearchBuilder builder;
     builder.setLocallyModified(true);
-    builder.setLocalId(utility::UidGenerator::Generate())
+    builder.setLocalId(utility::UidGenerator::generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
                 ? QString::fromUtf8("Updated saved search #%1").arg(index + 1)
@@ -162,7 +162,7 @@ enum class WithEvernoteFields
 
     if (withEvernoteFields == WithEvernoteFields::Yes) {
         builder.setUpdateSequenceNum(usn++);
-        builder.setGuid(utility::UidGenerator::Generate());
+        builder.setGuid(utility::UidGenerator::generate());
     }
 
     return builder.build();
@@ -173,7 +173,7 @@ enum class WithEvernoteFields
 {
     qevercloud::NotebookBuilder builder;
     builder.setLocallyModified(true);
-    builder.setLocalId(utility::UidGenerator::Generate())
+    builder.setLocalId(utility::UidGenerator::generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
                 ? QString::fromUtf8("Updated notebook #%1").arg(index + 1)
@@ -181,7 +181,7 @@ enum class WithEvernoteFields
 
     if (withEvernoteFields == WithEvernoteFields::Yes) {
         builder.setUpdateSequenceNum(usn++);
-        builder.setGuid(utility::UidGenerator::Generate());
+        builder.setGuid(utility::UidGenerator::generate());
     }
 
     return builder.build();
@@ -196,7 +196,7 @@ enum class WithEvernoteFields
 {
     qevercloud::NoteBuilder builder;
     builder.setLocallyModified(true);
-    builder.setLocalId(utility::UidGenerator::Generate())
+    builder.setLocalId(utility::UidGenerator::generate())
         .setTitle(
             (withEvernoteFields == WithEvernoteFields::Yes
                  ? QString::fromUtf8("Updated note #%1").arg(index + 1)
@@ -211,8 +211,8 @@ enum class WithEvernoteFields
             .setNotebookGuid(updatedNotebooks[index].guid());
     }
     else {
-        builder.setNotebookLocalId(utility::UidGenerator::Generate());
-        builder.setNotebookGuid(utility::UidGenerator::Generate());
+        builder.setNotebookLocalId(utility::UidGenerator::generate());
+        builder.setNotebookGuid(utility::UidGenerator::generate());
     }
 
     if (!newTags.isEmpty()) {
@@ -250,7 +250,7 @@ enum class WithEvernoteFields
 
     if (withEvernoteFields == WithEvernoteFields::Yes) {
         builder.setUpdateSequenceNum(usn++);
-        builder.setGuid(utility::UidGenerator::Generate());
+        builder.setGuid(utility::UidGenerator::generate());
     }
 
     return builder.build();
@@ -269,7 +269,7 @@ enum class AddParentToTag
 {
     qevercloud::TagBuilder builder;
     builder.setLocallyModified(true);
-    builder.setLocalId(utility::UidGenerator::Generate())
+    builder.setLocalId(utility::UidGenerator::generate())
         .setName(
             (withEvernoteFields == WithEvernoteFields::Yes)
                 ? QString::fromUtf8("Updated tag #%1").arg(index + 1)
@@ -281,7 +281,7 @@ enum class AddParentToTag
 
     if (withEvernoteFields == WithEvernoteFields::Yes) {
         builder.setUpdateSequenceNum(usn++);
-        builder.setGuid(utility::UidGenerator::Generate());
+        builder.setGuid(utility::UidGenerator::generate());
 
         if (!previousTags.isEmpty() && (addParentToTag == AddParentToTag::Yes))
         {
@@ -296,7 +296,7 @@ enum class AddParentToTag
     const int index, qint32 & usn)
 {
     return qevercloud::LinkedNotebookBuilder{}
-        .setGuid(utility::UidGenerator::Generate())
+        .setGuid(utility::UidGenerator::generate())
         .setUpdateSequenceNum(usn++)
         .setUsername(QString::fromUtf8("Linked notebook #%1").arg(index + 1))
         .build();
@@ -710,7 +710,7 @@ void setupUserOwnNoteStoreMock(
                 EXPECT_FALSE(ctx);
                 EXPECT_TRUE(testData.m_newSavedSearches.contains(savedSearch));
                 qevercloud::SavedSearch createdSavedSearch = savedSearch;
-                createdSavedSearch.setGuid(utility::UidGenerator::Generate());
+                createdSavedSearch.setGuid(utility::UidGenerator::generate());
                 const auto newUsn = getNewUserOwnUsn();
                 createdSavedSearch.setUpdateSequenceNum(newUsn);
 
@@ -851,7 +851,7 @@ void setupUserOwnNoteStoreMock(
                 EXPECT_FALSE(ctx);
                 EXPECT_TRUE(testData.m_newUserOwnNotebooks.contains(notebook));
                 qevercloud::Notebook createdNotebook = notebook;
-                createdNotebook.setGuid(utility::UidGenerator::Generate());
+                createdNotebook.setGuid(utility::UidGenerator::generate());
 
                 const auto newUsn = getNewUserOwnUsn();
                 createdNotebook.setUpdateSequenceNum(newUsn);
@@ -993,7 +993,7 @@ void setupUserOwnNoteStoreMock(
                     testData.m_newUserOwnTags.contains(tagWithoutParentGuid));
 
                 qevercloud::Tag createdTag = tag;
-                createdTag.setGuid(utility::UidGenerator::Generate());
+                createdTag.setGuid(utility::UidGenerator::generate());
                 const auto newUsn = getNewUserOwnUsn();
                 createdTag.setUpdateSequenceNum(newUsn);
                 if (!findAndSetParentTagGuid(
@@ -1130,7 +1130,7 @@ void setupUserOwnNoteStoreMock(
             return;
         }
 
-        note.setNotebookGuid(utility::UidGenerator::Generate());
+        note.setNotebookGuid(utility::UidGenerator::generate());
     };
 
     if (!testData.m_newUserOwnNotes.isEmpty()) {
@@ -1151,7 +1151,7 @@ void setupUserOwnNoteStoreMock(
                     testData.m_newUserOwnNotes.contains(noteWithoutTagGuids));
 
                 qevercloud::Note createdNote = note;
-                createdNote.setGuid(utility::UidGenerator::Generate());
+                createdNote.setGuid(utility::UidGenerator::generate());
                 const auto newUsn = getNewUserOwnUsn();
                 createdNote.setUpdateSequenceNum(newUsn);
                 setNoteNotebookGuid(createdNote);
@@ -1392,7 +1392,7 @@ void setupLinkedNotebookNoteStoreMocks(
                 return;
             }
 
-            note.setNotebookGuid(utility::UidGenerator::Generate());
+            note.setNotebookGuid(utility::UidGenerator::generate());
         };
 
         EXPECT_CALL(*mockNoteStore, createTagAsync)
@@ -1402,7 +1402,7 @@ void setupLinkedNotebookNoteStoreMocks(
                                     ctx) mutable {
                 EXPECT_FALSE(ctx);
                 qevercloud::Tag createdTag = tag;
-                createdTag.setGuid(utility::UidGenerator::Generate());
+                createdTag.setGuid(utility::UidGenerator::generate());
                 const auto newUsn =
                     getNewLinkedNotebookUsn(*linkedNotebook.guid());
                 createdTag.setUpdateSequenceNum(newUsn);
@@ -1536,7 +1536,7 @@ void setupLinkedNotebookNoteStoreMocks(
                                     ctx) mutable {
                 EXPECT_FALSE(ctx);
                 qevercloud::Note createdNote = note;
-                createdNote.setGuid(utility::UidGenerator::Generate());
+                createdNote.setGuid(utility::UidGenerator::generate());
                 const auto newUsn =
                     getNewLinkedNotebookUsn(*linkedNotebook.guid());
                 createdNote.setUpdateSequenceNum(newUsn);
@@ -1699,7 +1699,7 @@ void setupLocalStorageMock(
                 std::optional<qevercloud::Notebook>>(
                 qevercloud::NotebookBuilder{}
                     .setLocalId(notebookLocalId)
-                    .setGuid(utility::UidGenerator::Generate())
+                    .setGuid(utility::UidGenerator::generate())
                     .setName(QStringLiteral("Notebook"))
                     .setUpdateSequenceNum(1)
                     .build());
@@ -2424,7 +2424,7 @@ TEST_F(SenderTest, AttemptToSendTagIfItsNonNewParentTagWasNotSentSuccessfully)
             EXPECT_FALSE(ctx);
             EXPECT_EQ(tag, childTag);
             qevercloud::Tag createdTag = tag;
-            createdTag.setGuid(utility::UidGenerator::Generate());
+            createdTag.setGuid(utility::UidGenerator::generate());
             createdTag.setUpdateSequenceNum(usn++);
             return threading::makeReadyFuture<qevercloud::Tag>(
                 std::move(createdTag));
@@ -2627,7 +2627,7 @@ TEST_F(SenderTest, AttemptToSendNoteIfFailedToSendItsNonNewNotebook)
             EXPECT_EQ(n, note);
             qevercloud::Note newNote{n};
             newNote.setUpdateSequenceNum(usn++);
-            newNote.setGuid(utility::UidGenerator::Generate());
+            newNote.setGuid(utility::UidGenerator::generate());
             return threading::makeReadyFuture<qevercloud::Note>(
                 noteMetadata(std::move(newNote)));
         });
@@ -2748,7 +2748,7 @@ TEST_F(
             EXPECT_EQ(n, note);
             qevercloud::Note newNote{n};
             newNote.setUpdateSequenceNum(usn++);
-            newNote.setGuid(utility::UidGenerator::Generate());
+            newNote.setGuid(utility::UidGenerator::generate());
             return threading::makeReadyFuture<qevercloud::Note>(
                 noteMetadata(std::move(newNote)));
         });
@@ -2872,7 +2872,7 @@ TEST_F(
             EXPECT_EQ(n, note);
             qevercloud::Note newNote{n};
             newNote.setUpdateSequenceNum(usn++);
-            newNote.setGuid(utility::UidGenerator::Generate());
+            newNote.setGuid(utility::UidGenerator::generate());
             return threading::makeReadyFuture<qevercloud::Note>(
                 noteMetadata(std::move(newNote)));
         });

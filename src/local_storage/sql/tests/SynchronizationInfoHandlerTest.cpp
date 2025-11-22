@@ -66,7 +66,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::LinkedNotebook linkedNotebook;
-        linkedNotebook.setGuid(utility::UidGenerator::Generate());
+        linkedNotebook.setGuid(utility::UidGenerator::generate());
 
         linkedNotebook.setUri(QStringLiteral("uri"));
         linkedNotebook.setUpdateSequenceNum(smallestUsn + i);
@@ -90,7 +90,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::Notebook notebook;
-        notebook.setGuid(utility::UidGenerator::Generate());
+        notebook.setGuid(utility::UidGenerator::generate());
         notebook.setUpdateSequenceNum(smallestUsn + i);
         notebook.setName(
             QStringLiteral("Notebook #") + QString::number(smallestIndex + i));
@@ -110,7 +110,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::Tag tag;
-        tag.setGuid(utility::UidGenerator::Generate());
+        tag.setGuid(utility::UidGenerator::generate());
         tag.setUpdateSequenceNum(smallestUsn + i);
         tag.setName(
             QStringLiteral("Tag #") + QString::number(smallestIndex + i));
@@ -137,7 +137,7 @@ namespace {
         note.setLocallyFavorited(true);
         note.setNotebookLocalId(notebookLocalId);
         note.setNotebookGuid(notebookGuid);
-        note.setGuid(utility::UidGenerator::Generate());
+        note.setGuid(utility::UidGenerator::generate());
 
         note.setUpdateSequenceNum(smallestUsn + i);
 
@@ -171,7 +171,7 @@ namespace {
         resource.setLocallyModified(true);
 
         if (noteGuid) {
-            resource.setGuid(utility::UidGenerator::Generate());
+            resource.setGuid(utility::UidGenerator::generate());
             resource.setUpdateSequenceNum(smallestUsn + i);
         }
 
@@ -196,7 +196,7 @@ namespace {
     result.reserve(std::max(count, 0));
     for (int i = 0; i < count; ++i) {
         qevercloud::SavedSearch search;
-        search.setGuid(utility::UidGenerator::Generate());
+        search.setGuid(utility::UidGenerator::generate());
         search.setUpdateSequenceNum(smallestUsn + i);
         search.setName(
             QStringLiteral("Saved search #") +
@@ -307,7 +307,7 @@ TEST_F(
             m_connectionPool, m_thread);
 
     auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
-        utility::UidGenerator::Generate());
+        utility::UidGenerator::generate());
 
     highUsn.waitForFinished();
     EXPECT_EQ(highUsn.result(), 0);
@@ -357,7 +357,7 @@ TEST_F(
     const int notebookCount = 3;
     const qint32 smallestUsn = 42;
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -446,7 +446,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinTagsFromLinkedNotebook)
     const int tagCount = 3;
     const qint32 smallestUsn = 42;
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -545,7 +545,7 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotesFromLinkedNotebook)
     const int notebookCount = 1;
     const qint32 smallestUsn = 41;
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(
@@ -676,7 +676,7 @@ TEST_F(
     const int notebookCount = 1;
     const qint32 smallestUsn = 41;
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
     {
         const auto linkedNotebooksHandler =
             std::make_shared<LinkedNotebooksHandler>(

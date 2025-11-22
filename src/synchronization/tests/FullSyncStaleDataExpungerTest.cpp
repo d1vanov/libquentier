@@ -129,8 +129,8 @@ Q_DECLARE_FLAGS(
         [](const bool modified, const int counter,
            std::optional<qevercloud::Guid> linkedNotebookGuid) {
             return qevercloud::NotebookBuilder{}
-                .setGuid(utility::UidGenerator::Generate())
-                .setLocalId(utility::UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::generate())
+                .setLocalId(utility::UidGenerator::generate())
                 .setUpdateSequenceNum(counter)
                 .setName(QString::fromUtf8("Notebook #%1").arg(counter + 1))
                 .setLocallyModified(modified)
@@ -149,8 +149,8 @@ Q_DECLARE_FLAGS(
         const auto sampleBodyDataHash =
             QCryptographicHash::hash(sampleBodyData, QCryptographicHash::Md5);
         return qevercloud::NoteBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
-            .setLocalId(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setUpdateSequenceNum(counter)
             .setTitle(QString::fromUtf8("Note #%1").arg(counter + 1))
             .setLocallyModified(modified)
@@ -161,8 +161,8 @@ Q_DECLARE_FLAGS(
             .setResources(
                 QList<qevercloud::Resource>{}
                 << qevercloud::ResourceBuilder{}
-                       .setGuid(utility::UidGenerator::Generate())
-                       .setLocalId(utility::UidGenerator::Generate())
+                       .setGuid(utility::UidGenerator::generate())
+                       .setLocalId(utility::UidGenerator::generate())
                        .setData(
                            qevercloud::DataBuilder{}
                                .setBody(sampleBodyData)
@@ -178,8 +178,8 @@ Q_DECLARE_FLAGS(
         [](const bool modified, const int counter,
            std::optional<qevercloud::Guid> linkedNotebookGuid) {
             return qevercloud::TagBuilder{}
-                .setGuid(utility::UidGenerator::Generate())
-                .setLocalId(utility::UidGenerator::Generate())
+                .setGuid(utility::UidGenerator::generate())
+                .setLocalId(utility::UidGenerator::generate())
                 .setUpdateSequenceNum(counter)
                 .setName(QString::fromUtf8("Tag #%1").arg(counter + 1))
                 .setLocallyModified(modified)
@@ -189,8 +189,8 @@ Q_DECLARE_FLAGS(
 
     const auto createSavedSearch = [](const bool modified, const int counter) {
         return qevercloud::SavedSearchBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
-            .setLocalId(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setUpdateSequenceNum(counter)
             .setName(QString::fromUtf8("Saved search #%1").arg(counter + 1))
             .setLocallyModified(modified)
@@ -203,7 +203,7 @@ Q_DECLARE_FLAGS(
     const std::optional<qevercloud::Guid> linkedNotebookGuid =
         (options.testFlag(
              FullSyncStaleDataExpungerTestDataOption::WithLinkedNotebookGuid)
-             ? std::make_optional(utility::UidGenerator::Generate())
+             ? std::make_optional(utility::UidGenerator::generate())
              : std::optional<qevercloud::Guid>{});
 
     result.m_linkedNotebookGuid = linkedNotebookGuid;
@@ -306,15 +306,15 @@ Q_DECLARE_FLAGS(
             auto note = createNote(
                 false, noteCounter,
                 (notebooks.size() > i ? notebooks[i].guid().value()
-                                      : utility::UidGenerator::Generate()),
+                                      : utility::UidGenerator::generate()),
                 (notebooks.size() > i ? notebooks[i].localId()
-                                      : utility::UidGenerator::Generate()),
+                                      : utility::UidGenerator::generate()),
                 QList<qevercloud::Guid>{}
                     << (tags.size() > i ? tags[i].guid().value()
-                                        : utility::UidGenerator::Generate()),
+                                        : utility::UidGenerator::generate()),
                 QStringList{}
                     << (tags.size() > i ? tags[i].localId()
-                                        : utility::UidGenerator::Generate()));
+                                        : utility::UidGenerator::generate()));
             Q_ASSERT(note.guid());
 
             const auto guid = *note.guid();
@@ -331,15 +331,15 @@ Q_DECLARE_FLAGS(
             auto note = createNote(
                 true, noteCounter,
                 (notebooks.size() > i ? notebooks[i].guid().value()
-                                      : utility::UidGenerator::Generate()),
+                                      : utility::UidGenerator::generate()),
                 (notebooks.size() > i ? notebooks[i].localId()
-                                      : utility::UidGenerator::Generate()),
+                                      : utility::UidGenerator::generate()),
                 QList<qevercloud::Guid>{}
                     << (tags.size() > i ? tags[i].guid().value()
-                                        : utility::UidGenerator::Generate()),
+                                        : utility::UidGenerator::generate()),
                 QStringList{}
                     << (tags.size() > i ? tags[i].localId()
-                                        : utility::UidGenerator::Generate()));
+                                        : utility::UidGenerator::generate()));
             Q_ASSERT(note.guid());
 
             const auto guid = *note.guid();
@@ -410,7 +410,7 @@ Q_DECLARE_FLAGS(
             // happen with them present
             for (int i = 0; i < itemCount; ++i) {
                 result.m_preservedNotebookGuids.insert(
-                    utility::UidGenerator::Generate());
+                    utility::UidGenerator::generate());
             }
         }
     }
@@ -446,7 +446,7 @@ Q_DECLARE_FLAGS(
             // happen with them present
             for (int i = 0; i < itemCount; ++i) {
                 result.m_preservedTagGuids.insert(
-                    utility::UidGenerator::Generate());
+                    utility::UidGenerator::generate());
             }
         }
     }
@@ -482,7 +482,7 @@ Q_DECLARE_FLAGS(
             // happen with them present
             for (int i = 0; i < itemCount; ++i) {
                 result.m_preservedNoteGuids.insert(
-                    utility::UidGenerator::Generate());
+                    utility::UidGenerator::generate());
             }
         }
     }
@@ -518,7 +518,7 @@ Q_DECLARE_FLAGS(
             // happen with them present
             for (int i = 0; i < itemCount; ++i) {
                 result.m_preservedSavedSearchGuids.insert(
-                    utility::UidGenerator::Generate());
+                    utility::UidGenerator::generate());
             }
         }
     }

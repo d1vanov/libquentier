@@ -65,7 +65,7 @@ TEST_F(SimpleSavedSearchSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
 
     qevercloud::SavedSearch mine;
     mine.setName(QStringLiteral("mine"));
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
 
     auto future =
         resolver.resolveSavedSearchConflict(std::move(theirs), std::move(mine));
@@ -79,11 +79,11 @@ TEST_F(SimpleSavedSearchSyncConflictResolverTest, ConflictWhenTheirsHasNoName)
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
 
     qevercloud::SavedSearch mine;
     mine.setName(QStringLiteral("mine"));
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
 
     auto future =
         resolver.resolveSavedSearchConflict(std::move(theirs), std::move(mine));
@@ -98,7 +98,7 @@ TEST_F(
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("theirs"));
 
     qevercloud::SavedSearch mine;
@@ -115,7 +115,7 @@ TEST_F(SimpleSavedSearchSyncConflictResolverTest, ConflictWithSameNameAndGuid)
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::SavedSearch mine;
@@ -140,11 +140,11 @@ TEST_F(
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::SavedSearch mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -181,11 +181,11 @@ TEST_F(
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::SavedSearch mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName1 =
@@ -232,11 +232,11 @@ TEST_F(
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::SavedSearch mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName1 =
@@ -290,7 +290,7 @@ TEST_F(
 {
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::SavedSearch theirs;
     theirs.setGuid(guid);
@@ -323,7 +323,7 @@ TEST_F(
 {
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::SavedSearch theirs;
     theirs.setGuid(guid);
@@ -335,7 +335,7 @@ TEST_F(
 
     qevercloud::SavedSearch savedSearch;
     savedSearch.setName(theirs.name());
-    savedSearch.setGuid(utility::UidGenerator::Generate());
+    savedSearch.setGuid(utility::UidGenerator::generate());
 
     EXPECT_CALL(
         *m_mockLocalStorage, findSavedSearchByName(theirs.name().value()))
@@ -378,11 +378,11 @@ TEST_F(
         m_mockLocalStorage);
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::SavedSearch mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -470,7 +470,7 @@ TEST_F(
     auto resolver = std::make_shared<SimpleSavedSearchSyncConflictResolver>(
         m_mockLocalStorage);
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::SavedSearch theirs;
     theirs.setGuid(guid);
@@ -562,11 +562,11 @@ TEST_F(
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::SavedSearch theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::SavedSearch mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -589,7 +589,7 @@ TEST_F(
 {
     SimpleSavedSearchSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::SavedSearch theirs;
     theirs.setGuid(guid);

@@ -1323,7 +1323,7 @@ TEST_F(
     auto future = authenticationInfoProvider->authenticateToLinkedNotebook(
         account,
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .build(),
         AuthenticationInfoProvider::Mode::Cache);
     EXPECT_TRUE(future.isFinished());
@@ -1373,7 +1373,7 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToPublicLinkedNotebook)
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
             .setUri(QStringLiteral("uri"))
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
@@ -1468,9 +1468,9 @@ TEST_F(
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
-            .setSharedNotebookGlobalId(utility::UidGenerator::Generate())
+            .setSharedNotebookGlobalId(utility::UidGenerator::generate())
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
             .setShardId(m_authenticationInfo->shardId())
             .build();
@@ -1622,9 +1622,9 @@ TEST_F(
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
-            .setSharedNotebookGlobalId(utility::UidGenerator::Generate())
+            .setSharedNotebookGlobalId(utility::UidGenerator::generate())
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
             .setShardId(m_authenticationInfo->shardId())
             .build();
@@ -1774,9 +1774,9 @@ TEST_F(AuthenticationInfoProviderTest, AuthenticateToLinkedNotebookWithCache)
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
-            .setSharedNotebookGlobalId(utility::UidGenerator::Generate())
+            .setSharedNotebookGlobalId(utility::UidGenerator::generate())
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
             .setWebApiUrlPrefix(m_authenticationInfo->webApiUrlPrefix())
             .setShardId(m_authenticationInfo->shardId())
@@ -1867,9 +1867,9 @@ TEST_F(
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
-            .setSharedNotebookGlobalId(utility::UidGenerator::Generate())
+            .setSharedNotebookGlobalId(utility::UidGenerator::generate())
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
             .setWebApiUrlPrefix(m_authenticationInfo->webApiUrlPrefix())
             .setShardId(m_authenticationInfo->shardId())
@@ -2042,9 +2042,9 @@ TEST_F(
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
-            .setSharedNotebookGlobalId(utility::UidGenerator::Generate())
+            .setSharedNotebookGlobalId(utility::UidGenerator::generate())
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
             .setWebApiUrlPrefix(m_authenticationInfo->webApiUrlPrefix())
             .setShardId(m_authenticationInfo->shardId())
@@ -2420,9 +2420,9 @@ TEST_P(
 
     const qevercloud::LinkedNotebook linkedNotebook =
         qevercloud::LinkedNotebookBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUsername(QStringLiteral("username"))
-            .setSharedNotebookGlobalId(utility::UidGenerator::Generate())
+            .setSharedNotebookGlobalId(utility::UidGenerator::generate())
             .setNoteStoreUrl(m_authenticationInfo->noteStoreUrl())
             .setWebApiUrlPrefix(m_authenticationInfo->webApiUrlPrefix())
             .setShardId(m_authenticationInfo->shardId())

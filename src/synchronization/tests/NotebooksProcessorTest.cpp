@@ -140,31 +140,31 @@ TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
 
 TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
 {
-    const auto linkedNotebookGuid = utility::UidGenerator::Generate();
+    const auto linkedNotebookGuid = utility::UidGenerator::generate();
 
     const auto notebooks = QList<qevercloud::Notebook>{}
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #1"))
                .setUpdateSequenceNum(0)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #3"))
                .setUpdateSequenceNum(36)
                .setLinkedNotebookGuid(linkedNotebookGuid)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #4"))
                .setUpdateSequenceNum(54)
                .setLinkedNotebookGuid(linkedNotebookGuid)
@@ -297,9 +297,9 @@ TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
 TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
 {
     const auto expungedNotebookGuids = QList<qevercloud::Guid>{}
-        << utility::UidGenerator::Generate()
-        << utility::UidGenerator::Generate()
-        << utility::UidGenerator::Generate();
+        << utility::UidGenerator::generate()
+        << utility::UidGenerator::generate()
+        << utility::UidGenerator::generate();
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -359,26 +359,26 @@ TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
 {
     const auto notebooks = QList<qevercloud::Notebook>{}
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #1"))
                .setUpdateSequenceNum(0)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #4"))
                .setUpdateSequenceNum(54)
                .build();
@@ -472,15 +472,15 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
 {
     auto notebook = qevercloud::NotebookBuilder{}
-                        .setLocalId(utility::UidGenerator::Generate())
-                        .setGuid(utility::UidGenerator::Generate())
+                        .setLocalId(utility::UidGenerator::generate())
+                        .setGuid(utility::UidGenerator::generate())
                         .setName(QStringLiteral("Notebook #1"))
                         .setUpdateSequenceNum(1)
                         .build();
 
     const auto localConflict =
         qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setGuid(notebook.guid())
             .setName(notebook.name())
             .setUpdateSequenceNum(notebook.updateSequenceNum().value() - 1)
@@ -525,7 +525,7 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
     {
         movedLocalConflict =
             qevercloud::NotebookBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -616,20 +616,20 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
     auto notebooks = QList<qevercloud::Notebook>{}
         << notebook
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #4"))
                .setUpdateSequenceNum(54)
                .build();
@@ -716,15 +716,15 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
 TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
 {
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
-                              .setGuid(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
+                              .setGuid(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook #1"))
                               .setUpdateSequenceNum(1)
                               .build();
 
     const auto localConflict =
         qevercloud::NotebookBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setName(notebook.name())
             .build();
 
@@ -791,7 +791,7 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
     {
         movedLocalConflict =
             qevercloud::NotebookBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -851,20 +851,20 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
     auto notebooks = QList<qevercloud::Notebook>{}
         << notebook
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #2"))
                .setUpdateSequenceNum(35)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #3"))
                .setUpdateSequenceNum(36)
                .build()
         << qevercloud::NotebookBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setName(QStringLiteral("Notebook #4"))
                .setUpdateSequenceNum(54)
                .build();

@@ -44,26 +44,26 @@ const std::array gSyncStates{
         .setUserDataUpdateCount(43)
         .setUserDataLastSyncTime(qevercloud::Timestamp{1721405555000})
         .setLinkedNotebookUpdateCounts(QHash<qevercloud::Guid, qint32>{
-            {utility::UidGenerator::Generate(), 44},
-            {utility::UidGenerator::Generate(), 45},
-            {utility::UidGenerator::Generate(), 46},
+            {utility::UidGenerator::generate(), 44},
+            {utility::UidGenerator::generate(), 45},
+            {utility::UidGenerator::generate(), 46},
         })
         .build(),
     SyncStateBuilder{}
         .setUserDataUpdateCount(43)
         .setUserDataLastSyncTime(qevercloud::Timestamp{1721405555000})
         .setLinkedNotebookUpdateCounts(QHash<qevercloud::Guid, qint32>{
-            {utility::UidGenerator::Generate(), 44},
-            {utility::UidGenerator::Generate(), 45},
-            {utility::UidGenerator::Generate(), 46},
+            {utility::UidGenerator::generate(), 44},
+            {utility::UidGenerator::generate(), 45},
+            {utility::UidGenerator::generate(), 46},
         })
         .setLinkedNotebookLastSyncTimes(
             QHash<qevercloud::Guid, qevercloud::Timestamp>{
-                {utility::UidGenerator::Generate(),
+                {utility::UidGenerator::generate(),
                  qevercloud::Timestamp{1721405556000}},
-                {utility::UidGenerator::Generate(),
+                {utility::UidGenerator::generate(),
                  qevercloud::Timestamp{1721405557000}},
-                {utility::UidGenerator::Generate(),
+                {utility::UidGenerator::generate(),
                  qevercloud::Timestamp{1721405558000}},
             })
         .build(),

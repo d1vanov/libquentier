@@ -76,7 +76,7 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByGuid)
     linkedNotebookFinder->init();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(utility::UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::generate())
                                     .setUsername(QStringLiteral("username"))
                                     .build();
 
@@ -180,7 +180,7 @@ TEST_F(LinkedNotebookFinderTest, FindNoLinkedNotebookByGuid)
 
     linkedNotebookFinder->init();
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     EXPECT_CALL(*m_mockLocalStorage, findLinkedNotebookByGuid(guid))
         .WillOnce(
@@ -285,8 +285,8 @@ TEST_F(
     linkedNotebookFinder->init();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .build();
 
@@ -385,7 +385,7 @@ TEST_F(
 
     linkedNotebookFinder->init();
 
-    const auto localId = utility::UidGenerator::Generate();
+    const auto localId = utility::UidGenerator::generate();
 
     EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(localId))
         .WillOnce(Return(
@@ -413,7 +413,7 @@ TEST_F(
     // If this notebook gets put to local storage, its not found entry should be
     // removed from the cache so the next call would go to local storage again
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
                               .setLocalId(localId)
                               .setName(QStringLiteral("Notebook"))
                               .build();
@@ -482,13 +482,13 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookLocalId)
     linkedNotebookFinder->init();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(utility::UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::generate())
                                     .setUsername(QStringLiteral("username"))
                                     .build();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .setLinkedNotebookGuid(linkedNotebook.guid())
                               .build();
@@ -655,8 +655,8 @@ TEST_F(
     linkedNotebookFinder->init();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .build();
 
@@ -755,7 +755,7 @@ TEST_F(
 
     linkedNotebookFinder->init();
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     EXPECT_CALL(*m_mockLocalStorage, findNotebookByGuid(guid))
         .WillOnce(Return(
@@ -783,7 +783,7 @@ TEST_F(
     // removed from the cache so the next call would go to local storage again
     const auto notebook = qevercloud::NotebookBuilder{}
                               .setGuid(guid)
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .build();
 
@@ -851,13 +851,13 @@ TEST_F(LinkedNotebookFinderTest, FindLinkedNotebookByNotebookGuid)
     linkedNotebookFinder->init();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(utility::UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::generate())
                                     .setUsername(QStringLiteral("username"))
                                     .build();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .setLinkedNotebookGuid(linkedNotebook.guid())
                               .build();

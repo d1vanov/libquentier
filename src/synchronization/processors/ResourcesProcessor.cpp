@@ -365,14 +365,14 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     Q_ASSERT(localNote.guid());
     const auto noteGuid = *localNote.guid();
 
-    localNote.setLocalId(utility::UidGenerator::Generate());
+    localNote.setLocalId(utility::UidGenerator::generate());
     localNote.setGuid(std::nullopt);
     localNote.setUpdateSequenceNum(std::nullopt);
     localNote.setLocallyModified(true);
 
     if (localNote.resources()) {
         for (auto & resource: *localNote.mutableResources()) {
-            resource.setLocalId(utility::UidGenerator::Generate());
+            resource.setLocalId(utility::UidGenerator::generate());
             resource.setGuid(std::nullopt);
             resource.setUpdateSequenceNum(std::nullopt);
             resource.setNoteGuid(std::nullopt);
@@ -464,7 +464,7 @@ void ResourcesProcessor::handleResourceConflict(
 
     Q_ASSERT(context);
 
-    localResource.setLocalId(utility::UidGenerator::Generate());
+    localResource.setLocalId(utility::UidGenerator::generate());
     localResource.setGuid(std::nullopt);
     localResource.setNoteGuid(std::nullopt);
     localResource.setUpdateSequenceNum(std::nullopt);

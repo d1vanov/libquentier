@@ -556,7 +556,7 @@ void FullSyncStaleDataExpunger::processModifiedNotebook(
     notebook->setDefaultNotebook(std::nullopt);
     notebook->setLocallyModified(true);
 
-    const auto newLocalId = utility::UidGenerator::Generate();
+    const auto newLocalId = utility::UidGenerator::generate();
     notebook->setLocalId(newLocalId);
 
     auto expungeNotebookFuture = m_localStorage->expungeNotebookByGuid(guid);
@@ -619,7 +619,7 @@ void FullSyncStaleDataExpunger::processModifiedTag(
     tag->setLocallyModified(true);
 
     auto oldLocalId = tag->localId();
-    auto newLocalId = utility::UidGenerator::Generate();
+    auto newLocalId = utility::UidGenerator::generate();
     tag->setLocalId(newLocalId);
 
     auto expungeTagFuture = m_localStorage->expungeTagByGuid(guid);
@@ -698,7 +698,7 @@ void FullSyncStaleDataExpunger::processModifiedSavedSearch(
 
     savedSearch->setGuid(std::nullopt);
     savedSearch->setUpdateSequenceNum(std::nullopt);
-    savedSearch->setLocalId(utility::UidGenerator::Generate());
+    savedSearch->setLocalId(utility::UidGenerator::generate());
     savedSearch->setLocallyModified(true);
 
     auto expungeSavedSearchFuture =
@@ -761,7 +761,7 @@ void FullSyncStaleDataExpunger::processModifiedNote(
 
     note->setGuid(std::nullopt);
     note->setUpdateSequenceNum(std::nullopt);
-    note->setLocalId(utility::UidGenerator::Generate());
+    note->setLocalId(utility::UidGenerator::generate());
     note->setLocallyModified(true);
 
     if (const auto it = newNotebooksMap->constFind(*note->notebookGuid());
@@ -779,7 +779,7 @@ void FullSyncStaleDataExpunger::processModifiedNote(
             resource.setGuid(std::nullopt);
             resource.setUpdateSequenceNum(std::nullopt);
             resource.setLocallyModified(true);
-            resource.setLocalId(utility::UidGenerator::Generate());
+            resource.setLocalId(utility::UidGenerator::generate());
         }
     }
 

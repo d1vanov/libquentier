@@ -57,8 +57,8 @@ TEST_P(DownloadNotesStatusJsonSerializationTest, SerializeAndDeserialize)
 
     const auto generateNote = [&] {
         return qevercloud::NoteBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setTitle(QString::fromUtf8("Note #%1").arg(noteCounter++))
             .setUpdateSequenceNum(updateSequenceNumber++)
             .build();
@@ -93,26 +93,26 @@ TEST_P(DownloadNotesStatusJsonSerializationTest, SerializeAndDeserialize)
     for (int i = 0; i < itemCount; ++i) {
         status->m_noteGuidsWhichFailedToExpunge
             << IDownloadNotesStatus::GuidWithException{
-                   utility::UidGenerator::Generate(),
+                   utility::UidGenerator::generate(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("Failed to expunge note")})};
     }
 
     status->m_processedNoteGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
+        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::generate()] =
             updateSequenceNumber++;
     }
 
     status->m_cancelledNoteGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
+        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::generate()] =
             updateSequenceNumber++;
     }
 
     status->m_expungedNoteGuids.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_expungedNoteGuids << utility::UidGenerator::Generate();
+        status->m_expungedNoteGuids << utility::UidGenerator::generate();
     }
 
     status->m_stopSynchronizationError = GetParam();

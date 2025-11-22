@@ -88,9 +88,9 @@ TEST_F(ResourceFullDataDownloaderTest, DownloadSingleResource)
 
     const auto resource =
         qevercloud::ResourceBuilder{}
-            .setGuid(utility::UidGenerator::Generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUpdateSequenceNum(1U)
-            .setNoteGuid(utility::UidGenerator::Generate())
+            .setNoteGuid(utility::UidGenerator::generate())
             .setData(qevercloud::DataBuilder{}
                          .setBody(dataBody)
                          .setSize(dataBody.size())
@@ -140,9 +140,9 @@ TEST_F(
             const auto dataBody =
                 QString::fromUtf8("Data #%1").arg(i + 1).toUtf8();
             result << qevercloud::ResourceBuilder{}
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(1U)
-                          .setNoteGuid(utility::UidGenerator::Generate())
+                          .setNoteGuid(utility::UidGenerator::generate())
                           .setData(qevercloud::DataBuilder{}
                                        .setBody(dataBody)
                                        .setSize(dataBody.size())
@@ -221,9 +221,9 @@ TEST_F(
             const auto dataBody =
                 QString::fromUtf8("Data #%1").arg(i + 1).toUtf8();
             result << qevercloud::ResourceBuilder{}
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(1U)
-                          .setNoteGuid(utility::UidGenerator::Generate())
+                          .setNoteGuid(utility::UidGenerator::generate())
                           .setData(qevercloud::DataBuilder{}
                                        .setBody(dataBody)
                                        .setSize(dataBody.size())

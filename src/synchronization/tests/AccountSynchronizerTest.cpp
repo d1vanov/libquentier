@@ -119,14 +119,14 @@ namespace {
         status->m_notesWhichFailedToDownload
             << IDownloadNotesStatus::NoteWithException{
                    qevercloud::NoteBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setTitle(
                            QString::fromUtf8("Note failed to download #%1")
                                .arg(startValue + 1))
                        .setUpdateSequenceNum(startValue + 2)
-                       .setNotebookGuid(utility::UidGenerator::Generate())
-                       .setNotebookLocalId(utility::UidGenerator::Generate())
+                       .setNotebookGuid(utility::UidGenerator::generate())
+                       .setNotebookLocalId(utility::UidGenerator::generate())
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
@@ -137,13 +137,13 @@ namespace {
         status->m_notesWhichFailedToProcess
             << IDownloadNotesStatus::NoteWithException{
                    qevercloud::NoteBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setTitle(QString::fromUtf8("Note failed to process #%1")
                                      .arg(startValue + 1))
                        .setUpdateSequenceNum(startValue + 2)
-                       .setNotebookGuid(utility::UidGenerator::Generate())
-                       .setNotebookLocalId(utility::UidGenerator::Generate())
+                       .setNotebookGuid(utility::UidGenerator::generate())
+                       .setNotebookLocalId(utility::UidGenerator::generate())
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
@@ -153,23 +153,23 @@ namespace {
     for (int i = 0; i < count; ++i) {
         status->m_noteGuidsWhichFailedToExpunge
             << IDownloadNotesStatus::GuidWithException{
-                   utility::UidGenerator::Generate(),
+                   utility::UidGenerator::generate(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
     }
 
     for (int i = 0; i < count; ++i) {
-        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
+        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::generate()] =
             static_cast<qint32>(startValue++);
     }
 
     for (int i = 0; i < count; ++i) {
-        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
+        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::generate()] =
             static_cast<qint32>(startValue++);
     }
 
     for (int i = 0; i < count; ++i) {
-        status->m_expungedNoteGuids << utility::UidGenerator::Generate();
+        status->m_expungedNoteGuids << utility::UidGenerator::generate();
     }
 
     return status;
@@ -187,11 +187,11 @@ namespace {
         status->m_resourcesWhichFailedToDownload
             << IDownloadResourcesStatus::ResourceWithException{
                    qevercloud::ResourceBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setUpdateSequenceNum(startValue++)
-                       .setNoteGuid(utility::UidGenerator::Generate())
-                       .setNoteLocalId(utility::UidGenerator::Generate())
+                       .setNoteGuid(utility::UidGenerator::generate())
+                       .setNoteLocalId(utility::UidGenerator::generate())
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
@@ -201,11 +201,11 @@ namespace {
         status->m_resourcesWhichFailedToProcess
             << IDownloadResourcesStatus::ResourceWithException{
                    qevercloud::ResourceBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setUpdateSequenceNum(startValue++)
-                       .setNoteGuid(utility::UidGenerator::Generate())
-                       .setNoteLocalId(utility::UidGenerator::Generate())
+                       .setNoteGuid(utility::UidGenerator::generate())
+                       .setNoteLocalId(utility::UidGenerator::generate())
                        .build(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("some error")})};
@@ -213,13 +213,13 @@ namespace {
 
     for (int i = 0; i < count; ++i) {
         status->m_processedResourceGuidsAndUsns
-            [utility::UidGenerator::Generate()] =
+            [utility::UidGenerator::generate()] =
             static_cast<qint32>(startValue++);
     }
 
     for (int i = 0; i < count; ++i) {
         status->m_cancelledResourceGuidsAndUsns
-            [utility::UidGenerator::Generate()] =
+            [utility::UidGenerator::generate()] =
             static_cast<qint32>(startValue++);
     }
 
@@ -241,13 +241,13 @@ namespace {
     for (int i = 0; i < count; ++i) {
         status->m_failedToSendNotes << ISendStatus::NoteWithException{
             qevercloud::NoteBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
-                .setGuid(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
+                .setGuid(utility::UidGenerator::generate())
                 .setTitle(QString::fromUtf8("Note failed to send #%1")
                               .arg(startValue + 1))
                 .setUpdateSequenceNum(startValue + 2)
-                .setNotebookGuid(utility::UidGenerator::Generate())
-                .setNotebookLocalId(utility::UidGenerator::Generate())
+                .setNotebookGuid(utility::UidGenerator::generate())
+                .setNotebookLocalId(utility::UidGenerator::generate())
                 .build(),
             std::make_shared<RuntimeError>(
                 ErrorString{QStringLiteral("some error")})};
@@ -258,8 +258,8 @@ namespace {
     for (int i = 0; i < count; ++i) {
         status->m_failedToSendNotebooks << ISendStatus::NotebookWithException{
             qevercloud::NotebookBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
-                .setGuid(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
+                .setGuid(utility::UidGenerator::generate())
                 .setName(QString::fromUtf8("Notebook failed to send #%1")
                              .arg(startValue + 1))
                 .setUpdateSequenceNum(startValue + 2)
@@ -274,8 +274,8 @@ namespace {
         status->m_failedToSendSavedSearches
             << ISendStatus::SavedSearchWithException{
                    qevercloud::SavedSearchBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setName(
                            QString::fromUtf8("SavedSearch failed to send #%1")
                                .arg(startValue + 1))
@@ -290,8 +290,8 @@ namespace {
     for (int i = 0; i < count; ++i) {
         status->m_failedToSendTags << ISendStatus::TagWithException{
             qevercloud::TagBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
-                .setGuid(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
+                .setGuid(utility::UidGenerator::generate())
                 .setName(QString::fromUtf8("Tag failed to send #%1")
                              .arg(startValue + 1))
                 .setUpdateSequenceNum(startValue + 2)
@@ -310,7 +310,7 @@ namespace {
     QSet<qevercloud::Guid> linkedNotebookGuids;
     linkedNotebookGuids.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        linkedNotebookGuids.insert(utility::UidGenerator::Generate());
+        linkedNotebookGuids.insert(utility::UidGenerator::generate());
     }
     return linkedNotebookGuids;
 }

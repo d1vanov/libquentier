@@ -253,34 +253,34 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
 
 TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -420,34 +420,34 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
 TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -623,34 +623,34 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 TEST_F(
     ResourcesProcessorTest, TolerateFailuresToFindResourceByGuidInLocalStorage)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -827,34 +827,34 @@ TEST_F(
 
 TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1039,34 +1039,34 @@ TEST_F(
     ResourcesProcessorTest,
     HandleExistingResourceWhichShouldBeOverriddenByDownloadedVersion)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1221,34 +1221,34 @@ TEST_F(
     ResourcesProcessorTest,
     HandleExistingResourceWhichShouldBeMovedToLocalConflictingNote)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1449,34 +1449,34 @@ TEST_F(
     ResourcesProcessorTest,
     TolerateFailuresToFindNoteOwningConflictResourceByGuidInLocalStorage)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1669,34 +1669,34 @@ TEST_F(
     ResourcesProcessorTest,
     TolerateMissingNoteOwningConflictResourceInLocalStorage)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -1889,34 +1889,34 @@ TEST_F(
     ResourcesProcessorTest,
     CancelFurtherResourceDownloadingOnApiRateLimitExceeding)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)
@@ -2173,34 +2173,34 @@ TEST_F(
     ResourcesProcessorTest,
     CancelFurtherResourceDownloadingOnAuthenticationExpired)
 {
-    const auto noteGuid = utility::UidGenerator::Generate();
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto resources = QList<qevercloud::Resource>{}
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(1)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(2)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(3)
                .build()
         << qevercloud::ResourceBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNoteLocalId(noteLocalId)
                .setNoteGuid(noteGuid)
                .setUpdateSequenceNum(4)

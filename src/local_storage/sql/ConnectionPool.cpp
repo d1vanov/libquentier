@@ -132,7 +132,7 @@ QSqlDatabase ConnectionPool::database()
         QTextStream strm{&result};
         strm << "quentier_local_storage_db_connection_"
              << QString::fromStdString(sstrm.str()) << "_"
-             << utility::UidGenerator::Generate();
+             << utility::UidGenerator::generate();
         return result;
     }();
 

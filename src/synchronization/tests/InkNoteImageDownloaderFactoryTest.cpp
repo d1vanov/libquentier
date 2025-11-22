@@ -106,7 +106,7 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -131,7 +131,7 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -162,7 +162,7 @@ TEST_F(InkNoteImageDownloaderFactoryTest, UserOwnNoteThumbnailDownloader)
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -197,9 +197,9 @@ TEST_F(
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -237,9 +237,9 @@ TEST_F(InkNoteImageDownloaderFactoryTest, LinkedNotebookThumbnailDownloader)
             m_account, m_mockAuthenticationInfoProvider,
             m_mockLinkedNotebookFinder);
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)

@@ -808,7 +808,7 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
 
             // File's base name is resource's local id
             resourceVersionIdsMap[resourceDataBodyFile.baseName()]
-                .m_dataBodyVersionId = utility::UidGenerator::Generate();
+                .m_dataBodyVersionId = utility::UidGenerator::generate();
         }
     }
 
@@ -838,7 +838,7 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
                 resourceVersionIdsMap[resourceAlternateDataBodyFile.baseName()];
 
             resourceVersionIds.m_alternateDataBodyVersionId =
-                utility::UidGenerator::Generate();
+                utility::UidGenerator::generate();
         }
     }
 

@@ -71,8 +71,8 @@ TEST_F(LinkedNotebookTagsCleanerTest, ClearTags)
 
         for (int i = 0; i < tagCount; ++i) {
             result << qevercloud::TagBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setName(QString::fromUtf8("Tag #%1").arg(i + 1))
                           .build();
         }

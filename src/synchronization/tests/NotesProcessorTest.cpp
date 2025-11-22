@@ -374,7 +374,7 @@ class NotesProcessorTestWithLinkedNotebookParam :
 
 const std::array g_test_linked_notebook_guids{
     std::optional<qevercloud::Guid>{},
-    std::make_optional<qevercloud::Guid>(utility::UidGenerator::Generate())};
+    std::make_optional<qevercloud::Guid>(utility::UidGenerator::generate())};
 
 INSTANTIATE_TEST_SUITE_P(
     NotesProcessorTestWithLinkedNotebookParamInstance,
@@ -388,33 +388,33 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -569,33 +569,33 @@ TEST_P(
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -782,33 +782,33 @@ TEST_P(
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -998,33 +998,33 @@ TEST_P(
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -1216,33 +1216,33 @@ TEST_P(
     EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
         .WillRepeatedly(ReturnRef(linkedNotebookGuid));
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -1439,33 +1439,33 @@ TEST_P(
 
 TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 {
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -1726,33 +1726,33 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
 TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
 {
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -2007,9 +2007,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnAuthenticationExpired)
 TEST_F(NotesProcessorTest, ProcessExpungedNotes)
 {
     const auto expungedNoteGuids = QList<qevercloud::Guid>{}
-        << utility::UidGenerator::Generate()
-        << utility::UidGenerator::Generate()
-        << utility::UidGenerator::Generate();
+        << utility::UidGenerator::generate()
+        << utility::UidGenerator::generate()
+        << utility::UidGenerator::generate();
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -2072,9 +2072,9 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
 TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 {
     const auto expungedNoteGuids = QList<qevercloud::Guid>{}
-        << utility::UidGenerator::Generate()
-        << utility::UidGenerator::Generate()
-        << utility::UidGenerator::Generate();
+        << utility::UidGenerator::generate()
+        << utility::UidGenerator::generate()
+        << utility::UidGenerator::generate();
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}
@@ -2159,33 +2159,33 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
 TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 {
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -2286,11 +2286,11 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 {
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     auto note = qevercloud::NoteBuilder{}
-                    .setLocalId(utility::UidGenerator::Generate())
-                    .setGuid(utility::UidGenerator::Generate())
+                    .setLocalId(utility::UidGenerator::generate())
+                    .setGuid(utility::UidGenerator::generate())
                     .setNotebookGuid(notebookGuid)
                     .setUpdateSequenceNum(1)
                     .setTitle(QStringLiteral("Note #1"))
@@ -2298,7 +2298,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto localConflict =
         qevercloud::NoteBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
             .setGuid(note.guid())
             .setTitle(note.title())
             .setUpdateSequenceNum(note.updateSequenceNum().value() - 1)
@@ -2404,22 +2404,22 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     auto notes = QList<qevercloud::Note>{}
         << note
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(2)
                .setTitle(QStringLiteral("Note #2"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(3)
                .setTitle(QStringLiteral("Note #3"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setUpdateSequenceNum(4)
                .setTitle(QStringLiteral("Note #4"))
@@ -2607,21 +2607,21 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
 
     m_syncOptions->m_downloadNoteThumbnails = true;
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(2)
@@ -2629,8 +2629,8 @@ TEST_F(NotesProcessorTest, DownloadNoteThumbnailsForNotesWithResources)
                .setResources(
                    QList<qevercloud::Resource>{}
                    << qevercloud::ResourceBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(12)
                           .build())
                .build();
@@ -2801,21 +2801,21 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
 
     m_syncOptions->m_downloadNoteThumbnails = true;
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(2)
@@ -2823,8 +2823,8 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadNoteThumbnail)
                .setResources(
                    QList<qevercloud::Resource>{}
                    << qevercloud::ResourceBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(12)
                           .build())
                .build();
@@ -2992,21 +2992,21 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
 
     m_syncOptions->m_downloadNoteThumbnails = true;
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(2)
@@ -3014,8 +3014,8 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateNoteThumbnailDownloader)
                .setResources(
                    QList<qevercloud::Resource>{}
                    << qevercloud::ResourceBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setUpdateSequenceNum(12)
                           .build())
                .build();
@@ -3177,21 +3177,21 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
     QDir inkNoteImagesStorageDir{inkNoteImagesStorageTmpDir.path()};
     m_syncOptions->m_inkNoteImagesStorageDir = inkNoteImagesStorageDir;
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(2)
@@ -3199,8 +3199,8 @@ TEST_F(NotesProcessorTest, DownloadInkNoteImages)
                .setResources(
                    QList<qevercloud::Resource>{}
                    << qevercloud::ResourceBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setMime(
                               QStringLiteral("application/vnd.evernote.ink"))
                           .setHeight(200)
@@ -3393,21 +3393,21 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
     QDir inkNoteImagesStorageDir{inkNoteImagesStorageTmpDir.path()};
     m_syncOptions->m_inkNoteImagesStorageDir = inkNoteImagesStorageDir;
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(2)
@@ -3415,8 +3415,8 @@ TEST_F(NotesProcessorTest, HandleFailureToDownloadInkNoteImage)
                .setResources(
                    QList<qevercloud::Resource>{}
                    << qevercloud::ResourceBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setMime(
                               QStringLiteral("application/vnd.evernote.ink"))
                           .setHeight(200)
@@ -3594,21 +3594,21 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
     QDir inkNoteImagesStorageDir{inkNoteImagesStorageTmpDir.path()};
     m_syncOptions->m_inkNoteImagesStorageDir = inkNoteImagesStorageDir;
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto notes = QList<qevercloud::Note>{}
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(1)
                .setTitle(QStringLiteral("Note #1"))
                .build()
         << qevercloud::NoteBuilder{}
-               .setLocalId(utility::UidGenerator::Generate())
-               .setGuid(utility::UidGenerator::Generate())
+               .setLocalId(utility::UidGenerator::generate())
+               .setGuid(utility::UidGenerator::generate())
                .setNotebookGuid(notebookGuid)
                .setNotebookLocalId(notebookLocalId)
                .setUpdateSequenceNum(2)
@@ -3616,8 +3616,8 @@ TEST_F(NotesProcessorTest, HandleFailureToCreateInkNoteImageDownloader)
                .setResources(
                    QList<qevercloud::Resource>{}
                    << qevercloud::ResourceBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setMime(
                               QStringLiteral("application/vnd.evernote.ink"))
                           .setHeight(200)

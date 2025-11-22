@@ -70,7 +70,7 @@ QList<T> sorted(QList<T> lst)
     QList<qevercloud::Guid> result;
     result.reserve(count);
     for (qint32 i = 0; i < count; ++i) {
-        result << utility::UidGenerator::Generate();
+        result << utility::UidGenerator::generate();
     }
 
     return result;
@@ -90,7 +90,7 @@ const QList gTestGuidsSet6 = generateTestGuids(3);
         return {};
     }
 
-    const auto notebookGuid = utility::UidGenerator::Generate();
+    const auto notebookGuid = utility::UidGenerator::generate();
 
     QList<qevercloud::Note> result;
     result.reserve(noteGuids.size());

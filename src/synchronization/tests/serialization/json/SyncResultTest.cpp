@@ -83,8 +83,8 @@ namespace {
 
     const auto generateNote = [&] {
         return qevercloud::NoteBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setTitle(QString::fromUtf8("Note #%1").arg(noteCounter++))
             .setUpdateSequenceNum(updateSequenceNumber++)
             .build();
@@ -119,26 +119,26 @@ namespace {
     for (int i = 0; i < itemCount; ++i) {
         status->m_noteGuidsWhichFailedToExpunge
             << IDownloadNotesStatus::GuidWithException{
-                   utility::UidGenerator::Generate(),
+                   utility::UidGenerator::generate(),
                    std::make_shared<RuntimeError>(
                        ErrorString{QStringLiteral("Failed to expunge note")})};
     }
 
     status->m_processedNoteGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
+        status->m_processedNoteGuidsAndUsns[utility::UidGenerator::generate()] =
             updateSequenceNumber++;
     }
 
     status->m_cancelledNoteGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::Generate()] =
+        status->m_cancelledNoteGuidsAndUsns[utility::UidGenerator::generate()] =
             updateSequenceNumber++;
     }
 
     status->m_expungedNoteGuids.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_expungedNoteGuids << utility::UidGenerator::Generate();
+        status->m_expungedNoteGuids << utility::UidGenerator::generate();
     }
 
     status->m_stopSynchronizationError =
@@ -153,8 +153,8 @@ namespace {
 
     const auto generateResource = [&] {
         return qevercloud::ResourceBuilder{}
-            .setLocalId(utility::UidGenerator::Generate())
-            .setGuid(utility::UidGenerator::Generate())
+            .setLocalId(utility::UidGenerator::generate())
+            .setGuid(utility::UidGenerator::generate())
             .setUpdateSequenceNum(updateSequenceNumber++)
             .build();
     };
@@ -185,14 +185,14 @@ namespace {
 
     status->m_processedResourceGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_processedResourceGuidsAndUsns[utility::UidGenerator::Generate()] =
-            updateSequenceNumber++;
+        status->m_processedResourceGuidsAndUsns
+            [utility::UidGenerator::generate()] = updateSequenceNumber++;
     }
 
     status->m_cancelledResourceGuidsAndUsns.reserve(itemCount);
     for (int i = 0; i < itemCount; ++i) {
-        status->m_cancelledResourceGuidsAndUsns[utility::UidGenerator::Generate()] =
-            updateSequenceNumber++;
+        status->m_cancelledResourceGuidsAndUsns
+            [utility::UidGenerator::generate()] = updateSequenceNumber++;
     }
 
     status->m_stopSynchronizationError =
@@ -226,8 +226,8 @@ namespace {
     for (int i = 0; i < itemCount; ++i) {
         sendStatus->m_failedToSendNotes << ISendStatus::NoteWithException{
             qevercloud::NoteBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
-                .setGuid(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
+                .setGuid(utility::UidGenerator::generate())
                 .setTitle(QString::fromUtf8("Note #%1").arg(noteCounter++))
                 .setUpdateSequenceNum(usn++)
                 .build(),
@@ -239,8 +239,8 @@ namespace {
         sendStatus->m_failedToSendNotebooks
             << ISendStatus::NotebookWithException{
                    qevercloud::NotebookBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setName(QString::fromUtf8("Notebook #%1")
                                     .arg(notebookCounter++))
                        .setUpdateSequenceNum(usn++)
@@ -254,8 +254,8 @@ namespace {
         sendStatus->m_failedToSendSavedSearches
             << ISendStatus::SavedSearchWithException{
                    qevercloud::SavedSearchBuilder{}
-                       .setLocalId(utility::UidGenerator::Generate())
-                       .setGuid(utility::UidGenerator::Generate())
+                       .setLocalId(utility::UidGenerator::generate())
+                       .setGuid(utility::UidGenerator::generate())
                        .setName(QString::fromUtf8("Saved search #%1")
                                     .arg(savedSearchCounter++))
                        .setUpdateSequenceNum(usn++)
@@ -268,8 +268,8 @@ namespace {
     for (int i = 0; i < itemCount; ++i) {
         sendStatus->m_failedToSendTags << ISendStatus::TagWithException{
             qevercloud::TagBuilder{}
-                .setLocalId(utility::UidGenerator::Generate())
-                .setGuid(utility::UidGenerator::Generate())
+                .setLocalId(utility::UidGenerator::generate())
+                .setGuid(utility::UidGenerator::generate())
                 .setName(QString::fromUtf8("Tag #%1").arg(tagCounter++))
                 .setUpdateSequenceNum(usn++)
                 .build(),
@@ -291,17 +291,17 @@ TEST(SyncResultJsonSerializationTest, SerializeAndDeserializeSyncResult)
             .setUserDataUpdateCount(43)
             .setUserDataLastSyncTime(qevercloud::Timestamp{1721405555000})
             .setLinkedNotebookUpdateCounts(QHash<qevercloud::Guid, qint32>{
-                {utility::UidGenerator::Generate(), 44},
-                {utility::UidGenerator::Generate(), 45},
-                {utility::UidGenerator::Generate(), 46},
+                {utility::UidGenerator::generate(), 44},
+                {utility::UidGenerator::generate(), 45},
+                {utility::UidGenerator::generate(), 46},
             })
             .setLinkedNotebookLastSyncTimes(
                 QHash<qevercloud::Guid, qevercloud::Timestamp>{
-                    {utility::UidGenerator::Generate(),
+                    {utility::UidGenerator::generate(),
                      qevercloud::Timestamp{1721405556000}},
-                    {utility::UidGenerator::Generate(),
+                    {utility::UidGenerator::generate(),
                      qevercloud::Timestamp{1721405557000}},
-                    {utility::UidGenerator::Generate(),
+                    {utility::UidGenerator::generate(),
                      qevercloud::Timestamp{1721405558000}},
                 })
             .build());
@@ -314,7 +314,7 @@ TEST(SyncResultJsonSerializationTest, SerializeAndDeserializeSyncResult)
     syncResult->m_linkedNotebookSyncChunksDataCounters.reserve(
         linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        const auto guid = utility::UidGenerator::Generate();
+        const auto guid = utility::UidGenerator::generate();
         syncResult->m_linkedNotebookSyncChunksDataCounters[guid] =
             generateSyncChunksDataCounters();
     }
@@ -325,7 +325,7 @@ TEST(SyncResultJsonSerializationTest, SerializeAndDeserializeSyncResult)
     syncResult->m_linkedNotebookDownloadNotesStatuses.reserve(
         linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        const auto guid = utility::UidGenerator::Generate();
+        const auto guid = utility::UidGenerator::generate();
         syncResult->m_linkedNotebookDownloadNotesStatuses[guid] =
             generateDownloadNotesStatus();
     }
@@ -337,7 +337,7 @@ TEST(SyncResultJsonSerializationTest, SerializeAndDeserializeSyncResult)
         linkedNotebookCount);
 
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        const auto guid = utility::UidGenerator::Generate();
+        const auto guid = utility::UidGenerator::generate();
         syncResult->m_linkedNotebookDownloadResourcesStatuses[guid] =
             generateDownloadResourcesStatus();
     }
@@ -345,7 +345,7 @@ TEST(SyncResultJsonSerializationTest, SerializeAndDeserializeSyncResult)
     syncResult->m_userAccountSendStatus = generateSendStatus();
     syncResult->m_linkedNotebookSendStatuses.reserve(linkedNotebookCount);
     for (int i = 0; i < linkedNotebookCount; ++i) {
-        const auto guid = utility::UidGenerator::Generate();
+        const auto guid = utility::UidGenerator::generate();
         syncResult->m_linkedNotebookSendStatuses[guid] = generateSendStatus();
     }
 

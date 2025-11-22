@@ -65,7 +65,7 @@ TEST_F(SimpleNotebookSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
 
     qevercloud::Notebook mine;
     mine.setName(QStringLiteral("mine"));
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
 
     auto future =
         resolver.resolveNotebookConflict(std::move(theirs), std::move(mine));
@@ -79,11 +79,11 @@ TEST_F(SimpleNotebookSyncConflictResolverTest, ConflictWhenTheirsHasNoName)
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
 
     qevercloud::Notebook mine;
     mine.setName(QStringLiteral("mine"));
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
 
     auto future =
         resolver.resolveNotebookConflict(std::move(theirs), std::move(mine));
@@ -97,7 +97,7 @@ TEST_F(SimpleNotebookSyncConflictResolverTest, ConflictWhenMineHasNoNameOrGuid)
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("theirs"));
 
     qevercloud::Notebook mine;
@@ -114,7 +114,7 @@ TEST_F(SimpleNotebookSyncConflictResolverTest, ConflictWithSameNameAndGuid)
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Notebook mine;
@@ -139,11 +139,11 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -182,11 +182,11 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName1 =
@@ -237,11 +237,11 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName1 =
@@ -305,12 +305,12 @@ TEST_F(
     // from user's own account
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::generate());
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     auto future =
@@ -331,12 +331,12 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::generate());
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
     mine.setLinkedNotebookGuid(theirs.linkedNotebookGuid());
 
@@ -376,12 +376,12 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::generate());
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
     mine.setLinkedNotebookGuid(theirs.linkedNotebookGuid());
 
@@ -434,12 +434,12 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
-    theirs.setLinkedNotebookGuid(utility::UidGenerator::Generate());
+    theirs.setLinkedNotebookGuid(utility::UidGenerator::generate());
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
     mine.setLinkedNotebookGuid(theirs.linkedNotebookGuid());
 
@@ -500,7 +500,7 @@ TEST_F(
 {
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::Notebook theirs;
     theirs.setGuid(guid);
@@ -535,7 +535,7 @@ TEST_F(
 {
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::Notebook theirs;
     theirs.setGuid(guid);
@@ -547,7 +547,7 @@ TEST_F(
 
     qevercloud::Notebook notebook;
     notebook.setName(theirs.name());
-    notebook.setGuid(utility::UidGenerator::Generate());
+    notebook.setGuid(utility::UidGenerator::generate());
 
     EXPECT_CALL(
         *m_mockLocalStorage,
@@ -594,11 +594,11 @@ TEST_F(
         m_mockLocalStorage);
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -689,7 +689,7 @@ TEST_F(
     auto resolver = std::make_shared<SimpleNotebookSyncConflictResolver>(
         m_mockLocalStorage);
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::Notebook theirs;
     theirs.setGuid(guid);
@@ -785,11 +785,11 @@ TEST_F(
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
     qevercloud::Notebook theirs;
-    theirs.setGuid(utility::UidGenerator::Generate());
+    theirs.setGuid(utility::UidGenerator::generate());
     theirs.setName(QStringLiteral("name"));
 
     qevercloud::Notebook mine;
-    mine.setGuid(utility::UidGenerator::Generate());
+    mine.setGuid(utility::UidGenerator::generate());
     mine.setName(QStringLiteral("name"));
 
     const QString newName =
@@ -815,7 +815,7 @@ TEST_F(
 {
     SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
 
-    const auto guid = utility::UidGenerator::Generate();
+    const auto guid = utility::UidGenerator::generate();
 
     qevercloud::Notebook theirs;
     theirs.setGuid(guid);

@@ -108,7 +108,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
     for (qint32 i = 0; i < count; ++i) {
         linkedNotebooks
             << qevercloud::LinkedNotebookBuilder{}
-                   .setGuid(utility::UidGenerator::Generate())
+                   .setGuid(utility::UidGenerator::generate())
                    .setUpdateSequenceNum(usn++)
                    .setUsername(
                        QString::fromUtf8("Linked notebook #%1").arg(i + 1))
@@ -144,7 +144,7 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
             expungedLinkedNotebooks.reserve(itemCountPerSyncChunk);
 
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
-                expungedLinkedNotebooks << utility::UidGenerator::Generate();
+                expungedLinkedNotebooks << utility::UidGenerator::generate();
             }
 
             builder.setChunkHighUSN(
@@ -165,13 +165,13 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 notes << qevercloud::NoteBuilder{}
-                             .setGuid(utility::UidGenerator::Generate())
+                             .setGuid(utility::UidGenerator::generate())
                              .setUpdateSequenceNum(usn++)
                              .setTitle(QString::fromUtf8("Note #%1").arg(j + 1))
-                             .setNotebookGuid(utility::UidGenerator::Generate())
+                             .setNotebookGuid(utility::UidGenerator::generate())
                              .build();
 
-                expungedNotes << utility::UidGenerator::Generate();
+                expungedNotes << utility::UidGenerator::generate();
             }
             builder.setChunkHighUSN(notes.last().updateSequenceNum().value());
             builder.setNotes(std::move(notes));
@@ -187,13 +187,13 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 notebooks << qevercloud::NotebookBuilder{}
-                                 .setGuid(utility::UidGenerator::Generate())
+                                 .setGuid(utility::UidGenerator::generate())
                                  .setUpdateSequenceNum(usn++)
                                  .setName(QString::fromUtf8("Notebook #%1")
                                               .arg(j + 1))
                                  .build();
 
-                expungedNotebooks << utility::UidGenerator::Generate();
+                expungedNotebooks << utility::UidGenerator::generate();
             }
             builder.setChunkHighUSN(
                 notebooks.last().updateSequenceNum().value());
@@ -213,9 +213,9 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
                     QCryptographicHash::hash(dataBody, QCryptographicHash::Md5);
 
                 resources << qevercloud::ResourceBuilder{}
-                                 .setGuid(utility::UidGenerator::Generate())
+                                 .setGuid(utility::UidGenerator::generate())
                                  .setUpdateSequenceNum(usn++)
-                                 .setNoteGuid(utility::UidGenerator::Generate())
+                                 .setNoteGuid(utility::UidGenerator::generate())
                                  .setData(
                                      qevercloud::DataBuilder{}
                                          .setBody(std::move(dataBody))
@@ -241,13 +241,13 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 savedSearches
                     << qevercloud::SavedSearchBuilder{}
-                           .setGuid(utility::UidGenerator::Generate())
+                           .setGuid(utility::UidGenerator::generate())
                            .setUpdateSequenceNum(usn++)
                            .setName(
                                QString::fromUtf8("Saved search #%1").arg(j + 1))
                            .build();
 
-                expungedSavedSearches << utility::UidGenerator::Generate();
+                expungedSavedSearches << utility::UidGenerator::generate();
             }
             builder.setChunkHighUSN(
                 savedSearches.last().updateSequenceNum().value());
@@ -265,12 +265,12 @@ Q_DECLARE_FLAGS(SyncChunksFlags, SyncChunksFlag);
 
             for (qint32 j = 0; j < itemCountPerSyncChunk; ++j) {
                 tags << qevercloud::TagBuilder{}
-                            .setGuid(utility::UidGenerator::Generate())
+                            .setGuid(utility::UidGenerator::generate())
                             .setUpdateSequenceNum(usn++)
                             .setName(QString::fromUtf8("Tag #%1").arg(j + 1))
                             .build();
 
-                expungedTags << utility::UidGenerator::Generate();
+                expungedTags << utility::UidGenerator::generate();
             }
             builder.setChunkHighUSN(tags.last().updateSequenceNum().value());
             builder.setTags(std::move(tags));

@@ -75,7 +75,7 @@ TEST_F(NotebookFinderTest, FindNotebookByLocalId)
     notebookFinder->init();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .build();
 
@@ -169,7 +169,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByLocalId)
 
     notebookFinder->init();
 
-    const auto localId = utility::UidGenerator::Generate();
+    const auto localId = utility::UidGenerator::generate();
 
     EXPECT_CALL(*m_mockLocalStorage, findNotebookByLocalId(localId))
         .WillOnce(Return(
@@ -265,7 +265,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
 
     notebookFinder->init();
 
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLocalStorage,
@@ -292,7 +292,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteLocalIdForNonexistentNote)
     res = future.result();
     EXPECT_FALSE(res);
 
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto note = qevercloud::NoteBuilder{}
                           .setLocalId(noteLocalId)
@@ -382,13 +382,13 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteLocalId)
     notebookFinder->init();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .build();
 
     const auto note = qevercloud::NoteBuilder{}
-                          .setLocalId(utility::UidGenerator::Generate())
+                          .setLocalId(utility::UidGenerator::generate())
                           .setNotebookLocalId(notebook.localId())
                           .setTitle(QStringLiteral("Note"))
                           .build();
@@ -557,7 +557,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
 
     notebookFinder->init();
 
-    const auto noteGuid = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLocalStorage,
@@ -584,7 +584,7 @@ TEST_F(NotebookFinderTest, FindNoNotebookByNoteGuidForNonexistentNote)
     res = future.result();
     EXPECT_FALSE(res);
 
-    const auto notebookLocalId = utility::UidGenerator::Generate();
+    const auto notebookLocalId = utility::UidGenerator::generate();
 
     const auto note = qevercloud::NoteBuilder{}
                           .setGuid(noteGuid)
@@ -675,13 +675,13 @@ TEST_F(NotebookFinderTest, FindNotebookByNoteGuid)
     notebookFinder->init();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(utility::UidGenerator::Generate())
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setGuid(utility::UidGenerator::generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .build();
 
     const auto note = qevercloud::NoteBuilder{}
-                          .setGuid(utility::UidGenerator::Generate())
+                          .setGuid(utility::UidGenerator::generate())
                           .setNotebookLocalId(notebook.localId())
                           .setTitle(QStringLiteral("Note"))
                           .build();

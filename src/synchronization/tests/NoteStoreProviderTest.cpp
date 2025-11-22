@@ -148,7 +148,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnAccount)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const QString notebookLocalId = utility::UidGenerator::Generate();
+    const QString notebookLocalId = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -268,7 +268,7 @@ TEST_F(
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const QString notebookLocalId = utility::UidGenerator::Generate();
+    const QString notebookLocalId = utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -300,9 +300,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookLocalId)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const QString notebookLocalId = utility::UidGenerator::Generate();
+    const QString notebookLocalId = utility::UidGenerator::generate();
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -426,10 +426,10 @@ TEST_F(
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const QString notebookLocalId = utility::UidGenerator::Generate();
+    const QString notebookLocalId = utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(utility::UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::generate())
                                     .setUsername(QStringLiteral("username"))
                                     .setUpdateSequenceNum(43)
                                     .build();
@@ -465,9 +465,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForLinkedNotebookByNotebookGuid)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const qevercloud::Guid notebookGuid = utility::UidGenerator::Generate();
+    const qevercloud::Guid notebookGuid = utility::UidGenerator::generate();
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -591,10 +591,10 @@ TEST_F(
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const qevercloud::Guid notebookGuid = utility::UidGenerator::Generate();
+    const qevercloud::Guid notebookGuid = utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
-                                    .setGuid(utility::UidGenerator::Generate())
+                                    .setGuid(utility::UidGenerator::generate())
                                     .setUsername(QStringLiteral("username"))
                                     .setUpdateSequenceNum(43)
                                     .build();
@@ -631,7 +631,7 @@ TEST_F(NoteStoreProviderTest, LinkedNotebookNoteStore)
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -755,7 +755,7 @@ TEST_F(
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     EXPECT_CALL(
         *m_mockLinkedNotebookFinder,
@@ -782,7 +782,7 @@ TEST_F(
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -946,10 +946,10 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteLocalId)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .setUpdateSequenceNum(43)
                               .build();
@@ -1062,9 +1062,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -1073,7 +1073,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteLocalIdFromLinkedNotebook)
                                     .build();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .setUpdateSequenceNum(44)
                               .setLinkedNotebookGuid(linkedNotebookGuid)
@@ -1200,7 +1200,7 @@ TEST_F(
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const auto noteLocalId = utility::UidGenerator::Generate();
+    const auto noteLocalId = utility::UidGenerator::generate();
 
     EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteLocalId(noteLocalId))
         .WillRepeatedly(Return(
@@ -1223,10 +1223,10 @@ TEST_F(NoteStoreProviderTest, NoteStoreForUserOwnNoteGuid)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const auto noteGuid = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .setUpdateSequenceNum(43)
                               .build();
@@ -1339,9 +1339,9 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const auto noteGuid = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
     const qevercloud::Guid linkedNotebookGuid =
-        utility::UidGenerator::Generate();
+        utility::UidGenerator::generate();
 
     const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
                                     .setGuid(linkedNotebookGuid)
@@ -1350,7 +1350,7 @@ TEST_F(NoteStoreProviderTest, NoteStoreForNoteGuidFromLinkedNotebook)
                                     .build();
 
     const auto notebook = qevercloud::NotebookBuilder{}
-                              .setLocalId(utility::UidGenerator::Generate())
+                              .setLocalId(utility::UidGenerator::generate())
                               .setName(QStringLiteral("Notebook"))
                               .setUpdateSequenceNum(44)
                               .setLinkedNotebookGuid(linkedNotebookGuid)
@@ -1476,7 +1476,7 @@ TEST_F(NoteStoreProviderTest, NoNoteStoreForNoteGuidIfCannotFindNotebookForNote)
         m_mockLinkedNotebookFinder, m_mockNotebookFinder,
         m_mockAuthenticationInfoProvider, m_mockNoteStoreFactory, m_account);
 
-    const auto noteGuid = utility::UidGenerator::Generate();
+    const auto noteGuid = utility::UidGenerator::generate();
 
     EXPECT_CALL(*m_mockNotebookFinder, findNotebookByNoteGuid(noteGuid))
         .WillRepeatedly(Return(
