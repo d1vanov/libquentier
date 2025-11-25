@@ -23,7 +23,7 @@ namespace quentier::utility {
 QString UidGenerator::generate()
 {
     const QUuid uid = QUuid::createUuid();
-    return UidToString(uid);
+    return uidToString(uid);
 }
 
 QString UidGenerator::uidToString(const QUuid & uid)
@@ -36,16 +36,6 @@ QString UidGenerator::uidToString(const QUuid & uid)
     result.remove(result.size() - 1, 1);
     result.remove(0, 1);
     return result;
-}
-
-QString UidGenerator::Generate()
-{
-    return UidGenerator::generate();
-}
-
-QString UidGenerator::UidToString(const QUuid & uid)
-{
-    return UidGenerator::uidToString(uid);
 }
 
 } // namespace quentier::utility

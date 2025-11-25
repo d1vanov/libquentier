@@ -30,17 +30,6 @@ class QUENTIER_EXPORT UidGenerator
 public:
     [[nodiscard]] static QString generate();
     [[nodiscard]] static QString uidToString(const QUuid & uid);
-
-    // TODO: remove these methods after migrating out from their usage
-    [[nodiscard]] static QString Generate();
-    [[nodiscard]] static QString UidToString(const QUuid & uid);
 };
 
 } // namespace quentier::utility
-
-namespace quentier {
-
-class QUENTIER_EXPORT UidGenerator : public utility::UidGenerator
-{};
-
-} // namespace quentier
