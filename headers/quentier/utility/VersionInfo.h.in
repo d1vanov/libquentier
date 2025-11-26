@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,7 +54,7 @@
  */
 @LIB_QUENTIER_VERSION_PATCH_DEFINE@
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @return          Major version of libquentier
@@ -115,5 +115,21 @@ libquentierBuiltWithQEverCloudVersionPatch() noexcept;
  */
 [[nodiscard]] QString QUENTIER_EXPORT
 libquentierBuiltWithQEverCloudBuildInfo() noexcept;
+
+} // namespace quentier::utility
+
+// TODO: remove after migrating to namespaced version in Quentier
+namespace quentier {
+
+using utility::libquentierVersionMajor;
+using utility::libquentierVersionMinor;
+using utility::libquentierVersionPatch;
+using utility::libquentierBuildInfo;
+using utility::libquentierBuiltWithQtVersion;
+using utility::libquentierHasNoteEditor;
+using utility::libquentierBuiltWithQEverCloudVersionMajor;
+using utility::libquentierBuiltWithQEverCloudVersionMinor;
+using utility::libquentierBuiltWithQEverCloudVersionPatch;
+using utility::libquentierBuiltWithQEverCloudBuildInfo;
 
 } // namespace quentier

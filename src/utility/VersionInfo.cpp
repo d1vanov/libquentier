@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 
 #include <QtGlobal>
 
-namespace quentier {
+namespace quentier::utility {
 
 int libquentierVersionMajor() noexcept
 {
@@ -74,4 +74,4 @@ QString libquentierBuiltWithQEverCloudBuildInfo() noexcept
     return QStringLiteral(QEVERCLOUD_BUILD_INFO);
 }
 
-} // namespace quentier
+} // namespace quentier::utility
