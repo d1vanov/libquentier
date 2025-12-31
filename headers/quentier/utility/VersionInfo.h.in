@@ -117,19 +117,3 @@ libquentierBuiltWithQEverCloudVersionPatch() noexcept;
 libquentierBuiltWithQEverCloudBuildInfo() noexcept;
 
 } // namespace quentier::utility
-
-// TODO: remove after migrating to namespaced version in Quentier
-namespace quentier {
-
-using utility::libquentierVersionMajor;
-using utility::libquentierVersionMinor;
-using utility::libquentierVersionPatch;
-using utility::libquentierBuildInfo;
-using utility::libquentierBuiltWithQtVersion;
-using utility::libquentierHasNoteEditor;
-using utility::libquentierBuiltWithQEverCloudVersionMajor;
-using utility::libquentierBuiltWithQEverCloudVersionMinor;
-using utility::libquentierBuiltWithQEverCloudVersionPatch;
-using utility::libquentierBuiltWithQEverCloudBuildInfo;
-
-} // namespace quentier
