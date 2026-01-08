@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,24 +25,26 @@
 namespace quentier {
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
-    NoteEditorPrivate & noteEditorPrivate, const QList<Resource> & resources,
-    QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditorPrivate,
+    QList<qevercloud::Resource> resources, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_resources(resources)
+    m_resources(std::move(resources))
 {
     init();
 }
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
-    NoteEditorPrivate & noteEditorPrivate, const QList<Resource> & resources,
-    const QString & text, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditorPrivate,
+    QList<qevercloud::Resource> resources, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_resources(resources)
+    m_resources(std::move(resources))
 {
     init();
 }
 
-NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand() {}
+NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand() noexcept =
+    default;
 
 void NoteEditorContentEditUndoCommand::redoImpl()
 {

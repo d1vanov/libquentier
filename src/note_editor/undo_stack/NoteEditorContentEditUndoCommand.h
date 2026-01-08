@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,35 +16,34 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_NOTE_EDITOR_CONTENT_EDIT_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_NOTE_EDITOR_CONTENT_EDIT_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QList>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand final :
-    public INoteEditorUndoCommand
+class NoteEditorContentEditUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        const QList<Resource> & resources, QUndoCommand * parent = nullptr);
+        QList<qevercloud::Resource> resources,
+        QUndoCommand * parent = nullptr);
 
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        const QList<Resource> & resources, const QString & text,
+        QList<qevercloud::Resource> resources, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~NoteEditorContentEditUndoCommand();
+    ~NoteEditorContentEditUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     void init();
@@ -55,8 +54,8 @@ private:
      * the note might be deleted via simply pressing backspace; the actual fact
      * of the resource's deletion only becomes clear when the HTML from note
      * editor's page is converted back into ENML and its analysis can reveal
-     * that certain resource is no longer is a part of the note. Only at that
-     * time it is removed from the list of note's resources.
+     * that certain resource is no longer a part of the note. Only at that
+     * time the resource is removed from the list of note's resources.
      *
      * The undo stack must make it possible to restore the resources when
      * undoing the changes made to the note's content. For this reason each undo
@@ -72,9 +71,7 @@ private:
      * removing the resource from the note's content via backspace, that fact
      * would be figured out elsewhere
      */
-    QList<Resource> m_resources;
+    QList<qevercloud::Resource> m_resources;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_NOTE_EDITOR_CONTENT_EDIT_UNDO_COMMAND_H

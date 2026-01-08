@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,15 +32,15 @@
 #include <QMutexLocker>
 #include <QString>
 
-namespace quentier {
+namespace quentier::utility {
 
 qint64 SysInfo::totalMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     struct sysinfo si;
-    int rc = sysinfo(&si);
+    const int rc = sysinfo(&si);
     if (rc) {
         return -1;
     }
@@ -51,10 +51,10 @@ qint64 SysInfo::totalMemory()
 qint64 SysInfo::freeMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     struct sysinfo si;
-    int rc = sysinfo(&si);
+    const int rc = sysinfo(&si);
     if (rc) {
         return -1;
     }
@@ -65,12 +65,12 @@ qint64 SysInfo::freeMemory()
 QString SysInfo::stackTrace()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     fpos_t pos;
 
     QString tmpFile = QDir::tempPath();
-    QString appName = QApplication::applicationName();
+    const QString appName = QApplication::applicationName();
 
     tmpFile += QStringLiteral("/Quentier_") + appName +
         QStringLiteral("_StackTrace.txt");
@@ -78,11 +78,11 @@ QString SysInfo::stackTrace()
     // flush existing stderr and reopen it as file
     fflush(stderr);
     fgetpos(stderr, &pos);
-    int fd = dup(fileno(stderr));
+    const int fd = dup(fileno(stderr));
     FILE * fileHandle = freopen(tmpFile.toLocal8Bit().data(), "w", stderr);
     if (!fileHandle) {
         perror("Can't reopen stderr");
-        return QString();
+        return {};
     }
 
     stacktrace::displayCurrentStackTrace();
@@ -95,15 +95,12 @@ QString SysInfo::stackTrace()
     fsetpos(stderr, &pos);
     fclose(fileHandle);
 
-    QFile file(tmpFile);
-    bool res = file.open(QIODevice::ReadOnly);
-    if (!res) {
+    QFile file{tmpFile};
+    if (!file.open(QIODevice::ReadOnly)) {
         return QStringLiteral("Cannot open temporary file with stacktrace");
     }
 
-    QByteArray rawOutput = file.readAll();
-    QString output = QString::fromLocal8Bit(rawOutput);
-    return output;
+    return QString::fromLocal8Bit(file.readAll());
 }
 
-} // namespace quentier
+} // namespace quentier::utility

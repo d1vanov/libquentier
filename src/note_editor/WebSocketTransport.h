@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,31 +16,28 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_TRANSPORT_H
-#define LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_TRANSPORT_H
+#pragma once
 
 #include <QtWebChannel/QWebChannelAbstractTransport>
 
-QT_FORWARD_DECLARE_CLASS(QWebSocket)
+class QWebSocket;
 
-class Q_DECL_HIDDEN WebSocketTransport final :
-    public QWebChannelAbstractTransport
+class WebSocketTransport final : public QWebChannelAbstractTransport
 {
     Q_OBJECT
 public:
     explicit WebSocketTransport(QWebSocket * socket);
-    virtual ~WebSocketTransport();
+    ~WebSocketTransport() override;
 
-    virtual void sendMessage(const QJsonObject & message) override;
+    void sendMessage(const QJsonObject & message) override;
 
 private Q_SLOTS:
     void textMessageReceived(const QString & message);
 
 private:
-    bool parseMessage(QByteArray messageData, QJsonObject & object);
+    [[nodiscard]] bool parseMessage(
+        QByteArray messageData, QJsonObject & object);
 
 private:
     QWebSocket * m_socket;
 };
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_TRANSPORT_H

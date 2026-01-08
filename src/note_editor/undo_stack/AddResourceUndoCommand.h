@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,18 +16,17 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_RESOURCE_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_RESOURCE_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
 #include "../NoteEditorPage.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AddResourceUndoCommand final : public INoteEditorUndoCommand
+class AddResourceUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -35,27 +34,25 @@ public:
 
 public:
     AddResourceUndoCommand(
-        const Resource & resource, const Callback & callback,
+        qevercloud::Resource resource, Callback callback,
         NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     AddResourceUndoCommand(
-        const Resource & resource, const Callback & callback,
+        qevercloud::Resource resource, Callback callback,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~AddResourceUndoCommand();
+    ~AddResourceUndoCommand() noexcept override;
 
-    virtual void undoImpl() override;
-    virtual void redoImpl() override;
+    void undoImpl() override;
+    void redoImpl() override;
 
 private:
     void init();
 
 private:
-    Resource m_resource;
+    qevercloud::Resource m_resource;
     Callback m_callback;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_RESOURCE_UNDO_COMMAND_H

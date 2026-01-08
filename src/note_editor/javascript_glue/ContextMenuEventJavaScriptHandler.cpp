@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,17 +21,17 @@
 namespace quentier {
 
 ContextMenuEventJavaScriptHandler::ContextMenuEventJavaScriptHandler(
-    QObject * parent) :
-    QObject(parent)
+    QObject * parent) : QObject(parent)
 {}
 
 void ContextMenuEventJavaScriptHandler::setContextMenuContent(
-    QString contentType, QString selectedHtml, bool insideDecryptedTextFragment,
-    QStringList extraData, quint64 sequenceNumber)
+    QString contentType, QString selectedHtml,
+    const bool insideDecryptedTextFragment, QStringList extraData,
+    const quint64 sequenceNumber)
 {
     Q_EMIT contextMenuEventReply(
-        contentType, selectedHtml, insideDecryptedTextFragment, extraData,
-        sequenceNumber);
+        std::move(contentType), std::move(selectedHtml),
+        insideDecryptedTextFragment, std::move(extraData), sequenceNumber);
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,40 +17,37 @@
  */
 
 #include <quentier/types/ResourceRecognitionIndices.h>
-#include <quentier/utility/Compat.h>
 
 #include "data/ResourceRecognitionIndicesData.h"
+
+#include <utility>
 
 namespace quentier {
 
 ResourceRecognitionIndices::ResourceRecognitionIndices() :
-    Printable(), d(new ResourceRecognitionIndicesData)
-{}
-
-ResourceRecognitionIndices::ResourceRecognitionIndices(
-    const ResourceRecognitionIndices & other) :
-    Printable(),
-    d(other.d)
+    d(new ResourceRecognitionIndicesData)
 {}
 
 ResourceRecognitionIndices::ResourceRecognitionIndices(
     const QByteArray & rawRecognitionIndicesData) :
     d(new ResourceRecognitionIndicesData)
 {
-    d->setData(rawRecognitionIndicesData);
+    Q_UNUSED(d->setData(rawRecognitionIndicesData))
 }
+
+ResourceRecognitionIndices::ResourceRecognitionIndices(
+    const ResourceRecognitionIndices & other) = default;
+
+ResourceRecognitionIndices::ResourceRecognitionIndices(
+    ResourceRecognitionIndices && other) noexcept = default;
 
 ResourceRecognitionIndices & ResourceRecognitionIndices::operator=(
-    const ResourceRecognitionIndices & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+    const ResourceRecognitionIndices & other) = default;
 
-    return *this;
-}
+ResourceRecognitionIndices & ResourceRecognitionIndices::operator=(
+    ResourceRecognitionIndices && other) noexcept = default;
 
-ResourceRecognitionIndices::~ResourceRecognitionIndices() {}
+ResourceRecognitionIndices::~ResourceRecognitionIndices() = default;
 
 bool ResourceRecognitionIndices::isNull() const
 {
@@ -180,7 +177,7 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
 
     if (!d->m_items.isEmpty()) {
         strm << "  recognition items: \n";
-        for (const auto & item: qAsConst(d->m_items)) {
+        for (const auto & item: std::as_const(d->m_items)) {
             strm << item << "\n";
         }
         strm << "\n";

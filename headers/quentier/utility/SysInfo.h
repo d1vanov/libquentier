@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,39 +16,35 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_SYS_INFO_H
-#define LIB_QUENTIER_UTILITY_SYS_INFO_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 #include <QString>
 
-namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(SysInfoPrivate)
+namespace quentier::utility {
 
 class QUENTIER_EXPORT SysInfo
 {
 public:
     SysInfo();
-    ~SysInfo();
+    ~SysInfo() noexcept;
 
-    qint64 pageSize();
-    qint64 totalMemory();
-    qint64 freeMemory();
+    [[nodiscard]] qint64 pageSize();
+    [[nodiscard]] qint64 totalMemory();
+    [[nodiscard]] qint64 freeMemory();
 
-    QString stackTrace();
+    [[nodiscard]] QString stackTrace();
 
-    QString platformName();
+    [[nodiscard]] QString platformName();
 
 private:
     Q_DISABLE_COPY(SysInfo)
 
 private:
+    class SysInfoPrivate;
     SysInfoPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(SysInfo)
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_SYS_INFO_H
+} // namespace quentier::utility

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,17 +20,17 @@
 
 #include "StringUtils_p.h"
 
-namespace quentier {
+namespace quentier::utility {
 
 StringUtils::StringUtils() : d_ptr(new StringUtilsPrivate) {}
 
-StringUtils::~StringUtils()
+StringUtils::~StringUtils() noexcept
 {
     delete d_ptr;
 }
 
 void StringUtils::removePunctuation(
-    QString & str, const QVector<QChar> & charactersToPreserve) const
+    QString & str, const QList<QChar> & charactersToPreserve) const
 {
     Q_D(const StringUtils);
     d->removePunctuation(str, charactersToPreserve);
@@ -48,4 +48,4 @@ void StringUtils::removeNewlines(QString & str) const
     d->removeNewlines(str);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

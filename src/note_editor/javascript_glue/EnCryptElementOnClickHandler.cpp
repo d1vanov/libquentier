@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,10 +25,11 @@ EnCryptElementOnClickHandler::EnCryptElementOnClickHandler(QObject * parent) :
 {}
 
 void EnCryptElementOnClickHandler::onEnCryptElementClicked(
-    QString encryptedText, QString cipher, QString length, QString hint,
-    QString enCryptIndex)
+    QString encryptedText, QString cipher, QString hint, QString enCryptIndex)
 {
-    Q_EMIT decrypt(encryptedText, cipher, length, hint, enCryptIndex, nullptr);
+    Q_EMIT decrypt(
+        std::move(encryptedText), std::move(cipher), std::move(hint),
+        std::move(enCryptIndex));
 }
 
 } // namespace quentier

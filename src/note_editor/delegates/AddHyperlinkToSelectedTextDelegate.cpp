@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,10 +23,6 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebFrame>
-#endif
-
 #include <memory>
 
 namespace quentier {
@@ -36,8 +32,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "AddHyperlinkToSelectedTextDelegate",                              \
-            "Can't add hyperlink to the selected "                             \
-            "text: no note editor page"));                                     \
+            "Can't add hyperlink to the selected text: no note editor page")); \
         QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -45,8 +40,8 @@ namespace quentier {
 
 AddHyperlinkToSelectedTextDelegate::AddHyperlinkToSelectedTextDelegate(
     NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor), m_hyperlinkId(hyperlinkIdToAdd)
+    QObject(&noteEditor), m_noteEditor(noteEditor),
+    m_hyperlinkId(hyperlinkIdToAdd)
 {}
 
 void AddHyperlinkToSelectedTextDelegate::start()
@@ -84,12 +79,11 @@ void AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink(
 }
 
 void AddHyperlinkToSelectedTextDelegate::onOriginalPageConvertedToNote(
-    Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "onOriginalPageConvertedToNote");
+        "AddHyperlinkToSelectedTextDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -104,11 +98,10 @@ void AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "addHyperlinkToSelectedText");
+        "AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText");
 
     if (m_shouldGetHyperlinkFromDialog || m_replacementLinkText.isEmpty()) {
-        QString javascript = QStringLiteral("getSelectionHtml();");
+        const QString javascript = QStringLiteral("getSelectionHtml();");
         GET_PAGE()
 
         page->executeJavaScript(
@@ -132,7 +125,7 @@ void AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived(
         "AddHyperlinkToSelectedTextDelegate::"
             << "onInitialHyperlinkDataReceived: " << data);
 
-    QString initialText = data.toString();
+    const QString initialText = data.toString();
 
     if (m_shouldGetHyperlinkFromDialog) {
         raiseAddHyperlinkDialog(initialText);
@@ -150,10 +143,10 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "raiseAddHyperlinkDialog: initial text = " << initialText);
+        "AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog: "
+            << "initial text = " << initialText);
 
-    auto pEditHyperlinkDialog =
+    const auto pEditHyperlinkDialog =
         std::make_unique<EditHyperlinkDialog>(&m_noteEditor, initialText);
 
     pEditHyperlinkDialog->setWindowModality(Qt::WindowModal);
@@ -164,15 +157,15 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
         &AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished);
 
     QNTRACE("note_editor:delegate", "Will exec add hyperlink dialog now");
-    int res = pEditHyperlinkDialog->exec();
-    if (res == QDialog::Rejected) {
+    if (pEditHyperlinkDialog->exec() == QDialog::Rejected) {
         QNTRACE("note_editor:delegate", "Cancelled add hyperlink dialog");
         Q_EMIT cancelled();
     }
 }
 
 void AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished(
-    QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
+    QString text, QUrl url, quint64 hyperlinkId, // NOLINT
+    bool startupUrlWasEmpty)
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -183,8 +176,7 @@ void AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished(
     Q_UNUSED(hyperlinkId);
     Q_UNUSED(startupUrlWasEmpty);
 
-    QString urlString = url.toString(QUrl::FullyEncoded);
-    setHyperlinkToSelection(urlString, text);
+    setHyperlinkToSelection(url.toString(QUrl::FullyEncoded), text);
 }
 
 void AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection(
@@ -192,10 +184,10 @@ void AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "setHyperlinkToSelection: url = " << url << ", text = " << text);
+        "AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection: "
+            << "url = " << url << ", text = " << text);
 
-    QString javascript =
+    const QString javascript =
         QStringLiteral("hyperlinkManager.setHyperlinkToSelection('") + text +
         QStringLiteral("', '") + url + QStringLiteral("', ") +
         QString::number(m_hyperlinkId) + QStringLiteral(");");
@@ -213,12 +205,11 @@ void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate"
-            << "::onHyperlinkSetToSelection");
+        "AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection");
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of the attempt to "
@@ -228,8 +219,7 @@ void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));

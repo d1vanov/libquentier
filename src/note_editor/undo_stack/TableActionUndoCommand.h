@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TABLE_ACTION_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TABLE_ACTION_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -25,7 +24,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN TableActionUndoCommand final : public INoteEditorUndoCommand
+class TableActionUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -40,15 +39,13 @@ public:
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         Callback callback, QUndoCommand * parent = nullptr);
 
-    virtual ~TableActionUndoCommand();
+    ~TableActionUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     Callback m_callback;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TABLE_ACTION_UNDO_COMMAND_H

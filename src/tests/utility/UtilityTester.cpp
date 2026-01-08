@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,39 +18,29 @@
 
 #include "UtilityTester.h"
 
-#include "EncryptionManagerTests.h"
 #include "LRUCacheTests.h"
 #include "TagSortByParentChildRelationsTest.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNote.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
 
 #include <quentier/utility/SysInfo.h>
 
 #include <QApplication>
+#include <QTest>
 #include <QTextStream>
 #include <QTimer>
-#include <QtTest/QTest>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 UtilityTester::UtilityTester(QObject * parent) : QObject(parent) {}
 
-UtilityTester::~UtilityTester() {}
+UtilityTester::~UtilityTester() noexcept = default;
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
@@ -65,48 +55,19 @@ void UtilityTester::init()
 
 #define CATCH_EXCEPTION()                                                      \
     catch (const std::exception & exception) {                                 \
-        SysInfo sysInfo;                                                       \
+        utility::SysInfo sysInfo;                                              \
         QFAIL(qPrintable(                                                      \
             QStringLiteral("Caught exception: ") +                             \
             QString::fromUtf8(exception.what()) +                              \
             QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));          \
     }
 
-void UtilityTester::encryptDecryptNoteTest()
-{
-    try {
-        QString error;
-        bool res = encryptDecryptTest(error);
-        QVERIFY2(res, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void UtilityTester::decryptNoteAesTest()
-{
-    try {
-        QString error;
-        bool res = decryptAesTest(error);
-        QVERIFY2(res, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void UtilityTester::decryptNoteRc2Test()
-{
-    try {
-        QString error;
-        bool res = decryptRc2Test(error);
-        QVERIFY2(res, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
 void UtilityTester::tagSortByParentChildRelationsTest()
 {
     try {
         QString error;
-        bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
+        const bool res =
+            ::quentier::test::tagSortByParentChildRelationsTest(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -116,26 +77,26 @@ void UtilityTester::lruCacheTests()
 {
     try {
         QString error;
-        bool res = ::quentier::test::testEmptyLRUCacheConsistency(error);
+        bool res =
+            ::quentier::utility::test::testEmptyLRUCacheConsistency(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testNonEmptyLRUCacheConsistency(error);
+        res = ::quentier::utility::test::testNonEmptyLRUCacheConsistency(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testRemovalFromLRUCache(error);
+        res = ::quentier::utility::test::testRemovalFromLRUCache(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testLRUCacheReverseIterators(error);
+        res = ::quentier::utility::test::testLRUCacheReverseIterators(error);
         QVERIFY2(res, qPrintable(error));
 
-        res =
-            ::quentier::test::testItemsAdditionToLRUCacheBeforeReachingMaxSize(
-                error);
+        res = ::quentier::utility::test::
+            testItemsAdditionToLRUCacheBeforeReachingMaxSize(error);
 
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testItemsAdditionToLRUCacheAfterReachingMaxSize(
-            error);
+        res = ::quentier::utility::test::
+            testItemsAdditionToLRUCacheAfterReachingMaxSize(error);
 
         QVERIFY2(res, qPrintable(error));
     }
@@ -144,5 +105,4 @@ void UtilityTester::lruCacheTests()
 
 #undef CATCH_EXCEPTION
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

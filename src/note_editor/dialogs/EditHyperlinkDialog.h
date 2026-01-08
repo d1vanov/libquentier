@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,40 +16,39 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QUrl>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(EditHyperlinkDialog)
+class EditHyperlinkDialog;
 }
 
 namespace quentier {
 
-class Q_DECL_HIDDEN EditHyperlinkDialog final : public QDialog
+class EditHyperlinkDialog final : public QDialog
 {
     Q_OBJECT
 public:
     explicit EditHyperlinkDialog(
         QWidget * parent = nullptr, const QString & startupText = {},
-        const QString & startupUrl = {}, const quint64 idNumber = 0);
+        const QString & startupUrl = {}, quint64 idNumber = 0);
 
-    virtual ~EditHyperlinkDialog();
+    ~EditHyperlinkDialog() noexcept override;
 
 Q_SIGNALS:
     void editHyperlinkAccepted(
         QString text, QUrl url, quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:
-    virtual void accept() override;
+    void accept() override;
 
     void onUrlEdited(QString url);
     void onUrlEditingFinished();
 
 private:
-    bool validateAndGetUrl(QUrl & url);
+    [[nodiscard]] bool validateAndGetUrl(QUrl & url);
 
 private:
     Ui::EditHyperlinkDialog * m_pUI;
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H

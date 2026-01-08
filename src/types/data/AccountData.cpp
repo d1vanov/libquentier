@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #include "AccountData.h"
 
-#include <qt5qevercloud/generated/Constants.h>
+#include <qevercloud/Constants.h>
 
 namespace quentier {
 
@@ -49,44 +49,42 @@ void AccountData::setEvernoteAccountLimits(
     const qevercloud::AccountLimits & limits)
 {
     m_mailLimitDaily =
-        (limits.userMailLimitDaily.isSet() ? limits.userMailLimitDaily.ref()
-                                           : mailLimitDaily());
+        (limits.userMailLimitDaily() ? *limits.userMailLimitDaily()
+                                     : mailLimitDaily());
 
     m_noteSizeMax =
-        (limits.noteSizeMax.isSet() ? limits.noteSizeMax.ref() : noteSizeMax());
+        (limits.noteSizeMax() ? *limits.noteSizeMax() : noteSizeMax());
 
     m_resourceSizeMax =
-        (limits.resourceSizeMax.isSet() ? limits.resourceSizeMax.ref()
-                                        : resourceSizeMax());
+        (limits.resourceSizeMax() ? *limits.resourceSizeMax()
+                                  : resourceSizeMax());
 
     m_linkedNotebookMax =
-        (limits.userLinkedNotebookMax.isSet()
-             ? limits.userLinkedNotebookMax.ref()
-             : linkedNotebookMax());
+        (limits.userLinkedNotebookMax() ? *limits.userLinkedNotebookMax()
+                                        : linkedNotebookMax());
 
     m_noteCountMax =
-        (limits.userNoteCountMax.isSet() ? limits.userNoteCountMax.ref()
-                                         : noteCountMax());
+        (limits.userNoteCountMax() ? *limits.userNoteCountMax()
+                                   : noteCountMax());
 
     m_notebookCountMax =
-        (limits.userNotebookCountMax.isSet() ? limits.userNotebookCountMax.ref()
-                                             : notebookCountMax());
+        (limits.userNotebookCountMax() ? *limits.userNotebookCountMax()
+                                       : notebookCountMax());
 
     m_tagCountMax =
-        (limits.userTagCountMax.isSet() ? limits.userTagCountMax.ref()
-                                        : tagCountMax());
+        (limits.userTagCountMax() ? *limits.userTagCountMax() : tagCountMax());
 
     m_noteTagCountMax =
-        (limits.noteTagCountMax.isSet() ? limits.noteTagCountMax.ref()
-                                        : noteTagCountMax());
+        (limits.noteTagCountMax() ? *limits.noteTagCountMax()
+                                  : noteTagCountMax());
 
     m_savedSearchCountMax =
-        (limits.userSavedSearchesMax.isSet() ? limits.userSavedSearchesMax.ref()
-                                             : savedSearchCountMax());
+        (limits.userSavedSearchesMax() ? *limits.userSavedSearchesMax()
+                                       : savedSearchCountMax());
 
     m_noteResourceCountMax =
-        (limits.noteResourceCountMax.isSet() ? limits.noteResourceCountMax.ref()
-                                             : noteResourceCountMax());
+        (limits.noteResourceCountMax() ? *limits.noteResourceCountMax()
+                                       : noteResourceCountMax());
 }
 
 qint32 AccountData::mailLimitDaily() const

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,22 +26,23 @@
 namespace quentier {
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-    NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+    NoteEditorPrivate & noteEditor, QString ignoredWord,
     SpellChecker * pSpellChecker, QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, parent),
-    m_pSpellChecker(pSpellChecker), m_ignoredWord(ignoredWord)
+    INoteEditorUndoCommand(noteEditor, parent), m_pSpellChecker(pSpellChecker),
+    m_ignoredWord(std::move(ignoredWord))
 {
     setText(tr("Ignore word"));
 }
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-    NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+    NoteEditorPrivate & noteEditor, QString ignoredWord,
     SpellChecker * pSpellChecker, const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_pSpellChecker(pSpellChecker), m_ignoredWord(ignoredWord)
+    m_pSpellChecker(pSpellChecker), m_ignoredWord(std::move(ignoredWord))
 {}
 
-SpellCheckIgnoreWordUndoCommand::~SpellCheckIgnoreWordUndoCommand() {}
+SpellCheckIgnoreWordUndoCommand::~SpellCheckIgnoreWordUndoCommand() noexcept =
+    default;
 
 void SpellCheckIgnoreWordUndoCommand::redoImpl()
 {

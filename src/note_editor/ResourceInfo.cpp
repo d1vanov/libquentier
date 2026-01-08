@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,10 +43,10 @@ void ResourceInfo::cacheResourceInfo(
     info.m_resourceImageSize = resourceImageSize;
 }
 
-bool ResourceInfo::contains(const QByteArray & resourceHash) const
+bool ResourceInfo::contains(const QByteArray & resourceHash) const noexcept
 {
-    auto it = m_resourceInfoHash.find(resourceHash);
-    return (it != m_resourceInfoHash.end());
+    return m_resourceInfoHash.constFind(resourceHash) !=
+        m_resourceInfoHash.constEnd();
 }
 
 bool ResourceInfo::findResourceInfo(
@@ -59,7 +59,7 @@ bool ResourceInfo::findResourceInfo(
         "ResourceInfo::findResourceInfo: resource hash = "
             << resourceHash.toHex());
 
-    auto it = m_resourceInfoHash.find(resourceHash);
+    const auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {
         QNTRACE("note_editor", "Resource info was not found");
         return false;
@@ -87,7 +87,7 @@ bool ResourceInfo::removeResourceInfo(const QByteArray & resourceHash)
         "ResourceInfo::removeResourceInfo: resource hash = "
             << resourceHash.toHex());
 
-    auto it = m_resourceInfoHash.find(resourceHash);
+    const auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {
         QNTRACE("note_editor", "Resource info was not found hence not removed");
         return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_OBFUSCATED_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_OBFUSCATED_KEYCHAIN_SERVICE_H
+#pragma once
 
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
 /**
  * @brief The ObfuscatingKeychainService class implements IKeychainService
@@ -30,28 +29,25 @@ namespace quentier {
  * obfuscated form. It is not really a secure storage and should not be used for
  * data which *must* be stored securely.
  */
-class Q_DECL_HIDDEN ObfuscatingKeychainService final : public IKeychainService
+class ObfuscatingKeychainService final : public IKeychainService
 {
-    Q_OBJECT
 public:
-    explicit ObfuscatingKeychainService(QObject * parent = nullptr);
+    explicit ObfuscatingKeychainService(IEncryptorPtr encryptor);
 
-    virtual ~ObfuscatingKeychainService() override;
+public:
+    ~ObfuscatingKeychainService() noexcept override;
 
-    virtual QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) override;
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
 
-    virtual QUuid startReadPasswordJob(
-        const QString & service, const QString & key) override;
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) const override;
 
-    virtual QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) override;
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
 
 private:
-    EncryptionManager m_encryptionManager;
+    const IEncryptorPtr m_encryptor;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_OBFUSCATED_KEYCHAIN_SERVICE_H
+} // namespace quentier::utility::keychain

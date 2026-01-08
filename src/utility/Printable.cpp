@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,23 +18,17 @@
 
 #include <quentier/utility/Printable.h>
 
-namespace quentier {
+namespace quentier::utility {
 
-const QString Printable::toString() const
+Printable::~Printable() noexcept = default;
+
+QString Printable::toString() const
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << *this;
     return str;
 }
-
-Printable::Printable() = default;
-
-Printable::Printable(const Printable &) = default;
-
-Printable & Printable::operator=(const Printable &) = default;
-
-Printable::~Printable() = default;
 
 QDebug & operator<<(QDebug & debug, const Printable & printable)
 {
@@ -47,4 +41,4 @@ QTextStream & operator<<(QTextStream & strm, const Printable & printable)
     return printable.print(strm);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

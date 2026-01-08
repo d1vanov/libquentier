@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,49 +18,10 @@
 
 #include <quentier/synchronization/ISyncStateStorage.h>
 
-#include "SyncStateStorage.h"
+namespace quentier::synchronization {
 
-#include <quentier/utility/Compat.h>
-#include <quentier/utility/DateTime.h>
+ISyncStateStorage::ISyncStateStorage(QObject * parent) : QObject(parent) {}
 
-namespace quentier {
+ISyncStateStorage::~ISyncStateStorage() = default;
 
-QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
-{
-    strm << "ISyncState: {\n"
-         << "    user data update count = " << userDataUpdateCount() << "\n"
-         << "    user data last sync time = "
-         << printableDateTimeFromTimestamp(userDataLastSyncTime()) << "\n";
-
-    auto updateCountsByLinkedNotebookGuid = linkedNotebookUpdateCounts();
-    if (!updateCountsByLinkedNotebookGuid.isEmpty()) {
-        strm << "    update counts by linked notebook guid:\n";
-
-        for (const auto it:
-             qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid)))
-        {
-            strm << "        [" << it.key() << "] = " << it.value() << "\n";
-        }
-    }
-
-    auto lastSyncTimesByLinkedNotebookGuid = linkedNotebookLastSyncTimes();
-    if (!lastSyncTimesByLinkedNotebookGuid.isEmpty()) {
-        strm << "    last sync times by linked notebook guid:\n";
-
-        for (const auto it:
-             qevercloud::toRange(::qAsConst(lastSyncTimesByLinkedNotebookGuid)))
-        {
-            strm << "        [" << it.key() << "] = " << it.value() << "\n";
-        }
-    }
-
-    strm << "}\n";
-    return strm;
-}
-
-ISyncStateStoragePtr newSyncStateStorage(QObject * parent)
-{
-    return std::make_shared<SyncStateStorage>(parent);
-}
-
-} // namespace quentier
+} // namespace quentier::synchronization

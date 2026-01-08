@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,35 +16,28 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
+#pragma once
 
+#include <quentier/exception/IQuentierException.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/ForwardDeclarations.h>
+
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
-#include <QObject>
-#include <QUuid>
+#include <QFuture>
 
-#include <memory>
+class QDebug;
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
-
-namespace quentier {
+namespace quentier::utility {
 
 /**
- * @brief The IKeychainService interface provides methods intended to start
- * potentially asynchronous interaction with the keychain and signals intended
- * to notify listeners about the completion of asynchronous interactions.
+ * @brief The IKeychainService interface provides the ability to interact with
+ * the storage of sensitive data - read, write and delete it.
  */
-class QUENTIER_EXPORT IKeychainService : public QObject
+class QUENTIER_EXPORT IKeychainService
 {
-    Q_OBJECT
-protected:
-    explicit IKeychainService(QObject * parent = nullptr);
-
 public:
-    virtual ~IKeychainService() {}
+    virtual ~IKeychainService() noexcept;
 
     /**
      * Error codes for results of operations with the keychain service
@@ -85,122 +78,81 @@ public:
         OtherError
     };
 
-    friend QTextStream & operator<<(
-        QTextStream & strm, const ErrorCode errorCode);
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, ErrorCode errorCode);
 
-    friend QDebug & operator<<(QDebug & dbg, const ErrorCode errorCode);
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, ErrorCode errorCode);
+
+    /**
+     * @brief The IKeychainService::Exception class is the base class for
+     * exceptions returned inside QFutures from methods of IKeychainService
+     */
+    class QUENTIER_EXPORT Exception : public IQuentierException
+    {
+    public:
+        explicit Exception(ErrorCode errorCode) noexcept;
+
+        explicit Exception(
+            ErrorCode errorCode, ErrorString errorDescription) noexcept;
+
+        [[nodiscard]] ErrorCode errorCode() const noexcept;
+        [[nodiscard]] QString exceptionDisplayName() const override;
+
+        void raise() const override;
+        [[nodiscard]] Exception * clone() const override;
+
+    private:
+        const ErrorCode m_errorCode;
+    };
 
 public:
     /**
-     * startWritePasswordJob slot should start the potentially asynchronous
-     * process of storing the password in the keychain. When ready, this slot
-     * is expected to emit writePasswordJobFinished signal.
+     * writePassword method potentially asynchronously writes password to the
+     * keychain.
      *
      * @param service                   Name of service within the keychain
      * @param key                       Key to store the password under
      * @param password                  Password to store in the keychain
      *
-     * @return                          Unique identifier assigned to this
-     *                                  write password request
+     * @return                          Future which becomes finished when the
+     *                                  operation is comlete. If the operation
+     *                                  fails, the future would contain an
+     *                                  exception.
      */
-    virtual QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) = 0;
+    [[nodiscard]] virtual QFuture<void> writePassword(
+        QString service, QString key, QString password) = 0;
 
     /**
-     * startReadPasswordJob slot should start the potentially asynchronous
-     * process of reading the password from the keychain. When ready, this slot
-     * is expected to emit readPasswordJobFinished signal.
+     * readPassword method potentially asynchronously reads password from the
+     * keychain.
      *
      * @param service                   Name of service within the keychain
      * @param key                       Key under which the password is stored
      *
-     * @return                          Unique identifier assigned to this
-     *                                  read password request
+     * @return                          Future which becomes finished when the
+     *                                  operation is complete. The value inside
+     *                                  the future would be the read password.
+     *                                  If the operation fails, the future
+     *                                  would contain an exception.
      */
-    virtual QUuid startReadPasswordJob(
-        const QString & service, const QString & key) = 0;
+    [[nodiscard]] virtual QFuture<QString> readPassword(
+        QString service, QString key) const = 0;
 
     /**
-     * startDeletePasswordJob slot should start the potentially asynchronous
-     * process of deleting the password from the keychain. When ready, this slot
-     * is expected to emit deletePasswordJobFinished signal.
+     * deletePassword potentially asynchronously deletes password from the
+     * keychain.
      *
      * @param service                   Name of service within the keychain
      * @param key                       Key under which the password is stored
      *
-     * @return                          Unique identifier assigned to this
-     *                                  delete password request
+     * @return                          Future which becomes finished when the
+     *                                  operation is comlete. If the operation
+     *                                  fails, the future would contain an
+     *                                  exception.
      */
-    virtual QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) = 0;
-
-Q_SIGNALS:
-    /**
-     * writePasswordJobFinished signal should be emitted in response to
-     * the call of startWritePasswordJob method
-     *
-     * @param requestId                 Request id returned from
-     *                                  startWritePasswordJob method
-     * @param errorCode                 Error code determining whether
-     *                                  the operation was successful or some
-     *                                  error has occurred
-     * @param errorDescription          Textual description of error in case
-     *                                  of unsuccessful execution
-     */
-    void writePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-    /**
-     * readPasswordJobFinished signal should be emitted in response to
-     * the call of startReadPasswordJob method
-     *
-     * @param requestId                 Request id returned from
-     *                                  startReadPasswordJob method
-     * @param errorCode                 Error code determining whether
-     *                                  the operation was successful or some
-     *                                  error has occurred
-     * @param errorDescription          Textual description of error in case
-     *                                  of unsuccessful execution
-     * @param password                  Password read from the keychain
-     */
-    void readPasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-        QString password);
-
-    /**
-     * deletePasswordJobFinished signal should be emitted in response to
-     * the call of startDeletePasswordJob method
-     *
-     * @param requestId                 Request id returned from
-     *                                  startDeletePasswordJob method
-     * @param errorCode                 Error code determining whether
-     *                                  the operation was successful or some
-     *                                  error has occurred
-     * @param errorDescription          Textual description of error in case
-     *                                  of unsuccessful execution
-     */
-    void deletePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-private:
-    Q_DISABLE_COPY(IKeychainService);
+    [[nodiscard]] virtual QFuture<void> deletePassword(
+        QString service, QString key) = 0;
 };
 
-QUENTIER_EXPORT IKeychainServicePtr
-newQtKeychainService(QObject * parent = nullptr);
-
-QUENTIER_EXPORT IKeychainServicePtr
-newObfuscatingKeychainService(QObject * parent = nullptr);
-
-QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
-    QString name, IKeychainServicePtr primaryKeychain,
-    IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
-
-QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
-    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
-    QObject * parent = nullptr);
-
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
+} // namespace quentier::utility

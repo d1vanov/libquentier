@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,72 +17,145 @@
  */
 
 #include "QtKeychainService.h"
-#include "QtKeychainWrapper.h"
 
-namespace quentier {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#include <qt6keychain/keychain.h>
+#else
+#include <qt5keychain/keychain.h>
+#include <quentier/threading/Qt5Promise.h>
+#endif
 
-QtKeychainService::QtKeychainService(QObject * parent) :
-    IKeychainService(parent), m_pQtKeychainWrapper(new QtKeychainWrapper)
+#include <memory>
+
+namespace quentier::utility::keychain {
+
+namespace {
+
+IKeychainService::ErrorCode translateErrorCode(
+    const QKeychain::Error errorCode) noexcept
 {
-    QObject::connect(
-        this, &QtKeychainService::notifyStartWritePasswordJob,
-        m_pQtKeychainWrapper, &QtKeychainWrapper::onStartWritePasswordJob,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+    using ErrorCode = IKeychainService::ErrorCode;
 
-    QObject::connect(
-        this, &QtKeychainService::notifyStartReadPasswordJob,
-        m_pQtKeychainWrapper, &QtKeychainWrapper::onStartReadPasswordJob,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        this, &QtKeychainService::notifyStartDeletePasswordJob,
-        m_pQtKeychainWrapper, &QtKeychainWrapper::onStartDeletePasswordJob,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        m_pQtKeychainWrapper, &QtKeychainWrapper::writePasswordJobFinished,
-        this, &QtKeychainService::writePasswordJobFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        m_pQtKeychainWrapper, &QtKeychainWrapper::readPasswordJobFinished, this,
-        &QtKeychainService::readPasswordJobFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        m_pQtKeychainWrapper, &QtKeychainWrapper::deletePasswordJobFinished,
-        this, &QtKeychainService::deletePasswordJobFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+    switch (errorCode) {
+    case QKeychain::NoError:
+        return ErrorCode::NoError;
+    case QKeychain::EntryNotFound:
+        return ErrorCode::EntryNotFound;
+    case QKeychain::CouldNotDeleteEntry:
+        return ErrorCode::CouldNotDeleteEntry;
+    case QKeychain::AccessDeniedByUser:
+        return ErrorCode::AccessDeniedByUser;
+    case QKeychain::AccessDenied:
+        return ErrorCode::AccessDenied;
+    case QKeychain::NoBackendAvailable:
+        return ErrorCode::NoBackendAvailable;
+    case QKeychain::NotImplemented:
+        return ErrorCode::NotImplemented;
+    case QKeychain::OtherError:
+    default:
+        return ErrorCode::OtherError;
+    }
 }
 
-QtKeychainService::~QtKeychainService()
+} // namespace
+
+QtKeychainService::~QtKeychainService() noexcept = default;
+
+QFuture<void> QtKeychainService::writePassword(
+    QString service, QString key, QString password) // NOLINT
 {
-    m_pQtKeychainWrapper->disconnect();
-    m_pQtKeychainWrapper->deleteLater();
+    auto promise = std::make_shared<QPromise<void>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    auto job = std::make_unique<QKeychain::WritePasswordJob>(service);
+    job->setKey(key);
+    job->setTextData(password);
+
+    QObject::connect(
+        job.get(), &QKeychain::WritePasswordJob::finished, job.get(),
+        [promise](QKeychain::Job * job) {
+            Q_ASSERT(job);
+            const auto errorCode = job->error();
+            if (errorCode != QKeychain::NoError) {
+                promise->setException(
+                    IKeychainService::Exception(translateErrorCode(errorCode)));
+            }
+
+            promise->finish();
+        });
+
+    job->start();
+    Q_UNUSED(job.release()); // NOLINT
+    return future;
 }
 
-QUuid QtKeychainService::startWritePasswordJob(
-    const QString & service, const QString & key, const QString & password)
+QFuture<QString> QtKeychainService::readPassword(
+    QString service, QString key) const // NOLINT
 {
-    QUuid jobId = QUuid::createUuid();
-    Q_EMIT notifyStartWritePasswordJob(jobId, service, key, password);
-    return jobId;
+    auto promise = std::make_shared<QPromise<QString>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    auto job = std::make_unique<QKeychain::ReadPasswordJob>(service);
+    job->setKey(key);
+
+    QObject::connect(
+        job.get(), &QKeychain::ReadPasswordJob::finished, job.get(),
+        [promise](QKeychain::Job * job) {
+            Q_ASSERT(job);
+
+            auto * readPasswordJob =
+                qobject_cast<QKeychain::ReadPasswordJob *>(job);
+            Q_ASSERT(readPasswordJob);
+
+            const auto errorCode = job->error();
+            if (errorCode == QKeychain::NoError) {
+                promise->addResult(readPasswordJob->textData());
+            }
+            else {
+                promise->setException(
+                    IKeychainService::Exception(translateErrorCode(errorCode)));
+            }
+
+            promise->finish();
+        });
+
+    job->start();
+    Q_UNUSED(job.release()); // NOLINT
+    return future;
 }
 
-QUuid QtKeychainService::startReadPasswordJob(
-    const QString & service, const QString & key)
+QFuture<void> QtKeychainService::deletePassword(
+    QString service, QString key) // NOLINT
 {
-    QUuid jobId = QUuid::createUuid();
-    Q_EMIT notifyStartReadPasswordJob(jobId, service, key);
-    return jobId;
+    auto promise = std::make_shared<QPromise<void>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    auto job = std::make_unique<QKeychain::DeletePasswordJob>(service);
+    job->setKey(key);
+
+    QObject::connect(
+        job.get(), &QKeychain::DeletePasswordJob::finished, job.get(),
+        [promise](QKeychain::Job * job) {
+            Q_ASSERT(job);
+            const auto errorCode = job->error();
+            if (errorCode != QKeychain::NoError) {
+                promise->setException(
+                    IKeychainService::Exception(translateErrorCode(errorCode)));
+            }
+
+            promise->finish();
+        });
+
+    job->start();
+    Q_UNUSED(job.release()); // NOLINT
+    return future;
 }
 
-QUuid QtKeychainService::startDeletePasswordJob(
-    const QString & service, const QString & key)
-{
-    QUuid jobId = QUuid::createUuid();
-    Q_EMIT notifyStartDeletePasswordJob(jobId, service, key);
-    return jobId;
-}
-
-} // namespace quentier
+} // namespace quentier::utility::keychain

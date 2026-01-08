@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,14 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QHash>
 #include <QObject>
@@ -31,8 +31,8 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class GenericResourceImageManager;
+class NoteEditorPrivate;
 
 /**
  * @brief The RenameResourceDelegate class encapsulates a chain of callbacks
@@ -40,16 +40,16 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * the note editor's page considering the details of wrapping this action
  * around undo stack
  */
-class Q_DECL_HIDDEN RenameResourceDelegate final : public QObject
+class RenameResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit RenameResourceDelegate(
-        const Resource & resource, NoteEditorPrivate & noteEditor,
+        const qevercloud::Resource & resource, NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash,
-        const bool performingUndo = false);
+        bool performingUndo = false);
 
     void start();
 
@@ -58,40 +58,33 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QString oldResourceName, QString newResourceName, Resource resource,
-        bool performingUndo);
+        QString oldResourceName, QString newResourceName,
+        qevercloud::Resource resource, bool performingUndo);
 
     void cancelled();
     void notifyError(ErrorString);
 
 // private signals
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void saveGenericResourceImageToFile(
-        QString noteLocalUid, QString resourceLocalUid,
+        QString noteLocalId, QString resourceLocalId,
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);
-#endif
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onRenameResourceDialogFinished(QString newResourceName);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onGenericResourceImageWriterFinished(
         bool success, QByteArray resourceHash, QString filePath,
         ErrorString errorDescription, QUuid requestId);
 
     void onGenericResourceImageUpdated(const QVariant & data);
-#endif
 
 private:
     void doStart();
     void raiseRenameResourceDialog();
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void buildAndSaveGenericResourceImage();
-#endif
 
 private:
     using JsCallback = JsResultCallbackFunctor<RenameResourceDelegate>;
@@ -100,7 +93,7 @@ private:
     NoteEditorPrivate & m_noteEditor;
     GenericResourceImageManager * m_pGenericResourceImageManager;
     QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;
-    Resource m_resource;
+    qevercloud::Resource m_resource;
 
     QString m_oldResourceName;
     QString m_newResourceName;
@@ -108,13 +101,9 @@ private:
 
     bool m_performingUndo;
 
-    Note * m_pNote;
+    qevercloud::Note * m_pNote;
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     QUuid m_genericResourceImageWriterRequestId;
-#endif
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H

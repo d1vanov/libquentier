@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,30 +16,30 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_IMAGE_RESOURCE_ROTATION_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_IMAGE_RESOURCE_ROTATION_DELEGATE_H
+#pragma once
 
 #include "../NoteEditor_p.h"
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QSize>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ImageResourceRotationDelegate final : public QObject
+class ImageResourceRotationDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit ImageResourceRotationDelegate(
-        const QByteArray & resourceHashBefore,
-        const INoteEditorBackend::Rotation rotationDirection,
+        QByteArray resourceHashBefore,
+        INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
         ResourceDataInTemporaryFileStorageManager &
             resourceDataInTemporaryFileStorageManager,
-        QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
+        QHash<QString, QString> & resourceFileStoragePathsByLocalId);
 
     void start();
 
@@ -48,18 +48,18 @@ Q_SIGNALS:
         QByteArray resourceDataBefore, QByteArray resourceHashBefore,
         QByteArray resourceRecognitionDataBefore,
         QByteArray resourceRecognitionDataHashBefore,
-        QSize resourceImageSizeBefore, Resource resourceAfter,
+        QSize resourceImageSizeBefore, qevercloud::Resource resourceAfter,
         INoteEditorBackend::Rotation rotationDirection);
 
     void notifyError(ErrorString error);
 
     // private signals
     void saveResourceDataToTemporaryFile(
-        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString noteLocalId, QString resourceLocalId, QByteArray data,
         QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onResourceDataSavedToTemporaryFile(
         QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
@@ -76,13 +76,15 @@ private:
 private:
     NoteEditorPrivate & m_noteEditor;
     ResourceInfo & m_resourceInfo;
+
     ResourceDataInTemporaryFileStorageManager &
         m_resourceDataInTemporaryFileStorageManager;
-    QHash<QString, QString> & m_resourceFileStoragePathsByLocalUid;
+
+    QHash<QString, QString> & m_resourceFileStoragePathsByLocalId;
 
     INoteEditorBackend::Rotation m_rotationDirection;
 
-    Note * m_pNote = nullptr;
+    qevercloud::Note * m_pNote = nullptr;
 
     QByteArray m_resourceDataBefore;
     QByteArray m_resourceHashBefore;
@@ -94,10 +96,8 @@ private:
     QString m_resourceFileStoragePathBefore;
     QString m_resourceFileStoragePathAfter;
 
-    Resource m_rotatedResource;
+    qevercloud::Resource m_rotatedResource;
     QUuid m_saveResourceDataToTemporaryFileRequestId;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_IMAGE_RESOURCE_ROTATION_DELEGATE_H

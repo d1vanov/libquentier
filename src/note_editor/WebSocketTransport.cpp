@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,18 +32,18 @@ WebSocketTransport::WebSocketTransport(QWebSocket * socket) :
         &WebSocketTransport::textMessageReceived);
 }
 
-WebSocketTransport::~WebSocketTransport() {}
+WebSocketTransport::~WebSocketTransport() = default;
 
 void WebSocketTransport::sendMessage(const QJsonObject & message)
 {
-    QJsonDocument doc(message);
+    const QJsonDocument doc(message);
     m_socket->sendTextMessage(
         QString::fromUtf8(doc.toJson(QJsonDocument::Compact)));
 }
 
 void WebSocketTransport::textMessageReceived(const QString & messageData)
 {
-    QByteArray messageRawData = messageData.toUtf8();
+    const QByteArray messageRawData = messageData.toUtf8();
     QJsonObject object;
     if (parseMessage(messageRawData, object)) {
         Q_EMIT messageReceived(object, this);
@@ -56,13 +56,13 @@ bool WebSocketTransport::parseMessage(
     QNTRACE("note_editor", "WebSocketTransport::parseMessage: " << messageData);
 
     QJsonParseError error;
-    QJsonDocument document = QJsonDocument::fromJson(messageData, &error);
+    const QJsonDocument document = QJsonDocument::fromJson(messageData, &error);
     if (!error.error) {
         if (!document.isObject()) {
             QNWARNING(
                 "note_editor",
-                "Failed to parse JSON message that is "
-                    << "not an object: " << messageData);
+                "Failed to parse JSON message that is " << "not an object: "
+                                                        << messageData);
             return false;
         }
 
@@ -91,7 +91,7 @@ bool WebSocketTransport::parseMessage(
      * FIXME: need to have a better understanding of how this thing is supposed
      * to work
      */
-    int lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
+    const auto lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
     if (lastOpeningCurvyBraceIndex <= 0) {
         QNWARNING(
             "note_editor",

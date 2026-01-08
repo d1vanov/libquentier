@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_ADD_TO_USER_WORDLIST_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_ADD_TO_USER_WORDLIST_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -25,26 +24,26 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SpellChecker)
+class SpellChecker;
 
-class Q_DECL_HIDDEN SpellCheckAddToUserWordListUndoCommand final :
+class SpellCheckAddToUserWordListUndoCommand final :
     public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
     SpellCheckAddToUserWordListUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & word,
+        NoteEditorPrivate & noteEditor, QString word,
         SpellChecker * pSpellChecker, QUndoCommand * parent = nullptr);
 
     SpellCheckAddToUserWordListUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & word,
+        NoteEditorPrivate & noteEditor, QString word,
         SpellChecker * pSpellChecker, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~SpellCheckAddToUserWordListUndoCommand();
+    ~SpellCheckAddToUserWordListUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     QPointer<SpellChecker> m_pSpellChecker;
@@ -52,5 +51,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_ADD_TO_USER_WORDLIST_UNDO_COMMAND_H

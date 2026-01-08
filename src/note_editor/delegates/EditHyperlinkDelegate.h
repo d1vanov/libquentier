@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,27 +16,27 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_EDIT_HYPERLINK_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_EDIT_HYPERLINK_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/types/Note.h>
 
 #include <QObject>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPage)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditorPage;
+class NoteEditorPrivate;
 
-class Q_DECL_HIDDEN EditHyperlinkDelegate final : public QObject
+class EditHyperlinkDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit EditHyperlinkDelegate(
-        NoteEditorPrivate & noteEditor, const quint64 hyperlinkId);
+        NoteEditorPrivate & noteEditor, quint64 hyperlinkId);
 
     void start();
 
@@ -46,7 +46,7 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onHyperlinkDataReceived(const QVariant & data);
 
     void onHyperlinkDataEdited(
@@ -70,5 +70,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_EDIT_HYPERLINK_DELEGATE_H

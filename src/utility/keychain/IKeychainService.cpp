@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/utility/Factory.h>
 #include <quentier/utility/IKeychainService.h>
 
 #include "CompositeKeychainService.h"
@@ -23,14 +24,30 @@
 #include "ObfuscatingKeychainService.h"
 #include "QtKeychainService.h"
 
-#include <quentier/utility/Printable.h>
-
 #include <QDebug>
 #include <QTextStream>
 
-namespace quentier {
+namespace quentier::utility {
 
-IKeychainService::IKeychainService(QObject * parent) : QObject(parent) {}
+namespace {
+
+[[nodiscard]] ErrorString errorStringForErrorCode(
+    const IKeychainService::ErrorCode errorCode)
+{
+    ErrorString error{QT_TRANSLATE_NOOP(
+        "utility::keychain::IKeychainService", "Keychain job failed")};
+
+    QString errorCodeStr;
+    QTextStream strm{&errorCodeStr};
+    strm << errorCode;
+
+    error.details() = errorCodeStr;
+    return error;
+}
+
+} // namespace
+
+IKeychainService::~IKeychainService() noexcept = default;
 
 QTextStream & operator<<(
     QTextStream & strm, const IKeychainService::ErrorCode errorCode)
@@ -70,37 +87,70 @@ QTextStream & operator<<(
     return strm;
 }
 
+IKeychainService::Exception::Exception(
+    IKeychainService::ErrorCode errorCode) noexcept :
+    IQuentierException{errorStringForErrorCode(errorCode)},
+    m_errorCode{errorCode}
+{}
+
+IKeychainService::Exception::Exception(
+    IKeychainService::ErrorCode errorCode,
+    ErrorString errorDescription) noexcept :
+    IQuentierException{std::move(errorDescription)}, m_errorCode{errorCode}
+{}
+
+IKeychainService::ErrorCode IKeychainService::Exception::errorCode()
+    const noexcept
+{
+    return m_errorCode;
+}
+
+QString IKeychainService::Exception::exceptionDisplayName() const
+{
+    return QStringLiteral("IKeychainService::Exception");
+}
+
+void IKeychainService::Exception::raise() const
+{
+    throw *this;
+}
+
+IKeychainService::Exception * IKeychainService::Exception::clone() const
+{
+    return new Exception{m_errorCode, errorMessage()};
+}
+
 QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
 {
     dbg << ToString(errorCode);
     return dbg;
 }
 
-IKeychainServicePtr newQtKeychainService(QObject * parent)
+IKeychainServicePtr newQtKeychainService()
 {
-    return std::make_shared<QtKeychainService>(parent);
+    return std::make_shared<keychain::QtKeychainService>();
 }
 
-IKeychainServicePtr newObfuscatingKeychainService(QObject * parent)
+IKeychainServicePtr newObfuscatingKeychainService()
 {
-    return std::make_shared<ObfuscatingKeychainService>(parent);
+    return std::make_shared<keychain::ObfuscatingKeychainService>(
+        utility::createOpenSslEncryptor());
 }
 
 IKeychainServicePtr newCompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
-    IKeychainServicePtr secondaryKeychain, QObject * parent)
+    IKeychainServicePtr secondaryKeychain)
 {
-    return std::make_shared<CompositeKeychainService>(
+    return std::make_shared<keychain::CompositeKeychainService>(
         std::move(name), std::move(primaryKeychain),
-        std::move(secondaryKeychain), parent);
+        std::move(secondaryKeychain));
 }
 
 IKeychainServicePtr newMigratingKeychainService(
-    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
-    QObject * parent)
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain)
 {
-    return std::make_shared<MigratingKeychainService>(
-        std::move(sourceKeychain), std::move(sinkKeychain), parent);
+    return std::make_shared<keychain::MigratingKeychainService>(
+        std::move(sourceKeychain), std::move(sinkKeychain));
 }
 
-} // namespace quentier
+} // namespace quentier::utility

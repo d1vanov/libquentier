@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,9 @@
 
 #include <QStringList>
 
-namespace quentier {
+namespace quentier::utility {
 
-const QString humanReadableSize(const quint64 bytes)
+QString humanReadableSize(const quint64 bytes)
 {
     QStringList list;
     list << QStringLiteral("Kb") << QStringLiteral("Mb") << QStringLiteral("Gb")
@@ -31,7 +31,7 @@ const QString humanReadableSize(const quint64 bytes)
     QStringListIterator it(list);
     QString unit = QStringLiteral("bytes");
 
-    double num = static_cast<double>(bytes);
+    auto num = static_cast<double>(bytes);
     while (num >= 1024.0 && it.hasNext()) {
         unit = it.next();
         num /= 1024.0;
@@ -44,4 +44,4 @@ const QString humanReadableSize(const quint64 bytes)
     return result;
 }
 
-} // namespace quentier
+} // namespace quentier::utility

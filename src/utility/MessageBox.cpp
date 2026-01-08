@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,14 +22,16 @@
 
 #include <memory>
 
-namespace quentier {
+namespace quentier::utility {
 
-int messageBoxImplementation(
+namespace {
+
+[[nodiscard]] int messageBoxImplementation(
     const QMessageBox::Icon icon, QWidget * parent, const QString & title,
     const QString & briefText, const QString & detailedText,
     QMessageBox::StandardButtons buttons)
 {
-    auto pMessageBox = std::make_unique<QMessageBox>(parent);
+    const auto pMessageBox = std::make_unique<QMessageBox>(parent);
     if (parent) {
         pMessageBox->setWindowModality(Qt::WindowModal);
     }
@@ -46,6 +48,8 @@ int messageBoxImplementation(
     pMessageBox->setStandardButtons(buttons);
     return pMessageBox->exec();
 }
+
+} // namespace
 
 int genericMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
@@ -98,14 +102,14 @@ void internalErrorMessageBox(QWidget * parent, QString detailedText)
         detailedText.prepend(QObject::tr("Technical details on the issue: "));
     }
 
-    criticalMessageBox(
+    Q_UNUSED(criticalMessageBox(
         parent, QObject::tr("Internal error"),
         QObject::tr("Unfortunately, ") + QApplication::applicationName() +
             QStringLiteral(" ") +
             QObject::tr("encountered internal error. Please report "
                         "the bug to the developers and try restarting "
                         "the application"),
-        detailedText);
+        detailedText))
 }
 
-} // namespace quentier
+} // namespace quentier::utility

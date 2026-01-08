@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,14 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QHash>
 #include <QNetworkAccessManager>
@@ -35,38 +36,38 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(ENMLConverter)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
-QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(ResourceInfo)
+class Account;
+class NoteEditorPrivate;
+class ResourceDataInTemporaryFileStorageManager;
+class ResourceInfo;
 
-class Q_DECL_HIDDEN InsertHtmlDelegate final : public QObject
+class InsertHtmlDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit InsertHtmlDelegate(
-        const QString & inputHtml, NoteEditorPrivate & noteEditor,
-        ENMLConverter & enmlConverter,
+        QString inputHtml, NoteEditorPrivate & noteEditor,
+        enml::IENMLTagsConverterPtr enmlTagsConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
-        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo, QObject * parent = nullptr);
 
     void start();
 
 Q_SIGNALS:
     void finished(
-        QList<Resource> addedResources, QStringList resourceFileStoragePaths);
+        QList<qevercloud::Resource> addedResources,
+        QStringList resourceFileStoragePaths);
 
     void notifyError(ErrorString error);
 
     // private signals:
     void saveResourceDataToTemporaryFile(
-        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString noteLocalId, QString resourceLocalId, QByteArray data,
         QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
 
     void onResourceDataSavedToTemporaryFile(
@@ -89,11 +90,12 @@ private:
 
 private:
     NoteEditorPrivate & m_noteEditor;
-    ENMLConverter & m_enmlConverter;
+    const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
 
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager;
-    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalUid;
+
+    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalId;
     ResourceInfo & m_resourceInfo;
 
     QString m_inputHtml;
@@ -103,13 +105,13 @@ private:
     QSet<QUrl> m_pendingImageUrls;
     QSet<QUrl> m_failingImageUrls;
 
-    QHash<QUuid, Resource> m_resourceBySaveDataToTemporaryFileRequestId;
-    QHash<QString, QUrl> m_sourceUrlByResourceLocalUid;
+    QHash<QUuid, qevercloud::Resource> m_resourceBySaveDataToTemporaryFileRequestId;
+    QHash<QString, QUrl> m_sourceUrlByResourceLocalId;
     QHash<QUrl, QUrl> m_urlToRedirectUrl;
 
-    struct Q_DECL_HIDDEN ImgData
+    struct ImgData
     {
-        Resource m_resource;
+        qevercloud::Resource m_resource;
         QString m_resourceFileStoragePath;
     };
 
@@ -119,5 +121,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H

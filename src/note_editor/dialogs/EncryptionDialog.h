@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,66 +16,67 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H
+#pragma once
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <QDialog>
 
 #include <memory>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(EncryptionDialog)
-}
+
+class EncryptionDialog;
+
+} // namespace Ui
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-
-class Q_DECL_HIDDEN EncryptionDialog final : public QDialog
+class EncryptionDialog final : public QDialog
 {
     Q_OBJECT
 public:
     explicit EncryptionDialog(
-        const QString & textToEncrypt, const Account & account,
-        std::shared_ptr<EncryptionManager> encryptionManager,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+        QString textToEncrypt, Account account,
+        utility::IEncryptorPtr encryptor,
+        enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr);
 
-    virtual ~EncryptionDialog() override;
+    ~EncryptionDialog() noexcept override;
 
-    QString passphrase() const;
-    bool rememberPassphrase() const;
+    [[nodiscard]] QString passphrase() const noexcept;
+    [[nodiscard]] bool rememberPassphrase() const noexcept;
 
-    QString encryptedText() const;
-    QString hint() const;
+    [[nodiscard]] QString encryptedText() const noexcept;
+    [[nodiscard]] QString hint() const noexcept;
 
 Q_SIGNALS:
     void encryptionAccepted(
-        QString textToEncrypt, QString encryptedText, QString cipher,
-        size_t keyLength, QString hint, bool rememberForSession);
+        QString textToEncrypt, QString encryptedText,
+        utility::IEncryptor::Cipher cipher, QString hint,
+        bool rememberForSession);
 
 private Q_SLOTS:
-    void setRememberPassphraseDefaultState(const bool checked);
+    void setRememberPassphraseDefaultState(bool checked);
     void onRememberPassphraseStateChanged(int checked);
 
-    virtual void accept() override;
+    void accept() override;
 
 private:
     void setError(const ErrorString & error);
 
 private:
-    Ui::EncryptionDialog * m_pUI;
+    const utility::IEncryptorPtr m_encryptor;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
+    Ui::EncryptionDialog * m_ui;
+
     QString m_textToEncrypt;
-    QString m_cachedEncryptedText;
+    QString m_encryptedText;
     Account m_account;
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H

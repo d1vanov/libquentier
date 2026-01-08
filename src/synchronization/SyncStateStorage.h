@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,61 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNC_STATE_STORAGE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_SYNC_STATE_STORAGE_H
+#pragma once
 
 #include <quentier/synchronization/ISyncStateStorage.h>
 
-namespace quentier {
+namespace quentier::synchronization {
 
-class Q_DECL_HIDDEN SyncStateStorage final : public ISyncStateStorage
+class SyncStateStorage final : public ISyncStateStorage
 {
     Q_OBJECT
 public:
-    class Q_DECL_HIDDEN SyncState final : public ISyncState
-    {
-    public:
-        qint32 m_userDataUpdateCount = 0;
-        qevercloud::Timestamp m_userDataLastSyncTime = 0;
-
-        QHash<QString, qint32> m_updateCountsByLinkedNotebookGuid;
-        QHash<QString, qevercloud::Timestamp>
-            m_lastSyncTimesByLinkedNotebookGuid;
-
-        virtual qint32 userDataUpdateCount() const override
-        {
-            return m_userDataUpdateCount;
-        }
-
-        virtual qevercloud::Timestamp userDataLastSyncTime() const override
-        {
-            return m_userDataLastSyncTime;
-        }
-
-        virtual QHash<QString, qint32> linkedNotebookUpdateCounts()
-            const override
-        {
-            return m_updateCountsByLinkedNotebookGuid;
-        }
-
-        virtual QHash<QString, qevercloud::Timestamp>
-        linkedNotebookLastSyncTimes() const override
-        {
-            return m_lastSyncTimesByLinkedNotebookGuid;
-        }
-    };
-
-public:
     explicit SyncStateStorage(QObject * parent);
 
-    virtual ~SyncStateStorage() = default;
+    ~SyncStateStorage() override = default;
 
-    virtual ISyncStatePtr getSyncState(const Account & account) override;
+    [[nodiscard]] ISyncStatePtr getSyncState(const Account & account) override;
 
-    virtual void setSyncState(
+    void setSyncState(
         const Account & account, ISyncStatePtr syncState) override;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_SYNC_STATE_STORAGE_H
+} // namespace quentier::synchronization

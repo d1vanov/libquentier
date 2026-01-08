@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,13 +22,54 @@
 
 namespace quentier {
 
+namespace {
+
+template <typename T>
+void printAccountType(T & t, const Account::Type type)
+{
+    switch (type) {
+    case Account::Type::Local:
+        t << "Local";
+        break;
+    case Account::Type::Evernote:
+        t << "Evernote";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(type) << ")";
+        break;
+    }
+}
+
+template <typename T>
+void printEvernoteAccountType(T & t, const Account::EvernoteAccountType type)
+{
+    switch (type) {
+    case Account::EvernoteAccountType::Free:
+        t << "Free";
+        break;
+    case Account::EvernoteAccountType::Plus:
+        t << "Plus";
+        break;
+    case Account::EvernoteAccountType::Premium:
+        t << "Premium";
+        break;
+    case Account::EvernoteAccountType::Business:
+        t << "Business";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(type) << ")";
+        break;
+    }
+}
+
+} // namespace
+
 Account::Account() : d(new AccountData) {}
 
 Account::Account(
     QString name, const Type type, const qevercloud::UserID userId,
     const EvernoteAccountType evernoteAccountType, QString evernoteHost,
-    QString shardId) :
-    d(new AccountData)
+    QString shardId) : d(new AccountData)
 {
     d->m_name = std::move(name);
     d->m_accountType = type;
@@ -39,27 +80,24 @@ Account::Account(
     d->switchEvernoteAccountType(evernoteAccountType);
 }
 
-Account::Account(const Account & other) : Printable(), d(other.d) {}
+Account::Account(const Account & other) = default;
 
-Account & Account::operator=(const Account & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+Account::Account(Account && other) noexcept = default;
 
-    return *this;
-}
+Account & Account::operator=(const Account & other) = default;
 
-Account::~Account() {}
+Account & Account::operator=(Account && other) noexcept = default;
 
-bool Account::operator==(const Account & other) const
+Account::~Account() noexcept = default;
+
+bool Account::operator==(const Account & other) const noexcept
 {
     if (d == other.d) {
         return true;
     }
 
-    // NOTE: display name intentionally does not take part in the comparison
     if ((d->m_name == other.d->m_name) &&
+        (d->m_displayName == other.d->m_displayName) &&
         (d->m_accountType == other.d->m_accountType) &&
         (d->m_evernoteAccountType == other.d->m_evernoteAccountType) &&
         (d->m_userId == other.d->m_userId) &&
@@ -82,7 +120,7 @@ bool Account::operator==(const Account & other) const
     return false;
 }
 
-bool Account::operator!=(const Account & other) const
+bool Account::operator!=(const Account & other) const noexcept
 {
     return !(operator==(other));
 }
@@ -92,9 +130,8 @@ bool Account::isEmpty() const
     if (d->m_accountType == Account::Type::Local) {
         return d->m_name.isEmpty();
     }
-    else {
-        return (d->m_userId < 0);
-    }
+
+    return (d->m_userId < 0);
 }
 
 void Account::setEvernoteAccountType(
@@ -273,22 +310,6 @@ QTextStream & Account::print(QTextStream & strm) const
     return strm;
 }
 
-template <typename T>
-void printAccountType(T & t, const Account::Type type)
-{
-    switch (type) {
-    case Account::Type::Local:
-        t << "Local";
-        break;
-    case Account::Type::Evernote:
-        t << "Evernote";
-        break;
-    default:
-        t << "Unknown (" << static_cast<qint64>(type) << ")";
-        break;
-    }
-}
-
 QTextStream & operator<<(QTextStream & strm, const Account::Type type)
 {
     printAccountType(strm, type);
@@ -299,28 +320,6 @@ QDebug & operator<<(QDebug & dbg, const Account::Type type)
 {
     printAccountType(dbg, type);
     return dbg;
-}
-
-template <typename T>
-void printEvernoteAccountType(T & t, const Account::EvernoteAccountType type)
-{
-    switch (type) {
-    case Account::EvernoteAccountType::Free:
-        t << "Free";
-        break;
-    case Account::EvernoteAccountType::Plus:
-        t << "Plus";
-        break;
-    case Account::EvernoteAccountType::Premium:
-        t << "Premium";
-        break;
-    case Account::EvernoteAccountType::Business:
-        t << "Business";
-        break;
-    default:
-        t << "Unknown (" << static_cast<qint64>(type) << ")";
-        break;
-    }
 }
 
 QTextStream & operator<<(

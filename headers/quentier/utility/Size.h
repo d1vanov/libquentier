@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,14 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_SIZE_H
-#define LIB_QUENTIER_UTILITY_SIZE_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 #include <QString>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * humanReadableSize provides the human readable string denoting the size
@@ -34,8 +33,6 @@ namespace quentier {
  * @return          The human readable string corresponding to the passed in
  *                  number of bytes
  */
-const QString QUENTIER_EXPORT humanReadableSize(const quint64 bytes);
+[[nodiscard]] QString QUENTIER_EXPORT humanReadableSize(quint64 bytes);
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_SIZE_H
+} // namespace quentier::utility

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PRIVATE_MACROS_H
-#define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PRIVATE_MACROS_H
+#pragma once
 
 #define GET_PAGE()                                                             \
     NoteEditorPage * page = qobject_cast<NoteEditorPage *>(this->page());      \
@@ -45,6 +44,15 @@
         return;                                                                \
     }
 
+#define CHECK_DECRYPTED_TEXT_CACHE(message)                                    \
+    if (Q_UNLIKELY(!m_decryptedTextCache)) {                                   \
+        ErrorString error(message);                                            \
+        error.appendBase(QT_TRANSLATE_NOOP(                                    \
+            "NoteEditorPrivate", "No decrypted text cache"));                  \
+        QNWARNING("note_editor", error);                                       \
+        return;                                                                \
+    }
+
 #define CHECK_ACCOUNT(message, ...)                                            \
     if (Q_UNLIKELY(!m_pAccount)) {                                             \
         ErrorString error(message);                                            \
@@ -54,5 +62,3 @@
         Q_EMIT notifyError(error);                                             \
         return __VA_ARGS__;                                                    \
     }
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PRIVATE_MACROS_H

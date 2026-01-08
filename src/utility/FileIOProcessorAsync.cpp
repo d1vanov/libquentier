@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,10 +20,10 @@
 
 #include "FileIOProcessorAsync_p.h"
 
-namespace quentier {
+namespace quentier::utility {
 
 FileIOProcessorAsync::FileIOProcessorAsync(QObject * parent) :
-    QObject(parent), d_ptr(new FileIOProcessorAsyncPrivate(this))
+    QObject{parent}, d_ptr{new FileIOProcessorAsyncPrivate(this)}
 {
     QObject::connect(
         d_ptr, &FileIOProcessorAsyncPrivate::readyForIO, this,
@@ -48,14 +48,15 @@ void FileIOProcessorAsync::onWriteFileRequest(
     QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
 {
     Q_D(FileIOProcessorAsync);
-    d->onWriteFileRequest(absoluteFilePath, data, requestId, append);
+    d->onWriteFileRequest(
+        std::move(absoluteFilePath), std::move(data), requestId, append);
 }
 
 void FileIOProcessorAsync::onReadFileRequest(
     QString absoluteFilePath, QUuid requestId)
 {
     Q_D(FileIOProcessorAsync);
-    d->onReadFileRequest(absoluteFilePath, requestId);
+    d->onReadFileRequest(std::move(absoluteFilePath), requestId);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

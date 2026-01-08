@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,13 +21,12 @@
 namespace quentier {
 
 HyperlinkClickJavaScriptHandler::HyperlinkClickJavaScriptHandler(
-    QObject * parent) :
-    QObject(parent)
+    QObject * parent) : QObject(parent)
 {}
 
 void HyperlinkClickJavaScriptHandler::onHyperlinkClicked(QString url)
 {
-    Q_EMIT hyperlinkClicked(url);
+    Q_EMIT hyperlinkClicked(std::move(url));
 }
 
 } // namespace quentier

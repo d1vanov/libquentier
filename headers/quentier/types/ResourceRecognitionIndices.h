@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDICES_H
-#define LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDICES_H
+#pragma once
 
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 
@@ -27,45 +26,49 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndicesData)
+class ResourceRecognitionIndicesData;
 
-class QUENTIER_EXPORT ResourceRecognitionIndices : public Printable
+class QUENTIER_EXPORT ResourceRecognitionIndices : public utility::Printable
 {
 public:
     explicit ResourceRecognitionIndices();
-    ResourceRecognitionIndices(const ResourceRecognitionIndices & other);
 
     explicit ResourceRecognitionIndices(
         const QByteArray & rawRecognitionIndicesData);
 
+    ResourceRecognitionIndices(const ResourceRecognitionIndices & other);
+    ResourceRecognitionIndices(ResourceRecognitionIndices && other) noexcept;
+
     ResourceRecognitionIndices & operator=(
         const ResourceRecognitionIndices & other);
 
-    virtual ~ResourceRecognitionIndices() override;
+    ResourceRecognitionIndices & operator=(
+        ResourceRecognitionIndices && other) noexcept;
 
-    bool isNull() const;
-    bool isValid() const;
+    ~ResourceRecognitionIndices() override;
 
-    QString objectId() const;
-    QString objectType() const;
-    QString recoType() const;
-    QString engineVersion() const;
-    QString docType() const;
-    QString lang() const;
+    [[nodiscard]] bool isNull() const;
+    [[nodiscard]] bool isValid() const;
 
-    int objectHeight() const;
-    int objectWidth() const;
+    [[nodiscard]] QString objectId() const;
+    [[nodiscard]] QString objectType() const;
+    [[nodiscard]] QString recoType() const;
+    [[nodiscard]] QString engineVersion() const;
+    [[nodiscard]] QString docType() const;
+    [[nodiscard]] QString lang() const;
 
-    QVector<ResourceRecognitionIndexItem> items() const;
+    [[nodiscard]] int objectHeight() const;
+    [[nodiscard]] int objectWidth() const;
+
+    [[nodiscard]] QVector<ResourceRecognitionIndexItem> items() const;
 
     bool setData(const QByteArray & rawRecognitionIndicesData);
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    // utility::Printable
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ResourceRecognitionIndicesData> d;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDICES_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,6 +30,7 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <utility>
 
 #ifdef Q_OS_WIN
 
@@ -40,15 +41,15 @@
 #include <windows.h>
 #endif // defined Q_OS_WIN
 
-namespace quentier {
+namespace quentier::utility {
 
-const QString relativePathFromAbsolutePath(
+QString relativePathFromAbsolutePath(
     const QString & absolutePath, const QString & relativePathRootFolder)
 {
     QNDEBUG(
         "utility:filesystem", "relativePathFromAbsolutePath: " << absolutePath);
 
-    int position = absolutePath.indexOf(
+    const auto position = absolutePath.indexOf(
         relativePathRootFolder, 0,
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
         Qt::CaseInsensitive
@@ -74,8 +75,7 @@ bool removeFile(const QString & filePath)
 
     QFile file(filePath);
     file.close(); // NOTE: this line seems to be mandatory on Windows
-    bool res = file.remove();
-    if (res) {
+    if (file.remove()) {
         QNTRACE("utility:filesystem", "Successfully removed file " << filePath);
         return true;
     }
@@ -107,12 +107,12 @@ bool removeDirImpl(const QString & dirPath)
     QDir dir(dirPath);
 
     if (dir.exists()) {
-        QFileInfoList dirContents = dir.entryInfoList(
+        const QFileInfoList dirContents = dir.entryInfoList(
             QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs |
                 QDir::Files,
             QDir::DirsFirst);
 
-        for (const auto & info: qAsConst(dirContents)) {
+        for (const auto & info: std::as_const(dirContents)) {
             if (info.isDir()) {
                 result = removeDirImpl(info.absoluteFilePath());
             }
@@ -184,7 +184,7 @@ QByteArray readFileContents(
             "Failed to read file contents, file is too large"));
 
         errorDescription.details() =
-            humanReadableSize(static_cast<quint64>(length));
+            utility::humanReadableSize(static_cast<quint64>(length));
         return result;
     }
 
@@ -251,4 +251,4 @@ bool renameFile(
 #endif // Q_OS_WIN
 }
 
-} // namespace quentier
+} // namespace quentier::utility

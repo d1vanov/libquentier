@@ -41,8 +41,13 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
     file(APPEND "${fake_pro_file}" "  ${PROJECT_SOURCE_DIR}/${translation_file}\\\n")
   endforeach()
 
-  set(LUPDATE ${Qt5_LUPDATE_EXECUTABLE})
-  set(LRELEASE ${Qt5_LRELEASE_EXECUTABLE})
+  if(LIBQUENTIER_USE_QT6)
+    set(LUPDATE Qt6::lupdate)
+    set(LRELEASE Qt6::lrelease)
+  else()
+    set(LUPDATE ${Qt5_LUPDATE_EXECUTABLE})
+    set(LRELEASE ${Qt5_LRELEASE_EXECUTABLE})
+  endif()
 
   add_custom_target(lupdate COMMAND ${LUPDATE} -verbose -noobsolete \"${fake_pro_file}\" DEPENDS ${fake_pro_file})
 
@@ -54,6 +59,6 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
     # NOTE: "translations/" is already included into QM_FILE_NAME
     set(QM_FILE "${PROJECT_BINARY_DIR}/${QM_FILE_NAME}.qm")
     list(APPEND ${PROJECT_NAME}_QM_FILES ${QM_FILE})
-    add_custom_command(COMMAND ${LRELEASE} \"${PROJECT_SOURCE_DIR}/${translation_file}\" -qm \"${QM_FILE}\" TARGET lrelease POST_BUILD)
+    add_custom_command(COMMAND ${LRELEASE} "${PROJECT_SOURCE_DIR}/${translation_file}" -qm ${QM_FILE} VERBATIM TARGET lrelease POST_BUILD)
   endforeach()
 endmacro()

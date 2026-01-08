@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,7 +50,7 @@ T & printRotation(T & t, const INoteEditorBackend::Rotation rotation)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-INoteEditorBackend::~INoteEditorBackend() {}
+INoteEditorBackend::~INoteEditorBackend() noexcept = default;
 
 INoteEditorBackend::INoteEditorBackend(NoteEditor * parent) :
     m_pNoteEditor(parent)

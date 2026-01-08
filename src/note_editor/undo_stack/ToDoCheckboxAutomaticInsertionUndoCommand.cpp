@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,8 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "ToDoCheckboxAutomaticInsertionUndoCommand",                       \
-            "Can't undo/redo the automatic insertion "                         \
-            "of a TODO checkbox: no note editor page"));                       \
+            "Can't undo/redo the automatic insertion of a TODO checkbox: "     \
+            "no note editor page"));                                           \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -38,32 +38,29 @@ namespace quentier {
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(callback)
+    INoteEditorUndoCommand(noteEditor, parent), m_callback(std::move(callback))
 {
     setText(tr("Insert ToDo checkbox automatically"));
 }
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
-        const QString & text, QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditor, Callback callback, const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
-    ~ToDoCheckboxAutomaticInsertionUndoCommand()
-{}
+    ~ToDoCheckboxAutomaticInsertionUndoCommand() noexcept = default;
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
 {
     QNDEBUG(
         "note_editor:undo",
-        "ToDoCheckboxAutomaticInsertionUndoCommand"
-            << "::redoImpl");
+        "ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -74,8 +71,7 @@ void ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl()
 {
     QNDEBUG(
         "note_editor:undo",
-        "ToDoCheckboxAutomaticInsertionUndoCommand"
-            << "::undoImpl");
+        "ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

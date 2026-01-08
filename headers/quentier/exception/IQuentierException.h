@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,12 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
-#define LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
+#pragma once
 
-#include <exception>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Printable.h>
+
+#include <QException>
 
 namespace quentier {
 
@@ -34,34 +34,32 @@ namespace quentier {
  * non-localized error messages.
  */
 class QUENTIER_EXPORT IQuentierException :
-    public Printable,
-    public std::exception
+    public utility::Printable,
+    public QException
 {
 public:
-    explicit IQuentierException(const ErrorString & message);
+    ~IQuentierException() noexcept override;
 
-    virtual ~IQuentierException() noexcept override;
+    [[nodiscard]] ErrorString errorMessage() const;
+    [[nodiscard]] QString localizedErrorMessage() const;
+    [[nodiscard]] QString nonLocalizedErrorMessage() const;
 
-    QString localizedErrorMessage() const;
-    QString nonLocalizedErrorMessage() const;
+    // std::exception
+    [[nodiscard]] const char * what() const noexcept override;
 
-    virtual const char * what() const noexcept override;
-
-    virtual QTextStream & print(QTextStream & strm) const override;
+    // utility::Printable
+    QTextStream & print(QTextStream & strm) const override;
 
 protected:
+    explicit IQuentierException(ErrorString message);
     IQuentierException(const IQuentierException & other);
     IQuentierException & operator=(const IQuentierException & other);
 
-    virtual const QString exceptionDisplayName() const = 0;
+    [[nodiscard]] virtual QString exceptionDisplayName() const = 0;
 
 private:
-    IQuentierException() = delete;
-
     ErrorString m_message;
-    char * m_whatMessage;
+    char * m_whatMessage = nullptr;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H

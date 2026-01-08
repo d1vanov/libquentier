@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,29 +16,30 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/exception/ApplicationSettingsInitializationException.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/StandardPaths.h>
 
 #include <QApplication>
 
-namespace quentier {
+#include <utility>
+
+namespace quentier::utility {
 
 namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-QString defaultApplicationStoragePath(const QString & settingsName)
+[[nodiscard]] QString defaultApplicationStoragePath(
+    const QString & settingsName)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(
-            ErrorString(QT_TRANSLATE_NOOP(
-                "ApplicationSettings",
-                "Can't create ApplicationSettings instance: "
-                "no persistent storage path")));
+        throw RuntimeError(ErrorString(QT_TRANSLATE_NOOP(
+            "ApplicationSettings",
+            "Can't create ApplicationSettings instance: "
+            "no persistent storage path")));
     }
 
     storagePath += QStringLiteral("/settings/");
@@ -47,7 +48,7 @@ QString defaultApplicationStoragePath(const QString & settingsName)
         storagePath += settingsName;
     }
     else {
-        QString appName = QApplication::applicationName();
+        const QString appName = QApplication::applicationName();
         if (!appName.isEmpty()) {
             storagePath += appName;
         }
@@ -60,29 +61,27 @@ QString defaultApplicationStoragePath(const QString & settingsName)
     return storagePath;
 }
 
-QString accountApplicationStoragePath(
+[[nodiscard]] QString accountApplicationStoragePath(
     const Account & account, const QString & settingsName)
 {
-    QString accountName = account.name();
+    const QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
         QNWARNING(
             "utility",
             "Detected attempt to create ApplicationSettings "
             "for account with empty name");
-        throw ApplicationSettingsInitializationException(
-            ErrorString(QT_TRANSLATE_NOOP(
-                "ApplicationSettings",
-                "Can't create ApplicationSettings instance: "
-                "the account name is empty")));
+        throw RuntimeError(ErrorString(QT_TRANSLATE_NOOP(
+            "ApplicationSettings",
+            "Can't create ApplicationSettings instance: "
+            "the account name is empty")));
     }
 
     QString storagePath = accountPersistentStoragePath(account);
     if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(
-            ErrorString(QT_TRANSLATE_NOOP(
-                "ApplicationSettings",
-                "Can't create ApplicationSettings instance: "
-                "no account persistent storage path")));
+        throw RuntimeError(ErrorString(QT_TRANSLATE_NOOP(
+            "ApplicationSettings",
+            "Can't create ApplicationSettings instance: "
+            "no account persistent storage path")));
     }
 
     storagePath += QStringLiteral("/settings/");
@@ -125,7 +124,13 @@ ApplicationSettings::ApplicationSettings(
         QSettings::IniFormat)
 {}
 
-ApplicationSettings::~ApplicationSettings() {}
+ApplicationSettings::ApplicationSettings(
+    const Account & account, const std::string_view settingsName) :
+    ApplicationSettings(
+        account, settingsName.data(), static_cast<int>(settingsName.size()))
+{}
+
+ApplicationSettings::~ApplicationSettings() = default;
 
 void ApplicationSettings::beginGroup(const QString & prefix)
 {
@@ -137,6 +142,12 @@ void ApplicationSettings::beginGroup(const char * prefix, const int size)
     QSettings::beginGroup(QString::fromUtf8(prefix, size));
 }
 
+void ApplicationSettings::beginGroup(const std::string_view prefix)
+{
+    QSettings::beginGroup(
+        QString::fromUtf8(prefix.data(), static_cast<int>(prefix.size())));
+}
+
 int ApplicationSettings::beginReadArray(const QString & prefix)
 {
     return QSettings::beginReadArray(prefix);
@@ -145,6 +156,12 @@ int ApplicationSettings::beginReadArray(const QString & prefix)
 int ApplicationSettings::beginReadArray(const char * prefix, const int size)
 {
     return QSettings::beginReadArray(QString::fromUtf8(prefix, size));
+}
+
+int ApplicationSettings::beginReadArray(const std::string_view prefix)
+{
+    return QSettings::beginReadArray(
+        QString::fromUtf8(prefix.data(), static_cast<int>(prefix.size())));
 }
 
 void ApplicationSettings::beginWriteArray(
@@ -160,6 +177,14 @@ void ApplicationSettings::beginWriteArray(
         QString::fromUtf8(prefix, prefixSize), arraySize);
 }
 
+void ApplicationSettings::beginWriteArray(
+    const std::string_view prefix, const int arraySize)
+{
+    QSettings::beginWriteArray(
+        QString::fromUtf8(prefix.data(), static_cast<int>(prefix.size())),
+        arraySize);
+}
+
 bool ApplicationSettings::contains(const QString & key) const
 {
     return QSettings::contains(key);
@@ -168,6 +193,12 @@ bool ApplicationSettings::contains(const QString & key) const
 bool ApplicationSettings::contains(const char * key, const int size) const
 {
     return QSettings::contains(QString::fromUtf8(key, size));
+}
+
+bool ApplicationSettings::contains(const std::string_view key) const
+{
+    return QSettings::contains(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())));
 }
 
 void ApplicationSettings::remove(const QString & key)
@@ -180,6 +211,12 @@ void ApplicationSettings::remove(const char * key, const int size)
     QSettings::remove(QString::fromUtf8(key, size));
 }
 
+void ApplicationSettings::remove(const std::string_view key)
+{
+    QSettings::remove(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())));
+}
+
 void ApplicationSettings::setValue(const QString & key, const QVariant & value)
 {
     QSettings::setValue(key, value);
@@ -189,6 +226,13 @@ void ApplicationSettings::setValue(
     const char * key, const QVariant & value, const int keySize)
 {
     QSettings::setValue(QString::fromUtf8(key, keySize), value);
+}
+
+void ApplicationSettings::setValue(
+    const std::string_view key, const QVariant & value)
+{
+    QSettings::setValue(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())), value);
 }
 
 QVariant ApplicationSettings::value(
@@ -203,17 +247,23 @@ QVariant ApplicationSettings::value(
     return QSettings::value(QString::fromUtf8(key, keySize), defaultValue);
 }
 
+QVariant ApplicationSettings::value(
+    const std::string_view key, const QVariant & defaultValue) const
+{
+    return QSettings::value(
+        QString::fromUtf8(key.data(), static_cast<int>(key.size())),
+        defaultValue);
+}
+
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
-    auto allStoredKeys = QSettings::allKeys();
-
-    for (const auto & key: qAsConst(allStoredKeys)) {
-        auto value = QSettings::value(key);
-        strm << QStringLiteral("Key: ") << key << QStringLiteral("; Value: ")
-             << value.toString() << QStringLiteral("\n;");
+    const auto allStoredKeys = QSettings::allKeys();
+    for (const auto & key: std::as_const(allStoredKeys)) {
+        const auto value = QSettings::value(key);
+        strm << "Key: " << key << "; Value: " << value.toString() << "\n;";
     }
 
     return strm;
 }
 
-} // namespace quentier
+} // namespace quentier::utility

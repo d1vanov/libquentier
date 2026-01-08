@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_RESOURCE_INFO_H
-#define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_INFO_H
+#pragma once
 
 #include <QHash>
 #include <QSize>
@@ -25,7 +24,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceInfo
+class ResourceInfo
 {
 public:
     void cacheResourceInfo(
@@ -33,19 +32,19 @@ public:
         const QString & resourceDisplaySize,
         const QString & resourceLocalFilePath, const QSize & resourceImageSize);
 
-    bool contains(const QByteArray & resourceHash) const;
+    [[nodiscard]] bool contains(const QByteArray & resourceHash) const noexcept;
 
-    bool findResourceInfo(
+    [[nodiscard]] bool findResourceInfo(
         const QByteArray & resourceHash, QString & resourceDisplayName,
         QString & resourceDisplaySize, QString & resourceLocalFilePath,
         QSize & resourceImageSize) const;
 
-    bool removeResourceInfo(const QByteArray & resourceHash);
+    [[nodiscard]] bool removeResourceInfo(const QByteArray & resourceHash);
 
     void clear();
 
 private:
-    struct Q_DECL_HIDDEN Info
+    struct Info
     {
         QString m_resourceDisplayName;
         QString m_resourceDisplaySize;
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_RESOURCE_INFO_H

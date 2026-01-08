@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@ namespace quentier {
 
 GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
     const QHash<QByteArray, QString> & cache, QObject * parent) :
-    QObject(parent),
-    m_cache(cache)
+    QObject(parent), m_cache(cache)
 {}
 
 void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
@@ -33,21 +32,20 @@ void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
 {
     QNDEBUG(
         "note_editor:js_glue",
-        "GenericResourceImageJavaScriptHandler"
-            << "::findGenericResourceImage: resource hash = " << resourceHash);
+        "GenericResourceImageJavaScriptHandler::findGenericResourceImage: "
+            << "resource hash = " << resourceHash);
 
-    auto it = m_cache.find(QByteArray::fromHex(resourceHash));
+    const auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
         QNTRACE(
             "note_editor:js_glue",
             "Found generic resouce image, path is " << it.value());
-        Q_EMIT genericResourceImageFound(resourceHash, it.value());
+        Q_EMIT genericResourceImageFound(std::move(resourceHash), it.value());
     }
     else {
         QNINFO(
             "note_editor:js_glue",
-            "Can't find generic resource image for "
-                << "hash " << resourceHash);
+            "Can't find generic resource image for hash " << resourceHash);
     }
 }
 

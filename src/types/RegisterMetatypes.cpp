@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,25 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../src/synchronization/SynchronizationShared.h"
-
-#include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
-#include <quentier/synchronization/ForwardDeclarations.h>
-#include <quentier/synchronization/ISyncChunksDataCounters.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
+#include <quentier/synchronization/types/Fwd.h>
+#include <quentier/synchronization/types/ISyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
 #include <quentier/utility/IKeychainService.h>
+
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/Tag.h>
+#include <qevercloud/types/User.h>
 
 #include <QList>
 #include <QMetaType>
@@ -42,75 +41,27 @@
 #include <QSqlError>
 #include <QVector>
 
+#include <cstddef>
+
 namespace quentier {
 
 void registerMetatypes()
 {
-    qRegisterMetaType<Notebook>("Notebook");
-    qRegisterMetaType<Note>("Note");
-    qRegisterMetaType<Tag>("Tag");
-    qRegisterMetaType<Resource>("Resource");
-    qRegisterMetaType<User>("User");
-    qRegisterMetaType<LinkedNotebook>("LinkedNotebook");
-    qRegisterMetaType<SavedSearch>("SavedSearch");
     qRegisterMetaType<Account>("Account");
 
-    qRegisterMetaType<qevercloud::UserID>("qevercloud::UserID");
-    qRegisterMetaType<qevercloud::Timestamp>("qevercloud::Timestamp");
-    qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
-    qRegisterMetaType<qevercloud::SavedSearch>("qevercloud::SavedSearch");
-    qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
-    qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
-    qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
-
-    qRegisterMetaType<QVector<LinkedNotebookAuthData>>(
-        "QVector<LinkedNotebookAuthData>");
-
-    qRegisterMetaType<QList<Notebook>>("QList<Notebook>");
-    qRegisterMetaType<QList<Note>>("QList<Note>");
-    qRegisterMetaType<QList<Tag>>("QList<Tag>");
-    qRegisterMetaType<QList<Resource>>("QList<Resource>");
-    qRegisterMetaType<QList<User>>("QList<User>");
-    qRegisterMetaType<QList<LinkedNotebook>>("QList<LinkedNotebook>");
-    qRegisterMetaType<QList<SavedSearch>>("QList<SavedSearch>");
-
-    qRegisterMetaType<QList<SharedNotebook>>("QList<SharedNotebook>");
-
-    qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
-        "LocalStorageManager::ListObjectsOptions");
-
-    qRegisterMetaType<LocalStorageManager::ListNotesOrder>(
-        "LocalStorageManager::ListNotesOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder>(
-        "LocalStorageManager::ListNotebooksOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder>(
-        "LocalStorageManager::ListLinkedNotebooksOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListTagsOrder>(
-        "LocalStorageManager::ListTagsOrder");
-
-    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder>(
-        "LocalStorageManager::ListSavedSearchesOrder");
-
-    qRegisterMetaType<LocalStorageManager::OrderDirection>(
-        "LocalStorageManager::OrderDirection");
-
-    qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>(
-        "LocalStorageManager::UpdateNoteOptions");
-
-    qRegisterMetaType<LocalStorageManager::GetNoteOptions>(
-        "LocalStorageManager::GetNoteOptions");
-
-    qRegisterMetaType<LocalStorageManager::GetResourceOptions>(
-        "LocalStorageManager::GetResourceOptions");
-
-    qRegisterMetaType<LocalStorageManager::StartupOptions>(
-        "LocalStorageManager::StartupOptions");
-
-    qRegisterMetaType<LocalStorageManager::NoteCountOptions>(
-        "LocalStorageManager::NoteCountOptions");
+    qRegisterMetaType<QList<qevercloud::Notebook>>(
+        "QList<qevercloud::Notebook>");
+    qRegisterMetaType<QList<qevercloud::Note>>("QList<qevercloud::Note>");
+    qRegisterMetaType<QList<qevercloud::Tag>>("QList<qevercloud::Tag>");
+    qRegisterMetaType<QList<qevercloud::Resource>>(
+        "QList<qevercloud::Resource>");
+    qRegisterMetaType<QList<qevercloud::User>>("QList<qevercloud::User>");
+    qRegisterMetaType<QList<qevercloud::LinkedNotebook>>(
+        "QList<qevercloud::LinkedNotebook>");
+    qRegisterMetaType<QList<qevercloud::SavedSearch>>(
+        "QList<qevercloud::SavedSearch>");
+    qRegisterMetaType<QList<qevercloud::SharedNotebook>>(
+        "QList<qevercloud::SharedNotebook>");
 
     qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<QUuid>("QUuid");
@@ -129,29 +80,36 @@ void registerMetatypes()
     qRegisterMetaType<QHash<QString, qint32>>("QHash<QString,qint32>");
     qRegisterMetaType<QHash<QString, int>>("QHash<QString,int>");
 
-    qRegisterMetaType<NoteSearchQuery>("NoteSearchQuery");
+    qRegisterMetaType<local_storage::NoteSearchQuery>("NoteSearchQuery");
 
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
 
-    qRegisterMetaType<QList<std::pair<Tag, QStringList>>>(
-        "QList<std::pair<Tag, QStringList> >");
+    qRegisterMetaType<QList<std::pair<qevercloud::Tag, QStringList>>>(
+        "QList<std::pair<qevercloud::Tag, QStringList> >");
 
     qRegisterMetaType<QHash<QString, std::pair<QString, QString>>>(
         "QHash<QString,std::pair<QString,QString> >");
 
-    using ErrorCode = IKeychainService::ErrorCode;
+    using ErrorCode = utility::IKeychainService::ErrorCode;
     qRegisterMetaType<ErrorCode>("ErrorCode");
 
-    qRegisterMetaType<IKeychainService::ErrorCode>(
-        "IKeychainService::ErrorCode");
+    qRegisterMetaType<utility::IKeychainService::ErrorCode>(
+        "utility::IKeychainService::ErrorCode");
 
     qRegisterMetaType<QList<QNetworkCookie>>("QList<QNeworkCookie>");
 
-    using ISyncStatePtr = ISyncStateStorage::ISyncStatePtr;
-    qRegisterMetaType<ISyncStatePtr>("ISyncStatePtr");
+    qRegisterMetaType<synchronization::ISyncStatePtr>("ISyncStatePtr");
 
-    qRegisterMetaType<ISyncChunksDataCountersPtr>("ISyncChunksDataCountersPtr");
+    qRegisterMetaType<std::size_t>("std::size_t");
+
+    qRegisterMetaType<synchronization::ISyncChunksDataCountersPtr>(
+        "ISyncChunksDataCountersPtr");
+
+    qRegisterMetaType<local_storage::ILocalStorage::UpdateNoteOptions>(
+        "ILocalStorage::UpdateNoteOptions");
+
+    qRegisterMetaType<synchronization::ISendStatusPtr>("ISendStatusPtr");
 }
 
 } // namespace quentier

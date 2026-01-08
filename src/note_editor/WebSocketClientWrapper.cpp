@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,8 +23,7 @@
 
 WebSocketClientWrapper::WebSocketClientWrapper(
     QWebSocketServer * server, QObject * parent) :
-    QObject(parent),
-    m_server(server)
+    QObject(parent), m_server(server)
 {
     QObject::connect(
         server, &QWebSocketServer::newConnection, this,

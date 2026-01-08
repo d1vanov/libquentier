@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,40 +17,38 @@
  */
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include "data/ErrorStringData.h"
 
-#include <QApplication>
+#include <quentier/utility/Compat.h>
+
+#include <QCoreApplication>
+
+#include <utility>
 
 namespace quentier {
 
-ErrorString::ErrorString(const char * error) :
-    Printable(), d(new ErrorStringData)
+ErrorString::ErrorString(const char * error) : d(new ErrorStringData)
 {
     d->m_base = QString::fromUtf8(error);
 }
 
-ErrorString::ErrorString(const QString & error) :
-    Printable(), d(new ErrorStringData)
+ErrorString::ErrorString(const QString & error) : d(new ErrorStringData)
 {
     d->m_base = error;
 }
 
-ErrorString::ErrorString(const ErrorString & other) : Printable(), d(other.d) {}
+ErrorString::ErrorString(const ErrorString & other) = default;
 
-ErrorString & ErrorString::operator=(const ErrorString & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+ErrorString::ErrorString(ErrorString && other) noexcept = default;
 
-    return *this;
-}
+ErrorString & ErrorString::operator=(const ErrorString & other) = default;
 
-ErrorString::~ErrorString() {}
+ErrorString & ErrorString::operator=(ErrorString && other) noexcept = default;
 
-const QString & ErrorString::base() const
+ErrorString::~ErrorString() = default;
+
+const QString & ErrorString::base() const noexcept
 {
     return d->m_base;
 }
@@ -60,7 +58,7 @@ QString & ErrorString::base()
     return d->m_base;
 }
 
-const QStringList & ErrorString::additionalBases() const
+const QStringList & ErrorString::additionalBases() const noexcept
 {
     return d->m_additionalBases;
 }
@@ -70,7 +68,7 @@ QStringList & ErrorString::additionalBases()
     return d->m_additionalBases;
 }
 
-const QString & ErrorString::details() const
+const QString & ErrorString::details() const noexcept
 {
     return d->m_details;
 }
@@ -80,9 +78,9 @@ QString & ErrorString::details()
     return d->m_details;
 }
 
-void ErrorString::setBase(const QString & error)
+void ErrorString::setBase(QString error)
 {
-    d->m_base = error;
+    d->m_base = std::move(error);
 }
 
 void ErrorString::setBase(const char * error)
@@ -131,22 +129,24 @@ void ErrorString::clear()
 QString ErrorString::localizedString() const
 {
     if (isEmpty()) {
-        return QString();
+        return {};
     }
 
     QString baseStr;
     if (!d->m_base.isEmpty()) {
-        baseStr = qApp->translate("", d->m_base.toLocal8Bit().constData());
+        const auto baseBytes = d->m_base.toUtf8();
+        baseStr = qApp->translate("", baseBytes.constData());
     }
 
     QString additionalBasesStr;
-    for (const auto & additionalBase: qAsConst(d->m_additionalBases)) {
+    for (const auto & additionalBase: std::as_const(d->m_additionalBases)) {
         if (additionalBase.isEmpty()) {
             continue;
         }
 
-        QString translatedStr =
-            qApp->translate("", additionalBase.toLocal8Bit().constData());
+        const auto additionalBaseBytes = additionalBase.toUtf8();
+        const QString translatedStr =
+            qApp->translate("", additionalBaseBytes.constData());
 
         if (additionalBasesStr.isEmpty()) {
             additionalBasesStr = translatedStr;
@@ -202,7 +202,7 @@ QString ErrorString::nonLocalizedString() const
 {
     QString result = d->m_base;
 
-    for (const auto & additionalBase: qAsConst(d->m_additionalBases)) {
+    for (const auto & additionalBase: std::as_const(d->m_additionalBases)) {
         if (additionalBase.isEmpty()) {
             continue;
         }
@@ -254,6 +254,17 @@ QTextStream & ErrorString::print(QTextStream & strm) const
     }
 
     return strm;
+}
+
+bool operator==(const ErrorString & lhs, const ErrorString & rhs) noexcept
+{
+    return lhs.base() == rhs.base() && lhs.details() == rhs.details() &&
+        lhs.additionalBases() == rhs.additionalBases();
+}
+
+bool operator!=(const ErrorString & lhs, const ErrorString & rhs) noexcept
+{
+    return !(lhs == rhs);
 }
 
 } // namespace quentier

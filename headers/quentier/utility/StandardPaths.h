@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
-#define LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
+#pragma once
 
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
@@ -29,18 +28,21 @@
 #define LIBQUENTIER_PERSISTENCE_STORAGE_PATH                                   \
     "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"
 
-namespace quentier {
+namespace quentier::utility {
+
+constexpr const char * gLibquentierPersistenceStoragePath =
+    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH";
 
 /**
  * applicationPersistentStoragePath returns the path to folder in which
  * the application should store its persistent data. By default chooses
  * the appropriate system location but that can be overridden by setting
- * QUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard
+ * LIBQUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard
  * location is overridden via the environment variable, the bool pointed to
- * by pNonStandardLocation (if any) is set to false
+ * by nonStandardLocation (if any) is set to false
  */
-const QString QUENTIER_EXPORT
-applicationPersistentStoragePath(bool * pNonStandardLocation = nullptr);
+[[nodiscard]] QString QUENTIER_EXPORT
+    applicationPersistentStoragePath(bool * nonStandardLocation = nullptr);
 
 /**
  * accountPersistentStoragePath returns the path to account-specific folder
@@ -51,27 +53,25 @@ applicationPersistentStoragePath(bool * pNonStandardLocation = nullptr);
  * @param account   The account for which the path needs to be returned; if
  *                  empty, the application persistent storage path is returned
  */
-const QString QUENTIER_EXPORT
-accountPersistentStoragePath(const Account & account);
+[[nodiscard]] QString QUENTIER_EXPORT
+    accountPersistentStoragePath(const Account & account);
 
 /**
  * @return          The path to folder in which the application can store
  *                  temporary files
  */
-const QString QUENTIER_EXPORT applicationTemporaryStoragePath();
+[[nodiscard]] QString QUENTIER_EXPORT applicationTemporaryStoragePath();
 
 /**
  * @return          The path to user's home directory - /home/<username> on
  *                  Linux/BSD, /Users/<username> on OS X/macOS,
  *                  C:/Users/<username> on Windows
  */
-const QString QUENTIER_EXPORT homePath();
+[[nodiscard]] QString QUENTIER_EXPORT homePath();
 
 /**
  * @return          The path to user's documents storage directory
  */
-const QString QUENTIER_EXPORT documentsPath();
+[[nodiscard]] QString QUENTIER_EXPORT documentsPath();
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
+} // namespace quentier::utility

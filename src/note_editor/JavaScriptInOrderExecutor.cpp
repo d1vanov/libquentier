@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,16 +20,11 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include <QWebFrame>
-#endif
-
 namespace quentier {
 
 JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
-    WebView & view, Canceler canceler, QObject * parent) :
-    QObject{parent},
-    m_view{view}, m_canceler{std::move(canceler)}
+    QWebEngineView & view, Canceler canceler, QObject * parent) :
+    QObject(parent), m_view{view}, m_canceler{std::move(canceler)}
 {
     Q_ASSERT(m_canceler);
 }
@@ -37,7 +32,7 @@ JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
 void JavaScriptInOrderExecutor::append(
     const QString & script, JavaScriptInOrderExecutor::Callback callback)
 {
-    m_javaScriptsQueue.enqueue(std::make_pair(script, callback));
+    m_javaScriptsQueue.enqueue(std::make_pair(script, std::move(callback)));
 
     QNTRACE(
         "note_editor",
@@ -47,7 +42,7 @@ void JavaScriptInOrderExecutor::append(
 
 void JavaScriptInOrderExecutor::start()
 {
-    auto scriptCallbackPair = m_javaScriptsQueue.dequeue();
+    const auto scriptCallbackPair = m_javaScriptsQueue.dequeue();
 
     m_inProgress = true;
 
@@ -55,13 +50,7 @@ void JavaScriptInOrderExecutor::start()
     const Callback & callback = scriptCallbackPair.second;
 
     m_currentPendingCallback = callback;
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_view.page()->runJavaScript(script, JavaScriptCallback(*this));
-#else
-    QVariant data = m_view.page()->mainFrame()->evaluateJavaScript(script);
-    next(data);
-#endif
 }
 
 void JavaScriptInOrderExecutor::next(const QVariant & data)

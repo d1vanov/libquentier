@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
-#define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
+#pragma once
 
 #include <quentier/utility/FileSystemWatcher.h>
 #include <quentier/utility/SuppressWarnings.h>
@@ -33,26 +32,26 @@ MSVC_SUPPRESS_WARNING(4834)
 
 RESTORE_WARNINGS
 
-namespace quentier {
+namespace quentier::utility {
 
-class Q_DECL_HIDDEN FileSystemWatcherPrivate final : public QObject
+class FileSystemWatcher::FileSystemWatcherPrivate final : public QObject
 {
     Q_OBJECT
 public:
     explicit FileSystemWatcherPrivate(
-        FileSystemWatcher & parent, const int removalTimeoutMSec);
+        FileSystemWatcher & parent, int removalTimeoutMSec);
 
     explicit FileSystemWatcherPrivate(
         FileSystemWatcher & parent, const QStringList & paths,
-        const int removalTimeoutMSec);
+        int removalTimeoutMSec);
 
-    virtual ~FileSystemWatcherPrivate();
+    ~FileSystemWatcherPrivate() override;
 
     void addPath(const QString & path);
     void addPaths(const QStringList & paths);
 
-    QStringList directories() const;
-    QStringList files() const;
+    [[nodiscard]] QStringList directories() const;
+    [[nodiscard]] QStringList files() const;
 
     void removePath(const QString & path);
     void removePaths(const QStringList & paths);
@@ -74,7 +73,7 @@ private:
     void processDirectoryRemoval(const QString & path);
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent) override;
+    void timerEvent(QTimerEvent * event) override;
 
 private:
     Q_DISABLE_COPY(FileSystemWatcherPrivate)
@@ -94,6 +93,4 @@ private:
     PathWithTimerId m_justRemovedDirectoryPathsWithPostRemovalTimerIds;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
+} // namespace quentier::utility

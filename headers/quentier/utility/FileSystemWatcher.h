@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,42 +16,33 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_H
-#define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>
 #include <QStringList>
 
-#define FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC (500)
-
-namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(FileSystemWatcherPrivate)
+namespace quentier::utility {
 
 class QUENTIER_EXPORT FileSystemWatcher : public QObject
 {
     Q_OBJECT
 public:
     explicit FileSystemWatcher(
-        const int removalTimeoutMSec =
-            FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
-        QObject * parent = nullptr);
+        int removalTimeoutMSec = 500, QObject * parent = nullptr);
 
     explicit FileSystemWatcher(
-        const QStringList & paths,
-        const int removalTimeoutMSec =
-            FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+        const QStringList & paths, int removalTimeoutMSec = 500,
         QObject * parent = nullptr);
 
-    virtual ~FileSystemWatcher() override;
+    ~FileSystemWatcher() override;
 
     void addPath(const QString & path);
     void addPaths(const QStringList & paths);
 
-    QStringList directories() const;
-    QStringList files() const;
+    [[nodiscard]] QStringList directories() const;
+    [[nodiscard]] QStringList files() const;
 
     void removePath(const QString & path);
     void removePaths(const QStringList & paths);
@@ -67,10 +58,10 @@ private:
     Q_DISABLE_COPY(FileSystemWatcher)
 
 private:
+    class FileSystemWatcherPrivate;
+
     FileSystemWatcherPrivate * d_ptr;
     Q_DECLARE_PRIVATE(FileSystemWatcher)
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_H
+} // namespace quentier::utility

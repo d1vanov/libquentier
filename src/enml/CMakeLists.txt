@@ -1,0 +1,32 @@
+cmake_minimum_required(VERSION 3.16.3)
+
+set(LIBRARY_NAME ${LIBNAME}_enml)
+
+add_library(${LIBRARY_NAME} STATIC)
+
+target_sources(${LIBRARY_NAME}
+  PRIVATE
+  Converter.cpp
+  Converter.h
+  DecryptedTextCache.cpp
+  DecryptedTextCache.h
+  ENMLTagsConverter.cpp
+  ENMLTagsConverter.h
+  HtmlData.cpp
+  HtmlData.h
+  conversion_rules/SkipRule.cpp
+  conversion_rules/SkipRule.h
+  conversion_rules/SkipRuleBuilder.cpp
+  conversion_rules/SkipRuleBuilder.h)
+
+target_link_libraries(${LIBRARY_NAME}
+  PRIVATE
+  ${LIBNAME}_private
+  Qt${LIBQUENTIER_QT_VERSION}::Core
+  Qt${LIBQUENTIER_QT_VERSION}::Gui
+  Qt${LIBQUENTIER_QT_VERSION}::Widgets
+  LibXml2::LibXml2)
+
+if(GMOCK_FOUND AND GTEST_FOUND)
+  add_subdirectory(tests)
+endif()

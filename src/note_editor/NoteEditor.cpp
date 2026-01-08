@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 
 #include "NoteEditor_p.h"
 
-#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 
 #include <QColor>
@@ -30,29 +29,33 @@
 #include <QUndoStack>
 #include <QVBoxLayout>
 
+#include <utility>
+
 namespace quentier {
 
 NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
     QWidget(parent, flags), m_backend(new NoteEditorPrivate(*this))
 {
-    QVBoxLayout * pLayout = new QVBoxLayout;
-    pLayout->addWidget(m_backend->widget());
-    pLayout->setMargin(0);
-    setLayout(pLayout);
+    auto * layout = new QVBoxLayout;
+    layout->addWidget(m_backend->widget());
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
     setAcceptDrops(true);
 }
 
-NoteEditor::~NoteEditor() {}
+NoteEditor::~NoteEditor() noexcept = default;
 
 void NoteEditor::initialize(
-    LocalStorageManagerAsync & localStorageManager, SpellChecker & spellChecker,
-    const Account & account, QThread * pBackgroundJobsThread)
+    local_storage::ILocalStoragePtr localStorage, SpellChecker & spellChecker,
+    const Account & account, QThread * backgroundJobsThread,
+    enml::IDecryptedTextCachePtr decryptedTextCache)
 {
     m_backend->initialize(
-        localStorageManager, spellChecker, account, pBackgroundJobsThread);
+        std::move(localStorage), spellChecker, account, backgroundJobsThread,
+        std::move(decryptedTextCache));
 }
 
-INoteEditorBackend * NoteEditor::backend()
+INoteEditorBackend * NoteEditor::backend() noexcept
 {
     return m_backend;
 }
@@ -97,14 +100,14 @@ void NoteEditor::setNoteLoadingPageHtml(const QString & html)
     m_backend->setNoteLoadingPageHtml(html);
 }
 
-QString NoteEditor::currentNoteLocalUid() const
+QString NoteEditor::currentNoteLocalId() const
 {
-    return m_backend->currentNoteLocalUid();
+    return m_backend->currentNoteLocalId();
 }
 
-void NoteEditor::setCurrentNoteLocalUid(const QString & noteLocalUid)
+void NoteEditor::setCurrentNoteLocalId(const QString & noteLocalId)
 {
-    m_backend->setCurrentNoteLocalUid(noteLocalUid);
+    m_backend->setCurrentNoteLocalId(noteLocalId);
 }
 
 void NoteEditor::clear()
@@ -112,17 +115,17 @@ void NoteEditor::clear()
     m_backend->clear();
 }
 
-bool NoteEditor::isModified() const
+bool NoteEditor::isModified() const noexcept
 {
     return m_backend->isModified();
 }
 
-bool NoteEditor::isNoteLoaded() const
+bool NoteEditor::isNoteLoaded() const noexcept
 {
     return m_backend->isNoteLoaded();
 }
 
-qint64 NoteEditor::idleTime() const
+qint64 NoteEditor::idleTime() const noexcept
 {
     return m_backend->idleTime();
 }
@@ -148,9 +151,9 @@ void NoteEditor::setNoteTitle(const QString & noteTitle)
 }
 
 void NoteEditor::setTagIds(
-    const QStringList & tagLocalUids, const QStringList & tagGuids)
+    const QStringList & tagLocalIds, const QStringList & tagGuids)
 {
-    m_backend->setTagIds(tagLocalUids, tagGuids);
+    m_backend->setTagIds(tagLocalIds, tagGuids);
 }
 
 void NoteEditor::undo()
@@ -243,12 +246,12 @@ void NoteEditor::alignFull()
     m_backend->alignFull();
 }
 
-QString NoteEditor::selectedText() const
+QString NoteEditor::selectedText() const noexcept
 {
     return m_backend->selectedText();
 }
 
-bool NoteEditor::hasSelection() const
+bool NoteEditor::hasSelection() const noexcept
 {
     return m_backend->hasSelection();
 }
@@ -294,7 +297,7 @@ void NoteEditor::setSpellcheck(const bool enabled)
     m_backend->setSpellcheck(enabled);
 }
 
-bool NoteEditor::spellCheckEnabled() const
+bool NoteEditor::spellCheckEnabled() const noexcept
 {
     return m_backend->spellCheckEnabled();
 }

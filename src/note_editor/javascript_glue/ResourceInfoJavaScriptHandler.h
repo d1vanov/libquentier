@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
-#define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
+#pragma once
 
 #include <QObject>
 #include <QSize>
@@ -25,7 +24,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ResourceInfo)
+class ResourceInfo;
 
 /**
  * The ResourceInfoJavaScriptHandler is used for communicating the information
@@ -42,8 +41,8 @@ Q_SIGNALS:
     void notifyResourceInfo(
         const QString & resourceHash, const QString & resourceLocalFilePath,
         const QString & resourceDisplayName,
-        const QString & resourceDisplaySize, const int resourceImageHeight,
-        const int resourceImageWidth);
+        const QString & resourceDisplaySize, int resourceImageHeight,
+        int resourceImageWidth);
 
 public Q_SLOTS:
     void findResourceInfo(const QString & resourceHash);
@@ -53,5 +52,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,26 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QHash>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
+class GenericResourceImageManager;
 
-class Q_DECL_HIDDEN RenameResourceUndoCommand final :
-    public INoteEditorUndoCommand
+class RenameResourceUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
     RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        qevercloud::Resource resource, QString previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
@@ -43,20 +41,20 @@ public:
         QUndoCommand * parent = nullptr);
 
     RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        qevercloud::Resource resource, QString previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~RenameResourceUndoCommand();
+    ~RenameResourceUndoCommand() noexcept override;
 
-    virtual void undoImpl() override;
-    virtual void redoImpl() override;
+    void undoImpl() override;
+    void redoImpl() override;
 
 private:
-    Resource m_resource;
+    qevercloud::Resource m_resource;
     QString m_previousResourceName;
     QString m_newResourceName;
     GenericResourceImageManager * m_pGenericResourceImageManager;
@@ -64,5 +62,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_ERROR_STRING_H
-#define LIB_QUENTIER_TYPES_ERROR_STRING_H
+#pragma once
 
 #include <quentier/utility/Printable.h>
 
@@ -25,7 +24,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ErrorStringData)
+class ErrorStringData;
 
 /**
  * @brief The ErrorString class encapsulates two (or more) strings which are
@@ -40,25 +39,30 @@ QT_FORWARD_DECLARE_CLASS(ErrorStringData)
  *    translatable strings; one translatable string is not always enough because
  *    the error message might be composed from different parts
  */
-class QUENTIER_EXPORT ErrorString : public Printable
+class QUENTIER_EXPORT ErrorString : public utility::Printable
 {
 public:
     explicit ErrorString(const char * error = nullptr);
     explicit ErrorString(const QString & error);
+
     ErrorString(const ErrorString & other);
+    ErrorString(ErrorString && other) noexcept;
+
     ErrorString & operator=(const ErrorString & other);
-    virtual ~ErrorString() override;
+    ErrorString & operator=(ErrorString && other) noexcept;
 
-    const QString & base() const;
-    QString & base();
+    ~ErrorString() override;
 
-    const QStringList & additionalBases() const;
-    QStringList & additionalBases();
+    [[nodiscard]] const QString & base() const noexcept;
+    [[nodiscard]] QString & base();
 
-    const QString & details() const;
-    QString & details();
+    [[nodiscard]] const QStringList & additionalBases() const noexcept;
+    [[nodiscard]] QStringList & additionalBases();
 
-    void setBase(const QString & error);
+    [[nodiscard]] const QString & details() const noexcept;
+    [[nodiscard]] QString & details();
+
+    void setBase(QString error);
     void setBase(const char * error);
 
     void appendBase(const QString & error);
@@ -68,18 +72,22 @@ public:
     void setDetails(const QString & error);
     void setDetails(const char * error);
 
-    bool isEmpty() const;
+    [[nodiscard]] bool isEmpty() const;
     void clear();
 
-    QString localizedString() const;
-    QString nonLocalizedString() const;
+    [[nodiscard]] QString localizedString() const;
+    [[nodiscard]] QString nonLocalizedString() const;
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ErrorStringData> d;
 };
 
-} // namespace quentier
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ErrorString & lhs, const ErrorString & rhs) noexcept;
 
-#endif // LIB_QUENTIER_TYPES_ERROR_STRING_H
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ErrorString & lhs, const ErrorString & rhs) noexcept;
+
+} // namespace quentier

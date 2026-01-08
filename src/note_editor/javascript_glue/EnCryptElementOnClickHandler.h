@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_EN_CRYPT_ELEMENT_ON_CLICK_HANDLER_H
-#define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_EN_CRYPT_ELEMENT_ON_CLICK_HANDLER_H
+#pragma once
 
 #include <QObject>
 
@@ -38,15 +37,13 @@ public:
 
 Q_SIGNALS:
     void decrypt(
-        QString encryptedText, QString cipher, QString length, QString hint,
-        QString enCryptIndex, bool * pCancelled);
+        QString encryptedText, QString cipher, QString hint,
+        QString enCryptIndex);
 
 public Q_SLOTS:
     void onEnCryptElementClicked(
-        QString encryptedText, QString cipher, QString length, QString hint,
+        QString encryptedText, QString cipher, QString hint,
         QString enCryptIndex);
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_EN_CRYPT_ELEMENT_ON_CLICK_HANDLER_H

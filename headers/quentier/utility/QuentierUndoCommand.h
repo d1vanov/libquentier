@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_QUENTIER_UNDO_COMMAND_H
-#define LIB_QUENTIER_UTILITY_QUENTIER_UNDO_COMMAND_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
 
 #include <QObject>
 #include <QUndoCommand>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The QuentierUndoCommand class has the sole purpose of working around
@@ -57,12 +56,12 @@ class QuentierUndoCommand : public QObject, public QUndoCommand
 public:
     QuentierUndoCommand(QUndoCommand * parent = nullptr);
     QuentierUndoCommand(const QString & text, QUndoCommand * parent = nullptr);
-    virtual ~QuentierUndoCommand() override;
+    ~QuentierUndoCommand() noexcept override;
 
-    virtual void undo() override final;
-    virtual void redo() override final;
+    void undo() final;
+    void redo() final;
 
-    bool onceUndoExecuted() const
+    [[nodiscard]] bool onceUndoExecuted() const noexcept
     {
         return m_onceUndoExecuted;
     }
@@ -75,9 +74,7 @@ protected:
     virtual void redoImpl() = 0;
 
 private:
-    bool m_onceUndoExecuted;
+    bool m_onceUndoExecuted = false;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_QUENTIER_UNDO_COMMAND_H
+} // namespace quentier::utility

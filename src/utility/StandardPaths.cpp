@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,14 +23,15 @@
 #include <QDesktopServices>
 #include <QStandardPaths>
 
-namespace quentier {
+namespace quentier::utility {
 
-const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
+QString applicationPersistentStoragePath(bool * nonStandardLocation)
 {
-    QByteArray envOverride = qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+    const QByteArray envOverride = qgetenv(gLibquentierPersistenceStoragePath);
+
     if (!envOverride.isEmpty()) {
-        if (pNonStandardLocation) {
-            *pNonStandardLocation = true;
+        if (nonStandardLocation) {
+            *nonStandardLocation = true;
         }
 
         return QString::fromLocal8Bit(envOverride);
@@ -50,20 +51,20 @@ const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 #endif
 }
 
-const QString accountPersistentStoragePath(const Account & account)
+QString accountPersistentStoragePath(const Account & account)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
-        return storagePath;
+        return {};
     }
 
     if (Q_UNLIKELY(account.isEmpty())) {
-        return storagePath;
+        return {};
     }
 
     QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
-        return storagePath;
+        return {};
     }
 
     if (account.type() == Account::Type::Local) {
@@ -82,22 +83,23 @@ const QString accountPersistentStoragePath(const Account & account)
     return storagePath;
 }
 
-const QString applicationTemporaryStoragePath()
+QString applicationTemporaryStoragePath()
 {
-    QString path;
-    path = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    QString path =
+        QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+
     path += QStringLiteral("/") + QCoreApplication::applicationName();
     return path;
 }
 
-const QString homePath()
+QString homePath()
 {
     return QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 }
 
-const QString documentsPath()
+QString documentsPath()
 {
     return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

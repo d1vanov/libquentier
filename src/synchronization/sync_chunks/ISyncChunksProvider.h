@@ -1,0 +1,71 @@
+/*
+ * Copyright 2022-2023 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <quentier/utility/cancelers/Fwd.h>
+
+#include <synchronization/SynchronizationMode.h>
+
+#include <qevercloud/Fwd.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/SyncChunk.h>
+
+#include <QFuture>
+#include <QList>
+
+namespace quentier::synchronization {
+
+class ISyncChunksProvider
+{
+public:
+    virtual ~ISyncChunksProvider() = default;
+
+    class ICallback
+    {
+    public:
+        virtual ~ICallback() = default;
+
+        virtual void onUserOwnSyncChunksDownloadProgress(
+            qint32 highestDownloadedUsn, qint32 highestServerUsn,
+            qint32 lastPreviousUsn) = 0;
+
+        virtual void onLinkedNotebookSyncChunksDownloadProgress(
+            qint32 highestDownloadedUsn, qint32 highestServerUsn,
+            qint32 lastPreviousUsn,
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
+
+    [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunks(
+        qint32 afterUsn, qint32 updateCount, SynchronizationMode syncMode,
+        qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler,
+        ICallbackWeakPtr callbackWeak) = 0;
+
+    [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>>
+        fetchLinkedNotebookSyncChunks(
+            qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
+            qint32 updateCount, SynchronizationMode syncMode,
+            qevercloud::IRequestContextPtr ctx,
+            utility::cancelers::ICancelerPtr canceler,
+            ICallbackWeakPtr callbackWeak) = 0;
+};
+
+} // namespace quentier::synchronization

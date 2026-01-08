@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,23 +16,22 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_STRING_UTILS_PRIVATE_H
-#define LIB_QUENTIER_UTILITY_STRING_UTILS_PRIVATE_H
+#pragma once
 
 #include <quentier/utility/StringUtils.h>
 
 #include <QHash>
 #include <QStringList>
 
-namespace quentier {
+namespace quentier::utility {
 
-class Q_DECL_HIDDEN StringUtilsPrivate
+class StringUtils::StringUtilsPrivate
 {
 public:
     StringUtilsPrivate();
 
     void removePunctuation(
-        QString & str, const QVector<QChar> & charactersToPreserve) const;
+        QString & str, const QList<QChar> & charactersToPreserve) const;
 
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
@@ -45,6 +44,4 @@ private:
     QStringList m_noDiacriticLetters;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_STRING_UTILS_PRIVATE_H
+} // namespace quentier::utility

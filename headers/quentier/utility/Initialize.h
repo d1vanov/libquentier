@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,12 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_INITIALIZE_H
-#define LIB_QUENTIER_UTILITY_INITIALIZE_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * initializeLibquentier - the function that needs to be called during
@@ -29,6 +28,4 @@ namespace quentier {
  */
 void QUENTIER_EXPORT initializeLibquentier();
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_INITIALIZE_H
+} // namespace quentier::utility

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2023 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,22 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
+#pragma once
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qt5qevercloud/QEverCloud.h>
-
-#include <QHash>
 #include <QObject>
-#include <QString>
 
-#include <memory>
-
-namespace quentier {
+namespace quentier::synchronization {
 
 /**
  * @brief The ISyncStateStorage interface represents the interface of a class
@@ -41,32 +34,14 @@ namespace quentier {
 class QUENTIER_EXPORT ISyncStateStorage : public QObject
 {
     Q_OBJECT
-public:
-    /**
-     * @brief The ISyncState interface provides accessory methods to determine
-     * the sync state for the account
-     */
-    class QUENTIER_EXPORT ISyncState : public Printable
-    {
-    public:
-        virtual qint32 userDataUpdateCount() const = 0;
-        virtual qevercloud::Timestamp userDataLastSyncTime() const = 0;
-        virtual QHash<QString, qint32> linkedNotebookUpdateCounts() const = 0;
-
-        virtual QHash<QString, qevercloud::Timestamp>
-        linkedNotebookLastSyncTimes() const = 0;
-
-        virtual QTextStream & print(QTextStream & strm) const override;
-    };
-
-    using ISyncStatePtr = std::shared_ptr<ISyncState>;
+protected:
+    explicit ISyncStateStorage(QObject * parent = nullptr);
 
 public:
-    explicit ISyncStateStorage(QObject * parent = nullptr) : QObject(parent) {}
+    ~ISyncStateStorage() override;
 
-    virtual ~ISyncStateStorage() = default;
-
-    virtual ISyncStatePtr getSyncState(const Account & account) = 0;
+    [[nodiscard]] virtual ISyncStatePtr getSyncState(
+        const Account & account) = 0;
 
     virtual void setSyncState(
         const Account & account, ISyncStatePtr syncState) = 0;
@@ -80,9 +55,4 @@ Q_SIGNALS:
     void notifySyncStateUpdated(Account account, ISyncStatePtr syncState);
 };
 
-QUENTIER_EXPORT ISyncStateStoragePtr
-newSyncStateStorage(QObject * parent = nullptr);
-
-} // namespace quentier
-
-#endif // LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
+} // namespace quentier::synchronization

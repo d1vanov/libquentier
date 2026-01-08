@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,30 +29,27 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "RemoveHyperlinkUndoCommand",                                      \
-            "Can't undo/redo hyperlink removal: "                              \
-            "no note editor's page"));                                         \
+            "Can't undo/redo hyperlink removal: no note editor's page"));      \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }
 
 RemoveHyperlinkUndoCommand::RemoveHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditor, const Callback & callback,
-    QUndoCommand * parent) :
-    INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(callback)
+    NoteEditorPrivate & noteEditor, Callback callback, QUndoCommand * parent) :
+    INoteEditorUndoCommand(noteEditor, parent), m_callback(std::move(callback))
 {
     setText(tr("Remove hyperlink"));
 }
 
 RemoveHyperlinkUndoCommand::RemoveHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditor, const Callback & callback,
-    const QString & text, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, Callback callback, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
-RemoveHyperlinkUndoCommand::~RemoveHyperlinkUndoCommand() {}
+RemoveHyperlinkUndoCommand::~RemoveHyperlinkUndoCommand() noexcept = default;
 
 void RemoveHyperlinkUndoCommand::redoImpl()
 {

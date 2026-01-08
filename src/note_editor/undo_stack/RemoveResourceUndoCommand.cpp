@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,23 +37,23 @@ namespace quentier {
     }
 
 RemoveResourceUndoCommand::RemoveResourceUndoCommand(
-    const Resource & resource, const Callback & callback,
+    qevercloud::Resource resource, Callback callback,
     NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_resource(resource), m_callback(callback)
+    m_resource(std::move(resource)), m_callback(std::move(callback))
 {
     setText(tr("Remove attachment"));
 }
 
 RemoveResourceUndoCommand::RemoveResourceUndoCommand(
-    const Resource & resource, const Callback & callback,
+    qevercloud::Resource resource, Callback callback,
     NoteEditorPrivate & noteEditorPrivate, const QString & text,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_resource(resource), m_callback(callback)
+    m_resource(std::move(resource)), m_callback(std::move(callback))
 {}
 
-RemoveResourceUndoCommand::~RemoveResourceUndoCommand() {}
+RemoveResourceUndoCommand::~RemoveResourceUndoCommand() noexcept = default;
 
 void RemoveResourceUndoCommand::undoImpl()
 {

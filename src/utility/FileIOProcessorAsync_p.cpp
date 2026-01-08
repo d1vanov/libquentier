@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 #include <QFileInfo>
 #include <QTimerEvent>
 
-namespace quentier {
+namespace quentier::utility {
 
 FileIOProcessorAsyncPrivate::FileIOProcessorAsyncPrivate(QObject * parent) :
     QObject(parent)
@@ -47,14 +47,15 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
         killTimer(m_postOperationTimerId);                                     \
     }                                                                          \
     m_postOperationTimerId =                                                   \
-        startTimer(secondsToMilliseconds(m_idleTimePeriodSeconds));            \
+        startTimer(utility::secondsToMilliseconds(m_idleTimePeriodSeconds));   \
     QNTRACE(                                                                   \
         "utility:file_async",                                                  \
         "FileIOProcessorAsyncPrivate: started post "                           \
             << "operation timer with id " << m_postOperationTimerId)
 
 void FileIOProcessorAsyncPrivate::onWriteFileRequest(
-    QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
+    QString absoluteFilePath, QByteArray data, QUuid requestId, // NOLINT
+    bool append)
 {
     QNDEBUG(
         "utility:file_async",
@@ -62,11 +63,10 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
             << absoluteFilePath << ", request id = " << requestId
             << ", append = " << (append ? "true" : "false"));
 
-    QFileInfo fileInfo(absoluteFilePath);
+    const QFileInfo fileInfo{absoluteFilePath};
     QDir folder = fileInfo.absoluteDir();
     if (!folder.exists()) {
-        bool madeFolder = folder.mkpath(folder.absolutePath());
-        if (!madeFolder) {
+        if (!folder.mkpath(folder.absolutePath())) {
             ErrorString error(
                 QT_TR_NOOP("can't create folder to write file into"));
 
@@ -78,7 +78,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
         }
     }
 
-    QFile file(absoluteFilePath);
+    QFile file{absoluteFilePath};
 
     QIODevice::OpenMode mode;
     if (append) {
@@ -88,8 +88,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
         mode = QIODevice::WriteOnly;
     }
 
-    bool open = file.open(mode);
-    if (Q_UNLIKELY(!open)) {
+    if (Q_UNLIKELY(!file.open(mode))) {
         ErrorString error(QT_TR_NOOP("can't open file for writing/appending"));
         error.details() = absoluteFilePath;
         QNWARNING("utility:file_async", error);
@@ -98,7 +97,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
         return;
     }
 
-    qint64 writtenBytes = file.write(data);
+    const qint64 writtenBytes = file.write(data);
     if (Q_UNLIKELY(writtenBytes < data.size())) {
         ErrorString error(QT_TR_NOOP("can't write the whole data to file"));
         error.details() = absoluteFilePath;
@@ -118,14 +117,14 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
 }
 
 void FileIOProcessorAsyncPrivate::onReadFileRequest(
-    QString absoluteFilePath, QUuid requestId)
+    QString absoluteFilePath, QUuid requestId) // NOLINT
 {
     QNDEBUG(
         "utility:file_async",
         "FileIOProcessorAsyncPrivate::onReadFileRequest: file path = "
             << absoluteFilePath << ", request id = " << requestId);
 
-    QFile file(absoluteFilePath);
+    QFile file{absoluteFilePath};
     if (!file.exists()) {
         QNTRACE(
             "utility:file_async",
@@ -139,8 +138,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(
         return;
     }
 
-    bool open = file.open(QIODevice::ReadOnly);
-    if (!open) {
+    if (!file.open(QIODevice::ReadOnly)) {
         ErrorString error(QT_TR_NOOP("can't open file for reading"));
         error.details() = absoluteFilePath;
         QNDEBUG("utility:file_async", error);
@@ -149,7 +147,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(
         return;
     }
 
-    QByteArray data = file.readAll();
+    const QByteArray data = file.readAll();
     Q_EMIT readFileRequestProcessed(true, ErrorString(), data, requestId);
     RESTART_TIMER();
 }
@@ -164,8 +162,7 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
         return;
     }
 
-    qint32 timerId = pEvent->timerId();
-
+    const qint32 timerId = pEvent->timerId();
     if (timerId != m_postOperationTimerId) {
         QNTRACE(
             "utility:file_async",
@@ -180,4 +177,4 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
     Q_EMIT readyForIO();
 }
 
-} // namespace quentier
+} // namespace quentier::utility

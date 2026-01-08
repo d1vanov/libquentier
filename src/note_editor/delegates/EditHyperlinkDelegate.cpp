@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,8 +32,7 @@ namespace quentier {
 
 EditHyperlinkDelegate::EditHyperlinkDelegate(
     NoteEditorPrivate & noteEditor, const quint64 hyperlinkId) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor), m_hyperlinkId(hyperlinkId)
+    QObject(&noteEditor), m_noteEditor(noteEditor), m_hyperlinkId(hyperlinkId)
 {}
 
 #define GET_PAGE()                                                             \
@@ -63,12 +62,12 @@ void EditHyperlinkDelegate::start()
     }
 }
 
-void EditHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
+void EditHyperlinkDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "EditHyperlinkDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -83,12 +82,11 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onHyperlinkDataReceived: data = " << data);
+        "EditHyperlinkDelegate::onHyperlinkDataReceived: data = " << data);
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink data "
@@ -98,11 +96,10 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
-        auto errorIt = resultMap.find(QStringLiteral("error"));
+        const auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of hyperlink data "
@@ -119,7 +116,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
         return;
     }
 
-    auto dataIt = resultMap.find(QStringLiteral("data"));
+    const auto dataIt = resultMap.find(QStringLiteral("data"));
     if (Q_UNLIKELY(dataIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("No hyperlink data received from JavaScript"));
@@ -128,7 +125,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
         return;
     }
 
-    QStringList hyperlinkDataList = dataIt.value().toStringList();
+    const QStringList hyperlinkDataList = dataIt.value().toStringList();
     if (hyperlinkDataList.isEmpty()) {
         ErrorString error(
             QT_TR_NOOP("Can't edit hyperlink: can't find hyperlink "
@@ -177,7 +174,7 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
             << startupHyperlinkText
             << ", original url: " << startupHyperlinkUrl);
 
-    auto pEditHyperlinkDialog = std::make_unique<EditHyperlinkDialog>(
+    const auto pEditHyperlinkDialog = std::make_unique<EditHyperlinkDialog>(
         &m_noteEditor, startupHyperlinkText, startupHyperlinkUrl);
 
     pEditHyperlinkDialog->setWindowModality(Qt::WindowModal);
@@ -188,8 +185,7 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
 
     QNTRACE("note_editor:delegate", "Will exec edit hyperlink dialog now");
 
-    int res = pEditHyperlinkDialog->exec();
-    if (res == QDialog::Rejected) {
+    if (pEditHyperlinkDialog->exec() == QDialog::Rejected) {
         QNTRACE("note_editor:delegate", "Cancelled editing the hyperlink");
         Q_EMIT cancelled();
         return;
@@ -197,22 +193,23 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
 }
 
 void EditHyperlinkDelegate::onHyperlinkDataEdited(
-    QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
+    QString text, QUrl url, quint64 hyperlinkId, // NOLINT
+    bool startupUrlWasEmpty)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onHyperlinkDataEdited: text = " << text << ", url = " << url
-            << ", hyperlink id = " << hyperlinkId);
+        "EditHyperlinkDelegate" << "::onHyperlinkDataEdited: text = " << text
+                                << ", url = " << url
+                                << ", hyperlink id = " << hyperlinkId);
 
     Q_UNUSED(hyperlinkId)
     Q_UNUSED(startupUrlWasEmpty)
 
-    QString urlString = url.toString(QUrl::FullyEncoded);
-
-    QString javascript = QStringLiteral("hyperlinkManager.setHyperlinkData('") +
-        text + QStringLiteral("', '") + urlString + QStringLiteral("', ") +
-        QString::number(m_hyperlinkId) + QStringLiteral(");");
+    const QString javascript =
+        QStringLiteral("hyperlinkManager.setHyperlinkData('") + text +
+        QStringLiteral("', '") + url.toString(QUrl::FullyEncoded) +
+        QStringLiteral("', ") + QString::number(m_hyperlinkId) +
+        QStringLiteral(");");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -224,12 +221,11 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onHyperlinkModified");
+        "EditHyperlinkDelegate" << "::onHyperlinkModified");
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink edit "
@@ -239,11 +235,10 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
-        auto errorIt = resultMap.find(QStringLiteral("error"));
+        const auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of hyperlink editing "

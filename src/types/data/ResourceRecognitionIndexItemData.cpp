@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,8 @@
 #include "ResourceRecognitionIndexItemData.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
+
+#include <utility>
 
 namespace quentier {
 
@@ -28,90 +29,120 @@ bool ResourceRecognitionIndexItemData::isValid() const
     if (m_textItems.isEmpty() && m_objectItems.isEmpty() &&
         m_shapeItems.isEmpty() && m_barcodeItems.isEmpty())
     {
-        QNTRACE("types:data", "Resource recognition index item is empty");
+        QNTRACE("types::data", "Resource recognition index item is empty");
         return false;
     }
 
-    for (const auto & textItem: qAsConst(m_textItems)) {
-        if (textItem.m_weight < 0) {
+    for (const auto & textItem: std::as_const(m_textItems)) {
+        if (Q_UNLIKELY(!textItem)) {
             QNTRACE(
-                "types:data",
+                "types::data",
+                "Resource recognition index item contains null text item");
+            return false;
+        }
+
+        if (textItem->weight() < 0) {
+            QNTRACE(
+                "types::data",
                 "Resource recognition index item contains "
-                    << "text item with weight less than 0: " << textItem.m_text
-                    << ", weight = " << textItem.m_weight);
+                    << "text item with weight less than 0: " << textItem->text()
+                    << ", weight = " << textItem->weight());
             return false;
         }
     }
 
-    for (const auto & objectItem: qAsConst(m_objectItems)) {
-        if (objectItem.m_weight < 0) {
+    for (const auto & objectItem: std::as_const(m_objectItems)) {
+        if (Q_UNLIKELY(!objectItem)) {
             QNTRACE(
-                "types:data",
+                "types::data",
+                "Resource recognition index item contains null object item");
+            return false;
+        }
+
+        if (objectItem->weight() < 0) {
+            QNTRACE(
+                "types::data",
                 "Resource recognition index item contains "
                     << "object item with weight less than 0: "
-                    << objectItem.m_objectType
-                    << ", weight = " << objectItem.m_weight);
+                    << objectItem->objectType()
+                    << ", weight = " << objectItem->weight());
             return false;
         }
 
-        if ((objectItem.m_objectType != QStringLiteral("face")) &&
-            (objectItem.m_objectType != QStringLiteral("sky")) &&
-            (objectItem.m_objectType != QStringLiteral("ground")) &&
-            (objectItem.m_objectType != QStringLiteral("water")) &&
-            (objectItem.m_objectType != QStringLiteral("lake")) &&
-            (objectItem.m_objectType != QStringLiteral("sea")) &&
-            (objectItem.m_objectType != QStringLiteral("snow")) &&
-            (objectItem.m_objectType != QStringLiteral("mountains")) &&
-            (objectItem.m_objectType != QStringLiteral("verdure")) &&
-            (objectItem.m_objectType != QStringLiteral("grass")) &&
-            (objectItem.m_objectType != QStringLiteral("trees")) &&
-            (objectItem.m_objectType != QStringLiteral("building")) &&
-            (objectItem.m_objectType != QStringLiteral("road")) &&
-            (objectItem.m_objectType != QStringLiteral("car")))
+        const auto objectType = objectItem->objectType();
+        if ((objectType != QStringLiteral("face")) &&
+            (objectType != QStringLiteral("sky")) &&
+            (objectType != QStringLiteral("ground")) &&
+            (objectType != QStringLiteral("water")) &&
+            (objectType != QStringLiteral("lake")) &&
+            (objectType != QStringLiteral("sea")) &&
+            (objectType != QStringLiteral("snow")) &&
+            (objectType != QStringLiteral("mountains")) &&
+            (objectType != QStringLiteral("verdure")) &&
+            (objectType != QStringLiteral("grass")) &&
+            (objectType != QStringLiteral("trees")) &&
+            (objectType != QStringLiteral("building")) &&
+            (objectType != QStringLiteral("road")) &&
+            (objectType != QStringLiteral("car")))
         {
             QNTRACE(
-                "types:data",
+                "types::data",
                 "Resource recognition index object item has "
-                    << "invalid object type: " << objectItem.m_objectType);
+                    << "invalid object type: " << objectType);
             return false;
         }
     }
 
-    for (const auto & shapeItem: qAsConst(m_shapeItems)) {
-        if (shapeItem.m_weight < 0) {
+    for (const auto & shapeItem: std::as_const(m_shapeItems)) {
+        if (Q_UNLIKELY(!shapeItem)) {
             QNTRACE(
-                "types:data",
+                "types::data",
+                "Resource recognition index item contains null shape item");
+            return false;
+        }
+
+        if (shapeItem->weight() < 0) {
+            QNTRACE(
+                "types::data",
                 "Resource recognition index item contains "
                     << "shape item with weight less than 0: "
-                    << shapeItem.m_shapeType
-                    << ", weight = " << shapeItem.m_weight);
+                    << shapeItem->shape()
+                    << ", weight = " << shapeItem->weight());
             return false;
         }
 
-        if ((shapeItem.m_shapeType != QStringLiteral("circle")) &&
-            (shapeItem.m_shapeType != QStringLiteral("oval")) &&
-            (shapeItem.m_shapeType != QStringLiteral("rectangle")) &&
-            (shapeItem.m_shapeType != QStringLiteral("triangle")) &&
-            (shapeItem.m_shapeType != QStringLiteral("line")) &&
-            (shapeItem.m_shapeType != QStringLiteral("arrow")) &&
-            (shapeItem.m_shapeType != QStringLiteral("polyline")))
+        const auto shape = shapeItem->shape();
+        if ((shape != QStringLiteral("circle")) &&
+            (shape != QStringLiteral("oval")) &&
+            (shape != QStringLiteral("rectangle")) &&
+            (shape != QStringLiteral("triangle")) &&
+            (shape != QStringLiteral("line")) &&
+            (shape != QStringLiteral("arrow")) &&
+            (shape != QStringLiteral("polyline")))
         {
             QNTRACE(
-                "types:data",
+                "types::data",
                 "Resource recognition index shape item has "
-                    << "invalid shape type: " << shapeItem.m_shapeType);
+                    << "invalid shape type: " << shape);
             return false;
         }
     }
 
-    for (const auto & barcodeItem: qAsConst(m_barcodeItems)) {
-        if (barcodeItem.m_weight < 0) {
+    for (const auto & barcodeItem: std::as_const(m_barcodeItems)) {
+        if (Q_UNLIKELY(!barcodeItem)) {
             QNTRACE(
-                "types:data",
+                "types::data",
+                "Resource recognition index item contains null barcode item");
+            return false;
+        }
+
+        if (barcodeItem->weight() < 0) {
+            QNTRACE(
+                "types::data",
                 "Resource recognition index item contains "
                     << "barcode item with weight less than 0: "
-                    << barcodeItem.m_barcode
-                    << ", weight = " << barcodeItem.m_weight);
+                    << barcodeItem->barcode()
+                    << ", weight = " << barcodeItem->weight());
             return false;
         }
     }

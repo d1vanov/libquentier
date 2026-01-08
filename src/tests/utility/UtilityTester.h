@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,27 +16,21 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
-#define LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
+#pragma once
 
 #include <QObject>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class UtilityTester final : public QObject
 {
     Q_OBJECT
 public:
     explicit UtilityTester(QObject * parent = nullptr);
-    virtual ~UtilityTester() override;
+    ~UtilityTester() noexcept override;
 
 private Q_SLOTS:
     void init();
-
-    void encryptDecryptNoteTest();
-    void decryptNoteAesTest();
-    void decryptNoteRc2Test();
 
     void tagSortByParentChildRelationsTest();
 
@@ -46,7 +40,4 @@ private:
     Q_DISABLE_COPY(UtilityTester)
 };
 
-} // namespace test
-} // namespace quentier
-
-#endif // LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
+} // namespace quentier::test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,26 +16,23 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_QUENTIER_APPLICATION_H
-#define LIB_QUENTIER_UTILITY_QUENTIER_APPLICATION_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 #include <QApplication>
 
-namespace quentier {
+namespace quentier::utility {
 
 class QUENTIER_EXPORT QuentierApplication : public QApplication
 {
     Q_OBJECT
 public:
-    QuentierApplication(int & argc, char * argv[]);
-    virtual ~QuentierApplication() override;
+    QuentierApplication(int & argc, char * argv[]); // NOLINT
+    ~QuentierApplication() noexcept override;
 
-    virtual bool notify(QObject * pObject, QEvent * pEvent) override;
-    virtual bool event(QEvent * pEvent) override;
+    [[nodiscard]] bool notify(QObject * object, QEvent * event) override;
+    [[nodiscard]] bool event(QEvent * event) override;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_QUENTIER_APPLICATION_H
+} // namespace quentier::utility

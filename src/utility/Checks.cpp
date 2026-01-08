@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,18 +16,17 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Checks.h>
+#include "Checks.h"
 
-#include <qt5qevercloud/generated/Constants.h>
+#include <qevercloud/Constants.h>
 
 #include <limits>
 
-namespace quentier {
+namespace quentier::utility {
 
 bool checkGuid(const QString & guid)
 {
-    qint32 guidSize = static_cast<qint32>(guid.size());
-
+    const auto guidSize = static_cast<qint32>(guid.size());
     if (guidSize < qevercloud::EDAM_GUID_LEN_MIN) {
         return false;
     }
@@ -39,12 +38,11 @@ bool checkGuid(const QString & guid)
     return true;
 }
 
-bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
+bool checkUpdateSequenceNumber(const qint32 updateSequenceNumber)
 {
-    return !(
-        (updateSequenceNumber < 0) ||
-        (updateSequenceNumber == std::numeric_limits<int32_t>::min()) ||
-        (updateSequenceNumber == std::numeric_limits<int32_t>::max()));
+    return updateSequenceNumber >= 0 &&
+        updateSequenceNumber != std::numeric_limits<qint32>::min() &&
+        updateSequenceNumber != std::numeric_limits<qint32>::max();
 }
 
-} // namespace quentier
+} // namespace quentier::utility

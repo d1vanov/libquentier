@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_INSERT_HTML_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_INSERT_HTML_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -26,12 +25,17 @@
 #include <QHash>
 #include <QStringList>
 
+namespace qevercloud {
+
+class Resource;
+
+} // namespace qevercloud
+
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(ResourceInfo)
+class ResourceInfo;
 
-class Q_DECL_HIDDEN InsertHtmlUndoCommand final : public INoteEditorUndoCommand
+class InsertHtmlUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -39,35 +43,33 @@ public:
 
 public:
     InsertHtmlUndoCommand(
-        const Callback & callback, NoteEditorPrivate & noteEditor,
-        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+        Callback callback, NoteEditorPrivate & noteEditor,
+        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo,
-        const QList<Resource> & addedResources = {},
-        const QStringList & resourceFileStoragePaths = {},
+        QList<qevercloud::Resource> addedResources = {},
+        QStringList resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
 
     InsertHtmlUndoCommand(
-        const Callback & callback, NoteEditorPrivate & noteEditor,
-        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+        Callback callback, NoteEditorPrivate & noteEditor,
+        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo, const QString & text,
-        const QList<Resource> & addedResources = {},
-        const QStringList & resourceFileStoragePaths = {},
+        QList<qevercloud::Resource> addedResources = {},
+        QStringList resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
 
-    virtual ~InsertHtmlUndoCommand();
+    ~InsertHtmlUndoCommand() noexcept override;
 
-    virtual void undoImpl() override;
-    virtual void redoImpl() override;
+    void undoImpl() override;
+    void redoImpl() override;
 
 private:
-    QList<Resource> m_addedResources;
+    QList<qevercloud::Resource> m_addedResources;
     QStringList m_resourceFileStoragePaths;
     Callback m_callback;
 
-    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalUid;
+    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalId;
     ResourceInfo & m_resourceInfo;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_INSERT_HTML_UNDO_COMMAND_H

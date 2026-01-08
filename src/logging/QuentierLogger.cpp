@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,11 +20,11 @@
 
 #include "QuentierLogger_p.h"
 
-#include <qt5qevercloud/Log.h>
+#include <qevercloud/utility/Log.h>
 
 #include <QCoreApplication>
 
-#include <exception>
+#include <stdexcept>
 
 namespace quentier {
 
@@ -54,16 +54,16 @@ LogLevel QEverCloudLogLevelToQuentierLogLevel(
 class QEverCloudLogger final : public qevercloud::ILogger
 {
 public:
-    virtual bool shouldLog(
+    [[nodiscard]] bool shouldLog(
         const qevercloud::LogLevel level, const char * component) const override
     {
         Q_UNUSED(component)
 
-        auto logLevel = QEverCloudLogLevelToQuentierLogLevel(level);
+        const auto logLevel = QEverCloudLogLevelToQuentierLogLevel(level);
         return QuentierIsLogLevelActive(logLevel);
     }
 
-    virtual void log(
+    void log(
         const qevercloud::LogLevel level, const char * component,
         const char * fileName, const quint32 lineNumber, const qint64 timestamp,
         const QString & message) override
@@ -77,7 +77,7 @@ public:
             QEverCloudLogLevelToQuentierLogLevel(level));
     }
 
-    virtual void setLevel(const qevercloud::LogLevel level) override
+    void setLevel(const qevercloud::LogLevel level) override
     {
         Q_UNUSED(level)
 
@@ -85,7 +85,7 @@ public:
             "Unimplemented method QEverCloudLogger::setLevel was called");
     }
 
-    virtual qevercloud::LogLevel level() const override
+    [[nodiscard]] qevercloud::LogLevel level() const override
     {
         auto logLevel = QuentierMinLogLevel();
         switch (logLevel) {
@@ -119,8 +119,7 @@ void QuentierAddLogEntry(
     const QString & sourceFileName, const int sourceFileLineNumber,
     const QString & component, const QString & message, const LogLevel logLevel)
 {
-    auto componentFilter = QuentierLogComponentFilter();
-
+    const auto componentFilter = QuentierLogComponentFilter();
     if (componentFilter.isValid() && !component.isEmpty() &&
         !componentFilter.match(component).hasMatch())
     {
@@ -129,7 +128,7 @@ void QuentierAddLogEntry(
 
     QString relativeSourceFileName = sourceFileName;
 
-    int prefixIndex = relativeSourceFileName.indexOf(
+    auto prefixIndex = relativeSourceFileName.indexOf(
         QStringLiteral("libquentier"), Qt::CaseInsensitive);
 
     if (prefixIndex < 0) {
@@ -141,7 +140,7 @@ void QuentierAddLogEntry(
         relativeSourceFileName.remove(0, prefixIndex);
     }
     else {
-        QString appName = QCoreApplication::applicationName().toLower();
+        const QString appName = QCoreApplication::applicationName().toLower();
         prefixIndex =
             relativeSourceFileName.indexOf(appName, Qt::CaseInsensitive);
 

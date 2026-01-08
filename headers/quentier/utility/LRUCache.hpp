@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
-#define LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
+#pragma once
 
 #include <QHash>
 
 #include <cstddef>
 #include <list>
 
-namespace quentier {
+namespace quentier::utility {
 
 template <
     class Key, class Value,
@@ -32,9 +31,7 @@ template <
 class LRUCache
 {
 public:
-    LRUCache(const size_t maxSize = 100) :
-        m_container(), m_currentSize(0), m_maxSize(maxSize), m_mapper()
-    {}
+    explicit LRUCache(const std::size_t maxSize = 100) : m_maxSize{maxSize} {}
 
     using key_type = Key;
     using mapped_type = Value;
@@ -55,51 +52,57 @@ public:
     using const_pointer =
         typename std::allocator_traits<allocator_type>::const_pointer;
 
-    iterator begin()
-    {
-        return m_container.begin();
-    }
-    const_iterator begin() const
+    [[nodiscard]] iterator begin() noexcept
     {
         return m_container.begin();
     }
 
-    reverse_iterator rbegin()
+    [[nodiscard]] const_iterator begin() const noexcept
+    {
+        return m_container.begin();
+    }
+
+    [[nodiscard]] reverse_iterator rbegin() noexcept
     {
         return m_container.rbegin();
     }
-    const_reverse_iterator rbegin() const
+
+    [[nodiscard]] const_reverse_iterator rbegin() const noexcept
     {
         return m_container.rbegin();
     }
 
-    iterator end()
-    {
-        return m_container.end();
-    }
-    const_iterator end() const
+    [[nodiscard]] iterator end() noexcept
     {
         return m_container.end();
     }
 
-    reverse_iterator rend()
+    [[nodiscard]] const_iterator end() const noexcept
     {
-        return m_container.rend();
+        return m_container.end();
     }
-    const_reverse_iterator rend() const
+
+    [[nodiscard]] reverse_iterator rend() noexcept
     {
         return m_container.rend();
     }
 
-    bool empty() const
+    [[nodiscard]] const_reverse_iterator rend() const noexcept
+    {
+        return m_container.rend();
+    }
+
+    [[nodiscard]] bool empty() const noexcept
     {
         return m_container.empty();
     }
-    size_t size() const
+
+    [[nodiscard]] std::size_t size() const noexcept
     {
         return m_currentSize;
     }
-    size_t max_size() const
+
+    [[nodiscard]] std::size_t max_size() const noexcept
     {
         return m_maxSize;
     }
@@ -122,7 +125,7 @@ public:
         fixupSize();
     }
 
-    const mapped_type * get(const key_type & key) const
+    [[nodiscard]] const mapped_type * get(const key_type & key) const noexcept
     {
         auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
@@ -139,25 +142,25 @@ public:
         return &(mapperIt.value()->second);
     }
 
-    bool exists(const key_type & key)
+    [[nodiscard]] bool exists(const key_type & key) const noexcept
     {
-        auto mapperIt = m_mapper.find(key);
+        const auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
             return false;
         }
 
-        auto it = mapperIt.value();
+        const auto it = mapperIt.value();
         return (it != m_container.end());
     }
 
-    bool remove(const key_type & key)
+    bool remove(const key_type & key) noexcept
     {
-        auto mapperIt = m_mapper.find(key);
+        const auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
             return false;
         }
 
-        auto it = mapperIt.value();
+        const auto it = mapperIt.value();
         Q_UNUSED(m_container.erase(it))
         Q_UNUSED(m_mapper.erase(mapperIt))
 
@@ -168,15 +171,15 @@ public:
         return true;
     }
 
-    void setMaxSize(const size_t maxSize)
+    void setMaxSize(const std::size_t maxSize)
     {
         if (maxSize >= m_maxSize) {
             m_maxSize = maxSize;
             return;
         }
 
-        size_t diff = m_maxSize - maxSize;
-        for (size_t i = 0; (i < diff) && !m_container.empty(); ++i) {
+        std::size_t diff = m_maxSize - maxSize;
+        for (std::size_t i = 0; (i < diff) && !m_container.empty(); ++i) {
             auto lastIt = m_container.end();
             --lastIt;
 
@@ -216,12 +219,10 @@ private:
 
 private:
     mutable container_type m_container;
-    size_t m_currentSize;
-    size_t m_maxSize;
+    std::size_t m_currentSize = 0;
+    std::size_t m_maxSize;
 
     mutable QHash<Key, iterator> m_mapper;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
+} // namespace quentier::utility

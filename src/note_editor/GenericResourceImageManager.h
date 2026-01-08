@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
-#define LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
+#pragma once
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/types/Note.h>
 
 #include <QObject>
 #include <QUuid>
@@ -36,7 +36,7 @@ namespace quentier {
  * It would also listen to the current note changes and remove stale generic
  * resource images as appropriate.
  */
-class Q_DECL_HIDDEN GenericResourceImageManager final : public QObject
+class GenericResourceImageManager final : public QObject
 {
     Q_OBJECT
 public:
@@ -51,21 +51,19 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void onGenericResourceImageWriteRequest(
-        QString noteLocalUid, QString resourceLocalUid,
+        QString noteLocalId, QString resourceLocalId,
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);
 
-    void onCurrentNoteChanged(Note note);
+    void onCurrentNoteChanged(qevercloud::Note note);
 
 private:
     void removeStaleGenericResourceImageFilesFromCurrentNote();
 
 private:
     QString m_storageFolderPath;
-    std::unique_ptr<Note> m_pCurrentNote;
+    std::unique_ptr<qevercloud::Note> m_pCurrentNote;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H

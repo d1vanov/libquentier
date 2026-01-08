@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,52 +16,46 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_P_H
-#define LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_P_H
-
-#include "SpellCheckerDictionariesFinder.h"
+#pragma once
 
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Fwd.h>
 
-#include <QAtomicInt>
 #include <QHash>
+#include <QList>
 #include <QObject>
 #include <QStringList>
 #include <QUuid>
-#include <QVector>
 
 #include <memory>
 #include <utility>
 
-QT_FORWARD_DECLARE_CLASS(Hunspell)
+class Hunspell;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
-
-class Q_DECL_HIDDEN SpellCheckerPrivate final : public QObject
+class SpellCheckerPrivate final : public QObject
 {
     Q_OBJECT
 public:
     SpellCheckerPrivate(
-        FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+        utility::FileIOProcessorAsync * fileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
-
-    virtual ~SpellCheckerPrivate() override;
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<std::pair<QString, bool>> listAvailableDictionaries() const;
+    [[nodiscard]] QList<std::pair<QString, bool>> listAvailableDictionaries()
+        const;
 
-    void setAccount(const Account & account);
+    void setAccount(Account account);
 
     void enableDictionary(const QString & language);
     void disableDictionary(const QString & language);
 
-    bool checkSpell(const QString & word) const;
+    [[nodiscard]] bool checkSpell(const QString & word) const;
 
-    QStringList spellCorrectionSuggestions(
+    [[nodiscard]] QStringList spellCorrectionSuggestions(
         const QString & misSpelledWord) const;
 
     void addToUserWordlist(const QString & word);
@@ -69,7 +63,7 @@ public:
     void ignoreWord(const QString & word);
     void removeWord(const QString & word);
 
-    bool isReady() const;
+    [[nodiscard]] bool isReady() const noexcept;
 
 Q_SIGNALS:
     void ready();
@@ -81,17 +75,24 @@ Q_SIGNALS:
         QString absoluteFilePath, QByteArray data, QUuid requestId,
         bool append);
 
-private Q_SLOTS:
-    void onDictionariesFound(
-        SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName files);
-
 private:
+    struct HunspellDictionaryData
+    {
+        QString dicFile;
+        QString affFile;
+    };
+
+    using DictionariesByName = QHash<QString, HunspellDictionaryData>;
+
     void checkAndScanSystemDictionaries();
     void scanSystemDictionaries();
     void addSystemDictionary(const QString & path, const QString & name);
+    void persistFoundDictionariesData(const DictionariesByName & dictionaries);
 
     void initializeUserDictionary(const QString & userDictionaryPath);
-    bool checkUserDictionaryPath(const QString & userDictionaryPath) const;
+
+    [[nodiscard]] bool checkUserDictionaryPath(
+        const QString & userDictionaryPath) const;
 
     void checkUserDictionaryDataPendingWriting();
 
@@ -112,19 +113,19 @@ private Q_SLOTS:
         bool success, ErrorString errorDescription, QUuid requestId);
 
 private:
-    class Q_DECL_HIDDEN HunspellWrapper
+    class HunspellWrapper
     {
     public:
         void initialize(
             const QString & affFilePath, const QString & dicFilePath);
 
-        bool isEmpty() const;
+        [[nodiscard]] bool isEmpty() const noexcept;
 
-        bool spell(const QString & word) const;
-        bool spell(const QByteArray & wordData) const;
+        [[nodiscard]] bool spell(const QString & word) const;
+        [[nodiscard]] bool spell(const QByteArray & wordData) const;
 
-        QStringList suggestions(const QString & word) const;
-        QStringList suggestions(const QByteArray & wordData) const;
+        [[nodiscard]] QStringList suggestions(const QString & word) const;
+        [[nodiscard]] QStringList suggestions(const QByteArray & wordData) const;
 
         void add(const QString & word);
         void add(const QByteArray & wordData);
@@ -133,28 +134,23 @@ private:
         void remove(const QByteArray & wordData);
 
     private:
-        std::shared_ptr<Hunspell> m_pHunspell;
+        std::shared_ptr<Hunspell> m_hunspell;
     };
 
-    class Q_DECL_HIDDEN Dictionary
+    class Dictionary
     {
     public:
-        Dictionary();
-
-        bool isEmpty() const;
+        [[nodiscard]] bool isEmpty() const noexcept;
 
     public:
         HunspellWrapper m_hunspellWrapper;
         QString m_dictionaryPath;
-        bool m_enabled;
+        bool m_enabled = true;
     };
 
 private:
-    FileIOProcessorAsync * m_pFileIOProcessorAsync;
-
+    utility::FileIOProcessorAsync * m_fileIOProcessorAsync;
     Account m_currentAccount;
-
-    std::shared_ptr<QAtomicInt> m_pDictionariesFinderStopFlag;
 
     // Hashed by the language code
     QHash<QString, Dictionary> m_systemDictionaries;
@@ -172,5 +168,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_P_H

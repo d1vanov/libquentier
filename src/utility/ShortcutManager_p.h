@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,42 +16,40 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_PRIVATE_H
-#define LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_PRIVATE_H
+#pragma once
 
 #include <quentier/types/Account.h>
+#include <quentier/utility/ShortcutManager.h>
 
 #include <QKeySequence>
 #include <QObject>
 
-namespace quentier {
+namespace quentier::utility {
 
-QT_FORWARD_DECLARE_CLASS(ShortcutManager)
-
-class Q_DECL_HIDDEN ShortcutManagerPrivate final : public QObject
+class ShortcutManager::ShortcutManagerPrivate final : public QObject
 {
     Q_OBJECT
 public:
     explicit ShortcutManagerPrivate(ShortcutManager & shortcutManager);
 
-    QKeySequence shortcut(
-        const int key, const Account & account, const QString & context) const;
+    [[nodiscard]] QKeySequence shortcut(
+        int key, const Account & account, const QString & context) const;
 
-    QKeySequence shortcut(
+    [[nodiscard]] QKeySequence shortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
-    QKeySequence defaultShortcut(
-        const int key, const Account & account, const QString & context) const;
+    [[nodiscard]] QKeySequence defaultShortcut(
+        int key, const Account & account, const QString & context) const;
 
-    QKeySequence defaultShortcut(
+    [[nodiscard]] QKeySequence defaultShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
-    QKeySequence userShortcut(
-        const int key, const Account & account, const QString & context) const;
+    [[nodiscard]] QKeySequence userShortcut(
+        int key, const Account & account, const QString & context) const;
 
-    QKeySequence userShortcut(
+    [[nodiscard]] QKeySequence userShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
@@ -66,33 +64,31 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void setUserShortcut(
-        int key, QKeySequence shortcut, const Account & account,
+        int key, const QKeySequence & shortcut, const Account & account,
         QString context);
 
     void setNonStandardUserShortcut(
-        QString nonStandardKey, QKeySequence shortcut, const Account & account,
-        QString context);
+        QString nonStandardKey, const QKeySequence & shortcut,
+        const Account & account, QString context);
 
     void setDefaultShortcut(
-        int key, QKeySequence shortcut, const Account & account,
+        int key, const QKeySequence & shortcut, const Account & account,
         QString context);
 
     void setNonStandardDefaultShortcut(
-        QString nonStandardKey, QKeySequence shortcut, const Account & account,
-        QString context);
+        QString nonStandardKey, const QKeySequence & shortcut,
+        const Account & account, QString context);
 
 private:
-    QString keyToString(const int key) const;
+    [[nodiscard]] QString keyToString(int key) const;
 
-    QString shortcutGroupString(
-        const QString & context, const bool defaultShortcut,
-        const bool nonStandardShortcut) const;
+    [[nodiscard]] QString shortcutGroupString(
+        const QString & context, bool defaultShortcut,
+        bool nonStandardShortcut) const;
 
 private:
     ShortcutManager * const q_ptr;
     Q_DECLARE_PUBLIC(ShortcutManager)
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_PRIVATE_H
+} // namespace quentier::utility

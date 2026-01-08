@@ -11,31 +11,31 @@ Prebuilt versions of the library can be downloaded from the following locations:
      * [MSVC 2015 32 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt513-VS2015_x86.zip)
      * [MSVC 2017 64 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt513-VS2017_x64.zip)
    * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
-   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
+   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 20.04 with Qt 5.12
  * Unstable version:
    * Windows binaries:
      * [MSVC 2015 32 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt513-VS2015_x86.zip)
      * [MSVC 2017 64 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt513-VS2017_x64.zip)
    * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
-   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
+   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 20.04 with Qt 5.12
 
 There are also repositories from which libquentier can be installed conveniently for several Linux distributions:
 
  * Stable version:
-   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-master&package=libquentier) for Fedora 26, Fedora 27, OpenSUSE Leap 42.3, OpenSUSE Tumbleweed, OpenSUSE Leap 15.0 and Arch Linux repositories
-   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-master&package=libqt5quentier0) for Debian 9.0 repositories
-   * See [this PPA](https://launchpad.net/~d1vanov/+archive/ubuntu/quentier-stable) for repositories of multiple Ubuntu versions
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-master&package=libquentier) for Fedora, OpenSUSE Leap, OpenSUSE Tumbleweed and Arch Linux repositories
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-master&package=libqt5quentier0) for Debian repositories
+   * See [this PPA](https://launchpad.net/~d1vanov/+archive/ubuntu/quentier-stable) for Ubuntu repositories
  * Unstable version:
-   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-development&package=libquentier) for Fedora 26, Fedora 27, OpenSUSE Leap 42.3, OpenSUSE Tumbleweed, OpenSUSE Leap 15.0 and Arch Linux repositories
-   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-development&package=libqt5quentier0) for Debian 9.0 repositories
-   * See [this PPA](https://launchpad.net/~d1vanov/+archive/ubuntu/quentier-development) for repositories of multiple Ubuntu versions
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-development&package=libquentier) for Fedora, OpenSUSE Leap, OpenSUSE Tumbleweed and Arch Linux repositories
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-development&package=libqt5quentier0) for Debian repositories
+   * See [this PPA](https://launchpad.net/~d1vanov/+archive/ubuntu/quentier-development) for Ubuntu repositories
 
 Note that you need to pick **either** stable or unstable version and not intermix the two! Stable version corresponds to latest version from `master` branch, unstable version corresponds to `development` branch.
 
 ## Compatibility
 
-Libquentier works on Linux, OS X / macOS and Windows. It can be built Qt framework starting from 5.5.1,
-and up to the latest and greatest Qt 5.x. The major part of libquentier is written in C++14 standard.
+Libquentier works on Linux, OS X / macOS and Windows. It can be built with Qt framework >= 5.12.0.
+The major part of libquentier is written in C++17 standard.
 Libquentier should be easy to build on any recent enough Linux distro. The oldest supported distro
 is considered to be the oldest LTS Ubuntu version.
 
@@ -45,9 +45,9 @@ so things might occasionally break on Windows and macOS platforms.
 ## Dependencies
 
 Dependencies include the following Qt modules:
- * For Qt5: Qt5Core, Qt5Gui, Qt5Widgets, Qt5Network, Qt5PrintSupport, Qt5Xml, Qt5Sql, Qt5Test, Qt5LinguistTools + Qt5DBus on Linux platform only + optionally either Qt5WebKit and Qt5WebKitWidgets or Qt5WebEngine (and Qt5WebEngineCore for Qt >= 5.6), Qt5WebEngineWidgets, Qt5WebSockets and Qt5WebChannel
+ * For Qt5: Qt5Core, Qt5Gui, Qt5Widgets, Qt5Network, Qt5PrintSupport, Qt5Xml, Qt5Sql, Qt5Test, Qt5LinguistTools + Qt5DBus on Linux platform only + optionally either Qt5WebEngine, Qt5WebEngineCore, Qt5WebEngineWidgets, Qt5WebSockets and Qt5WebChannel (if the library is built with note editor and/or authentication manager)
 
-The dependency on QtWebKit or QtWebEngine for Qt4 and Qt5 is enabled by default but can be disabled by passing special arguments to `CMake`, see the details below.
+The dependency on Qt5WebEngine is enabled by default but can be disabled by passing special arguments to `CMake`, see the details below.
 
 Non-Qt dependendencies of libquentier are the following:
  * libxml2 - for validation of Evernote notes ENML against the DTD
@@ -100,18 +100,13 @@ These pieces of functionality include:
  * Note editor - the widget encapsulating all the details of presenting the editable note with ENML-formatted text and resources (attachments)
  * OAuth authentication - the library's built-in implementation of `IAuthenticationManager` interface using `QEverCloud`'s authentication facilities
 
-The `CMake` options allowing to configure the build to omit the listed libquentier's components and thus the need for `QtWebKit` or `QtWebEngine` are the following:
+The `CMake` options allowing to configure the build to omit the listed libquentier's components and thus the need for `QtWebEngine` are the following:
  * `BUILD_WITH_NOTE_EDITOR`
  * `BUILD_WITH_AUTHENTICATION_MANAGER`
 
-In order to force the build without `QtWebKit` or `QtWebEngine`, set both options to `NO`:
+In order to force the build without `QtWebEngine`, set both options to `NO`:
 ```
 cmake -DBUILD_WITH_NOTE_EDITOR=NO -DBUILD_WITH_AUTHENTICATION_MANAGER=NO <...>
-```
-
-One other related option controls which of two Qt's web backends to use with Qt5: by default `QtWebEngine` is searched for Qt >= 5.5. But one can force the use of `QtWebKit` instead of `QtWebEngine` with `CMake` option `USE_QT5_WEBKIT`:
-```
-cmake -DUSE_QT5_WEBKIT=YES <...>
 ```
 
 If you want to point `CMake` to some particular Qt installation in non-standard location, you can do it with `CMAKE_PREFIX_PATH` option:

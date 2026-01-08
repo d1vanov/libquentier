@@ -1,0 +1,128 @@
+/*
+ * Copyright 2023-2024 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "TestData.h"
+
+#include <quentier/synchronization/types/Fwd.h>
+
+#include <QFlags>
+
+#include <optional>
+
+////////////////////////////////////////////////////////////////////////////////
+
+class QDebug;
+class QTextStream;
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace quentier {
+
+class Account;
+
+} // namespace quentier
+
+namespace quentier::local_storage {
+
+class ILocalStorage;
+
+} // namespace quentier::local_storage
+
+namespace quentier::synchronization::tests {
+
+class FakeSyncStateStorage;
+class FakeNoteStoreBackend;
+
+} // namespace quentier::synchronization::tests
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace quentier::synchronization::tests {
+
+enum class DataItemType
+{
+    SavedSearch = 1 << 0,
+    Tag = 1 << 1,
+    Notebook = 1 << 2,
+    Note = 1 << 3,
+    Resource = 1 << 4,
+};
+
+QTextStream & operator<<(QTextStream & strm, DataItemType type);
+QDebug & operator<<(QDebug & dbg, DataItemType type);
+
+Q_DECLARE_FLAGS(DataItemTypes, DataItemType);
+Q_DECLARE_OPERATORS_FOR_FLAGS(DataItemTypes);
+
+QTextStream & operator<<(QTextStream & strm, DataItemTypes types);
+QDebug & operator<<(QDebug & dbg, DataItemTypes types);
+
+enum class ItemGroup
+{
+    Base = 1 << 0,
+    New = 1 << 1,
+    Modified = 1 << 2,
+};
+
+QTextStream & operator<<(QTextStream & strm, ItemGroup group);
+QDebug & operator<<(QDebug & dbg, ItemGroup group);
+
+Q_DECLARE_FLAGS(ItemGroups, ItemGroup);
+Q_DECLARE_OPERATORS_FOR_FLAGS(ItemGroups);
+
+QTextStream & operator<<(QTextStream & strm, ItemGroups groups);
+QDebug & operator<<(QDebug & dbg, ItemGroups groups);
+
+enum class ItemSource
+{
+    UserOwnAccount = 1 << 0,
+    LinkedNotebook = 1 << 1,
+};
+
+QTextStream & operator<<(QTextStream & strm, ItemSource source);
+QDebug & operator<<(QDebug & dbg, ItemSource source);
+
+Q_DECLARE_FLAGS(ItemSources, ItemSource);
+Q_DECLARE_OPERATORS_FOR_FLAGS(ItemSources);
+
+QTextStream & operator<<(QTextStream & strm, ItemSources sources);
+QDebug & operator<<(QDebug & dbg, ItemSources sources);
+
+void setupTestData(
+    DataItemTypes dataItemTypes, ItemGroups itemGroups, ItemSources itemSources,
+    DataItemTypes expungedDataItemTypes, ItemSources expungedItemSources,
+    quint16 port, TestData & testData);
+
+void setupNoteStoreBackend(
+    TestData & testData, DataItemTypes dataItemTypes, ItemGroups itemGroups,
+    ItemSources itemSources, FakeNoteStoreBackend & noteStoreBackend);
+
+void setupLocalStorage(
+    const TestData & testData, DataItemTypes dataItemTypes,
+    ItemGroups itemGroups, ItemSources itemSources,
+    local_storage::ILocalStorage & localStorage);
+
+[[nodiscard]] ISyncStatePtr setupSyncState(
+    const TestData & testData, DataItemTypes dataItemTypes,
+    ItemGroups itemGroups, ItemSources itemSources,
+    DataItemTypes expungedDataItemTypes, ItemSources expungedItemSources,
+    std::optional<qevercloud::Timestamp> lastUpdateTimestamp = std::nullopt);
+
+} // namespace quentier::synchronization::tests

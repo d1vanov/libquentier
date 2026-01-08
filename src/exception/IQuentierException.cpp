@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,29 +16,52 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/exception/IQuentierException.h>
+
+#include <cstddef>
 #include <cstring>
 #include <ostream>
-
-#include <quentier/exception/IQuentierException.h>
 
 namespace quentier {
 
 #define INIT_WHAT_MESSAGE()                                                    \
-    QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit();           \
-    int size = bytes.size();                                                   \
+    const QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit();     \
+    const auto size = bytes.size();                                            \
     if (size >= 0) {                                                           \
-        size_t usize = static_cast<size_t>(size);                              \
+        std::size_t usize = static_cast<std::size_t>(size);                    \
         m_whatMessage = new char[usize + 1];                                   \
         Q_UNUSED(strncpy(m_whatMessage, bytes.constData(), usize))             \
         m_whatMessage[usize] = '\0';                                           \
     }
 
-IQuentierException::IQuentierException(const ErrorString & message) :
-    Printable(), m_message(message), m_whatMessage(nullptr){INIT_WHAT_MESSAGE()}
+IQuentierException::IQuentierException(ErrorString message) :
+    m_message(std::move(message)){INIT_WHAT_MESSAGE()}
 
     IQuentierException::~IQuentierException() noexcept
 {
     delete[] m_whatMessage;
+}
+
+IQuentierException::IQuentierException(const IQuentierException & other) :
+    m_message(other.m_message){INIT_WHAT_MESSAGE()}
+
+    IQuentierException
+    & IQuentierException::operator=(const IQuentierException & other)
+{
+    if (this != &other) {
+        m_message = other.m_message;
+
+        delete m_whatMessage;
+        m_whatMessage = nullptr;
+        INIT_WHAT_MESSAGE()
+    }
+
+    return *this;
+}
+
+ErrorString IQuentierException::errorMessage() const
+{
+    return m_message;
 }
 
 QString IQuentierException::localizedErrorMessage() const
@@ -61,24 +84,6 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
     strm << "\n <" << exceptionDisplayName() << ">";
     strm << "\n message: " << m_message.nonLocalizedString();
     return strm;
-}
-
-IQuentierException::IQuentierException(const IQuentierException & other) :
-    Printable(other), m_message(other.m_message),
-    m_whatMessage(nullptr){INIT_WHAT_MESSAGE()}
-
-        IQuentierException
-        & IQuentierException::operator=(const IQuentierException & other)
-{
-    if (this != &other) {
-        m_message = other.m_message;
-
-        delete m_whatMessage;
-        m_whatMessage = nullptr;
-        INIT_WHAT_MESSAGE()
-    }
-
-    return *this;
 }
 
 } // namespace quentier

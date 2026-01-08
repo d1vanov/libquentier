@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,17 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_RESOURCE_RECOGNITION_INDICES_PARSING_TESTS_H
-#define LIB_QUENTIER_TESTS_RESOURCE_RECOGNITION_INDICES_PARSING_TESTS_H
+#pragma once
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
-bool parseResourceRecognitionIndicesAndItemsTest(QString & error);
+[[nodiscard]] bool parseResourceRecognitionIndicesAndItemsTest(QString & error);
 
-} // namespace test
-} // namespace quentier
-
-#endif // LIB_QUENTIER_TESTS_RESOURCE_RECOGNITION_INDICES_PARSING_TESTS_H
+} // namespace quentier::test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIRECTED_GRAPH_DEPTH_FIRST_SEARCH_H
-#define LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIRECTED_GRAPH_DEPTH_FIRST_SEARCH_H
+#pragma once
 
 #include "TagDirectedGraph.h"
 
@@ -28,34 +27,35 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN TagDirectedGraphDepthFirstSearch
+class TagDirectedGraphDepthFirstSearch
 {
 public:
-    TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph);
+    TagDirectedGraphDepthFirstSearch(TagDirectedGraph graph);
 
-    const TagDirectedGraph & graph() const;
-    bool reached(const QString & tagId) const;
+    [[nodiscard]] const TagDirectedGraph & graph() const noexcept;
+    [[nodiscard]] bool reached(const QString & tagId) const noexcept;
 
-    bool hasCycle() const;
-    const QStack<QString> & cycle() const;
+    [[nodiscard]] bool hasCycle() const noexcept;
+    [[nodiscard]] const QStack<QString> & cycle() const noexcept;
 
-    const QQueue<QString> & tagIdsInPreOrder() const
+    [[nodiscard]] const QQueue<QString> & tagIdsInPreOrder() const noexcept
     {
         return m_tagIdsInPreOrder;
     }
 
-    const QQueue<QString> & tagIdsInPostOrder() const
+    [[nodiscard]] const QQueue<QString> & tagIdsInPostOrder() const noexcept
     {
         return m_tagIdsInPostOrder;
     }
 
-    const QStack<QString> & tagIdsInReversePostOrder() const
+    [[nodiscard]] const QStack<QString> & tagIdsInReversePostOrder()
+        const noexcept
     {
         return m_tagIdsInReversePostOrder;
     }
 
 private:
-    void depthFirstSearch(const QString & sourceTagGuid);
+    void depthFirstSearch(const QString & sourceTagId);
 
 private:
     TagDirectedGraph m_graph;
@@ -70,5 +70,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIRECTED_GRAPH_DEPTH_FIRST_SEARCH_H

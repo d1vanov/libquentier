@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,18 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_PRINTABLE_H
-#define LIB_QUENTIER_UTILITY_PRINTABLE_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 #include <QDebug>
 #include <QHash>
+#include <QIODevice>
 #include <QSet>
 #include <QString>
 #include <QTextStream>
 
-namespace quentier {
+namespace quentier::utility {
 
 /**
  * @brief The Printable class is the interface for Quentier's internal classes
@@ -37,29 +37,25 @@ namespace quentier {
 class QUENTIER_EXPORT Printable
 {
 public:
+    virtual ~Printable() noexcept;
+
     virtual QTextStream & print(QTextStream & strm) const = 0;
 
-    virtual const QString toString() const;
+    [[nodiscard]] QString toString() const;
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, const Printable & printable);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & debug, const Printable & printable);
-
-protected:
-    Printable();
-    Printable(const Printable & other);
-    Printable & operator=(const Printable & other);
-    virtual ~Printable();
 };
 
-} // namespace quentier
+} // namespace quentier::utility
 
 // printing operators for existing classes not inheriting from Printable
 
 template <class T>
-const QString ToString(const T & object)
+[[nodiscard]] QString ToString(const T & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -68,13 +64,13 @@ const QString ToString(const T & object)
 }
 
 template <class TKey, class TValue>
-const QString ToString(const QHash<TKey, TValue> & object)
+[[nodiscard]] QString ToString(const QHash<TKey, TValue> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << QStringLiteral("QHash: \n");
 
-    typedef typename QHash<TKey, TValue>::const_iterator CIter;
+    using CIter = typename QHash<TKey, TValue>::const_iterator;
     CIter hashEnd = object.end();
     for (CIter it = object.begin(); it != hashEnd; ++it) {
         strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ")
@@ -84,13 +80,13 @@ const QString ToString(const QHash<TKey, TValue> & object)
 }
 
 template <class T>
-const QString ToString(const QSet<T> & object)
+[[nodiscard]] QString ToString(const QSet<T> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << QStringLiteral("QSet: \n");
 
-    typedef typename QSet<T>::const_iterator CIter;
+    using CIter = typename QSet<T>::const_iterator;
     CIter setEnd = object.end();
     for (CIter it = object.begin(); it != setEnd; ++it) {
         strm << QStringLiteral("[") << *it << QStringLiteral("];\n");
@@ -107,5 +103,3 @@ const QString ToString(const QSet<T> & object)
         return debug;                                                          \
     }                                                                          \
     // QUENTIER_DECLARE_PRINTABLE
-
-#endif // LIB_QUENTIER_UTILITY_PRINTABLE_H

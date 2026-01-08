@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@
 
 #include <windows.h>
 
-namespace quentier {
+namespace quentier::utility {
 
 qint64 SysInfo::pageSize()
 {
@@ -41,7 +41,7 @@ qint64 SysInfo::pageSize()
 qint64 SysInfo::freeMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     MEMORYSTATUSEX memory_status;
     ZeroMemory(&memory_status, sizeof(MEMORYSTATUSEX));
@@ -57,7 +57,7 @@ qint64 SysInfo::freeMemory()
 qint64 SysInfo::totalMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     MEMORYSTATUSEX memory_status;
     ZeroMemory(&memory_status, sizeof(MEMORYSTATUSEX));
@@ -77,4 +77,4 @@ QString SysInfo::stackTrace()
         "patches are welcome");
 }
 
-} // namespace quentier
+} // namespace quentier::utility

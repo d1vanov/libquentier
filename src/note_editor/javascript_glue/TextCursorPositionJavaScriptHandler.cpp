@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,8 +21,7 @@
 namespace quentier {
 
 TextCursorPositionJavaScriptHandler::TextCursorPositionJavaScriptHandler(
-    QObject * parent) :
-    QObject(parent)
+    QObject * parent) : QObject(parent)
 {}
 
 void TextCursorPositionJavaScriptHandler::onTextCursorPositionChange()
@@ -31,100 +30,101 @@ void TextCursorPositionJavaScriptHandler::onTextCursorPositionChange()
 }
 
 void TextCursorPositionJavaScriptHandler::setOnImageResourceState(
-    bool state, QString resourceHash)
+    const bool state, const QString resourceHash) // NOLINT
 {
     Q_EMIT textCursorPositionOnImageResourceState(
         state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void TextCursorPositionJavaScriptHandler::setOnNonImageResourceState(
-    bool state, QString resourceHash)
+    const bool state, const QString resourceHash) // NOLINT
 {
     Q_EMIT textCursorPositionOnNonImageResourceState(
         state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void TextCursorPositionJavaScriptHandler::setOnEnCryptTagState(
-    bool state, QString encryptedText, QString cipher, QString length)
+    const bool state, QString encryptedText, QString cipher, QString length)
 {
     Q_EMIT textCursorPositionOnEnCryptTagState(
-        state, encryptedText, cipher, length);
+        state, std::move(encryptedText), std::move(cipher), std::move(length));
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionBoldState(
-    bool bold)
+    const bool bold)
 {
     Q_EMIT textCursorPositionBoldState(bold);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionItalicState(
-    bool italic)
+    const bool italic)
 {
     Q_EMIT textCursorPositionItalicState(italic);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionUnderlineState(
-    bool underline)
+    const bool underline)
 {
     Q_EMIT textCursorPositionUnderlineState(underline);
 }
 
 void TextCursorPositionJavaScriptHandler::
-    setTextCursorPositionStrikethroughState(bool strikethrough)
+    setTextCursorPositionStrikethroughState(const bool strikethrough)
 {
     Q_EMIT textCursorPositionStrikethroughState(strikethrough);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignLeftState(
-    bool state)
+    const bool state)
 {
     Q_EMIT textCursorPositionAlignLeftState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignCenterState(
-    bool state)
+    const bool state)
 {
     Q_EMIT textCursorPositionAlignCenterState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignRightState(
-    bool state)
+    const bool state)
 {
     Q_EMIT textCursorPositionAlignRightState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignFullState(
-    bool state)
+    const bool state)
 {
     Q_EMIT textCursorPositionAlignFullState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::
-    setTextCursorPositionInsideOrderedListState(bool insideOrderedList)
+    setTextCursorPositionInsideOrderedListState(const bool insideOrderedList)
 {
     Q_EMIT textCursorPositionInsideOrderedListState(insideOrderedList);
 }
 
 void TextCursorPositionJavaScriptHandler::
-    setTextCursorPositionInsideUnorderedListState(bool insideUnorderedList)
+    setTextCursorPositionInsideUnorderedListState(
+        const bool insideUnorderedList)
 {
     Q_EMIT textCursorPositionInsideUnorderedListState(insideUnorderedList);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideTableState(
-    bool insideTable)
+    const bool insideTable)
 {
     Q_EMIT textCursorPositionInsideTableState(insideTable);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionFontName(
-    QString fontSize)
+    QString name)
 {
-    Q_EMIT textCursorPositionFontName(fontSize);
+    Q_EMIT textCursorPositionFontName(std::move(name));
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionFontSize(
-    int fontSize)
+    const int fontSize)
 {
     Q_EMIT textCursorPositionFontSize(fontSize);
 }

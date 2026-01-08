@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,79 +16,72 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DECRYPTION_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_DECRYPTION_DIALOG_H
+#pragma once
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/EncryptionManager.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
 
 #include <QDialog>
 
 #include <memory>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(DecryptionDialog)
-}
+
+class DecryptionDialog;
+
+} // namespace Ui
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-
-class Q_DECL_HIDDEN DecryptionDialog final : public QDialog
+class DecryptionDialog final : public QDialog
 {
     Q_OBJECT
 public:
     explicit DecryptionDialog(
-        const QString & encryptedText, const QString & cipher,
-        const QString & hint, const size_t keyLength, const Account & account,
-        std::shared_ptr<EncryptionManager> encryptionManager,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+        QString encryptedText, utility::IEncryptor::Cipher cipher, QString hint,
+        Account account, utility::IEncryptorPtr encryptor,
+        enml::IDecryptedTextCachePtr decryptedTextCache,
         QWidget * parent = nullptr, bool decryptPermanentlyFlag = false);
 
-    virtual ~DecryptionDialog();
+    ~DecryptionDialog() noexcept override;
 
-    QString passphrase() const;
-    bool rememberPassphrase() const;
-    bool decryptPermanently() const;
-
-    QString decryptedText() const;
+    [[nodiscard]] QString passphrase() const noexcept;
+    [[nodiscard]] bool rememberPassphrase() const noexcept;
+    [[nodiscard]] bool decryptPermanently() const noexcept;
+    [[nodiscard]] QString decryptedText() const noexcept;
 
 Q_SIGNALS:
     void decryptionAccepted(
-        QString cipher, size_t keyLength, QString encryptedText,
+        QString encryptedText, utility::IEncryptor::Cipher cipher,
         QString passphrase, QString decryptedText, bool rememberPassphrase,
         bool decryptPermanently);
 
 private Q_SLOTS:
     void setHint(const QString & hint);
-    void setRememberPassphraseDefaultState(const bool checked);
+    void setRememberPassphraseDefaultState(bool checked);
     void onRememberPassphraseStateChanged(int checked);
     void onShowPasswordStateChanged(int checked);
 
     void onDecryptPermanentlyStateChanged(int checked);
 
-    virtual void accept() override;
+    void accept() override;
 
 private:
     void setError(const ErrorString & error);
 
 private:
-    Ui::DecryptionDialog * m_pUI;
+    const utility::IEncryptorPtr m_encryptor;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
+
+    Ui::DecryptionDialog * m_ui;
     QString m_encryptedText;
-    QString m_cipher;
+    utility::IEncryptor::Cipher m_cipher;
     QString m_hint;
-
-    QString m_cachedDecryptedText;
-
+    QString m_decryptedText;
     Account m_account;
-
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
-
-    size_t m_keyLength;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DECRYPTION_DIALOG_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,36 +16,33 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
-#define LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
+#pragma once
 
 #include <QDialog>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(RenameResourceDialog)
+class RenameResourceDialog;
 }
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RenameResourceDialog final : public QDialog
+class RenameResourceDialog final : public QDialog
 {
     Q_OBJECT
 public:
     explicit RenameResourceDialog(
         const QString & initialResourceName, QWidget * parent = nullptr);
 
-    virtual ~RenameResourceDialog();
+    ~RenameResourceDialog() noexcept override;
 
 Q_SIGNALS:
     void renameAccepted(QString newResourceName);
 
 private Q_SLOTS:
-    virtual void accept() override;
+    void accept() override;
 
 private:
     Ui::RenameResourceDialog * m_pUI;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H

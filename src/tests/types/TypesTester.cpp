@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,18 +21,17 @@
 #include "ResourceRecognitionIndicesParsingTest.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/Note.h>
+#include <quentier/types/NoteUtils.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Resource.h>
 #include <quentier/utility/SysInfo.h>
 
 #include <QApplication>
+#include <QTest>
 #include <QTextStream>
-#include <QtTest/QTest>
 
 #define CATCH_EXCEPTION()                                                      \
     catch (const std::exception & exception) {                                 \
-        SysInfo sysInfo;                                                       \
+        utility::SysInfo sysInfo;                                              \
         QFAIL(qPrintable(                                                      \
             QStringLiteral("Caught exception: ") +                             \
             QString::fromUtf8(exception.what()) +                              \
@@ -40,19 +39,19 @@
     }
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";
     }
 }
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 TypesTester::TypesTester(QObject * parent) : QObject(parent) {}
 
-TypesTester::~TypesTester() {}
+TypesTester::~TypesTester() = default;
 
 void TypesTester::init()
 {
@@ -69,56 +68,65 @@ void TypesTester::noteContainsToDoTest()
             "Completed item<en-todo/>Not yet "
             "completed item</en-note>");
 
-        Note note;
-        note.setContent(noteContent);
-
-        QString error =
+        const QString error =
             QStringLiteral("Wrong result of Note's containsToDo method");
 
-        QVERIFY2(note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
+        QVERIFY2(
+            noteContentContainsCheckedToDo(noteContent), qPrintable(error));
+
+        QVERIFY2(
+            noteContentContainsUncheckedToDo(noteContent), qPrintable(error));
+
+        QVERIFY2(noteContentContainsToDo(noteContent), qPrintable(error));
 
         noteContent = QStringLiteral(
             "<en-note><h1>Hello, world!</h1>"
             "<en-todo checked = \"true\"/>"
             "Completed item</en-note>");
 
-        note.setContent(noteContent);
+        QVERIFY2(
+            noteContentContainsCheckedToDo(noteContent), qPrintable(error));
 
-        QVERIFY2(note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(!note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
+        QVERIFY2(
+            !noteContentContainsUncheckedToDo(noteContent), qPrintable(error));
+
+        QVERIFY2(noteContentContainsToDo(noteContent), qPrintable(error));
 
         noteContent = QStringLiteral(
             "<en-note><h1>Hello, world!</h1><en-todo/>"
             "Not yet completed item</en-note>");
 
-        note.setContent(noteContent);
+        QVERIFY2(
+            !noteContentContainsCheckedToDo(noteContent), qPrintable(error));
 
-        QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
+        QVERIFY2(
+            noteContentContainsUncheckedToDo(noteContent), qPrintable(error));
+
+        QVERIFY2(noteContentContainsToDo(noteContent), qPrintable(error));
 
         noteContent = QStringLiteral(
             "<en-note><h1>Hello, world!</h1>"
             "<en-todo checked = \"false\"/>"
             "Not yet completed item</en-note>");
 
-        note.setContent(noteContent);
+        QVERIFY2(
+            !noteContentContainsCheckedToDo(noteContent), qPrintable(error));
 
-        QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
+        QVERIFY2(
+            noteContentContainsUncheckedToDo(noteContent), qPrintable(error));
+
+        QVERIFY2(noteContentContainsToDo(noteContent), qPrintable(error));
 
         noteContent =
             QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
 
-        note.setContent(noteContent);
+        QVERIFY2(
+            !noteContentContainsCheckedToDo(noteContent), qPrintable(error));
 
-        QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(!note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(!note.containsTodo(), qPrintable(error));
+        QVERIFY2(
+            !noteContentContainsUncheckedToDo(noteContent), qPrintable(error));
+
+        QVERIFY2(!noteContentContainsToDo(noteContent), qPrintable(error));
     }
     CATCH_EXCEPTION();
 }
@@ -132,31 +140,24 @@ void TypesTester::noteContainsEncryptionTest()
             "NKLHX5yK1MlpzemJQijAN6C4545s2EODx"
             "Q8Bg1r==</en-crypt></en-note>");
 
-        Note note;
-        note.setContent(noteContent);
-
-        QString error =
+        const QString error =
             QStringLiteral("Wrong result of Note's containsEncryption method");
 
-        QVERIFY2(note.containsEncryption(), qPrintable(error));
+        QVERIFY2(
+            noteContentContainsEncryptedFragments(noteContent),
+            qPrintable(error));
 
-        QString noteContentWithoutEncryption =
+        const QString noteContentWithoutEncryption =
             QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
 
-        note.setContent(noteContentWithoutEncryption);
+        QVERIFY2(
+            !noteContentContainsEncryptedFragments(
+                noteContentWithoutEncryption),
+            qPrintable(error));
 
-        QVERIFY2(!note.containsEncryption(), qPrintable(error));
-
-        note.clear();
-        note.setContent(noteContentWithoutEncryption);
-
-        QVERIFY2(!note.containsEncryption(), qPrintable(error));
-
-        note.setContent(noteContent);
-        QVERIFY2(note.containsEncryption(), qPrintable(error));
-
-        note.clear();
-        QVERIFY2(!note.containsEncryption(), qPrintable(error));
+        QVERIFY2(
+            !noteContentContainsEncryptedFragments(QString{}),
+            qPrintable(error));
     }
     CATCH_EXCEPTION();
 }
@@ -165,11 +166,10 @@ void TypesTester::resourceRecognitionIndicesParsingTest()
 {
     try {
         QString error;
-        bool res = parseResourceRecognitionIndicesAndItemsTest(error);
+        const bool res = parseResourceRecognitionIndicesAndItemsTest(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

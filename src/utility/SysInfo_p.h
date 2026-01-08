@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,14 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBQUENTIER_UTILITY_SYS_INFO_PRIVATE_H
-#define LIBQUENTIER_UTILITY_SYS_INFO_PRIVATE_H
+#pragma once
+
+#include <quentier/utility/SysInfo.h>
 
 #include <QMutex>
 
-namespace quentier {
+namespace quentier::utility {
 
-class Q_DECL_HIDDEN SysInfoPrivate
+class SysInfo::SysInfoPrivate
 {
 public:
     SysInfoPrivate() = default;
@@ -31,6 +32,4 @@ public:
     QMutex m_mutex;
 };
 
-} // namespace quentier
-
-#endif // LIBQUENTIER_UTILITY_SYS_INFO_PRIVATE_H
+} // namespace quentier::utility

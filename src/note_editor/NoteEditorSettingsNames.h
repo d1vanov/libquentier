@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H
-#define LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H
+#pragma once
 
 #define NOTE_EDITOR_SETTINGS_NAME QStringLiteral("NoteEditor")
 
@@ -35,5 +34,3 @@
 
 // 100 Mb in bytes
 #define NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_DEFAULT_THRESHOLD (104857600)
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H

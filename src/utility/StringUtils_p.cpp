@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,41 +21,47 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Compat.h>
 
-#include <QRegExp>
+#include <QRegularExpression>
 
-namespace quentier {
+#include <utility>
 
-StringUtilsPrivate::StringUtilsPrivate()
+namespace quentier::utility {
+
+StringUtils::StringUtilsPrivate::StringUtilsPrivate()
 {
     initialize();
 }
 
-void StringUtilsPrivate::removePunctuation(
-    QString & str, const QVector<QChar> & charactersToPreserve) const
+void StringUtils::StringUtilsPrivate::removePunctuation(
+    QString & str, const QList<QChar> & charactersToPreserve) const
 {
     QString filterStr =
         QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
 
-    for (const auto & chr: qAsConst(charactersToPreserve)) {
+    for (const auto & chr: std::as_const(charactersToPreserve)) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         int pos = -1;
+#else
+        qsizetype pos = -1;
+#endif
         while ((pos = filterStr.indexOf(chr)) >= 0) {
             filterStr.remove(pos, 1);
         }
     }
 
-    QRegExp punctuationFilter(filterStr);
+    static const QRegularExpression punctuationFilter{filterStr};
     str.remove(punctuationFilter);
 }
 
-void StringUtilsPrivate::removeDiacritics(QString & str) const
+void StringUtils::StringUtilsPrivate::removeDiacritics(QString & str) const
 {
     QNTRACE("utility:string", "str before normalizing by KD form: " << str);
     str = str.normalized(QString::NormalizationForm_KD);
     QNTRACE("utility:string", "str after normalizing by KD form: " << str);
 
     for (int i = 0; i < str.length(); ++i) {
-        QChar currentCharacter = str[i];
-        auto category = currentCharacter.category();
+        const QChar currentCharacter = str[i];
+        const auto category = currentCharacter.category();
         if ((category == QChar::Mark_NonSpacing) ||
             (category == QChar::Mark_SpacingCombining) ||
             (category == QChar::Mark_Enclosing))
@@ -64,7 +70,8 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
             continue;
         }
 
-        int diacriticIndex = m_diacriticLetters.indexOf(currentCharacter);
+        const auto diacriticIndex =
+            m_diacriticLetters.indexOf(currentCharacter);
         if (diacriticIndex < 0) {
             continue;
         }
@@ -76,12 +83,13 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
     QNTRACE("utility:string", "str after removing diacritics: " << str);
 }
 
-void StringUtilsPrivate::removeNewlines(QString & str) const
+void StringUtils::StringUtilsPrivate::removeNewlines(QString & str) const
 {
-    str.replace(QRegExp(QStringLiteral("[\n\r\v\f]")), QStringLiteral(" "));
+    static const QRegularExpression regexp{QStringLiteral("[\n\r\v\f]")};
+    str.replace(regexp, QStringLiteral(" "));
 }
 
-void StringUtilsPrivate::initialize()
+void StringUtils::StringUtilsPrivate::initialize()
 {
     m_diacriticLetters = QString::fromUtf8(
         "ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæ"
@@ -115,4 +123,4 @@ void StringUtilsPrivate::initialize()
         << QStringLiteral("u") << QStringLiteral("y") << QStringLiteral("y");
 }
 
-} // namespace quentier
+} // namespace quentier::utility

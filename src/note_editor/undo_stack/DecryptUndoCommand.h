@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_DECRYPT_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_DECRYPT_UNDO_COMMAND_H
+#pragma once
 
 #include "EncryptDecryptUndoCommandInfo.h"
 
@@ -25,41 +24,38 @@
 
 #include "../NoteEditorPage.h"
 
-#include <quentier/enml/DecryptedTextManager.h>
+#include <quentier/enml/Fwd.h>
 
 #include <memory>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN DecryptUndoCommand final : public INoteEditorUndoCommand
+class DecryptUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
     using Callback = NoteEditorPage::Callback;
-
 public:
     DecryptUndoCommand(
-        const EncryptDecryptUndoCommandInfo & info,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        EncryptDecryptUndoCommandInfo info,
+        enml::IDecryptedTextCachePtr decryptedTextCache,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     DecryptUndoCommand(
-        const EncryptDecryptUndoCommandInfo & info,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        EncryptDecryptUndoCommandInfo info,
+        enml::IDecryptedTextCachePtr decryptedTextCache,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~DecryptUndoCommand();
+    ~DecryptUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     EncryptDecryptUndoCommandInfo m_info;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
     Callback m_callback;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_DECRYPT_UNDO_COMMAND_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,17 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_TAG_SORT_BY_PARENT_CHILD_RELATIONS_TEST_H
-#define LIB_QUENTIER_TESTS_TAG_SORT_BY_PARENT_CHILD_RELATIONS_TEST_H
+#pragma once
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
-bool tagSortByParentChildRelationsTest(QString & error);
+[[nodiscard]] bool tagSortByParentChildRelationsTest(QString & error);
 
-} // namespace test
-} // namespace quentier
-
-#endif // LIB_QUENTIER_TESTS_TAG_SORT_BY_PARENT_CHILD_RELATIONS_TEST_H
+} // namespace quentier::test

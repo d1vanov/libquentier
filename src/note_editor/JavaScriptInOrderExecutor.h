@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,18 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
-#define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
+#pragma once
 
 #include <QObject>
 #include <QPointer>
 #include <QQueue>
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebEngineView>
-#else
-#include <QWebView>
-#endif
 
 #include <atomic>
 #include <functional>
@@ -36,32 +30,24 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN JavaScriptInOrderExecutor final : public QObject
+class JavaScriptInOrderExecutor final : public QObject
 {
     Q_OBJECT
-private:
-    using WebView =
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-        QWebEngineView;
-#else
-        QWebView;
-#endif
-
 public:
     using Callback = std::function<void(const QVariant &)>;
     using Canceler = std::shared_ptr<std::atomic<bool>>;
 
-    JavaScriptInOrderExecutor(
-        WebView & view, Canceler canceler, QObject * parent = nullptr);
+    explicit JavaScriptInOrderExecutor(
+        QWebEngineView & view, Canceler canceler, QObject * parent = nullptr);
 
-    void append(const QString & script, Callback callback = 0);
+    void append(const QString & script, Callback callback = {});
 
-    int size() const
+    [[nodiscard]] qsizetype size() const noexcept
     {
         return m_javaScriptsQueue.size();
     }
 
-    bool empty() const
+    [[nodiscard]] bool empty() const noexcept
     {
         return m_javaScriptsQueue.empty();
     }
@@ -73,7 +59,7 @@ public:
 
     void start();
 
-    bool inProgress() const
+    [[nodiscard]] bool inProgress() const noexcept
     {
         return m_inProgress;
     }
@@ -82,7 +68,7 @@ Q_SIGNALS:
     void finished();
 
 private:
-    class Q_DECL_HIDDEN JavaScriptCallback
+    class JavaScriptCallback
     {
     public:
         JavaScriptCallback(JavaScriptInOrderExecutor & executor) :
@@ -99,10 +85,10 @@ private:
 
     void next(const QVariant & data);
 
-    bool canceled() const;
+    [[nodiscard]] bool canceled() const;
 
 private:
-    WebView & m_view;
+    QWebEngineView & m_view;
     const Canceler m_canceler;
 
     QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
@@ -111,5 +97,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H

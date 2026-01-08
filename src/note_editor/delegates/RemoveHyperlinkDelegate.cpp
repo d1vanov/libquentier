@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,8 +37,7 @@ namespace quentier {
 
 RemoveHyperlinkDelegate::RemoveHyperlinkDelegate(
     NoteEditorPrivate & noteEditor) :
-    QObject(&noteEditor),
-    m_noteEditor(noteEditor)
+    QObject(&noteEditor), m_noteEditor(noteEditor)
 {}
 
 void RemoveHyperlinkDelegate::start()
@@ -57,12 +56,12 @@ void RemoveHyperlinkDelegate::start()
     }
 }
 
-void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
+void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveHyperlinkDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "RemoveHyperlinkDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -77,10 +76,9 @@ void RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveHyperlinkDelegate"
-            << "::findIdOfHyperlinkUnderCursor");
+        "RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor");
 
-    QString javascript =
+    const QString javascript =
         QStringLiteral("hyperlinkManager.findSelectedHyperlinkId();");
 
     GET_PAGE()
@@ -93,12 +91,11 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveHyperlinkDelegate"
-            << "::onHyperlinkIdFound: " << data);
+        "RemoveHyperlinkDelegate::onHyperlinkIdFound: " << data);
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink data "
@@ -108,11 +105,10 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
-        auto errorIt = resultMap.find(QStringLiteral("error"));
+        const auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of hyperlink data "
@@ -129,7 +125,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
         return;
     }
 
-    auto dataIt = resultMap.find(QStringLiteral("data"));
+    const auto dataIt = resultMap.find(QStringLiteral("data"));
     if (Q_UNLIKELY(dataIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("No hyperlink data received from JavaScript"));
@@ -138,10 +134,10 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
         return;
     }
 
-    QString dataStr = dataIt.value().toString();
+    const QString dataStr = dataIt.value().toString();
 
     bool conversionResult = false;
-    quint64 hyperlinkId = dataStr.toULongLong(&conversionResult);
+    const quint64 hyperlinkId = dataStr.toULongLong(&conversionResult);
     if (!conversionResult) {
         ErrorString error(
             QT_TR_NOOP("Can't remove hyperlink under cursor: "
@@ -158,7 +154,8 @@ void RemoveHyperlinkDelegate::removeHyperlink(const quint64 hyperlinkId)
 {
     QNDEBUG("note_editor:delegate", "RemoveHyperlinkDelegate::removeHyperlink");
 
-    QString javascript = QStringLiteral("hyperlinkManager.removeHyperlink(") +
+    const QString javascript =
+        QStringLiteral("hyperlinkManager.removeHyperlink(") +
         QString::number(hyperlinkId) + QStringLiteral(", false);");
 
     GET_PAGE()
@@ -171,12 +168,11 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveHyperlinkDelegate"
-            << "::onHyperlinkRemoved: " << data);
+        "RemoveHyperlinkDelegate::onHyperlinkRemoved: " << data);
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink "
@@ -186,8 +182,7 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));

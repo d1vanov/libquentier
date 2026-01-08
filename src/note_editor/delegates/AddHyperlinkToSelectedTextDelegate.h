@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,20 +16,20 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_HYPERLINK_TO_SELECTED_TEXT_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_HYPERLINK_TO_SELECTED_TEXT_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/types/Note.h>
 
 #include <QObject>
 #include <QUuid>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditorPrivate;
 
 /**
  * @brief The AddHyperlinkToSelectedTextDelegate class encapsulates a chain of
@@ -38,12 +38,12 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * around undo stack and necessary switching of note editor page during the
  * process
  */
-class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate final : public QObject
+class AddHyperlinkToSelectedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit AddHyperlinkToSelectedTextDelegate(
-        NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd);
+        NoteEditorPrivate & noteEditor, quint64 hyperlinkIdToAdd);
 
     void start();
 
@@ -57,7 +57,7 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onInitialHyperlinkDataReceived(const QVariant & data);
 
     void onAddHyperlinkDialogFinished(
@@ -86,5 +86,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_HYPERLINK_TO_SELECTED_TEXT_DELEGATE_H

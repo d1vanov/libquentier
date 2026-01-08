@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,20 +25,21 @@
 namespace quentier {
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
-    const QByteArray & resourceDataBefore,
-    const QByteArray & resourceHashBefore,
-    const QByteArray & resourceRecognitionDataBefore,
-    const QByteArray & resourceRecognitionDataHashBefore,
-    const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
+    QByteArray resourceDataBefore, QByteArray resourceHashBefore,
+    QByteArray resourceRecognitionDataBefore,
+    QByteArray resourceRecognitionDataHashBefore, QSize resourceImageSizeBefore,
+    qevercloud::Resource resourceAfter,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_resourceDataBefore(resourceDataBefore),
-    m_resourceHashBefore(resourceHashBefore),
-    m_resourceRecognitionDataBefore(resourceRecognitionDataBefore),
-    m_resourceRecognitionDataHashBefore(resourceRecognitionDataHashBefore),
+    m_resourceDataBefore(std::move(resourceDataBefore)),
+    m_resourceHashBefore(std::move(resourceHashBefore)),
+    m_resourceRecognitionDataBefore(std::move(resourceRecognitionDataBefore)),
+    m_resourceRecognitionDataHashBefore(
+        std::move(resourceRecognitionDataHashBefore)),
     m_resourceImageSizeBefore(resourceImageSizeBefore),
-    m_resourceAfter(resourceAfter), m_rotationDirection(rotationDirection)
+    m_resourceAfter(std::move(resourceAfter)),
+    m_rotationDirection(rotationDirection)
 {
     setText(
         QObject::tr("Image resource rotation") + QStringLiteral(" ") +
@@ -48,30 +49,32 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
 }
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
-    const QByteArray & resourceDataBefore,
-    const QByteArray & resourceHashBefore,
-    const QByteArray & resourceRecognitionDataBefore,
-    const QByteArray & resourceRecognitionDataHashBefore,
-    const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
+    QByteArray resourceDataBefore, QByteArray resourceHashBefore,
+    QByteArray resourceRecognitionDataBefore,
+    QByteArray resourceRecognitionDataHashBefore, QSize resourceImageSizeBefore,
+    qevercloud::Resource resourceAfter,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, const QString & text,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_resourceDataBefore(resourceDataBefore),
-    m_resourceHashBefore(resourceHashBefore),
-    m_resourceRecognitionDataBefore(resourceRecognitionDataBefore),
-    m_resourceRecognitionDataHashBefore(resourceRecognitionDataHashBefore),
+    m_resourceDataBefore(std::move(resourceDataBefore)),
+    m_resourceHashBefore(std::move(resourceHashBefore)),
+    m_resourceRecognitionDataBefore(std::move(resourceRecognitionDataBefore)),
+    m_resourceRecognitionDataHashBefore(
+        std::move(resourceRecognitionDataHashBefore)),
     m_resourceImageSizeBefore(resourceImageSizeBefore),
-    m_resourceAfter(resourceAfter), m_rotationDirection(rotationDirection)
+    m_resourceAfter(std::move(resourceAfter)),
+    m_rotationDirection(rotationDirection)
 {}
 
-ImageResourceRotationUndoCommand::~ImageResourceRotationUndoCommand() {}
+ImageResourceRotationUndoCommand::~ImageResourceRotationUndoCommand() noexcept =
+    default;
 
 void ImageResourceRotationUndoCommand::redoImpl()
 {
     QNDEBUG("note_editor:undo", "ImageResourceRotationUndoCommand::redoImpl");
 
-    const Note * pNote = m_noteEditorPrivate.notePtr();
+    const auto * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
         QNDEBUG(
             "note_editor:undo",
@@ -81,14 +84,14 @@ void ImageResourceRotationUndoCommand::redoImpl()
     }
 
     m_noteEditorPrivate.updateResource(
-        m_resourceAfter.localUid(), m_resourceHashBefore, m_resourceAfter);
+        m_resourceAfter.localId(), m_resourceHashBefore, m_resourceAfter);
 }
 
 void ImageResourceRotationUndoCommand::undoImpl()
 {
     QNDEBUG("note_editor:undo", "ImageResourceRotationUndoCommand::undoImpl");
 
-    const Note * pNote = m_noteEditorPrivate.notePtr();
+    const auto * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
         QNDEBUG(
             "note_editor:undo",
@@ -97,16 +100,40 @@ void ImageResourceRotationUndoCommand::undoImpl()
         return;
     }
 
-    Resource resource(m_resourceAfter);
-    resource.setDataBody(m_resourceDataBefore);
-    resource.setDataSize(m_resourceDataBefore.size());
-    resource.setDataHash(m_resourceHashBefore);
-    resource.setRecognitionDataBody(m_resourceRecognitionDataBefore);
-    resource.setRecognitionDataHash(m_resourceRecognitionDataHashBefore);
+    qevercloud::Resource resource(m_resourceAfter);
+    if (!m_resourceDataBefore.isEmpty()) {
+        if (!resource.data()) {
+            resource.setData(qevercloud::Data{});
+        }
+
+        resource.mutableData()->setBody(m_resourceDataBefore);
+        resource.mutableData()->setSize(m_resourceDataBefore.size());
+        resource.mutableData()->setBodyHash(m_resourceHashBefore);
+    }
+    else {
+        resource.setData(std::nullopt);
+    }
+
+    if (!m_resourceRecognitionDataBefore.isEmpty()) {
+        if (!resource.recognition()) {
+            resource.setRecognition(qevercloud::Data{});
+        }
+
+        resource.mutableRecognition()->setBody(m_resourceRecognitionDataBefore);
+
+        resource.mutableRecognition()->setBodyHash(
+            m_resourceRecognitionDataHashBefore);
+
+        resource.mutableRecognition()->setSize(
+            m_resourceRecognitionDataBefore.size());
+    }
+    else {
+        resource.setRecognition(std::nullopt);
+    }
 
     if (m_resourceImageSizeBefore.isValid()) {
-        int height = m_resourceImageSizeBefore.height();
-        int width = m_resourceImageSizeBefore.width();
+        const int height = m_resourceImageSizeBefore.height();
+        const int width = m_resourceImageSizeBefore.width();
         if ((height > 0) && (height < std::numeric_limits<qint16>::max()) &&
             (width > 0) && (width < std::numeric_limits<qint16>::max()))
         {
@@ -115,12 +142,13 @@ void ImageResourceRotationUndoCommand::undoImpl()
         }
     }
 
-    if (!m_resourceRecognitionDataBefore.isEmpty()) {
-        resource.setRecognitionDataSize(m_resourceRecognitionDataBefore.size());
-    }
+    const QByteArray resourceAfterDataHash =
+        (m_resourceAfter.data() && m_resourceAfter.data()->bodyHash())
+        ? *m_resourceAfter.data()->bodyHash()
+        : QByteArray();
 
     m_noteEditorPrivate.updateResource(
-        resource.localUid(), m_resourceAfter.dataHash(), resource);
+        resource.localId(), resourceAfterDataHash, resource);
 }
 
 } // namespace quentier

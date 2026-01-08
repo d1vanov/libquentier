@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,16 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/enml/Fwd.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+#include <quentier/utility/Fwd.h>
+#include <quentier/utility/IEncryptor.h>
+
+#include <qevercloud/types/Note.h>
 
 #include <QPointer>
 
@@ -30,31 +33,29 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-QT_FORWARD_DECLARE_CLASS(EncryptionManager)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditorPrivate;
 
 /**
  * @brief The DecryptEncryptedTextDelegate class encapsulates a chain of
  * callbacks required for proper implementation of decryption for encrypted text
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN DecryptEncryptedTextDelegate final : public QObject
+class DecryptEncryptedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit DecryptEncryptedTextDelegate(
-        const QString & encryptedTextId, const QString & encryptedText,
-        const QString & cipher, const QString & length, const QString & hint,
-        NoteEditorPrivate * pNoteEditor,
-        std::shared_ptr<EncryptionManager> encryptionManager,
-        std::shared_ptr<DecryptedTextManager> decryptedTextManager);
+        QString encryptedTextId, QString encryptedText,
+        utility::IEncryptor::Cipher cipher, QString hint,
+        NoteEditorPrivate * noteEditor, utility::IEncryptorPtr encryptor,
+        enml::IDecryptedTextCachePtr decryptedTextCache,
+        enml::IENMLTagsConverterPtr enmlTagsConverter);
 
     void start();
 
 Q_SIGNALS:
     void finished(
-        QString encryptedText, QString cipher, size_t length, QString hint,
+        QString encryptedText, utility::IEncryptor::Cipher cipher, QString hint,
         QString decryptedText, QString passphrase, bool rememberForSession,
         bool decryptPermanently);
 
@@ -62,10 +63,10 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onEncryptedTextDecrypted(
-        QString cipher, size_t keyLength, QString encryptedText,
+        QString encryptedText, utility::IEncryptor::Cipher cipher,
         QString passphrase, QString decryptedText, bool rememberForSession,
         bool decryptPermanently);
 
@@ -75,24 +76,23 @@ private:
     void raiseDecryptionDialog();
 
 private:
-    typedef JsResultCallbackFunctor<DecryptEncryptedTextDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<DecryptEncryptedTextDelegate>;
 
 private:
+    const utility::IEncryptorPtr m_encryptor;
+    const enml::IDecryptedTextCachePtr m_decryptedTextCache;
+    const enml::IENMLTagsConverterPtr m_enmlTagsConverter;
+
     QString m_encryptedTextId;
     QString m_encryptedText;
-    QString m_cipher;
-    size_t m_length = 0;
+    utility::IEncryptor::Cipher m_cipher;
     QString m_hint;
     QString m_decryptedText;
     QString m_passphrase;
     bool m_rememberForSession = false;
     bool m_decryptPermanently = false;
 
-    QPointer<NoteEditorPrivate> m_pNoteEditor;
-    std::shared_ptr<EncryptionManager> m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
+    QPointer<NoteEditorPrivate> m_noteEditor;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H

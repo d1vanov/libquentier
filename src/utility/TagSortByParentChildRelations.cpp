@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,29 +16,32 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "TagSortByParentChildRelationsHelpers.hpp"
+#include <quentier/utility/TagSortByParentChildRelations.h>
 
 #include "tag_topological_sort/TagDirectedGraphDepthFirstSearch.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
+#include <quentier/types/ErrorString.h>
 
-namespace quentier {
+#include <qevercloud/types/Tag.h>
 
-template <class T>
-bool sortTagsByParentChildRelationsImpl(
-    QList<T> & tagList, ErrorString & errorDescription)
+#include <utility>
+
+namespace quentier::utility {
+
+bool sortTagsByParentChildRelations(
+    QList<qevercloud::Tag> & tagList, ErrorString & errorDescription)
 {
     if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QString log;
-        QTextStream strm(&log);
+        QTextStream strm{&log};
         strm << "Tags list before performing the topological sort: ";
 
-        for (const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: ::std::as_const(tagList)) {
             strm << tag << ", ";
         }
         strm.flush();
-        QNTRACE("utility:tar_sort", log);
+        QNTRACE("utility::tag_sort", log);
     }
 
     if (tagList.isEmpty() || (tagList.size() == 1)) {
@@ -53,11 +56,11 @@ bool sortTagsByParentChildRelationsImpl(
 
     bool allTagsHaveGuids = true;
 
-    for (const auto & tag: ::qAsConst(tagList)) {
-        if (!tagHasGuid(tag)) {
+    for (const auto & tag: std::as_const(tagList)) {
+        if (!tag.guid()) {
             allTagsHaveGuids = false;
             QNDEBUG(
-                "utility:tar_sort",
+                "utility::tag_sort",
                 "Not all tags have guids, won't use "
                     << "guids to track parent-child relations");
             break;
@@ -65,20 +68,20 @@ bool sortTagsByParentChildRelationsImpl(
     }
 
     if (!allTagsHaveGuids) {
-        bool allTagsHaveLocalUids = true;
+        bool allTagsHaveLocalIds = true;
 
-        for (const auto & tag: ::qAsConst(tagList)) {
-            if (!tagHasLocalUid(tag)) {
-                allTagsHaveLocalUids = false;
+        for (const auto & tag: std::as_const(tagList)) {
+            if (tag.localId().isEmpty()) {
+                allTagsHaveLocalIds = false;
                 break;
             }
         }
 
-        if (!allTagsHaveLocalUids) {
+        if (!allTagsHaveLocalIds) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "sortTagsByParentChildRelationsImpl",
                 "Can't synchronize tags: all tags must have "
-                "either guids or local uids to be sorted by "
+                "either guids or local ids to be sorted by "
                 "parent-child relations"));
 
             return false;
@@ -87,27 +90,26 @@ bool sortTagsByParentChildRelationsImpl(
 
     TagDirectedGraph graph;
 
-    for (const auto & tag: ::qAsConst(tagList)) {
-        if (allTagsHaveGuids && tagHasGuid(tag)) {
-            QString guid = tagGuid(tag);
-            QString parentTagGuid = tagParentGuid(tag);
+    for (const auto & tag: std::as_const(tagList)) {
+        if (allTagsHaveGuids && tag.guid()) {
+            const QString & guid = *tag.guid();
+            const QString parentTagGuid =
+                tag.parentGuid() ? *tag.parentGuid() : QString();
             graph.addChild(parentTagGuid, guid);
         }
-        else if (tagHasLocalUid(tag)) {
-            QString localUid = tagLocalUid(tag);
-            QString parentTagLocalUid = tagParentLocalUid(tag);
+        else if (!tag.localId().isEmpty()) {
+            const QString & localId = tag.localId();
+            const QString & parentTagLocalId = tag.parentTagLocalId();
             QNTRACE(
-                "utility:tar_sort",
-                "Adding tag local uid "
-                    << localUid << " and tag parent local uid "
-                    << parentTagLocalUid << " to the graph");
-            graph.addChild(parentTagLocalUid, localUid);
+                "utility::tag_sort",
+                "Adding tag local id " << localId << " and tag parent local id "
+                                       << parentTagLocalId << " to the graph");
+            graph.addChild(parentTagLocalId, localId);
         }
         else {
             QNTRACE(
-                "utility:tar_sort",
-                "Skipping tag without either guid or "
-                    << "local uid: " << tag);
+                "utility::tag_sort",
+                "Skipping tag without either guid or local id: " << tag);
         }
     }
 
@@ -129,7 +131,7 @@ bool sortTagsByParentChildRelationsImpl(
     }
 
     QStack<QString> order = dfs.tagIdsInReversePostOrder();
-    QList<T> resultList;
+    QList<qevercloud::Tag> resultList;
     resultList.reserve(tagList.size());
     while (!order.isEmpty()) {
         QString id = order.pop();
@@ -140,21 +142,25 @@ bool sortTagsByParentChildRelationsImpl(
         auto it = tagList.end();
         if (allTagsHaveGuids) {
             it = std::find_if(
-                tagList.begin(), tagList.end(), CompareItemByGuid<T>(id));
+                tagList.begin(), tagList.end(),
+                [&id](const qevercloud::Tag & tag) {
+                    return *tag.guid() == id;
+                });
         }
         else {
             it = std::find_if(
-                tagList.begin(), tagList.end(), CompareItemByLocalUid<T>(id));
+                tagList.begin(), tagList.end(),
+                [&id](const qevercloud::Tag & tag) {
+                    return tag.localId() == id;
+                });
         }
 
         if (Q_UNLIKELY(it == tagList.end())) {
             QNDEBUG(
-                "utility:tar_sort",
-                "Skipping the tag guid or local uid "
-                    << "not found within the original set (probably the guid "
-                       "of "
-                    << "some parent tag not present within the sorted subset): "
-                    << id);
+                "utility::tag_sort",
+                "Skipping the tag guid or local id not found within "
+                    << "the original set (probably the guid of some parent tag "
+                    << "not present within the sorted subset): " << id);
             continue;
         }
 
@@ -166,29 +172,17 @@ bool sortTagsByParentChildRelationsImpl(
 
     if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QString log;
-        QTextStream strm(&log);
+        QTextStream strm{&log};
         strm << "Tags list after performing the topological sort: ";
 
-        for (const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: std::as_const(tagList)) {
             strm << tag << "\n";
         }
         strm.flush();
-        QNTRACE("utility:tar_sort", log);
+        QNTRACE("utility::tag_sort", log);
     }
 
     return true;
 }
 
-bool sortTagsByParentChildRelations(
-    QList<qevercloud::Tag> & tagList, ErrorString & errorDescription)
-{
-    return sortTagsByParentChildRelationsImpl(tagList, errorDescription);
-}
-
-bool sortTagsByParentChildRelations(
-    QList<Tag> & tagList, ErrorString errorDescription)
-{
-    return sortTagsByParentChildRelationsImpl(tagList, errorDescription);
-}
-
-} // namespace quentier
+} // namespace quentier::utility

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,22 +36,22 @@ namespace quentier {
     }
 
 EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {
     setText(tr("Edit hyperlink"));
 }
 
 EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, Callback callback,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
-EditHyperlinkUndoCommand::~EditHyperlinkUndoCommand() {}
+EditHyperlinkUndoCommand::~EditHyperlinkUndoCommand() noexcept = default;
 
 void EditHyperlinkUndoCommand::redoImpl()
 {

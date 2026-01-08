@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,24 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H
-#define LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H
+#pragma once
 
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/types/Note.h>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditorPrivate;
 
 /**
  * @brief The RemoveHyperlinkDelegate class encapsulates a chain of callbacks
  * required for proper implementation of removing a hyperlink under cursor
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN RemoveHyperlinkDelegate final : public QObject
+class RemoveHyperlinkDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -46,13 +46,13 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onHyperlinkIdFound(const QVariant & data);
     void onHyperlinkRemoved(const QVariant & data);
 
 private:
     void findIdOfHyperlinkUnderCursor();
-    void removeHyperlink(const quint64 hyperlinkId);
+    void removeHyperlink(quint64 hyperlinkId);
 
 private:
     using JsCallback = JsResultCallbackFunctor<RemoveHyperlinkDelegate>;
@@ -62,5 +62,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H

@@ -16,15 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "enml/ENMLTester.h"
-#include "local_storage/LocalStorageManagerTester.h"
-#include "synchronization/FullSyncStaleDataItemsExpungerTester.h"
-#include "synchronization/SynchronizationTester.h"
 #include "types/TypesTester.h"
 #include "utility/UtilityTester.h"
-#include "utility/keychain/CompositeKeychainTester.h"
-#include "utility/keychain/MigratingKeychainTester.h"
-#include "utility/keychain/ObfuscatingKeychainTester.h"
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileSystem.h>
@@ -40,19 +33,19 @@ using namespace quentier::test;
 
 int main(int argc, char * argv[])
 {
-    quentier::QuentierApplication app(argc, argv);
-    app.setOrganizationName(QStringLiteral("d1vanov"));
-    app.setApplicationName(QStringLiteral("LibquentierTests"));
+    quentier::utility::QuentierApplication app(argc, argv);
+    QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
+    QCoreApplication::setApplicationName(QStringLiteral("LibquentierTests"));
 
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Trace);
     // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
-    quentier::initializeLibquentier();
+    quentier::utility::initializeLibquentier();
 
     // Remove any persistence left after the previous run of tests
     QString libquentierTestsPersistencePath =
-        quentier::applicationPersistentStoragePath();
+        quentier::utility::applicationPersistentStoragePath();
 
     QDir libquentierTestsPersistenceDir(libquentierTestsPersistencePath);
     if (libquentierTestsPersistenceDir.exists()) {
@@ -61,7 +54,8 @@ int main(int argc, char * argv[])
 
         QDir evernoteAccountsDir(evernoteAccountsPath);
         if (evernoteAccountsDir.exists() &&
-            !quentier::removeDir(evernoteAccountsPath)) {
+            !quentier::utility::removeDir(evernoteAccountsPath))
+        {
             qWarning() << "Failed to delete the directory with libquentier "
                        << "tests persistence for Evernote accounts: "
                        << QDir::toNativeSeparators(evernoteAccountsPath);
@@ -74,7 +68,8 @@ int main(int argc, char * argv[])
 
         QDir localAccountsDir(localAccountsPath);
         if (localAccountsDir.exists() &&
-            !quentier::removeDir(localAccountsPath)) {
+            !quentier::utility::removeDir(localAccountsPath))
+        {
             qWarning() << "Failed to delete the directory with libquentier "
                        << "tests persistence for local accounts: "
                        << QDir::toNativeSeparators(evernoteAccountsPath);
@@ -86,20 +81,13 @@ int main(int argc, char * argv[])
     int res = 0;
 
 #define RUN_TESTS(tester)                                                      \
-    res = QTest::qExec(new tester);                                            \
+    res = QTest::qExec(new tester, argc, argv);                                \
     if (res != 0) {                                                            \
         return res;                                                            \
     }
 
     RUN_TESTS(TypesTester)
-    RUN_TESTS(ENMLTester)
     RUN_TESTS(UtilityTester)
-    RUN_TESTS(CompositeKeychainTester)
-    RUN_TESTS(MigratingKeychainTester)
-    RUN_TESTS(ObfuscatingKeychainTester)
-    RUN_TESTS(LocalStorageManagerTester)
-    RUN_TESTS(FullSyncStaleDataItemsExpungerTester)
-    RUN_TESTS(SynchronizationTester)
 
     return 0;
 }

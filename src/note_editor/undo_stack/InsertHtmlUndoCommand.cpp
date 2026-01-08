@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,16 @@
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/ResourceUtils.h>
 #include <quentier/utility/Size.h>
+
+#include <qevercloud/types/Resource.h>
 
 #include <QCryptographicHash>
 #include <QMimeDatabase>
 #include <QMimeType>
+
+#include <utility>
 
 namespace quentier {
 
@@ -34,88 +39,80 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "InsertHtmlUndoCommand",                                           \
-            "Can't undo/redo the html insertion: "                             \
-            "no note editor page"));                                           \
+            "Can't undo/redo the html insertion: no note editor page"));       \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-    const Callback & callback, NoteEditorPrivate & noteEditor,
-    QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
-    ResourceInfo & resourceInfo, const QList<Resource> & addedResources,
-    const QStringList & resourceFileStoragePaths, QUndoCommand * parent) :
+    Callback callback, NoteEditorPrivate & noteEditor,
+    QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
+    ResourceInfo & resourceInfo, QList<qevercloud::Resource> addedResources,
+    QStringList resourceFileStoragePaths, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_addedResources(addedResources),
-    m_resourceFileStoragePaths(resourceFileStoragePaths), m_callback(callback),
-    m_resourceFileStoragePathsByResourceLocalUid(
-        resourceFileStoragePathsByResourceLocalUid),
+    m_addedResources(std::move(addedResources)),
+    m_resourceFileStoragePaths(std::move(resourceFileStoragePaths)),
+    m_callback(std::move(callback)),
+    m_resourceFileStoragePathsByResourceLocalId(
+        resourceFileStoragePathsByResourceLocalId),
     m_resourceInfo(resourceInfo)
 {
     setText(tr("Insert HTML"));
 }
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-    const Callback & callback, NoteEditorPrivate & noteEditor,
-    QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+    Callback callback, NoteEditorPrivate & noteEditor,
+    QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo, const QString & text,
-    const QList<Resource> & addedResources,
-    const QStringList & resourceFileStoragePaths, QUndoCommand * parent) :
+    QList<qevercloud::Resource> addedResources,
+    QStringList resourceFileStoragePaths, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_addedResources(addedResources),
-    m_resourceFileStoragePaths(resourceFileStoragePaths), m_callback(callback),
-    m_resourceFileStoragePathsByResourceLocalUid(
-        resourceFileStoragePathsByResourceLocalUid),
+    m_addedResources(std::move(addedResources)),
+    m_resourceFileStoragePaths(std::move(resourceFileStoragePaths)),
+    m_callback(std::move(callback)),
+    m_resourceFileStoragePathsByResourceLocalId(
+        resourceFileStoragePathsByResourceLocalId),
     m_resourceInfo(resourceInfo)
 {}
 
-InsertHtmlUndoCommand::~InsertHtmlUndoCommand() {}
+InsertHtmlUndoCommand::~InsertHtmlUndoCommand() noexcept = default;
 
 void InsertHtmlUndoCommand::undoImpl()
 {
     QNDEBUG("note_editor:undo", "InsertHtmlUndoCommand::undoImpl");
 
-    const QList<Resource> & addedResources = m_addedResources;
-    int numResources = addedResources.size();
-
-    for (int i = 0; i < numResources; ++i) {
-        const Resource * pResource = &(addedResources.at(i));
-
-        if (Q_UNLIKELY(!pResource->hasDataHash())) {
+    for (auto & resource: m_addedResources) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no data "
-                    << "hash: " << *pResource);
+                "One of added resources has no data hash: " << resource);
 
-            if (!pResource->hasDataBody()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
-                    "This resource has no data body "
-                        << "as well, skipping it");
+                    "This resource has no data body as well, skipping it");
                 continue;
             }
 
-            QByteArray hash = QCryptographicHash::hash(
-                pResource->dataBody(), QCryptographicHash::Md5);
+            const QByteArray hash = QCryptographicHash::hash(
+                *resource.data()->body(), QCryptographicHash::Md5);
 
-            m_addedResources[i].setDataHash(hash);
-            // This might have caused detach, need to update the pointer to
-            // the resource
-            pResource = &(addedResources.at(i));
+            resource.mutableData()->setBodyHash(hash);
         }
 
-        m_noteEditorPrivate.removeResourceFromNote(*pResource);
+        m_noteEditorPrivate.removeResourceFromNote(resource);
 
-        auto rit = m_resourceFileStoragePathsByResourceLocalUid.find(
-            pResource->localUid());
+        const auto rit = m_resourceFileStoragePathsByResourceLocalId.find(
+            resource.localId());
 
-        if (Q_LIKELY(rit != m_resourceFileStoragePathsByResourceLocalUid.end()))
+        if (Q_LIKELY(rit != m_resourceFileStoragePathsByResourceLocalId.end()))
         {
-            Q_UNUSED(m_resourceFileStoragePathsByResourceLocalUid.erase(rit))
+            Q_UNUSED(m_resourceFileStoragePathsByResourceLocalId.erase(rit))
         }
 
-        m_resourceInfo.removeResourceInfo(pResource->dataHash());
+        Q_UNUSED(
+            m_resourceInfo.removeResourceInfo(*resource.data()->bodyHash()))
     }
 
     GET_PAGE()
@@ -127,17 +124,17 @@ void InsertHtmlUndoCommand::redoImpl()
 {
     QNDEBUG("note_editor:undo", "InsertHtmlUndoCommand::redoImpl");
 
-    const QList<Resource> & addedResources = m_addedResources;
-    int numResources = addedResources.size();
-
     QMimeDatabase mimeDatabase;
 
-    for (int i = 0; i < numResources; ++i) {
-        const Resource * pResource = &(addedResources.at(i));
+    for (auto it = m_addedResources.begin(), end = m_addedResources.end();
+         it != end; ++it)
+    {
+        auto & resource = *it;
+        auto index = std::distance(m_addedResources.begin(), it);
 
         QMimeType mimeType;
-        if (pResource->hasMime()) {
-            mimeType = mimeDatabase.mimeTypeForName(pResource->mime());
+        if (resource.mime()) {
+            mimeType = mimeDatabase.mimeTypeForName(*resource.mime());
         }
 
         if (Q_UNLIKELY(!mimeType.isValid())) {
@@ -147,115 +144,102 @@ void InsertHtmlUndoCommand::redoImpl()
                     << "mime type from the mime type name or resource has "
                     << "no declared mime type");
 
-            if (pResource->hasDataBody()) {
+            if (resource.data() && resource.data()->body()) {
                 QNDEBUG(
                     "note_editor:undo",
-                    "Trying to deduce the mime type "
-                        << "from the resource data");
-                mimeType = mimeDatabase.mimeTypeForData(pResource->dataBody());
+                    "Trying to deduce the mime type from the resource data");
+
+                mimeType =
+                    mimeDatabase.mimeTypeForData(*resource.data()->body());
             }
         }
 
         if (Q_UNLIKELY(!mimeType.isValid())) {
             QNDEBUG(
                 "note_editor:undo",
-                "All attempts to deduce the correct "
-                    << "mime type have failed, fallback to mime type of "
-                       "image/png");
+                "All attempts to deduce the correct mime type have failed, "
+                    << "fallback to mime type of image/png");
+
             mimeType =
                 mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
         }
 
-        if (Q_UNLIKELY(!pResource->hasMime())) {
+        if (Q_UNLIKELY(!resource.mime())) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no mime type: " << *pResource);
+                "One of added resources has no mime type: " << resource);
 
-            if (!pResource->hasDataBody()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
-                    "This resource has no data body "
-                        << "as well, skipping it");
+                    "This resource has no data body as well, skipping it");
                 continue;
             }
 
-            m_addedResources[i].setMime(mimeType.name());
-            // This might have caused resize, need to update the pointer
-            // to the resource
-            pResource = &(addedResources.at(i));
+            resource.setMime(mimeType.name());
         }
 
-        if (Q_UNLIKELY(!pResource->hasDataHash())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->bodyHash()))) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no data "
-                    << "hash: " << *pResource);
+                "One of added resources has no data hash: " << resource);
 
-            if (!pResource->hasDataBody()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
-                    "This resource has no data body "
-                        << "as well, skipping it");
+                    "This resource has no data body as well, skipping it");
                 continue;
             }
 
-            QByteArray hash = QCryptographicHash::hash(
-                pResource->dataBody(), QCryptographicHash::Md5);
-            m_addedResources[i].setDataHash(hash);
-            // This might have caused resize, need to update the pointer
-            // to the resource
-            pResource = &(addedResources.at(i));
+            const QByteArray hash = QCryptographicHash::hash(
+                *resource.data()->body(), QCryptographicHash::Md5);
+
+            resource.mutableData()->setBodyHash(hash);
         }
 
-        if (Q_UNLIKELY(!pResource->hasDataSize())) {
+        if (Q_UNLIKELY(!(resource.data() && resource.data()->size()))) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no data "
-                    << "size: " << *pResource);
+                "One of added resources has no data size: " << resource);
 
-            if (!pResource->hasDataBody()) {
+            if (!(resource.data() && resource.data()->body())) {
                 QNDEBUG(
                     "note_editor:undo",
-                    "This resource has no data body "
-                        << "as well, skipping it");
+                    "This resource has no data body as well, skipping it");
                 continue;
             }
 
-            m_addedResources[i].setDataSize(
-                m_addedResources[i].dataBody().size());
-
-            // This might have caused resize, need to update the pointer
-            // to the resource
-            pResource = &(addedResources.at(i));
+            resource.mutableData()->setSize(
+                static_cast<qint32>(resource.data()->body()->size()));
         }
 
-        m_noteEditorPrivate.addResourceToNote(*pResource);
+        m_noteEditorPrivate.addResourceToNote(resource);
 
-        if (Q_LIKELY(m_resourceFileStoragePaths.size() > i)) {
-            m_resourceFileStoragePathsByResourceLocalUid[pResource
-                                                             ->localUid()] =
-                m_resourceFileStoragePaths[i];
+        if (Q_LIKELY(m_resourceFileStoragePaths.size() > index)) {
+            m_resourceFileStoragePathsByResourceLocalId[resource.localId()] =
+                m_resourceFileStoragePaths[static_cast<int>(index)];
 
             QSize resourceImageSize;
-            if (pResource->hasHeight() && pResource->hasWidth()) {
-                resourceImageSize.setHeight(pResource->height());
-                resourceImageSize.setWidth(pResource->width());
+            if (resource.height() && resource.width()) {
+                resourceImageSize.setHeight(*resource.height());
+                resourceImageSize.setWidth(*resource.width());
             }
 
             m_resourceInfo.cacheResourceInfo(
-                pResource->dataHash(), pResource->displayName(),
-                humanReadableSize(static_cast<quint64>(pResource->dataSize())),
-                m_resourceFileStoragePaths[i], resourceImageSize);
+                *resource.data()->bodyHash(), resourceDisplayName(resource),
+                utility::humanReadableSize(
+                    static_cast<quint64>(*resource.data()->size())),
+                m_resourceFileStoragePaths[static_cast<int>(index)],
+                resourceImageSize);
         }
         else {
             QNWARNING(
                 "note_editor:undo",
-                "Can't restore the resource file "
-                    << "storage path for one of resources: the number of "
-                    << "resource file storage path is less than "
-                    << "or equal to the index: paths = "
+                "Can't restore the resource file storage path for one of "
+                    << "resources: the number of resource file storage path is "
+                    << "less than or equal to the index: paths = "
                     << m_resourceFileStoragePaths.join(QStringLiteral(", "))
-                    << "; resource: " << pResource);
+                    << "; resource: " << resource);
         }
     }
 

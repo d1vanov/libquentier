@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_REPLACE_ALL_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_REPLACE_ALL_UNDO_COMMAND_H
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -25,7 +24,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ReplaceAllUndoCommand final : public INoteEditorUndoCommand
+class ReplaceAllUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -33,19 +32,19 @@ public:
 
 public:
     ReplaceAllUndoCommand(
-        const QString & textToReplace, const bool matchCase,
+        QString textToReplace, bool matchCase,
         NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     ReplaceAllUndoCommand(
-        const QString & textToReplace, const bool matchCase,
+        QString textToReplace, bool matchCase,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         Callback callback, QUndoCommand * parent = nullptr);
 
-    virtual ~ReplaceAllUndoCommand();
+    ~ReplaceAllUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     QString m_textToReplace;
@@ -54,5 +53,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_REPLACE_ALL_UNDO_COMMAND_H

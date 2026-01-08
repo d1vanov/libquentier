@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,21 +20,27 @@
 
 #include "FileSystemWatcher_p.h"
 
-namespace quentier {
+namespace quentier::utility {
 
 FileSystemWatcher::FileSystemWatcher(
     const int removalTimeoutMSec, QObject * parent) :
-    QObject(parent),
-    d_ptr(new FileSystemWatcherPrivate(*this, removalTimeoutMSec))
+    QObject{parent},
+    // clang-format off
+    d_ptr{new FileSystemWatcher::FileSystemWatcherPrivate(
+        *this, removalTimeoutMSec)}
+// clang-format on
 {}
 
 FileSystemWatcher::FileSystemWatcher(
     const QStringList & paths, const int removalTimeoutMSec, QObject * parent) :
-    QObject(parent),
-    d_ptr(new FileSystemWatcherPrivate(*this, paths, removalTimeoutMSec))
+    QObject{parent},
+    // clang-format off
+    d_ptr{new FileSystemWatcher::FileSystemWatcherPrivate(
+        *this, paths, removalTimeoutMSec)}
+// clang-format on
 {}
 
-FileSystemWatcher::~FileSystemWatcher() {}
+FileSystemWatcher::~FileSystemWatcher() = default;
 
 void FileSystemWatcher::addPath(const QString & path)
 {
@@ -72,4 +78,4 @@ void FileSystemWatcher::removePaths(const QStringList & paths)
     d->removePaths(paths);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

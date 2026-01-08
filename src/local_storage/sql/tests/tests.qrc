@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>expected_db_schema.txt</file>
+    </qresource>
+</RCC>

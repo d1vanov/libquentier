@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
-#define LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
@@ -41,10 +40,9 @@ enum class LogLevel
     Error
 };
 
-QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const LogLevel logLevel);
+QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, LogLevel logLevel);
 
-QUENTIER_EXPORT QTextStream & operator<<(
-    QTextStream & strm, const LogLevel logLevel);
+QUENTIER_EXPORT QTextStream & operator<<(QTextStream & strm, LogLevel logLevel);
 
 /**
  * This function needs to be called once during a process lifetime before
@@ -59,9 +57,8 @@ void QUENTIER_EXPORT QuentierInitializeLogging();
  * This function is used to add new log entry to logs written by libquentier
  */
 void QUENTIER_EXPORT QuentierAddLogEntry(
-    const QString & sourceFileName, const int sourceFileLineNumber,
-    const QString & component, const QString & message,
-    const LogLevel logLevel);
+    const QString & sourceFileName, int sourceFileLineNumber,
+    const QString & component, const QString & message, LogLevel logLevel);
 
 /**
  * Current minimal log level used by libquentier. By default minimal log level
@@ -73,7 +70,7 @@ LogLevel QUENTIER_EXPORT QuentierMinLogLevel();
 /**
  * Change the current minimal log level used by libquentier
  */
-void QUENTIER_EXPORT QuentierSetMinLogLevel(const LogLevel logLevel);
+void QUENTIER_EXPORT QuentierSetMinLogLevel(LogLevel logLevel);
 
 /**
  * Call this function to write logs not only to rotating files but also to
@@ -85,12 +82,12 @@ void QUENTIER_EXPORT QuentierAddStdOutLogDestination();
  * Check whether log level is active i.e. whether log level is larger than or
  * equal to the minimal log level
  */
-bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel logLevel);
+[[nodiscard]] bool QUENTIER_EXPORT QuentierIsLogLevelActive(LogLevel logLevel);
 
 /**
  * Directory containing rotating log files written by libquentier
  */
-QString QUENTIER_EXPORT QuentierLogFilesDirPath();
+[[nodiscard]] QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
 /**
  * Clear logs accumulated within the existing log file
@@ -100,17 +97,17 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 /**
  * Current filter specified for log components
  */
-QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
+[[nodiscard]] QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
 
 /**
  * Change the current filter for log components
  */
 void QUENTIER_EXPORT
-QuentierSetLogComponentFilter(const QRegularExpression & filter);
+    QuentierSetLogComponentFilter(const QRegularExpression & filter);
 
 } // namespace quentier
 
-#define __QNLOG_BASE(component, message, level)                                \
+#define QNLOG_PRIVATE_BASE(component, message, level)                          \
     if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level)) {       \
         QString msg;                                                           \
         QDebug dbg(&msg);                                                      \
@@ -121,39 +118,39 @@ QuentierSetLogComponentFilter(const QRegularExpression & filter);
             QStringLiteral(__FILE__), __LINE__, QString::fromUtf8(component),  \
             msg, quentier::LogLevel::level);                                   \
     }                                                                          \
-    // __QNLOG_BASE
+    // QNLOG_PRIVATE_BASE
 
 #define QNTRACE(component, message)                                            \
-    __QNLOG_BASE(component, message, Trace)                                    \
+    QNLOG_PRIVATE_BASE(component, message, Trace)                              \
     // QNTRACE
 
 #define QNDEBUG(component, message)                                            \
-    __QNLOG_BASE(component, message, Debug)                                    \
+    QNLOG_PRIVATE_BASE(component, message, Debug)                              \
     // QNDEBUG
 
 #define QNINFO(component, message)                                             \
-    __QNLOG_BASE(component, message, Info)                                     \
+    QNLOG_PRIVATE_BASE(component, message, Info)                               \
     // QNINFO
 
 #define QNWARNING(component, message)                                          \
-    __QNLOG_BASE(component, message, Warning)                                  \
+    QNLOG_PRIVATE_BASE(component, message, Warning)                            \
     // QNWARNING
 
 #define QNERROR(component, message)                                            \
-    __QNLOG_BASE(component, message, Error)                                    \
+    QNLOG_PRIVATE_BASE(component, message, Error)                              \
     // QNERROR
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \
-    quentier::QuentierSetMinLogLevel(                                          \
-        quentier::LogLevel::level) // QUENTIER_SET_MIN_LOG_LEVEL
+    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level)
+  // QUENTIER_SET_MIN_LOG_LEVEL
 
-#define QUENTIER_INITIALIZE_LOGGING()                                          \
-    quentier::QuentierInitializeLogging() // QUENTIER_INITIALIZE_LOGGING
+#define QUENTIER_INITIALIZE_LOGGING() quentier::QuentierInitializeLogging()
+  // QUENTIER_INITIALIZE_LOGGING
 
+// clang-format off
 #define QUENTIER_ADD_STDOUT_LOG_DESTINATION()                                  \
-    quentier::                                                                 \
-        QuentierAddStdOutLogDestination() // QUENTIER_ADD_STDOUT_LOG_DESTINATION
+    quentier::QuentierAddStdOutLogDestination()                                \
+    // QUENTIER_ADD_STDOUT_LOG_DESTINATION
+// clang-format on
 
 #define QNLOG_FILE_LINENUMBER_DELIMITER ":"
-
-#endif // LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H

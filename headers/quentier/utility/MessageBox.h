@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,39 +16,38 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_MESSAGE_BOX_H
-#define LIB_QUENTIER_UTILITY_MESSAGE_BOX_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 #include <QMessageBox>
 
-namespace quentier {
+namespace quentier::utility {
 
 int QUENTIER_EXPORT genericMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 int QUENTIER_EXPORT informationMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 int QUENTIER_EXPORT warningMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 int QUENTIER_EXPORT criticalMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
-int QUENTIER_EXPORT questionMessageBox(
+[[nodiscard]] int QUENTIER_EXPORT questionMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok |
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok |
         QMessageBox::Cancel);
 
 /**
@@ -57,8 +56,6 @@ int QUENTIER_EXPORT questionMessageBox(
  * needs to provide the detailed text
  */
 void QUENTIER_EXPORT
-internalErrorMessageBox(QWidget * parent, QString detailedText = {});
+    internalErrorMessageBox(QWidget * parent, QString detailedText = {});
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_MESSAGE_BOX_H
+} // namespace quentier::utility

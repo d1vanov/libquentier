@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_HIDE_DECRYPTED_TEXT_UNDO_COMMAND
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_HIDE_DECRYPTED_TEXT_UNDO_COMMAND
+#pragma once
 
 #include "INoteEditorUndoCommand.h"
 
@@ -25,8 +24,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN HideDecryptedTextUndoCommand final :
-    public INoteEditorUndoCommand
+class HideDecryptedTextUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -34,22 +32,20 @@ public:
 
 public:
     HideDecryptedTextUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     HideDecryptedTextUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~HideDecryptedTextUndoCommand();
+    ~HideDecryptedTextUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     Callback m_callback;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_HIDE_DECRYPTED_TEXT_UNDO_COMMAND

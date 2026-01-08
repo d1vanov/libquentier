@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,32 +29,33 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "ReplaceUndoCommand",                                              \
-            "Can't undo/redo text replacement: "                               \
-            "can't get note editor page"));                                    \
+            "Can't undo/redo text replacement: can't get note editor page"));  \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }
 
 ReplaceUndoCommand::ReplaceUndoCommand(
-    const QString & textToReplace, const bool matchCase,
+    QString textToReplace, const bool matchCase,
     NoteEditorPrivate & noteEditorPrivate, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_textToReplace(textToReplace), m_matchCase(matchCase), m_callback(callback)
+    m_textToReplace(std::move(textToReplace)), m_matchCase(matchCase),
+    m_callback(std::move(callback))
 {
     setText(tr("Replace text"));
 }
 
 ReplaceUndoCommand::ReplaceUndoCommand(
-    const QString & textToReplace, const bool matchCase,
+    QString textToReplace, const bool matchCase,
     NoteEditorPrivate & noteEditorPrivate, const QString & text,
     Callback callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_textToReplace(textToReplace), m_matchCase(matchCase), m_callback(callback)
+    m_textToReplace(std::move(textToReplace)), m_matchCase(matchCase),
+    m_callback(std::move(callback))
 {}
 
-ReplaceUndoCommand::~ReplaceUndoCommand() {}
+ReplaceUndoCommand::~ReplaceUndoCommand() noexcept = default;
 
 void ReplaceUndoCommand::redoImpl()
 {
@@ -62,7 +63,7 @@ void ReplaceUndoCommand::redoImpl()
 
     GET_PAGE()
 
-    QString javascript = QStringLiteral("findReplaceManager.redo();");
+    const QString javascript = QStringLiteral("findReplaceManager.redo();");
     page->executeJavaScript(javascript, m_callback);
 
     if (m_noteEditorPrivate.searchHighlightEnabled()) {
@@ -78,7 +79,7 @@ void ReplaceUndoCommand::undoImpl()
 
     GET_PAGE()
 
-    QString javascript = QStringLiteral("findReplaceManager.undo();");
+    const QString javascript = QStringLiteral("findReplaceManager.undo();");
     page->executeJavaScript(javascript, m_callback);
 
     if (m_noteEditorPrivate.searchHighlightEnabled()) {

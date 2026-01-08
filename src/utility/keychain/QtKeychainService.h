@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,47 +16,25 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
+#pragma once
 
 #include <quentier/utility/IKeychainService.h>
 
-namespace quentier {
+namespace quentier::utility::keychain {
 
-QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
-
-class Q_DECL_HIDDEN QtKeychainService final : public IKeychainService
+class QtKeychainService final : public IKeychainService
 {
-    Q_OBJECT
 public:
-    explicit QtKeychainService(QObject * parent = nullptr);
+    ~QtKeychainService() noexcept override;
 
-    virtual ~QtKeychainService() override;
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
 
-    virtual QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) override;
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) const override;
 
-    virtual QUuid startReadPasswordJob(
-        const QString & service, const QString & key) override;
-
-    virtual QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) override;
-
-Q_SIGNALS:
-    // private signals
-    void notifyStartWritePasswordJob(
-        QUuid jobId, QString service, QString key, QString password);
-
-    void notifyStartReadPasswordJob(QUuid jobId, QString service, QString key);
-
-    void notifyStartDeletePasswordJob(
-        QUuid jobId, QString service, QString key);
-
-private:
-    QtKeychainWrapper * m_pQtKeychainWrapper;
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
+} // namespace quentier::utility::keychain

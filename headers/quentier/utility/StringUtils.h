@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,50 +16,32 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_STRING_UTILS_H
-#define LIB_QUENTIER_UTILITY_STRING_UTILS_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
+#include <QList>
 #include <QSet>
 #include <QString>
-#include <QVector>
 
-namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(StringUtilsPrivate)
+namespace quentier::utility {
 
 class QUENTIER_EXPORT StringUtils
 {
 public:
     StringUtils();
-    virtual ~StringUtils();
+    ~StringUtils() noexcept;
 
     void removePunctuation(
-        QString & str, const QVector<QChar> & charactersToPreserve = {}) const;
+        QString & str, const QList<QChar> & charactersToPreserve = {}) const;
 
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
 
-    struct StringFilterPredicate
-    {
-        StringFilterPredicate(QSet<QString> & filteredStrings) :
-            m_filteredStrings(filteredStrings)
-        {}
-
-        bool operator()(const QString & str) const
-        {
-            return m_filteredStrings.contains(str);
-        }
-
-        QSet<QString> & m_filteredStrings;
-    };
-
 private:
+    class StringUtilsPrivate;
     StringUtilsPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(StringUtils);
 };
 
-} // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_STRING_UTILS_H
+} // namespace quentier::utility

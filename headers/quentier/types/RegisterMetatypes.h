@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,12 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TYPES_REGISTER_METATYPES_H
-#define LIB_QUENTIER_TYPES_REGISTER_METATYPES_H
+#pragma once
 
 #include <quentier/utility/Linkage.h>
 
 namespace quentier {
 
-void QUENTIER_EXPORT registerMetatypes();
+QUENTIER_EXPORT void registerMetatypes();
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TYPES_REGISTER_METATYPES_H

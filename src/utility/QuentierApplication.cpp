@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2025 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,21 +22,21 @@
 
 #include <exception>
 
-namespace quentier {
+namespace quentier::utility {
 
-QuentierApplication::QuentierApplication(int & argc, char * argv[]) :
+QuentierApplication::QuentierApplication(int & argc, char * argv[]) : // NOLINT
     QApplication(argc, argv)
 {}
 
-QuentierApplication::~QuentierApplication() {}
+QuentierApplication::~QuentierApplication() noexcept = default;
 
-bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
+bool QuentierApplication::notify(QObject * object, QEvent * event)
 {
     try {
-        return QApplication::notify(pObject, pEvent);
+        return QApplication::notify(object, event);
     }
     catch (const std::exception & e) {
-        SysInfo sysInfo;
+        utility::SysInfo sysInfo;
         QNERROR(
             "utility:app",
             "Caught unhandled exception: " << e.what() << ", backtrace: "
@@ -45,7 +45,7 @@ bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
     }
 }
 
-bool QuentierApplication::event(QEvent * pEvent)
+bool QuentierApplication::event(QEvent * event)
 {
 #ifdef Q_WS_MAC
     // Handling close action from OS X / macOS dock properly
@@ -55,7 +55,7 @@ bool QuentierApplication::event(QEvent * pEvent)
     }
 #endif
 
-    return QApplication::event(pEvent);
+    return QApplication::event(event);
 }
 
-} // namespace quentier
+} // namespace quentier::utility

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,8 +21,7 @@
 namespace quentier {
 
 ToDoCheckboxAutomaticInsertionHandler::ToDoCheckboxAutomaticInsertionHandler(
-    QObject * parent) :
-    QObject(parent)
+    QObject * parent) : QObject(parent)
 {}
 
 void ToDoCheckboxAutomaticInsertionHandler::

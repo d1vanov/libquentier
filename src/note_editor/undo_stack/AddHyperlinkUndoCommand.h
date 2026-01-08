@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2024 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,16 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_HYPERLINK_UNDO_COMMAND_H
-#define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_HYPERLINK_UNDO_COMMAND_H
+#pragma once
 
 #include "../NoteEditorPage.h"
 #include "INoteEditorUndoCommand.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AddHyperlinkUndoCommand final :
-    public INoteEditorUndoCommand
+class AddHyperlinkUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -33,22 +31,20 @@ public:
 
 public:
     AddHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         QUndoCommand * parent = nullptr);
 
     AddHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~AddHyperlinkUndoCommand();
+    ~AddHyperlinkUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     Callback m_callback;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_HYPERLINK_UNDO_COMMAND_H
